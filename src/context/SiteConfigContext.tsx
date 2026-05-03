@@ -28,8 +28,16 @@ const SiteConfigContext = createContext<SiteConfigContextValue | null>(null);
 const getInitialSiteConfig = (): SiteConfig => {
   if (typeof window === 'undefined') return DEFAULT_SITE_CONFIG;
 
-  // Clear old config to force use of new default
-  window.localStorage.removeItem(SITE_CONFIG_STORAGE_KEY);
+  // Try to load saved config from localStorage
+  try {
+    const savedConfig = window.localStorage.getItem(SITE_CONFIG_STORAGE_KEY);
+    if (savedConfig) {
+      const parsed = JSON.parse(savedConfig);
+      return hydrateSiteConfig(parsed);
+    }
+  } catch (error) {
+    console.warn('Failed to load saved config:', error);
+  }
 
   return DEFAULT_SITE_CONFIG;
 };

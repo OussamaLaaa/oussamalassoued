@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import CursorAnimationLayer from '../components/CursorAnimationLayer';
 import {
   getButtonClass,
   getCardClass,
@@ -31,15 +32,6 @@ import {
   type SiteScene05LogoItem,
   type SiteInboxMessage,
   type SiteMessageStatus,
-  type AITrackingType,
-  type AIFrequency,
-  type EmailFolder,
-  type EmailStatus,
-  type NoteCategory,
-  type SiteAITracking,
-  type SiteAIReport,
-  type SiteEmail,
-  type SiteNote,
 } from '../config/siteConfig';
 import {
   BarChart3,
@@ -51,15 +43,6 @@ import {
   RotateCcw,
   Save,
   Settings,
-  Users,
-  Briefcase,
-  Share2,
-  DollarSign,
-  Brain,
-  Mail,
-  StickyNote,
-  Sun,
-  Moon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -85,19 +68,7 @@ type DashboardSectionId =
   | 'animation'
   | 'articlesPage';
 
-type DashboardWorkspace =
-  | 'sitePages'
-  | 'designSystem'
-  | 'siteIntegrations'
-  | 'publishing'
-  | 'analytics'
-  | 'messages'
-  | 'personalHub'
-  | 'aiIntelligence'
-  | 'communication'
-  | 'notes';
-
-type DashboardPersonalHubSection = 'partners' | 'projects' | 'social' | 'finance';
+type DashboardWorkspace = 'site' | 'articles' | 'settings' | 'analytics' | 'messages';
 type DashboardSettingsPanel = 'browser' | 'integrations' | 'inbox';
 
 const DASHBOARD_WORKSPACES: Array<{
@@ -107,64 +78,34 @@ const DASHBOARD_WORKSPACES: Array<{
   icon: LucideIcon;
 }> = [
   {
-    id: 'sitePages',
-    label: 'Site Pages',
-    description: 'Manage all website pages and content sections.',
+    id: 'site',
+    label: 'Site Editor',
+    description: 'Edit all website sections, text, images, and visual modules.',
     icon: Globe,
   },
   {
-    id: 'designSystem',
-    label: 'Design System',
-    description: 'Colors, typography, components, and animation settings.',
-    icon: StickyNote,
-  },
-  {
-    id: 'siteIntegrations',
-    label: 'Site Integrations',
-    description: 'Browser identity, AI, domain, analytics, and security.',
-    icon: Settings,
-  },
-  {
-    id: 'publishing',
-    label: 'Publishing',
-    description: 'Create, schedule, and manage articles and content.',
+    id: 'articles',
+    label: 'Articles Studio',
+    description: 'Create, schedule, and publish articles.',
     icon: FileText,
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    description: 'Manage browser metadata, domain, API, and integrations.',
+    icon: Settings,
   },
   {
     id: 'analytics',
     label: 'Analytics',
-    description: 'Site statistics, personal progress, and project reports.',
+    description: 'Track channel performance, sessions, and conversion health.',
     icon: BarChart3,
   },
   {
     id: 'messages',
     label: 'Messages',
-    description: 'Manage inbound messages from website visitors.',
+    description: 'Review inbound messages submitted from website visitors.',
     icon: Inbox,
-  },
-  {
-    id: 'personalHub',
-    label: 'Personal Hub',
-    description: 'Partners, projects, social media, and finance.',
-    icon: Users,
-  },
-  {
-    id: 'aiIntelligence',
-    label: 'AI Intelligence',
-    description: 'News tracking, market monitoring, and AI reports.',
-    icon: Brain,
-  },
-  {
-    id: 'communication',
-    label: 'Communication',
-    description: 'Email client and communication management.',
-    icon: Mail,
-  },
-  {
-    id: 'notes',
-    label: 'Notes',
-    description: 'Personal note-taking and knowledge management.',
-    icon: StickyNote,
   },
 ];
 
@@ -187,38 +128,6 @@ const DASHBOARD_SETTINGS_PANELS: Array<{
     id: 'inbox',
     label: 'Inbox Routing',
     description: 'Forwarding and auto-reply behavior for new messages.',
-  },
-];
-
-const DASHBOARD_PERSONAL_HUB_SECTIONS: Array<{
-  id: DashboardPersonalHubSection;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}> = [
-  {
-    id: 'partners',
-    label: 'Partners',
-    description: 'Target companies and freelance opportunities.',
-    icon: Users,
-  },
-  {
-    id: 'projects',
-    label: 'Projects',
-    description: 'Current and completed project management.',
-    icon: Briefcase,
-  },
-  {
-    id: 'social',
-    label: 'Social Media',
-    description: 'Social media accounts and post scheduling.',
-    icon: Share2,
-  },
-  {
-    id: 'finance',
-    label: 'Finance',
-    description: 'Income, expenses, investments, and invoices.',
-    icon: DollarSign,
   },
 ];
 
@@ -331,64 +240,6 @@ const readFileAsDataUrl = (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 };
-
-const COLOR_HEX_REGEX = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
-
-const toPickerColorValue = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return '#000000';
-
-  const hexMatch = trimmed.match(COLOR_HEX_REGEX);
-  if (hexMatch?.[0]) {
-    const rawHex = hexMatch[0].slice(1).toLowerCase();
-    if (rawHex.length === 3) {
-      return `#${rawHex
-        .split('')
-        .map((character) => character + character)
-        .join('')}`;
-    }
-    if (rawHex.length === 4) {
-      return `#${rawHex
-        .slice(0, 3)
-        .split('')
-        .map((character) => character + character)
-        .join('')}`;
-    }
-    if (rawHex.length === 8) {
-      return `#${rawHex.slice(0, 6)}`;
-    }
-    return `#${rawHex}`;
-  }
-
-  if (typeof document === 'undefined') return '#000000';
-
-  const probe = document.createElement('span');
-  probe.style.color = trimmed;
-  probe.style.position = 'absolute';
-  probe.style.left = '-9999px';
-  probe.style.top = '-9999px';
-  document.body.appendChild(probe);
-
-  const computedColor = window.getComputedStyle(probe).color;
-  probe.remove();
-
-  const rgbMatch = computedColor.match(/^rgba?\(([^)]+)\)$/i);
-  if (!rgbMatch?.[1]) return '#000000';
-
-  const [red, green, blue] = rgbMatch[1]
-    .split(',')
-    .slice(0, 3)
-    .map((part) => Number.parseFloat(part.trim()));
-
-  if ([red, green, blue].some((channel) => !Number.isFinite(channel))) return '#000000';
-
-  const toHexChannel = (channel: number) => {
-    return Math.round(Math.min(255, Math.max(0, channel))).toString(16).padStart(2, '0');
-  };
-
-  return `#${toHexChannel(red)}${toHexChannel(green)}${toHexChannel(blue)}`;
-};
-
 const Card: React.FC<{
   title: string;
   subtitle?: string;
@@ -396,18 +247,19 @@ const Card: React.FC<{
   className?: string;
 }> = ({ title, subtitle, children, className }) => {
   return (
-    <section>
-      className={`dashboard-card-surface relative overflow-hidden rounded-[12px] border border-[#e5e7eb] bg-white p-4 shadow-sm ${
+    <section
+      className={`dashboard-card-surface relative overflow-hidden rounded-[18px] border border-white/12 bg-[linear-gradient(180deg,rgba(18,22,30,0.98),rgba(14,18,24,0.96))] p-5 shadow-[0_22px_44px_-34px_rgba(0,0,0,0.68)] backdrop-blur-xl ${
         className ?? ''
       }`}
     >
-      <div className="mb-3 border-b border-[#e5e7eb] pb-2">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#1a1a1a]">{title}</h2>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/28 to-transparent" />
+      <div className="mb-4 border-b border-white/10 pb-3">
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/88">{title}</h2>
         {subtitle ? (
-          <p className="mt-0.5 text-[11px] text-[#6b7280]">{subtitle}</p>
+          <p className="mt-1 text-[12px] text-white/58">{subtitle}</p>
         ) : null}
       </div>
-      <div className="space-y-3">{children}</div>
+      <div className="space-y-4">{children}</div>
     </section>
   );
 };
@@ -422,15 +274,15 @@ const SectionButton: React.FC<{
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-[10px] border px-3 py-2 text-left transition-all duration-300 ${
+      className={`group w-full rounded-[14px] border px-3.5 py-3 text-left transition-all duration-300 ${
         isActive
-          ? 'border-[#3b82f6] bg-[#3b82f6]/10 text-[#1a1a1a]'
-          : 'border-[#e5e7eb] bg-white text-[#6b7280] hover:border-[#d1d5db] hover:bg-[#f9fafb]'
+          ? 'border-[#b6f45b]/50 bg-[#b6f45b]/12 text-white shadow-[0_16px_34px_-24px_rgba(182,244,91,0.6)]'
+          : 'border-white/12 bg-white/[0.04] text-white/84 hover:border-white/24 hover:bg-white/[0.08]'
       }`}
     >
-      <p className="font-mono text-[9px] uppercase tracking-[0.12em]">{label}</p>
-      <p>
-        className={`mt-0.5 text-[11px] ${isActive ? 'text-[#1a1a1a]' : 'text-[#9ca3af]'}`}
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">{label}</p>
+      <p
+        className={`mt-1 text-[12px] ${isActive ? 'text-white/80 group-hover:text-white' : 'text-white/52 group-hover:text-white/72'}`}
       >
         {hint}
       </p>
@@ -481,14 +333,14 @@ const Input: React.FC<{
     };
 
     return (
-      <label className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
-          <div className="inline-flex items-center gap-1 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] p-0.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/66">{label}</span>
+          <div className="inline-flex items-center gap-1 rounded-[10px] border border-white/14 bg-black/25 p-1">
             <button
               type="button"
               onClick={() => nudgeValue(-1)}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-[6px] border border-[#e5e7eb] bg-white text-[12px] leading-none text-[#6b7280] transition-all hover:bg-[#ffffff]"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-[7px] border border-white/14 bg-white/10 text-[14px] leading-none text-white/82 transition-all hover:border-white/24 hover:bg-white/18"
               aria-label={`Decrease ${label}`}
             >
               -
@@ -496,7 +348,7 @@ const Input: React.FC<{
             <button
               type="button"
               onClick={() => nudgeValue(1)}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-[6px] border border-[#e5e7eb] bg-white text-[12px] leading-none text-[#6b7280] transition-all hover:bg-[#ffffff]"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-[7px] border border-white/14 bg-white/10 text-[14px] leading-none text-white/82 transition-all hover:border-white/24 hover:bg-white/18"
               aria-label={`Increase ${label}`}
             >
               +
@@ -511,7 +363,7 @@ const Input: React.FC<{
           step={stepValue}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
+          className="w-full rounded-[10px] border border-white/14 bg-white/[0.06] px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-[#b6f45b]/58 focus:ring-2 focus:ring-[#b6f45b]/24"
         />
 
         {showSlider ? (
@@ -522,7 +374,7 @@ const Input: React.FC<{
             step={stepValue}
             value={currentNumber}
             onChange={(e) => onChange(e.target.value)}
-            className="dashboard-range h-1.5 w-full cursor-pointer appearance-none rounded-full"
+            className="dashboard-range h-2 w-full cursor-pointer appearance-none rounded-full"
           />
         ) : null}
       </label>
@@ -530,8 +382,8 @@ const Input: React.FC<{
   }
 
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/66">{label}</span>
       <input
         type={type}
         min={min}
@@ -539,38 +391,8 @@ const Input: React.FC<{
         step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
+        className="rounded-[10px] border border-white/14 bg-white/[0.06] px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-[#b6f45b]/58 focus:ring-2 focus:ring-[#b6f45b]/24"
       />
-    </label>
-  );
-};
-
-const ColorInput: React.FC<{
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}> = ({ label, value, onChange }) => {
-  const pickerValue = toPickerColorValue(value);
-
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
-      <div className="flex items-stretch gap-2">
-        <input
-          type="color"
-          value={pickerValue}
-          onChange={(e) => onChange(e.target.value)}
-          aria-label={`${label} color picker`}
-          className="h-[36px] w-[44px] cursor-pointer rounded-[8px] border border-[#e5e7eb] bg-white p-1 outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="min-w-0 flex-1 rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
-        />
-      </div>
-      <p className="text-[9px] text-[#9ca3af]">Use the swatch or paste any CSS color.</p>
     </label>
   );
 };
@@ -582,13 +404,13 @@ const Textarea: React.FC<{
   rows?: number;
 }> = ({ label, value, onChange, rows = 3 }) => {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/66">{label}</span>
       <textarea
         rows={rows}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
+        className="rounded-[10px] border border-white/14 bg-white/[0.06] px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-[#b6f45b]/58 focus:ring-2 focus:ring-[#b6f45b]/24"
       />
     </label>
   );
@@ -601,12 +423,12 @@ const SelectInput: React.FC<{
   onChange: (value: string) => void;
 }> = ({ label, value, options, onChange }) => {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/66">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
+        className="rounded-[10px] border border-white/14 bg-white/[0.06] px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-[#b6f45b]/58 focus:ring-2 focus:ring-[#b6f45b]/24"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -620,9 +442,9 @@ const SelectInput: React.FC<{
 
 const VariantPickerTitle: React.FC<{ label: string; tone: SurfaceTone }> = ({ label, tone }) => {
   return (
-    <p>
+    <p
       className={`font-mono text-[10px] uppercase tracking-[0.14em] ${
-        tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'
+        tone === 'dark' ? 'text-white/70' : 'text-black/60'
       }`}
     >
       {label}
@@ -637,7 +459,7 @@ const ButtonVariantPicker: React.FC<{
   tone?: SurfaceTone;
   sampleText?: string;
 }> = ({ label, value, onChange, tone = 'dark', sampleText = 'Sample Action' }) => {
-  const wrapperToneClass = tone === 'dark' ? 'bg-[#f3f4f6] border-[#e5e7eb]' : 'bg-[#ffffff] border-[#e5e7eb]';
+  const wrapperToneClass = tone === 'dark' ? 'bg-black/20 border-white/12' : 'bg-white/75 border-black/10';
 
   return (
     <div className="space-y-2">
@@ -653,19 +475,19 @@ const ButtonVariantPicker: React.FC<{
               className={`rounded-[12px] p-1.5 text-left transition-all ${
                 isActive
                   ? tone === 'dark'
-                    ? 'bg-[#f8f9fa] ring-1 ring-[#e5e7eb]'
-                    : 'bg-[#ffffff] ring-1 ring-[#e5e7eb]'
+                    ? 'bg-white/10 ring-1 ring-white/40'
+                    : 'bg-black/5 ring-1 ring-black/30'
                   : tone === 'dark'
-                    ? 'hover:bg-[#f8f9fa]'
-                    : 'hover:bg-[#ffffff]'
+                    ? 'hover:bg-white/5'
+                    : 'hover:bg-black/5'
               }`}
             >
               <span className={getButtonClass(variant, tone as SurfaceTone, 'sm', 'w-full justify-center')}>
                 {sampleText}
               </span>
-              <span>
+              <span
                 className={`mt-1.5 block text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
-                  tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'
+                  tone === 'dark' ? 'text-white/65' : 'text-black/55'
                 }`}
               >
                 {formatVariantLabel(variant)}
@@ -685,8 +507,8 @@ const CardVariantPicker: React.FC<{
   onChange: (variant: SiteCardVariant) => void;
   tone?: SurfaceTone;
 }> = ({ label, value, glassVariant, onChange, tone = 'dark' }) => {
-  const wrapperToneClass = tone === 'dark' ? 'bg-[#ffffff] border-[#e5e7eb]' : 'bg-[#f8f9fa] border-[#e5e7eb]';
-  const textToneClass = tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]';
+  const wrapperToneClass = tone === 'dark' ? 'bg-black/20 border-white/12' : 'bg-white/75 border-black/10';
+  const textToneClass = tone === 'dark' ? 'text-white/80' : 'text-black/75';
 
   return (
     <div className="space-y-2">
@@ -702,27 +524,27 @@ const CardVariantPicker: React.FC<{
               className={`rounded-[12px] p-1.5 text-left transition-all ${
                 isActive
                   ? tone === 'dark'
-                    ? 'bg-[#f8f9fa] ring-1 ring-[#e5e7eb]'
-                    : 'bg-[#ffffff] ring-1 ring-[#e5e7eb]'
+                    ? 'bg-white/10 ring-1 ring-white/40'
+                    : 'bg-black/5 ring-1 ring-black/30'
                   : tone === 'dark'
-                    ? 'hover:bg-[#f8f9fa]'
-                    : 'hover:bg-[#ffffff]'
+                    ? 'hover:bg-white/5'
+                    : 'hover:bg-black/5'
               }`}
             >
-              <div>
+              <div
                 className={`${getCardClass(variant, tone as SurfaceTone, 'p-3')} ${getGlassClass(
                   glassVariant,
                   tone as SurfaceTone,
                 )}`}
               >
                 <p className={`font-sans text-sm font-semibold ${textToneClass}`}>Card Surface</p>
-                <p className={`mt-1 text-xs ${tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'}`}>
+                <p className={`mt-1 text-xs ${tone === 'dark' ? 'text-white/60' : 'text-black/55'}`}>
                   Glass depth and border behavior preview.
                 </p>
               </div>
-              <span>
+              <span
                 className={`mt-1.5 block text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
-                  tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'
+                  tone === 'dark' ? 'text-white/65' : 'text-black/55'
                 }`}
               >
                 {formatVariantLabel(variant)}
@@ -741,7 +563,7 @@ const GlassVariantPicker: React.FC<{
   onChange: (variant: SiteGlassVariant) => void;
   tone?: SurfaceTone;
 }> = ({ label, value, onChange, tone = 'dark' }) => {
-  const wrapperToneClass = tone === 'dark' ? 'bg-[#ffffff] border-[#e5e7eb]' : 'bg-[#f8f9fa] border-[#e5e7eb]'
+  const wrapperToneClass = tone === 'dark' ? 'bg-black/20 border-white/12' : 'bg-white/75 border-black/10';
 
   return (
     <div className="space-y-2">
@@ -757,21 +579,21 @@ const GlassVariantPicker: React.FC<{
               className={`rounded-[12px] p-1.5 text-left transition-all ${
                 isActive
                   ? tone === 'dark'
-                    ? 'bg-[#f8f9fa] ring-1 ring-[#e5e7eb]'
-                    : 'bg-[#ffffff] ring-1 ring-[#e5e7eb]'
+                    ? 'bg-white/10 ring-1 ring-white/40'
+                    : 'bg-black/5 ring-1 ring-black/30'
                   : tone === 'dark'
-                    ? 'hover:bg-[#f8f9fa]'
-                    : 'hover:bg-[#ffffff]'
+                    ? 'hover:bg-white/5'
+                    : 'hover:bg-black/5'
               }`}
             >
               <div className={`${getGlassClass(variant, tone as SurfaceTone)} rounded-[10px] p-3`}>
-                <p className={`font-mono text-[10px] uppercase tracking-[0.12em] ${tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'}`}>
+                <p className={`font-mono text-[10px] uppercase tracking-[0.12em] ${tone === 'dark' ? 'text-white/75' : 'text-black/60'}`}>
                   Glass Surface
                 </p>
               </div>
-              <span>
+              <span
                 className={`mt-1.5 block text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
-                  tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]'
+                  tone === 'dark' ? 'text-white/65' : 'text-black/55'
                 }`}
               >
                 {formatVariantLabel(variant)}
@@ -790,38 +612,37 @@ const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: bo
   onChange,
 }) => {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] px-2.5 py-1.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[#3b82f6]" />
+    <label className="flex items-center justify-between gap-3 rounded-[10px] border border-white/14 bg-white/[0.05] px-3 py-2">
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/78">{label}</span>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[#b6f45b]" />
     </label>
   );
 };
 
 const listItemClass =
-  'rounded-[10px] border border-[#e5e7eb] bg-white p-2.5 md:p-3 space-y-2';
+  'rounded-[12px] border border-white/14 bg-white/[0.04] p-3 md:p-4 space-y-2.5';
 
 const dashboardActionButtonBaseClass =
-  'inline-flex h-8 items-center justify-center rounded-[8px] border px-3 font-mono text-[9px] uppercase tracking-[0.14em] transition-all focus-visible:outline-none focus-visible:ring-1';
+  'inline-flex h-10 items-center justify-center rounded-[10px] border px-4 font-mono text-[10px] uppercase tracking-[0.16em] transition-all focus-visible:outline-none focus-visible:ring-2';
 const dashboardActionButtonPrimaryClass =
-  `${dashboardActionButtonBaseClass} border-[#3b82f6] bg-[#3b82f6] text-white hover:bg-[#2563eb] focus-visible:ring-[#3b82f6]`;
+  `${dashboardActionButtonBaseClass} border-[#b6f45b]/38 bg-[#b6f45b] text-[#0a0d11] hover:bg-[#c4ff67] focus-visible:ring-[#b6f45b]/45`;
 const dashboardActionButtonSecondaryClass =
-  `${dashboardActionButtonBaseClass} border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff] focus-visible:ring-[#e5e7eb]`;
+  `${dashboardActionButtonBaseClass} border-white/16 bg-white/[0.06] text-white hover:bg-white/[0.12] focus-visible:ring-white/22`;
 const dashboardActionButtonDangerClass =
-  `${dashboardActionButtonBaseClass} border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20 focus-visible:ring-[#ef4444]`;
+  `${dashboardActionButtonBaseClass} border-[#ef4444]/42 bg-[#ef4444]/14 text-[#fecaca] hover:bg-[#ef4444]/22 focus-visible:ring-[#ef4444]/30`;
 const dashboardStatusSuccessClass =
-  'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]';
+  'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]';
 const dashboardStatusFailureClass =
-  'border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444]';
+  'border-[#ef4444]/40 bg-[#ef4444]/14 text-[#fecaca]';
 
 export const Dashboard: React.FC = () => {
   const { siteConfig, setSiteConfig, resetSiteConfig } = useSiteConfig();
 
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeWorkspace, setActiveWorkspace] = useState<DashboardWorkspace>('sitePages');
+  const [activeWorkspace, setActiveWorkspace] = useState<DashboardWorkspace>('site');
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('sequence');
   const [activeSettingsPanel, setActiveSettingsPanel] = useState<DashboardSettingsPanel>('browser');
-  const [activePersonalHubSection, setActivePersonalHubSection] = useState<DashboardPersonalHubSection>('partners');
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
   const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
   const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
@@ -832,40 +653,11 @@ export const Dashboard: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
   const [activeCardStudio, setActiveCardStudio] = useState<SiteCardVariant>('card-1');
-  const [dashboardTheme, setDashboardTheme] = useState<'dark' | 'light'>('dark');
   const previewAnimationAreaRef = useRef<HTMLDivElement | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.sessionStorage.getItem(DASHBOARD_AUTH_KEY) === 'ok';
   });
-
-  // AI Intelligence workspace states
-  const [activeTrackingId, setActiveTrackingId] = useState<string | null>(null);
-  const [trackingSearch, setTrackingSearch] = useState('');
-  const [showReports, setShowReports] = useState(false);
-
-  // Communication workspace states
-  const [activeEmailId, setActiveEmailId] = useState<string | null>(null);
-  const [emailSearch, setEmailSearch] = useState('');
-  const [emailFilter, setEmailFilter] = useState<EmailFolder>('inbox');
-  const [showCompose, setShowCompose] = useState(false);
-  const [composeTo, setComposeTo] = useState('');
-  const [composeSubject, setComposeSubject] = useState('');
-  const [composeBody, setComposeBody] = useState('');
-
-  // Notes workspace states
-  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [noteSearch, setNoteSearch] = useState('');
-  const [noteCategoryFilter, setNoteCategoryFilter] = useState<NoteCategory | 'all'>('all');
-
-  // Design System workspace states
-  const [activeDesignSection, setActiveDesignSection] = useState<'colors' | 'typography' | 'spacing' | 'components' | 'motion'>('colors');
-
-  // Site Integrations workspace states
-  const [activeIntegrationSection, setActiveIntegrationSection] = useState<'browser' | 'ai' | 'domain' | 'analytics' | 'security' | 'technical'>('browser');
-
-  // Publishing workspace states
-  const [activePublishingSection, setActivePublishingSection] = useState<'articles' | 'calendar' | 'analytics' | 'settings'>('articles');
 
   const updateConfig = (updater: (prev: SiteConfig) => SiteConfig) => {
     setSiteConfig((prev) => updater(prev));
@@ -1477,13 +1269,6 @@ export const Dashboard: React.FC = () => {
       gaConnected:
         siteConfig.dashboard.integrations.googleAnalyticsEnabled &&
         siteConfig.dashboard.integrations.googleAnalyticsMeasurementId.trim().length > 0,
-      partners: siteConfig.partners.length,
-      personalProjects: siteConfig.personalProjects.length,
-      socialAccounts: siteConfig.socialAccounts.length,
-      financialTransactions: siteConfig.financialTransactions.length,
-      notes: siteConfig.notes.length,
-      aiTracking: siteConfig.aiTracking.length,
-      emails: siteConfig.emails.length,
     };
   }, [siteConfig]);
 
@@ -1733,7 +1518,7 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <p className="rounded-[10px] border border-[#e5e7eb] p-3 text-sm text-[#1a1a1a]">
+              <p className="rounded-[10px] border border-white/10 bg-black/25 px-3 py-2 text-xs text-white/58">
                 Tune hero scroll sensitivity, touch feel, easing, and input cooldown when moving between cinematic frames. Pause timing still controls how long the About closet holds before the Projects reveal.
               </p>
             </Card>
@@ -1914,40 +1699,18 @@ export const Dashboard: React.FC = () => {
       case 'intro':
         return (
           <div className="grid gap-4">
-            <Card title="Intro Text" subtitle="Glowing headline and scroll prompt">
+            <Card title="Intro Text" subtitle="Main cinematic sentence on page load">
               <Textarea
-                label="Primary headline"
+                label="Intro paragraph"
                 value={siteConfig.introText}
-                rows={4}
+                rows={5}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, introText: next }))}
               />
-              <Input
-                label="Scroll prompt"
-                value={siteConfig.introScrollPrompt}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, introScrollPrompt: next }))
-                }
-              />
-              <Input
-                label="Backdrop color"
-                value={siteConfig.introOverlayBackdropColor}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, introOverlayBackdropColor: next }))
-                }
-              />
-              <Input
-                label="Backdrop opacity"
-                type="number"
-                min={0}
-                max={0.95}
-                step={0.05}
-                value={siteConfig.introOverlayBackdropOpacity}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    introOverlayBackdropOpacity: toSafeNumberInRange(next, 0.6, 0, 0.95),
-                  }))
-                }
+              <CardVariantPicker
+                label="Intro window card type"
+                value={siteConfig.designSystem.components.introCardVariant}
+                glassVariant={siteConfig.designSystem.components.globalGlassVariant}
+                onChange={(next) => updateDesignComponent('introCardVariant', next as SiteCardVariant)}
               />
             </Card>
           </div>
@@ -2035,8 +1798,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Style mapping for this section
                 </p>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -2080,19 +1843,19 @@ export const Dashboard: React.FC = () => {
         return (
           <div className="grid gap-4">
             <Card title="Projects" subtitle="Edit, add, remove cards + upload images">
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-white/55">
                 You can upload image files directly. For local storage reliability keep each image under{' '}
                 {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}.
               </p>
 
               {siteConfig.projects.map((project) => (
                 <div key={project.id} className={listItemClass}>
-                  <div className="overflow-hidden rounded-[10px] border border-[#e5e7eb]">
+                  <div className="overflow-hidden rounded-[10px] border border-white/10 bg-black/20">
                     <img src={project.img} alt={project.title} className="h-40 w-full object-cover" />
                   </div>
 
                   <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                       Upload project image
                     </span>
                     <input
@@ -2103,7 +1866,7 @@ export const Dashboard: React.FC = () => {
                         e.currentTarget.value = '';
                         void handleProjectImageUpload(project, file);
                       }}
-                      className="rounded-[10px] border border-[#e5e7eb] p-2"
+                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
                     />
                   </label>
 
@@ -2138,22 +1901,6 @@ export const Dashboard: React.FC = () => {
                     value={project.live}
                     onChange={(next) => updateProject(project.id, (item) => ({ ...item, live: next }))}
                   />
-                  <label className="flex flex-col gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#111217]/70">Button Type</span>
-                    <select
-                      value={project.buttonType}
-                      onChange={(e) =>
-                        updateProject(project.id, (item) => ({
-                          ...item,
-                          buttonType: e.target.value as 'live' | 'caseStudy',
-                        }))
-                      }
-                      className="rounded-[10px] border border-[#111217]/14 bg-[#111217]/25 px-3 py-2 text-[13px] text-[#111217] outline-none transition-all focus:border-[#111217]/36 focus:ring-2 focus:ring-[#111217]/12"
-                    >
-                      <option value="live">Live App</option>
-                      <option value="caseStudy">Case Study</option>
-                    </select>
-                  </label>
 
                   <button
                     type="button"
@@ -2180,7 +1927,6 @@ export const Dashboard: React.FC = () => {
                     img: '/frames/scene-02-desk-focus/ezgif-frame-001.jpg',
                     behance: '#',
                     live: '#',
-                    buttonType: 'live',
                     visible: true,
                   };
                   updateConfig((prev) => ({
@@ -2188,7 +1934,7 @@ export const Dashboard: React.FC = () => {
                     projects: [...prev.projects, nextProject],
                   }));
                 }}
-                className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
               >
                 Add Project
               </button>
@@ -2199,93 +1945,6 @@ export const Dashboard: React.FC = () => {
       case 'timeline':
         return (
           <div className="grid gap-4">
-            <Card title="Timeline Section Labels" subtitle="Headings shown above the timeline">
-              <Input
-                label="Section eyebrow"
-                value={siteConfig.timelineSection.eyebrow}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    timelineSection: { ...prev.timelineSection, eyebrow: next },
-                  }))
-                }
-              />
-              <Input
-                label="Section title"
-                value={siteConfig.timelineSection.title}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    timelineSection: { ...prev.timelineSection, title: next },
-                  }))
-                }
-              />
-            </Card>
-
-            <Card title="Experience Marquee" subtitle="Ticker labels shown before the timeline">
-              {siteConfig.experienceMarquee.map((item) => (
-                <div key={item.id} className={listItemClass}>
-                  <SelectInput
-                    label="Item type"
-                    value={item.type}
-                    options={[
-                      { value: 'text', label: 'Text' },
-                      { value: 'logo', label: 'Logo URL' },
-                    ]}
-                    onChange={(next) =>
-                      updateExperienceMarqueeItem(item.id, (prev) => ({
-                        ...prev,
-                        type: next === 'logo' ? 'logo' : 'text',
-                      }))
-                    }
-                  />
-                  <Input
-                    label={item.type === 'logo' ? 'Logo URL' : 'Label text'}
-                    value={item.value}
-                    onChange={(next) => updateExperienceMarqueeItem(item.id, (prev) => ({ ...prev, value: next }))}
-                  />
-                  <Toggle
-                    label="Visible"
-                    checked={item.visible}
-                    onChange={(next) =>
-                      updateExperienceMarqueeItem(item.id, (prev) => ({ ...prev, visible: next }))
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateConfig((prev) => ({
-                        ...prev,
-                        experienceMarquee: prev.experienceMarquee.filter((entry) => entry.id !== item.id),
-                      }));
-                    }}
-                    className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => {
-                  const newItem: SiteExperienceMarqueeItem = {
-                    id: `xp-${Date.now()}`,
-                    type: 'text',
-                    value: 'New Experience',
-                    visible: true,
-                  };
-                  updateConfig((prev) => ({
-                    ...prev,
-                    experienceMarquee: [...prev.experienceMarquee, newItem],
-                  }));
-                }}
-                className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
-              >
-                Add Experience Label
-              </button>
-            </Card>
-
             <Card title="Journey Timeline" subtitle="Edit vertical timeline events">
               {siteConfig.journeyTimeline.map((event) => (
                 <div key={event.id} className={listItemClass}>
@@ -2347,7 +2006,7 @@ export const Dashboard: React.FC = () => {
                     journeyTimeline: [...prev.journeyTimeline, newEvent],
                   }));
                 }}
-                className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
               >
                 Add Timeline Event
               </button>
@@ -2418,7 +2077,7 @@ export const Dashboard: React.FC = () => {
                     testimonials: [...prev.testimonials, nextTestimonial],
                   }));
                 }}
-                className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
               >
                 Add Testimonial
               </button>
@@ -2457,7 +2116,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateArticlesPageField('description', next)}
               />
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-white/10 bg-black/20 p-3 md:grid-cols-2">
                 <Input
                   label="Search placeholder"
                   value={siteConfig.articlesPage.searchPlaceholder}
@@ -2496,7 +2155,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateArticlesPageField('latestArticlesLabel', next)}
               />
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-white/10 bg-black/20 p-3 md:grid-cols-2">
                 <Input
                   label="Undated fallback label"
                   value={siteConfig.articlesPage.undatedLabel}
@@ -2535,7 +2194,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-white/10 bg-black/20 p-3 md:grid-cols-2">
                 <Input
                   label="No results title"
                   value={siteConfig.articlesPage.noResultsTitle}
@@ -2558,7 +2217,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-white/10 bg-black/20 p-3 md:grid-cols-2">
                 <Input
                   label="Article not found title"
                   value={siteConfig.articlesPage.articleNotFoundTitle}
@@ -2576,7 +2235,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-white/10 bg-black/20 p-3 md:grid-cols-2">
                 <Input
                   label="Newsletter title"
                   value={siteConfig.articlesPage.newsletterTitle}
@@ -2607,15 +2266,13 @@ export const Dashboard: React.FC = () => {
         return (
           <div className="grid gap-4 xl:grid-cols-2">
             <Card title="Music + CTA Button" subtitle="Audio upload and persistent controls">
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-white/55">
                 Upload an audio file for site music. Keep the file under {formatMegabytes(MAX_AUDIO_UPLOAD_BYTES)} so
                 it can be saved reliably in browser storage.
               </p>
 
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  Upload music file
-                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload music</span>
                 <input
                   type="file"
                   accept="audio/*"
@@ -2624,7 +2281,7 @@ export const Dashboard: React.FC = () => {
                     e.currentTarget.value = '';
                     void handleMusicUpload(file);
                   }}
-                  className="rounded-[10px] border border-[#e5e7eb] p-2"
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
                 />
               </label>
 
@@ -2658,46 +2315,6 @@ export const Dashboard: React.FC = () => {
                 }
               />
               <Input
-                label="Music toggle aria label"
-                value={siteConfig.persistentUI.musicToggleAriaLabel}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    persistentUI: { ...prev.persistentUI, musicToggleAriaLabel: next },
-                  }))
-                }
-              />
-              <Input
-                label="Logo alt text"
-                value={siteConfig.persistentUI.logoAlt}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    persistentUI: { ...prev.persistentUI, logoAlt: next },
-                  }))
-                }
-              />
-              <Input
-                label="Logo source (light mode)"
-                value={siteConfig.persistentUI.logoLightSrc}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    persistentUI: { ...prev.persistentUI, logoLightSrc: next },
-                  }))
-                }
-              />
-              <Input
-                label="Logo source (dark mode)"
-                value={siteConfig.persistentUI.logoDarkSrc}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    persistentUI: { ...prev.persistentUI, logoDarkSrc: next },
-                  }))
-                }
-              />
-              <Input
                 label="Let's Talk label"
                 value={siteConfig.persistentUI.letsTalkLabel}
                 onChange={(next) =>
@@ -2718,8 +2335,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Style mapping for navigation
                 </p>
                 <CardVariantPicker
@@ -2786,9 +2403,7 @@ export const Dashboard: React.FC = () => {
                   />
 
                   <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      Section
-                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Section</span>
                     <select
                       value={item.section}
                       onChange={(e) => {
@@ -2804,7 +2419,7 @@ export const Dashboard: React.FC = () => {
                           },
                         }));
                       }}
-                      className="rounded-[10px] border border-[#e5e7eb] p-2"
+                      className="rounded-[10px] border border-white/15 bg-black/35 px-3 py-2 text-[13px] text-white outline-none focus:border-white/40"
                     >
                       <option value="home">home</option>
                       <option value="about">about</option>
@@ -2849,7 +2464,7 @@ export const Dashboard: React.FC = () => {
                     },
                   }));
                 }}
-                className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
               >
                 Add Nav Item
               </button>
@@ -2866,12 +2481,9 @@ export const Dashboard: React.FC = () => {
                 value={siteConfig.footer.email}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, email: next } }))}
               />
-
-              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3">
+              <div className="space-y-2 rounded-[10px] border border-white/10 p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    Social Links
-                  </p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Social links</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -2892,14 +2504,14 @@ export const Dashboard: React.FC = () => {
                         },
                       }));
                     }}
-                    className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                    className="rounded-[8px] border border-white/20 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
                   >
                     Add Social Link
                   </button>
                 </div>
 
                 {siteConfig.footer.socialLinks.map((link) => (
-                  <div key={link.id} className="grid gap-2 rounded-[10px] border border-[#e5e7eb] p-3">
+                  <div key={link.id} className="grid gap-2 rounded-[10px] border border-white/10 bg-black/20 p-3">
                     <Input
                       label="Label"
                       value={link.label}
@@ -3035,10 +2647,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  Legal Links
-                </p>
+              <div className="space-y-2 rounded-[10px] border border-white/10 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Legal links</p>
                 {siteConfig.footer.legalLinks.map((link) => (
                   <div key={link.id} className="grid gap-2 md:grid-cols-2">
                     <Input
@@ -3090,17 +2700,15 @@ export const Dashboard: React.FC = () => {
                 ))}
               </div>
 
-              <div className="space-y-3 rounded-[10px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  Footer Navigation
-                </p>
-                <p className="text-xs text-[#6b7280]">
+              <div className="space-y-3 rounded-[10px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Footer nav links</p>
+                <p className="text-xs text-white/56">
                   Footer navigation is synced automatically from the Navigation labels and sections, so links always match the top menu.
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveSection('navigation')}
-                  className="rounded-[8px] border border-[#e5e7eb] px-3 py-2 text-sm"
+                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
                 >
                   Edit Navigation Labels
                 </button>
@@ -3190,16 +2798,6 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateVisibility('testimonialsSection', next)}
               />
               <Toggle
-                label="Experience marquee"
-                checked={siteConfig.visibility.experienceMarqueeSection}
-                onChange={(next) => updateVisibility('experienceMarqueeSection', next)}
-              />
-              <Toggle
-                label="Journey timeline"
-                checked={siteConfig.visibility.journeyTimelineSection}
-                onChange={(next) => updateVisibility('journeyTimelineSection', next)}
-              />
-              <Toggle
                 label="CTA block"
                 checked={siteConfig.visibility.featuredCtaSection}
                 onChange={(next) => updateVisibility('featuredCtaSection', next)}
@@ -3269,14 +2867,14 @@ export const Dashboard: React.FC = () => {
                         }))
                       }
                     />
-                    <div>
+                    <div
                       className={`relative w-10 h-6 rounded-full transition-colors ${
-                        siteConfig.scene05.animations?.enabled ? 'bg-white' : 'bg-[#f8f9fa]'
+                        siteConfig.scene05.animations?.enabled ? 'bg-white' : 'bg-white/10'
                       }`}
                     >
-                      <div>
+                      <div
                         className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
-                          siteConfig.scene05.animations?.enabled ? 'translate-x-4 bg-black' : 'translate-x-0 bg-[#f8f9fa]'
+                          siteConfig.scene05.animations?.enabled ? 'translate-x-4 bg-black' : 'translate-x-0 bg-white/50'
                         }`}
                       />
                     </div>
@@ -3285,11 +2883,11 @@ export const Dashboard: React.FC = () => {
                   {siteConfig.scene05.animations?.enabled && (
                     <>
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-white/50">
                           Text Reveal Style
                         </label>
                         <select
-                          className="w-full bg-[#161a23] border border-[#e5e7eb] rounded-[8px] px-3 py-2 text-sm"
+                          className="w-full bg-[#161a23] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                           value={siteConfig.scene05.animations.textRevealStyle}
                           onChange={(e) =>
                             updateConfig((prev) => ({
@@ -3311,11 +2909,11 @@ export const Dashboard: React.FC = () => {
                       </div>
 
                       <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-white/50">
                           Card Entrance Style
                         </label>
                         <select
-                          className="w-full bg-[#161a23] border border-[#e5e7eb] rounded-[8px] px-3 py-2 text-sm"
+                          className="w-full bg-[#161a23] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30"
                           value={siteConfig.scene05.animations.cardEntranceStyle}
                           onChange={(e) =>
                             updateConfig((prev) => ({
@@ -3370,20 +2968,6 @@ export const Dashboard: React.FC = () => {
                   updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, portraitAlt: next } }))
                 }
               />
-              <Input
-                label="Portrait caption"
-                value={siteConfig.scene05.portraitCaption}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, portraitCaption: next } }))
-                }
-              />
-              <Input
-                label="Vision title"
-                value={siteConfig.scene05.visionTitle}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, visionTitle: next } }))
-                }
-              />
               <Textarea
                 label="Vision text"
                 value={siteConfig.scene05.visionText}
@@ -3436,20 +3020,6 @@ export const Dashboard: React.FC = () => {
                   updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, certificationsTitle: next } }))
                 }
               />
-              <Input
-                label="Learning logos title"
-                value={siteConfig.scene05.learningLogosTitle}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, learningLogosTitle: next } }))
-                }
-              />
-              <Input
-                label="Company logos title"
-                value={siteConfig.scene05.companyLogosTitle}
-                onChange={(next) =>
-                  updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, companyLogosTitle: next } }))
-                }
-              />
 
               <Input
                 label="Credential button label"
@@ -3462,8 +3032,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Certification cards
                 </p>
 
@@ -3559,7 +3129,7 @@ export const Dashboard: React.FC = () => {
                       },
                     }));
                   }}
-                  className="rounded-[8px] border border-[#e5e7eb] bg-white px-3 py-2 font-mono text-[9px] uppercase tracking-[0.14em] text-[#1a1a1a] transition-colors hover:bg-[#f8f9fa]"
+                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
                 >
                   Add Certification Card
                 </button>
@@ -3576,163 +3146,6 @@ export const Dashboard: React.FC = () => {
                   }))
                 }
               />
-
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] bg-white p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">Learning Logos</p>
-
-                {siteConfig.scene05.learningLogos.map((item) => (
-                  <div key={item.id} className={listItemClass}>
-                    <Input
-                      label="Name"
-                      value={item.name}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, name: next }))
-                      }
-                    />
-                    <Input
-                      label="Logo URL"
-                      value={item.logoSrc}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
-                      }
-                    />
-                    <Input
-                      label="Link URL"
-                      value={item.href}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, href: next }))
-                      }
-                    />
-
-                    <div className="flex items-center justify-between gap-4 mt-2">
-                      <Toggle
-                        label="Visible"
-                        checked={item.visible}
-                        onChange={(next) =>
-                          updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, visible: next }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateConfig((prev) => ({
-                            ...prev,
-                            scene05: {
-                              ...prev.scene05,
-                              learningLogos: prev.scene05.learningLogos.filter((entry) => entry.id !== item.id),
-                            },
-                          }));
-                        }}
-                        className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newLogo: SiteScene05LogoItem = {
-                      id: `learning-${Date.now()}`,
-                      name: 'New Learning Brand',
-                      logoSrc: '',
-                      href: '#',
-                      visible: true,
-                    };
-                    updateConfig((prev) => ({
-                      ...prev,
-                      scene05: {
-                        ...prev.scene05,
-                        learningLogos: [...prev.scene05.learningLogos, newLogo],
-                      },
-                    }));
-                  }}
-                  className="rounded-[8px] border border-[#e5e7eb]"
-                >
-                  Add Learning Logo
-                </button>
-              </div>
-
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-
-                {siteConfig.scene05.companyLogos.map((item) => (
-                  <div key={item.id} className={listItemClass}>
-                    <Input
-                      label="Name"
-                      value={item.name}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, name: next }))
-                      }
-                    />
-                    <Input
-                      label="Logo URL"
-                      value={item.logoSrc}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
-                      }
-                    />
-                    <Input
-                      label="Link URL"
-                      value={item.href}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, href: next }))
-                      }
-                    />
-
-                    <div className="flex items-center justify-between gap-4 mt-2">
-                      <Toggle
-                        label="Visible"
-                        checked={item.visible}
-                        onChange={(next) =>
-                          updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, visible: next }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateConfig((prev) => ({
-                            ...prev,
-                            scene05: {
-                              ...prev.scene05,
-                              companyLogos: prev.scene05.companyLogos.filter((entry) => entry.id !== item.id),
-                            },
-                          }));
-                        }}
-                        className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newLogo: SiteScene05LogoItem = {
-                      id: `company-${Date.now()}`,
-                      name: 'New Company',
-                      logoSrc: '',
-                      href: '#',
-                      visible: true,
-                    };
-                    updateConfig((prev) => ({
-                      ...prev,
-                      scene05: {
-                        ...prev.scene05,
-                        companyLogos: [...prev.scene05.companyLogos, newLogo],
-                      },
-                    }));
-                  }}
-                  className="rounded-[8px] border border-[#e5e7eb]"
-                >
-                  Add Company Logo
-                </button>
-              </div>
-
               <Input
                 label="AI section title"
                 value={siteConfig.scene05.aiTitle}
@@ -3776,11 +3189,11 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Style mapping for Scene 05
-                </p>"
-                <CardVariantPicker"
+                </p>
+                <CardVariantPicker
                   label="About card type"
                   value={siteConfig.designSystem.components.scene05CardVariant}
                   glassVariant={siteConfig.designSystem.components.globalGlassVariant}
@@ -3846,15 +3259,15 @@ export const Dashboard: React.FC = () => {
                   onChange={(next) => updateDesignComponent('globalGlassVariant', next as SiteGlassVariant)}
                 />
 
-                <div className="grid grid-cols-2 gap-2 rounded-[12px] border border-[#e5e7eb]">
-                  <div>
-                    className="rounded-[10px] border border-[#e5e7eb]"
+                <div className="grid grid-cols-2 gap-2 rounded-[12px] border border-white/10 bg-black/20 p-2">
+                  <div
+                    className="rounded-[10px] border border-white/10 p-2 text-center font-mono text-[10px] uppercase tracking-[0.12em]"
                     style={{ background: siteConfig.designSystem.theme.primaryColor, color: siteConfig.designSystem.theme.onPrimaryColor }}
                   >
                     Primary
                   </div>
-                  <div>
-                    className="rounded-[10px] border border-[#e5e7eb]"
+                  <div
+                    className="rounded-[10px] border border-white/10 p-2 text-center font-mono text-[10px] uppercase tracking-[0.12em]"
                     style={{ background: siteConfig.designSystem.theme.secondaryColor, color: siteConfig.designSystem.theme.onSecondaryColor }}
                   >
                     Secondary
@@ -3862,32 +3275,6 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Glow & Atmosphere" subtitle="Global halo across text and UI surfaces">
-                <Toggle
-                  label="Enable glow"
-                  checked={siteConfig.designSystem.theme.glowEnabled}
-                  onChange={(next) => updateDesignTheme('glowEnabled', next)}
-                />
-                <Input
-                  label="Glow color"
-                  value={siteConfig.designSystem.theme.glowColor}
-                  onChange={(next) => updateDesignTheme('glowColor', next)}
-                />
-                <Input
-                  label="Glow intensity"
-                  type="number"
-                  min={0}
-                  max={1.2}
-                  step={0.05}
-                  value={siteConfig.designSystem.theme.glowIntensity}
-                  onChange={(next) =>
-                    updateDesignTheme('glowIntensity', toSafeNumberInRange(next, 0.55, 0, 1.2))
-                  }
-                />
-                <p className="text-xs text-[#6b7280]">
-                  Applies a subtle cinematic halo to typography, buttons, cards, and glass surfaces.
-                </p>
-              </Card>"
               <Card title="Typography Tokens" subtitle="Display/title/body sizing, rhythm and personality">
                 <div className="grid gap-3 md:grid-cols-2">
                   <Input
@@ -4135,11 +3522,12 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-white/60">
                 These tokens drive the new ds-section, ds-stack, and ds-grid spacing classes so every page respects the same rhythm.
               </p>
             </Card>
-          </div>"
+          </div>
+
             <div className="grid gap-4 xl:grid-cols-2">
               <Card title="Component Physics" subtitle="Radius, borders, blur and shadows for buttons/cards">
                 <div className="grid gap-3 md:grid-cols-2">
@@ -4151,7 +3539,7 @@ export const Dashboard: React.FC = () => {
                     step={1}
                     value={siteConfig.designSystem.theme.buttonRadius}
                     onChange={(next) =>
-                      updateDesignTheme('buttonRadius', toSafeNumberInRange(next, 14, 2, 48))
+                      updateDesignTheme('buttonRadius', toSafeNumberInRange(next, 8, 2, 48))
                     }
                   />
                   <Input
@@ -4173,7 +3561,7 @@ export const Dashboard: React.FC = () => {
                     step={0.01}
                     value={siteConfig.designSystem.theme.buttonShadowOpacity}
                     onChange={(next) =>
-                      updateDesignTheme('buttonShadowOpacity', toSafeNumberInRange(next, 0.08, 0, 0.65))
+                      updateDesignTheme('buttonShadowOpacity', toSafeNumberInRange(next, 0.24, 0, 0.65))
                     }
                   />
                   <Input
@@ -4256,8 +3644,8 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setActiveButtonStudio(variant)}
                         className={`rounded-[10px] border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition-all ${
                           active
-                            ? 'border-[#e5e7eb]
-                            : 'border-[#e5e7eb]
+                            ? 'border-white/36 bg-white/14 text-white'
+                            : 'border-white/14 bg-black/25 text-white/70 hover:bg-white/8'
                         }`}
                       >
                         {formatVariantLabel(variant)}
@@ -4293,57 +3681,57 @@ export const Dashboard: React.FC = () => {
                       })
                     }
                   />
-                  <ColorInput
+                  <Input
                     label="Dark background (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].darkBackground}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { darkBackground: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Dark border (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].darkBorder}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { darkBorder: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Dark text (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].darkText}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { darkText: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Dark hover (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].darkHoverBackground}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { darkHoverBackground: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light background (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].lightBackground}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { lightBackground: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light border (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].lightBorder}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { lightBorder: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light text (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].lightText}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { lightText: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light hover (CSS color)"
                     value={siteConfig.designSystem.componentStyles.buttons[activeButtonStudio].lightHoverBackground}
                     onChange={(next) => updateButtonPreset(activeButtonStudio, { lightHoverBackground: next })}
                   />
                 </div>
 
-                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]">
-                  <div className="rounded-[10px] border border-[#e5e7eb]">
-                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+                <div className="grid gap-2 rounded-[12px] border border-white/10 bg-black/25 p-3 sm:grid-cols-2">
+                  <div className="rounded-[10px] border border-white/10 bg-[#0f1014] p-3">
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/55">Dark</p>
                     <button type="button" className={getButtonClass(activeButtonStudio, 'dark', 'sm')}>
                       Live Preview
                     </button>
                   </div>
                   <div className="rounded-[10px] border border-black/10 bg-[#f5f7fb] p-3">
-                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#1a1a1a]">
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-black/45">Light</p>
                     <button type="button" className={getButtonClass(activeButtonStudio, 'light', 'sm')}>
                       Live Preview
                     </button>
@@ -4362,8 +3750,8 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setActiveCardStudio(variant)}
                         className={`rounded-[10px] border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition-all ${
                           active
-                            ? 'border-[#e5e7eb]
-                            : 'border-[#e5e7eb]
+                            ? 'border-white/36 bg-white/14 text-white'
+                            : 'border-white/14 bg-black/25 text-white/70 hover:bg-white/8'
                         }`}
                       >
                         {formatVariantLabel(variant)}
@@ -4399,22 +3787,22 @@ export const Dashboard: React.FC = () => {
                       })
                     }
                   />
-                  <ColorInput
+                  <Input
                     label="Dark border"
                     value={siteConfig.designSystem.componentStyles.cards[activeCardStudio].darkBorder}
                     onChange={(next) => updateCardPreset(activeCardStudio, { darkBorder: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light border"
                     value={siteConfig.designSystem.componentStyles.cards[activeCardStudio].lightBorder}
                     onChange={(next) => updateCardPreset(activeCardStudio, { lightBorder: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Dark background"
                     value={siteConfig.designSystem.componentStyles.cards[activeCardStudio].darkBackground}
                     onChange={(next) => updateCardPreset(activeCardStudio, { darkBackground: next })}
                   />
-                  <ColorInput
+                  <Input
                     label="Light background"
                     value={siteConfig.designSystem.componentStyles.cards[activeCardStudio].lightBackground}
                     onChange={(next) => updateCardPreset(activeCardStudio, { lightBackground: next })}
@@ -4447,33 +3835,35 @@ export const Dashboard: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]">
-                  <div>
+                <div className="grid gap-2 rounded-[12px] border border-white/10 bg-black/25 p-3 sm:grid-cols-2">
+                  <div
                     className={`${getCardClass(activeCardStudio, 'dark', 'p-3')} ${getGlassClass(
                       siteConfig.designSystem.components.globalGlassVariant,
                       'dark',
                     )}`}
                   >
-                    <p className="text-sm font-semibold text-white"Dark Surface</p>
-                    <p className="mt-1 text-xs text-[#6b7280]">
+                    <p className="text-sm font-semibold text-white">Dark Surface</p>
+                    <p className="mt-1 text-xs text-white/65">Live card style preview</p>
                   </div>
-                  <div>
+                  <div
                     className={`${getCardClass(activeCardStudio, 'light', 'p-3')} ${getGlassClass(
                       siteConfig.designSystem.components.globalGlassVariant,
                       'light',
-                    )}`}"
-                  >"
-                    <p className="text-sm font-semibold text-[#1a1a1a]">
-                    <p className="mt-1 text-xs text-[#1a1a1a]">
+                    )}`}
+                  >
+                    <p className="text-sm font-semibold text-black/85">Light Surface</p>
+                    <p className="mt-1 text-xs text-black/60">Live card style preview</p>
                   </div>
                 </div>
               </Card>
-            </div>"
+            </div>
+
             <Card title="Live Design Lab" subtitle="Instant preview on dark and light surfaces inside dashboard">
               <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-[14px] border border-[#e5e7eb]">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  <h3"
+                <div className="rounded-[14px] border border-white/12 bg-[#0d0d12] p-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/55">Dark Surface</p>
+
+                  <h3
                     className="mt-3 text-white"
                     style={{
                       fontSize: `clamp(${getScaledRem(
@@ -4489,15 +3879,16 @@ export const Dashboard: React.FC = () => {
                   >
                     Display Heading
                   </h3>
-                  <p>
-                    className="mt-1 text-[#6b7280]
+                  <p
+                    className="mt-1 text-white/70"
                     style={{
                       fontSize: `${siteConfig.designSystem.theme.bodyTextSizeRem}rem`,
                       lineHeight: siteConfig.designSystem.theme.bodyLineHeight,
                     }}
                   >
                     Body text rhythm preview for readability and spacing.
-                  </p>"
+                  </p>
+
                   <div className="mt-4 flex flex-wrap gap-2">
                     {SITE_BUTTON_VARIANTS.map((variant) => (
                       <button key={`dark-${variant}`} type="button" className={getButtonClass(variant, 'dark', 'sm')}>
@@ -4508,7 +3899,7 @@ export const Dashboard: React.FC = () => {
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     {SITE_CARD_VARIANTS.map((variant) => (
-                      <div>
+                      <div
                         key={`dark-card-${variant}`}
                         className={`${getCardClass(variant, 'dark', 'p-3')} ${getGlassClass(
                           siteConfig.designSystem.components.globalGlassVariant,
@@ -4516,14 +3907,16 @@ export const Dashboard: React.FC = () => {
                         )}`}
                       >
                         <p className="text-sm font-semibold text-white">{formatVariantLabel(variant)}</p>
-                        <p className="mt-1 text-xs text-[#6b7280]">
+                        <p className="mt-1 text-xs text-white/70">Shared dark card preview.</p>
                       </div>
                     ))}
                   </div>
-                </div>"
+                </div>
+
                 <div className="rounded-[14px] border border-black/10 bg-[#f5f7fb] p-4">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#1a1a1a]">
-                  <h3"
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/55">Light Surface</p>
+
+                  <h3
                     className="mt-3 text-[#111217]"
                     style={{
                       fontSize: `clamp(${getScaledRem(
@@ -4539,15 +3932,16 @@ export const Dashboard: React.FC = () => {
                   >
                     Section Heading
                   </h3>
-                  <p>
-                    className="mt-1 text-[#1a1a1a]
+                  <p
+                    className="mt-1 text-black/65"
                     style={{
                       fontSize: `${siteConfig.designSystem.theme.bodyTextSizeRem}rem`,
                       lineHeight: siteConfig.designSystem.theme.bodyLineHeight,
                     }}
                   >
                     Live visual confirmation before saving your style decisions.
-                  </p>"
+                  </p>
+
                   <div className="mt-4 flex flex-wrap gap-2">
                     {SITE_BUTTON_VARIANTS.map((variant) => (
                       <button key={`light-${variant}`} type="button" className={getButtonClass(variant, 'light', 'sm')}>
@@ -4558,21 +3952,22 @@ export const Dashboard: React.FC = () => {
 
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     {SITE_CARD_VARIANTS.map((variant) => (
-                      <div>
+                      <div
                         key={`light-card-${variant}`}
                         className={`${getCardClass(variant, 'light', 'p-3')} ${getGlassClass(
                           siteConfig.designSystem.components.globalGlassVariant,
                           'light',
                         )}`}
                       >
-                        <p className="text-sm font-semibold text-[#1a1a1a])}</p>"
-                        <p className="mt-1 text-xs text-[#1a1a1a]">
+                        <p className="text-sm font-semibold text-black/85">{formatVariantLabel(variant)}</p>
+                        <p className="mt-1 text-xs text-black/60">Shared light card preview.</p>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>"
-              <p className="text-xs text-[#6b7280]">
+              </div>
+
+              <p className="text-xs text-white/55">
                 This lab is live: every token change updates instantly here and in the site scenes that use the
                 design-system components.
               </p>
@@ -4580,8 +3975,8 @@ export const Dashboard: React.FC = () => {
           </div>
         );
 
-      case 'animation':"
-        return ("
+      case 'animation':
+        return (
           <div className="grid gap-4 xl:grid-cols-[minmax(0,430px)_minmax(0,1fr)]">
             <Card title="Animation Selector" subtitle="Pick one cursor animation and tune its own properties">
               <div className="grid gap-2 sm:grid-cols-3">
@@ -4606,17 +4001,18 @@ export const Dashboard: React.FC = () => {
                       }}
                       className={`rounded-[11px] border px-3 py-3 text-left transition-all ${
                         active
-                          ? 'border-[#e5e7eb]
-                          : 'border-[#e5e7eb]
+                          ? 'border-white/34 bg-white/12 text-white'
+                          : 'border-white/12 bg-black/25 text-white/72 hover:bg-white/8'
                       }`}
                     >
                       <p className="font-mono text-[10px] uppercase tracking-[0.14em]">{mode.label}</p>
-                      <p className="mt-1 text-[12px] text-[#6b7280]">
+                      <p className="mt-1 text-[12px] text-white/55">{mode.hint}</p>
                     </button>
                   );
                 })}
               </div>
-              {siteConfig.animation.activeCursorAnimation === 'fluid' ? ("
+
+              {siteConfig.animation.activeCursorAnimation === 'fluid' ? (
                 <div className="grid gap-3">
                   <Input
                     label="Density Dissipation"
@@ -5201,16 +4597,20 @@ export const Dashboard: React.FC = () => {
                     animation: { ...DEFAULT_SITE_CONFIG.animation },
                   }));
                 }}
-                className="rounded-[10px] border border-[#e5e7eb]"
-              >
-                Reset All Animation Presets
-              </button>
-            </Card>
+                className="rounded-[10px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                  >
+                    Reset All Animation Presets
+                  </button>
+                </Card>
 
             <Card title="Section Motion" subtitle="Toggle cinematic text + card reveals by surface">
               <div className="space-y-4">
-                <div className="rounded-[12px] border border-[#e5e7eb] p-3">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="rounded-[12px] border border-white/10 bg-white/5 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/90">About Overlay</p>
+                      <p className="text-xs text-white/55">Sequential hero text, skills rain, rotating certificates</p>
+                    </div>
                     <Toggle
                       label="Enable"
                       checked={siteConfig.animation.sections.about.enabled}
@@ -5219,19 +4619,16 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Text sequence style
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Text Sequence</span>
                       <select
                         value={siteConfig.animation.sections.about.textSequenceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
-                            textSequenceStyle:
-                              e.target.value as SiteConfig['animation']['sections']['about']['textSequenceStyle'],
+                            textSequenceStyle: e.target.value as SiteConfig['animation']['sections']['about']['textSequenceStyle'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="beam">Beam reveal</option>
                         <option value="typewriter">Typewriter</option>
@@ -5239,19 +4636,16 @@ export const Dashboard: React.FC = () => {
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Card entrance style
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Card Entrance</span>
                       <select
                         value={siteConfig.animation.sections.about.cardEntranceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
-                            cardEntranceStyle:
-                              e.target.value as SiteConfig['animation']['sections']['about']['cardEntranceStyle'],
+                            cardEntranceStyle: e.target.value as SiteConfig['animation']['sections']['about']['cardEntranceStyle'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="stack">Stacked</option>
                         <option value="orbit">Orbital</option>
@@ -5259,10 +4653,8 @@ export const Dashboard: React.FC = () => {
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Text rhythm
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Text Rhythm</span>
                       <select
                         value={siteConfig.animation.sections.about.textRhythm}
                         onChange={(e) =>
@@ -5270,7 +4662,7 @@ export const Dashboard: React.FC = () => {
                             textRhythm: e.target.value as SiteConfig['animation']['sections']['about']['textRhythm'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="tight">Tight</option>
                         <option value="balanced">Balanced</option>
@@ -5278,19 +4670,16 @@ export const Dashboard: React.FC = () => {
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Certification rhythm
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Certificate Rhythm</span>
                       <select
                         value={siteConfig.animation.sections.about.certificationRhythm}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
-                            certificationRhythm:
-                              e.target.value as SiteConfig['animation']['sections']['about']['certificationRhythm'],
+                            certificationRhythm: e.target.value as SiteConfig['animation']['sections']['about']['certificationRhythm'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="tight">Tight</option>
                         <option value="balanced">Balanced</option>
@@ -5298,10 +4687,8 @@ export const Dashboard: React.FC = () => {
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Skill mode
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Skill Motion</span>
                       <select
                         value={siteConfig.animation.sections.about.skillMode}
                         onChange={(e) =>
@@ -5309,7 +4696,7 @@ export const Dashboard: React.FC = () => {
                             skillMode: e.target.value as SiteConfig['animation']['sections']['about']['skillMode'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="rain">Rain</option>
                         <option value="tiles">Tiles</option>
@@ -5318,8 +4705,12 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[12px] border border-[#e5e7eb] p-3">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="rounded-[12px] border border-white/10 bg-white/5 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/90">Projects Grid</p>
+                      <p className="text-xs text-white/55">Staggered cards and parallax hover</p>
+                    </div>
                     <Toggle
                       label="Enable"
                       checked={siteConfig.animation.sections.projects.enabled}
@@ -5328,19 +4719,16 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Card entrance style
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Entrance</span>
                       <select
                         value={siteConfig.animation.sections.projects.cardEntranceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('projects', {
-                            cardEntranceStyle:
-                              e.target.value as SiteConfig['animation']['sections']['projects']['cardEntranceStyle'],
+                            cardEntranceStyle: e.target.value as SiteConfig['animation']['sections']['projects']['cardEntranceStyle'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="tilt">Tilt</option>
                         <option value="drift">Drift</option>
@@ -5348,10 +4736,8 @@ export const Dashboard: React.FC = () => {
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Grid depth
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Depth</span>
                       <select
                         value={siteConfig.animation.sections.projects.gridDepth}
                         onChange={(e) =>
@@ -5359,7 +4745,7 @@ export const Dashboard: React.FC = () => {
                             gridDepth: e.target.value as SiteConfig['animation']['sections']['projects']['gridDepth'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="tight">Tight</option>
                         <option value="balanced">Balanced</option>
@@ -5368,7 +4754,8 @@ export const Dashboard: React.FC = () => {
                     </label>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-3 rounded-[10px] border border-[#e5e7eb] p-2">
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-black/20 px-3 py-2">
+                    <p className="text-xs text-white/70">Enable parallax hover</p>
                     <Toggle
                       label="Parallax"
                       checked={siteConfig.animation.sections.projects.hoverParallax}
@@ -5377,8 +4764,12 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[12px] border border-[#e5e7eb] p-3">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="rounded-[12px] border border-white/10 bg-white/5 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/90">Testimonials</p>
+                      <p className="text-xs text-white/55">Slider motion and timing</p>
+                    </div>
                     <Toggle
                       label="Enable"
                       checked={siteConfig.animation.sections.testimonials.enabled}
@@ -5387,19 +4778,16 @@ export const Dashboard: React.FC = () => {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        Transition style
-                      </span>
+                    <label className="flex flex-col gap-1 text-white/80">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">Transition</span>
                       <select
                         value={siteConfig.animation.sections.testimonials.transitionStyle}
                         onChange={(e) =>
                           updateSectionAnimation('testimonials', {
-                            transitionStyle:
-                              e.target.value as SiteConfig['animation']['sections']['testimonials']['transitionStyle'],
+                            transitionStyle: e.target.value as SiteConfig['animation']['sections']['testimonials']['transitionStyle'],
                           })
                         }
-                        className="rounded-[10px] border border-[#e5e7eb]"
+                        className="rounded-[10px] border border-white/14 bg-black/25 px-3 py-2 text-[13px] text-white outline-none transition-all focus:border-white/36 focus:ring-2 focus:ring-white/12"
                       >
                         <option value="fade">Fade</option>
                         <option value="slide">Slide</option>
@@ -5452,7 +4840,7 @@ export const Dashboard: React.FC = () => {
             <Card title="Live Animation Preview" subtitle="Hover this area and test the selected cursor animation">
               <div
                 ref={previewAnimationAreaRef}
-                className="relative h-[420px] overflow-hidden rounded-[14px] border border-[#e5e7eb]"
+                className="relative h-[420px] overflow-hidden rounded-[14px] border border-white/12 bg-black/50"
               >
                 <div className="absolute inset-0 grid grid-cols-2">
                   <div className="bg-[#090909]" />
@@ -5461,22 +4849,32 @@ export const Dashboard: React.FC = () => {
 
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.1),transparent_44%),radial-gradient(circle_at_82%_82%,rgba(0,0,0,0.2),transparent_46%)]" />
 
-                <div className="absolute left-3 top-3 rounded-[8px] border border-[#e5e7eb]">
+                <CursorAnimationLayer
+                  animation={siteConfig.animation}
+                  positionMode="absolute"
+                  className="absolute inset-0"
+                  containerStyle={{ zIndex: 5 }}
+                  trackingTargetRef={previewAnimationAreaRef}
+                />
+
+                <div className="absolute left-3 top-3 rounded-[8px] border border-white/20 bg-black/30 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Dark Surface
                 </div>
-                <div className="absolute right-3 top-3 rounded-[8px] border border-black/20 bg-[#f8f9fa]">
+                <div className="absolute right-3 top-3 rounded-[8px] border border-black/20 bg-white/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-black/70">
                   Light Surface
                 </div>
-                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-[10px] border border-[#e5e7eb]">
+
+                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-[10px] border border-white/20 bg-black/35 px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-white/75">
                   Active: {siteConfig.animation.activeCursorAnimation}
                 </div>
               </div>
 
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-white/55">
                 Every animation has isolated settings. Switch between modes anytime and each one preserves its own
                 values.
               </p>
             </Card>
+
             <Card
               className="xl:col-span-2"
               title="Motion System"
@@ -5574,7 +4972,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-white/60">
                 Buttons, cards, and glass surfaces now read these motion tokens so hover lift, easing, and rhythm stay aligned across every page.
               </p>
             </Card>
@@ -5593,15 +4991,13 @@ export const Dashboard: React.FC = () => {
   const renderSiteWorkspace = () => {
     return (
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb] p-3">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Sections</p>
+        <aside className="self-start rounded-[20px] border border-white/12 bg-white/[0.03] p-3.5 xl:sticky xl:top-4">
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-white/56">Dashboard Sections</p>
 
           <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
             {DASHBOARD_SECTION_GROUPS.map((group) => (
               <div key={group.id} className="space-y-2">
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  {group.label}
-                </p>
+                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/50">{group.label}</p>
                 <div className="space-y-2">
                   {group.sectionIds.map((sectionId) => {
                     const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
@@ -5625,10 +5021,8 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb] p-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              Editing now: <span className="font-semibold text-[#1a1a1a]">{activeSectionInfo.label}</span>
-            </p>
+          <div className="mt-3 rounded-[12px] border border-white/12 bg-black/25 px-3 py-2 text-xs text-white/68">
+            Editing now: <span className="font-semibold text-white">{activeSectionInfo.label}</span>
           </div>
         </aside>
 
@@ -5644,3016 +5038,8 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="rounded-[20px] border border-[#e5e7eb] p-4">{renderSectionContent()}</div>
+          <div className="rounded-[20px] border border-white/12 bg-[#0f141c] p-5 md:p-6">{renderSectionContent()}</div>
         </section>
-      </div>
-    );
-  };
-
-  const renderSitePagesWorkspace = () => {
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Sections</p>
-
-          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
-            {DASHBOARD_SECTION_GROUPS.map((group) => (
-              <div key={group.id} className="space-y-2">
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  {group.label}
-                </p>
-                <div className="space-y-2">
-                  {group.sectionIds.map((sectionId) => {
-                    const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
-                    if (!section) return null;
-
-                    return (
-                      <SectionButton
-                        key={section.id}
-                        label={section.label}
-                        hint={section.hint}
-                        isActive={activeSection === section.id}
-                        onClick={() => {
-                          setActiveSection(section.id);
-                          clearUploadFeedback();
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              Editing now: <span className="font-semibold text-[#1a1a1a]">{activeSectionInfo.label}</span>
-            </p>
-          </div>
-        </aside>
-
-        <section className="space-y-4">
-          {uploadError ? (
-            <div className="rounded-[12px] border border-[#b42318]/28 bg-[#b42318]/10 px-4 py-3 text-sm text-[#8f1f16]">
-              {uploadError}
-            </div>
-          ) : null}
-          {uploadMessage ? (
-            <div className="rounded-[12px] border border-[#177245]/30 bg-[#177245]/10 px-4 py-3 text-sm text-[#146238]">
-              {uploadMessage}
-            </div>
-          ) : null}
-
-          <div className="rounded-[20px] border border-[#e5e7eb] bg-white p-4">{renderSectionContent()}</div>
-        </section>
-      </div>
-    );
-  };
-
-  const renderDesignSystemWorkspace = () => {
-    const designSections = [
-      { id: 'colors' as const, label: 'Colors', hint: 'Color schemes and palettes' },
-      { id: 'typography' as const, label: 'Typography', hint: 'Fonts, sizes, and weights' },
-      { id: 'spacing' as const, label: 'Spacing', hint: 'Margins, padding, and gaps' },
-      { id: 'components' as const, label: 'Components', hint: 'Buttons, cards, and variants' },
-      { id: 'motion' as const, label: 'Motion', hint: 'Animations and transitions' },
-    ];
-
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Design Sections</p>
-
-          <div className="mt-3 space-y-2">
-            {designSections.map((section) => (
-              <SectionButton
-                key={section.id}
-                label={section.label}
-                hint={section.hint}
-                isActive={activeDesignSection === section.id}
-                onClick={() => setActiveDesignSection(section.id)}
-              />
-            ))}
-          </div>
-        </aside>
-
-        <section className="space-y-4">
-          {activeDesignSection === 'colors' && (
-            <>
-              <Card title="Color System" subtitle="Primary and secondary color schemes">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ColorInput
-                    label="Primary Color"
-                    value={siteConfig.designSystem.theme.primaryColor}
-                    onChange={(next) => updateConfig((prev) => ({
-                      ...prev,
-                      designSystem: {
-                        ...prev.designSystem,
-                        theme: { ...prev.designSystem.theme, primaryColor: next },
-                      },
-                    }))}
-                  />
-                  <ColorInput
-                    label="Secondary Color"
-                    value={siteConfig.designSystem.theme.secondaryColor}
-                    onChange={(next) => updateConfig((prev) => ({
-                      ...prev,
-                      designSystem: {
-                        ...prev.designSystem,
-                        theme: { ...prev.designSystem.theme, secondaryColor: next },
-                      },
-                    }))}
-                  />
-                  <ColorInput
-                    label="On Primary Color"
-                    value={siteConfig.designSystem.theme.onPrimaryColor}
-                    onChange={(next) => updateConfig((prev) => ({
-                      ...prev,
-                      designSystem: {
-                        ...prev.designSystem,
-                        theme: { ...prev.designSystem.theme, onPrimaryColor: next },
-                      },
-                    }))}
-                  />
-                  <ColorInput
-                    label="On Secondary Color"
-                    value={siteConfig.designSystem.theme.onSecondaryColor}
-                    onChange={(next) => updateConfig((prev) => ({
-                      ...prev,
-                      designSystem: {
-                        ...prev.designSystem,
-                        theme: { ...prev.designSystem.theme, onSecondaryColor: next },
-                      },
-                    }))}
-                  />
-                </div>
-              </Card>
-
-              <Card title="Glow Effects" subtitle="Glow color and intensity settings">
-                <ColorInput
-                  label="Glow Color"
-                  value={siteConfig.designSystem.theme.glowColor}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, glowColor: next },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Glow Intensity"
-                  type="number"
-                  min={0}
-                  max={1.2}
-                  step={0.1}
-                  value={siteConfig.designSystem.theme.glowIntensity}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, glowIntensity: Number(next) },
-                    },
-                  }))}
-                />
-                <Toggle
-                  label="Enable Glow"
-                  checked={siteConfig.designSystem.theme.glowEnabled}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, glowEnabled: next },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Glass Effects" subtitle="Glass tint and border colors">
-                <ColorInput
-                  label="Glass Tint Color"
-                  value={siteConfig.designSystem.theme.glassTintColor}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, glassTintColor: next },
-                    },
-                  }))}
-                />
-                <ColorInput
-                  label="Glass Border Color"
-                  value={siteConfig.designSystem.theme.glassBorderColor}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, glassBorderColor: next },
-                    },
-                  }))}
-                />
-              </Card>
-            </>
-          )}
-
-          {activeDesignSection === 'typography' && (
-            <>
-              <Card title="Typography Scale" subtitle="Font sizes and scaling">
-                <Input
-                  label="Display Title Size (rem)"
-                  type="number"
-                  min={1}
-                  max={10}
-                  step={0.1}
-                  value={siteConfig.designSystem.theme.displayTitleSizeRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, displayTitleSizeRem: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Section Title Size (rem)"
-                  type="number"
-                  min={1}
-                  max={6}
-                  step={0.1}
-                  value={siteConfig.designSystem.theme.sectionTitleSizeRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, sectionTitleSizeRem: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Body Text Size (rem)"
-                  type="number"
-                  min={0.5}
-                  max={2}
-                  step={0.05}
-                  value={siteConfig.designSystem.theme.bodyTextSizeRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, bodyTextSizeRem: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Heading Scale"
-                  type="number"
-                  min={0.8}
-                  max={1.5}
-                  step={0.05}
-                  value={siteConfig.designSystem.theme.headingScale}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, headingScale: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Typography Style" subtitle="Font weights and spacing">
-                <Input
-                  label="Heading Weight"
-                  type="number"
-                  min={100}
-                  max={900}
-                  step={100}
-                  value={siteConfig.designSystem.theme.headingWeight}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, headingWeight: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Heading Letter Spacing (em)"
-                  type="number"
-                  min={-0.1}
-                  max={0.3}
-                  step={0.01}
-                  value={siteConfig.designSystem.theme.headingLetterSpacingEm}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, headingLetterSpacingEm: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Body Line Height"
-                  type="number"
-                  min={1}
-                  max={2.5}
-                  step={0.1}
-                  value={siteConfig.designSystem.theme.bodyLineHeight}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, bodyLineHeight: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-            </>
-          )}
-
-          {activeDesignSection === 'spacing' && (
-            <>
-              <Card title="Spacing System" subtitle="Section, stack, and grid spacing">
-                <Input
-                  label="Section Padding (rem)"
-                  type="number"
-                  min={1}
-                  max={10}
-                  step={0.5}
-                  value={siteConfig.designSystem.foundation.spacing.sectionPaddingRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        spacing: { ...prev.designSystem.foundation.spacing, sectionPaddingRem: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Stack Gap (rem)"
-                  type="number"
-                  min={0.5}
-                  max={5}
-                  step={0.25}
-                  value={siteConfig.designSystem.foundation.spacing.stackGapRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        spacing: { ...prev.designSystem.foundation.spacing, stackGapRem: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Grid Gap (rem)"
-                  type="number"
-                  min={0.5}
-                  max={5}
-                  step={0.25}
-                  value={siteConfig.designSystem.foundation.spacing.gridGapRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        spacing: { ...prev.designSystem.foundation.spacing, gridGapRem: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Card Padding (rem)"
-                  type="number"
-                  min={0.5}
-                  max={5}
-                  step={0.25}
-                  value={siteConfig.designSystem.foundation.spacing.cardPaddingRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        spacing: { ...prev.designSystem.foundation.spacing, cardPaddingRem: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Layout System" subtitle="Content width and column settings">
-                <Input
-                  label="Content Max Width (px)"
-                  type="number"
-                  min={800}
-                  max={2000}
-                  step={50}
-                  value={siteConfig.designSystem.foundation.layout.contentMaxWidthPx}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        layout: { ...prev.designSystem.foundation.layout, contentMaxWidthPx: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Column Gap (rem)"
-                  type="number"
-                  min={0.5}
-                  max={5}
-                  step={0.25}
-                  value={siteConfig.designSystem.foundation.layout.columnGapRem}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        layout: { ...prev.designSystem.foundation.layout, columnGapRem: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Max Grid Columns"
-                  type="number"
-                  min={1}
-                  max={12}
-                  step={1}
-                  value={siteConfig.designSystem.foundation.layout.maxGridColumns}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      foundation: {
-                        ...prev.designSystem.foundation,
-                        layout: { ...prev.designSystem.foundation.layout, maxGridColumns: Number(next) },
-                      },
-                    },
-                  }))}
-                />
-              </Card>
-            </>
-          )}
-
-          {activeDesignSection === 'components' && (
-            <>
-              <Card title="Button Components" subtitle="Radius, border, and shadow settings">
-                <Input
-                  label="Button Radius (px)"
-                  type="number"
-                  min={0}
-                  max={50}
-                  step={1}
-                  value={siteConfig.designSystem.theme.buttonRadius}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, buttonRadius: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Button Border Width (px)"
-                  type="number"
-                  min={0}
-                  max={5}
-                  step={0.5}
-                  value={siteConfig.designSystem.theme.buttonBorderWidth}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, buttonBorderWidth: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Button Shadow Opacity"
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={siteConfig.designSystem.theme.buttonShadowOpacity}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, buttonShadowOpacity: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Card Components" subtitle="Radius, border, blur, and shadow settings">
-                <Input
-                  label="Card Radius (px)"
-                  type="number"
-                  min={0}
-                  max={50}
-                  step={1}
-                  value={siteConfig.designSystem.theme.cardRadius}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, cardRadius: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Card Border Width (px)"
-                  type="number"
-                  min={0}
-                  max={5}
-                  step={0.5}
-                  value={siteConfig.designSystem.theme.cardBorderWidth}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, cardBorderWidth: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Card Blur (px)"
-                  type="number"
-                  min={0}
-                  max={50}
-                  step={1}
-                  value={siteConfig.designSystem.theme.cardBlurPx}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, cardBlurPx: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Card Shadow Opacity"
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={siteConfig.designSystem.theme.cardShadowOpacity}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      theme: { ...prev.designSystem.theme, cardShadowOpacity: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Component Variants" subtitle="Button and card variant assignments">
-                <SelectInput
-                  label="Global Glass Variant"
-                  value={siteConfig.designSystem.components.globalGlassVariant}
-                  options={SITE_GLASS_VARIANTS.map((v) => ({ value: v, label: formatVariantLabel(v) }))}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      components: { ...prev.designSystem.components, globalGlassVariant: next as SiteGlassVariant },
-                    },
-                  }))}
-                />
-                <SelectInput
-                  label="Navigation Glass Variant"
-                  value={siteConfig.designSystem.components.navigationGlassVariant}
-                  options={SITE_GLASS_VARIANTS.map((v) => ({ value: v, label: formatVariantLabel(v) }))}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    designSystem: {
-                      ...prev.designSystem,
-                      components: { ...prev.designSystem.components, navigationGlassVariant: next as SiteGlassVariant },
-                    },
-                  }))}
-                />
-              </Card>
-            </>
-          )}
-
-          {activeDesignSection === 'motion' && (
-            <>
-              <Card title="Motion System" subtitle="Duration, easing, and hover effects">
-                <Input
-                  label="Fast Duration (ms)"
-                  type="number"
-                  min={50}
-                  max={500}
-                  step={10}
-                  value={siteConfig.animation.motion.durationFastMs}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, durationFastMs: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Base Duration (ms)"
-                  type="number"
-                  min={100}
-                  max={1000}
-                  step={25}
-                  value={siteConfig.animation.motion.durationBaseMs}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, durationBaseMs: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Slow Duration (ms)"
-                  type="number"
- min={200}
-                  max={2000}
-                  step={50}
-                  value={siteConfig.animation.motion.durationSlowMs}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, durationSlowMs: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Stagger (ms)"
-                  type="number"
-                  min={0}
-                  max={200}
-                  step={10}
-                  value={siteConfig.animation.motion.staggerMs}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, staggerMs: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Hover Effects" subtitle="Scale and lift on hover">
-                <Input
-                  label="Hover Scale"
-                  type="number"
-                  min={1}
-                  max={1.2}
-                  step={0.01}
-                  value={siteConfig.animation.motion.hoverScale}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, hoverScale: Number(next) },
-                    },
-                  }))}
-                />
-                <Input
-                  label="Hover Lift (px)"
-                  type="number"
-                  min={0}
-                  max={20}
-                  step={1}
-                  value={siteConfig.animation.motion.hoverLiftPx}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, hoverLiftPx: Number(next) },
-                    },
-                  }))}
-                />
-              </Card>
-
-              <Card title="Easing Function" subtitle="Animation easing curve">
-                <Input
-                  label="Easing Function"
-                  value={siteConfig.animation.motion.ease}
-                  onChange={(next) => updateConfig((prev) => ({
-                    ...prev,
-                    animation: {
-                      ...prev.animation,
-                      motion: { ...prev.animation.motion, ease: next },
-                    },
-                  }))}
-                />
-              </Card>
-            </>
-          )}
-        </section>
-      </div>
-    );
-  };
-
-  const renderSiteIntegrationsWorkspace = () => {
-    const integrationSections = [
-      { id: 'browser' as const, label: 'Browser Identity', hint: 'Tab title and favicon' },
-      { id: 'ai' as const, label: 'AI Integration', hint: 'AI configuration and settings' },
-      { id: 'domain' as const, label: 'Domain', hint: 'Custom domain and DNS' },
-      { id: 'analytics' as const, label: 'Analytics', hint: 'Google Analytics and tracking' },
-      { id: 'security' as const, label: 'Security', hint: 'Security settings and protection' },
-      { id: 'reports' as const, label: 'Technical Reports', hint: 'Site performance reports' },
-    ];
-
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">
-          <div className="mt-3 space-y-2">
-            {integrationSections.map((section) => (
-              <SectionButton
-                key={section.id}
-                label={section.label}
-                hint={section.hint}
-                isActive={activeIntegrationSection === section.id}
-                onClick={() => setActiveIntegrationSection(section.id)}
-              />
-            ))}
-          </div>
-        </aside>
-
-        <section className="space-y-4">
-          {activeIntegrationSection === 'browser' && (
-            <>
-              <Card title="Browser Identity" subtitle="Control tab title and favicon">
-                <Input
-                  label="Browser Tab Title"
-                  value={siteConfig.dashboard.browser.browserTabTitle}
-                  onChange={(next) => updateDashboardBrowser('browserTabTitle', next)}
-                />
-                <Input
-                  label="Favicon URL"
-                  value={siteConfig.dashboard.browser.faviconUrl}
-                  onChange={(next) => updateDashboardBrowser('faviconUrl', next)}
-                />
-                <label className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  <input"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      e.currentTarget.value = '';
-                      void handleFaviconUpload(file);
-                    }}
-                    className="rounded-[10px] border border-[#e5e7eb]"
-                  />
-                </label>
-              </Card>
-
-              <Card title="Preview" subtitle="Current browser identity settings">
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
-                </div>
-                <div className="mt-3 rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]">
-                      {siteConfig.dashboard.browser.faviconUrl ? (
-                        <img src={siteConfig.dashboard.browser.faviconUrl} alt="Favicon preview" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="font-mono text-[10px] text-[#6b7280]">
-                      )}"
-                    </span>"
-                    <p className="text-xs text-[#6b7280]">
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activeIntegrationSection === 'ai' && ("
-            <>"
-              <Card title="AI Integration" subtitle="Configure AI-powered features">
-                <Input
-                  label="API Base URL"
-                  value={siteConfig.dashboard.integrations.apiBaseUrl}
-                  onChange={(next) => updateDashboardIntegration('apiBaseUrl', next)}
-                />
-                <Textarea
-                  label="AI Configuration"
-                  value="AI integration settings will be configured here."
-                  rows={4}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Enable AI Features"
-                  checked={false}
-                  onChange={() => {}}
-                />
-              </Card>
-
-              <Card title="AI Features" subtitle="Available AI-powered capabilities">
-                <div className="space-y-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm font-medium text-white"Content Generation</p>
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>"
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm font-medium text-white"Smart Analytics</p>
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>"
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm font-medium text-white"Automated Reports</p>
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activeIntegrationSection === 'domain' && ("
-            <>"
-              <Card title="Domain Settings" subtitle="Custom domain and DNS configuration">
-                <Input
-                  label="Custom Domain"
-                  value={siteConfig.dashboard.integrations.customDomain}
-                  onChange={(next) => updateDashboardIntegration('customDomain', next)}
-                />
-                <Input
-                  label="DNS Provider"
-                  value="">
-                  onChange={() => {}}
-                />
-                <Textarea
-                  label="DNS Records"
-                  value="Configure your DNS records to point to your site."
-                  rows={4}
-                  onChange={() => {}}
-                />
-              </Card>
-
-              <Card title="Domain Status" subtitle="Current domain configuration status">
-                <div className={`rounded-[12px] border px-3 py-3 text-sm ${>
-                  siteConfig.dashboard.integrations.customDomain
-                    ? dashboardStatusSuccessClass
-                    : dashboardStatusFailureClass
-                }`}>
-                  {siteConfig.dashboard.integrations.customDomain
-                    ? `Domain configured: ${siteConfig.dashboard.integrations.customDomain}`
-                    : 'No custom domain configured'}
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activeIntegrationSection === 'analytics' && (
-            <>
-              <Card title="Google Analytics" subtitle="Configure Google Analytics tracking">
-                <Input
-                  label="Measurement ID"
-                  value={siteConfig.dashboard.integrations.googleAnalyticsMeasurementId}
-                  onChange={(next) => updateDashboardIntegration('googleAnalyticsMeasurementId', next)}
-                />
-                <Toggle
-                  label="Enable Google Analytics"
-                  checked={siteConfig.dashboard.integrations.googleAnalyticsEnabled}
-                  onChange={(next) => updateDashboardIntegration('googleAnalyticsEnabled', next)}
-                />
-              </Card>
-
-              <Card title="Connection Health" subtitle="Analytics integration status">
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  Measurement ID: <span className="font-semibold text-white"
-                    {siteConfig.dashboard.integrations.googleAnalyticsMeasurementId || 'Not set'}
-                  </span>
-                </div>
-                <div>
-                  className={`mt-3 rounded-[12px] border px-3 py-3 text-sm ${
-                    stats.gaConnected ? dashboardStatusSuccessClass : dashboardStatusFailureClass
-                  }`}
-                >
-                  {stats.gaConnected
-                    ? 'Google Analytics connection is healthy.'
-                    : 'Google Analytics needs a valid measurement ID and enabled toggle.'}
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activeIntegrationSection === 'security' && (
-            <>
-              <Card title="Security Settings" subtitle="Configure site security options">
-                <Toggle
-                  label="Enable HTTPS"
-                  checked={true}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Enable Content Security Policy"
-                  checked={false}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Enable Rate Limiting"
-                  checked={true}
-                  onChange={() => {}}
-                />
-                <Input
-                  label="Allowed Origins"
-                  value="*"
-                  onChange={() => {}}
-                />
-              </Card>
-
-              <Card title="Security Status" subtitle="Current security configuration">
-                <div className="space-y-2">
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2">
-                    <p className="text-xs text-[#86efac]"✓ HTTPS Enabled</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-xs text-[#6b7280]">
-                  </div>"
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2">
-                    <p className="text-xs text-[#86efac]"✓ Rate Limiting Active</p>
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activeIntegrationSection === 'reports' && (
-            <>
-              <Card title="Technical Reports" subtitle="Site performance and health reports">
-                <div className="space-y-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white"Performance Report</p>
-                      <span className="text-xs text-[#6b7280]">
-                    </div>"
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>"
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white"SEO Report</p>
-                      <span className="text-xs text-[#6b7280]">
-                    </div>"
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>"
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white"Accessibility Report</p>
-                      <span className="text-xs text-[#6b7280]">
-                    </div>"
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </div>
-                </div>
-              </Card>"
-              <Card title="Report Settings" subtitle="Configure automated reports">
-                <Toggle
-                  label="Enable Daily Reports"
-                  checked={true}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Email Reports"
-                  checked={false}
-                  onChange={() => {}}
-                />
-                <Input
-                  label="Report Frequency"
-                  value="daily"
-                  onChange={() => {}}
-                />
-              </Card>
-            </>
-          )}
-        </section>
-      </div>
-    );
-  };
-
-  const renderPublishingWorkspace = () => {
-    const publishingSections = [
-      { id: 'articles' as const, label: 'Articles', hint: 'Manage all articles' },
-      { id: 'calendar' as const, label: 'Calendar', hint: 'Publishing schedule' },
-      { id: 'performance' as const, label: 'Performance', hint: 'Article analytics' },
-      { id: 'settings' as const, label: 'Settings', hint: 'Publishing preferences' },
-    ];
-
-    const contentStatusOptions: Array<{ value: SiteContentStatus; label: string }> = [
-      { value: 'draft', label: 'Draft' },
-      { value: 'scheduled', label: 'Scheduled' },
-      { value: 'published', label: 'Published' },
-    ];
-
-    const articleQuery = articleSearchQuery.trim().toLowerCase();
-
-    const filteredArticles = siteConfig.articles.filter((article) => {
-      if (!articleQuery) return true;
-      const haystack = [article.title, article.slug, article.category, article.author, article.excerpt, article.tags.join(' ')].join(' ');
-      return haystack.toLowerCase().includes(articleQuery);
-    });
-
-    const activeArticle =
-      siteConfig.articles.find((article) => article.id === activeArticleId) ?? filteredArticles[0] ?? siteConfig.articles[0] ?? null;
-
-    const liveArticlesCount = siteConfig.articles.filter((article) => article.visible && article.status === 'published').length;
-    const scheduledCount = siteConfig.articles.filter((article) => article.status === 'scheduled').length;
-
-    const articleCanGoLive = Boolean(
-      activeArticle && activeArticle.visible && activeArticle.status === 'published' && activeArticle.slug.trim().length > 0,
-    );
-
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">
-          <div className="mt-3 space-y-2">
-            {publishingSections.map((section) => (
-              <SectionButton
-                key={section.id}
-                label={section.label}
-                hint={section.hint}
-                isActive={activePublishingSection === section.id}
-                onClick={() => setActivePublishingSection(section.id)}
-              />
-            ))}
-          </div>
-
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]">
-            Total: <span className="font-semibold text-white">{siteConfig.articles.length}</span> articles
-          </div>
-        </aside>
-
-        <section className="space-y-4">
-          {activePublishingSection === 'articles' && (
-            <>
-              <Card title="Articles Studio" subtitle="Create, publish, and preview articles">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <p className="max-w-[560px] text-sm text-[#6b7280]">
-                    Build a focused publishing workflow around articles only. Create drafts, schedule launches, and push live posts from one editor.
-                  </p>"
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date().toISOString();
-                        const nextArticle: SiteArticle = {
-                          id: `article-${Date.now()}`,
-                          title: 'New Article',
-                          slug: `new-article-${Date.now()}`,
-                          excerpt: 'Write a short summary for this article.',
-                          content: 'Write your article body here.',
-                          coverImage: '/frames/scene-03-screen-entry/ezgif-frame-001.jpg',
-                          author: 'Your Name',
-                          category: 'Insights',
-                          tags: ['insight'],
-                          readingMinutes: 6,
-                          status: 'draft',
-                          featured: false,
-                          visible: true,
-                          publishedAt: now,
-                          videoUrl: '',
-                        };
-
-                        updateConfig((prev) => ({
-                          ...prev,
-                          articles: [nextArticle, ...prev.articles],
-                        }));
-
-                        setActiveArticleId(nextArticle.id);
-                      }}
-                      className={dashboardActionButtonSecondaryClass}
-                    >
-                      New Article
-                    </button>
-
-                    <button type="button" onClick={handleOpenArticlesPage} className={dashboardActionButtonPrimaryClass}>
-                      Open Articles Page
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-                <Card title="Article Library" subtitle="Select one article card to focus the editor">
-                  <Input label="Search articles" value={articleSearchQuery} onChange={setArticleSearchQuery} />
-
-                  <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1">
-                    {filteredArticles.length === 0 ? (
-                      <div className="rounded-[12px] border border-[#e5e7eb]">
-                        No articles match this search.
-                      </div>
-                    ) : (
-                      filteredArticles.map((article) => {
-                        const isActive = activeArticle?.id === article.id;
-                        const isLive = article.visible && article.status === 'published';
-                        return (
-                          <button
-                            key={article.id}
-                            type="button"
-                            onClick={() => setActiveArticleId(article.id)}
-                            className={`w-full rounded-[14px] border p-3 text-left transition-all ${
-                              isActive
-                                ? 'border-[#3b82f6]/45 bg-[#3b82f6]/14 text-white'
-                                : 'border-[#e5e7eb]
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
-                              <span>
-                                className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
-                                  isLive
-                                    ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
-                                    : 'border-[#ef4444]/30 bg-[#ef4444]/14 text-[#fecaca]'
-                                }`}
-                              >
-                                {isLive ? 'Live' : article.status}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-[#6b7280]">
-                              {article.category} • {article.readingMinutes} min • {new Date(article.publishedAt).toLocaleDateString('en-US')}
-                            </p>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </Card>
-                {activeArticle ? ("
-                  <Card title="Article Editor" subtitle={`Editing: ${activeArticle.title}`}>
-                    <div className={`rounded-[12px] border px-3 py-2 text-xs ${articleCanGoLive ? dashboardStatusSuccessClass : dashboardStatusFailureClass}`}>
-                      {articleCanGoLive
-                        ? 'This article is live and visible on /articles.'
-                        : 'This article is not live. Use Published status, keep Visible enabled, and provide a slug.'}
-                    </div>
-
-                    <div className="space-y-4">
-                      <Input
-                        label="Title"
-                        value={activeArticle.title}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, title: next }))}
-                      />
-                      <Input
-                        label="Slug"
-                        value={activeArticle.slug}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, slug: next }))}
-                      />
-                      <Input
-                        label="Category"
-                        value={activeArticle.category}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, category: next }))}
-                      />
-                      <Input
-                        label="Author"
-                        value={activeArticle.author}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, author: next }))}
-                      />
-                      <Textarea
-                        label="Excerpt"
-                        value={activeArticle.excerpt}
-                        rows={3}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, excerpt: next }))}
-                      />
-                      <Textarea
-                        label="Content"
-                        value={activeArticle.content}
-                        rows={8}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, content: next }))}
-                      />
-                      <Input
-                        label="Cover Image URL"
-                        value={activeArticle.coverImage}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, coverImage: next }))}
-                      />
-                      <Input
-                        label="Reading Minutes"
-                        type="number"
-                        min={1}
-                        max={60}
-                        value={activeArticle.readingMinutes}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, readingMinutes: Number(next) }))}
-                      />
-                      <SelectInput
-                        label="Status"
-                        value={activeArticle.status}
-                        options={contentStatusOptions}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, status: next as SiteContentStatus }))}
-                      />
-                      <Toggle
-                        label="Visible"
-                        checked={activeArticle.visible}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, visible: next }))}
-                      />
-                      <Toggle
-                        label="Featured"
-                        checked={activeArticle.featured}
-                        onChange={(next) => updateArticle(activeArticle.id, (article) => ({ ...article, featured: next }))}
-                      />
-                    </div>
-                  </Card>
-                ) : (
-                  <Card title="Article Editor" subtitle="No article selected">
-                    <p className="text-sm text-[#6b7280]">
-                  </Card>
-                )}
-              </div>
-            </>
-          )}
-
-          {activePublishingSection === 'calendar' && ("
-            <>"
-              <Card title="Publishing Calendar" subtitle="View and manage scheduled content">
-                <div className="space-y-4">
-                  <div className="grid gap-2 sm:grid-cols-7">
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                      <div key={day} className="rounded-[8px] border border-[#e5e7eb]">
-                        <p className="text-[10px] font-mono uppercase text-[#6b7280]">
-                      </div>
-                    ))}"
-                  </div>"
-                  <div className="grid gap-2 sm:grid-cols-7">
-                    {Array.from({ length: 35 }).map((_, i) => {
-                      const day = i + 1;
-                      const hasScheduled = siteConfig.articles.some(
-                        (article) => article.status === 'scheduled' && new Date(article.publishedAt).getDate() === day
-                      );
-                      return (
-                        <div>
-                          key={i}
-                          className={`rounded-[8px] border px-2 py-2 text-center ${
-                            hasScheduled
-                              ? 'border-[#3b82f6]/30 bg-[#3b82f6]/10'
-                              : 'border-[#e5e7eb]
-                          }`}
-                        >
-                          <p className="text-sm text-white">{day}</p>
-                          {hasScheduled && <div className="mt-1 h-1 w-1 rounded-full bg-[#3b82f6]" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
-
-              <Card title="Upcoming Publications" subtitle="Articles scheduled for publication">
-                <div className="space-y-2">
-                  {siteConfig.articles
-                    .filter((article) => article.status === 'scheduled')
-                    .sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime())
-                    .slice(0, 5)
-                    .map((article) => (
-                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{article.title}</p>
-                          <span className="text-xs text-[#6b7280]">
-                            {new Date(article.publishedAt).toLocaleDateString('en-US')}
-                          </span>
-                        </div>
-                      </div>
-                    ))}"
-                  {siteConfig.articles.filter((article) => article.status === 'scheduled').length === 0 && ("
-                    <p className="text-sm text-[#6b7280]">
-                  )}
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activePublishingSection === 'performance' && ("
-            <>"
-              <Card title="Article Performance" subtitle="View statistics for all articles">
-                <div className="space-y-3">
-                  {siteConfig.articles
-                    .filter((article) => article.status === 'published')
-                    .slice(0, 10)
-                    .map((article) => (
-                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{article.title}</p>
-                          <span className="text-xs text-[#6b7280]">
-                        </div>"
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          <div>
-                            <p className="text-[10px] text-[#6b7280]">
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 1000) + 100}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-[#6b7280]">
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 500) + 50}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-[#6b7280]">
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 50) + 5}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  {siteConfig.articles.filter((article) => article.status === 'published').length === 0 && (
-                    <p className="text-sm text-[#6b7280]">
-                  )}
-                </div>
-              </Card>"
-              <Card title="Overall Statistics" subtitle="Publishing performance overview">
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-2xl font-semibold text-white">
-                      {siteConfig.articles
-                        .filter((article) => article.status === 'published')
-                        .reduce((sum, article) => sum + Math.floor(Math.random() * 1000) + 100, 0)
-                        .toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-2xl font-semibold text-white">
-                      {(
-                        siteConfig.articles
-                          .filter((article) => article.status === 'published')
-                          .reduce((sum, article) => sum + article.readingMinutes, 0) /
-                        Math.max(1, siteConfig.articles.filter((article) => article.status === 'published').length)
-                      ).toFixed(1)}
-                      min
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-2xl font-semibold text-white">
-                      {siteConfig.articles
-                        .filter((article) => article.status === 'published')
-                        .reduce((sum, article) => sum + Math.floor(Math.random() * 50) + 5, 0)
-                        .toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-
-          {activePublishingSection === 'settings' && (
-            <>
-              <Card title="Publishing Settings" subtitle="Configure publishing preferences">
-                <Toggle
-                  label="Auto-publish scheduled articles"
-                  checked={true}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Send notifications on publish"
-                  checked={false}
-                  onChange={() => {}}
-                />
-                <Toggle
-                  label="Enable social sharing"
-                  checked={true}
-                  onChange={() => {}}
-                />
-                <Input
-                  label="Default author name"
-                  value="Your Name"
-                  onChange={() => {}}
-                />
-                <Input
-                  label="Default reading time (minutes)"
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={5}
-                  onChange={() => {}}
-                />
-              </Card>
-
-              <Card title="Content Guidelines" subtitle="Publishing standards and requirements">
-                <div className="space-y-2">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm text-white"• Minimum word count: 300 words</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm text-white"• Required: Cover image and excerpt</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm text-white"• Maximum title length: 100 characters</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="text-sm text-white"• Categories: Insights, Tutorial, Case Study</p>
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-        </section>
-      </div>
-    );
-  };
-
-  const renderPersonalHubWorkspace = () => {
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">
-          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
-            {DASHBOARD_PERSONAL_HUB_SECTIONS.map((section) => {
-              const SectionIcon = section.icon;
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => setActivePersonalHubSection(section.id)}
-                  className={`group w-full rounded-[14px] border px-3.5 py-3 text-left transition-all duration-300 ${
-                    activePersonalHubSection === section.id
-                      ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white shadow-[0_16px_34px_-24px_rgba(182,244,91,0.6)]'
-                      : 'border-[#e5e7eb]
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <SectionIcon size={16} strokeWidth={1.8} />
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">{section.label}</p>
-                      <p className={`mt-1 text-[12px] ${activePersonalHubSection === section.id ? 'text-[#6b7280]>
-                        {section.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        <section className="space-y-4">
-          {activePersonalHubSection === 'partners' && (
-            <>
-              <Card title="Partners Management" subtitle="Target companies and freelance opportunities">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <p className="max-w-[560px] text-sm text-[#6b7280]">
-                    Manage your target companies, freelance opportunities, and partnership planning. Track contacts, follow-ups, and opportunities.
-                  </p>
-                  <button"
-                    type="button"
-                    onClick={() => {
-                      const now = new Date().toISOString();
-                      const nextPartner: SitePartner = {
-                        id: `partner-${Date.now()}`,
-                        name: 'New Partner',
-                        type: 'agency',
-                        status: 'prospect',
-                        website: '',
-                        email: '',
-                        phone: '',
-                        logo: '',
-                        description: '',
-                        notes: '',
-                        createdAt: now,
-                        lastContacted: now,
-                        nextFollowUp: '',
-                        tags: [],
-                        visible: true,
-                      };
-
-                      updateConfig((prev) => ({
-                        ...prev,
-                        partners: [nextPartner, ...prev.partners],
-                      }));
-                    }}
-                    className={dashboardActionButtonSecondaryClass}
-                  >
-                    Add Partner
-                  </button>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Active</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'active').length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Prospects</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'prospect').length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <div className="space-y-3">
-                  {siteConfig.partners.length === 0 ? (
-                    <p className="text-sm text-[#6b7280]">
-                  ) : ("
-                    siteConfig.partners.map((partner) => ("
-                      <div key={partner.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{partner.name}</p>
-                              <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${>
-                                partner.status === 'active'
-                                  ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
-                                  : partner.status === 'prospect'
-                                    ? 'border-[#f59e0b]/35 bg-[#f59e0b]/14 text-[#fcd34d]'
-                                    : 'border-[#e5e7eb]
-                              }`}>
-                                {partner.status}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-[#6b7280]">
-                            {partner.email && <p className="mt-1 text-xs text-[#6b7280]"
-                          </div>"
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className="rounded-[8px] border border-[#e5e7eb]"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded-[8px] border border-[#ef4444]/38 bg-[#ef4444]/14 text-[#fecaca] px-2 py-1 text-xs hover:bg-[#ef4444]/24"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {activePersonalHubSection === 'projects' && (
-            <>
-              <Card title="Projects Management" subtitle="Current and completed project management">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <p className="max-w-[560px] text-sm text-[#6b7280]">
-                    Track all your projects with detailed information including budget, timeline, status, and financial details.
-                  </p>
-                  <button"
-                    type="button"
-                    onClick={() => {
-                      const now = new Date().toISOString();
-                      const nextProject: SitePersonalProject = {
-                        id: `project-${Date.now()}`,
-                        title: 'New Project',
-                        description: '',
-                        status: 'planning',
-                        priority: 'medium',
-                        startDate: now,
-                        endDate: '',
-                        estimatedBudget: 0,
-                        actualBudget: 0,
-                        client: '',
-                        category: '',
-                        tags: [],
-                        progress: 0,
-                        notes: '',
-                        visible: true,
-                      };
-
-                      updateConfig((prev) => ({
-                        ...prev,
-                        personalProjects: [nextProject, ...prev.personalProjects],
-                      }));
-                    }}
-                    className={dashboardActionButtonSecondaryClass}
-                  >
-                    Add Project
-                  </button>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"In Progress</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'in_progress').length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Completed</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'completed').length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      ${siteConfig.personalProjects.reduce((sum, p) => sum + p.estimatedBudget, 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <div className="space-y-3">
-                  {siteConfig.personalProjects.length === 0 ? (
-                    <p className="text-sm text-[#6b7280]">
-                  ) : ("
-                    siteConfig.personalProjects.map((project) => ("
-                      <div key={project.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{project.title}</p>
-                              <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${>
-                                project.status === 'completed'
-                                  ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
-                                  : project.status === 'in_progress'
-                                    ? 'border-[#3b82f6]/35 bg-[#3b82f6]/14 text-[#93c5fd]'
-                                    : project.status === 'on_hold'
-                                      ? 'border-[#f59e0b]/35 bg-[#f59e0b]/14 text-[#fcd34d]'
-                                      : 'border-[#e5e7eb]
-                              }`}>
-                                {project.status}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-[#6b7280]">
-                            <div className="mt-2 flex items-center gap-4">
-                              <div className="flex-1">
-                                <div className="h-2 rounded-full bg-[#f8f9fa]">
-                                  <div"">
-                                    className="h-2 rounded-full bg-[#3b82f6]"
-                                    style={{ width: `${project.progress}%` }}
-                                  />
-                                </div>
-                                <p className="mt-1 text-xs text-[#6b7280]">
-                              </div>"
-                              <p className="text-xs text-[#6b7280])}</p>
-                            </div>"
-                          </div>"
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className="rounded-[8px] border border-[#e5e7eb]"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded-[8px] border border-[#ef4444]/38 bg-[#ef4444]/14 text-[#fecaca] px-2 py-1 text-xs hover:bg-[#ef4444]/24"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {activePersonalHubSection === 'social' && (
-            <>
-              <Card title="Social Media Management" subtitle="Accounts and post scheduling">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <p className="max-w-[560px] text-sm text-[#6b7280]">
-                    Manage your social media accounts, schedule posts, and track engagement across all platforms.
-                  </p>
-                  <button"
-                    type="button"
-                    onClick={() => {
-                      const now = new Date().toISOString();
-                      const nextAccount: SiteSocialAccount = {
-                        id: `social-${Date.now()}`,
-                        platform: 'twitter',
-                        username: '',
-                        displayName: '',
-                        profileUrl: '',
-                        followerCount: 0,
-                        connected: false,
-                        lastSynced: now,
-                        visible: true,
-                      };
-
-                      updateConfig((prev) => ({
-                        ...prev,
-                        socialAccounts: [nextAccount, ...prev.socialAccounts],
-                      }));
-                    }}
-                    className={dashboardActionButtonSecondaryClass}
-                  >
-                    Add Account
-                  </button>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.socialAccounts.filter((a) => a.connected).length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      {siteConfig.socialAccounts.reduce((sum, a) => sum + a.followerCount, 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.socialPosts.filter((p) => p.status === 'scheduled').length}</p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.socialPosts.filter((p) => p.status === 'published').length<</p>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <h3 className="mb-3 text-sm font-semibold text-white"Connected Accounts</h3>
-                <div className="space-y-2">
-                  {siteConfig.socialAccounts.length === 0 ? (
-                    <p className="text-sm text-[#6b7280]">
-                  ) : ("
-                    siteConfig.socialAccounts.map((account) => ("
-                      <div key={account.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-white capitalize">account.platform<</p>
-                            <p className="mt-1 text-xs text-[#6b7280]">
-                          </div>"
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-[#6b7280])} followers</span>
-                            <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${>
-                              account.connected
-                                ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
-                                : 'border-[#e5e7eb]
-                            }`}>
-                              {account.connected ? 'Connected' : 'Disconnected'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {activePersonalHubSection === 'finance' && ("
-            <>"
-              <Card title="Financial Management" subtitle="Income, expenses, investments, and invoices">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <p className="max-w-[560px] text-sm text-[#6b7280]">
-                    Track your income, expenses, investments, and invoices. Get a complete overview of your financial health.
-                  </p>"
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date().toISOString();
-                        const nextTransaction: SiteFinancialTransaction = {
-                          id: `transaction-${Date.now()}`,
-                          type: 'income',
-                          category: 'freelance',
-                          amount: 0,
-                          currency: 'USD',
-                          description: '',
-                          date: now,
-                          tags: [],
-                          visible: true,
-                        };
-
-                        updateConfig((prev) => ({
-                          ...prev,
-                          financialTransactions: [nextTransaction, ...prev.financialTransactions],
-                        }));
-                      }}
-                      className={dashboardActionButtonSecondaryClass}
-                    >
-                      Add Transaction
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date().toISOString();
-                        const nextInvoice: SiteInvoice = {
-                          id: `invoice-${Date.now()}`,
-                          invoiceNumber: `INV-${Date.now()}`,
-                          clientId: '',
-                          amount: 0,
-                          currency: 'USD',
-                          status: 'draft',
-                          dueDate: '',
-                          paidDate: '',
-                          items: [],
-                          notes: '',
-                          visible: true,
-                        };
-
-                        updateConfig((prev) => ({
-                          ...prev,
-                          invoices: [nextInvoice, ...prev.invoices],
-                        }));
-                      }}
-                      className={dashboardActionButtonSecondaryClass}
-                    >
-                      Create Invoice
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Total Income</p>
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      ${siteConfig.financialTransactions
-                        .filter((t) => t.type === 'income')
-                        .reduce((sum, t) => sum + t.amount, 0)
-                        .toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Total Expenses</p>
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      ${siteConfig.financialTransactions
-                        .filter((t) => t.type === 'expense')
-                        .reduce((sum, t) => sum + t.amount, 0)
-                        .toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">
-                      ${siteConfig.investments.reduce((sum, i) => sum + i.currentValue, 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.invoices.filter((i) => i.status === 'sent').length<</p>
-                  </div>
-                </div>
-              </Card>
-
-              <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-[20px] border border-[#e5e7eb]">
-                  <h3 className="mb-3 text-sm font-semibold text-white"Recent Transactions</h3>
-                  <div className="space-y-2">
-                    {siteConfig.financialTransactions.slice(0, 5).map((transaction) => (
-                      <div key={transaction.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-white">transaction.description || 'No description'<</p>
-                            <p className="mt-1 text-xs text-[#6b7280]).toLocaleDateString()}</p>
-                          </div>
-                          <span className={`text-sm font-semibold ${>
-                            transaction.type === 'income' ? 'text-[#86efac]' : 'text-[#fecaca]'
-                          }`}>
-                            {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}"
-                    {siteConfig.financialTransactions.length === 0 && ("
-                      <p className="text-sm text-[#6b7280]">
-                    )}
-                  </div>
-                </div>"
-                <div className="rounded-[20px] border border-[#e5e7eb]">
-                  <h3 className="mb-3 text-sm font-semibold text-white"Recent Invoices</h3>
-                  <div className="space-y-2">
-                    {siteConfig.invoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="rounded-[12px] border border-[#e5e7eb]">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-white">invoice.invoiceNumber<</p>
-                            <p className="mt-1 text-xs text-[#6b7280])}</p>
-                          </div>
-                          <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${>
-                            invoice.status === 'paid'
-                              ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
-                              : invoice.status === 'sent'
-                                ? 'border-[#f59e0b]/35 bg-[#f59e0b]/14 text-[#fcd34d]'
-                                : 'border-[#e5e7eb]
-                          }`}>
-                            {invoice.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}"
-                    {siteConfig.invoices.length === 0 && ("
-                      <p className="text-sm text-[#6b7280]">
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
-    );
-  };
-
-  const renderAIIntelligenceWorkspace = () => {
-    const trackingQuery = trackingSearch.trim().toLowerCase();
-    const filteredTracking = siteConfig.aiTracking.filter((tracking) => {
-      if (!trackingQuery) return true;
-      const haystack = [tracking.name, tracking.keywords.join(' '), tracking.notes].join(' ');
-      return haystack.toLowerCase().includes(trackingQuery);
-    });
-
-    const activeTracking =
-      siteConfig.aiTracking.find((tracking) => tracking.id === activeTrackingId) ?? filteredTracking[0] ?? siteConfig.aiTracking[0] ?? null;
-
-    const trackingReports = activeTracking
-      ? siteConfig.aiReports.filter((report) => report.trackingId === activeTracking.id)
-      : [];
-
-    const trackingTypeOptions: Array<{ value: AITrackingType; label: string }> = [
-      { value: 'news', label: 'News Tracking' },
-      { value: 'market', label: 'Market Monitoring' },
-      { value: 'influencer', label: 'Influencer Tracking' },
-      { value: 'competitor', label: 'Competitor Analysis' },
-      { value: 'trend', label: 'Trend Analysis' },
-    ];
-
-    const frequencyOptions: Array<{ value: AIFrequency; label: string }> = [
-      { value: 'hourly', label: 'Hourly' },
-      { value: 'daily', label: 'Daily' },
-      { value: 'weekly', label: 'Weekly' },
-      { value: 'monthly', label: 'Monthly' },
-    ];
-
-    const updateTracking = (trackingId: string, updater: (tracking: SiteAITracking) => SiteAITracking) => {
-      updateConfig((prev) => ({
-        ...prev,
-        aiTracking: prev.aiTracking.map((tracking) =>
-          tracking.id === trackingId ? updater(tracking) : tracking,
-        ),
-      }));
-    };
-
-    const addTracking = () => {
-      const now = new Date().toISOString();
-      const nextTracking: SiteAITracking = {
-        id: `tracking-${Date.now()}`,
-        name: 'New Tracking',
-        type: 'news',
-        keywords: [],
-        sources: [],
-        frequency: 'daily',
-        enabled: true,
-        lastReport: now,
-        nextReport: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        notes: '',
-        visible: true,
-      };
-      updateConfig((prev) => ({
-        ...prev,
-        aiTracking: [...prev.aiTracking, nextTracking],
-      }));
-      setActiveTrackingId(nextTracking.id);
-    };
-
-    const deleteTracking = (trackingId: string) => {
-      updateConfig((prev) => ({
-        ...prev,
-        aiTracking: prev.aiTracking.filter((tracking) => tracking.id !== trackingId),
-      }));
-      if (activeTrackingId === trackingId) {
-        setActiveTrackingId(null);
-      }
-    };
-
-    const generateReport = (trackingId: string) => {
-      const now = new Date().toISOString();
-      const tracking = siteConfig.aiTracking.find((t) => t.id === trackingId);
-      if (!tracking) return;
-
-      const newReport: SiteAIReport = {
-        id: `report-${Date.now()}`,
-        trackingId,
-        title: `${tracking.name} - ${new Date().toLocaleDateString()}`,
-        summary: `AI-generated report for ${tracking.name} tracking configuration.`,
-        content: `This is a placeholder for AI-generated content. In production, this would contain detailed analysis based on the tracking configuration.\n\nKeywords: ${tracking.keywords.join(', ')}\nSources: ${tracking.sources.join(', ')}`,
-        insights: [
-          'Key insight 1 from AI analysis',
-          'Key insight 2 from AI analysis',
-          'Key insight 3 from AI analysis',
-        ],
-        recommendations: [
-          'Recommendation 1 based on analysis',
-          'Recommendation 2 based on analysis',
-        ],
-        generatedAt: now,
-        read: false,
-        visible: true,
-      };
-
-      updateConfig((prev) => ({
-        ...prev,
-        aiReports: [newReport, ...prev.aiReports],
-        aiTracking: prev.aiTracking.map((t) =>
-          t.id === trackingId
-            ? {
-                ...t,
-                lastReport: now,
-                nextReport: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-              }
-            : t,
-        ),
-      }));
-    };
-    return ("
-      <div className="space-y-4">
-        <Card title="AI Intelligence" subtitle="News tracking, market monitoring, and AI reports">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <p className="max-w-[560px] text-sm text-[#6b7280]">
-              Configure AI-powered tracking for news, markets, influencers, and generate daily reports for decision making."
-            </p>"
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={addTracking}
-                className={`${dashboardActionButtonPrimaryClass} h-9`}
-              >
-                + New Tracking
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowReports(!showReports)}
-                className={`${dashboardActionButtonSecondaryClass} h-9`}
-              >
-                {showReports ? 'View Tracking' : 'View Reports'}
-              </button>
-            </div>
-          </div>
-        </Card>
-
-        {showReports ? (
-          <div className="space-y-4">
-            <div className="rounded-[20px] border border-[#e5e7eb]">
-              <h3 className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
-              <div className="space-y-3">
-                {siteConfig.aiReports.length === 0 ? (
-                  <p className="text-sm text-[#6b7280]">
-                ) : (
-                  siteConfig.aiReports.map((report) => {
-                    const tracking = siteConfig.aiTracking.find((t) => t.id === report.trackingId);
-                    return (
-                      <div"">
-                        key={report.id}"
-                        className={`rounded-[12px] border border-[#e5e7eb]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-[#6b7280]"
-                            <p className="mt-1 text-xs text-[#6b7280]">
-                              {tracking?.name || 'Unknown Tracking'} • {new Date(report.generatedAt).toLocaleDateString()}
-                            </p>
-                          </div>"
-                          {!report.read && ("
-                            <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
-                          )}
-                        </div>
-                        <p className="text-sm text-[#6b7280]">
-                        <div className="flex flex-wrap gap-2">
-                          {report.insights.slice(0, 2).map((insight, idx) => (
-                            <span key={idx} className="inline-flex rounded-[8px] border border-[#e5e7eb]">
-                              {insight}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <div className="space-y-3">
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <input
-                  type="text"
-                  placeholder="Search tracking..."
-                  value={trackingSearch}
-                  onChange={(e) => setTrackingSearch(e.target.value)}
-                  className="w-full rounded-[10px] border border-[#e5e7eb]"
-                />
-              </div>
-              <div className="space-y-2">
-                {filteredTracking.map((tracking) => (
-                  <button
-                    key={tracking.id}
-                    type="button"
-                    onClick={() => setActiveTrackingId(tracking.id)}
-                    className={`w-full rounded-[12px] border p-3 text-left transition-all ${
-                      activeTrackingId === tracking.id
-                        ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white'
-                        : 'border-[#e5e7eb]
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-sm">tracking.name<</span>
-                      {tracking.enabled ? (
-                        <span className="inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
-                      ) : (
-                        <span className="inline-flex h-2 w-2 rounded-full bg-[#f8f9fa]">
-                      )}"
-                    </div>"
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                  </button>
-                ))}"
-                {filteredTracking.length === 0 && ("
-                  <p className="text-center text-sm text-[#6b7280]">
-                )}
-              </div>
-            </div>
-            {activeTracking ? ("
-              <div className="space-y-4">
-                <div className="rounded-[20px] border border-[#e5e7eb]">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                      {activeTracking.name}"
-                    </h3>"
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => generateReport(activeTracking.id)}
-                        className={`${dashboardActionButtonPrimaryClass} h-8`}
-                      >
-                        Generate Report
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteTracking(activeTracking.id)}
-                        className={`${dashboardActionButtonDangerClass} h-8`}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Input
-                      label="Name"
-                      value={activeTracking.name}
-                      onChange={(value) => updateTracking(activeTracking.id, (prev) => ({ ...prev, name: value }))}
-                    />
-
-                    <SelectInput
-                      label="Type"
-                      value={activeTracking.type}
-                      options={trackingTypeOptions}
-                      onChange={(value) =>
-                        updateTracking(activeTracking.id, (prev) => ({ ...prev, type: value as AITrackingType }))
-                      }
-                    />
-
-                    <SelectInput
-                      label="Frequency"
-                      value={activeTracking.frequency}
-                      options={frequencyOptions}
-                      onChange={(value) =>
-                        updateTracking(activeTracking.id, (prev) => ({ ...prev, frequency: value as AIFrequency }))
-                      }
-                    />
-
-                    <Toggle
-                      label="Enabled"
-                      checked={activeTracking.enabled}
-                      onChange={(checked) => updateTracking(activeTracking.id, (prev) => ({ ...prev, enabled: checked }))}
-                    />
-
-                    <Textarea
-                      label="Keywords (comma-separated)"
-                      value={activeTracking.keywords.join(', ')}
-                      onChange={(value) =>
-                        updateTracking(activeTracking.id, (prev) => ({
-                          ...prev,
-                          keywords: parseTagsInput(value),
-                        }))
-                      }
-                      rows={2}
-                    />
-
-                    <Textarea
-                      label="Sources (comma-separated)"
-                      value={activeTracking.sources.join(', ')}
-                      onChange={(value) =>
-                        updateTracking(activeTracking.id, (prev) => ({
-                          ...prev,
-                          sources: parseTagsInput(value),
-                        }))
-                      }
-                      rows={2}
-                    />
-
-                    <Textarea
-                      label="Notes"
-                      value={activeTracking.notes}
-                      onChange={(value) => updateTracking(activeTracking.id, (prev) => ({ ...prev, notes: value }))}
-                      rows={3}
-                    />
-
-                    <div className="rounded-[12px] border border-[#e5e7eb]">
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-[#6b7280]">
-                          <p className="text-sm text-[#6b7280]">
-                            {activeTracking.lastReport ? new Date(activeTracking.lastReport).toLocaleString() : 'Never'}
-                          </p>
-                        </div>"
-                        <div>"
-                          <p className="text-xs text-[#6b7280]">
-                          <p className="text-sm text-[#6b7280]">
-                            {activeTracking.nextReport ? new Date(activeTracking.nextReport).toLocaleString() : 'Not scheduled'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    {trackingReports.length > 0 && ("
-                      <div className="space-y-2">
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        {trackingReports.slice(0, 3).map((report) => (
-                          <div"">
-                            key={report.id}"
-                            className={`rounded-[12px] border border-[#e5e7eb]"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-[#6b7280]">
-                              {!report.read && <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />}
-                            </div>
-                            <p className="text-xs text-[#6b7280]).toLocaleString()}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>"
-            ) : ("
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <p className="text-sm text-[#6b7280]">
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderCommunicationWorkspace = () => {
-    const emailQuery = emailSearch.trim().toLowerCase();
-    const filteredEmails = siteConfig.emails.filter((email) => {
-      if (!email.visible) return false;
-      if (emailFilter !== 'all' && email.folder !== emailFilter) return false;
-      if (!emailQuery) return true;
-      const haystack = [email.from, email.subject, email.body, email.labels.join(' ')].join(' ');
-      return haystack.toLowerCase().includes(emailQuery);
-    });
-
-    const activeEmail =
-      siteConfig.emails.find((email) => email.id === activeEmailId) ?? filteredEmails[0] ?? siteConfig.emails[0] ?? null;
-
-    const folderOptions: Array<{ value: EmailFolder; label: string; icon: LucideIcon }> = [
-      { value: 'inbox', label: 'Inbox', icon: Inbox },
-      { value: 'sent', label: 'Sent', icon: Mail },
-      { value: 'drafts', label: 'Drafts', icon: FileText },
-      { value: 'archive', label: 'Archive', icon: FileText },
-      { value: 'spam', label: 'Spam', icon: FileText },
-    ];
-
-    const statusOptions: Array<{ value: EmailStatus; label: string }> = [
-      { value: 'unread', label: 'Unread' },
-      { value: 'read', label: 'Read' },
-      { value: 'replied', label: 'Replied' },
-      { value: 'forwarded', label: 'Forwarded' },
-    ];
-
-    const updateEmail = (emailId: string, updater: (email: SiteEmail) => SiteEmail) => {
-      updateConfig((prev) => ({
-        ...prev,
-        emails: prev.emails.map((email) => (email.id === emailId ? updater(email) : email)),
-      }));
-    };
-
-    const sendEmail = () => {
-      if (!composeTo.trim() || !composeSubject.trim()) return;
-
-      const now = new Date().toISOString();
-      const newEmail: SiteEmail = {
-        id: `email-${Date.now()}`,
-        from: 'me@example.com',
-        to: [composeTo],
-        subject: composeSubject,
-        body: composeBody,
-        attachments: [],
-        folder: 'sent',
-        status: 'read',
-        receivedAt: now,
-        sentAt: now,
-        labels: [],
-        visible: true,
-      };
-
-      updateConfig((prev) => ({
-        ...prev,
-        emails: [newEmail, ...prev.emails],
-      }));
-
-      setComposeTo('');
-      setComposeSubject('');
-      setComposeBody('');
-      setShowCompose(false);
-    };
-
-    const deleteEmail = (emailId: string) => {
-      updateConfig((prev) => ({
-        ...prev,
-        emails: prev.emails.map((email) =>
-          email.id === emailId ? { ...email, visible: false } : email,
-        ),
-      }));
-      if (activeEmailId === emailId) {
-        setActiveEmailId(null);
-      }
-    };
-
-    const markAsRead = (emailId: string) => {
-      updateEmail(emailId, (prev) => ({ ...prev, status: 'read' }));
-    };
-
-    const unreadCount = siteConfig.emails.filter((email) => email.visible && email.folder === 'inbox' && email.status === 'unread').length;
-    return ("
-      <div className="space-y-4">
-        <Card title="Communication" subtitle="Email client and communication management">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <p className="max-w-[560px] text-sm text-[#6b7280]">
-              Full email client with inbox management, compose, reply, and folder organization."
-            </p>"
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCompose(true)}
-                className={`${dashboardActionButtonPrimaryClass} h-9`}
-              >
-                + Compose
-              </button>
-            </div>
-          </div>
-        </Card>
-
-        {showCompose ? (
-          <div className="rounded-[20px] border border-[#e5e7eb]">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
-              <button"
-                type="button"
-                onClick={() => setShowCompose(false)}
-                className={`${dashboardActionButtonSecondaryClass} h-8`}
-              >
-                Cancel
-              </button>
-            </div>
-            <div className="space-y-4">
-              <Input
-                label="To"
-                value={composeTo}
-                onChange={setComposeTo}
-              />
-              <Input
-                label="Subject"
-                value={composeSubject}
-                onChange={setComposeSubject}
-              />
-              <Textarea
-                label="Body"
-                value={composeBody}
-                onChange={setComposeBody}
-                rows={8}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={sendEmail}
-                  className={`${dashboardActionButtonPrimaryClass} h-9`}
-                >
-                  Send
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const now = new Date().toISOString();
-                    const draftEmail: SiteEmail = {
-                      id: `email-${Date.now()}`,
-                      from: 'me@example.com',
-                      to: composeTo ? [composeTo] : [],
-                      subject: composeSubject,
-                      body: composeBody,
-                      attachments: [],
-                      folder: 'drafts',
-                      status: 'read',
-                      receivedAt: now,
-                      sentAt: now,
-                      labels: [],
-                      visible: true,
-                    };
-                    updateConfig((prev) => ({
-                      ...prev,
-                      emails: [draftEmail, ...prev.emails],
-                    }));
-                    setComposeTo('');
-                    setComposeSubject('');
-                    setComposeBody('');
-                    setShowCompose(false);
-                  }}
-                  className={`${dashboardActionButtonSecondaryClass} h-9`}
-                >
-                  Save Draft
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <div className="space-y-3">
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <input
-                  type="text"
-                  placeholder="Search emails..."
-                  value={emailSearch}
-                  onChange={(e) => setEmailSearch(e.target.value)}
-                  className="w-full rounded-[10px] border border-[#e5e7eb]"
-                />
-              </div>
-              <div className="space-y-2">
-                {folderOptions.map((folder) => {
-                  const Icon = folder.icon;
-                  const count = siteConfig.emails.filter((email) => email.visible && email.folder === folder.value).length;
-                  const unreadInFolder = siteConfig.emails.filter(
-                    (email) => email.visible && email.folder === folder.value && email.status === 'unread',
-                  ).length;
-
-                  return (
-                    <button
-                      key={folder.value}
-                      type="button"
-                      onClick={() => setEmailFilter(folder.value)}
-                      className={`w-full rounded-[12px] border p-3 text-left transition-all ${
-                        emailFilter === folder.value
-                          ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white'
-                          : 'border-[#e5e7eb]
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          <span className="font-semibold text-sm">folder.label<</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {unreadInFolder > 0 && (
-                            <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
-                          )}
-                          <span className="text-xs text-[#6b7280]">
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>"
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                    {folderOptions.find((f) => f.value === emailFilter)?.label || 'Emails'}"
-                    {unreadCount > 0 && emailFilter === 'inbox' && ("
-                      <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
-                    )}
-                  </h3>
-                  <span className="text-xs text-[#6b7280]">
-                </div>"
-                <div className="space-y-2">
-                  {filteredEmails.length === 0 ? (
-                    <p className="text-center text-sm text-[#6b7280]">
-                  ) : (
-                    filteredEmails.map((email) => (
-                      <button"
-                        key={email.id}"
-                        type="button"
-                        onClick={() => {
-                          setActiveEmailId(email.id);
-                          if (email.status === 'unread') {
-                            markAsRead(email.id);
-                          }
-                        }}
-                        className={`w-full rounded-[12px] border p-4 text-left transition-all ${
-                          activeEmailId === email.id
-                            ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white'
-                            : 'border-[#e5e7eb]
-                        } ${email.status === 'unread' ? 'border-l-4 border-l-[#3b82f6]' : ''}`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-[#6b7280]">
-                              {email.status === 'unread' && ("
-                                <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
-                              )}
-                            </div>
-                            <p className="mt-1 truncate text-sm font-medium text-[#6b7280]">
-                            <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]">
-                          </div>"
-                          <span className="whitespace-nowrap text-xs text-[#6b7280]">
-                            {new Date(email.receivedAt).toLocaleDateString()}
-                          </span>
-                        </div>"
-                        {email.labels.length > 0 && ("
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {email.labels.map((label, idx) => (
-                              <span>
-                                key={idx}
-                                className="inline-flex rounded-[6px] border border-[#e5e7eb]"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {activeEmail && (
-                <div className="rounded-[20px] border border-[#e5e7eb]">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setComposeTo(activeEmail.from);
-                          setComposeSubject(`Re: ${activeEmail.subject}`);
-                          setComposeBody(`\n\n--- Original Message ---\nFrom: ${activeEmail.from}\nSubject: ${activeEmail.subject}\n\n${activeEmail.body}`);
-                          setShowCompose(true);
-                        }}
-                        className={`${dashboardActionButtonSecondaryClass} h-8`}
-                      >
-                        Reply
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteEmail(activeEmail.id)}
-                        className={`${dashboardActionButtonDangerClass} h-8`}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <p className="text-sm text-[#6b7280]">
-                    </div>
-                    <div>"
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <p className="text-sm text-[#6b7280])}</p>
-                    </div>
-
-                    {activeEmail.cc && activeEmail.cc.length > 0 && ("
-                      <div>"
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        <p className="text-sm text-[#6b7280])}</p>
-                      </div>
-                    )}
-                    <div>"
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <p className="text-sm font-semibold text-[#6b7280]">
-                    </div>
-                    <div>"
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
-                    </div>
-                    <div>"
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <SelectInput
-                        value={activeEmail.status}
-                        options={statusOptions}
-                        onChange={(value) =>
-                          updateEmail(activeEmail.id, (prev) => ({ ...prev, status: value as EmailStatus }))
-                        }
-                      />
-                    </div>
-                    <div>"
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                      <div className="rounded-[10px] border border-[#e5e7eb]">
-                        <p className="whitespace-pre-wrap text-sm text-[#6b7280]">
-                      </div>
-                    </div>
-
-                    {activeEmail.attachments.length > 0 && ("
-                      <div>"
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        <div className="space-y-2">
-                          {activeEmail.attachments.map((attachment, idx) => (
-                            <div>
-                              key={idx}
-                              className="flex items-center justify-between rounded-[8px] border border-[#e5e7eb]"
-                            >
-                              <span className="text-sm text-[#6b7280]">
-                              <span className="text-xs text-[#6b7280])}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {activeEmail.labels.length > 0 && ("
-                      <div>"
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                        <div className="flex flex-wrap gap-2">
-                          {activeEmail.labels.map((label, idx) => (
-                            <span>
-                              key={idx}
-                              className="inline-flex rounded-[8px] border border-[#e5e7eb]"
-                            >
-                              {label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderNotesWorkspace = () => {
-    const noteQuery = noteSearch.trim().toLowerCase();
-    const filteredNotes = siteConfig.notes.filter((note) => {
-      if (!note.visible) return false;
-      if (noteCategoryFilter !== 'all' && note.category !== noteCategoryFilter) return false;
-      if (!noteQuery) return true;
-      const haystack = [note.title, note.content, note.tags.join(' ')].join(' ');
-      return haystack.toLowerCase().includes(noteQuery);
-    });
-
-    const activeNote =
-      siteConfig.notes.find((note) => note.id === activeNoteId) ?? filteredNotes[0] ?? siteConfig.notes[0] ?? null;
-
-    const categoryOptions: Array<{ value: NoteCategory | 'all'; label: string }> = [
-      { value: 'all', label: 'All Categories' },
-      { value: 'work', label: 'Work' },
-      { value: 'personal', label: 'Personal' },
-      { value: 'ideas', label: 'Ideas' },
-      { value: 'meeting', label: 'Meeting' },
-      { value: 'reference', label: 'Reference' },
-      { value: 'other', label: 'Other' },
-    ];
-
-    const colorOptions: Array<{ value: string; label: string; color: string }> = [
-      { value: '#3b82f6', label: 'Green', color: 'bg-[#3b82f6]' },
-      { value: '#60a5fa', label: 'Blue', color: 'bg-[#60a5fa]' },
-      { value: '#f472b6', label: 'Pink', color: 'bg-[#f472b6]' },
-      { value: '#fbbf24', label: 'Yellow', color: 'bg-[#fbbf24]' },
-      { value: '#a78bfa', label: 'Purple', color: 'bg-[#a78bfa]' },
-      { value: '#34d399', label: 'Teal', color: 'bg-[#34d399]' },
-    ];
-
-    const updateNote = (noteId: string, updater: (note: SiteNote) => SiteNote) => {
-      updateConfig((prev) => ({
-        ...prev,
-        notes: prev.notes.map((note) => (note.id === noteId ? updater(note) : note)),
-      }));
-    };
-
-    const addNote = () => {
-      const now = new Date().toISOString();
-      const nextNote: SiteNote = {
-        id: `note-${Date.now()}`,
-        title: 'New Note',
-        content: '',
-        category: 'other',
-        tags: [],
-        createdAt: now,
-        updatedAt: now,
-        pinned: false,
-        color: '#3b82f6',
-        visible: true,
-      };
-      updateConfig((prev) => ({
-        ...prev,
-        notes: [nextNote, ...prev.notes],
-      }));
-      setActiveNoteId(nextNote.id);
-    };
-
-    const deleteNote = (noteId: string) => {
-      updateConfig((prev) => ({
-        ...prev,
-        notes: prev.notes.map((note) => (note.id === noteId ? { ...note, visible: false } : note)),
-      }));
-      if (activeNoteId === noteId) {
-        setActiveNoteId(null);
-      }
-    };
-
-    const togglePin = (noteId: string) => {
-      updateNote(noteId, (prev) => ({ ...prev, pinned: !prev.pinned }));
-    };
-
-    const pinnedNotes = filteredNotes.filter((note) => note.pinned);
-    const unpinnedNotes = filteredNotes.filter((note) => !note.pinned);
-
-    return (
-      <div className="space-y-4">
-        <Card title="Notes" subtitle="Personal note-taking and knowledge management">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <p className="max-w-[560px] text-sm text-[#6b7280]">
-              Create and manage personal notes with categories, tags, and search functionality."
-            </p>"
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={addNote}
-                className={`${dashboardActionButtonPrimaryClass} h-9`}
-              >
-                + New Note
-              </button>
-            </div>
-          </div>
-        </Card>
-
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="space-y-3">
-            <div className="rounded-[20px] border border-[#e5e7eb]">
-              <input
-                type="text"
-                placeholder="Search notes..."
-                value={noteSearch}
-                onChange={(e) => setNoteSearch(e.target.value)}
-                className="w-full rounded-[10px] border border-[#e5e7eb]"
-              />
-              <select
-                value={noteCategoryFilter}
-                onChange={(e) => setNoteCategoryFilter(e.target.value as NoteCategory | 'all')}
-                className="w-full rounded-[10px] border border-[#e5e7eb]"
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              {pinnedNotes.length > 0 && (
-                <>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  {pinnedNotes.map((note) => (
-                    <button"
-                      key={note.id}"
-                      type="button"
-                      onClick={() => setActiveNoteId(note.id)}
-                      className={`w-full rounded-[12px] border p-3 text-left transition-all ${
-                        activeNoteId === note.id
-                          ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white'
-                          : 'border-[#e5e7eb]
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: note.color }} />
-                            <span className="font-semibold text-sm text-[#6b7280]">
-                          </div>"
-                          <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]">
-                        </div>"
-                        <span className="text-[#6b7280]">
-                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"
-                            <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828zM5 13H3v-2.828l7.586-7.586a2 2 0 012.828 0l1.414 1.414L7 10.172V13z" />
-                          </svg>
-                        </span>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {note.tags.slice(0, 2).map((tag, idx) => (
-                          <span>
-                            key={idx}
-                            className="inline-flex rounded-[6px] border border-[#e5e7eb]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-
-              {unpinnedNotes.length > 0 && (
-                <>
-                  {pinnedNotes.length > 0 && (
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                  )}
-                  {unpinnedNotes.map((note) => (
-                    <button"
-                      key={note.id}"
-                      type="button"
-                      onClick={() => setActiveNoteId(note.id)}
-                      className={`w-full rounded-[12px] border p-3 text-left transition-all ${
-                        activeNoteId === note.id
-                          ? 'border-[#3b82f6]/50 bg-[#3b82f6]/12 text-white'
-                          : 'border-[#e5e7eb]
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: note.color }} />
-                            <span className="font-semibold text-sm text-[#6b7280]">
-                          </div>"
-                          <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]">
-                        </div>"
-                      </div>"
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {note.tags.slice(0, 2).map((tag, idx) => (
-                          <span>
-                            key={idx}
-                            className="inline-flex rounded-[6px] border border-[#e5e7eb]"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
-
-              {filteredNotes.length === 0 && (
-                <p className="text-center text-sm text-[#6b7280]">
-              )}
-            </div>
-          </div>
-          {activeNote ? ("
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-[#e5e7eb]">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                    {activeNote.title}"
-                  </h3>"
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => togglePin(activeNote.id)}
-                      className={`${dashboardActionButtonSecondaryClass} h-8`}
-                      title={activeNote.pinned ? 'Unpin' : 'Pin'}
-                    >
-                      {activeNote.pinned ? '📌 Unpin' : '📌 Pin'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteNote(activeNote.id)}
-                      className={`${dashboardActionButtonDangerClass} h-8`}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Input
-                    label="Title"
-                    value={activeNote.title}
-                    onChange={(value) =>
-                      updateNote(activeNote.id, (prev) => ({ ...prev, title: value, updatedAt: new Date().toISOString() }))
-                    }
-                  />
-
-                  <SelectInput
-                    label="Category"
-                    value={activeNote.category}
-                    options={categoryOptions.filter((opt) => opt.value !== 'all')}
-                    onChange={(value) =>
-                      updateNote(activeNote.id, (prev) => ({ ...prev, category: value as NoteCategory, updatedAt: new Date().toISOString() }))
-                    }
-                  />
-
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <div className="flex flex-wrap gap-2">
-                      {colorOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() =>
-                            updateNote(activeNote.id, (prev) => ({ ...prev, color: option.value, updatedAt: new Date().toISOString() }))
-                          }
-                          className={`h-8 w-8 rounded-full border-2 transition-all ${
-                            activeNote.color === option.value
-                              ? 'border-white scale-110'
-                              : 'border-[#e5e7eb]
-                          } ${option.color}`}
-                          title={option.label}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <Textarea
-                    label="Content"
-                    value={activeNote.content}
-                    onChange={(value) =>
-                      updateNote(activeNote.id, (prev) => ({ ...prev, content: value, updatedAt: new Date().toISOString() }))
-                    }
-                    rows={12}
-                  />
-
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280])</p>"
-                    <input"
-                      type="text"
-                      value={activeNote.tags.join(', ')}
-                      onChange={(e) =>
-                        updateNote(activeNote.id, (prev) => ({
-                          ...prev,
-                          tags: parseTagsInput(e.target.value),
-                          updatedAt: new Date().toISOString(),
-                        }))
-                      }
-                      className="w-full rounded-[10px] border border-[#e5e7eb]"
-                    />
-                  </div>
-
-                  <div className="rounded-[12px] border border-[#e5e7eb]">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-xs text-[#6b7280]">
-                        <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
-                      </div>"
-                      <div>"
-                        <p className="text-xs text-[#6b7280]">
-                        <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Toggle
-                    label="Visible"
-                    checked={activeNote.visible}
-                    onChange={(checked) =>
-                      updateNote(activeNote.id, (prev) => ({ ...prev, visible: checked, updatedAt: new Date().toISOString() }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-[20px] border border-[#e5e7eb]">
-              <p className="text-sm text-[#6b7280]">
-            </div>
-          )}
-        </div>
       </div>
     );
   };
@@ -8682,13 +5068,15 @@ export const Dashboard: React.FC = () => {
     const articleCanGoLive = Boolean(
       activeArticle && activeArticle.visible && activeArticle.status === 'published' && activeArticle.slug.trim().length > 0,
     );
-    return ("
+
+    return (
       <div className="space-y-4">
         <Card title="Articles Studio" subtitle="Create, publish, and preview articles from one focused workspace">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <p className="max-w-[560px] text-sm text-[#6b7280]">
+            <p className="max-w-[560px] text-sm text-white/62">
               Build a focused publishing workflow around articles only. Create drafts, schedule launches, and push live posts from one editor.
-            </p>"
+            </p>
+
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -8731,16 +5119,16 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-[12px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+            <div className="rounded-[12px] border border-white/12 bg-white/[0.04] px-3 py-2.5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/52">Article Units</p>
               <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
             </div>
             <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">Live on /articles</p>
               <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
             </div>
             <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Scheduled Queue</p>
               <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
             </div>
           </div>
@@ -8752,7 +5140,7 @@ export const Dashboard: React.FC = () => {
 
             <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1">
               {filteredArticles.length === 0 ? (
-                <div className="rounded-[12px] border border-[#e5e7eb]">
+                <div className="rounded-[12px] border border-white/12 bg-white/[0.04] px-3 py-4 text-sm text-white/58">
                   No articles match this search.
                 </div>
               ) : (
@@ -8766,13 +5154,13 @@ export const Dashboard: React.FC = () => {
                       onClick={() => setActiveArticleId(article.id)}
                       className={`w-full rounded-[14px] border p-3 text-left transition-all ${
                         isActive
-                          ? 'border-[#3b82f6]/45 bg-[#3b82f6]/14 text-white'
-                          : 'border-[#e5e7eb]
+                          ? 'border-[#b6f45b]/45 bg-[#b6f45b]/14 text-white'
+                          : 'border-white/12 bg-white/[0.04] text-white hover:border-white/24 hover:bg-white/[0.08]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
-                        <span>
+                        <span
                           className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                             isLive
                               ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
@@ -8782,7 +5170,7 @@ export const Dashboard: React.FC = () => {
                           {isLive ? 'Live' : article.status}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-[#6b7280]">
+                      <p className="mt-1 text-xs text-white/62">
                         {article.category} • {article.readingMinutes} min • {new Date(article.publishedAt).toLocaleDateString('en-US')}
                       </p>
                     </button>
@@ -8791,7 +5179,8 @@ export const Dashboard: React.FC = () => {
               )}
             </div>
           </Card>
-          {activeArticle ? ("
+
+          {activeArticle ? (
             <Card title="Article Editor" subtitle={`Editing: ${activeArticle.title}`}>
               <div className={`rounded-[12px] border px-3 py-2 text-xs ${articleCanGoLive ? dashboardStatusSuccessClass : dashboardStatusFailureClass}`}>
                 {articleCanGoLive
@@ -8925,7 +5314,7 @@ export const Dashboard: React.FC = () => {
             </Card>
           ) : (
             <Card title="Article Editor" subtitle="No article selected">
-              <p className="text-sm text-[#6b7280]">
+              <p className="text-sm text-white/62">Create an article or choose a card to start editing.</p>
             </Card>
           )}
         </div>
@@ -8933,11 +5322,11 @@ export const Dashboard: React.FC = () => {
     );
   };
 
-  const renderSettingsWorkspace = () => {"
-    return ("
+  const renderSettingsWorkspace = () => {
+    return (
       <div className="space-y-4">
-        <section className="rounded-[18px] border border-[#e5e7eb]">
-          <p className="px-2 pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">
+        <section className="rounded-[18px] border border-white/12 bg-white/[0.03] p-2">
+          <p className="px-2 pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-white/56">Settings Menu</p>
           <div className="flex flex-wrap gap-2">
             {DASHBOARD_SETTINGS_PANELS.map((panel) => (
               <button
@@ -8946,12 +5335,12 @@ export const Dashboard: React.FC = () => {
                 onClick={() => setActiveSettingsPanel(panel.id)}
                 className={`rounded-[11px] border px-3 py-2 text-left transition-all ${
                   activeSettingsPanel === panel.id
-                    ? 'border-[#3b82f6]/45 bg-[#3b82f6]/14 text-white'
-                    : 'border-[#e5e7eb]
+                    ? 'border-[#b6f45b]/45 bg-[#b6f45b]/14 text-white'
+                    : 'border-white/12 bg-white/[0.04] text-white/78 hover:border-white/20 hover:bg-white/[0.08]'
                 }`}
               >
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">panel.label<</p>
-                <p className={`mt-1 text-[12px] ${activeSettingsPanel === panel.id ? 'text-[#6b7280]>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">{panel.label}</p>
+                <p className={`mt-1 text-[12px] ${activeSettingsPanel === panel.id ? 'text-white/72' : 'text-white/58'}`}>
                   {panel.description}
                 </p>
               </button>
@@ -8973,7 +5362,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateDashboardBrowser('faviconUrl', next)}
               />
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/66"Upload favicon</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/66">Upload favicon</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -8982,36 +5371,37 @@ export const Dashboard: React.FC = () => {
                     e.currentTarget.value = '';
                     void handleFaviconUpload(file);
                   }}
-                  className="rounded-[10px] border border-[#e5e7eb]"
+                  className="rounded-[10px] border border-white/14 bg-white/[0.05] px-3 py-2 text-xs text-white/84"
                 />
               </label>
             </Card>
 
-            <aside className="rounded-[18px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]">
+            <aside className="rounded-[18px] border border-white/12 bg-white/[0.04] p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/56">Preview</p>
               <div className="mt-3 space-y-3">
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-2">
+                  <p className="text-xs text-white/60">Tab title</p>
                   <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-2">
+                  <p className="text-xs text-white/60">Favicon</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]">
+                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-white/14 bg-white/10">
                       {siteConfig.dashboard.browser.faviconUrl ? (
                         <img src={siteConfig.dashboard.browser.faviconUrl} alt="Favicon preview" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="font-mono text-[10px] text-[#6b7280]">
-                      )}"
-                    </span>"
-                    <p className="text-xs text-[#6b7280]">
+                        <span className="font-mono text-[10px] text-white/58">N/A</span>
+                      )}
+                    </span>
+                    <p className="text-xs text-white/62">Displayed in browser tab and bookmarks.</p>
                   </div>
                 </div>
               </div>
             </aside>
           </section>
         ) : null}
-        {activeSettingsPanel === 'integrations' ? ("
+
+        {activeSettingsPanel === 'integrations' ? (
           <section className="grid gap-4 xl:grid-cols-2">
             <Card title="Integrations" subtitle="API, domain, and analytics connection settings">
               <Input
@@ -9037,13 +5427,13 @@ export const Dashboard: React.FC = () => {
             </Card>
 
             <Card title="Connection Health" subtitle="Current integration readiness and missing requirements">
-              <div className="rounded-[12px] border border-[#e5e7eb]">
-                API base URL: <span className="font-semibold text-white">siteConfig.dashboard.integrations.apiBaseUrl || 'Not set'<</span>
+              <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-3 text-sm text-white/72">
+                API base URL: <span className="font-semibold text-white">{siteConfig.dashboard.integrations.apiBaseUrl || 'Not set'}</span>
               </div>
-              <div className="rounded-[12px] border border-[#e5e7eb]">
-                Domain: <span className="font-semibold text-white">siteConfig.dashboard.integrations.customDomain || 'Not set'<</span>
+              <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-3 text-sm text-white/72">
+                Domain: <span className="font-semibold text-white">{siteConfig.dashboard.integrations.customDomain || 'Not set'}</span>
               </div>
-              <div>
+              <div
                 className={`rounded-[12px] border px-3 py-3 text-sm ${
                   stats.gaConnected ? dashboardStatusSuccessClass : dashboardStatusFailureClass
                 }`}
@@ -9069,20 +5459,20 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <aside className="rounded-[18px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]">
+            <aside className="rounded-[18px] border border-white/12 bg-white/[0.04] p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/56">Inbox Snapshot</p>
               <div className="mt-3 space-y-2">
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxTotal<</p>
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-2">
+                  <p className="text-xs text-white/58">Total messages</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxTotal}</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxUnread<</p>
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-2">
+                  <p className="text-xs text-white/58">Unread</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxUnread}</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]">
-                  <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxArchived<</p>
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-2">
+                  <p className="text-xs text-white/58">Archived</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxArchived}</p>
                 </div>
               </div>
             </aside>
@@ -9122,61 +5512,63 @@ export const Dashboard: React.FC = () => {
       <div className="grid gap-4">
         <Card title="KPI Snapshot" subtitle="Current website analytics metrics">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[12px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              <p className="mt-1 text-2xl font-semibold text-white">monthlyVisitors.toLocaleString()<</p>
-              <p className="mt-1 text-xs text-[#6b7280]">
-            </div>"
-            <div className="rounded-[12px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              <p className="mt-1 text-2xl font-semibold text-white">conversionRate.toFixed(1)<%</p>
-              <p className="mt-1 text-xs text-[#6b7280]">
-            </div>"
-            <div className="rounded-[12px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+            <div className="rounded-[12px] border border-white/12 bg-white/[0.04] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Monthly Visitors</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{monthlyVisitors.toLocaleString()}</p>
+              <p className="mt-1 text-xs text-white/58">Estimated sessions this month</p>
+            </div>
+            <div className="rounded-[12px] border border-white/12 bg-white/[0.04] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Conversion</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{conversionRate.toFixed(1)}%</p>
+              <p className="mt-1 text-xs text-white/58">Site-wide conversion rate</p>
+            </div>
+            <div className="rounded-[12px] border border-white/12 bg-white/[0.04] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Avg Session</p>
               <p className="mt-1 text-2xl font-semibold text-white">
                 {Math.max(0, Math.round(siteConfig.dashboard.analytics.avgSessionDurationSec / 60))}m
               </p>
-              <p className="mt-1 text-xs text-[#6b7280]">
-            </div>"
-            <div className="rounded-[12px] border border-[#e5e7eb]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              <p className="mt-1 text-2xl font-semibold text-white">conversions.toLocaleString()<</p>
-              <p className="mt-1 text-xs text-[#6b7280]">
+              <p className="mt-1 text-xs text-white/58">Average time on site</p>
+            </div>
+            <div className="rounded-[12px] border border-white/12 bg-white/[0.04] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Conversions</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{conversions.toLocaleString()}</p>
+              <p className="mt-1 text-xs text-white/58">Projected completed actions</p>
             </div>
           </div>
-        </Card>"
+        </Card>
+
         <Card title="Traffic Trend (14 Days)" subtitle="Session trend simulation based on current visitor profile">
           <div className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-2">
             {trendSeries.map((point) => (
               <div key={point.label} className="flex flex-col items-center gap-2">
-                <div className="flex h-[140px] w-full items-end rounded-[8px] bg-[#f8f9fa]">
-                  <div"">
-                    className="w-full rounded-[6px] bg-[#3b82f6]"
+                <div className="flex h-[140px] w-full items-end rounded-[8px] bg-white/[0.06] p-1">
+                  <div
+                    className="w-full rounded-[6px] bg-[#b6f45b]"
                     style={{ height: `${Math.max(8, (point.visitors / maxTrendVisitors) * 100)}%` }}
                   />
                 </div>
-                <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[#6b7280]">
+                <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-white/56">{point.label}</span>
               </div>
             ))}
           </div>
-        </Card>"
+        </Card>
+
         <div className="grid gap-4 xl:grid-cols-2">
           <Card title="Acquisition Mix" subtitle="Channel distribution and trend direction">
             <div className="space-y-3">
               {channels.map((channel) => (
-                <div key={channel.id} className="rounded-[12px] border border-[#e5e7eb]">
+                <div key={channel.id} className="rounded-[12px] border border-white/12 bg-white/[0.04] p-3">
                   <div className="flex items-center justify-between gap-2 text-sm text-white">
-                    <span className="font-semibold">channel.label<</span>
+                    <span className="font-semibold">{channel.label}</span>
                     <span>{channel.sessions.toLocaleString()} sessions</span>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-[#f8f9fa]">
-                    <div"">
-                      className="h-2 rounded-full bg-[#3b82f6]"
+                  <div className="mt-2 h-2 rounded-full bg-white/10">
+                    <div
+                      className="h-2 rounded-full bg-[#b6f45b]"
                       style={{ width: `${Math.max(6, (channel.sessions / maxSessions) * 100)}%` }}
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#6b7280]">
+                  <div className="mt-2 flex items-center justify-between gap-2 text-xs text-white/62">
                     <span>Conv: {channel.conversionRate.toFixed(1)}%</span>
                     <span className={channel.trendPct >= 0 ? 'text-[#86efac]' : 'text-[#fecaca]'}>
                       Trend {channel.trendPct >= 0 ? '+' : ''}
@@ -9186,17 +5578,18 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-          </Card>"
+          </Card>
+
           <Card title="Conversion Funnel" subtitle="How traffic narrows down to completed conversions">
             <div className="space-y-3">
               {funnel.map((stage) => (
                 <div key={stage.id} className="space-y-1.5">
                   <div className="flex items-center justify-between gap-2 text-sm text-white">
                     <span>{stage.label}</span>
-                    <span className="font-semibold">stage.value.toLocaleString()<</span>
+                    <span className="font-semibold">{stage.value.toLocaleString()}</span>
                   </div>
-                  <div className="h-3 rounded-full bg-[#f8f9fa]">
-                    <div"">
+                  <div className="h-3 rounded-full bg-white/10">
+                    <div
                       className="h-3 rounded-full bg-[#f59e0b]"
                       style={{ width: `${Math.max(8, (stage.value / maxFunnelValue) * 100)}%` }}
                     />
@@ -9227,14 +5620,14 @@ export const Dashboard: React.FC = () => {
 
     return (
       <div className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <aside className="rounded-[18px] border border-[#e5e7eb]">
+        <aside className="rounded-[18px] border border-white/12 bg-white/[0.04] p-3">
           <div className="space-y-2">
             <input
               type="text"
               value={messageSearch}
               onChange={(e) => setMessageSearch(e.target.value)}
               placeholder="Search messages"
-              className="w-full rounded-[10px] border border-[#e5e7eb]"
+              className="w-full rounded-[10px] border border-white/14 bg-white/[0.06] px-3 py-2 text-[13px] text-white outline-none placeholder:text-white/42"
             />
 
             <div className="flex flex-wrap gap-2">
@@ -9250,8 +5643,8 @@ export const Dashboard: React.FC = () => {
                   onClick={() => setMessageFilter(option.id as 'all' | SiteMessageStatus)}
                   className={`rounded-[999px] border px-2.5 py-1 text-[11px] ${
                     messageFilter === option.id
-                      ? 'border-[#3b82f6]/45 bg-[#3b82f6]/16 text-[#ffffff]'
-                      : 'border-[#e5e7eb]
+                      ? 'border-[#b6f45b]/45 bg-[#b6f45b]/16 text-[#d7ff9d]'
+                      : 'border-white/14 bg-white/[0.04] text-white/70 hover:bg-white/[0.09]'
                   }`}
                 >
                   {option.label}
@@ -9284,13 +5677,13 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-[14px] border border-[#e5e7eb]">
+          <div className="mt-3 overflow-hidden rounded-[14px] border border-white/12 bg-black/20">
             {filteredMessages.length === 0 ? (
-              <div className="px-3 py-5 text-sm text-[#6b7280]">
+              <div className="px-3 py-5 text-sm text-white/62">No messages for this filter.</div>
             ) : (
               filteredMessages.map((message) => (
-                <button"
-                  key={message.id}"
+                <button
+                  key={message.id}
                   type="button"
                   onClick={() => {
                     setActiveMessageId(message.id);
@@ -9298,34 +5691,36 @@ export const Dashboard: React.FC = () => {
                       updateInboxMessage(message.id, (item) => ({ ...item, status: 'read' }));
                     }
                   }}
-                  className={`w-full border-b border-[#e5e7eb]
-                    activeMessage?.id === message.id ? 'bg-[#f8f9fa]
+                  className={`w-full border-b border-white/10 px-3 py-3 text-left transition-colors last:border-b-0 ${
+                    activeMessage?.id === message.id ? 'bg-white/[0.1]' : 'bg-transparent hover:bg-white/[0.06]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-white">message.senderName<</p>
-                    <span className="text-[11px] text-[#6b7280]">
+                    <p className="truncate text-sm font-semibold text-white">{message.senderName}</p>
+                    <span className="text-[11px] text-white/56">
                       {new Date(message.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>"
-                  </div>"
-                  <p className="mt-0.5 truncate text-xs text-[#6b7280]">
-                  <p className="mt-1 truncate text-[11px] text-[#6b7280]">
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-white/72">{message.subject}</p>
+                  <p className="mt-1 truncate text-[11px] text-white/56">{message.companyName}</p>
                 </button>
               ))
             )}
           </div>
-        </aside>"
+        </aside>
+
         <section className="min-w-0">
           {activeMessage ? (
-            <div className="rounded-[18px] border border-[#e5e7eb]">
-              <div className="border-b border-[#e5e7eb]">
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">
-                <h2 className="mt-1 text-xl font-semibold text-white">activeMessage.subject<</h2>
-                <p className="mt-1 text-sm text-[#6b7280]">
+            <div className="rounded-[18px] border border-white/12 bg-white/[0.04] p-4 md:p-5">
+              <div className="border-b border-white/10 pb-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/56">Message Detail</p>
+                <h2 className="mt-1 text-xl font-semibold text-white">{activeMessage.subject}</h2>
+                <p className="mt-1 text-sm text-white/64">
                   From {activeMessage.senderName} at {activeMessage.companyName} • {activeMessage.email}
                 </p>
-              </div>"
-              <div className="mt-4 rounded-[12px] border border-[#e5e7eb]">
+              </div>
+
+              <div className="mt-4 rounded-[12px] border border-white/12 bg-black/22 p-4 text-[14px] leading-relaxed text-white/84">
                 {activeMessage.message}
               </div>
 
@@ -9366,7 +5761,7 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : (
             <Card title="Inbox" subtitle="No message selected">
-              <p className="text-sm text-[#111217]/62"Choose a message from the list to view details.</p>
+              <p className="text-sm text-[#111217]/62">Choose a message from the list to view details.</p>
             </Card>
           )}
         </section>
@@ -9376,26 +5771,16 @@ export const Dashboard: React.FC = () => {
 
   const renderWorkspaceContent = () => {
     switch (activeWorkspace) {
-      case 'sitePages':
-        return renderSitePagesWorkspace();
-      case 'designSystem':
-        return renderDesignSystemWorkspace();
-      case 'siteIntegrations':
-        return renderSiteIntegrationsWorkspace();
-      case 'publishing':
-        return renderPublishingWorkspace();
+      case 'site':
+        return renderSiteWorkspace();
+      case 'articles':
+        return renderArticlesWorkspace();
+      case 'settings':
+        return renderSettingsWorkspace();
       case 'analytics':
         return renderAnalyticsWorkspace();
       case 'messages':
         return renderMessagesWorkspace();
-      case 'personalHub':
-        return renderPersonalHubWorkspace();
-      case 'aiIntelligence':
-        return renderAIIntelligenceWorkspace();
-      case 'communication':
-        return renderCommunicationWorkspace();
-      case 'notes':
-        return renderNotesWorkspace();
       default:
         return null;
     }
@@ -9404,16 +5789,16 @@ export const Dashboard: React.FC = () => {
 
   if (!isUnlocked) {
     return (
-      <main className="dashboard-mono flex min-h-screen items-center justify-center bg-[#ffffff] px-4 text-[#111217]"
+      <main className="dashboard-mono flex min-h-screen items-center justify-center bg-[#f3f4f6] px-4 text-[#111217]">
         <form
           onSubmit={handleLogin}
           className="w-full max-w-[440px] rounded-[16px] border border-[#111217]/12 bg-white p-6 shadow-[0_22px_50px_-38px_rgba(17,18,23,0.45)]"
         >
-          <h1 className="font-mono text-[12px] uppercase tracking-[0.28em] text-[#111217]/90"Dashboard Access</h1>
-          <p className="mt-3 text-sm text-[#111217]/65"Hidden control panel. Enter password to continue.</p>
+          <h1 className="font-mono text-[12px] uppercase tracking-[0.28em] text-[#111217]/90">Dashboard Access</h1>
+          <p className="mt-3 text-sm text-[#111217]/65">Hidden control panel. Enter password to continue.</p>
 
           <label className="mt-5 flex flex-col gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#111217]/70"Password</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#111217]/70">Password</span>
             <input
               type="password"
               value={password}
@@ -9423,7 +5808,7 @@ export const Dashboard: React.FC = () => {
             />
           </label>
 
-          {authError ? <p className="mt-3 text-sm text-[#111217]/76">authError<</p> : null}
+          {authError ? <p className="mt-3 text-sm text-[#111217]/76">{authError}</p> : null}
 
           <button
             type="submit"
@@ -9432,22 +5817,22 @@ export const Dashboard: React.FC = () => {
             Unlock
           </button>
 
-          <p className="mt-4 text-xs text-[#111217]/45"Open this page with the hidden route: #/dashboard</p>
+          <p className="mt-4 text-xs text-[#111217]/45">Open this page with the hidden route: #/dashboard</p>
         </form>
       </main>
     );
   }
 
   return (
-    <main className="dashboard-mono min-h-screen p-2 md:p-4 bg-[#f8f9fa] text-[#1a1a1a]"
-      <div className="dashboard-shell mx-auto w-full max-w-[1600px] rounded-[16px] border border-[#e5e7eb] bg-white p-2 md:p-3 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[60px_minmax(0,1fr)]">
-          <aside className="dashboard-sidebar flex min-h-[600px] flex-col rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e5e7eb] bg-white p-1.5">
+    <main className="dashboard-mono dashboard-cyber min-h-screen bg-[#b7d697] p-3 text-[#edf2f9] md:p-6">
+      <div className="dashboard-shell mx-auto w-full max-w-[1780px] rounded-[34px] border border-black/30 bg-[#07090d] p-3 shadow-[0_48px_120px_-60px_rgba(0,0,0,0.82)] md:p-5">
+        <div className="grid gap-4 lg:grid-cols-[78px_minmax(0,1fr)]">
+          <aside className="dashboard-sidebar flex min-h-[740px] flex-col rounded-[24px] border border-white/10 bg-[#0c1118] p-2.5">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[14px] border border-white/16 bg-black/40 p-2">
               <img src={dashboardLogoSrc} alt={dashboardLogoAlt} className="h-full w-full object-contain" />
             </span>
 
-            <div className="mt-2 flex flex-col gap-1.5">
+            <div className="mt-3 flex flex-col gap-2">
               {DASHBOARD_WORKSPACES.map((workspace) => {
                 const active = workspace.id === activeWorkspace;
                 const WorkspaceIcon = workspace.icon;
@@ -9459,35 +5844,25 @@ export const Dashboard: React.FC = () => {
                       setActiveWorkspace(workspace.id);
                       clearUploadFeedback();
                     }}
-                    className={`inline-flex h-9 w-9 items-center justify-center rounded-[8px] border font-mono text-[9px] uppercase tracking-[0.12em] transition-all ${
+                    className={`inline-flex h-11 w-11 items-center justify-center rounded-[12px] border font-mono text-[10px] uppercase tracking-[0.14em] transition-all ${
                       active
-                        ? 'border-[#3b82f6] bg-[#3b82f6] text-white'
-                        : 'border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff] hover:text-[#1a1a1a]'
+                        ? 'border-[#b6f45b]/46 bg-[#b6f45b]/18 text-[#d7ff9d]'
+                        : 'border-white/12 bg-white/[0.03] text-white/68 hover:bg-white/[0.08] hover:text-white'
                     }`}
                     title={workspace.label}
                   >
-                    <WorkspaceIcon size={14} strokeWidth={1.8} />
+                    <WorkspaceIcon size={16} strokeWidth={1.8} />
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-auto flex flex-col gap-1.5 pt-2">
-              <button
-                type="button"
-                onClick={handleSaveChanges}
-                title="Save changes"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#3b82f6] bg-[#3b82f6] text-white"
-              >
-                <Save size={14} strokeWidth={1.9} />
+            <div className="mt-auto flex flex-col gap-2 pt-3">
+              <button type="button" onClick={handleSaveChanges} title="Save changes" className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#b6f45b]/46 bg-[#b6f45b] text-[#0a0d11]">
+                <Save size={16} strokeWidth={1.9} />
               </button>
-              <button
-                type="button"
-                onClick={handleOpenSite}
-                title="Open site"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff]"
-              >
-                <ExternalLink size={14} strokeWidth={1.9} />
+              <button type="button" onClick={handleOpenSite} title="Open site" className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-white/14 bg-white/[0.06] text-white/78 hover:bg-white/[0.12]">
+                <ExternalLink size={16} strokeWidth={1.9} />
               </button>
               <button
                 type="button"
@@ -9497,50 +5872,33 @@ export const Dashboard: React.FC = () => {
                   setHasUnsavedChanges(false);
                 }}
                 title="Reset defaults"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-white/14 bg-white/[0.06] text-white/78 hover:bg-white/[0.12]"
               >
-                <RotateCcw size={14} strokeWidth={1.9} />
+                <RotateCcw size={16} strokeWidth={1.9} />
               </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Logout"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20"
-              >
-                <LogOut size={14} strokeWidth={1.9} />
+              <button type="button" onClick={handleLogout} title="Logout" className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#ef4444]/38 bg-[#ef4444]/18 text-[#fecaca] hover:bg-[#ef4444]/28">
+                <LogOut size={16} strokeWidth={1.9} />
               </button>
             </div>
           </aside>
 
-          <section className="dashboard-main min-w-0 rounded-[12px] border border-[#e5e7eb] bg-white p-2 md:p-3">
-            <div className="dashboard-toolbar flex flex-col gap-2 rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-2 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-1.5">
+          <section className="dashboard-main min-w-0 rounded-[26px] border border-white/12 bg-[#0f131b] p-3 md:p-4">
+            <div className="dashboard-toolbar flex flex-col gap-3 rounded-[16px] border border-white/10 bg-[#0c1016] px-3 py-2.5 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
                 {DASHBOARD_WORKSPACES.map((workspace) => {
                   const active = workspace.id === activeWorkspace;
                   const badge =
-                    workspace.id === 'sitePages'
+                    workspace.id === 'site'
                       ? `${stats.projects + stats.articles}`
-                      : workspace.id === 'designSystem'
-                        ? 'System'
-                        : workspace.id === 'siteIntegrations'
+                      : workspace.id === 'articles'
+                        ? `${stats.articles}`
+                        : workspace.id === 'settings'
                           ? stats.gaConnected
                             ? 'Ready'
                             : 'Setup'
-                          : workspace.id === 'publishing'
-                            ? `${stats.articles}`
                           : workspace.id === 'analytics'
                             ? compactMonthlyVisitors
-                          : workspace.id === 'messages'
-                            ? `${stats.inboxUnread}`
-                          : workspace.id === 'personalHub'
-                            ? `${stats.partners + stats.personalProjects}`
-                          : workspace.id === 'aiIntelligence'
-                            ? `${stats.aiTracking}`
-                          : workspace.id === 'communication'
-                            ? `${stats.emails}`
-                          : workspace.id === 'notes'
-                            ? `${stats.notes}`
-                          : '0';
+                            : `${stats.inboxUnread}`;
 
                   return (
                     <button
@@ -9550,18 +5908,18 @@ export const Dashboard: React.FC = () => {
                         setActiveWorkspace(workspace.id);
                         clearUploadFeedback();
                       }}
-                      className={`dashboard-nav-item inline-flex items-center gap-1.5 rounded-[999px] border px-2 py-1 text-left transition-all ${
+                      className={`dashboard-nav-item inline-flex items-center gap-2 rounded-[999px] border px-3 py-2 text-left transition-all ${
                         active
-                          ? 'border-[#3b82f6] bg-[#3b82f6] text-white'
-                          : 'border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff]'
+                          ? 'dashboard-nav-item-active border-[#b6f45b]/46 bg-[#b6f45b]/18 text-white shadow-[0_12px_28px_-20px_rgba(182,244,91,0.55)]'
+                          : 'dashboard-nav-item-idle border-white/14 bg-white/[0.04] text-white/80 hover:border-white/24 hover:bg-white/[0.1]'
                       }`}
                     >
-                      <span className="font-medium text-[11px]">workspace.label<</span>
-                      <span className={`rounded-[999px] border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${>
-                        active
-                          ? 'border-[#e5e7eb]
-                          : 'border-[#e5e7eb] bg-[#f8f9fa] text-[#6b7280]'
-                      }`}>
+                      <span className="font-medium text-[12px]">{workspace.label}</span>
+                      <span
+                        className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
+                          active ? 'border-white/26 bg-black/25 text-white/86' : 'border-white/14 bg-black/20 text-white/66'
+                        }`}
+                      >
                         {badge}
                       </span>
                     </button>
@@ -9569,73 +5927,73 @@ export const Dashboard: React.FC = () => {
                 })}
               </div>
 
-              <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center">
-                <label className="w-full sm:w-[280px]">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <label className="w-full sm:w-[320px]">
                   <input
                     type="text"
                     placeholder="Search workspace"
-                    className="w-full rounded-[999px] border border-[#e5e7eb] bg-white px-3 py-1.5 text-[12px] text-[#1a1a1a] outline-none placeholder:text-[#9ca3af] focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
+                    className="w-full rounded-[999px] border border-white/14 bg-white/[0.06] px-4 py-2 text-[13px] text-white outline-none transition-all placeholder:text-white/38 focus:border-[#b6f45b]/52 focus:ring-2 focus:ring-[#b6f45b]/22"
                   />
                 </label>
-                <div className="inline-flex items-center gap-1.5 rounded-[999px] border border-[#e5e7eb] bg-white px-2 py-1">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f8f9fa] p-1">
+                <div className="inline-flex items-center gap-2 rounded-[999px] border border-white/12 bg-white/[0.04] px-2 py-1.5">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/16 bg-black/45 p-1.5">
                     <img src={dashboardLogoSrc} alt={dashboardLogoAlt} className="h-full w-full object-contain" />
                   </span>
                   <div className="pr-1">
-                    <p className="text-[11px] font-medium text-[#1a1a1a]"Web Studio</p>
-                    <p className="text-[9px] text-[#6b7280]"@dashboard</p>
+                    <p className="text-[12px] font-medium text-white">Web Studio</p>
+                    <p className="text-[10px] text-white/52">@dashboard</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="mt-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#6b7280]"Dashboard Control</p>
-                <h1 className="mt-0.5 text-xl font-semibold leading-tight text-[#1a1a1a]">activeWorkspaceInfo.label<</h1>
-                <p className="mt-0.5 text-xs text-[#6b7280]">activeWorkspaceInfo.description<</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/52">Dashboard Control</p>
+                <h1 className="mt-1 text-3xl font-semibold leading-tight text-white">{activeWorkspaceInfo.label}</h1>
+                <p className="mt-1 text-sm text-white/58">{activeWorkspaceInfo.description}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="rounded-[999px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-0.5 text-[10px] text-[#6b7280]"Date: {currentDateLabel}</span>
-                <span className={`rounded-[999px] border px-2 py-0.5 text-[10px] ${hasUnsavedChanges ? 'border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444]' : 'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]'}`}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-[999px] border border-white/12 bg-white/[0.04] px-3 py-1 text-[11px] text-white/72">Date: {currentDateLabel}</span>
+                <span className={`rounded-[999px] border px-3 py-1 text-[11px] ${hasUnsavedChanges ? dashboardStatusFailureClass : dashboardStatusSuccessClass}`}>
                   {hasUnsavedChanges ? 'Changes pending' : 'Synced'}
                 </span>
               </div>
             </div>
 
-            <section className="dashboard-kpis mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"Content Units</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">stats.projects + stats.articles<</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]"Projects and articles</p>
+            <section className="dashboard-kpis mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="dashboard-kpi rounded-[16px] border border-white/12 bg-white/[0.04] p-2.5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/52">Content Units</p>
+                <p className="mt-1 text-xl font-semibold text-white">{stats.projects + stats.articles}</p>
+                <p className="mt-1 text-xs text-white/58">Projects and articles</p>
               </div>
 
-              <div className="dashboard-kpi dashboard-kpi-primary rounded-[10px] border border-[#3b82f6] bg-[#3b82f6]/10 p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#3b82f6]"Unread Messages</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">stats.inboxUnread<</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]"Leads waiting for follow-up</p>
+              <div className="dashboard-kpi dashboard-kpi-primary rounded-[16px] border border-[#b6f45b]/36 bg-[#b6f45b]/14 p-2.5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#d7ff9d]">Unread Messages</p>
+                <p className="mt-1 text-xl font-semibold text-white">{stats.inboxUnread}</p>
+                <p className="mt-1 text-xs text-white/74">Leads waiting for follow-up</p>
               </div>
 
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"GA Integration</p>
-                <p className="mt-0.5 text-base font-semibold text-[#1a1a1a]">stats.gaConnected ? 'Connected' : 'Not Connected'<</p>
-                <p className="mt-0.5 truncate text-[10px] text-[#6b7280]">
+              <div className="dashboard-kpi rounded-[16px] border border-white/12 bg-white/[0.04] p-2.5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/52">GA Integration</p>
+                <p className="mt-1 text-lg font-semibold text-white">{stats.gaConnected ? 'Connected' : 'Not Connected'}</p>
+                <p className="mt-1 truncate text-xs text-white/58">
                   {siteConfig.dashboard.integrations.googleAnalyticsMeasurementId || 'No measurement ID'}
                 </p>
               </div>
 
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"Monthly Visitors</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">siteConfig.dashboard.analytics.monthlyVisitors.toLocaleString()<</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]"Conversion {siteConfig.dashboard.analytics.conversionRate.toFixed(1)}%</p>
+              <div className="dashboard-kpi rounded-[16px] border border-white/12 bg-white/[0.04] p-2.5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/52">Monthly Visitors</p>
+                <p className="mt-1 text-xl font-semibold text-white">{siteConfig.dashboard.analytics.monthlyVisitors.toLocaleString()}</p>
+                <p className="mt-1 text-xs text-white/58">Conversion {siteConfig.dashboard.analytics.conversionRate.toFixed(1)}%</p>
               </div>
             </section>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <button type="button" onClick={handleSaveChanges} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#3b82f6] bg-[#3b82f6] px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#2563eb]"
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={handleSaveChanges} className={dashboardActionButtonPrimaryClass}>
                 Save Changes
               </button>
-              <button type="button" onClick={handleOpenSite} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#1a1a1a] transition-colors hover:bg-[#ffffff]"
+              <button type="button" onClick={handleOpenSite} className={dashboardActionButtonSecondaryClass}>
                 Open Site
               </button>
               <button
@@ -9645,28 +6003,28 @@ export const Dashboard: React.FC = () => {
                   clearUploadFeedback();
                   setHasUnsavedChanges(false);
                 }}
-                className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#1a1a1a] transition-colors hover:bg-[#ffffff]"
+                className={dashboardActionButtonSecondaryClass}
               >
                 Reset Defaults
               </button>
-              <button type="button" onClick={handleLogout} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#ef4444] bg-[#ef4444]/10 px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#ef4444] transition-colors hover:bg-[#ef4444]/20"
+              <button type="button" onClick={handleLogout} className={dashboardActionButtonDangerClass}>
                 Logout
               </button>
             </div>
 
-            <section className="mt-3 space-y-3">
-              {activeWorkspace !== 'sitePages' && uploadError ? (
-                <div className="rounded-[10px] border border-[#ef4444] bg-[#ef4444]/10 px-3 py-2 text-sm text-[#ef4444]">
+            <section className="mt-4 space-y-4">
+              {activeWorkspace !== 'site' && uploadError ? (
+                <div className={`rounded-[12px] border px-4 py-3 text-sm ${dashboardStatusFailureClass}`}>
                   {uploadError}
                 </div>
               ) : null}
-              {activeWorkspace !== 'sitePages' && uploadMessage ? (
-                <div className="rounded-[10px] border border-[#22c55e] bg-[#22c55e]/10 px-3 py-2 text-sm text-[#22c55e]">
+              {activeWorkspace !== 'site' && uploadMessage ? (
+                <div className={`rounded-[12px] border px-4 py-3 text-sm ${dashboardStatusSuccessClass}`}>
                   {uploadMessage}
                 </div>
               ) : null}
 
-              <div className="dashboard-workspace dashboard-workspace-surface rounded-[12px] border border-[#e5e7eb] bg-white p-3 md:p-4">
+              <div className="dashboard-workspace dashboard-workspace-surface rounded-[22px] border border-white/10 bg-[#11161f] p-4 md:p-5">
                 {renderWorkspaceContent()}
               </div>
             </section>
@@ -9678,7 +6036,6 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
 
 
 
