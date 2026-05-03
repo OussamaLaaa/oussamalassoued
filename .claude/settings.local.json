@@ -10,7 +10,8 @@
       "Bash(grep -n 'className=\"[^\"]*$' src/pages/Dashboard.tsx)",
       "Bash(Get-Content \"c:\\\\webiiiiiiiiiiiiiii\\\\src\\\\pages\\\\Dashboard.tsx\")",
       "Bash(Select-Object -First 200)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(grep -n 'className=\".*border border-\\\\[#[0-9a-f]+\\\\]$' src/pages/Dashboard.tsx)"
     ]
   }
 }

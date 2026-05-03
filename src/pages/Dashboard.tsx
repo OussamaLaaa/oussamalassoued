@@ -5648,13 +5648,13 @@ export const Dashboard: React.FC = () => {
   const renderSitePagesWorkspace = () => {
     return (
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Sections</p>
 
           <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
             {DASHBOARD_SECTION_GROUPS.map((group) => (
               <div key={group.id} className="space-y-2">
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">{group.label}</p>
                 <div className="space-y-2">
                   {group.sectionIds.map((sectionId) => {
                     const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
@@ -5678,8 +5678,10 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]
-            Editing now: <span className="font-semibold text-white">{activeSectionInfo.label}</span>
+          <div className="mt-3 rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              Editing now: <span className="font-semibold text-[#1a1a1a]">{activeSectionInfo.label}</span>
+            </p>
           </div>
         </aside>
 
@@ -5695,7 +5697,9 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="rounded-[20px] border border-[#e5e7eb])}</div>
+          <div className="rounded-[20px] border border-[#e5e7eb] bg-white p-4">
+            {renderSectionContent()}
+          </div>
         </section>
       </div>
     );
@@ -5712,8 +5716,8 @@ export const Dashboard: React.FC = () => {
 
     return (
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Design Sections</p>
 
           <div className="mt-3 space-y-2">
             {designSections.map((section) => (
