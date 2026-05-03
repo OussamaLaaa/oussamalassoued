@@ -791,7 +791,7 @@ const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: bo
 }) => {
   return (
     <label className="flex items-center justify-between gap-3 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] px-2.5 py-1.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[#3b82f6]" />
     </label>
   );
@@ -4515,7 +4515,7 @@ export const Dashboard: React.FC = () => {
                           'dark',
                         )}`}
                       >
-                        <p className="text-sm font-semibold text-white">formatVariantLabel(variant)<</p>
+                        <p className="text-sm font-semibold text-white">{formatVariantLabel(variant)}</p>
                         <p className="mt-1 text-xs text-[#6b7280]
                       </div>
                     ))}
@@ -4614,7 +4614,7 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em]">mode.label<</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em]">{mode.label}</p>
                       <p className="mt-1 text-[12px] text-[#6b7280]
                     </button>
                   );
@@ -5623,7 +5623,7 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
-            Editing now: <span className="font-semibold text-white">activeSectionInfo.label<</span>
+            Editing now: <span className="font-semibold text-white">{activeSectionInfo.label}</span>
           </div>
         </aside>
 
@@ -5654,7 +5654,7 @@ export const Dashboard: React.FC = () => {
           <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1"
             {DASHBOARD_SECTION_GROUPS.map((group) => (
               <div key={group.id} className="space-y-2"
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">group.label<</p>
+                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">{group.label}</p>
                 <div className="space-y-2">
                   {group.sectionIds.map((sectionId) => {
                     const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
@@ -5680,7 +5680,7 @@ export const Dashboard: React.FC = () => {
 
           <div className="mt-3 rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
-              Editing now: <span className="font-semibold text-[#1a1a1a]">activeSectionInfo.label<</span>
+              Editing now: <span className="font-semibold text-[#1a1a1a]">{activeSectionInfo.label}</span>
             </p>
           </div>
         </aside>
@@ -6422,7 +6422,7 @@ export const Dashboard: React.FC = () => {
               <Card title="Preview" subtitle="Current browser identity settings"
                 <div className="rounded-[12px] border border-[#e5e7eb]"
                   <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 font-medium text-white">siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'<</p>
+                  <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
                 </div>
                 <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
                   <p className="text-xs text-[#6b7280]">
@@ -6693,7 +6693,7 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
-            Total: <span className="font-semibold text-white">siteConfig.articles.length<</span> articles
+            Total: <span className="font-semibold text-white">{siteConfig.articles.length}</span> articles
           </div>
         </aside>
 
@@ -6750,15 +6750,15 @@ export const Dashboard: React.FC = () => {
                 <div className="grid gap-2 sm:grid-cols-3"
                   <div className="rounded-[12px] border border-[#e5e7eb]"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.articles.length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
-                    <p className="mt-1 text-lg font-semibold text-white">liveArticlesCount<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
-                    <p className="mt-1 text-lg font-semibold text-white">scheduledCount<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
                   </div>
                 </div>
               </Card>
@@ -6788,7 +6788,7 @@ export const Dashboard: React.FC = () => {
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2"
-                              <p className="line-clamp-1 text-sm font-semibold text-white">article.title<</p>
+                              <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
                               <span
                                 className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                                   isLive
@@ -6916,7 +6916,7 @@ export const Dashboard: React.FC = () => {
                               : 'border-[#e5e7eb]
                           }`}
                         >
-                          <p className="text-sm text-white">day<</p>
+                          <p className="text-sm text-white">{day}</p>
                           {hasScheduled && <div className="mt-1 h-1 w-1 rounded-full bg-[#3b82f6]" />}
                         </div>
                       );
@@ -6934,7 +6934,7 @@ export const Dashboard: React.FC = () => {
                     .map((article) => (
                       <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]"
                         <div className="flex items-center justify-between"
-                          <p className="text-sm font-medium text-white">article.title<</p>
+                          <p className="text-sm font-medium text-white">{article.title}</p>
                           <span className="text-xs text-[#6b7280]
                             {new Date(article.publishedAt).toLocaleDateString('en-US')}
                           </span>
@@ -6959,21 +6959,21 @@ export const Dashboard: React.FC = () => {
                     .map((article) => (
                       <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]"
                         <div className="flex items-center justify-between"
-                          <p className="text-sm font-medium text-white">article.title<</p>
+                          <p className="text-sm font-medium text-white">{article.title}</p>
                           <span className="text-xs text-[#6b7280]"
                         </div>"
                         <div className="mt-2 grid grid-cols-3 gap-2"
                           <div>
                             <p className="text-[10px] text-[#6b7280]"
-                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 1000) + 100<</p>
+                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 1000) + 100}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-[#6b7280]"
-                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 500) + 50<</p>
+                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 500) + 50}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-[#6b7280]"
-                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 50) + 5<</p>
+                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 50) + 5}</p>
                           </div>
                         </div>
                       </div>
@@ -7100,7 +7100,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex items-center gap-3"
                     <SectionIcon size={16} strokeWidth={1.8} />
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">section.label<</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">{section.label}</p>
                       <p className={`mt-1 text-[12px] ${activePersonalHubSection === section.id ? 'text-[#6b7280]
                         {section.description}
                       </p>
@@ -7157,19 +7157,19 @@ export const Dashboard: React.FC = () => {
                 <div className="grid gap-2 sm:grid-cols-4"
                   <div className="rounded-[12px] border border-[#e5e7eb]"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Active</p>
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.status === 'active').length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'active').length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Prospects</p>
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.status === 'prospect').length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'prospect').length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#e5e7eb]"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length}</p>
                   </div>
                 </div>
               </Card>
@@ -7184,7 +7184,7 @@ export const Dashboard: React.FC = () => {
                         <div className="flex items-start justify-between gap-3"
                           <div className="flex-1"
                             <div className="flex items-center gap-2"
-                              <p className="text-sm font-semibold text-white">partner.name<</p>
+                              <p className="text-sm font-semibold text-white">{partner.name}</p>
                               <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                                 partner.status === 'active'
                                   ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
@@ -7265,15 +7265,15 @@ export const Dashboard: React.FC = () => {
                 <div className="grid gap-2 sm:grid-cols-4"
                   <div className="rounded-[12px] border border-[#e5e7eb]"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"In Progress</p>
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.filter((p) => p.status === 'in_progress').length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'in_progress').length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Completed</p>
-                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.filter((p) => p.status === 'completed').length<</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'completed').length}</p>
                   </div>
                   <div className="rounded-[12px] border border-[#e5e7eb]"
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
@@ -8755,15 +8755,15 @@ export const Dashboard: React.FC = () => {
           <div className="grid gap-2 sm:grid-cols-3"
             <div className="rounded-[12px] border border-[#e5e7eb]"
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
-              <p className="mt-1 text-lg font-semibold text-white">siteConfig.articles.length<</p>
+              <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
             </div>
             <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
-              <p className="mt-1 text-lg font-semibold text-white">liveArticlesCount<</p>
+              <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
             </div>
             <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
               <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
-              <p className="mt-1 text-lg font-semibold text-white">scheduledCount<</p>
+              <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
             </div>
           </div>
         </Card>
@@ -8793,7 +8793,7 @@ export const Dashboard: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2"
-                        <p className="line-clamp-1 text-sm font-semibold text-white">article.title<</p>
+                        <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
                         <span
                           className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                             isLive
@@ -9015,7 +9015,7 @@ export const Dashboard: React.FC = () => {
               <div className="mt-3 space-y-3"
                 <div className="rounded-[12px] border border-[#e5e7eb]"
                   <p className="text-xs text-[#6b7280]">
-                  <p className="mt-1 font-medium text-white">siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'<</p>
+                  <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
                 </div>
                 <div className="rounded-[12px] border border-[#e5e7eb]"
                   <p className="text-xs text-[#6b7280]">

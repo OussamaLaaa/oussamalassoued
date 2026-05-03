@@ -12,7 +12,8 @@
       "Bash(Select-Object -First 200)",
       "Bash(npx tsc *)",
       "Bash(grep -n 'className=\".*border border-\\\\[#[0-9a-f]+\\\\]$' src/pages/Dashboard.tsx)",
-      "Bash(grep -n 'className=\".*border border-\\\\[#[0-9a-fA-F]\\\\+\\\\]$\" src/pages/Dashboard.tsx | head -30)"
+      "Bash(grep -n 'className=\".*border border-\\\\[#[0-9a-fA-F]\\\\+\\\\]$\" src/pages/Dashboard.tsx | head -30)",
+      "Bash(timeout 5)"
     ]
   }
 }
