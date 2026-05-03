@@ -481,10 +481,10 @@ const Input: React.FC<{
     };
 
     return (
-      <label className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
-          <div className="inline-flex items-center gap-1 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] p-0.5">
+      <label className="flex flex-col gap-1.5"
+        <div className="flex items-center justify-between gap-2"
+          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
+          <div className="inline-flex items-center gap-1 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] p-0.5"
             <button
               type="button"
               onClick={() => nudgeValue(-1)}
@@ -530,8 +530,8 @@ const Input: React.FC<{
   }
 
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1"
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
       <input
         type={type}
         min={min}
@@ -553,9 +553,9 @@ const ColorInput: React.FC<{
   const pickerValue = toPickerColorValue(value);
 
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
-      <div className="flex items-stretch gap-2">
+    <label className="flex flex-col gap-1"
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
+      <div className="flex items-stretch gap-2"
         <input
           type="color"
           value={pickerValue}
@@ -570,7 +570,7 @@ const ColorInput: React.FC<{
           className="min-w-0 flex-1 rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-[12px] text-[#1a1a1a] outline-none transition-all focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
         />
       </div>
-      <p className="text-[9px] text-[#9ca3af]">Use the swatch or paste any CSS color.</p>
+      <p className="text-[9px] text-[#9ca3af]"Use the swatch or paste any CSS color.</p>
     </label>
   );
 };
@@ -582,8 +582,8 @@ const Textarea: React.FC<{
   rows?: number;
 }> = ({ label, value, onChange, rows = 3 }) => {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1"
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
       <textarea
         rows={rows}
         value={value}
@@ -601,8 +601,8 @@ const SelectInput: React.FC<{
   onChange: (value: string) => void;
 }> = ({ label, value, options, onChange }) => {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex flex-col gap-1"
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -640,7 +640,7 @@ const ButtonVariantPicker: React.FC<{
   const wrapperToneClass = tone === 'dark' ? 'bg-[#f3f4f6] border-[#e5e7eb]' : 'bg-[#ffffff] border-[#e5e7eb]';
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2"
       <VariantPickerTitle label={label} tone={tone} />
       <div className={`grid gap-2 rounded-[12px] border p-2 ${wrapperToneClass} sm:grid-cols-3`}>
         {SITE_BUTTON_VARIANTS.map((variant) => {
@@ -689,7 +689,7 @@ const CardVariantPicker: React.FC<{
   const textToneClass = tone === 'dark' ? 'text-[#6b7280]' : 'text-[#1a1a1a]';
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2"
       <VariantPickerTitle label={label} tone={tone} />
       <div className={`grid gap-2 rounded-[12px] border p-2 ${wrapperToneClass} sm:grid-cols-2`}>
         {SITE_CARD_VARIANTS.map((variant) => {
@@ -744,7 +744,7 @@ const GlassVariantPicker: React.FC<{
   const wrapperToneClass = tone === 'dark' ? 'bg-[#ffffff] border-[#e5e7eb]' : 'bg-[#f8f9fa] border-[#e5e7eb]'
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2"
       <VariantPickerTitle label={label} tone={tone} />
       <div className={`grid gap-2 rounded-[12px] border p-2 ${wrapperToneClass} sm:grid-cols-3`}>
         {SITE_GLASS_VARIANTS.map((variant) => {
@@ -790,8 +790,8 @@ const Toggle: React.FC<{ label: string; checked: boolean; onChange: (checked: bo
   onChange,
 }) => {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] px-2.5 py-1.5">
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">{label}</span>
+    <label className="flex items-center justify-between gap-3 rounded-[8px] border border-[#e5e7eb] bg-[#f8f9fa] px-2.5 py-1.5"
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">label<</span>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[#3b82f6]" />
     </label>
   );
@@ -1535,9 +1535,9 @@ export const Dashboard: React.FC = () => {
     switch (activeSection) {
       case 'sequence':
         return (
-          <div className="grid gap-5 2xl:grid-cols-2">
-            <Card title="Cinematic Sequence" subtitle="Control scene handoff from About to Projects">
-              <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-5 2xl:grid-cols-2"
+            <Card title="Cinematic Sequence" subtitle="Control scene handoff from About to Projects"
+              <div className="grid gap-4 xl:grid-cols-2"
                 <Input
                   label="Wheel intensity"
                   type="number"
@@ -1733,13 +1733,13 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <p className="rounded-[10px] border border-[#e5e7eb] p-3 text-sm text-[#1a1a1a]">
+              <p className="rounded-[10px] border border-[#e5e7eb] p-3 text-sm text-[#1a1a1a]"
                 Tune hero scroll sensitivity, touch feel, easing, and input cooldown when moving between cinematic frames. Pause timing still controls how long the About closet holds before the Projects reveal.
               </p>
             </Card>
 
-            <Card title="Portal Frame Window" subtitle="Edit the first-scene window size, offsets, and matte tone">
-              <div className="grid gap-4 xl:grid-cols-2">
+            <Card title="Portal Frame Window" subtitle="Edit the first-scene window size, offsets, and matte tone"
+              <div className="grid gap-4 xl:grid-cols-2"
                 <Input
                   label="Top offset mobile (px)"
                   type="number"
@@ -1913,8 +1913,8 @@ export const Dashboard: React.FC = () => {
 
       case 'intro':
         return (
-          <div className="grid gap-4">
-            <Card title="Intro Text" subtitle="Glowing headline and scroll prompt">
+          <div className="grid gap-4"
+            <Card title="Intro Text" subtitle="Glowing headline and scroll prompt"
               <Textarea
                 label="Primary headline"
                 value={siteConfig.introText}
@@ -1955,8 +1955,8 @@ export const Dashboard: React.FC = () => {
 
       case 'featured':
         return (
-          <div className="grid gap-4">
-            <Card title="Featured Section" subtitle="Headline, labels, CTA text">
+          <div className="grid gap-4"
+            <Card title="Featured Section" subtitle="Headline, labels, CTA text"
               <Input
                 label="Title line 1"
                 value={siteConfig.featured.titleLine1}
@@ -2035,11 +2035,11 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Style mapping for this section
                 </p>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2"
                   <CardVariantPicker
                     label="Project card type"
                     value={siteConfig.designSystem.components.featuredProjectCardVariant}
@@ -2078,21 +2078,21 @@ export const Dashboard: React.FC = () => {
 
       case 'projects':
         return (
-          <div className="grid gap-4">
-            <Card title="Projects" subtitle="Edit, add, remove cards + upload images">
-              <p className="text-xs text-[#6b7280]">
+          <div className="grid gap-4"
+            <Card title="Projects" subtitle="Edit, add, remove cards + upload images"
+              <p className="text-xs text-[#6b7280]"
                 You can upload image files directly. For local storage reliability keep each image under{' '}
                 {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}.
               </p>
 
               {siteConfig.projects.map((project) => (
                 <div key={project.id} className={listItemClass}>
-                  <div className="overflow-hidden rounded-[10px] border border-[#e5e7eb]">
+                  <div className="overflow-hidden rounded-[10px] border border-[#e5e7eb]"
                     <img src={project.img} alt={project.title} className="h-40 w-full object-cover" />
                   </div>
 
-                  <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+                  <label className="flex flex-col gap-1.5"
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       Upload project image
                     </span>
                     <input
@@ -2138,15 +2138,15 @@ export const Dashboard: React.FC = () => {
                     value={project.live}
                     onChange={(next) => updateProject(project.id, (item) => ({ ...item, live: next }))}
                   />
-                  <label className="flex flex-col gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#111217]/70">Button Type</span>
+                  <label className="flex flex-col gap-2"
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#111217]/70"Button Type</span>
                     <select
                       value={project.buttonType}
                       onChange={(e) => updateProject(project.id, (item) => ({ ...item, buttonType: e.target.value as 'live' | 'caseStudy' }))}
                       className="rounded-[10px] border border-[#111217]/14 bg-[#111217]/25 px-3 py-2 text-[13px] text-[#111217] outline-none transition-all focus:border-[#111217]/36 focus:ring-2 focus:ring-[#111217]/12"
                     >
-                      <option value="live">Live App</option>
-                      <option value="caseStudy">Case Study</option>
+                      <option value="live"Live App</option>
+                      <option value="caseStudy"Case Study</option>
                     </select>
                   </label>
 
@@ -2193,8 +2193,8 @@ export const Dashboard: React.FC = () => {
 
       case 'timeline':
         return (
-          <div className="grid gap-4">
-            <Card title="Timeline Section Labels" subtitle="Headings shown above the timeline">
+          <div className="grid gap-4"
+            <Card title="Timeline Section Labels" subtitle="Headings shown above the timeline"
               <Input
                 label="Section eyebrow"
                 value={siteConfig.timelineSection.eyebrow}
@@ -2217,7 +2217,7 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Experience Marquee" subtitle="Ticker labels shown before the timeline">
+            <Card title="Experience Marquee" subtitle="Ticker labels shown before the timeline"
               {siteConfig.experienceMarquee.map((item) => (
                 <div key={item.id} className={listItemClass}>
                   <SelectInput
@@ -2281,7 +2281,7 @@ export const Dashboard: React.FC = () => {
               </button>
             </Card>
 
-            <Card title="Journey Timeline" subtitle="Edit vertical timeline events">
+            <Card title="Journey Timeline" subtitle="Edit vertical timeline events"
               {siteConfig.journeyTimeline.map((event) => (
                 <div key={event.id} className={listItemClass}>
                   <Input
@@ -2305,7 +2305,7 @@ export const Dashboard: React.FC = () => {
                     rows={3}
                     onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, description: next }))}
                   />
-                  <div className="flex items-center justify-between gap-4 mt-2">
+                  <div className="flex items-center justify-between gap-4 mt-2"
                     <Toggle
                       label="Visible"
                       checked={event.visible}
@@ -2352,8 +2352,8 @@ export const Dashboard: React.FC = () => {
 
       case 'testimonials':
         return (
-          <div className="grid gap-4">
-            <Card title="Testimonials" subtitle="Edit slider content">
+          <div className="grid gap-4"
+            <Card title="Testimonials" subtitle="Edit slider content"
               {siteConfig.testimonials.map((testimonial) => (
                 <div key={testimonial.id} className={listItemClass}>
                   <Input
@@ -2433,8 +2433,8 @@ export const Dashboard: React.FC = () => {
 
       case 'articlesPage':
         return (
-          <div className="grid gap-4">
-            <Card title="Articles Page Copy" subtitle="Control the global copy seen on /articles">
+          <div className="grid gap-4"
+            <Card title="Articles Page Copy" subtitle="Control the global copy seen on /articles"
               <Input
                 label="Page title"
                 value={siteConfig.articlesPage.title}
@@ -2452,7 +2452,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateArticlesPageField('description', next)}
               />
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3"
                 <Input
                   label="Search placeholder"
                   value={siteConfig.articlesPage.searchPlaceholder}
@@ -2491,7 +2491,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateArticlesPageField('latestArticlesLabel', next)}
               />
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3"
                 <Input
                   label="Undated fallback label"
                   value={siteConfig.articlesPage.undatedLabel}
@@ -2530,7 +2530,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3"
                 <Input
                   label="No results title"
                   value={siteConfig.articlesPage.noResultsTitle}
@@ -2553,7 +2553,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3"
                 <Input
                   label="Article not found title"
                   value={siteConfig.articlesPage.articleNotFoundTitle}
@@ -2571,7 +2571,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3">
+              <div className="grid gap-3 rounded-[12px] border border-[#e5e7eb] p-3"
                 <Input
                   label="Newsletter title"
                   value={siteConfig.articlesPage.newsletterTitle}
@@ -2600,15 +2600,15 @@ export const Dashboard: React.FC = () => {
 
       case 'navigation':
         return (
-          <div className="grid gap-4 xl:grid-cols-2">
-            <Card title="Music + CTA Button" subtitle="Audio upload and persistent controls">
-              <p className="text-xs text-[#6b7280]">
+          <div className="grid gap-4 xl:grid-cols-2"
+            <Card title="Music + CTA Button" subtitle="Audio upload and persistent controls"
+              <p className="text-xs text-[#6b7280]"
                 Upload an audio file for site music. Keep the file under {formatMegabytes(MAX_AUDIO_UPLOAD_BYTES)} so
                 it can be saved reliably in browser storage.
               </p>
 
-              <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <label className="flex flex-col gap-1.5"
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Upload music file
                 </span>
                 <input
@@ -2713,8 +2713,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Style mapping for navigation
                 </p>
                 <CardVariantPicker
@@ -2745,7 +2745,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card title="Navigation Labels" subtitle="Desktop and mobile menu items">
+            <Card title="Navigation Labels" subtitle="Desktop and mobile menu items"
               {siteConfig.persistentUI.navItems.map((item) => (
                 <div key={item.id} className={listItemClass}>
                   <Input
@@ -2780,8 +2780,8 @@ export const Dashboard: React.FC = () => {
                     }}
                   />
 
-                  <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+                  <label className="flex flex-col gap-1.5"
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       Section
                     </span>
                     <select
@@ -2801,11 +2801,11 @@ export const Dashboard: React.FC = () => {
                       }}
                       className="rounded-[10px] border border-[#e5e7eb] p-2"
                     >
-                      <option value="home">home</option>
-                      <option value="about">about</option>
-                      <option value="projects">projects</option>
-                      <option value="testimonials">testimonials</option>
-                      <option value="articles">articles</option>
+                      <option value="home"home</option>
+                      <option value="about"about</option>
+                      <option value="projects"projects</option>
+                      <option value="testimonials"testimonials</option>
+                      <option value="articles"articles</option>
                     </select>
                   </label>
 
@@ -2854,17 +2854,17 @@ export const Dashboard: React.FC = () => {
 
       case 'footer':
         return (
-          <div className="grid gap-4">
-            <Card title="Footer + Social + Legal" subtitle="Email, address, links, socials">
+          <div className="grid gap-4"
+            <Card title="Footer + Social + Legal" subtitle="Email, address, links, socials"
               <Input
                 label="Footer email"
                 value={siteConfig.footer.email}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, email: next } }))}
               />
 
-              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3"
+                <div className="flex items-center justify-between gap-3"
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                     Social Links
                   </p>
                   <button
@@ -2894,7 +2894,7 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {siteConfig.footer.socialLinks.map((link) => (
-                  <div key={link.id} className="grid gap-2 rounded-[10px] border border-[#e5e7eb] p-3">
+                  <div key={link.id} className="grid gap-2 rounded-[10px] border border-[#e5e7eb] p-3"
                     <Input
                       label="Label"
                       value={link.label}
@@ -2911,7 +2911,7 @@ export const Dashboard: React.FC = () => {
                       }}
                     />
 
-                    <div className="grid gap-2 md:grid-cols-2">
+                    <div className="grid gap-2 md:grid-cols-2"
                       <SelectInput
                         label="Icon"
                         value={link.icon}
@@ -2954,7 +2954,7 @@ export const Dashboard: React.FC = () => {
                       />
                     </div>
 
-                    <div className="grid gap-2 md:grid-cols-2">
+                    <div className="grid gap-2 md:grid-cols-2"
                       <Toggle
                         label="Visible"
                         checked={link.visible}
@@ -3030,12 +3030,12 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-2 rounded-[10px] border border-[#e5e7eb] p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Legal Links
                 </p>
                 {siteConfig.footer.legalLinks.map((link) => (
-                  <div key={link.id} className="grid gap-2 md:grid-cols-2">
+                  <div key={link.id} className="grid gap-2 md:grid-cols-2"
                     <Input
                       label="Label"
                       value={link.label}
@@ -3085,11 +3085,11 @@ export const Dashboard: React.FC = () => {
                 ))}
               </div>
 
-              <div className="space-y-3 rounded-[10px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[10px] border border-[#e5e7eb] p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Footer Navigation
                 </p>
-                <p className="text-xs text-[#6b7280]">
+                <p className="text-xs text-[#6b7280]"
                   Footer navigation is synced automatically from the Navigation labels and sections, so links always match the top menu.
                 </p>
                 <button
@@ -3106,8 +3106,8 @@ export const Dashboard: React.FC = () => {
 
       case 'visibility':
         return (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Card title="Global Layers" subtitle="Master overlays and cross-page UI visibility">
+          <div className="grid gap-4 lg:grid-cols-2"
+            <Card title="Global Layers" subtitle="Master overlays and cross-page UI visibility"
               <Toggle
                 label="Global frame overlay"
                 checked={siteConfig.visibility.globalFrameOverlay}
@@ -3135,7 +3135,7 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Navigation Items" subtitle="Control each element inside the persistent top bar">
+            <Card title="Navigation Items" subtitle="Control each element inside the persistent top bar"
               <Toggle
                 label="Navigation logo"
                 checked={siteConfig.visibility.navigationLogo}
@@ -3158,7 +3158,7 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Featured Section" subtitle="Main portfolio scene visibility controls">
+            <Card title="Featured Section" subtitle="Main portfolio scene visibility controls"
               <Toggle
                 label="Featured section container"
                 checked={siteConfig.visibility.featuredWork}
@@ -3201,7 +3201,7 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Footer Internals" subtitle="Turn footer subsections on or off">
+            <Card title="Footer Internals" subtitle="Turn footer subsections on or off"
               <Toggle
                 label="Footer container"
                 checked={siteConfig.visibility.footer}
@@ -3238,13 +3238,13 @@ export const Dashboard: React.FC = () => {
 
       case 'scene05':
         return (
-          <div className="grid gap-4">
-            <Card title="Storytelling Animations" subtitle="Control narrative animation style (WebGL-like) for About Me section">
-                <div className="space-y-4">
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <span className="text-white text-sm font-bold flex flex-col">
+          <div className="grid gap-4"
+            <Card title="Storytelling Animations" subtitle="Control narrative animation style (WebGL-like) for About Me section"
+                <div className="space-y-4"
+                  <label className="flex items-center justify-between cursor-pointer"
+                    <span className="text-white text-sm font-bold flex flex-col"
                       Enable Storytelling
-                      <span className="text-[#aeb4c0] text-xs font-normal font-sans">
+                      <span className="text-[#aeb4c0] text-xs font-normal font-sans"
                         Activate sequential text and card animations
                       </span>
                     </span>
@@ -3279,8 +3279,8 @@ export const Dashboard: React.FC = () => {
 
                   {siteConfig.scene05.animations?.enabled && (
                     <>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]">
+                      <div className="flex flex-col gap-1"
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]"
                           Text Reveal Style
                         </label>
                         <select
@@ -3298,15 +3298,15 @@ export const Dashboard: React.FC = () => {
                             }))
                           }
                         >
-                          <option value="none">None</option>
-                          <option value="fade-up">Fade Up</option>
-                          <option value="cinematic">Cinematic Read</option>
-                          <option value="glitch">Glitch</option>
+                          <option value="none"None</option>
+                          <option value="fade-up"Fade Up</option>
+                          <option value="cinematic"Cinematic Read</option>
+                          <option value="glitch"Glitch</option>
                         </select>
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]">
+                      <div className="flex flex-col gap-1"
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[#6b7280]"
                           Card Entrance Style
                         </label>
                         <select
@@ -3324,10 +3324,10 @@ export const Dashboard: React.FC = () => {
                             }))
                           }
                         >
-                          <option value="none">None</option>
-                          <option value="stack">Stack Reveal</option>
-                          <option value="stagger">Staggered Entrance</option>
-                          <option value="creative">Creative Pop</option>
+                          <option value="none"None</option>
+                          <option value="stack"Stack Reveal</option>
+                          <option value="stagger"Staggered Entrance</option>
+                          <option value="creative"Creative Pop</option>
                         </select>
                       </div>
                     </>
@@ -3335,7 +3335,7 @@ export const Dashboard: React.FC = () => {
                 </div>
             </Card>
 
-            <Card title="About Page" subtitle="Edit full About content and certification cards">
+            <Card title="About Page" subtitle="Edit full About content and certification cards"
               <Input
                 label="Badge"
                 value={siteConfig.scene05.badge}
@@ -3457,8 +3457,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                   Certification cards
                 </p>
 
@@ -3472,7 +3472,7 @@ export const Dashboard: React.FC = () => {
                       }
                     />
 
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-3 md:grid-cols-2"
                       <Input
                         label="Issuer"
                         value={item.issuer}
@@ -3505,7 +3505,7 @@ export const Dashboard: React.FC = () => {
                       }
                     />
 
-                    <div className="flex items-center justify-between gap-4 mt-2">
+                    <div className="flex items-center justify-between gap-4 mt-2"
                       <Toggle
                         label="Visible"
                         checked={item.visible}
@@ -3572,8 +3572,8 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] bg-white p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">Learning Logos</p>
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb] bg-white p-3"
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"Learning Logos</p>
 
                 {siteConfig.scene05.learningLogos.map((item) => (
                   <div key={item.id} className={listItemClass}>
@@ -3599,7 +3599,7 @@ export const Dashboard: React.FC = () => {
                       }
                     />
 
-                    <div className="flex items-center justify-between gap-4 mt-2">
+                    <div className="flex items-center justify-between gap-4 mt-2"
                       <Toggle
                         label="Visible"
                         checked={item.visible}
@@ -3644,13 +3644,13 @@ export const Dashboard: React.FC = () => {
                       },
                     }));
                   }}
-                  className="rounded-[8px] border border-[#e5e7eb]
+                  className="rounded-[8px] border border-[#e5e7eb]"
                 >
                   Add Learning Logo
                 </button>
               </div>
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]"
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
 
                 {siteConfig.scene05.companyLogos.map((item) => (
@@ -3677,7 +3677,7 @@ export const Dashboard: React.FC = () => {
                       }
                     />
 
-                    <div className="flex items-center justify-between gap-4 mt-2">
+                    <div className="flex items-center justify-between gap-4 mt-2"
                       <Toggle
                         label="Visible"
                         checked={item.visible}
@@ -3722,7 +3722,7 @@ export const Dashboard: React.FC = () => {
                       },
                     }));
                   }}
-                  className="rounded-[8px] border border-[#e5e7eb]
+                  className="rounded-[8px] border border-[#e5e7eb]"
                 >
                   Add Company Logo
                 </button>
@@ -3771,11 +3771,11 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
-              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]
+              <div className="space-y-3 rounded-[12px] border border-[#e5e7eb]"
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                   Style mapping for Scene 05
-                </p>
-                <CardVariantPicker
+                </p>"
+                <CardVariantPicker"
                   label="About card type"
                   value={siteConfig.designSystem.components.scene05CardVariant}
                   glassVariant={siteConfig.designSystem.components.globalGlassVariant}
@@ -3794,10 +3794,10 @@ export const Dashboard: React.FC = () => {
 
       case 'designSystem':
         return (
-          <div className="grid gap-4">
-          <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-            <Card title="Color Tokens" subtitle="Brand and surface colors used by all shared components">
-              <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4"
+          <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3"
+            <Card title="Color Tokens" subtitle="Brand and surface colors used by all shared components"
+              <div className="grid gap-3 md:grid-cols-2"
                 <Input
                   label="Primary color"
                   type="color"
@@ -3841,15 +3841,15 @@ export const Dashboard: React.FC = () => {
                   onChange={(next) => updateDesignComponent('globalGlassVariant', next as SiteGlassVariant)}
                 />
 
-                <div className="grid grid-cols-2 gap-2 rounded-[12px] border border-[#e5e7eb]
+                <div className="grid grid-cols-2 gap-2 rounded-[12px] border border-[#e5e7eb]"
                   <div
-                    className="rounded-[10px] border border-[#e5e7eb]
+                    className="rounded-[10px] border border-[#e5e7eb]"
                     style={{ background: siteConfig.designSystem.theme.primaryColor, color: siteConfig.designSystem.theme.onPrimaryColor }}
                   >
                     Primary
                   </div>
                   <div
-                    className="rounded-[10px] border border-[#e5e7eb]
+                    className="rounded-[10px] border border-[#e5e7eb]"
                     style={{ background: siteConfig.designSystem.theme.secondaryColor, color: siteConfig.designSystem.theme.onSecondaryColor }}
                   >
                     Secondary
@@ -3857,7 +3857,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Glow & Atmosphere" subtitle="Global halo across text and UI surfaces">
+              <Card title="Glow & Atmosphere" subtitle="Global halo across text and UI surfaces"
                 <Toggle
                   label="Enable glow"
                   checked={siteConfig.designSystem.theme.glowEnabled}
@@ -3882,10 +3882,10 @@ export const Dashboard: React.FC = () => {
                 <p className="text-xs text-[#6b7280]
                   Applies a subtle cinematic halo to typography, buttons, cards, and glass surfaces.
                 </p>
-              </Card>
-
-              <Card title="Typography Tokens" subtitle="Display/title/body sizing, rhythm and personality">
-                <div className="grid gap-3 md:grid-cols-2">
+              </Card>"
+"
+              <Card title="Typography Tokens" subtitle="Display/title/body sizing, rhythm and personality"
+                <div className="grid gap-3 md:grid-cols-2"
                   <Input
                     label="Heading scale"
                     type="number"
@@ -4024,8 +4024,8 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Layout & Rhythm" subtitle="Control spacing scale, card padding, and max content width">
-              <div className="grid gap-3 md:grid-cols-2">
+            <Card title="Layout & Rhythm" subtitle="Control spacing scale, card padding, and max content width"
+              <div className="grid gap-3 md:grid-cols-2"
                 <Input
                   label="Section padding (rem)"
                   type="number"
@@ -4135,11 +4135,11 @@ export const Dashboard: React.FC = () => {
                 These tokens drive the new ds-section, ds-stack, and ds-grid spacing classes so every page respects the same rhythm.
               </p>
             </Card>
-          </div>
-
-            <div className="grid gap-4 xl:grid-cols-2">
-              <Card title="Component Physics" subtitle="Radius, borders, blur and shadows for buttons/cards">
-                <div className="grid gap-3 md:grid-cols-2">
+          </div>"
+"
+            <div className="grid gap-4 xl:grid-cols-2"
+              <Card title="Component Physics" subtitle="Radius, borders, blur and shadows for buttons/cards"
+                <div className="grid gap-3 md:grid-cols-2"
                   <Input
                     label="Button radius (px)"
                     type="number"
@@ -4220,7 +4220,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Component Library" subtitle="Canonical types available in the system">
+              <Card title="Component Library" subtitle="Canonical types available in the system"
                 <ButtonVariantPicker
                   label="All button types"
                   value={siteConfig.designSystem.components.featuredCtaButtonVariant}
@@ -4241,9 +4241,9 @@ export const Dashboard: React.FC = () => {
               </Card>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-              <Card title="Component Studio: Buttons" subtitle="Select a button type then tune it deeply">
-                <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-4 xl:grid-cols-2"
+              <Card title="Component Studio: Buttons" subtitle="Select a button type then tune it deeply"
+                <div className="grid gap-2 sm:grid-cols-3"
                   {SITE_BUTTON_VARIANTS.map((variant) => {
                     const active = variant === activeButtonStudio;
                     return (
@@ -4263,7 +4263,7 @@ export const Dashboard: React.FC = () => {
                   })}
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2"
                   <Input
                     label="Radius (px)"
                     type="number"
@@ -4332,15 +4332,15 @@ export const Dashboard: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]
-                  <div className="rounded-[10px] border border-[#e5e7eb]
-                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]"
+                  <div className="rounded-[10px] border border-[#e5e7eb]"
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                     <button type="button" className={getButtonClass(activeButtonStudio, 'dark', 'sm')}>
                       Live Preview
                     </button>
                   </div>
-                  <div className="rounded-[10px] border border-black/10 bg-[#f5f7fb] p-3">
-                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#1a1a1a]
+                  <div className="rounded-[10px] border border-black/10 bg-[#f5f7fb] p-3"
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#1a1a1a]"
                     <button type="button" className={getButtonClass(activeButtonStudio, 'light', 'sm')}>
                       Live Preview
                     </button>
@@ -4348,8 +4348,8 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Component Studio: Cards" subtitle="Tune fill, borders, radius and depth per card type">
-                <div className="grid gap-2 sm:grid-cols-3">
+              <Card title="Component Studio: Cards" subtitle="Tune fill, borders, radius and depth per card type"
+                <div className="grid gap-2 sm:grid-cols-3"
                   {SITE_CARD_VARIANTS.map((variant) => {
                     const active = variant === activeCardStudio;
                     return (
@@ -4369,7 +4369,7 @@ export const Dashboard: React.FC = () => {
                   })}
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2"
                   <Input
                     label="Radius (px)"
                     type="number"
@@ -4444,35 +4444,35 @@ export const Dashboard: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]
+                <div className="grid gap-2 rounded-[12px] border border-[#e5e7eb]"
                   <div
                     className={`${getCardClass(activeCardStudio, 'dark', 'p-3')} ${getGlassClass(
                       siteConfig.designSystem.components.globalGlassVariant,
                       'dark',
                     )}`}
                   >
-                    <p className="text-sm font-semibold text-white">Dark Surface</p>
+                    <p className="text-sm font-semibold text-white"Dark Surface</p>
                     <p className="mt-1 text-xs text-[#6b7280]
                   </div>
                   <div
                     className={`${getCardClass(activeCardStudio, 'light', 'p-3')} ${getGlassClass(
                       siteConfig.designSystem.components.globalGlassVariant,
                       'light',
-                    )}`}
-                  >
-                    <p className="text-sm font-semibold text-[#1a1a1a]
+                    )}`}"
+                  >"
+                    <p className="text-sm font-semibold text-[#1a1a1a]"
                     <p className="mt-1 text-xs text-[#1a1a1a]
                   </div>
                 </div>
               </Card>
-            </div>
-
-            <Card title="Live Design Lab" subtitle="Instant preview on dark and light surfaces inside dashboard">
-              <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-[14px] border border-[#e5e7eb]
+            </div>"
+"
+            <Card title="Live Design Lab" subtitle="Instant preview on dark and light surfaces inside dashboard"
+              <div className="grid gap-4 xl:grid-cols-2"
+                <div className="rounded-[14px] border border-[#e5e7eb]"
                   <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-
-                  <h3
+"
+                  <h3"
                     className="mt-3 text-white"
                     style={{
                       fontSize: `clamp(${getScaledRem(
@@ -4496,9 +4496,9 @@ export const Dashboard: React.FC = () => {
                     }}
                   >
                     Body text rhythm preview for readability and spacing.
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  </p>"
+"
+                  <div className="mt-4 flex flex-wrap gap-2"
                     {SITE_BUTTON_VARIANTS.map((variant) => (
                       <button key={`dark-${variant}`} type="button" className={getButtonClass(variant, 'dark', 'sm')}>
                         {formatVariantLabel(variant)}
@@ -4506,7 +4506,7 @@ export const Dashboard: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2"
                     {SITE_CARD_VARIANTS.map((variant) => (
                       <div
                         key={`dark-card-${variant}`}
@@ -4515,17 +4515,17 @@ export const Dashboard: React.FC = () => {
                           'dark',
                         )}`}
                       >
-                        <p className="text-sm font-semibold text-white">{formatVariantLabel(variant)}</p>
+                        <p className="text-sm font-semibold text-white">formatVariantLabel(variant)<</p>
                         <p className="mt-1 text-xs text-[#6b7280]
                       </div>
                     ))}
                   </div>
-                </div>
-
-                <div className="rounded-[14px] border border-black/10 bg-[#f5f7fb] p-4">
+                </div>"
+"
+                <div className="rounded-[14px] border border-black/10 bg-[#f5f7fb] p-4"
                   <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#1a1a1a]
-
-                  <h3
+"
+                  <h3"
                     className="mt-3 text-[#111217]"
                     style={{
                       fontSize: `clamp(${getScaledRem(
@@ -4549,9 +4549,9 @@ export const Dashboard: React.FC = () => {
                     }}
                   >
                     Live visual confirmation before saving your style decisions.
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  </p>"
+"
+                  <div className="mt-4 flex flex-wrap gap-2"
                     {SITE_BUTTON_VARIANTS.map((variant) => (
                       <button key={`light-${variant}`} type="button" className={getButtonClass(variant, 'light', 'sm')}>
                         {formatVariantLabel(variant)}
@@ -4559,7 +4559,7 @@ export const Dashboard: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2"
                     {SITE_CARD_VARIANTS.map((variant) => (
                       <div
                         key={`light-card-${variant}`}
@@ -4568,14 +4568,14 @@ export const Dashboard: React.FC = () => {
                           'light',
                         )}`}
                       >
-                        <p className="text-sm font-semibold text-[#1a1a1a])}</p>
+                        <p className="text-sm font-semibold text-[#1a1a1a])}</p>"
                         <p className="mt-1 text-xs text-[#1a1a1a]
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-
+              </div>"
+"
               <p className="text-xs text-[#6b7280]
                 This lab is live: every token change updates instantly here and in the site scenes that use the
                 design-system components.
@@ -4584,11 +4584,11 @@ export const Dashboard: React.FC = () => {
           </div>
         );
 
-      case 'animation':
-        return (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,430px)_minmax(0,1fr)]">
-            <Card title="Animation Selector" subtitle="Pick one cursor animation and tune its own properties">
-              <div className="grid gap-2 sm:grid-cols-3">
+      case 'animation':"
+        return ("
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,430px)_minmax(0,1fr)]"
+            <Card title="Animation Selector" subtitle="Pick one cursor animation and tune its own properties"
+              <div className="grid gap-2 sm:grid-cols-3"
                 {[
                   { id: 'fluid', label: 'Fluid', hint: 'WebGL liquid motion' },
                   { id: 'aura', label: 'Aura', hint: 'Soft cinematic glow' },
@@ -4614,15 +4614,15 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em]">{mode.label}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em]">mode.label<</p>
                       <p className="mt-1 text-[12px] text-[#6b7280]
                     </button>
                   );
                 })}
               </div>
-
-              {siteConfig.animation.activeCursorAnimation === 'fluid' ? (
-                <div className="grid gap-3">
+"
+              {siteConfig.animation.activeCursorAnimation === 'fluid' ? ("
+                <div className="grid gap-3"
                   <Input
                     label="Density Dissipation"
                     type="number"
@@ -4736,7 +4736,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'aura' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Aura Color"
                     value={siteConfig.animation.aura.color}
@@ -4784,7 +4784,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'orbit' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Particle Color"
                     value={siteConfig.animation.orbit.color}
@@ -4850,7 +4850,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'comet' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Comet Color"
                     value={siteConfig.animation.comet.color}
@@ -4924,7 +4924,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'ripple' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Ripple Color"
                     value={siteConfig.animation.ripple.color}
@@ -4998,7 +4998,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'spark' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Spark Color"
                     value={siteConfig.animation.spark.color}
@@ -5072,7 +5072,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'beam' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Beam Color"
                     value={siteConfig.animation.beam.color}
@@ -5137,7 +5137,7 @@ export const Dashboard: React.FC = () => {
               ) : null}
 
               {siteConfig.animation.activeCursorAnimation === 'plasma' ? (
-                <div className="grid gap-3">
+                <div className="grid gap-3"
                   <Input
                     label="Color A"
                     value={siteConfig.animation.plasma.colorA}
@@ -5206,166 +5206,166 @@ export const Dashboard: React.FC = () => {
                     animation: { ...DEFAULT_SITE_CONFIG.animation },
                   }));
                 }}
-                className="rounded-[10px] border border-[#e5e7eb]
+                className="rounded-[10px] border border-[#e5e7eb]"
                   >
                     Reset All Animation Presets
                   </button>
                 </Card>
 
-            <Card title="Section Motion" subtitle="Toggle cinematic text + card reveals by surface">
-              <div className="space-y-4">
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <div className="mb-2 flex items-center justify-between gap-3">
+            <Card title="Section Motion" subtitle="Toggle cinematic text + card reveals by surface"
+              <div className="space-y-4"
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <div className="mb-2 flex items-center justify-between gap-3"
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
                       <p className="text-xs text-[#6b7280]
-                    </div>
-                    <Toggle
+                    </div>"
+                    <Toggle"
                       label="Enable"
                       checked={siteConfig.animation.sections.about.enabled}
                       onChange={(next) => updateSectionAnimation('about', { enabled: next })}
                     />
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                  <div className="grid gap-3 sm:grid-cols-2"
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.about.textSequenceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
                             textSequenceStyle: e.target.value as SiteConfig['animation']['sections']['about']['textSequenceStyle'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="beam">Beam reveal</option>
-                        <option value="typewriter">Typewriter</option>
-                        <option value="slice">Slice</option>
+                        <option value="beam"Beam reveal</option>
+                        <option value="typewriter"Typewriter</option>
+                        <option value="slice"Slice</option>
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.about.cardEntranceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
                             cardEntranceStyle: e.target.value as SiteConfig['animation']['sections']['about']['cardEntranceStyle'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="stack">Stacked</option>
-                        <option value="orbit">Orbital</option>
-                        <option value="slide">Slide</option>
+                        <option value="stack"Stacked</option>
+                        <option value="orbit"Orbital</option>
+                        <option value="slide"Slide</option>
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.about.textRhythm}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
                             textRhythm: e.target.value as SiteConfig['animation']['sections']['about']['textRhythm'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="tight">Tight</option>
-                        <option value="balanced">Balanced</option>
-                        <option value="linger">Linger</option>
+                        <option value="tight"Tight</option>
+                        <option value="balanced"Balanced</option>
+                        <option value="linger"Linger</option>
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.about.certificationRhythm}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
                             certificationRhythm: e.target.value as SiteConfig['animation']['sections']['about']['certificationRhythm'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="tight">Tight</option>
-                        <option value="balanced">Balanced</option>
-                        <option value="linger">Linger</option>
+                        <option value="tight"Tight</option>
+                        <option value="balanced"Balanced</option>
+                        <option value="linger"Linger</option>
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.about.skillMode}
                         onChange={(e) =>
                           updateSectionAnimation('about', {
                             skillMode: e.target.value as SiteConfig['animation']['sections']['about']['skillMode'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="rain">Rain</option>
-                        <option value="tiles">Tiles</option>
+                        <option value="rain"Rain</option>
+                        <option value="tiles"Tiles</option>
                       </select>
                     </label>
                   </div>
                 </div>
 
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <div className="mb-2 flex items-center justify-between gap-3"
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
                       <p className="text-xs text-[#6b7280]
-                    </div>
-                    <Toggle
+                    </div>"
+                    <Toggle"
                       label="Enable"
                       checked={siteConfig.animation.sections.projects.enabled}
                       onChange={(next) => updateSectionAnimation('projects', { enabled: next })}
                     />
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                  <div className="grid gap-3 sm:grid-cols-2"
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.projects.cardEntranceStyle}
                         onChange={(e) =>
                           updateSectionAnimation('projects', {
                             cardEntranceStyle: e.target.value as SiteConfig['animation']['sections']['projects']['cardEntranceStyle'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="tilt">Tilt</option>
-                        <option value="drift">Drift</option>
-                        <option value="rise">Rise</option>
+                        <option value="tilt"Tilt</option>
+                        <option value="drift"Drift</option>
+                        <option value="rise"Rise</option>
                       </select>
                     </label>
 
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.projects.gridDepth}
                         onChange={(e) =>
                           updateSectionAnimation('projects', {
                             gridDepth: e.target.value as SiteConfig['animation']['sections']['projects']['gridDepth'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="tight">Tight</option>
-                        <option value="balanced">Balanced</option>
-                        <option value="linger">Linger</option>
+                        <option value="tight"Tight</option>
+                        <option value="balanced"Balanced</option>
+                        <option value="linger"Linger</option>
                       </select>
                     </label>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-3 rounded-[10px] border border-[#e5e7eb]
-                    <p className="text-xs text-[#6b7280]
-                    <Toggle
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-[10px] border border-[#e5e7eb]"
+                    <p className="text-xs text-[#6b7280]"
+                    <Toggle"
                       label="Parallax"
                       checked={siteConfig.animation.sections.projects.hoverParallax}
                       onChange={(next) => updateSectionAnimation('projects', { hoverParallax: next })}
@@ -5373,34 +5373,34 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <div className="mb-2 flex items-center justify-between gap-3"
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
+                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
                       <p className="text-xs text-[#6b7280]
-                    </div>
-                    <Toggle
+                    </div>"
+                    <Toggle"
                       label="Enable"
                       checked={siteConfig.animation.sections.testimonials.enabled}
                       onChange={(next) => updateSectionAnimation('testimonials', { enabled: next })}
                     />
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[#6b7280]
+                  <div className="grid gap-3 sm:grid-cols-2"
+                    <label className="flex flex-col gap-1 text-[#6b7280]"
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <select
                         value={siteConfig.animation.sections.testimonials.transitionStyle}
                         onChange={(e) =>
                           updateSectionAnimation('testimonials', {
                             transitionStyle: e.target.value as SiteConfig['animation']['sections']['testimonials']['transitionStyle'],
-                          })
-                        }
-                        className="rounded-[10px] border border-[#e5e7eb]
+                          })"
+                        }"
+                        className="rounded-[10px] border border-[#e5e7eb]"
                       >
-                        <option value="fade">Fade</option>
-                        <option value="slide">Slide</option>
-                        <option value="flip">Flip</option>
+                        <option value="fade"Fade</option>
+                        <option value="slide"Slide</option>
+                        <option value="flip"Flip</option>
                       </select>
                     </label>
 
@@ -5446,26 +5446,26 @@ export const Dashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card title="Live Animation Preview" subtitle="Hover this area and test the selected cursor animation">
+            <Card title="Live Animation Preview" subtitle="Hover this area and test the selected cursor animation"
               <div
                 ref={previewAnimationAreaRef}
-                className="relative h-[420px] overflow-hidden rounded-[14px] border border-[#e5e7eb]
+                className="relative h-[420px] overflow-hidden rounded-[14px] border border-[#e5e7eb]"
               >
-                <div className="absolute inset-0 grid grid-cols-2">
+                <div className="absolute inset-0 grid grid-cols-2"
                   <div className="bg-[#090909]" />
                   <div className="bg-[#f2f2f2]" />
                 </div>
 
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.1),transparent_44%),radial-gradient(circle_at_82%_82%,rgba(0,0,0,0.2),transparent_46%)]" />
 
-                <div className="absolute left-3 top-3 rounded-[8px] border border-[#e5e7eb]
+                <div className="absolute left-3 top-3 rounded-[8px] border border-[#e5e7eb]"
                   Dark Surface
                 </div>
                 <div className="absolute right-3 top-3 rounded-[8px] border border-black/20 bg-[#f8f9fa]
                   Light Surface
-                </div>
-
-                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-[10px] border border-[#e5e7eb]
+                </div>"
+"
+                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-[10px] border border-[#e5e7eb]"
                   Active: {siteConfig.animation.activeCursorAnimation}
                 </div>
               </div>
@@ -5475,13 +5475,13 @@ export const Dashboard: React.FC = () => {
                 values.
               </p>
             </Card>
-
-            <Card
+"
+            <Card"
               className="xl:col-span-2"
               title="Motion System"
               subtitle="Global durations, easing, and hover response applied to all design system components"
             >
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
                 <Input
                   label="Fast duration (ms)"
                   type="number"
@@ -5589,17 +5589,17 @@ export const Dashboard: React.FC = () => {
     return null;
   };
 
-  const renderSiteWorkspace = () => {
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-
-          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+  const renderSiteWorkspace = () => {"
+    return ("
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb]"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+"
+          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1"
             {DASHBOARD_SECTION_GROUPS.map((group) => (
-              <div key={group.id} className="space-y-2">
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                <div className="space-y-2">
+              <div key={group.id} className="space-y-2"
+                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                <div className="space-y-2"
                   {group.sectionIds.map((sectionId) => {
                     const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
                     if (!section) return null;
@@ -5622,19 +5622,19 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]
-            Editing now: <span className="font-semibold text-white">{activeSectionInfo.label}</span>
+          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
+            Editing now: <span className="font-semibold text-white">activeSectionInfo.label<</span>
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {uploadError ? (
-            <div className="rounded-[12px] border border-[#b42318]/28 bg-[#b42318]/10 px-4 py-3 text-sm text-[#8f1f16]">
+            <div className="rounded-[12px] border border-[#b42318]/28 bg-[#b42318]/10 px-4 py-3 text-sm text-[#8f1f16]"
               {uploadError}
             </div>
           ) : null}
           {uploadMessage ? (
-            <div className="rounded-[12px] border border-[#177245]/30 bg-[#177245]/10 px-4 py-3 text-sm text-[#146238]">
+            <div className="rounded-[12px] border border-[#177245]/30 bg-[#177245]/10 px-4 py-3 text-sm text-[#146238]"
               {uploadMessage}
             </div>
           ) : null}
@@ -5645,17 +5645,17 @@ export const Dashboard: React.FC = () => {
     );
   };
 
-  const renderSitePagesWorkspace = () => {
-    return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Sections</p>
+  const renderSitePagesWorkspace = () => {"
+    return ("
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"Sections</p>
 
-          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1"
             {DASHBOARD_SECTION_GROUPS.map((group) => (
-              <div key={group.id} className="space-y-2">
-                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">{group.label}</p>
-                <div className="space-y-2">
+              <div key={group.id} className="space-y-2"
+                <p className="px-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">group.label<</p>
+                <div className="space-y-2"
                   {group.sectionIds.map((sectionId) => {
                     const section = DASHBOARD_SECTIONS.find((entry) => entry.id === sectionId);
                     if (!section) return null;
@@ -5678,26 +5678,26 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]">
-              Editing now: <span className="font-semibold text-[#1a1a1a]">{activeSectionInfo.label}</span>
+          <div className="mt-3 rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              Editing now: <span className="font-semibold text-[#1a1a1a]">activeSectionInfo.label<</span>
             </p>
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {uploadError ? (
-            <div className="rounded-[12px] border border-[#b42318]/28 bg-[#b42318]/10 px-4 py-3 text-sm text-[#8f1f16]">
+            <div className="rounded-[12px] border border-[#b42318]/28 bg-[#b42318]/10 px-4 py-3 text-sm text-[#8f1f16]"
               {uploadError}
             </div>
           ) : null}
           {uploadMessage ? (
-            <div className="rounded-[12px] border border-[#177245]/30 bg-[#177245]/10 px-4 py-3 text-sm text-[#146238]">
+            <div className="rounded-[12px] border border-[#177245]/30 bg-[#177245]/10 px-4 py-3 text-sm text-[#146238]"
               {uploadMessage}
             </div>
           ) : null}
 
-          <div className="rounded-[20px] border border-[#e5e7eb] bg-white p-4">
+          <div className="rounded-[20px] border border-[#e5e7eb] bg-white p-4"
             {renderSectionContent()}
           </div>
         </section>
@@ -5715,11 +5715,11 @@ export const Dashboard: React.FC = () => {
     ];
 
     return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3">
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]">Design Sections</p>
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb] bg-[#f8f9fa] p-3"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"Design Sections</p>
 
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-2"
             {designSections.map((section) => (
               <SectionButton
                 key={section.id}
@@ -5732,11 +5732,11 @@ export const Dashboard: React.FC = () => {
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {activeDesignSection === 'colors' && (
             <>
-              <Card title="Color System" subtitle="Primary and secondary color schemes">
-                <div className="grid gap-4 md:grid-cols-2">
+              <Card title="Color System" subtitle="Primary and secondary color schemes"
+                <div className="grid gap-4 md:grid-cols-2"
                   <ColorInput
                     label="Primary Color"
                     value={siteConfig.designSystem.theme.primaryColor}
@@ -5784,7 +5784,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Glow Effects" subtitle="Glow color and intensity settings">
+              <Card title="Glow Effects" subtitle="Glow color and intensity settings"
                 <ColorInput
                   label="Glow Color"
                   value={siteConfig.designSystem.theme.glowColor}
@@ -5824,7 +5824,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Glass Effects" subtitle="Glass tint and border colors">
+              <Card title="Glass Effects" subtitle="Glass tint and border colors"
                 <ColorInput
                   label="Glass Tint Color"
                   value={siteConfig.designSystem.theme.glassTintColor}
@@ -5853,7 +5853,7 @@ export const Dashboard: React.FC = () => {
 
           {activeDesignSection === 'typography' && (
             <>
-              <Card title="Typography Scale" subtitle="Font sizes and scaling">
+              <Card title="Typography Scale" subtitle="Font sizes and scaling"
                 <Input
                   label="Display Title Size (rem)"
                   type="number"
@@ -5916,7 +5916,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Typography Style" subtitle="Font weights and spacing">
+              <Card title="Typography Style" subtitle="Font weights and spacing"
                 <Input
                   label="Heading Weight"
                   type="number"
@@ -5968,7 +5968,7 @@ export const Dashboard: React.FC = () => {
 
           {activeDesignSection === 'spacing' && (
             <>
-              <Card title="Spacing System" subtitle="Section, stack, and grid spacing">
+              <Card title="Spacing System" subtitle="Section, stack, and grid spacing"
                 <Input
                   label="Section Padding (rem)"
                   type="number"
@@ -6043,7 +6043,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Layout System" subtitle="Content width and column settings">
+              <Card title="Layout System" subtitle="Content width and column settings"
                 <Input
                   label="Content Max Width (px)"
                   type="number"
@@ -6104,7 +6104,7 @@ export const Dashboard: React.FC = () => {
 
           {activeDesignSection === 'components' && (
             <>
-              <Card title="Button Components" subtitle="Radius, border, and shadow settings">
+              <Card title="Button Components" subtitle="Radius, border, and shadow settings"
                 <Input
                   label="Button Radius (px)"
                   type="number"
@@ -6152,7 +6152,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Card Components" subtitle="Radius, border, blur, and shadow settings">
+              <Card title="Card Components" subtitle="Radius, border, blur, and shadow settings"
                 <Input
                   label="Card Radius (px)"
                   type="number"
@@ -6215,7 +6215,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Component Variants" subtitle="Button and card variant assignments">
+              <Card title="Component Variants" subtitle="Button and card variant assignments"
                 <SelectInput
                   label="Global Glass Variant"
                   value={siteConfig.designSystem.components.globalGlassVariant}
@@ -6246,7 +6246,7 @@ export const Dashboard: React.FC = () => {
 
           {activeDesignSection === 'motion' && (
             <>
-              <Card title="Motion System" subtitle="Duration, easing, and hover effects">
+              <Card title="Motion System" subtitle="Duration, easing, and hover effects"
                 <Input
                   label="Fast Duration (ms)"
                   type="number"
@@ -6309,7 +6309,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Hover Effects" subtitle="Scale and lift on hover">
+              <Card title="Hover Effects" subtitle="Scale and lift on hover"
                 <Input
                   label="Hover Scale"
                   type="number"
@@ -6342,7 +6342,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Easing Function" subtitle="Animation easing curve">
+              <Card title="Easing Function" subtitle="Animation easing curve"
                 <Input
                   label="Easing Function"
                   value={siteConfig.animation.motion.ease}
@@ -6373,11 +6373,11 @@ export const Dashboard: React.FC = () => {
     ];
 
     return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-
-          <div className="mt-3 space-y-2">
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb]"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+"
+          <div className="mt-3 space-y-2"
             {integrationSections.map((section) => (
               <SectionButton
                 key={section.id}
@@ -6390,10 +6390,10 @@ export const Dashboard: React.FC = () => {
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {activeIntegrationSection === 'browser' && (
             <>
-              <Card title="Browser Identity" subtitle="Control tab title and favicon">
+              <Card title="Browser Identity" subtitle="Control tab title and favicon"
                 <Input
                   label="Browser Tab Title"
                   value={siteConfig.dashboard.browser.browserTabTitle}
@@ -6404,9 +6404,9 @@ export const Dashboard: React.FC = () => {
                   value={siteConfig.dashboard.browser.faviconUrl}
                   onChange={(next) => updateDashboardBrowser('faviconUrl', next)}
                 />
-                <label className="flex flex-col gap-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                  <input
+                <label className="flex flex-col gap-1.5"
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                  <input"
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
@@ -6414,26 +6414,26 @@ export const Dashboard: React.FC = () => {
                       e.currentTarget.value = '';
                       void handleFaviconUpload(file);
                     }}
-                    className="rounded-[10px] border border-[#e5e7eb]
+                    className="rounded-[10px] border border-[#e5e7eb]"
                   />
                 </label>
               </Card>
 
-              <Card title="Preview" subtitle="Current browser identity settings">
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
+              <Card title="Preview" subtitle="Current browser identity settings"
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <p className="mt-1 font-medium text-white">siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'<</p>
                 </div>
-                <div className="mt-3 rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]
+                <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <div className="mt-2 flex items-center gap-2"
+                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]"
                       {siteConfig.dashboard.browser.faviconUrl ? (
                         <img src={siteConfig.dashboard.browser.faviconUrl} alt="Favicon preview" className="h-full w-full object-cover" />
                       ) : (
                         <span className="font-mono text-[10px] text-[#6b7280]
-                      )}
-                    </span>
+                      )}"
+                    </span>"
                     <p className="text-xs text-[#6b7280]
                   </div>
                 </div>
@@ -6441,9 +6441,9 @@ export const Dashboard: React.FC = () => {
             </>
           )}
 
-          {activeIntegrationSection === 'ai' && (
-            <>
-              <Card title="AI Integration" subtitle="Configure AI-powered features">
+          {activeIntegrationSection === 'ai' && ("
+            <>"
+              <Card title="AI Integration" subtitle="Configure AI-powered features"
                 <Input
                   label="API Base URL"
                   value={siteConfig.dashboard.integrations.apiBaseUrl}
@@ -6462,18 +6462,18 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="AI Features" subtitle="Available AI-powered capabilities">
-                <div className="space-y-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm font-medium text-white">Content Generation</p>
-                    <p className="mt-1 text-xs text-[#6b7280]
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm font-medium text-white">Smart Analytics</p>
-                    <p className="mt-1 text-xs text-[#6b7280]
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm font-medium text-white">Automated Reports</p>
+              <Card title="AI Features" subtitle="Available AI-powered capabilities"
+                <div className="space-y-3"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm font-medium text-white"Content Generation</p>
+                    <p className="mt-1 text-xs text-[#6b7280]"
+                  </div>"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm font-medium text-white"Smart Analytics</p>
+                    <p className="mt-1 text-xs text-[#6b7280]"
+                  </div>"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm font-medium text-white"Automated Reports</p>
                     <p className="mt-1 text-xs text-[#6b7280]
                   </div>
                 </div>
@@ -6481,9 +6481,9 @@ export const Dashboard: React.FC = () => {
             </>
           )}
 
-          {activeIntegrationSection === 'domain' && (
-            <>
-              <Card title="Domain Settings" subtitle="Custom domain and DNS configuration">
+          {activeIntegrationSection === 'domain' && ("
+            <>"
+              <Card title="Domain Settings" subtitle="Custom domain and DNS configuration"
                 <Input
                   label="Custom Domain"
                   value={siteConfig.dashboard.integrations.customDomain}
@@ -6491,7 +6491,7 @@ export const Dashboard: React.FC = () => {
                 />
                 <Input
                   label="DNS Provider"
-                  value=""
+                  value="">
                   onChange={() => {}}
                 />
                 <Textarea
@@ -6502,7 +6502,7 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Domain Status" subtitle="Current domain configuration status">
+              <Card title="Domain Status" subtitle="Current domain configuration status"
                 <div className={`rounded-[12px] border px-3 py-3 text-sm ${
                   siteConfig.dashboard.integrations.customDomain
                     ? dashboardStatusSuccessClass
@@ -6518,7 +6518,7 @@ export const Dashboard: React.FC = () => {
 
           {activeIntegrationSection === 'analytics' && (
             <>
-              <Card title="Google Analytics" subtitle="Configure Google Analytics tracking">
+              <Card title="Google Analytics" subtitle="Configure Google Analytics tracking"
                 <Input
                   label="Measurement ID"
                   value={siteConfig.dashboard.integrations.googleAnalyticsMeasurementId}
@@ -6531,9 +6531,9 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Connection Health" subtitle="Analytics integration status">
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  Measurement ID: <span className="font-semibold text-white">
+              <Card title="Connection Health" subtitle="Analytics integration status"
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  Measurement ID: <span className="font-semibold text-white"
                     {siteConfig.dashboard.integrations.googleAnalyticsMeasurementId || 'Not set'}
                   </span>
                 </div>
@@ -6552,7 +6552,7 @@ export const Dashboard: React.FC = () => {
 
           {activeIntegrationSection === 'security' && (
             <>
-              <Card title="Security Settings" subtitle="Configure site security options">
+              <Card title="Security Settings" subtitle="Configure site security options"
                 <Toggle
                   label="Enable HTTPS"
                   checked={true}
@@ -6575,16 +6575,16 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Security Status" subtitle="Current security configuration">
-                <div className="space-y-2">
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2">
-                    <p className="text-xs text-[#86efac]">✓ HTTPS Enabled</p>
+              <Card title="Security Status" subtitle="Current security configuration"
+                <div className="space-y-2"
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2"
+                    <p className="text-xs text-[#86efac]"✓ HTTPS Enabled</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-xs text-[#6b7280]
-                  </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2">
-                    <p className="text-xs text-[#86efac]">✓ Rate Limiting Active</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-xs text-[#6b7280]"
+                  </div>"
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2"
+                    <p className="text-xs text-[#86efac]"✓ Rate Limiting Active</p>
                   </div>
                 </div>
               </Card>
@@ -6593,33 +6593,33 @@ export const Dashboard: React.FC = () => {
 
           {activeIntegrationSection === 'reports' && (
             <>
-              <Card title="Technical Reports" subtitle="Site performance and health reports">
-                <div className="space-y-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white">Performance Report</p>
-                      <span className="text-xs text-[#6b7280]
-                    </div>
-                    <p className="mt-1 text-xs text-[#6b7280]
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white">SEO Report</p>
-                      <span className="text-xs text-[#6b7280]
-                    </div>
-                    <p className="mt-1 text-xs text-[#6b7280]
-                  </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white">Accessibility Report</p>
-                      <span className="text-xs text-[#6b7280]
-                    </div>
+              <Card title="Technical Reports" subtitle="Site performance and health reports"
+                <div className="space-y-3"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <div className="flex items-center justify-between"
+                      <p className="text-sm font-medium text-white"Performance Report</p>
+                      <span className="text-xs text-[#6b7280]"
+                    </div>"
+                    <p className="mt-1 text-xs text-[#6b7280]"
+                  </div>"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <div className="flex items-center justify-between"
+                      <p className="text-sm font-medium text-white"SEO Report</p>
+                      <span className="text-xs text-[#6b7280]"
+                    </div>"
+                    <p className="mt-1 text-xs text-[#6b7280]"
+                  </div>"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <div className="flex items-center justify-between"
+                      <p className="text-sm font-medium text-white"Accessibility Report</p>
+                      <span className="text-xs text-[#6b7280]"
+                    </div>"
                     <p className="mt-1 text-xs text-[#6b7280]
                   </div>
                 </div>
-              </Card>
-
-              <Card title="Report Settings" subtitle="Configure automated reports">
+              </Card>"
+"
+              <Card title="Report Settings" subtitle="Configure automated reports"
                 <Toggle
                   label="Enable Daily Reports"
                   checked={true}
@@ -6676,11 +6676,11 @@ export const Dashboard: React.FC = () => {
     );
 
     return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-
-          <div className="mt-3 space-y-2">
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb]"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+"
+          <div className="mt-3 space-y-2"
             {publishingSections.map((section) => (
               <SectionButton
                 key={section.id}
@@ -6692,21 +6692,21 @@ export const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]
-            Total: <span className="font-semibold text-white">{siteConfig.articles.length}</span> articles
+          <div className="mt-3 rounded-[12px] border border-[#e5e7eb]"
+            Total: <span className="font-semibold text-white">siteConfig.articles.length<</span> articles
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {activePublishingSection === 'articles' && (
             <>
-              <Card title="Articles Studio" subtitle="Create, publish, and preview articles">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <Card title="Articles Studio" subtitle="Create, publish, and preview articles"
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
                   <p className="max-w-[560px] text-sm text-[#6b7280]
                     Build a focused publishing workflow around articles only. Create drafts, schedule launches, and push live posts from one editor.
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
+                  </p>"
+"
+                  <div className="flex flex-wrap gap-2"
                     <button
                       type="button"
                       onClick={() => {
@@ -6747,29 +6747,29 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
+                <div className="grid gap-2 sm:grid-cols-3"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.articles.length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">Live on /articles</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
+                    <p className="mt-1 text-lg font-semibold text-white">liveArticlesCount<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Scheduled Queue</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
+                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
+                    <p className="mt-1 text-lg font-semibold text-white">scheduledCount<</p>
                   </div>
                 </div>
               </Card>
 
-              <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-                <Card title="Article Library" subtitle="Select one article card to focus the editor">
+              <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]"
+                <Card title="Article Library" subtitle="Select one article card to focus the editor"
                   <Input label="Search articles" value={articleSearchQuery} onChange={setArticleSearchQuery} />
 
-                  <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1">
+                  <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1"
                     {filteredArticles.length === 0 ? (
-                      <div className="rounded-[12px] border border-[#e5e7eb]
+                      <div className="rounded-[12px] border border-[#e5e7eb]"
                         No articles match this search.
                       </div>
                     ) : (
@@ -6787,8 +6787,8 @@ export const Dashboard: React.FC = () => {
                                 : 'border-[#e5e7eb]
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
+                            <div className="flex items-center justify-between gap-2"
+                              <p className="line-clamp-1 text-sm font-semibold text-white">article.title<</p>
                               <span
                                 className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                                   isLive
@@ -6808,8 +6808,8 @@ export const Dashboard: React.FC = () => {
                     )}
                   </div>
                 </Card>
-
-                {activeArticle ? (
+"
+                {activeArticle ? ("
                   <Card title="Article Editor" subtitle={`Editing: ${activeArticle.title}`}>
                     <div className={`rounded-[12px] border px-3 py-2 text-xs ${articleCanGoLive ? dashboardStatusSuccessClass : dashboardStatusFailureClass}`}>
                       {articleCanGoLive
@@ -6817,7 +6817,7 @@ export const Dashboard: React.FC = () => {
                         : 'This article is not live. Use Published status, keep Visible enabled, and provide a slug.'}
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4"
                       <Input
                         label="Title"
                         value={activeArticle.title}
@@ -6882,7 +6882,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </Card>
                 ) : (
-                  <Card title="Article Editor" subtitle="No article selected">
+                  <Card title="Article Editor" subtitle="No article selected"
                     <p className="text-sm text-[#6b7280]
                   </Card>
                 )}
@@ -6890,18 +6890,18 @@ export const Dashboard: React.FC = () => {
             </>
           )}
 
-          {activePublishingSection === 'calendar' && (
-            <>
-              <Card title="Publishing Calendar" subtitle="View and manage scheduled content">
-                <div className="space-y-4">
-                  <div className="grid gap-2 sm:grid-cols-7">
+          {activePublishingSection === 'calendar' && ("
+            <>"
+              <Card title="Publishing Calendar" subtitle="View and manage scheduled content"
+                <div className="space-y-4"
+                  <div className="grid gap-2 sm:grid-cols-7"
                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                      <div key={day} className="rounded-[8px] border border-[#e5e7eb]
+                      <div key={day} className="rounded-[8px] border border-[#e5e7eb]"
                         <p className="text-[10px] font-mono uppercase text-[#6b7280]
                       </div>
-                    ))}
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-7">
+                    ))}"
+                  </div>"
+                  <div className="grid gap-2 sm:grid-cols-7"
                     {Array.from({ length: 35 }).map((_, i) => {
                       const day = i + 1;
                       const hasScheduled = siteConfig.articles.some(
@@ -6916,7 +6916,7 @@ export const Dashboard: React.FC = () => {
                               : 'border-[#e5e7eb]
                           }`}
                         >
-                          <p className="text-sm text-white">{day}</p>
+                          <p className="text-sm text-white">day<</p>
                           {hasScheduled && <div className="mt-1 h-1 w-1 rounded-full bg-[#3b82f6]" />}
                         </div>
                       );
@@ -6925,23 +6925,23 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Card>
 
-              <Card title="Upcoming Publications" subtitle="Articles scheduled for publication">
-                <div className="space-y-2">
+              <Card title="Upcoming Publications" subtitle="Articles scheduled for publication"
+                <div className="space-y-2"
                   {siteConfig.articles
                     .filter((article) => article.status === 'scheduled')
                     .sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime())
                     .slice(0, 5)
                     .map((article) => (
-                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{article.title}</p>
+                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-center justify-between"
+                          <p className="text-sm font-medium text-white">article.title<</p>
                           <span className="text-xs text-[#6b7280]
                             {new Date(article.publishedAt).toLocaleDateString('en-US')}
                           </span>
                         </div>
                       </div>
-                    ))}
-                  {siteConfig.articles.filter((article) => article.status === 'scheduled').length === 0 && (
+                    ))}"
+                  {siteConfig.articles.filter((article) => article.status === 'scheduled').length === 0 && ("
                     <p className="text-sm text-[#6b7280]
                   )}
                 </div>
@@ -6949,31 +6949,31 @@ export const Dashboard: React.FC = () => {
             </>
           )}
 
-          {activePublishingSection === 'performance' && (
-            <>
-              <Card title="Article Performance" subtitle="View statistics for all articles">
-                <div className="space-y-3">
+          {activePublishingSection === 'performance' && ("
+            <>"
+              <Card title="Article Performance" subtitle="View statistics for all articles"
+                <div className="space-y-3"
                   {siteConfig.articles
                     .filter((article) => article.status === 'published')
                     .slice(0, 10)
                     .map((article) => (
-                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{article.title}</p>
-                          <span className="text-xs text-[#6b7280]
-                        </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2">
+                      <div key={article.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-center justify-between"
+                          <p className="text-sm font-medium text-white">article.title<</p>
+                          <span className="text-xs text-[#6b7280]"
+                        </div>"
+                        <div className="mt-2 grid grid-cols-3 gap-2"
                           <div>
-                            <p className="text-[10px] text-[#6b7280]
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 1000) + 100}</p>
+                            <p className="text-[10px] text-[#6b7280]"
+                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 1000) + 100<</p>
                           </div>
                           <div>
-                            <p className="text-[10px] text-[#6b7280]
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 500) + 50}</p>
+                            <p className="text-[10px] text-[#6b7280]"
+                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 500) + 50<</p>
                           </div>
                           <div>
-                            <p className="text-[10px] text-[#6b7280]
-                            <p className="text-sm font-semibold text-white">{Math.floor(Math.random() * 50) + 5}</p>
+                            <p className="text-[10px] text-[#6b7280]"
+                            <p className="text-sm font-semibold text-white">Math.floor(Math.random() * 50) + 5<</p>
                           </div>
                         </div>
                       </div>
@@ -6982,22 +6982,22 @@ export const Dashboard: React.FC = () => {
                     <p className="text-sm text-[#6b7280]
                   )}
                 </div>
-              </Card>
-
-              <Card title="Overall Statistics" subtitle="Publishing performance overview">
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-2xl font-semibold text-white">
+              </Card>"
+"
+              <Card title="Overall Statistics" subtitle="Publishing performance overview"
+                <div className="grid gap-3 md:grid-cols-3"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-2xl font-semibold text-white"
                       {siteConfig.articles
                         .filter((article) => article.status === 'published')
                         .reduce((sum, article) => sum + Math.floor(Math.random() * 1000) + 100, 0)
                         .toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-2xl font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-2xl font-semibold text-white"
                       {(
                         siteConfig.articles
                           .filter((article) => article.status === 'published')
@@ -7007,9 +7007,9 @@ export const Dashboard: React.FC = () => {
                       min
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-2xl font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-2xl font-semibold text-white"
                       {siteConfig.articles
                         .filter((article) => article.status === 'published')
                         .reduce((sum, article) => sum + Math.floor(Math.random() * 50) + 5, 0)
@@ -7023,7 +7023,7 @@ export const Dashboard: React.FC = () => {
 
           {activePublishingSection === 'settings' && (
             <>
-              <Card title="Publishing Settings" subtitle="Configure publishing preferences">
+              <Card title="Publishing Settings" subtitle="Configure publishing preferences"
                 <Toggle
                   label="Auto-publish scheduled articles"
                   checked={true}
@@ -7054,19 +7054,19 @@ export const Dashboard: React.FC = () => {
                 />
               </Card>
 
-              <Card title="Content Guidelines" subtitle="Publishing standards and requirements">
-                <div className="space-y-2">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm text-white">• Minimum word count: 300 words</p>
+              <Card title="Content Guidelines" subtitle="Publishing standards and requirements"
+                <div className="space-y-2"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm text-white"• Minimum word count: 300 words</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm text-white">• Required: Cover image and excerpt</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm text-white"• Required: Cover image and excerpt</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm text-white">• Maximum title length: 100 characters</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm text-white"• Maximum title length: 100 characters</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="text-sm text-white">• Categories: Insights, Tutorial, Case Study</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="text-sm text-white"• Categories: Insights, Tutorial, Case Study</p>
                   </div>
                 </div>
               </Card>
@@ -7079,11 +7079,11 @@ export const Dashboard: React.FC = () => {
 
   const renderPersonalHubWorkspace = () => {
     return (
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="self-start rounded-[20px] border border-[#e5e7eb]
-          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-
-          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1">
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]"
+        <aside className="self-start rounded-[20px] border border-[#e5e7eb]"
+          <p className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+"
+          <div className="mt-3 max-h-[68vh] space-y-3 overflow-y-auto pr-1"
             {DASHBOARD_PERSONAL_HUB_SECTIONS.map((section) => {
               const SectionIcon = section.icon;
               return (
@@ -7097,10 +7097,10 @@ export const Dashboard: React.FC = () => {
                       : 'border-[#e5e7eb]
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3"
                     <SectionIcon size={16} strokeWidth={1.8} />
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">{section.label}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.15em]">section.label<</p>
                       <p className={`mt-1 text-[12px] ${activePersonalHubSection === section.id ? 'text-[#6b7280]
                         {section.description}
                       </p>
@@ -7112,16 +7112,16 @@ export const Dashboard: React.FC = () => {
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="space-y-4"
           {activePersonalHubSection === 'partners' && (
             <>
-              <Card title="Partners Management" subtitle="Target companies and freelance opportunities">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <Card title="Partners Management" subtitle="Target companies and freelance opportunities"
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
                   <p className="max-w-[560px] text-sm text-[#6b7280]
                     Manage your target companies, freelance opportunities, and partnership planning. Track contacts, follow-ups, and opportunities.
                   </p>
-
-                  <button
+"
+                  <button"
                     type="button"
                     onClick={() => {
                       const now = new Date().toISOString();
@@ -7154,37 +7154,37 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.length}</p>
+                <div className="grid gap-2 sm:grid-cols-4"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">Active</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'active').length}</p>
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Active</p>
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.status === 'active').length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Prospects</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.status === 'prospect').length}</p>
+                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Prospects</p>
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.status === 'prospect').length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.partners.filter((p) => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length}</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.partners.filter((p) => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length<</p>
                   </div>
                 </div>
               </Card>
 
-              <div className="rounded-[20px] border border-[#e5e7eb]
-                <div className="space-y-3">
+              <div className="rounded-[20px] border border-[#e5e7eb]"
+                <div className="space-y-3"
                   {siteConfig.partners.length === 0 ? (
                     <p className="text-sm text-[#6b7280]
-                  ) : (
-                    siteConfig.partners.map((partner) => (
-                      <div key={partner.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{partner.name}</p>
+                  ) : ("
+                    siteConfig.partners.map((partner) => ("
+                      <div key={partner.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-start justify-between gap-3"
+                          <div className="flex-1"
+                            <div className="flex items-center gap-2"
+                              <p className="text-sm font-semibold text-white">partner.name<</p>
                               <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                                 partner.status === 'active'
                                   ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
@@ -7195,13 +7195,13 @@ export const Dashboard: React.FC = () => {
                                 {partner.status}
                               </span>
                             </div>
-                            <p className="mt-1 text-xs text-[#6b7280]
-                            {partner.email && <p className="mt-1 text-xs text-[#6b7280]
-                          </div>
-                          <div className="flex gap-2">
+                            <p className="mt-1 text-xs text-[#6b7280]"
+                            {partner.email && <p className="mt-1 text-xs text-[#6b7280]"
+                          </div>"
+                          <div className="flex gap-2"
                             <button
                               type="button"
-                              className="rounded-[8px] border border-[#e5e7eb]
+                              className="rounded-[8px] border border-[#e5e7eb]"
                             >
                               Edit
                             </button>
@@ -7223,13 +7223,13 @@ export const Dashboard: React.FC = () => {
 
           {activePersonalHubSection === 'projects' && (
             <>
-              <Card title="Projects Management" subtitle="Current and completed project management">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <Card title="Projects Management" subtitle="Current and completed project management"
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
                   <p className="max-w-[560px] text-sm text-[#6b7280]
                     Track all your projects with detailed information including budget, timeline, status, and financial details.
                   </p>
-
-                  <button
+"
+                  <button"
                     type="button"
                     onClick={() => {
                       const now = new Date().toISOString();
@@ -7262,39 +7262,39 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.length}</p>
+                <div className="grid gap-2 sm:grid-cols-4"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">In Progress</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'in_progress').length}</p>
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"In Progress</p>
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.filter((p) => p.status === 'in_progress').length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Completed</p>
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.personalProjects.filter((p) => p.status === 'completed').length}</p>
+                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Completed</p>
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.personalProjects.filter((p) => p.status === 'completed').length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white"
                       ${siteConfig.personalProjects.reduce((sum, p) => sum + p.estimatedBudget, 0).toLocaleString()}
                     </p>
                   </div>
                 </div>
               </Card>
 
-              <div className="rounded-[20px] border border-[#e5e7eb]
-                <div className="space-y-3">
+              <div className="rounded-[20px] border border-[#e5e7eb]"
+                <div className="space-y-3"
                   {siteConfig.personalProjects.length === 0 ? (
                     <p className="text-sm text-[#6b7280]
-                  ) : (
-                    siteConfig.personalProjects.map((project) => (
-                      <div key={project.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{project.title}</p>
+                  ) : ("
+                    siteConfig.personalProjects.map((project) => ("
+                      <div key={project.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-start justify-between gap-3"
+                          <div className="flex-1"
+                            <div className="flex items-center gap-2"
+                              <p className="text-sm font-semibold text-white">project.title<</p>
                               <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                                 project.status === 'completed'
                                   ? 'border-[#22c55e]/35 bg-[#22c55e]/14 text-[#86efac]'
@@ -7307,24 +7307,24 @@ export const Dashboard: React.FC = () => {
                                 {project.status}
                               </span>
                             </div>
-                            <p className="mt-1 text-xs text-[#6b7280]
-                            <div className="mt-2 flex items-center gap-4">
-                              <div className="flex-1">
-                                <div className="h-2 rounded-full bg-[#f8f9fa]
-                                  <div
+                            <p className="mt-1 text-xs text-[#6b7280]"
+                            <div className="mt-2 flex items-center gap-4"
+                              <div className="flex-1"
+                                <div className="h-2 rounded-full bg-[#f8f9fa]"
+                                  <div"
                                     className="h-2 rounded-full bg-[#3b82f6]"
                                     style={{ width: `${project.progress}%` }}
                                   />
                                 </div>
-                                <p className="mt-1 text-xs text-[#6b7280]
-                              </div>
+                                <p className="mt-1 text-xs text-[#6b7280]"
+                              </div>"
                               <p className="text-xs text-[#6b7280])}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
+                            </div>"
+                          </div>"
+                          <div className="flex gap-2"
                             <button
                               type="button"
-                              className="rounded-[8px] border border-[#e5e7eb]
+                              className="rounded-[8px] border border-[#e5e7eb]"
                             >
                               Edit
                             </button>
@@ -7346,13 +7346,13 @@ export const Dashboard: React.FC = () => {
 
           {activePersonalHubSection === 'social' && (
             <>
-              <Card title="Social Media Management" subtitle="Accounts and post scheduling">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <Card title="Social Media Management" subtitle="Accounts and post scheduling"
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
                   <p className="max-w-[560px] text-sm text-[#6b7280]
                     Manage your social media accounts, schedule posts, and track engagement across all platforms.
                   </p>
-
-                  <button
+"
+                  <button"
                     type="button"
                     onClick={() => {
                       const now = new Date().toISOString();
@@ -7379,42 +7379,42 @@ export const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.socialAccounts.filter((a) => a.connected).length}</p>
+                <div className="grid gap-2 sm:grid-cols-4"
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.socialAccounts.filter((a) => a.connected).length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white"
                       {siteConfig.socialAccounts.reduce((sum, a) => sum + a.followerCount, 0).toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.socialPosts.filter((p) => p.status === 'scheduled').length}</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.socialPosts.filter((p) => p.status === 'scheduled').length<</p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.socialPosts.filter((p) => p.status === 'published').length}</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.socialPosts.filter((p) => p.status === 'published').length<</p>
                   </div>
                 </div>
               </Card>
 
-              <div className="rounded-[20px] border border-[#e5e7eb]
-                <h3 className="mb-3 text-sm font-semibold text-white">Connected Accounts</h3>
-                <div className="space-y-2">
+              <div className="rounded-[20px] border border-[#e5e7eb]"
+                <h3 className="mb-3 text-sm font-semibold text-white"Connected Accounts</h3>
+                <div className="space-y-2"
                   {siteConfig.socialAccounts.length === 0 ? (
                     <p className="text-sm text-[#6b7280]
-                  ) : (
-                    siteConfig.socialAccounts.map((account) => (
-                      <div key={account.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-center justify-between">
+                  ) : ("
+                    siteConfig.socialAccounts.map((account) => ("
+                      <div key={account.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-center justify-between"
                           <div>
-                            <p className="text-sm font-medium text-white capitalize">{account.platform}</p>
-                            <p className="mt-1 text-xs text-[#6b7280]
-                          </div>
-                          <div className="flex items-center gap-3">
+                            <p className="text-sm font-medium text-white capitalize">account.platform<</p>
+                            <p className="mt-1 text-xs text-[#6b7280]"
+                          </div>"
+                          <div className="flex items-center gap-3"
                             <span className="text-xs text-[#6b7280])} followers</span>
                             <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                               account.connected
@@ -7433,15 +7433,15 @@ export const Dashboard: React.FC = () => {
             </>
           )}
 
-          {activePersonalHubSection === 'finance' && (
-            <>
-              <Card title="Financial Management" subtitle="Income, expenses, investments, and invoices">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          {activePersonalHubSection === 'finance' && ("
+            <>"
+              <Card title="Financial Management" subtitle="Income, expenses, investments, and invoices"
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
                   <p className="max-w-[560px] text-sm text-[#6b7280]
                     Track your income, expenses, investments, and invoices. Get a complete overview of your financial health.
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
+                  </p>"
+"
+                  <div className="flex flex-wrap gap-2"
                     <button
                       type="button"
                       onClick={() => {
@@ -7497,47 +7497,47 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">Total Income</p>
-                    <p className="mt-1 text-lg font-semibold text-white">
+                <div className="grid gap-2 sm:grid-cols-4"
+                  <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Total Income</p>
+                    <p className="mt-1 text-lg font-semibold text-white"
                       ${siteConfig.financialTransactions
                         .filter((t) => t.type === 'income')
                         .reduce((sum, t) => sum + t.amount, 0)
                         .toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Total Expenses</p>
-                    <p className="mt-1 text-lg font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Total Expenses</p>
+                    <p className="mt-1 text-lg font-semibold text-white"
                       ${siteConfig.financialTransactions
                         .filter((t) => t.type === 'expense')
                         .reduce((sum, t) => sum + t.amount, 0)
                         .toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white"
                       ${siteConfig.investments.reduce((sum, i) => sum + i.currentValue, 0).toLocaleString()}
                     </p>
                   </div>
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <p className="mt-1 text-lg font-semibold text-white">{siteConfig.invoices.filter((i) => i.status === 'sent').length}</p>
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <p className="mt-1 text-lg font-semibold text-white">siteConfig.invoices.filter((i) => i.status === 'sent').length<</p>
                   </div>
                 </div>
               </Card>
 
-              <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-[20px] border border-[#e5e7eb]
-                  <h3 className="mb-3 text-sm font-semibold text-white">Recent Transactions</h3>
-                  <div className="space-y-2">
+              <div className="grid gap-4 xl:grid-cols-2"
+                <div className="rounded-[20px] border border-[#e5e7eb]"
+                  <h3 className="mb-3 text-sm font-semibold text-white"Recent Transactions</h3>
+                  <div className="space-y-2"
                     {siteConfig.financialTransactions.slice(0, 5).map((transaction) => (
-                      <div key={transaction.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-center justify-between">
+                      <div key={transaction.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-center justify-between"
                           <div>
-                            <p className="text-sm font-medium text-white">{transaction.description || 'No description'}</p>
+                            <p className="text-sm font-medium text-white">transaction.description || 'No description'<</p>
                             <p className="mt-1 text-xs text-[#6b7280]).toLocaleDateString()}</p>
                           </div>
                           <span className={`text-sm font-semibold ${
@@ -7547,21 +7547,21 @@ export const Dashboard: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                    ))}
-                    {siteConfig.financialTransactions.length === 0 && (
+                    ))}"
+                    {siteConfig.financialTransactions.length === 0 && ("
                       <p className="text-sm text-[#6b7280]
                     )}
                   </div>
-                </div>
-
-                <div className="rounded-[20px] border border-[#e5e7eb]
-                  <h3 className="mb-3 text-sm font-semibold text-white">Recent Invoices</h3>
-                  <div className="space-y-2">
+                </div>"
+"
+                <div className="rounded-[20px] border border-[#e5e7eb]"
+                  <h3 className="mb-3 text-sm font-semibold text-white"Recent Invoices</h3>
+                  <div className="space-y-2"
                     {siteConfig.invoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="rounded-[12px] border border-[#e5e7eb]
-                        <div className="flex items-center justify-between">
+                      <div key={invoice.id} className="rounded-[12px] border border-[#e5e7eb]"
+                        <div className="flex items-center justify-between"
                           <div>
-                            <p className="text-sm font-medium text-white">{invoice.invoiceNumber}</p>
+                            <p className="text-sm font-medium text-white">invoice.invoiceNumber<</p>
                             <p className="mt-1 text-xs text-[#6b7280])}</p>
                           </div>
                           <span className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
@@ -7575,8 +7575,8 @@ export const Dashboard: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                    ))}
-                    {siteConfig.invoices.length === 0 && (
+                    ))}"
+                    {siteConfig.invoices.length === 0 && ("
                       <p className="text-sm text-[#6b7280]
                     )}
                   </div>
@@ -7699,15 +7699,15 @@ export const Dashboard: React.FC = () => {
         ),
       }));
     };
-
-    return (
-      <div className="space-y-4">
-        <Card title="AI Intelligence" subtitle="News tracking, market monitoring, and AI reports">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+"
+    return ("
+      <div className="space-y-4"
+        <Card title="AI Intelligence" subtitle="News tracking, market monitoring, and AI reports"
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
             <p className="max-w-[560px] text-sm text-[#6b7280]
-              Configure AI-powered tracking for news, markets, influencers, and generate daily reports for decision making.
-            </p>
-            <div className="flex flex-wrap gap-2">
+              Configure AI-powered tracking for news, markets, influencers, and generate daily reports for decision making."
+            </p>"
+            <div className="flex flex-wrap gap-2"
               <button
                 type="button"
                 onClick={addTracking}
@@ -7727,35 +7727,35 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {showReports ? (
-          <div className="space-y-4">
-            <div className="rounded-[20px] border border-[#e5e7eb]
-              <h3 className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-              <div className="space-y-3">
+          <div className="space-y-4"
+            <div className="rounded-[20px] border border-[#e5e7eb]"
+              <h3 className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
+              <div className="space-y-3"
                 {siteConfig.aiReports.length === 0 ? (
                   <p className="text-sm text-[#6b7280]
                 ) : (
                   siteConfig.aiReports.map((report) => {
                     const tracking = siteConfig.aiTracking.find((t) => t.id === report.trackingId);
                     return (
-                      <div
-                        key={report.id}
-                        className={`rounded-[12px] border border-[#e5e7eb]
+                      <div"
+                        key={report.id}"
+                        className={`rounded-[12px] border border-[#e5e7eb]"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-[#6b7280]
+                        <div className="flex items-start justify-between gap-3"
+                          <div className="flex-1"
+                            <h4 className="font-semibold text-[#6b7280]"
                             <p className="mt-1 text-xs text-[#6b7280]
                               {tracking?.name || 'Unknown Tracking'} • {new Date(report.generatedAt).toLocaleDateString()}
                             </p>
-                          </div>
-                          {!report.read && (
+                          </div>"
+                          {!report.read && ("
                             <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
                           )}
                         </div>
-                        <p className="text-sm text-[#6b7280]
-                        <div className="flex flex-wrap gap-2">
+                        <p className="text-sm text-[#6b7280]"
+                        <div className="flex flex-wrap gap-2"
                           {report.insights.slice(0, 2).map((insight, idx) => (
-                            <span key={idx} className="inline-flex rounded-[8px] border border-[#e5e7eb]
+                            <span key={idx} className="inline-flex rounded-[8px] border border-[#e5e7eb]"
                               {insight}
                             </span>
                           ))}
@@ -7768,18 +7768,18 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <div className="space-y-3">
-              <div className="rounded-[20px] border border-[#e5e7eb]
+          <div className="grid gap-4 lg:grid-cols-[320px_1fr]"
+            <div className="space-y-3"
+              <div className="rounded-[20px] border border-[#e5e7eb]"
                 <input
                   type="text"
                   placeholder="Search tracking..."
                   value={trackingSearch}
                   onChange={(e) => setTrackingSearch(e.target.value)}
-                  className="w-full rounded-[10px] border border-[#e5e7eb]
+                  className="w-full rounded-[10px] border border-[#e5e7eb]"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2"
                 {filteredTracking.map((tracking) => (
                   <button
                     key={tracking.id}
@@ -7791,31 +7791,31 @@ export const Dashboard: React.FC = () => {
                         : 'border-[#e5e7eb]
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-sm">{tracking.name}</span>
+                    <div className="flex items-center justify-between gap-2"
+                      <span className="font-semibold text-sm">tracking.name<</span>
                       {tracking.enabled ? (
                         <span className="inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
                       ) : (
                         <span className="inline-flex h-2 w-2 rounded-full bg-[#f8f9fa]
-                      )}
-                    </div>
+                      )}"
+                    </div>"
                     <p className="mt-1 text-xs text-[#6b7280]
                   </button>
-                ))}
-                {filteredTracking.length === 0 && (
+                ))}"
+                {filteredTracking.length === 0 && ("
                   <p className="text-center text-sm text-[#6b7280]
                 )}
               </div>
             </div>
-
-            {activeTracking ? (
-              <div className="space-y-4">
-                <div className="rounded-[20px] border border-[#e5e7eb]
-                  <div className="mb-4 flex items-center justify-between">
+"
+            {activeTracking ? ("
+              <div className="space-y-4"
+                <div className="rounded-[20px] border border-[#e5e7eb]"
+                  <div className="mb-4 flex items-center justify-between"
                     <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                      {activeTracking.name}
-                    </h3>
-                    <div className="flex gap-2">
+                      {activeTracking.name}"
+                    </h3>"
+                    <div className="flex gap-2"
                       <button
                         type="button"
                         onClick={() => generateReport(activeTracking.id)}
@@ -7833,7 +7833,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4"
                     <Input
                       label="Name"
                       value={activeTracking.name}
@@ -7895,34 +7895,34 @@ export const Dashboard: React.FC = () => {
                       rows={3}
                     />
 
-                    <div className="rounded-[12px] border border-[#e5e7eb]
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                      <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[12px] border border-[#e5e7eb]"
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                      <div className="grid grid-cols-2 gap-3"
                         <div>
-                          <p className="text-xs text-[#6b7280]
+                          <p className="text-xs text-[#6b7280]"
                           <p className="text-sm text-[#6b7280]
                             {activeTracking.lastReport ? new Date(activeTracking.lastReport).toLocaleString() : 'Never'}
                           </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#6b7280]
+                        </div>"
+                        <div>"
+                          <p className="text-xs text-[#6b7280]"
                           <p className="text-sm text-[#6b7280]
                             {activeTracking.nextReport ? new Date(activeTracking.nextReport).toLocaleString() : 'Not scheduled'}
                           </p>
                         </div>
                       </div>
                     </div>
-
-                    {trackingReports.length > 0 && (
-                      <div className="space-y-2">
+"
+                    {trackingReports.length > 0 && ("
+                      <div className="space-y-2"
                         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                         {trackingReports.slice(0, 3).map((report) => (
-                          <div
-                            key={report.id}
-                            className={`rounded-[12px] border border-[#e5e7eb]
+                          <div"
+                            key={report.id}"
+                            className={`rounded-[12px] border border-[#e5e7eb]"
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-[#6b7280]
+                            <div className="flex items-center justify-between gap-2"
+                              <span className="text-sm font-semibold text-[#6b7280]"
                               {!report.read && <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />}
                             </div>
                             <p className="text-xs text-[#6b7280]).toLocaleString()}</p>
@@ -7932,9 +7932,9 @@ export const Dashboard: React.FC = () => {
                     )}
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-[20px] border border-[#e5e7eb]
+              </div>"
+            ) : ("
+              <div className="rounded-[20px] border border-[#e5e7eb]"
                 <p className="text-sm text-[#6b7280]
               </div>
             )}
@@ -8026,15 +8026,15 @@ export const Dashboard: React.FC = () => {
     };
 
     const unreadCount = siteConfig.emails.filter((email) => email.visible && email.folder === 'inbox' && email.status === 'unread').length;
-
-    return (
-      <div className="space-y-4">
-        <Card title="Communication" subtitle="Email client and communication management">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+"
+    return ("
+      <div className="space-y-4"
+        <Card title="Communication" subtitle="Email client and communication management"
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
             <p className="max-w-[560px] text-sm text-[#6b7280]
-              Full email client with inbox management, compose, reply, and folder organization.
-            </p>
-            <div className="flex flex-wrap gap-2">
+              Full email client with inbox management, compose, reply, and folder organization."
+            </p>"
+            <div className="flex flex-wrap gap-2"
               <button
                 type="button"
                 onClick={() => setShowCompose(true)}
@@ -8047,10 +8047,10 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {showCompose ? (
-          <div className="rounded-[20px] border border-[#e5e7eb]
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-              <button
+          <div className="rounded-[20px] border border-[#e5e7eb]"
+            <div className="mb-4 flex items-center justify-between"
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
+              <button"
                 type="button"
                 onClick={() => setShowCompose(false)}
                 className={`${dashboardActionButtonSecondaryClass} h-8`}
@@ -8058,7 +8058,7 @@ export const Dashboard: React.FC = () => {
                 Cancel
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4"
               <Input
                 label="To"
                 value={composeTo}
@@ -8075,7 +8075,7 @@ export const Dashboard: React.FC = () => {
                 onChange={setComposeBody}
                 rows={8}
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2"
                 <button
                   type="button"
                   onClick={sendEmail}
@@ -8118,18 +8118,18 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <div className="space-y-3">
-              <div className="rounded-[20px] border border-[#e5e7eb]
+          <div className="grid gap-4 lg:grid-cols-[320px_1fr]"
+            <div className="space-y-3"
+              <div className="rounded-[20px] border border-[#e5e7eb]"
                 <input
                   type="text"
                   placeholder="Search emails..."
                   value={emailSearch}
                   onChange={(e) => setEmailSearch(e.target.value)}
-                  className="w-full rounded-[10px] border border-[#e5e7eb]
+                  className="w-full rounded-[10px] border border-[#e5e7eb]"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2"
                 {folderOptions.map((folder) => {
                   const Icon = folder.icon;
                   const count = siteConfig.emails.filter((email) => email.visible && email.folder === folder.value).length;
@@ -8148,12 +8148,12 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between gap-2"
+                        <div className="flex items-center gap-2"
                           <Icon className="h-4 w-4" />
-                          <span className="font-semibold text-sm">{folder.label}</span>
+                          <span className="font-semibold text-sm">folder.label<</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2"
                           {unreadInFolder > 0 && (
                             <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
                           )}
@@ -8164,27 +8164,27 @@ export const Dashboard: React.FC = () => {
                   );
                 })}
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-[#e5e7eb]
-                <div className="mb-4 flex items-center justify-between">
+            </div>"
+"
+            <div className="space-y-4"
+              <div className="rounded-[20px] border border-[#e5e7eb]"
+                <div className="mb-4 flex items-center justify-between"
                   <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                    {folderOptions.find((f) => f.value === emailFilter)?.label || 'Emails'}
-                    {unreadCount > 0 && emailFilter === 'inbox' && (
+                    {folderOptions.find((f) => f.value === emailFilter)?.label || 'Emails'}"
+                    {unreadCount > 0 && emailFilter === 'inbox' && ("
                       <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
                     )}
                   </h3>
                   <span className="text-xs text-[#6b7280]
-                </div>
-
-                <div className="space-y-2">
+                </div>"
+"
+                <div className="space-y-2"
                   {filteredEmails.length === 0 ? (
                     <p className="text-center text-sm text-[#6b7280]
                   ) : (
                     filteredEmails.map((email) => (
-                      <button
-                        key={email.id}
+                      <button"
+                        key={email.id}"
                         type="button"
                         onClick={() => {
                           setActiveEmailId(email.id);
@@ -8198,27 +8198,27 @@ export const Dashboard: React.FC = () => {
                             : 'border-[#e5e7eb]
                         } ${email.status === 'unread' ? 'border-l-4 border-l-[#3b82f6]' : ''}`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-[#6b7280]
-                              {email.status === 'unread' && (
+                        <div className="flex items-start justify-between gap-3"
+                          <div className="flex-1 min-w-0"
+                            <div className="flex items-center gap-2"
+                              <span className="font-semibold text-sm text-[#6b7280]"
+                              {email.status === 'unread' && ("
                                 <span className="inline-flex h-2 w-2 rounded-full bg-[#3b82f6]" />
                               )}
                             </div>
-                            <p className="mt-1 truncate text-sm font-medium text-[#6b7280]
-                            <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]
-                          </div>
+                            <p className="mt-1 truncate text-sm font-medium text-[#6b7280]"
+                            <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]"
+                          </div>"
                           <span className="whitespace-nowrap text-xs text-[#6b7280]
                             {new Date(email.receivedAt).toLocaleDateString()}
                           </span>
-                        </div>
-                        {email.labels.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
+                        </div>"
+                        {email.labels.length > 0 && ("
+                          <div className="mt-2 flex flex-wrap gap-1"
                             {email.labels.map((label, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex rounded-[6px] border border-[#e5e7eb]
+                                className="inline-flex rounded-[6px] border border-[#e5e7eb]"
                               >
                                 {label}
                               </span>
@@ -8232,10 +8232,10 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {activeEmail && (
-                <div className="rounded-[20px] border border-[#e5e7eb]
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                    <div className="flex gap-2">
+                <div className="rounded-[20px] border border-[#e5e7eb]"
+                  <div className="mb-4 flex items-center justify-between"
+                    <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]"
+                    <div className="flex gap-2"
                       <button
                         type="button"
                         onClick={() => {
@@ -8258,35 +8258,35 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4"
                     <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       <p className="text-sm text-[#6b7280]
                     </div>
-
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+"
+                    <div>"
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       <p className="text-sm text-[#6b7280])}</p>
                     </div>
 
-                    {activeEmail.cc && activeEmail.cc.length > 0 && (
-                      <div>
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+                    {activeEmail.cc && activeEmail.cc.length > 0 && ("
+                      <div>"
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                         <p className="text-sm text-[#6b7280])}</p>
                       </div>
                     )}
-
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+"
+                    <div>"
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       <p className="text-sm font-semibold text-[#6b7280]
                     </div>
-
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
+"
+                    <div>"
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
                       <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
                     </div>
-
-                    <div>
+"
+                    <div>"
                       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                       <SelectInput
                         value={activeEmail.status}
@@ -8296,24 +8296,24 @@ export const Dashboard: React.FC = () => {
                         }
                       />
                     </div>
-
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                      <div className="rounded-[10px] border border-[#e5e7eb]
+"
+                    <div>"
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                      <div className="rounded-[10px] border border-[#e5e7eb]"
                         <p className="whitespace-pre-wrap text-sm text-[#6b7280]
                       </div>
                     </div>
 
-                    {activeEmail.attachments.length > 0 && (
-                      <div>
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                        <div className="space-y-2">
+                    {activeEmail.attachments.length > 0 && ("
+                      <div>"
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                        <div className="space-y-2"
                           {activeEmail.attachments.map((attachment, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between rounded-[8px] border border-[#e5e7eb]
+                              className="flex items-center justify-between rounded-[8px] border border-[#e5e7eb]"
                             >
-                              <span className="text-sm text-[#6b7280]
+                              <span className="text-sm text-[#6b7280]"
                               <span className="text-xs text-[#6b7280])}</span>
                             </div>
                           ))}
@@ -8321,14 +8321,14 @@ export const Dashboard: React.FC = () => {
                       </div>
                     )}
 
-                    {activeEmail.labels.length > 0 && (
-                      <div>
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                        <div className="flex flex-wrap gap-2">
+                    {activeEmail.labels.length > 0 && ("
+                      <div>"
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                        <div className="flex flex-wrap gap-2"
                           {activeEmail.labels.map((label, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex rounded-[8px] border border-[#e5e7eb]
+                              className="inline-flex rounded-[8px] border border-[#e5e7eb]"
                             >
                               {label}
                             </span>
@@ -8424,13 +8424,13 @@ export const Dashboard: React.FC = () => {
     const unpinnedNotes = filteredNotes.filter((note) => !note.pinned);
 
     return (
-      <div className="space-y-4">
-        <Card title="Notes" subtitle="Personal note-taking and knowledge management">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="space-y-4"
+        <Card title="Notes" subtitle="Personal note-taking and knowledge management"
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
             <p className="max-w-[560px] text-sm text-[#6b7280]
-              Create and manage personal notes with categories, tags, and search functionality.
-            </p>
-            <div className="flex flex-wrap gap-2">
+              Create and manage personal notes with categories, tags, and search functionality."
+            </p>"
+            <div className="flex flex-wrap gap-2"
               <button
                 type="button"
                 onClick={addNote}
@@ -8442,20 +8442,20 @@ export const Dashboard: React.FC = () => {
           </div>
         </Card>
 
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <div className="space-y-3">
-            <div className="rounded-[20px] border border-[#e5e7eb]
+        <div className="grid gap-4 lg:grid-cols-[320px_1fr]"
+          <div className="space-y-3"
+            <div className="rounded-[20px] border border-[#e5e7eb]"
               <input
                 type="text"
                 placeholder="Search notes..."
                 value={noteSearch}
                 onChange={(e) => setNoteSearch(e.target.value)}
-                className="w-full rounded-[10px] border border-[#e5e7eb]
+                className="w-full rounded-[10px] border border-[#e5e7eb]"
               />
               <select
                 value={noteCategoryFilter}
                 onChange={(e) => setNoteCategoryFilter(e.target.value as NoteCategory | 'all')}
-                className="w-full rounded-[10px] border border-[#e5e7eb]
+                className="w-full rounded-[10px] border border-[#e5e7eb]"
               >
                 {categoryOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -8464,13 +8464,13 @@ export const Dashboard: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2"
               {pinnedNotes.length > 0 && (
                 <>
                   <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                   {pinnedNotes.map((note) => (
-                    <button
-                      key={note.id}
+                    <button"
+                      key={note.id}"
                       type="button"
                       onClick={() => setActiveNoteId(note.id)}
                       className={`w-full rounded-[12px] border p-3 text-left transition-all ${
@@ -8479,25 +8479,25 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                      <div className="flex items-start justify-between gap-2"
+                        <div className="flex-1 min-w-0"
+                          <div className="flex items-center gap-2"
                             <span className="inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: note.color }} />
-                            <span className="font-semibold text-sm text-[#6b7280]
-                          </div>
-                          <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]
-                        </div>
-                        <span className="text-[#6b7280]
-                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <span className="font-semibold text-sm text-[#6b7280]"
+                          </div>"
+                          <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]"
+                        </div>"
+                        <span className="text-[#6b7280]"
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"
                             <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828zM5 13H3v-2.828l7.586-7.586a2 2 0 012.828 0l1.414 1.414L7 10.172V13z" />
                           </svg>
                         </span>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-2 flex flex-wrap gap-1"
                         {note.tags.slice(0, 2).map((tag, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex rounded-[6px] border border-[#e5e7eb]
+                            className="inline-flex rounded-[6px] border border-[#e5e7eb]"
                           >
                             {tag}
                           </span>
@@ -8514,8 +8514,8 @@ export const Dashboard: React.FC = () => {
                     <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
                   )}
                   {unpinnedNotes.map((note) => (
-                    <button
-                      key={note.id}
+                    <button"
+                      key={note.id}"
                       type="button"
                       onClick={() => setActiveNoteId(note.id)}
                       className={`w-full rounded-[12px] border p-3 text-left transition-all ${
@@ -8524,20 +8524,20 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                      <div className="flex items-start justify-between gap-2"
+                        <div className="flex-1 min-w-0"
+                          <div className="flex items-center gap-2"
                             <span className="inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: note.color }} />
-                            <span className="font-semibold text-sm text-[#6b7280]
-                          </div>
+                            <span className="font-semibold text-sm text-[#6b7280]"
+                          </div>"
                           <p className="mt-1 line-clamp-2 text-xs text-[#6b7280]
-                        </div>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
+                        </div>"
+                      </div>"
+                      <div className="mt-2 flex flex-wrap gap-1"
                         {note.tags.slice(0, 2).map((tag, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex rounded-[6px] border border-[#e5e7eb]
+                            className="inline-flex rounded-[6px] border border-[#e5e7eb]"
                           >
                             {tag}
                           </span>
@@ -8553,15 +8553,15 @@ export const Dashboard: React.FC = () => {
               )}
             </div>
           </div>
-
-          {activeNote ? (
-            <div className="space-y-4">
-              <div className="rounded-[20px] border border-[#e5e7eb]
-                <div className="mb-4 flex items-center justify-between">
+"
+          {activeNote ? ("
+            <div className="space-y-4"
+              <div className="rounded-[20px] border border-[#e5e7eb]"
+                <div className="mb-4 flex items-center justify-between"
                   <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#6b7280]
-                    {activeNote.title}
-                  </h3>
-                  <div className="flex gap-2">
+                    {activeNote.title}"
+                  </h3>"
+                  <div className="flex gap-2"
                     <button
                       type="button"
                       onClick={() => togglePin(activeNote.id)}
@@ -8580,7 +8580,7 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4"
                   <Input
                     label="Title"
                     value={activeNote.title}
@@ -8599,8 +8599,8 @@ export const Dashboard: React.FC = () => {
                   />
 
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <div className="flex flex-wrap gap-2">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <div className="flex flex-wrap gap-2"
                       {colorOptions.map((option) => (
                         <button
                           key={option.value}
@@ -8629,8 +8629,8 @@ export const Dashboard: React.FC = () => {
                   />
 
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280])</p>
-                    <input
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280])</p>"
+                    <input"
                       type="text"
                       value={activeNote.tags.join(', ')}
                       onChange={(e) =>
@@ -8640,25 +8640,25 @@ export const Dashboard: React.FC = () => {
                           updatedAt: new Date().toISOString(),
                         }))
                       }
-                      className="w-full rounded-[10px] border border-[#e5e7eb]
+                      className="w-full rounded-[10px] border border-[#e5e7eb]"
                     />
                   </div>
 
-                  <div className="rounded-[12px] border border-[#e5e7eb]
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-[12px] border border-[#e5e7eb]"
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+                    <div className="grid grid-cols-2 gap-3"
                       <div>
-                        <p className="text-xs text-[#6b7280]
+                        <p className="text-xs text-[#6b7280]"
                         <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#6b7280]
+                      </div>"
+                      <div>"
+                        <p className="text-xs text-[#6b7280]"
                         <p className="text-sm text-[#6b7280]).toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
-
-                  <Toggle
+"
+                  <Toggle"
                     label="Visible"
                     checked={activeNote.visible}
                     onChange={(checked) =>
@@ -8669,7 +8669,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="rounded-[20px] border border-[#e5e7eb]
+            <div className="rounded-[20px] border border-[#e5e7eb]"
               <p className="text-sm text-[#6b7280]
             </div>
           )}
@@ -8702,16 +8702,16 @@ export const Dashboard: React.FC = () => {
     const articleCanGoLive = Boolean(
       activeArticle && activeArticle.visible && activeArticle.status === 'published' && activeArticle.slug.trim().length > 0,
     );
-
-    return (
-      <div className="space-y-4">
-        <Card title="Articles Studio" subtitle="Create, publish, and preview articles from one focused workspace">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+"
+    return ("
+      <div className="space-y-4"
+        <Card title="Articles Studio" subtitle="Create, publish, and preview articles from one focused workspace"
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"
             <p className="max-w-[560px] text-sm text-[#6b7280]
               Build a focused publishing workflow around articles only. Create drafts, schedule launches, and push live posts from one editor.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
+            </p>"
+"
+            <div className="flex flex-wrap gap-2"
               <button
                 type="button"
                 onClick={() => {
@@ -8752,29 +8752,29 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-[12px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-              <p className="mt-1 text-lg font-semibold text-white">{siteConfig.articles.length}</p>
+          <div className="grid gap-2 sm:grid-cols-3"
+            <div className="rounded-[12px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              <p className="mt-1 text-lg font-semibold text-white">siteConfig.articles.length<</p>
             </div>
-            <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]">Live on /articles</p>
-              <p className="mt-1 text-lg font-semibold text-white">{liveArticlesCount}</p>
+            <div className="rounded-[12px] border border-[#22c55e]/30 bg-[#22c55e]/12 px-3 py-2.5"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#86efac]"Live on /articles</p>
+              <p className="mt-1 text-lg font-semibold text-white">liveArticlesCount<</p>
             </div>
-            <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]">Scheduled Queue</p>
-              <p className="mt-1 text-lg font-semibold text-white">{scheduledCount}</p>
+            <div className="rounded-[12px] border border-[#ef4444]/30 bg-[#ef4444]/12 px-3 py-2.5"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#fecaca]"Scheduled Queue</p>
+              <p className="mt-1 text-lg font-semibold text-white">scheduledCount<</p>
             </div>
           </div>
         </Card>
 
-        <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-          <Card title="Article Library" subtitle="Select one article card to focus the editor">
+        <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]"
+          <Card title="Article Library" subtitle="Select one article card to focus the editor"
             <Input label="Search articles" value={articleSearchQuery} onChange={setArticleSearchQuery} />
 
-            <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1">
+            <div className="max-h-[66vh] space-y-2 overflow-y-auto pr-1"
               {filteredArticles.length === 0 ? (
-                <div className="rounded-[12px] border border-[#e5e7eb]
+                <div className="rounded-[12px] border border-[#e5e7eb]"
                   No articles match this search.
                 </div>
               ) : (
@@ -8792,8 +8792,8 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb]
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="line-clamp-1 text-sm font-semibold text-white">{article.title}</p>
+                      <div className="flex items-center justify-between gap-2"
+                        <p className="line-clamp-1 text-sm font-semibold text-white">article.title<</p>
                         <span
                           className={`rounded-[999px] border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] ${
                             isLive
@@ -8813,8 +8813,8 @@ export const Dashboard: React.FC = () => {
               )}
             </div>
           </Card>
-
-          {activeArticle ? (
+"
+          {activeArticle ? ("
             <Card title="Article Editor" subtitle={`Editing: ${activeArticle.title}`}>
               <div className={`rounded-[12px] border px-3 py-2 text-xs ${articleCanGoLive ? dashboardStatusSuccessClass : dashboardStatusFailureClass}`}>
                 {articleCanGoLive
@@ -8822,7 +8822,7 @@ export const Dashboard: React.FC = () => {
                   : 'This article is not live. Use Published status, keep Visible enabled, and provide a slug.'}
               </div>
 
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="grid gap-3 xl:grid-cols-2"
                 <Input
                   label="Title"
                   value={activeArticle.title}
@@ -8845,7 +8845,7 @@ export const Dashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-3 xl:grid-cols-3">
+              <div className="grid gap-3 xl:grid-cols-3"
                 <SelectInput
                   label="Status"
                   value={activeArticle.status}
@@ -8905,7 +8905,7 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateArticle(activeArticle.id, (item) => ({ ...item, content: next }))}
               />
 
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-3"
                 <Toggle
                   label="Visible"
                   checked={activeArticle.visible}
@@ -8932,7 +8932,7 @@ export const Dashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2"
                 <button type="button" onClick={handleOpenArticlesPage} className={dashboardActionButtonSecondaryClass}>
                   Open Articles Page
                 </button>
@@ -8947,7 +8947,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </Card>
           ) : (
-            <Card title="Article Editor" subtitle="No article selected">
+            <Card title="Article Editor" subtitle="No article selected"
               <p className="text-sm text-[#6b7280]
             </Card>
           )}
@@ -8956,12 +8956,12 @@ export const Dashboard: React.FC = () => {
     );
   };
 
-  const renderSettingsWorkspace = () => {
-    return (
-      <div className="space-y-4">
-        <section className="rounded-[18px] border border-[#e5e7eb]
-          <p className="px-2 pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-          <div className="flex flex-wrap gap-2">
+  const renderSettingsWorkspace = () => {"
+    return ("
+      <div className="space-y-4"
+        <section className="rounded-[18px] border border-[#e5e7eb]"
+          <p className="px-2 pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+          <div className="flex flex-wrap gap-2"
             {DASHBOARD_SETTINGS_PANELS.map((panel) => (
               <button
                 key={panel.id}
@@ -8973,7 +8973,7 @@ export const Dashboard: React.FC = () => {
                     : 'border-[#e5e7eb]
                 }`}
               >
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">{panel.label}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em]">panel.label<</p>
                 <p className={`mt-1 text-[12px] ${activeSettingsPanel === panel.id ? 'text-[#6b7280]
                   {panel.description}
                 </p>
@@ -8983,8 +8983,8 @@ export const Dashboard: React.FC = () => {
         </section>
 
         {activeSettingsPanel === 'browser' ? (
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <Card title="Browser Identity" subtitle="Control tab title and favicon from dashboard">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"
+            <Card title="Browser Identity" subtitle="Control tab title and favicon from dashboard"
               <Input
                 label="Browser tab title"
                 value={siteConfig.dashboard.browser.browserTabTitle}
@@ -8995,8 +8995,8 @@ export const Dashboard: React.FC = () => {
                 value={siteConfig.dashboard.browser.faviconUrl}
                 onChange={(next) => updateDashboardBrowser('faviconUrl', next)}
               />
-              <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/66">Upload favicon</span>
+              <label className="flex flex-col gap-1.5"
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/66"Upload favicon</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -9005,28 +9005,28 @@ export const Dashboard: React.FC = () => {
                     e.currentTarget.value = '';
                     void handleFaviconUpload(file);
                   }}
-                  className="rounded-[10px] border border-[#e5e7eb]
+                  className="rounded-[10px] border border-[#e5e7eb]"
                 />
               </label>
             </Card>
 
-            <aside className="rounded-[18px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]
-              <div className="mt-3 space-y-3">
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <p className="mt-1 font-medium text-white">{siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'}</p>
+            <aside className="rounded-[18px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]"
+              <div className="mt-3 space-y-3"
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <p className="mt-1 font-medium text-white">siteConfig.dashboard.browser.browserTabTitle || 'Untitled site'<</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <div className="mt-2 flex items-center gap-2"
+                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e7eb]"
                       {siteConfig.dashboard.browser.faviconUrl ? (
                         <img src={siteConfig.dashboard.browser.faviconUrl} alt="Favicon preview" className="h-full w-full object-cover" />
                       ) : (
                         <span className="font-mono text-[10px] text-[#6b7280]
-                      )}
-                    </span>
+                      )}"
+                    </span>"
                     <p className="text-xs text-[#6b7280]
                   </div>
                 </div>
@@ -9034,10 +9034,10 @@ export const Dashboard: React.FC = () => {
             </aside>
           </section>
         ) : null}
-
-        {activeSettingsPanel === 'integrations' ? (
-          <section className="grid gap-4 xl:grid-cols-2">
-            <Card title="Integrations" subtitle="API, domain, and analytics connection settings">
+"
+        {activeSettingsPanel === 'integrations' ? ("
+          <section className="grid gap-4 xl:grid-cols-2"
+            <Card title="Integrations" subtitle="API, domain, and analytics connection settings"
               <Input
                 label="API base URL"
                 value={siteConfig.dashboard.integrations.apiBaseUrl}
@@ -9060,12 +9060,12 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <Card title="Connection Health" subtitle="Current integration readiness and missing requirements">
-              <div className="rounded-[12px] border border-[#e5e7eb]
-                API base URL: <span className="font-semibold text-white">{siteConfig.dashboard.integrations.apiBaseUrl || 'Not set'}</span>
+            <Card title="Connection Health" subtitle="Current integration readiness and missing requirements"
+              <div className="rounded-[12px] border border-[#e5e7eb]"
+                API base URL: <span className="font-semibold text-white">siteConfig.dashboard.integrations.apiBaseUrl || 'Not set'<</span>
               </div>
-              <div className="rounded-[12px] border border-[#e5e7eb]
-                Domain: <span className="font-semibold text-white">{siteConfig.dashboard.integrations.customDomain || 'Not set'}</span>
+              <div className="rounded-[12px] border border-[#e5e7eb]"
+                Domain: <span className="font-semibold text-white">siteConfig.dashboard.integrations.customDomain || 'Not set'<</span>
               </div>
               <div
                 className={`rounded-[12px] border px-3 py-3 text-sm ${
@@ -9079,8 +9079,8 @@ export const Dashboard: React.FC = () => {
         ) : null}
 
         {activeSettingsPanel === 'inbox' ? (
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <Card title="Inbox Routing" subtitle="Define where incoming messages are sent">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]"
+            <Card title="Inbox Routing" subtitle="Define where incoming messages are sent"
               <Input
                 label="Forward incoming messages to"
                 value={siteConfig.dashboard.inbox.forwardToEmail}
@@ -9093,20 +9093,20 @@ export const Dashboard: React.FC = () => {
               />
             </Card>
 
-            <aside className="rounded-[18px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]
-              <div className="mt-3 space-y-2">
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxTotal}</p>
+            <aside className="rounded-[18px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#6b7280]"
+              <div className="mt-3 space-y-2"
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxTotal<</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxUnread}</p>
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxUnread<</p>
                 </div>
-                <div className="rounded-[12px] border border-[#e5e7eb]
-                  <p className="text-xs text-[#6b7280]
-                  <p className="mt-1 text-lg font-semibold text-white">{stats.inboxArchived}</p>
+                <div className="rounded-[12px] border border-[#e5e7eb]"
+                  <p className="text-xs text-[#6b7280]"
+                  <p className="mt-1 text-lg font-semibold text-white">stats.inboxArchived<</p>
                 </div>
               </div>
             </aside>
@@ -9143,40 +9143,40 @@ export const Dashboard: React.FC = () => {
     const maxFunnelValue = Math.max(1, ...funnel.map((item) => item.value));
 
     return (
-      <div className="grid gap-4">
-        <Card title="KPI Snapshot" subtitle="Current website analytics metrics">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[12px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-              <p className="mt-1 text-2xl font-semibold text-white">{monthlyVisitors.toLocaleString()}</p>
-              <p className="mt-1 text-xs text-[#6b7280]
-            </div>
-            <div className="rounded-[12px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-              <p className="mt-1 text-2xl font-semibold text-white">{conversionRate.toFixed(1)}%</p>
-              <p className="mt-1 text-xs text-[#6b7280]
-            </div>
-            <div className="rounded-[12px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-              <p className="mt-1 text-2xl font-semibold text-white">
+      <div className="grid gap-4"
+        <Card title="KPI Snapshot" subtitle="Current website analytics metrics"
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+            <div className="rounded-[12px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              <p className="mt-1 text-2xl font-semibold text-white">monthlyVisitors.toLocaleString()<</p>
+              <p className="mt-1 text-xs text-[#6b7280]"
+            </div>"
+            <div className="rounded-[12px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              <p className="mt-1 text-2xl font-semibold text-white">conversionRate.toFixed(1)<%</p>
+              <p className="mt-1 text-xs text-[#6b7280]"
+            </div>"
+            <div className="rounded-[12px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              <p className="mt-1 text-2xl font-semibold text-white"
                 {Math.max(0, Math.round(siteConfig.dashboard.analytics.avgSessionDurationSec / 60))}m
               </p>
-              <p className="mt-1 text-xs text-[#6b7280]
-            </div>
-            <div className="rounded-[12px] border border-[#e5e7eb]
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]
-              <p className="mt-1 text-2xl font-semibold text-white">{conversions.toLocaleString()}</p>
+              <p className="mt-1 text-xs text-[#6b7280]"
+            </div>"
+            <div className="rounded-[12px] border border-[#e5e7eb]"
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6b7280]"
+              <p className="mt-1 text-2xl font-semibold text-white">conversions.toLocaleString()<</p>
               <p className="mt-1 text-xs text-[#6b7280]
             </div>
           </div>
-        </Card>
-
-        <Card title="Traffic Trend (14 Days)" subtitle="Session trend simulation based on current visitor profile">
-          <div className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-2">
+        </Card>"
+"
+        <Card title="Traffic Trend (14 Days)" subtitle="Session trend simulation based on current visitor profile"
+          <div className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-2"
             {trendSeries.map((point) => (
-              <div key={point.label} className="flex flex-col items-center gap-2">
-                <div className="flex h-[140px] w-full items-end rounded-[8px] bg-[#f8f9fa]
-                  <div
+              <div key={point.label} className="flex flex-col items-center gap-2"
+                <div className="flex h-[140px] w-full items-end rounded-[8px] bg-[#f8f9fa]"
+                  <div"
                     className="w-full rounded-[6px] bg-[#3b82f6]"
                     style={{ height: `${Math.max(8, (point.visitors / maxTrendVisitors) * 100)}%` }}
                   />
@@ -9185,19 +9185,19 @@ export const Dashboard: React.FC = () => {
               </div>
             ))}
           </div>
-        </Card>
-
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card title="Acquisition Mix" subtitle="Channel distribution and trend direction">
-            <div className="space-y-3">
+        </Card>"
+"
+        <div className="grid gap-4 xl:grid-cols-2"
+          <Card title="Acquisition Mix" subtitle="Channel distribution and trend direction"
+            <div className="space-y-3"
               {channels.map((channel) => (
-                <div key={channel.id} className="rounded-[12px] border border-[#e5e7eb]
-                  <div className="flex items-center justify-between gap-2 text-sm text-white">
-                    <span className="font-semibold">{channel.label}</span>
+                <div key={channel.id} className="rounded-[12px] border border-[#e5e7eb]"
+                  <div className="flex items-center justify-between gap-2 text-sm text-white"
+                    <span className="font-semibold">channel.label<</span>
                     <span>{channel.sessions.toLocaleString()} sessions</span>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-[#f8f9fa]
-                    <div
+                  <div className="mt-2 h-2 rounded-full bg-[#f8f9fa]"
+                    <div"
                       className="h-2 rounded-full bg-[#3b82f6]"
                       style={{ width: `${Math.max(6, (channel.sessions / maxSessions) * 100)}%` }}
                     />
@@ -9212,18 +9212,18 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-          </Card>
-
-          <Card title="Conversion Funnel" subtitle="How traffic narrows down to completed conversions">
-            <div className="space-y-3">
+          </Card>"
+"
+          <Card title="Conversion Funnel" subtitle="How traffic narrows down to completed conversions"
+            <div className="space-y-3"
               {funnel.map((stage) => (
-                <div key={stage.id} className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-2 text-sm text-white">
+                <div key={stage.id} className="space-y-1.5"
+                  <div className="flex items-center justify-between gap-2 text-sm text-white"
                     <span>{stage.label}</span>
-                    <span className="font-semibold">{stage.value.toLocaleString()}</span>
+                    <span className="font-semibold">stage.value.toLocaleString()<</span>
                   </div>
-                  <div className="h-3 rounded-full bg-[#f8f9fa]
-                    <div
+                  <div className="h-3 rounded-full bg-[#f8f9fa]"
+                    <div"
                       className="h-3 rounded-full bg-[#f59e0b]"
                       style={{ width: `${Math.max(8, (stage.value / maxFunnelValue) * 100)}%` }}
                     />
@@ -9253,18 +9253,18 @@ export const Dashboard: React.FC = () => {
       filteredMessages.find((message) => message.id === activeMessageId) ?? filteredMessages[0] ?? null;
 
     return (
-      <div className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <aside className="rounded-[18px] border border-[#e5e7eb]
-          <div className="space-y-2">
+      <div className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]"
+        <aside className="rounded-[18px] border border-[#e5e7eb]"
+          <div className="space-y-2"
             <input
               type="text"
               value={messageSearch}
               onChange={(e) => setMessageSearch(e.target.value)}
               placeholder="Search messages"
-              className="w-full rounded-[10px] border border-[#e5e7eb]
+              className="w-full rounded-[10px] border border-[#e5e7eb]"
             />
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2"
               {[
                 { id: 'all', label: `All (${stats.inboxTotal})` },
                 { id: 'new', label: `New (${stats.inboxUnread})` },
@@ -9311,13 +9311,13 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-[14px] border border-[#e5e7eb]
+          <div className="mt-3 overflow-hidden rounded-[14px] border border-[#e5e7eb]"
             {filteredMessages.length === 0 ? (
               <div className="px-3 py-5 text-sm text-[#6b7280]
             ) : (
               filteredMessages.map((message) => (
-                <button
-                  key={message.id}
+                <button"
+                  key={message.id}"
                   type="button"
                   onClick={() => {
                     setActiveMessageId(message.id);
@@ -9329,36 +9329,36 @@ export const Dashboard: React.FC = () => {
                     activeMessage?.id === message.id ? 'bg-[#f8f9fa]
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-white">{message.senderName}</p>
+                  <div className="flex items-start justify-between gap-2"
+                    <p className="truncate text-sm font-semibold text-white">message.senderName<</p>
                     <span className="text-[11px] text-[#6b7280]
                       {new Date(message.receivedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-[#6b7280]
+                    </span>"
+                  </div>"
+                  <p className="mt-0.5 truncate text-xs text-[#6b7280]"
                   <p className="mt-1 truncate text-[11px] text-[#6b7280]
                 </button>
               ))
             )}
           </div>
-        </aside>
-
-        <section className="min-w-0">
+        </aside>"
+"
+        <section className="min-w-0"
           {activeMessage ? (
-            <div className="rounded-[18px] border border-[#e5e7eb]
-              <div className="border-b border-[#e5e7eb]
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]
-                <h2 className="mt-1 text-xl font-semibold text-white">{activeMessage.subject}</h2>
+            <div className="rounded-[18px] border border-[#e5e7eb]"
+              <div className="border-b border-[#e5e7eb]"
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#6b7280]"
+                <h2 className="mt-1 text-xl font-semibold text-white">activeMessage.subject<</h2>
                 <p className="mt-1 text-sm text-[#6b7280]
                   From {activeMessage.senderName} at {activeMessage.companyName} • {activeMessage.email}
                 </p>
-              </div>
-
-              <div className="mt-4 rounded-[12px] border border-[#e5e7eb]
+              </div>"
+"
+              <div className="mt-4 rounded-[12px] border border-[#e5e7eb]"
                 {activeMessage.message}
               </div>
 
-              <div className="mt-4 grid gap-2 md:grid-cols-4">
+              <div className="mt-4 grid gap-2 md:grid-cols-4"
                 <button
                   type="button"
                   onClick={() => updateInboxMessage(activeMessage.id, (item) => ({ ...item, status: 'new' as SiteMessageStatus }))}
@@ -9394,8 +9394,8 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <Card title="Inbox" subtitle="No message selected">
-              <p className="text-sm text-[#111217]/62">Choose a message from the list to view details.</p>
+            <Card title="Inbox" subtitle="No message selected"
+              <p className="text-sm text-[#111217]/62"Choose a message from the list to view details.</p>
             </Card>
           )}
         </section>
@@ -9433,16 +9433,16 @@ export const Dashboard: React.FC = () => {
 
   if (!isUnlocked) {
     return (
-      <main className="dashboard-mono flex min-h-screen items-center justify-center bg-[#ffffff] px-4 text-[#111217]">
+      <main className="dashboard-mono flex min-h-screen items-center justify-center bg-[#ffffff] px-4 text-[#111217]"
         <form
           onSubmit={handleLogin}
           className="w-full max-w-[440px] rounded-[16px] border border-[#111217]/12 bg-white p-6 shadow-[0_22px_50px_-38px_rgba(17,18,23,0.45)]"
         >
-          <h1 className="font-mono text-[12px] uppercase tracking-[0.28em] text-[#111217]/90">Dashboard Access</h1>
-          <p className="mt-3 text-sm text-[#111217]/65">Hidden control panel. Enter password to continue.</p>
+          <h1 className="font-mono text-[12px] uppercase tracking-[0.28em] text-[#111217]/90"Dashboard Access</h1>
+          <p className="mt-3 text-sm text-[#111217]/65"Hidden control panel. Enter password to continue.</p>
 
-          <label className="mt-5 flex flex-col gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#111217]/70">Password</span>
+          <label className="mt-5 flex flex-col gap-2"
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#111217]/70"Password</span>
             <input
               type="password"
               value={password}
@@ -9452,7 +9452,7 @@ export const Dashboard: React.FC = () => {
             />
           </label>
 
-          {authError ? <p className="mt-3 text-sm text-[#111217]/76">{authError}</p> : null}
+          {authError ? <p className="mt-3 text-sm text-[#111217]/76">authError<</p> : null}
 
           <button
             type="submit"
@@ -9461,22 +9461,22 @@ export const Dashboard: React.FC = () => {
             Unlock
           </button>
 
-          <p className="mt-4 text-xs text-[#111217]/45">Open this page with the hidden route: #/dashboard</p>
+          <p className="mt-4 text-xs text-[#111217]/45"Open this page with the hidden route: #/dashboard</p>
         </form>
       </main>
     );
   }
 
   return (
-    <main className="dashboard-mono min-h-screen p-2 md:p-4 bg-[#f8f9fa] text-[#1a1a1a]">
-      <div className="dashboard-shell mx-auto w-full max-w-[1600px] rounded-[16px] border border-[#e5e7eb] bg-white p-2 md:p-3 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[60px_minmax(0,1fr)]">
-          <aside className="dashboard-sidebar flex min-h-[600px] flex-col rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e5e7eb] bg-white p-1.5">
+    <main className="dashboard-mono min-h-screen p-2 md:p-4 bg-[#f8f9fa] text-[#1a1a1a]"
+      <div className="dashboard-shell mx-auto w-full max-w-[1600px] rounded-[16px] border border-[#e5e7eb] bg-white p-2 md:p-3 shadow-sm"
+        <div className="grid gap-3 lg:grid-cols-[60px_minmax(0,1fr)]"
+          <aside className="dashboard-sidebar flex min-h-[600px] flex-col rounded-[12px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#e5e7eb] bg-white p-1.5"
               <img src={dashboardLogoSrc} alt={dashboardLogoAlt} className="h-full w-full object-contain" />
             </span>
 
-            <div className="mt-2 flex flex-col gap-1.5">
+            <div className="mt-2 flex flex-col gap-1.5"
               {DASHBOARD_WORKSPACES.map((workspace) => {
                 const active = workspace.id === activeWorkspace;
                 const WorkspaceIcon = workspace.icon;
@@ -9501,7 +9501,7 @@ export const Dashboard: React.FC = () => {
               })}
             </div>
 
-            <div className="mt-auto flex flex-col gap-1.5 pt-2">
+            <div className="mt-auto flex flex-col gap-1.5 pt-2"
               <button
                 type="button"
                 onClick={handleSaveChanges}
@@ -9541,9 +9541,9 @@ export const Dashboard: React.FC = () => {
             </div>
           </aside>
 
-          <section className="dashboard-main min-w-0 rounded-[12px] border border-[#e5e7eb] bg-white p-2 md:p-3">
-            <div className="dashboard-toolbar flex flex-col gap-2 rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-2 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-1.5">
+          <section className="dashboard-main min-w-0 rounded-[12px] border border-[#e5e7eb] bg-white p-2 md:p-3"
+            <div className="dashboard-toolbar flex flex-col gap-2 rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-2 xl:flex-row xl:items-center xl:justify-between"
+              <div className="flex flex-wrap items-center gap-1.5"
                 {DASHBOARD_WORKSPACES.map((workspace) => {
                   const active = workspace.id === activeWorkspace;
                   const badge =
@@ -9585,7 +9585,7 @@ export const Dashboard: React.FC = () => {
                           : 'border-[#e5e7eb] bg-white text-[#6b7280] hover:bg-[#ffffff]'
                       }`}
                     >
-                      <span className="font-medium text-[11px]">{workspace.label}</span>
+                      <span className="font-medium text-[11px]">workspace.label<</span>
                       <span className={`rounded-[999px] border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
                         active
                           ? 'border-[#e5e7eb]
@@ -9598,73 +9598,73 @@ export const Dashboard: React.FC = () => {
                 })}
               </div>
 
-              <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center">
-                <label className="w-full sm:w-[280px]">
+              <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center"
+                <label className="w-full sm:w-[280px]"
                   <input
                     type="text"
                     placeholder="Search workspace"
                     className="w-full rounded-[999px] border border-[#e5e7eb] bg-white px-3 py-1.5 text-[12px] text-[#1a1a1a] outline-none placeholder:text-[#9ca3af] focus:border-[#3b82f6] focus:ring-1 focus:ring-[#3b82f6]"
                   />
                 </label>
-                <div className="inline-flex items-center gap-1.5 rounded-[999px] border border-[#e5e7eb] bg-white px-2 py-1">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f8f9fa] p-1">
+                <div className="inline-flex items-center gap-1.5 rounded-[999px] border border-[#e5e7eb] bg-white px-2 py-1"
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#e5e7eb] bg-[#f8f9fa] p-1"
                     <img src={dashboardLogoSrc} alt={dashboardLogoAlt} className="h-full w-full object-contain" />
                   </span>
-                  <div className="pr-1">
-                    <p className="text-[11px] font-medium text-[#1a1a1a]">Web Studio</p>
-                    <p className="text-[9px] text-[#6b7280]">@dashboard</p>
+                  <div className="pr-1"
+                    <p className="text-[11px] font-medium text-[#1a1a1a]"Web Studio</p>
+                    <p className="text-[9px] text-[#6b7280]"@dashboard</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="mt-3 flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between"
               <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#6b7280]">Dashboard Control</p>
-                <h1 className="mt-0.5 text-xl font-semibold leading-tight text-[#1a1a1a]">{activeWorkspaceInfo.label}</h1>
-                <p className="mt-0.5 text-xs text-[#6b7280]">{activeWorkspaceInfo.description}</p>
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#6b7280]"Dashboard Control</p>
+                <h1 className="mt-0.5 text-xl font-semibold leading-tight text-[#1a1a1a]">activeWorkspaceInfo.label<</h1>
+                <p className="mt-0.5 text-xs text-[#6b7280]">activeWorkspaceInfo.description<</p>
               </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="rounded-[999px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-0.5 text-[10px] text-[#6b7280]">Date: {currentDateLabel}</span>
+              <div className="flex flex-wrap items-center gap-1.5"
+                <span className="rounded-[999px] border border-[#e5e7eb] bg-[#f8f9fa] px-2 py-0.5 text-[10px] text-[#6b7280]"Date: {currentDateLabel}</span>
                 <span className={`rounded-[999px] border px-2 py-0.5 text-[10px] ${hasUnsavedChanges ? 'border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444]' : 'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]'}`}>
                   {hasUnsavedChanges ? 'Changes pending' : 'Synced'}
                 </span>
               </div>
             </div>
 
-            <section className="dashboard-kpis mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">Content Units</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">{stats.projects + stats.articles}</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]">Projects and articles</p>
+            <section className="dashboard-kpis mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4"
+              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
+                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"Content Units</p>
+                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">stats.projects + stats.articles<</p>
+                <p className="mt-0.5 text-[10px] text-[#6b7280]"Projects and articles</p>
               </div>
 
-              <div className="dashboard-kpi dashboard-kpi-primary rounded-[10px] border border-[#3b82f6] bg-[#3b82f6]/10 p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#3b82f6]">Unread Messages</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">{stats.inboxUnread}</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]">Leads waiting for follow-up</p>
+              <div className="dashboard-kpi dashboard-kpi-primary rounded-[10px] border border-[#3b82f6] bg-[#3b82f6]/10 p-2"
+                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#3b82f6]"Unread Messages</p>
+                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">stats.inboxUnread<</p>
+                <p className="mt-0.5 text-[10px] text-[#6b7280]"Leads waiting for follow-up</p>
               </div>
 
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">GA Integration</p>
-                <p className="mt-0.5 text-base font-semibold text-[#1a1a1a]">{stats.gaConnected ? 'Connected' : 'Not Connected'}</p>
-                <p className="mt-0.5 truncate text-[10px] text-[#6b7280]">
+              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
+                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"GA Integration</p>
+                <p className="mt-0.5 text-base font-semibold text-[#1a1a1a]">stats.gaConnected ? 'Connected' : 'Not Connected'<</p>
+                <p className="mt-0.5 truncate text-[10px] text-[#6b7280]"
                   {siteConfig.dashboard.integrations.googleAnalyticsMeasurementId || 'No measurement ID'}
                 </p>
               </div>
 
-              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]">Monthly Visitors</p>
-                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">{siteConfig.dashboard.analytics.monthlyVisitors.toLocaleString()}</p>
-                <p className="mt-0.5 text-[10px] text-[#6b7280]">Conversion {siteConfig.dashboard.analytics.conversionRate.toFixed(1)}%</p>
+              <div className="dashboard-kpi rounded-[10px] border border-[#e5e7eb] bg-[#f8f9fa] p-2"
+                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#6b7280]"Monthly Visitors</p>
+                <p className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">siteConfig.dashboard.analytics.monthlyVisitors.toLocaleString()<</p>
+                <p className="mt-0.5 text-[10px] text-[#6b7280]"Conversion {siteConfig.dashboard.analytics.conversionRate.toFixed(1)}%</p>
               </div>
             </section>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <button type="button" onClick={handleSaveChanges} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#3b82f6] bg-[#3b82f6] px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#2563eb]">
+            <div className="mt-3 flex flex-wrap gap-1.5"
+              <button type="button" onClick={handleSaveChanges} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#3b82f6] bg-[#3b82f6] px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#2563eb]"
                 Save Changes
               </button>
-              <button type="button" onClick={handleOpenSite} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#1a1a1a] transition-colors hover:bg-[#ffffff]">
+              <button type="button" onClick={handleOpenSite} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#1a1a1a] transition-colors hover:bg-[#ffffff]"
                 Open Site
               </button>
               <button
@@ -9678,24 +9678,24 @@ export const Dashboard: React.FC = () => {
               >
                 Reset Defaults
               </button>
-              <button type="button" onClick={handleLogout} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#ef4444] bg-[#ef4444]/10 px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#ef4444] transition-colors hover:bg-[#ef4444]/20">
+              <button type="button" onClick={handleLogout} className="inline-flex h-8 items-center justify-center rounded-[8px] border border-[#ef4444] bg-[#ef4444]/10 px-3 font-mono text-[9px] uppercase tracking-[0.14em] text-[#ef4444] transition-colors hover:bg-[#ef4444]/20"
                 Logout
               </button>
             </div>
 
-            <section className="mt-3 space-y-3">
+            <section className="mt-3 space-y-3"
               {activeWorkspace !== 'sitePages' && uploadError ? (
-                <div className="rounded-[10px] border border-[#ef4444] bg-[#ef4444]/10 px-3 py-2 text-sm text-[#ef4444]">
+                <div className="rounded-[10px] border border-[#ef4444] bg-[#ef4444]/10 px-3 py-2 text-sm text-[#ef4444]"
                   {uploadError}
                 </div>
               ) : null}
               {activeWorkspace !== 'sitePages' && uploadMessage ? (
-                <div className="rounded-[10px] border border-[#22c55e] bg-[#22c55e]/10 px-3 py-2 text-sm text-[#22c55e]">
+                <div className="rounded-[10px] border border-[#22c55e] bg-[#22c55e]/10 px-3 py-2 text-sm text-[#22c55e]"
                   {uploadMessage}
                 </div>
               ) : null}
 
-              <div className="dashboard-workspace dashboard-workspace-surface rounded-[12px] border border-[#e5e7eb] bg-white p-3 md:p-4">
+              <div className="dashboard-workspace dashboard-workspace-surface rounded-[12px] border border-[#e5e7eb] bg-white p-3 md:p-4"
                 {renderWorkspaceContent()}
               </div>
             </section>
