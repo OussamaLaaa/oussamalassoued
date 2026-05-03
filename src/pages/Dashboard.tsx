@@ -1255,6 +1255,180 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleTestimonialAvatarUpload = async (testimonialId: string, file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateConfig((prev) => ({
+        ...prev,
+        testimonials: prev.testimonials.map((item) =>
+          item.id === testimonialId ? { ...item, avatar: dataUrl } : item,
+        ),
+      }));
+      setUploadMessage(`Avatar image uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleArticleCoverUpload = async (articleId: string, file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateArticle(articleId, (item) => ({ ...item, coverImage: dataUrl }));
+      setUploadMessage(`Cover image uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handlePortraitUpload = async (file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateConfig((prev) => ({
+        ...prev,
+        scene05: { ...prev.scene05, portraitImage: dataUrl },
+      }));
+      setUploadMessage(`Portrait image uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleCertificationLogoUpload = async (certificationId: string, file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateScene05Certification(certificationId, (item) => ({ ...item, logoSrc: dataUrl }));
+      setUploadMessage(`Certification logo uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleCompanyLogoUpload = async (logoId: string, file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateScene05LogoItem('companyLogos', logoId, (item) => ({ ...item, logoSrc: dataUrl }));
+      setUploadMessage(`Company logo uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleLearningLogoUpload = async (logoId: string, file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateScene05LogoItem('learningLogos', logoId, (item) => ({ ...item, logoSrc: dataUrl }));
+      setUploadMessage(`Learning logo uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleLogoLightUpload = async (file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateConfig((prev) => ({
+        ...prev,
+        persistentUI: { ...prev.persistentUI, logoLightSrc: dataUrl },
+      }));
+      setUploadMessage(`Light logo uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
+  const handleLogoDarkUpload = async (file: File | null) => {
+    clearUploadFeedback();
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setUploadError(
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+      );
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateConfig((prev) => ({
+        ...prev,
+        persistentUI: { ...prev.persistentUI, logoDarkSrc: dataUrl },
+      }));
+      setUploadMessage(`Dark logo uploaded successfully.`);
+    } catch {
+      setUploadError('Could not read the selected image file.');
+    }
+  };
+
   const stats = useMemo(() => {
     const inboxItems = siteConfig.dashboard.inbox.items;
     return {
@@ -1927,6 +2101,7 @@ export const Dashboard: React.FC = () => {
                     img: '/frames/scene-02-desk-focus/ezgif-frame-001.jpg',
                     behance: '#',
                     live: '#',
+                    buttonType: 'live',
                     visible: true,
                   };
                   updateConfig((prev) => ({
@@ -2041,6 +2216,19 @@ export const Dashboard: React.FC = () => {
                     rows={4}
                     onChange={(next) => updateTestimonial(testimonial.id, (item) => ({ ...item, quote: next }))}
                   />
+                  <label className="flex flex-col gap-1.5">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload avatar image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        e.currentTarget.value = '';
+                        void handleTestimonialAvatarUpload(testimonial.id, file);
+                      }}
+                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                    />
+                  </label>
                   <Input
                     label="Avatar URL"
                     value={testimonial.avatar}
@@ -2468,6 +2656,65 @@ export const Dashboard: React.FC = () => {
               >
                 Add Nav Item
               </button>
+            </Card>
+
+            <Card title="Navigation Logo" subtitle="Upload logo images for light and dark modes">
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload light mode logo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.currentTarget.value = '';
+                    void handleLogoLightUpload(file);
+                  }}
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                />
+              </label>
+              <Input
+                label="Light logo URL"
+                value={siteConfig.persistentUI.logoLightSrc}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, logoLightSrc: next },
+                  }))
+                }
+              />
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload dark mode logo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.currentTarget.value = '';
+                    void handleLogoDarkUpload(file);
+                  }}
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                />
+              </label>
+              <Input
+                label="Dark logo URL"
+                value={siteConfig.persistentUI.logoDarkSrc}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, logoDarkSrc: next },
+                  }))
+                }
+              />
+              <Input
+                label="Logo alt text"
+                value={siteConfig.persistentUI.logoAlt}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, logoAlt: next },
+                  }))
+                }
+              />
             </Card>
           </div>
         );
@@ -2954,6 +3201,19 @@ export const Dashboard: React.FC = () => {
                 value={siteConfig.scene05.role}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, role: next } }))}
               />
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload portrait image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.currentTarget.value = '';
+                    void handlePortraitUpload(file);
+                  }}
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                />
+              </label>
               <Input
                 label="Portrait image URL"
                 value={siteConfig.scene05.portraitImage}
@@ -3072,6 +3332,20 @@ export const Dashboard: React.FC = () => {
                       }
                     />
 
+                    <label className="flex flex-col gap-1.5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload badge / logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          e.currentTarget.value = '';
+                          void handleCertificationLogoUpload(item.id, file);
+                        }}
+                        className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                      />
+                    </label>
+
                     <Input
                       label="Badge / logo URL"
                       value={item.logoSrc}
@@ -3188,6 +3462,186 @@ export const Dashboard: React.FC = () => {
                   }))
                 }
               />
+
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                  Learning Logos
+                </p>
+
+                {siteConfig.scene05.learningLogos.map((item) => (
+                  <div key={item.id} className={listItemClass}>
+                    <Input
+                      label="Name"
+                      value={item.name}
+                      onChange={(next) =>
+                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, name: next }))
+                      }
+                    />
+                    <Input
+                      label="Link URL"
+                      value={item.href}
+                      onChange={(next) =>
+                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, href: next }))
+                      }
+                    />
+                    <label className="flex flex-col gap-1.5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          e.currentTarget.value = '';
+                          void handleLearningLogoUpload(item.id, file);
+                        }}
+                        className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                      />
+                    </label>
+                    <Input
+                      label="Logo URL"
+                      value={item.logoSrc}
+                      onChange={(next) =>
+                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
+                      }
+                    />
+                    <Toggle
+                      label="Visible"
+                      checked={item.visible}
+                      onChange={(next) =>
+                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, visible: next }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          scene05: {
+                            ...prev.scene05,
+                            learningLogos: prev.scene05.learningLogos.filter((entry) => entry.id !== item.id),
+                          },
+                        }));
+                      }}
+                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newLogo: SiteScene05LogoItem = {
+                      id: `learn-${Date.now()}`,
+                      name: 'New Learning Partner',
+                      logoSrc: '',
+                      href: '#',
+                      visible: true,
+                    };
+                    updateConfig((prev) => ({
+                      ...prev,
+                      scene05: {
+                        ...prev.scene05,
+                        learningLogos: [...prev.scene05.learningLogos, newLogo],
+                      },
+                    }));
+                  }}
+                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                >
+                  Add Learning Logo
+                </button>
+              </div>
+
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                  Company Logos
+                </p>
+
+                {siteConfig.scene05.companyLogos.map((item) => (
+                  <div key={item.id} className={listItemClass}>
+                    <Input
+                      label="Name"
+                      value={item.name}
+                      onChange={(next) =>
+                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, name: next }))
+                      }
+                    />
+                    <Input
+                      label="Link URL"
+                      value={item.href}
+                      onChange={(next) =>
+                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, href: next }))
+                      }
+                    />
+                    <label className="flex flex-col gap-1.5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          e.currentTarget.value = '';
+                          void handleCompanyLogoUpload(item.id, file);
+                        }}
+                        className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                      />
+                    </label>
+                    <Input
+                      label="Logo URL"
+                      value={item.logoSrc}
+                      onChange={(next) =>
+                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
+                      }
+                    />
+                    <Toggle
+                      label="Visible"
+                      checked={item.visible}
+                      onChange={(next) =>
+                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, visible: next }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          scene05: {
+                            ...prev.scene05,
+                            companyLogos: prev.scene05.companyLogos.filter((entry) => entry.id !== item.id),
+                          },
+                        }));
+                      }}
+                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newLogo: SiteScene05LogoItem = {
+                      id: `company-${Date.now()}`,
+                      name: 'New Company',
+                      logoSrc: '',
+                      href: '#',
+                      visible: true,
+                    };
+                    updateConfig((prev) => ({
+                      ...prev,
+                      scene05: {
+                        ...prev.scene05,
+                        companyLogos: [...prev.scene05.companyLogos, newLogo],
+                      },
+                    }));
+                  }}
+                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                >
+                  Add Company Logo
+                </button>
+              </div>
 
               <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
@@ -5244,6 +5698,20 @@ export const Dashboard: React.FC = () => {
                   }
                 />
               </div>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload cover image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.currentTarget.value = '';
+                    void handleArticleCoverUpload(activeArticle.id, file);
+                  }}
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                />
+              </label>
 
               <Input
                 label="Cover Image URL"
