@@ -129,7 +129,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
 
   const handleBackNavigation = () => {
     window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: { show: true } }));
-    window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home' } }));
+    window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home-sequence' } }));
   };
 
   const handleForwardNavigation = () => {

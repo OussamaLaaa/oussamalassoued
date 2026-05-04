@@ -251,7 +251,6 @@ export interface SiteVisibilityConfig {
   musicToggle: boolean;
   letsTalkButton: boolean;
   experienceMarqueeSection: boolean;
-  journeyTimelineSection: boolean;
   featuredWork: boolean;
   featuredHeader: boolean;
   featuredProjectsGrid: boolean;
@@ -462,14 +461,6 @@ export interface SiteDesignTokens {
   };
 }
 
-export interface SiteTimelineEvent {
-  id: string;
-  title: string;
-  role: string;
-  date: string;
-  description: string;
-  visible: boolean;
-}
 
 export interface SiteExperienceMarqueeItem {
   id: string;
@@ -506,10 +497,6 @@ export interface SiteMotionSystem {
   hoverLiftPx: number;
 }
 
-export interface SiteTimelineSectionLabels {
-  eyebrow: string;
-  title: string;
-}
 
 // New types for Personal Hub
 export type PartnerStatus = 'prospect' | 'contacted' | 'negotiating' | 'active' | 'completed' | 'lost';
@@ -724,8 +711,6 @@ export interface SiteConfig {
   };
   projects: SiteProject[];
   experienceMarquee: SiteExperienceMarqueeItem[];
-  journeyTimeline: SiteTimelineEvent[];
-  timelineSection: SiteTimelineSectionLabels;
   testimonials: SiteTestimonial[];
   scene05: {
     badge: string;
@@ -738,8 +723,6 @@ export interface SiteConfig {
     visionText: string;
     storyTitle: string;
     storyParagraphs: string[];
-    learningLogosTitle: string;
-    learningLogos: SiteScene05LogoItem[];
     skillsTitle: string;
     skills: string[];
     certificationsTitle: string;
@@ -988,36 +971,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     { id: 'mq-4', type: 'text', value: 'Digital Marketing - Google', visible: true },
     { id: 'mq-5', type: 'text', value: 'Top Rated Plus - Upwork', visible: true }
   ],
-  journeyTimeline: [
-    {
-      id: 'jt-1',
-      title: 'Cinematic Studio',
-      role: 'Founder & Lead Dev',
-      date: '2023 - Present',
-      description: 'Building immersive web experiences bringing cinematic design and WebGL technologies to life for clients.',
-      visible: true
-    },
-    {
-      id: 'jt-2',
-      title: 'Creative Agency X',
-      role: 'Frontend Engineer',
-      date: '2021 - 2023',
-      description: 'Developed award-winning landing pages and portfolios using React, GSAP, and Three.js.',
-      visible: true
-    },
-    {
-      id: 'jt-3',
-      title: 'Digital Bootcamp',
-      role: 'UI/UX Design Student',
-      date: '2020 - 2021',
-      description: 'Studied core UX principles and front-end development, culminating in my first creative portfolio.',
-      visible: true
-    }
-  ],
-  timelineSection: {
-    eyebrow: 'Experience',
-    title: 'Journey & Timeline',
-  },
   testimonials: [
     {
       id: 'testimonial-1',
@@ -1062,37 +1015,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       'I work across the full product arc: research, information architecture, interaction modeling, design systems, and production-quality frontend implementation.',
       'My process starts with business intent and user behavior, then translates both into interfaces that feel clear, measurable, and commercially strong.',
       'I focus on decision clarity: every screen should reduce friction, support conversion, and preserve a strong visual identity at the same time.',
-    ],
-    learningLogosTitle: 'Certification Partners',
-    learningLogos: [
-      {
-        id: 'learn-1',
-        name: 'Google',
-        logoSrc: 'https://logo.clearbit.com/google.com',
-        href: 'https://grow.google/certificates/',
-        visible: true,
-      },
-      {
-        id: 'learn-2',
-        name: 'IBM',
-        logoSrc: 'https://logo.clearbit.com/ibm.com',
-        href: 'https://www.ibm.com/training',
-        visible: true,
-      },
-      {
-        id: 'learn-3',
-        name: 'HarvardX',
-        logoSrc: 'https://logo.clearbit.com/harvard.edu',
-        href: 'https://pll.harvard.edu/',
-        visible: true,
-      },
-      {
-        id: 'learn-4',
-        name: 'Coursera',
-        logoSrc: 'https://logo.clearbit.com/coursera.org',
-        href: 'https://www.coursera.org/',
-        visible: true,
-      },
     ],
     skillsTitle: 'Core Skills',
     skills: [
@@ -1983,7 +1905,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     musicToggle: true,
     letsTalkButton: true,
     experienceMarqueeSection: false,
-    journeyTimelineSection: false,
     featuredWork: true,
     featuredHeader: true,
     featuredProjectsGrid: true,
@@ -2154,7 +2075,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const persistentUI = isRecord(value.persistentUI) ? value.persistentUI : {};
   const footer = isRecord(value.footer) ? value.footer : {};
   const articlesPage = isRecord(value.articlesPage) ? value.articlesPage : {};
-  const timelineSection = isRecord(value.timelineSection) ? value.timelineSection : {};
   const footerSocialRecord = isRecord(footer.socialLinks) ? footer.socialLinks : {};
   const footerSocialArray = Array.isArray(footer.socialLinks) ? footer.socialLinks : [];
   const designSystem = isRecord(value.designSystem) ? value.designSystem : {};
@@ -2256,21 +2176,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         .filter((item): item is SiteExperienceMarqueeItem => !!item)
     : DEFAULT_SITE_CONFIG.experienceMarquee;
 
-  const journeyTimeline = Array.isArray(value.journeyTimeline)
-    ? value.journeyTimeline
-        .map((item, index) => {
-          if (!isRecord(item)) return null;
-          return {
-            id: asString(item.id, `timeline-${index + 1}`),
-            title: asString(item.title, ''),
-            role: asString(item.role, ''),
-            date: asString(item.date, ''),
-            description: asString(item.description, ''),
-            visible: asBoolean(item.visible, true),
-          };
-        })
-        .filter((item): item is SiteTimelineEvent => !!item)
-    : DEFAULT_SITE_CONFIG.journeyTimeline;
 
   const navItems = Array.isArray(persistentUI.navItems)
     ? persistentUI.navItems
@@ -2486,23 +2391,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? scene05.storyParagraphs.map((item) => asString(item, '')).filter(Boolean)
     : DEFAULT_SITE_CONFIG.scene05.storyParagraphs;
 
-  const learningLogos = Array.isArray(scene05.learningLogos)
-    ? scene05.learningLogos
-        .map((item, index) => {
-          if (!isRecord(item)) return null;
-          return {
-            id: asString(item.id, `learn-${index + 1}`),
-            name: asString(item.name, ''),
-            logoSrc: asString(item.logoSrc, ''),
-            href: asString(item.href, '#'),
-            visible: asBoolean(item.visible, true),
-          };
-        })
-        .filter(
-          (item): item is SiteScene05LogoItem =>
-            !!item && (item.name.length > 0 || item.logoSrc.length > 0),
-        )
-    : DEFAULT_SITE_CONFIG.scene05.learningLogos;
 
   const companyLogos = Array.isArray(scene05.companyLogos)
     ? scene05.companyLogos
@@ -2591,11 +2479,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         }))
       : DEFAULT_SITE_CONFIG.projects,
     experienceMarquee: experienceMarquee.length > 0 ? experienceMarquee : DEFAULT_SITE_CONFIG.experienceMarquee,
-    journeyTimeline: journeyTimeline.length > 0 ? journeyTimeline : DEFAULT_SITE_CONFIG.journeyTimeline,
-    timelineSection: {
-      eyebrow: asString(timelineSection.eyebrow, DEFAULT_SITE_CONFIG.timelineSection.eyebrow),
-      title: asString(timelineSection.title, DEFAULT_SITE_CONFIG.timelineSection.title),
-    },
     testimonials: testimonials.length > 0 ? testimonials : DEFAULT_SITE_CONFIG.testimonials,
     scene05: {
       badge: asString(scene05.badge, DEFAULT_SITE_CONFIG.scene05.badge),
@@ -2609,12 +2492,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       storyTitle: asString(scene05.storyTitle, DEFAULT_SITE_CONFIG.scene05.storyTitle),
       storyParagraphs:
         storyParagraphs.length > 0 ? storyParagraphs : DEFAULT_SITE_CONFIG.scene05.storyParagraphs,
-      learningLogosTitle: asString(
-        scene05.learningLogosTitle,
-        DEFAULT_SITE_CONFIG.scene05.learningLogosTitle,
-      ),
-      learningLogos:
-        learningLogos.length > 0 ? learningLogos : DEFAULT_SITE_CONFIG.scene05.learningLogos,
       skillsTitle: asString(scene05.skillsTitle, DEFAULT_SITE_CONFIG.scene05.skillsTitle),
       skills: skills.length > 0 ? skills : DEFAULT_SITE_CONFIG.scene05.skills,
       certificationsTitle: asString(
@@ -4012,10 +3889,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       experienceMarqueeSection: asBoolean(
         visibility.experienceMarqueeSection,
         DEFAULT_SITE_CONFIG.visibility.experienceMarqueeSection,
-      ),
-      journeyTimelineSection: asBoolean(
-        visibility.journeyTimelineSection,
-        DEFAULT_SITE_CONFIG.visibility.journeyTimelineSection,
       ),
       featuredWork: asBoolean(visibility.featuredWork, DEFAULT_SITE_CONFIG.visibility.featuredWork),
       featuredHeader: asBoolean(visibility.featuredHeader, DEFAULT_SITE_CONFIG.visibility.featuredHeader),

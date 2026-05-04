@@ -77,11 +77,6 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
 
   const isActive = progress >= 0;
 
-  const visibleTimeline = useMemo(
-    () => siteConfig.journeyTimeline.filter((item) => item.visible),
-    [siteConfig.journeyTimeline],
-  );
-
   const visibleSocialLinks = useMemo(
     () => siteConfig.footer.socialLinks.filter((item) => item.visible),
     [siteConfig.footer.socialLinks],
@@ -92,10 +87,6 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
     [scene05.companyLogos],
   );
 
-  const certificationStripLogos = useMemo<Scene05LogoView[]>(
-    () => scene05.learningLogos.filter((item) => item.visible),
-    [scene05.learningLogos],
-  );
 
   const visibleCertifications = useMemo<Scene05CertificationView[]>(() => {
     const structured = scene05.featuredCertifications
@@ -244,7 +235,7 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
       e.preventDefault();
       navLockUntilRef.current = now + NAV_LOCK_MS;
       window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: { show: true } }));
-      window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home' } }));
+      window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home-sequence' } }));
       return;
     }
 
@@ -282,7 +273,7 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
     if (atTop && deltaY < -54) {
       navLockUntilRef.current = now + NAV_LOCK_MS;
       window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: { show: true } }));
-      window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home' } }));
+      window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section: 'home-sequence' } }));
       return;
     }
 
@@ -460,64 +451,6 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
                 </ul>
               </aside>
             </section>
-
-            {certificationStripLogos.length > 0 ? (
-              <section className="s5-section mt-10 border-y border-[#0f1219]/10 py-4">
-                <div className="mb-2 px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f1219]/62">
-                  {scene05.learningLogosTitle}
-                </div>
-
-                <div className="group relative overflow-hidden py-2">
-                  <div className="pointer-events-none absolute bottom-0 left-0 top-0 w-14 bg-gradient-to-r from-[#f7faff] to-transparent" />
-                  <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-14 bg-gradient-to-l from-[#f7faff] to-transparent" />
-
-                  <div
-                    className="flex w-max items-center whitespace-nowrap group-hover:[animation-play-state:paused]"
-                    style={{ animation: 's05-cert-strip 26s linear infinite' }}
-                  >
-                    {[...certificationStripLogos, ...certificationStripLogos, ...certificationStripLogos].map((item, index) => {
-                      const logoItem = (
-                        <>
-                          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#0f1219]/12 bg-white/90">
-                            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[#0f1219]/70">
-                              {getInitials(item.name)}
-                            </span>
-                            {item.logoSrc ? (
-                              <img
-                                src={item.logoSrc}
-                                alt={item.name}
-                                className="absolute h-6 w-6 object-contain"
-                                loading="lazy"
-                                onError={(event) => {
-                                  event.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            ) : null}
-                          </div>
-                          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#0f1219]/70">{item.name}</span>
-                        </>
-                      );
-
-                      const rowClass = 'mx-4 flex items-center gap-2 rounded-full border border-transparent px-2 py-1.5 transition-colors hover:border-[#0f1219]/12 hover:bg-white/52 md:mx-6';
-
-                      if (item.href && item.href !== '#') {
-                        return (
-                          <a key={`${item.id}-${index}`} href={item.href} target="_blank" rel="noreferrer" className={rowClass}>
-                            {logoItem}
-                          </a>
-                        );
-                      }
-
-                      return (
-                        <div key={`${item.id}-${index}`} className={rowClass}>
-                          {logoItem}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </section>
-            ) : null}
 
             {visibleCompanyLogos.length > 0 ? (
               <section className="s5-section mt-10">

@@ -26,7 +26,6 @@ import {
   type SiteProject,
   type SiteSection,
   type SiteTestimonial,
-  type SiteTimelineEvent,
   type SiteExperienceMarqueeItem,
   type SiteScene05Certification,
   type SiteScene05LogoItem,
@@ -60,7 +59,6 @@ type DashboardSectionId =
   | 'intro'
   | 'featured'
   | 'projects'
-  | 'timeline'
   | 'testimonials'
   | 'navigation'
   | 'footer'
@@ -146,7 +144,6 @@ const DASHBOARD_SECTIONS: Array<{ id: DashboardSectionId; label: string; hint: s
   { id: 'projects', label: 'Projects', hint: 'Project cards and media sources' },
   { id: 'testimonials', label: 'Testimonials', hint: 'Slider content and avatar cards' },
   { id: 'articlesPage', label: 'Articles Page', hint: 'Hero, filters, labels, and list copy' },
-  { id: 'timeline', label: 'Career Timeline', hint: 'About page timeline milestones and descriptions' },
   { id: 'navigation', label: 'Navigation + Music', hint: 'Top bar links, CTA, and music controls' },
   { id: 'footer', label: 'Footer', hint: 'Contact, social, legal, and office details' },
   { id: 'visibility', label: 'Visibility', hint: 'Show/hide layers and major sections' },
@@ -160,7 +157,7 @@ const DASHBOARD_SECTION_GROUPS: Array<{ id: string; label: string; sectionIds: D
   {
     id: 'pages',
     label: 'Pages & Content',
-    sectionIds: ['intro', 'scene05', 'featured', 'projects', 'testimonials', 'articlesPage', 'timeline', 'navigation', 'footer'],
+    sectionIds: ['intro', 'scene05', 'featured', 'projects', 'testimonials', 'articlesPage', 'navigation', 'footer'],
   },
   {
     id: 'system-motion',
@@ -769,17 +766,6 @@ export const Dashboard: React.FC = () => {
     }));
   };
 
-  const updateTimelineEvent = (
-    eventId: string,
-    updater: (prev: SiteTimelineEvent) => SiteTimelineEvent,
-  ) => {
-    updateConfig((prev) => ({
-      ...prev,
-      journeyTimeline: prev.journeyTimeline.map((ev) =>
-        ev.id === eventId ? updater(ev) : ev,
-      ),
-    }));
-  };
 
   const updateTestimonial = (
     testimonialId: string,
@@ -809,7 +795,6 @@ export const Dashboard: React.FC = () => {
   };
 
   const updateScene05LogoItem = (
-    group: 'learningLogos' | 'companyLogos',
     logoId: string,
     updater: (item: SiteScene05LogoItem) => SiteScene05LogoItem,
   ) => {
@@ -817,7 +802,7 @@ export const Dashboard: React.FC = () => {
       ...prev,
       scene05: {
         ...prev.scene05,
-        [group]: prev.scene05[group].map((item) => (item.id === logoId ? updater(item) : item)),
+        companyLogos: prev.scene05.companyLogos.map((item) => (item.id === logoId ? updater(item) : item)),
       },
     }));
   };
@@ -1365,28 +1350,8 @@ export const Dashboard: React.FC = () => {
 
     try {
       const dataUrl = await readFileAsDataUrl(file);
-      updateScene05LogoItem('companyLogos', logoId, (item) => ({ ...item, logoSrc: dataUrl }));
+      updateScene05LogoItem(logoId, (item) => ({ ...item, logoSrc: dataUrl }));
       setUploadMessage(`Company logo uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
-    }
-  };
-
-  const handleLearningLogoUpload = async (logoId: string, file: File | null) => {
-    clearUploadFeedback();
-    if (!file) return;
-
-    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
-      setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
-      );
-      return;
-    }
-
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateScene05LogoItem('learningLogos', logoId, (item) => ({ ...item, logoSrc: dataUrl }));
-      setUploadMessage(`Learning logo uploaded successfully.`);
     } catch {
       setUploadError('Could not read the selected image file.');
     }
@@ -2131,78 +2096,6 @@ export const Dashboard: React.FC = () => {
                 className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
               >
                 Add Project
-              </button>
-            </Card>
-          </div>
-        );
-
-      case 'timeline':
-        return (
-          <div className="grid gap-4">
-            <Card title="Journey Timeline" subtitle="Edit vertical timeline events">
-              {siteConfig.journeyTimeline.map((event) => (
-                <div key={event.id} className={listItemClass}>
-                  <Input
-                    label="Role"
-                    value={event.role}
-                    onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, role: next }))}
-                  />
-                  <Input
-                    label="Company / Title"
-                    value={event.title}
-                    onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, title: next }))}
-                  />
-                  <Input
-                    label="Date / Period"
-                    value={event.date}
-                    onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, date: next }))}
-                  />
-                  <Textarea
-                    label="Description"
-                    value={event.description}
-                    rows={3}
-                    onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, description: next }))}
-                  />
-                  <div className="flex items-center justify-between gap-4 mt-2">
-                    <Toggle
-                      label="Visible"
-                      checked={event.visible}
-                      onChange={(next) => updateTimelineEvent(event.id, (item) => ({ ...item, visible: next }))}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateConfig((prev) => ({
-                          ...prev,
-                          journeyTimeline: prev.journeyTimeline.filter((item) => item.id !== event.id),
-                        }));
-                      }}
-                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  const newEvent: SiteTimelineEvent = {
-                    id: `timeline-${Date.now()}`,
-                    title: 'New Company',
-                    role: 'New Role',
-                    date: 'Present',
-                    description: 'Role description',
-                    visible: true,
-                  };
-                  updateConfig((prev) => ({
-                    ...prev,
-                    journeyTimeline: [...prev.journeyTimeline, newEvent],
-                  }));
-                }}
-                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
-              >
-                Add Timeline Event
               </button>
             </Card>
           </div>
@@ -3484,96 +3377,6 @@ export const Dashboard: React.FC = () => {
 
               <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
-                  Learning Logos
-                </p>
-
-                {siteConfig.scene05.learningLogos.map((item) => (
-                  <div key={item.id} className={listItemClass}>
-                    <Input
-                      label="Name"
-                      value={item.name}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, name: next }))
-                      }
-                    />
-                    <Input
-                      label="Link URL"
-                      value={item.href}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, href: next }))
-                      }
-                    />
-                    <label className="flex flex-col gap-1.5">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload logo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] ?? null;
-                          e.currentTarget.value = '';
-                          void handleLearningLogoUpload(item.id, file);
-                        }}
-                        className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
-                      />
-                    </label>
-                    <Input
-                      label="Logo URL"
-                      value={item.logoSrc}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
-                      }
-                    />
-                    <Toggle
-                      label="Visible"
-                      checked={item.visible}
-                      onChange={(next) =>
-                        updateScene05LogoItem('learningLogos', item.id, (prev) => ({ ...prev, visible: next }))
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateConfig((prev) => ({
-                          ...prev,
-                          scene05: {
-                            ...prev.scene05,
-                            learningLogos: prev.scene05.learningLogos.filter((entry) => entry.id !== item.id),
-                          },
-                        }));
-                      }}
-                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newLogo: SiteScene05LogoItem = {
-                      id: `learn-${Date.now()}`,
-                      name: 'New Learning Partner',
-                      logoSrc: '',
-                      href: '#',
-                      visible: true,
-                    };
-                    updateConfig((prev) => ({
-                      ...prev,
-                      scene05: {
-                        ...prev.scene05,
-                        learningLogos: [...prev.scene05.learningLogos, newLogo],
-                      },
-                    }));
-                  }}
-                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
-                >
-                  Add Learning Logo
-                </button>
-              </div>
-
-              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Company Logos
                 </p>
 
@@ -3582,16 +3385,12 @@ export const Dashboard: React.FC = () => {
                     <Input
                       label="Name"
                       value={item.name}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, name: next }))
-                      }
+                      onChange={(next) => updateScene05LogoItem(item.id, (prev) => ({ ...prev, name: next }))}
                     />
                     <Input
                       label="Link URL"
                       value={item.href}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, href: next }))
-                      }
+                      onChange={(next) => updateScene05LogoItem(item.id, (prev) => ({ ...prev, href: next }))}
                     />
                     <label className="flex flex-col gap-1.5">
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload logo</span>
@@ -3609,16 +3408,12 @@ export const Dashboard: React.FC = () => {
                     <Input
                       label="Logo URL"
                       value={item.logoSrc}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, logoSrc: next }))
-                      }
+                      onChange={(next) => updateScene05LogoItem(item.id, (prev) => ({ ...prev, logoSrc: next }))}
                     />
                     <Toggle
                       label="Visible"
                       checked={item.visible}
-                      onChange={(next) =>
-                        updateScene05LogoItem('companyLogos', item.id, (prev) => ({ ...prev, visible: next }))
-                      }
+                      onChange={(next) => updateScene05LogoItem(item.id, (prev) => ({ ...prev, visible: next }))}
                     />
                     <button
                       type="button"

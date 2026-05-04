@@ -101,15 +101,43 @@ export function usePreloadFrames(scenes: string[]) {
     // Sequential batched chunk loading to prevent UI freeze and memory spiking
     const loadImagesInChunks = async () => {
       const chunkSize = 20;
-      let allLoaders: (() => Promise<void>)[] = [];
+      const allLoaders: Array<() => Promise<void>> = [];
 
+      const maxFrames = totalScenesUrls.reduce((max, entry) => Math.max(max, entry.urls.length), 0);
+
+      // Priority pass: load the first frame of every scene early so each sequence becomes visible quickly.
       totalScenesUrls.forEach(({ scene, urls }) => {
-        urls.forEach((url, i) => {
+        const url = urls[0];
+        if (!url) return;
+        allLoaders.push(() => new Promise((resolve) => {
+          const img = new Image();
+          img.decoding = 'async';
+          img.onload = () => {
+            if (!mounted) return resolve();
+            loadedImagesRecord[scene][0] = img;
+            updateProgress();
+            resolve();
+          };
+          img.onerror = () => {
+            console.error(`Failed to load image: ${url}`);
+            updateProgress();
+            resolve();
+          };
+          img.src = url;
+        }));
+      });
+
+      // Interleave the rest of the frames across scenes to avoid one scene starving the others.
+      for (let frameIndex = 1; frameIndex < maxFrames; frameIndex += 1) {
+        for (const { scene, urls } of totalScenesUrls) {
+          const url = urls[frameIndex];
+          if (!url) continue;
           allLoaders.push(() => new Promise((resolve) => {
             const img = new Image();
+            img.decoding = 'async';
             img.onload = () => {
               if (!mounted) return resolve();
-              loadedImagesRecord[scene][i] = img;
+              loadedImagesRecord[scene][frameIndex] = img;
               updateProgress();
               resolve();
             };
@@ -120,8 +148,8 @@ export function usePreloadFrames(scenes: string[]) {
             };
             img.src = url;
           }));
-        });
-      });
+        }
+      }
 
       for (let i = 0; i < allLoaders.length; i += chunkSize) {
         if (!mounted) break;

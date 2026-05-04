@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { usePreloadFrames } from '../hooks/usePreloadFrames';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { MasterSequence } from '../components/MasterSequence';
@@ -20,8 +20,8 @@ const SCENES = [SCENE_02, SCENE_03, SCENE_07];
 const ABOUT_UI_START = 0.42;
 const ABOUT_UI_END = 0.74;
 const FINAL_FADE_IN_START = 0.972;
-const PORTFOLIO_ACTIVATE_THRESHOLD = 0.992;
-const PORTFOLIO_RELEASE_THRESHOLD = 0.976;
+const PORTFOLIO_ACTIVATE_THRESHOLD = 0.998;
+const PORTFOLIO_RELEASE_THRESHOLD = 0.988;
 const PENDING_NAV_SECTION_KEY = 'portfolio.pending-nav-section.v1';
 
 let hasHomeBootCompleted = false;
@@ -36,6 +36,7 @@ export const Home: React.FC = () => {
   const [isPortfolioActive, setIsPortfolioActive] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scene05Progress, setScene05Progress] = useState(-1);
+  const lastNavSectionRef = useRef<string>('home');
 
   const handleFadeComplete = () => {
     hasHomeBootCompleted = true;
@@ -95,10 +96,22 @@ export const Home: React.FC = () => {
             scene02Images={images[SCENE_02] || []}
             scene03Images={images[SCENE_03] || []}
             scene07Images={images[SCENE_07] || []}
-            isInputLocked={isPortfolioActive}
+            isInputLocked={isPortfolioActive || scene05Progress >= 0}
             onGlobalProgress={(p) => {
               const scrolled = p > 0.005;
               setIsScrolling(prev => prev !== scrolled ? scrolled : prev);
+
+              let nextSection = 'home';
+              if (p >= ABOUT_UI_START && p <= ABOUT_UI_END) {
+                nextSection = 'about';
+              } else if (p > ABOUT_UI_END) {
+                nextSection = 'projects';
+              }
+
+              if (lastNavSectionRef.current !== nextSection) {
+                lastNavSectionRef.current = nextSection;
+                window.dispatchEvent(new CustomEvent('nav-active-section', { detail: { section: nextSection } }));
+              }
 
               // Keep About overlay tied to the merged opening scene handoff.
               if (p >= ABOUT_UI_START && p <= ABOUT_UI_END) {

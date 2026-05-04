@@ -4,7 +4,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Testimonials } from './Testimonials';
 import { Footer } from './Footer';
 import { ExperienceMarquee } from './ExperienceMarquee';
-import { JourneyTimeline } from './JourneyTimeline';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass, getCardClass, getGlassClass, getScaledRem } from './designSystem';
 
@@ -27,6 +26,13 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = ({ isActive }) => {
   const backNavLockUntilRef = useRef(0);
   const pendingSectionRef = useRef<'projects' | 'testimonials' | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+  const navSectionRef = useRef<'projects' | 'testimonials'>('projects');
+
+  const dispatchNavSection = (next: 'projects' | 'testimonials') => {
+    if (navSectionRef.current === next) return;
+    navSectionRef.current = next;
+    window.dispatchEvent(new CustomEvent('nav-active-section', { detail: { section: next } }));
+  };
 
   const handlePlaceholderLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (isPlaceholderHref(href)) {
@@ -40,6 +46,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = ({ isActive }) => {
     const initTimer = window.setTimeout(() => {
       if (containerRef.current) containerRef.current.scrollTop = 0;
       window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: { show: true } }));
+      dispatchNavSection('projects');
     }, 50);
 
     let refreshTimer = 0;
@@ -226,6 +233,16 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = ({ isActive }) => {
 
     window.dispatchEvent(new CustomEvent('toggle-navbar', { detail: { show: true } }));
     lastScrollY.current = currentScrollY;
+
+    const scroller = containerRef.current;
+    const slide = scroller?.querySelector('.next-page-slide') as HTMLElement | null;
+    if (scroller && slide) {
+      const containerRect = scroller.getBoundingClientRect();
+      const slideRect = slide.getBoundingClientRect();
+      const threshold = containerRect.top + scroller.clientHeight * 0.35;
+      const nextSection = slideRect.top <= threshold ? 'testimonials' : 'projects';
+      dispatchNavSection(nextSection);
+    }
   };
 
   const runPortfolioNavigation = useCallback(
@@ -340,7 +357,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = ({ isActive }) => {
                 fontSize: `clamp(${getScaledRem(siteConfig.designSystem.theme.displayTitleSizeRem * 1.05, siteConfig.designSystem.theme.headingScale)}, 15vw, ${getScaledRem(siteConfig.designSystem.theme.displayTitleSizeRem * 1.9, siteConfig.designSystem.theme.headingScale)})`,
                 lineHeight: 0.9,
                 letterSpacing: `${siteConfig.designSystem.theme.headingLetterSpacingEm - 0.01}em`,
-                fontWeight: Math.min(720, Math.max(520, siteConfig.designSystem.theme.headingWeight + 120)),
+                fontWeight: Math.min(680, Math.max(500, siteConfig.designSystem.theme.headingWeight + 60)),
               }}
             >
               {featured.titleLine1}
@@ -434,8 +451,6 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = ({ isActive }) => {
       <div className="next-page-slide relative z-[250] w-full rounded-t-[8px] bg-white pt-28 pb-0 shadow-[0_-16px_42px_rgba(0,0,0,0.045)] md:pt-32">
         <div className="mx-auto w-full max-w-[1600px] px-6 md:px-12 lg:px-20">
           {visibility.experienceMarqueeSection ? <ExperienceMarquee isActive={isActive} /> : null}
-
-          {visibility.journeyTimelineSection ? <JourneyTimeline isActive={isActive} /> : null}
 
           {visibility.testimonialsSection ? <Testimonials isActive={isActive} /> : null}
 

@@ -54,15 +54,24 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
       }
     };
 
+    const handleNavActiveSection = (e: Event) => {
+      const customEvent = e as CustomEvent<{ section: string }>;
+      if (customEvent.detail?.section) {
+        setActiveSection(customEvent.detail.section);
+      }
+    };
+
     detectSection();
     window.addEventListener('hashchange', detectSection);
     window.addEventListener('popstate', detectSection);
     window.addEventListener('nav-to-section', handleNavToSection);
+    window.addEventListener('nav-active-section', handleNavActiveSection);
 
     return () => {
       window.removeEventListener('hashchange', detectSection);
       window.removeEventListener('popstate', detectSection);
       window.removeEventListener('nav-to-section', handleNavToSection);
+      window.removeEventListener('nav-active-section', handleNavActiveSection);
     };
   }, []);
 

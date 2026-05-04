@@ -13,6 +13,7 @@ const PHASE_ABOUT_END = 0.74;
 const PHASE_SCENE_07_END = 0.95;
 const SCENE_07_ENTRY_EPSILON = 0.0001;
 const SCENE_07_REVERSE_ENTRY_EPSILON = 0.0012;
+const HOME_REVERSE_ENTRY_EPSILON = 0.0014;
 const TRANSITION_DURATION_SCALE = 0.95;
 const SCENE_07_ACCELERATION_POWER = 0.72;
 
@@ -37,12 +38,17 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
   const lastDrawableImageRef = useRef<HTMLImageElement | null>(null);
   const { siteConfig } = useSiteConfig();
   const scrollSettings = siteConfig.cinematicSequence.scroll;
+  const isInputLockedRef = useRef(isInputLocked);
   
   const onGlobalProgressRef = useRef(onGlobalProgress);
 
   useEffect(() => {
     onGlobalProgressRef.current = onGlobalProgress;
   }, [onGlobalProgress]);
+
+  useEffect(() => {
+    isInputLockedRef.current = isInputLocked;
+  }, [isInputLocked]);
 
   const l1 = scene02Images ? scene02Images.length : 0;
   const l2 = scene03Images ? scene03Images.length : 0;
@@ -184,6 +190,8 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     const MOMENTUM_CAP = 0.08;
     const MIN_MOMENTUM = 0.000002;
     const tweenDuration = Math.max(0.0001, scrollSettings.smoothDurationMs / 1000);
+    const inputCooldownMs = Math.max(80, scrollSettings.inputCooldownMs);
+    let navLockUntil = 0;
 
     const stopMomentum = () => {
       if (momentumFrame) {
@@ -218,8 +226,45 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
       }
     };
 
+    let lastInputAt = 0;
+    let lastDirection = 0;
+    let lastForwardAt = 0;
+    let lastBackwardAt = 0;
+
     const queueMomentum = (delta: number, multiplier = 1) => {
+      if (Date.now() < navLockUntil) return;
+      if (delta === 0) return;
       const limitedDelta = clamp(delta, -scrollSettings.maxWheelDelta, scrollSettings.maxWheelDelta);
+      const now = Date.now();
+      const direction = Math.sign(limitedDelta);
+
+      if (
+        direction !== 0 &&
+        lastDirection !== 0 &&
+        direction !== lastDirection &&
+        now - lastInputAt < inputCooldownMs
+      ) {
+        return;
+      }
+
+      if (direction > 0) {
+        lastForwardAt = now;
+      } else if (direction < 0) {
+        lastBackwardAt = now;
+      }
+
+      if (direction < 0 && virtualProgress < 0.08 && now - lastForwardAt < inputCooldownMs * 2) {
+        return;
+      }
+
+      if (direction !== 0 && direction !== lastDirection) {
+        stopMomentum();
+      }
+
+      if (direction !== 0) {
+        lastDirection = direction;
+      }
+      lastInputAt = now;
       const impulse = limitedDelta * scrollSettings.wheelIntensity * multiplier;
       momentum = clamp(momentum + impulse, -MOMENTUM_CAP, MOMENTUM_CAP);
 
@@ -229,10 +274,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     };
 
     const handleWheel = (e: WheelEvent) => {
-      if (isInputLocked) {
+      if (isInputLockedRef.current) {
         stopMomentum();
         return;
       }
+      e.preventDefault();
       queueMomentum(e.deltaY);
     };
 
@@ -242,10 +288,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isInputLocked) {
+      if (isInputLockedRef.current) {
         stopMomentum();
         return;
       }
+      e.preventDefault();
       const touchEndY = e.touches[0].clientY;
       const diff = touchStartY - touchEndY;
       queueMomentum(diff, scrollSettings.touchMultiplier);
@@ -253,13 +300,15 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isInputLocked) {
+      if (isInputLockedRef.current) {
         stopMomentum();
         return;
       }
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
         tweenToProgress(virtualProgress + scrollSettings.keyboardStep);
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
         tweenToProgress(virtualProgress - scrollSettings.keyboardStep);
       }
     };
@@ -267,7 +316,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     const handleNavToSection = (e: Event) => {
       const { section } = (e as CustomEvent).detail;
       let target = 0;
+      navLockUntil = Date.now() + inputCooldownMs;
       if (section === 'home') target = 0;
+      else if (section === 'home-sequence') {
+        target = Math.max(0, PHASE_PLAY_SCENE_02_03_END - HOME_REVERSE_ENTRY_EPSILON);
+      }
       else if (section === 'about') target = PHASE_ABOUT_END;
       else if (section === 'projects-sequence') {
         // Enter scene-07 at its beginning so the sequence plays forward naturally.
@@ -285,9 +338,9 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
       tweenToProgress(target, { immediate: true });
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('nav-to-section', handleNavToSection);
 
@@ -314,7 +367,6 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
     scene03Images,
     scene07Images,
     scene07Start,
-    isInputLocked,
     scrollSettings,
   ]); 
 
