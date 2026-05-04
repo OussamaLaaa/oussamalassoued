@@ -1118,6 +1118,11 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     aiTags: ['AI Workflows', 'Figma', 'Claude Code', 'Systems'],
     actionLabel: 'Connect With Me',
     actionHref: '#',
+    animations: {
+      enabled: true,
+      textRevealStyle: 'cinematic',
+      cardEntranceStyle: 'stagger',
+    },
   },
   persistentUI: {
     logoAlt: 'Oussama Lassoued',

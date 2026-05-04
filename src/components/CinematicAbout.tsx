@@ -138,6 +138,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   };
 
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (!isActive) return;
     event.stopPropagation();
 
     const scroller = containerRef.current;
@@ -165,10 +166,12 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   };
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isActive) return;
     touchStartYRef.current = event.touches[0]?.clientY ?? null;
   };
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isActive) return;
     const startY = touchStartYRef.current;
     touchStartYRef.current = null;
     if (startY === null) return;
@@ -200,6 +203,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   };
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (!isActive) return;
     const currentScrollTop = event.currentTarget.scrollTop;
 
     if (currentScrollTop < 72) {
@@ -255,7 +259,9 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
         onWheel={handleWheel}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onTouchMove={(event) => event.stopPropagation()}
+        onTouchMove={(event) => {
+          if (isActive) event.stopPropagation();
+        }}
         onScroll={handleScroll}
         className="relative z-[4] h-full overflow-y-auto overflow-x-hidden overscroll-y-contain"
       >
