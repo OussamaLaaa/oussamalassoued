@@ -325,10 +325,10 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                       activeSection === item.section
                         ? isLightMode
                           ? 'text-black bg-gray-100/80'
-                          : 'text-white bg-white/10'
+                          : 'text-white bg-white/15'
                         : isLightMode
-                          ? 'text-gray-700 hover:text-black hover:bg-gray-50/60'
-                          : 'text-gray-300 hover:text-white hover:bg-white/5'
+                          ? 'text-gray-800 hover:text-black hover:bg-gray-50/60'
+                          : 'text-gray-200 hover:text-white hover:bg-white/8'
                     }`}
                   >
                     {item.label}
@@ -347,7 +347,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                   className={`relative h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
                     isLightMode
                       ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
-                      : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                      : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
                   }`}
                   aria-label="Toggle Music"
                 >
@@ -413,7 +413,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
             className={`md:hidden fixed top-4 right-4 z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
               isLightMode
                 ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
-                : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
             }`}
             aria-label="Toggle Menu"
           >
@@ -463,8 +463,8 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                           ? 'text-black'
                           : 'text-white'
                         : isLightMode
-                          ? 'text-gray-600 hover:text-black'
-                          : 'text-gray-400 hover:text-white'
+                          ? 'text-gray-700 hover:text-black'
+                          : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     {item.label}

@@ -301,7 +301,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                 </h1>
 
                 {scene05.role.trim() ? (
-                  <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600 sm:text-[11px]">
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-800 sm:text-[11px]">
                     {scene05.role}
                   </p>
                 ) : null}
@@ -311,13 +311,13 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                     ? introParagraphs.map((paragraph, index) => (
                         <p
                           key={`${paragraph.slice(0, 28)}-${index}`}
-                          className="text-[1.04rem] leading-[1.72] text-gray-700 sm:text-[1.1rem]"
+                          className="text-[1.04rem] leading-[1.72] text-gray-900 sm:text-[1.1rem]"
                         >
                           {paragraph}
                         </p>
                       ))
                     : (
-                      <p className="text-[1.04rem] leading-[1.72] text-gray-700 sm:text-[1.1rem]">
+                      <p className="text-[1.04rem] leading-[1.72] text-gray-900 sm:text-[1.1rem]">
                         {scene05.visionText}
                       </p>
                     )}
@@ -367,7 +367,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
 
           <section className="mb-14 grid gap-8 md:gap-9 lg:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)] lg:items-start lg:gap-10">
             <article className="relative">
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">{scene05.storyTitle}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-800">{scene05.storyTitle}</p>
 
               <div className="mt-5 space-y-5">
                 {storyParagraphs.map((paragraph, index) => {
@@ -375,7 +375,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                   return (
                     <p
                       key={`${paragraph.slice(0, 28)}-${index}`}
-                      className="text-sm leading-relaxed text-gray-700 transition-[transform,opacity] duration-700 ease-out md:text-[1rem] md:leading-[1.92]"
+                      className="text-sm leading-relaxed text-gray-900 transition-[transform,opacity] duration-700 ease-out md:text-[1rem] md:leading-[1.92]"
                       style={{
                         opacity: 0.2 + localReveal * 0.8,
                         transform: `translateX(${(1 - localReveal) * 22}px)`,
@@ -391,8 +391,8 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
 
             <article className="relative rounded-[28px] border border-gray-200 bg-white p-4 md:p-5 shadow-[0_20px_46px_-34px_rgba(0,0,0,0.08)]">
               <div className="mb-4 flex items-center gap-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">{scene05.skillsTitle}</p>
-                <span className="rounded-full border border-gray-300 bg-gray-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-700">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-800">{scene05.skillsTitle}</p>
+                <span className="rounded-full border border-gray-300 bg-gray-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-900">
                   {skills.length}
                 </span>
               </div>
@@ -408,7 +408,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                     return (
                       <span
                         key={`${skill}-${index}`}
-                        className="inline-flex rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700 shadow-[0_8px_18px_-14px_rgba(0,0,0,0.1)] transition-[transform,opacity] duration-500 ease-out md:text-xs hover:border-black hover:bg-black hover:text-white"
+                        className="inline-flex rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-900 shadow-[0_8px_18px_-14px_rgba(0,0,0,0.1)] transition-[transform,opacity] duration-500 ease-out md:text-xs hover:border-black hover:bg-black hover:text-white"
                         style={{
                           opacity: 0.15 + localReveal * 0.85,
                           transform: `translate3d(0, ${(1 - localReveal) * 30}px, 0) rotate(${tilt}deg)`,
@@ -424,14 +424,14 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
 
               {(scene05.aiText.trim() || aiTags.length > 0) ? (
                 <div className="mt-4 rounded-[20px] border border-gray-200 bg-gray-50 p-4 md:p-5">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">{scene05.aiTitle}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-700 md:text-[0.95rem]">{scene05.aiText}</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-800">{scene05.aiTitle}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-900 md:text-[0.95rem]">{scene05.aiText}</p>
                   {aiTags.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {aiTags.map((tag, index) => (
                         <span
                           key={`${tag}-${index}`}
-                          className="rounded-full border border-gray-300 bg-gray-200 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-gray-700"
+                          className="rounded-full border border-gray-300 bg-gray-200 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-gray-900"
                         >
                           {tag}
                         </span>
@@ -446,10 +446,10 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
           {certifications.length > 0 ? (
             <section className="mb-12 md:mb-14">
               <div className="mb-4 flex items-center gap-3">
-                <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
+                <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-800">
                   {scene05.certificationsTitle}
                 </h2>
-                <span className="rounded-full border border-gray-300 bg-gray-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-700">
+                <span className="rounded-full border border-gray-300 bg-gray-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-gray-900">
                   {certifications.length}
                 </span>
               </div>
@@ -472,7 +472,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                     >
                       <div>
                         <div className="mb-2 flex items-center gap-3">
-                          <span className="rounded-full border border-gray-300 bg-gray-200 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-gray-700">
+                          <span className="rounded-full border border-gray-300 bg-gray-200 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-gray-900">
                             {issuer}
                           </span>
                           {item.year ? (
@@ -492,7 +492,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                               <span className="text-xs text-gray-500">{issuerInitial}</span>
                             )}
                           </div>
-                          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-gray-600">{issuer}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-gray-800">{issuer}</span>
                         </div>
 
                         {item.credentialUrl && !isPlaceholderHref(item.credentialUrl) ? (
@@ -500,7 +500,7 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                             href={item.credentialUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-full border border-gray-400 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-gray-700 transition-colors hover:bg-black hover:border-black hover:text-white"
+                            className="rounded-full border border-gray-400 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-gray-900 transition-colors hover:bg-black hover:border-black hover:text-white"
                           >
                             {scene05.credentialButtonLabel}
                           </a>
