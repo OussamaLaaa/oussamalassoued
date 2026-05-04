@@ -96,18 +96,33 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
       return scene07Images[index - l1 - l2];
     };
 
+    const isDrawable = (image?: HTMLImageElement | null) => {
+      return !!image && image.complete && image.naturalWidth > 0;
+    };
+
+    const findDrawableIndex = (targetIndex: number) => {
+      const [segmentStart, segmentEnd] = targetIndex >= scene07Start
+        ? [scene07Start, totalLength - 1]
+        : [0, Math.max(preHeroLength - 1, 0)];
+
+      for (let i = targetIndex; i >= segmentStart; i -= 1) {
+        if (isDrawable(getImageAtGlobalIndex(i))) return i;
+      }
+
+      for (let i = targetIndex + 1; i <= segmentEnd; i += 1) {
+        if (isDrawable(getImageAtGlobalIndex(i))) return i;
+      }
+
+      return null;
+    };
+
     const drawFrame = (index: number) => {
       const safeIndex = clamp(index, 0, totalLength - 1);
-      const image = getImageAtGlobalIndex(safeIndex);
-      const drawableImage = image ?? lastDrawableImageRef.current;
-
-      if (!drawableImage) {
-        return;
-      }
-
-      if (drawableImage.complete && drawableImage.naturalWidth > 0) {
-        lastDrawableImageRef.current = drawableImage;
-      }
+      const drawableIndex = findDrawableIndex(safeIndex);
+      if (drawableIndex === null) return;
+      const drawableImage = getImageAtGlobalIndex(drawableIndex);
+      if (!drawableImage) return;
+      lastDrawableImageRef.current = drawableImage;
 
       const { innerWidth, innerHeight } = window;
       if (canvas.width !== innerWidth || canvas.height !== innerHeight) {
@@ -115,13 +130,13 @@ export const MasterSequence: React.FC<MasterSequenceProps> = ({
         canvas.height = innerHeight;
       }
 
-      const isScene07 = safeIndex >= scene07Start;
+      const isScene07 = drawableIndex >= scene07Start;
 
       drawCoverFrame(ctx, drawableImage, {
         zoomFactor: 1,
         objectFit: isScene07 ? 'contain' : 'cover'
       });
-      lastDrawnIndex = safeIndex;
+      lastDrawnIndex = drawableIndex;
     };
 
     const handleResize = () => {
