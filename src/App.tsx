@@ -1,7 +1,8 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { SiteConfigProvider } from './context/SiteConfigContext';
-import Home from './pages/Home';
 
+// Lazy load all pages including Home for better initial load performance
+const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Articles = lazy(() => import('./pages/Articles'));
@@ -87,7 +88,9 @@ function App() {
           <Articles slug={route.slug} />
         </Suspense>
       ) : (
-        <Home />
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+          <Home />
+        </Suspense>
       )}
     </SiteConfigProvider>
   );
