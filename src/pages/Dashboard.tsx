@@ -145,6 +145,7 @@ const DASHBOARD_SECTIONS: Array<{ id: DashboardSectionId; label: string; hint: s
   { id: 'articlesPage', label: 'Articles Page', hint: 'Hero, filters, labels, and list copy' },
   { id: 'navigation', label: 'Navigation + Music', hint: 'Top bar links, CTA, and music controls' },
   { id: 'footer', label: 'Footer', hint: 'Contact, social, legal, and office details' },
+  { id: 'contact', label: 'Contact Page', hint: 'Hero, form, cards, social links, and validation messages' },
   { id: 'visibility', label: 'Visibility', hint: 'Show/hide layers and major sections' },
   { id: 'sequence', label: 'Cinematic Flow', hint: 'Scene order, auto handoff, and portal frame' },
   { id: 'designSystem', label: 'Design System', hint: 'Tokens, foundations, and style mapping' },
@@ -156,7 +157,7 @@ const DASHBOARD_SECTION_GROUPS: Array<{ id: string; label: string; sectionIds: D
   {
     id: 'pages',
     label: 'Pages & Content',
-    sectionIds: ['intro', 'scene05', 'featured', 'projects', 'testimonials', 'articlesPage', 'navigation', 'footer'],
+    sectionIds: ['intro', 'scene05', 'featured', 'projects', 'testimonials', 'articlesPage', 'navigation', 'footer', 'contact'],
   },
   {
     id: 'system-motion',
@@ -3036,6 +3037,426 @@ export const Dashboard: React.FC = () => {
                 >
                   Edit Navigation Labels
                 </button>
+              </div>
+            </Card>
+          </div>
+        );
+
+      case 'contact':
+        return (
+          <div className="grid gap-4">
+            <Card title="Contact Page Hero" subtitle="Hero section text and labels">
+              <Input
+                label="Hero line 1"
+                value={siteConfig.contactPage.heroTitleLine1}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, heroTitleLine1: next } }))}
+              />
+              <Input
+                label="Hero line 2"
+                value={siteConfig.contactPage.heroTitleLine2}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, heroTitleLine2: next } }))}
+              />
+              <Textarea
+                label="Hero subtitle"
+                value={siteConfig.contactPage.heroSubtitle}
+                rows={3}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, heroSubtitle: next } }))}
+              />
+            </Card>
+
+            <Card title="Direct Contact Card" subtitle="Phone, email, and office information">
+              <Input
+                label="Card title"
+                value={siteConfig.contactPage.directContactTitle}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, directContactTitle: next } }))}
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Phone label"
+                  value={siteConfig.contactPage.phoneLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, phoneLabel: next } }))}
+                />
+                <Input
+                  label="Phone number"
+                  value={siteConfig.contactPage.phoneNumber}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, phoneNumber: next } }))}
+                />
+                <Input
+                  label="Email label"
+                  value={siteConfig.contactPage.emailLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, emailLabel: next } }))}
+                />
+                <Input
+                  label="Email address"
+                  value={siteConfig.contactPage.emailAddress}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, emailAddress: next } }))}
+                />
+                <Input
+                  label="Office label"
+                  value={siteConfig.contactPage.officeLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, officeLabel: next } }))}
+                />
+                <Input
+                  label="Office address"
+                  value={siteConfig.contactPage.officeAddress}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, officeAddress: next } }))}
+                />
+              </div>
+              <Textarea
+                label="Availability text"
+                value={siteConfig.contactPage.availabilityText}
+                rows={2}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, availabilityText: next } }))}
+              />
+            </Card>
+
+            <Card title="Response Time Card" subtitle="Expected response time display">
+              <Input
+                label="Label"
+                value={siteConfig.contactPage.responseTimeLabel}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, responseTimeLabel: next } }))}
+              />
+              <Input
+                label="Time value"
+                value={siteConfig.contactPage.responseTimeValue}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, responseTimeValue: next } }))}
+              />
+              <Textarea
+                label="Description"
+                value={siteConfig.contactPage.responseTimeDescription}
+                rows={2}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, responseTimeDescription: next } }))}
+              />
+            </Card>
+
+            <Card title="Contact Form Section" subtitle="Form labels, placeholders, and button text">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Form title"
+                  value={siteConfig.contactPage.formTitle}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formTitle: next } }))}
+                />
+                <Input
+                  label="Form subtitle"
+                  value={siteConfig.contactPage.formSubtitle}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSubtitle: next } }))}
+                />
+                <Input
+                  label="Name label"
+                  value={siteConfig.contactPage.formNameLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formNameLabel: next } }))}
+                />
+                <Input
+                  label="Name placeholder"
+                  value={siteConfig.contactPage.formNamePlaceholder}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formNamePlaceholder: next } }))}
+                />
+                <Input
+                  label="Email label"
+                  value={siteConfig.contactPage.formEmailLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formEmailLabel: next } }))}
+                />
+                <Input
+                  label="Email placeholder"
+                  value={siteConfig.contactPage.formEmailPlaceholder}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formEmailPlaceholder: next } }))}
+                />
+                <Input
+                  label="Subject label"
+                  value={siteConfig.contactPage.formSubjectLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSubjectLabel: next } }))}
+                />
+                <Input
+                  label="Subject placeholder"
+                  value={siteConfig.contactPage.formSubjectPlaceholder}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSubjectPlaceholder: next } }))}
+                />
+                <Input
+                  label="Message label"
+                  value={siteConfig.contactPage.formMessageLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formMessageLabel: next } }))}
+                />
+                <Input
+                  label="Message placeholder"
+                  value={siteConfig.contactPage.formMessagePlaceholder}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formMessagePlaceholder: next } }))}
+                />
+              </div>
+              <Textarea
+                label="Privacy text"
+                value={siteConfig.contactPage.formPrivacyText}
+                rows={2}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formPrivacyText: next } }))}
+              />
+              <Input
+                label="Privacy link"
+                value={siteConfig.contactPage.formPrivacyLink}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formPrivacyLink: next } }))}
+              />
+              <Input
+                label="Submit button text"
+                value={siteConfig.contactPage.formSubmitButton}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSubmitButton: next } }))}
+              />
+            </Card>
+
+            <Card title="Social Channels Section" subtitle="Social links section content">
+              <Input
+                label="Section label"
+                value={siteConfig.contactPage.socialSectionLabel}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, socialSectionLabel: next } }))}
+              />
+              <Input
+                label="Section title"
+                value={siteConfig.contactPage.socialSectionTitle}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, socialSectionTitle: next } }))}
+              />
+              <Textarea
+                label="Section description"
+                value={siteConfig.contactPage.socialSectionDescription}
+                rows={2}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, socialSectionDescription: next } }))}
+              />
+            </Card>
+
+            <Card title="Contact Cards" subtitle="Add, edit, or remove contact cards">
+              {siteConfig.contactPage.contactCards.map((card) => (
+                <div key={card.id} className={listItemClass}>
+                  <Input
+                    label="Title"
+                    value={card.title}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, title: next } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Subtitle"
+                    value={card.subtitle}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, subtitle: next } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Icon"
+                    value={card.icon}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, icon: next as any } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Href"
+                    value={card.href}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, href: next } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
+                  <Input
+                    label="Action label"
+                    value={card.action}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, action: next } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Input
+                      label="Color"
+                      value={card.color}
+                      onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        contactPage: {
+                          ...prev.contactPage,
+                          contactCards: prev.contactPage.contactCards.map((c) =>
+                            c.id === card.id ? { ...c, color: next } : c,
+                          ),
+                        },
+                      }));
+                    }}
+                    />
+                    <Input
+                      label="Hover color"
+                      value={card.hoverColor}
+                      onChange={(next) => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          contactPage: {
+                            ...prev.contactPage,
+                            contactCards: prev.contactPage.contactCards.map((c) =>
+                              c.id === card.id ? { ...c, hoverColor: next } : c,
+                            ),
+                          },
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 mt-2">
+                    <Toggle
+                      label="Visible"
+                      checked={card.visible}
+                      onChange={(next) => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          contactPage: {
+                            ...prev.contactPage,
+                            contactCards: prev.contactPage.contactCards.map((c) =>
+                              c.id === card.id ? { ...c, visible: next } : c,
+                            ),
+                          },
+                        }));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          contactPage: {
+                            ...prev.contactPage,
+                            contactCards: prev.contactPage.contactCards.filter((c) => c.id !== card.id),
+                          },
+                        }));
+                      }}
+                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                    >
+                      Remove Card
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newCard = {
+                    id: `contact-card-${Date.now()}`,
+                    title: 'New Contact Card',
+                    subtitle: 'Add a description',
+                    icon: 'mail',
+                    href: '#',
+                    action: 'Send Message',
+                    color: '#ffffff',
+                    hoverColor: '#b6f45b',
+                    visible: true,
+                  };
+                  updateConfig((prev) => ({
+                    ...prev,
+                    contactPage: {
+                      ...prev.contactPage,
+                      contactCards: [...prev.contactPage.contactCards, newCard],
+                    },
+                  }));
+                }}
+                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+              >
+                Add Contact Card
+              </button>
+            </Card>
+
+            <Card title="Success Messages" subtitle="Form submission feedback messages">
+              <Input
+                label="Success title"
+                value={siteConfig.contactPage.formSuccessTitle}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSuccessTitle: next } }))}
+              />
+              <Textarea
+                label="Success message"
+                value={siteConfig.contactPage.formSuccessMessage}
+                rows={3}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, formSuccessMessage: next } }))}
+              />
+            </Card>
+
+            <Card title="Validation Messages" subtitle="Error messages for form validation">
+              <Input
+                label="Required field message"
+                value={siteConfig.contactPage.validationRequired}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, validationRequired: next } }))}
+              />
+              <Input
+                label="Invalid email message"
+                value={siteConfig.contactPage.validationInvalidEmail}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, validationInvalidEmail: next } }))}
+              />
+              <Input
+                label="Min length message"
+                value={siteConfig.contactPage.validationMinLength}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, validationMinLength: next } }))}
+              />
+            </Card>
+
+            <Card title="Security Settings" subtitle="Honeypot and rate limiting configuration">
+              <Input
+                label="Honeypot field name"
+                value={siteConfig.contactPage.honeypotFieldName}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, honeypotFieldName: next } }))}
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Max message length"
+                  type="number"
+                  min={100}
+                  max={10000}
+                  step={100}
+                  value={siteConfig.contactPage.maxMessageLength}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, maxMessageLength: toSafeNumberInRange(next, 5000, 100, 10000) } }))}
+                />
+                <Input
+                  label="Min message length"
+                  type="number"
+                  min={10}
+                  max={1000}
+                  step={10}
+                  value={siteConfig.contactPage.minMessageLength}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, minMessageLength: toSafeNumberInRange(next, 50, 10, 1000) } }))}
+                />
+                <Input
+                  label="Rate limit minutes"
+                  type="number"
+                  min={1}
+                  max={60}
+                  step={1}
+                  value={siteConfig.contactPage.rateLimitMinutes}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, contactPage: { ...prev.contactPage, rateLimitMinutes: toSafeNumberInRange(next, 5, 1, 60) } }))}
+                />
               </div>
             </Card>
           </div>

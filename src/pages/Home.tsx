@@ -30,7 +30,7 @@ export const Home: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { visibility, globalFrame, crt } = siteConfig;
   const { progress, images, isComplete } = usePreloadFrames(SCENES);
-  
+   
   const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);
   const [finalFadeOpacity, setFinalFadeOpacity] = useState(0);
   const [isPortfolioActive, setIsPortfolioActive] = useState(false);

@@ -93,6 +93,81 @@ export interface SiteArticle {
 
 export type SiteMessageStatus = 'new' | 'read' | 'archived';
 
+// Contact Page Types
+export type ContactCardIconType = 'linkedin' | 'twitter' | 'instagram' | 'behance' | 'facebook' | 'dribbble' | 'youtube' | 'email' | 'phone' | 'location' | 'globe' | 'github' | 'figma' | 'mail';
+
+export interface SiteContactCard {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: ContactCardIconType;
+  href: string;
+  action: string;
+  color: string;
+  hoverColor: string;
+  visible: boolean;
+}
+
+export interface SiteContactPageConfig {
+  // Hero Section
+  heroTitleLine1: string;
+  heroTitleLine2: string;
+  heroSubtitle: string;
+  
+  // Direct Contact Card
+  directContactTitle: string;
+  phoneLabel: string;
+  phoneNumber: string;
+  emailLabel: string;
+  emailAddress: string;
+  officeLabel: string;
+  officeAddress: string;
+  availabilityText: string;
+  
+  // Response Time Card
+  responseTimeLabel: string;
+  responseTimeValue: string;
+  responseTimeDescription: string;
+  
+  // Form Section
+  formTitle: string;
+  formSubtitle: string;
+  formNameLabel: string;
+  formNamePlaceholder: string;
+  formEmailLabel: string;
+  formEmailPlaceholder: string;
+  formSubjectLabel: string;
+  formSubjectPlaceholder: string;
+  formMessageLabel: string;
+  formMessagePlaceholder: string;
+  formPrivacyText: string;
+  formPrivacyLink: string;
+  formSubmitButton: string;
+  
+  // Social Channels Section
+  socialSectionLabel: string;
+  socialSectionTitle: string;
+  socialSectionDescription: string;
+  
+  // Contact Cards
+  contactCards: SiteContactCard[];
+  
+  // Success Messages
+  formSuccessTitle: string;
+  formSuccessMessage: string;
+  
+  // Validation Messages
+  validationRequired: string;
+  validationInvalidEmail: string;
+  validationMinLength: string;
+  
+  // Security
+  honeypotFieldName: string;
+  maxMessageLength: number;
+  minMessageLength: number;
+  rateLimitMinutes: number;
+}
+
 export interface SiteInboxMessage {
   id: string;
   senderName: string;
@@ -800,6 +875,7 @@ export interface SiteConfig {
     videosSectionTitle: string;
     videosSectionDescription: string;
   };
+  contactPage: SiteContactPageConfig;
   articles: SiteArticle[];
   videos: SiteVideoItem[];
   dashboard: {
@@ -1181,6 +1257,105 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     videosSectionTitle: 'Video Publications',
     videosSectionDescription:
       'Short visual explainers, walkthroughs, and lessons published alongside written articles.',
+  },
+  contactPage: {
+    // Hero Section
+    heroTitleLine1: 'Get in Touch',
+    heroTitleLine2: "Let's Work Together",
+    heroSubtitle:
+      "Have a project in mind or want to explore opportunities? I'm always open to discussing new projects, creative ideas, or partnerships.",
+    // Direct Contact Card
+    directContactTitle: 'Direct Contact',
+    phoneLabel: 'Phone',
+    phoneNumber: '+1 234 567 890',
+    emailLabel: 'Email',
+    emailAddress: 'hello@example.com',
+    officeLabel: 'Office',
+    officeAddress: '123 Creative Ave, San Francisco, CA',
+    availabilityText: 'Available for projects worldwide',
+    // Response Time Card
+    responseTimeLabel: 'Response Time',
+    responseTimeValue: '< 24 hours',
+    responseTimeDescription: 'I typically respond within one business day',
+    // Form Section
+    formTitle: 'Send a Message',
+    formSubtitle: "I'd love to hear from you. Fill out the form below and I'll get back to you as soon as possible.",
+    formNameLabel: 'Your Name',
+    formNamePlaceholder: 'John Smith',
+    formEmailLabel: 'Email Address',
+    formEmailPlaceholder: 'john@company.com',
+    formSubjectLabel: 'Subject',
+    formSubjectPlaceholder: 'Project inquiry',
+    formMessageLabel: 'Message',
+    formMessagePlaceholder: 'Tell me about your project...',
+    formPrivacyText: 'By submitting, you agree to our',
+    formPrivacyLink: '/privacy-policy',
+    formSubmitButton: 'Send Message',
+    // Social Channels Section
+    socialSectionLabel: 'Social Channels',
+    socialSectionTitle: 'Connect on Social',
+    socialSectionDescription:
+      'Follow me on social media for updates, behind-the-scenes content, and more.',
+    // Contact Cards
+    contactCards: [
+      {
+        id: 'card-linkedin',
+        title: 'LinkedIn',
+        subtitle: 'Connect professionally',
+        icon: 'linkedin',
+        href: 'https://linkedin.com/in/oussama',
+        action: 'Connect',
+        color: '#0077B5',
+        hoverColor: '#005A8C',
+        visible: true,
+      },
+      {
+        id: 'card-twitter',
+        title: 'Twitter',
+        subtitle: 'Follow for updates',
+        icon: 'twitter',
+        href: 'https://twitter.com/oussama',
+        action: 'Follow',
+        color: '#1DA1F2',
+        hoverColor: '#0D8BD9',
+        visible: true,
+      },
+      {
+        id: 'card-instagram',
+        title: 'Instagram',
+        subtitle: 'See the creative process',
+        icon: 'instagram',
+        href: 'https://instagram.com/oussama',
+        action: 'Follow',
+        color: '#E4405F',
+        hoverColor: '#C1355A',
+        visible: true,
+      },
+      {
+        id: 'card-behance',
+        title: 'Behance',
+        subtitle: 'View design work',
+        icon: 'behance',
+        href: 'https://behance.net/oussama',
+        action: 'View',
+        color: '#1769FF',
+        hoverColor: '#0056CC',
+        visible: true,
+      },
+    ],
+    // Success Messages
+    formSuccessTitle: 'Message Sent!',
+    formSuccessMessage:
+      "Thank you for reaching out. I've received your message and will get back to you within 24 hours.",
+    // Validation Messages
+    validationRequired: 'This field is required',
+    validationInvalidEmail: 'Please enter a valid email address',
+    validationMinLength: 'Message must be at least 10 characters',
+    // Security
+    honeypotFieldName: 'website_url',
+    maxMessageLength: 5000,
+    minMessageLength: 10,
+    rateLimitMinutes: 5,
   },
   articles: [
     {
@@ -2144,6 +2319,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const dashboardIntegrations = isRecord(dashboard.integrations) ? dashboard.integrations : {};
   const dashboardAnalytics = isRecord(dashboard.analytics) ? dashboard.analytics : {};
   const dashboardInbox = isRecord(dashboard.inbox) ? dashboard.inbox : {};
+  const contactPage = isRecord(value.contactPage) ? value.contactPage : {};
 
   const projects = Array.isArray(value.projects)
     ? value.projects
@@ -2199,7 +2375,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         .map((item, index) => {
           if (!isRecord(item)) return null;
           const section = asString(item.section, 'home') as SiteSection;
-          if (!['home', 'about', 'projects', 'testimonials', 'articles'].includes(section)) return null;
+          if (!['home', 'about', 'projects', 'testimonials', 'articles', 'contact'].includes(section)) return null;
           return {
             id: asString(item.id, `nav-${index + 1}`),
             label: asString(item.label, ''),
@@ -2246,6 +2422,14 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       visible: false,
     };
 
+  const defaultContactNavItem =
+    DEFAULT_SITE_CONFIG.persistentUI.navItems.find((item) => item.section === 'contact') ?? {
+      id: 'nav-contact',
+      label: 'Contact',
+      section: 'contact' as const,
+      visible: true,
+    };
+
   const navItemsWithArticles = (navItems.length > 0 ? navItems : DEFAULT_SITE_CONFIG.persistentUI.navItems).some(
     (item) => item.section === 'articles',
   )
@@ -2253,6 +2437,11 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       ? navItems
       : DEFAULT_SITE_CONFIG.persistentUI.navItems
     : [...(navItems.length > 0 ? navItems : DEFAULT_SITE_CONFIG.persistentUI.navItems), defaultArticlesNavItem];
+
+  // Ensure nav-contact always exists with visible: true
+  const navItemsWithContact = navItemsWithArticles.some((item) => item.section === 'contact')
+    ? navItemsWithArticles
+    : [...navItemsWithArticles, defaultContactNavItem];
 
   const defaultFooterArticlesLink =
     DEFAULT_SITE_CONFIG.footer.navLinks.find((link) => link.href.toLowerCase() === '#/articles') ?? {
@@ -2544,7 +2733,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         persistentUI.musicToggleAriaLabel,
         DEFAULT_SITE_CONFIG.persistentUI.musicToggleAriaLabel,
       ),
-      navItems: navItemsWithArticles,
+      navItems: navItemsWithContact,
       letsTalkLabel: asString(persistentUI.letsTalkLabel, DEFAULT_SITE_CONFIG.persistentUI.letsTalkLabel),
       letsTalkHref: asString(persistentUI.letsTalkHref, DEFAULT_SITE_CONFIG.persistentUI.letsTalkHref),
       musicSrc: asString(persistentUI.musicSrc, DEFAULT_SITE_CONFIG.persistentUI.musicSrc),
@@ -2647,6 +2836,153 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       videosSectionDescription: asString(
         articlesPage.videosSectionDescription,
         DEFAULT_SITE_CONFIG.articlesPage.videosSectionDescription,
+      ),
+    },
+    contactPage: {
+      heroTitleLine1: asString(
+        contactPage?.heroTitleLine1,
+        DEFAULT_SITE_CONFIG.contactPage.heroTitleLine1,
+      ),
+      heroTitleLine2: asString(
+        contactPage?.heroTitleLine2,
+        DEFAULT_SITE_CONFIG.contactPage.heroTitleLine2,
+      ),
+      heroSubtitle: asString(
+        contactPage?.heroSubtitle,
+        DEFAULT_SITE_CONFIG.contactPage.heroSubtitle,
+      ),
+      directContactTitle: asString(
+        contactPage?.directContactTitle,
+        DEFAULT_SITE_CONFIG.contactPage.directContactTitle,
+      ),
+      phoneLabel: asString(contactPage?.phoneLabel, DEFAULT_SITE_CONFIG.contactPage.phoneLabel),
+      phoneNumber: asString(contactPage?.phoneNumber, DEFAULT_SITE_CONFIG.contactPage.phoneNumber),
+      emailLabel: asString(contactPage?.emailLabel, DEFAULT_SITE_CONFIG.contactPage.emailLabel),
+      emailAddress: asString(contactPage?.emailAddress, DEFAULT_SITE_CONFIG.contactPage.emailAddress),
+      officeLabel: asString(contactPage?.officeLabel, DEFAULT_SITE_CONFIG.contactPage.officeLabel),
+      officeAddress: asString(contactPage?.officeAddress, DEFAULT_SITE_CONFIG.contactPage.officeAddress),
+      availabilityText: asString(
+        contactPage?.availabilityText,
+        DEFAULT_SITE_CONFIG.contactPage.availabilityText,
+      ),
+      responseTimeLabel: asString(
+        contactPage?.responseTimeLabel,
+        DEFAULT_SITE_CONFIG.contactPage.responseTimeLabel,
+      ),
+      responseTimeValue: asString(
+        contactPage?.responseTimeValue,
+        DEFAULT_SITE_CONFIG.contactPage.responseTimeValue,
+      ),
+      responseTimeDescription: asString(
+        contactPage?.responseTimeDescription,
+        DEFAULT_SITE_CONFIG.contactPage.responseTimeDescription,
+      ),
+      formTitle: asString(contactPage?.formTitle, DEFAULT_SITE_CONFIG.contactPage.formTitle),
+      formSubtitle: asString(contactPage?.formSubtitle, DEFAULT_SITE_CONFIG.contactPage.formSubtitle),
+      formNameLabel: asString(contactPage?.formNameLabel, DEFAULT_SITE_CONFIG.contactPage.formNameLabel),
+      formNamePlaceholder: asString(
+        contactPage?.formNamePlaceholder,
+        DEFAULT_SITE_CONFIG.contactPage.formNamePlaceholder,
+      ),
+      formEmailLabel: asString(contactPage?.formEmailLabel, DEFAULT_SITE_CONFIG.contactPage.formEmailLabel),
+      formEmailPlaceholder: asString(
+        contactPage?.formEmailPlaceholder,
+        DEFAULT_SITE_CONFIG.contactPage.formEmailPlaceholder,
+      ),
+      formSubjectLabel: asString(
+        contactPage?.formSubjectLabel,
+        DEFAULT_SITE_CONFIG.contactPage.formSubjectLabel,
+      ),
+      formSubjectPlaceholder: asString(
+        contactPage?.formSubjectPlaceholder,
+        DEFAULT_SITE_CONFIG.contactPage.formSubjectPlaceholder,
+      ),
+      formMessageLabel: asString(
+        contactPage?.formMessageLabel,
+        DEFAULT_SITE_CONFIG.contactPage.formMessageLabel,
+      ),
+      formMessagePlaceholder: asString(
+        contactPage?.formMessagePlaceholder,
+        DEFAULT_SITE_CONFIG.contactPage.formMessagePlaceholder,
+      ),
+      formPrivacyText: asString(
+        contactPage?.formPrivacyText,
+        DEFAULT_SITE_CONFIG.contactPage.formPrivacyText,
+      ),
+      formPrivacyLink: asString(
+        contactPage?.formPrivacyLink,
+        DEFAULT_SITE_CONFIG.contactPage.formPrivacyLink,
+      ),
+      formSubmitButton: asString(
+        contactPage?.formSubmitButton,
+        DEFAULT_SITE_CONFIG.contactPage.formSubmitButton,
+      ),
+      socialSectionLabel: asString(
+        contactPage?.socialSectionLabel,
+        DEFAULT_SITE_CONFIG.contactPage.socialSectionLabel,
+      ),
+      socialSectionTitle: asString(
+        contactPage?.socialSectionTitle,
+        DEFAULT_SITE_CONFIG.contactPage.socialSectionTitle,
+      ),
+      socialSectionDescription: asString(
+        contactPage?.socialSectionDescription,
+        DEFAULT_SITE_CONFIG.contactPage.socialSectionDescription,
+      ),
+      contactCards: Array.isArray(contactPage?.contactCards) 
+        ? (contactPage.contactCards as any[]).map((card: any, index: number) => ({
+            id: asString(card.id, `contact-card-${index + 1}`),
+            title: asString(card.title, ''),
+            subtitle: asString(card.subtitle, ''),
+            icon: (['linkedin', 'twitter', 'instagram', 'behance', 'facebook', 'dribbble', 'youtube', 'email', 'phone', 'location', 'globe', 'github', 'figma', 'mail'].includes(card.icon) ? card.icon : 'globe') as any,
+            href: asString(card.href, '#'),
+            action: asString(card.action, ''),
+            color: asString(card.color, '#0077B5'),
+            hoverColor: asString(card.hoverColor, '#005A8C'),
+            visible: asBoolean(card.visible, true),
+          }))
+        : DEFAULT_SITE_CONFIG.contactPage.contactCards,
+      formSuccessTitle: asString(
+        contactPage?.formSuccessTitle,
+        DEFAULT_SITE_CONFIG.contactPage.formSuccessTitle,
+      ),
+      formSuccessMessage: asString(
+        contactPage?.formSuccessMessage,
+        DEFAULT_SITE_CONFIG.contactPage.formSuccessMessage,
+      ),
+      validationRequired: asString(
+        contactPage?.validationRequired,
+        DEFAULT_SITE_CONFIG.contactPage.validationRequired,
+      ),
+      validationInvalidEmail: asString(
+        contactPage?.validationInvalidEmail,
+        DEFAULT_SITE_CONFIG.contactPage.validationInvalidEmail,
+      ),
+      validationMinLength: asString(
+        contactPage?.validationMinLength,
+        DEFAULT_SITE_CONFIG.contactPage.validationMinLength,
+      ),
+      honeypotFieldName: asString(
+        contactPage?.honeypotFieldName,
+        DEFAULT_SITE_CONFIG.contactPage.honeypotFieldName,
+      ),
+      maxMessageLength: asBoundedNumber(
+        contactPage?.maxMessageLength,
+        DEFAULT_SITE_CONFIG.contactPage.maxMessageLength,
+        10,
+        5000,
+      ),
+      minMessageLength: asBoundedNumber(
+        contactPage?.minMessageLength,
+        DEFAULT_SITE_CONFIG.contactPage.minMessageLength,
+        1,
+        500,
+      ),
+      rateLimitMinutes: asBoundedNumber(
+        contactPage?.rateLimitMinutes,
+        DEFAULT_SITE_CONFIG.contactPage.rateLimitMinutes,
+        1,
+        60,
       ),
     },
     articles: articles.length > 0 ? articles : DEFAULT_SITE_CONFIG.articles,

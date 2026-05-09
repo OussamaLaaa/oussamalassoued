@@ -82,17 +82,17 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, isComple
 
     const fillTimer = window.setTimeout(() => {
       setIsFilled(true);
-    }, 2100);
+    }, 300);
 
     const glowTimer = window.setTimeout(() => {
       setIsGlowing(true);
-    }, 2600);
+    }, 500);
 
     const readyTimer = window.setTimeout(() => {
       introDoneRef.current = true;
       setIsWaiting(!completeRef.current);
       launch();
-    }, 3000);
+    }, 600);
 
     return () => {
       window.clearTimeout(fillTimer);

@@ -1,10 +1,10 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
-import Home from './pages/Home';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { SiteConfigProvider } from './context/SiteConfigContext';
+import Home from './pages/Home';
 
+const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Articles = lazy(() => import('./pages/Articles'));
-const Contact = lazy(() => import('./pages/Contact'));
 
 type AppRoute =
   | { page: 'home' }
@@ -75,24 +75,16 @@ function App() {
   return (
     <SiteConfigProvider>
       {route.page === 'dashboard' ? (
-        <Suspense
-          fallback={
-            <main className="flex min-h-screen items-center justify-center bg-[#09090b] text-white">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Loading dashboard...</p>
-            </main>
-          }
-        >
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
           <Dashboard />
         </Suspense>
       ) : route.page === 'contact' ? (
-        <Suspense
-          fallback={
-            <main className="flex min-h-screen items-center justify-center bg-[#09090b] text-white">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Loading contact...</p>
-            </main>
-          }
-        >
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
           <Contact />
+        </Suspense>
+      ) : route.page === 'articles' ? (
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+          <Articles slug={route.slug} />
         </Suspense>
       ) : (
         <Home />

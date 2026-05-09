@@ -915,6 +915,15 @@ select:focus-visible {
   animation: scrollbar-pulse 2s ease-in-out infinite;
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ========================================
    CRT SCREEN EFFECTS - Retro TV Style
    ======================================== */
