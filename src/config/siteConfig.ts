@@ -94,7 +94,7 @@ export interface SiteArticle {
 export type SiteMessageStatus = 'new' | 'read' | 'archived';
 
 // Contact Page Types
-export type ContactCardIconType = 'linkedin' | 'twitter' | 'instagram' | 'behance' | 'facebook' | 'dribbble' | 'youtube' | 'email' | 'phone' | 'location' | 'globe' | 'github' | 'figma' | 'mail';
+export type ContactCardIconType = 'linkedin' | 'twitter' | 'instagram' | 'behance' | 'facebook' | 'dribbble' | 'youtube' | 'email' | 'phone' | 'location' | 'globe' | 'github' | 'figma' | 'mail' | 'cv';
 
 export interface SiteContactCard {
   id: string;
@@ -1332,14 +1332,47 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         visible: true,
       },
       {
-        id: 'card-behance',
-        title: 'Behance',
-        subtitle: 'View design work',
-        icon: 'behance',
-        href: 'https://behance.net/oussama',
-        action: 'View',
-        color: '#1769FF',
-        hoverColor: '#0056CC',
+        id: 'card-facebook',
+        title: 'Facebook',
+        subtitle: 'Follow for updates',
+        icon: 'facebook',
+        href: 'https://facebook.com/oussama',
+        action: 'Follow',
+        color: '#1877F2',
+        hoverColor: '#0D5BB8',
+        visible: true,
+      },
+      {
+        id: 'card-youtube',
+        title: 'YouTube',
+        subtitle: 'Watch tutorials',
+        icon: 'youtube',
+        href: 'https://youtube.com/@oussama',
+        action: 'Subscribe',
+        color: '#FF0000',
+        hoverColor: '#CC0000',
+        visible: true,
+      },
+      {
+        id: 'card-email',
+        title: 'Email',
+        subtitle: 'Send me a message',
+        icon: 'email',
+        href: 'mailto:hello@example.com',
+        action: 'Send',
+        color: '#000000',
+        hoverColor: '#333333',
+        visible: true,
+      },
+      {
+        id: 'card-cv',
+        title: 'CV / Resume',
+        subtitle: 'Download my CV',
+        icon: 'cv',
+        href: '/cv.pdf',
+        action: 'Download',
+        color: '#000000',
+        hoverColor: '#333333',
         visible: true,
       },
     ],
@@ -2934,7 +2967,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             id: asString(card.id, `contact-card-${index + 1}`),
             title: asString(card.title, ''),
             subtitle: asString(card.subtitle, ''),
-            icon: (['linkedin', 'twitter', 'instagram', 'behance', 'facebook', 'dribbble', 'youtube', 'email', 'phone', 'location', 'globe', 'github', 'figma', 'mail'].includes(card.icon) ? card.icon : 'globe') as any,
+            icon: (['linkedin', 'twitter', 'instagram', 'behance', 'facebook', 'dribbble', 'youtube', 'email', 'phone', 'location', 'globe', 'github', 'figma', 'mail', 'cv'].includes(card.icon) ? card.icon : 'globe') as any,
             href: asString(card.href, '#'),
             action: asString(card.action, ''),
             color: asString(card.color, '#0077B5'),
