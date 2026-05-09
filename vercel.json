@@ -1,9 +1,10 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "installCommand": "npm install",
   "framework": "vite",
+  "installCommand": "npm install",
+  "outputDirectory": "dist",
+  "name": "webiiiiii",
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -29,11 +30,15 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
         }
       ]
     }
   ],
   "env": {
-    "DASHBOARD_PASSWORD": "@dashboard-password"
+    "DASHBOARD_PASSWORD": "00000008"
   }
 }
