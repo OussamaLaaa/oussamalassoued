@@ -1353,7 +1353,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
           hoverColor: '#0D5BB8',
           visible: true,
         },
-  +++++++ REPLACE
       {
         id: 'card-youtube',
         title: 'YouTube',
@@ -4316,7 +4315,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         enabled: asBoolean(crt?.phosphorGlow?.enabled, DEFAULT_SITE_CONFIG.crt.phosphorGlow.enabled),
         intensity: asBoundedNumber(crt?.phosphorGlow?.intensity, DEFAULT_SITE_CONFIG.crt.phosphorGlow.intensity, 0, 1),
         spread: asBoundedNumber(crt?.phosphorGlow?.spread, DEFAULT_SITE_CONFIG.crt.phosphorGlow.spread, 0, 1),
-        color: asString(crt?.phosphorGlow?.color, DEFAULT_SITE_CONFIG.crt.phosphorGlow.color),
+        color: asString((crt?.phosphorGlow as any)?.color, DEFAULT_SITE_CONFIG.crt.phosphorGlow.color),
       },
     },
     visibility: {

@@ -315,7 +315,6 @@ const Contact: React.FC = () => {
               className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight"
               style={{ color: '#000000' }}
             >
-  +++++++ REPLACE
               {contactPage.heroTitleLine1}
               <br />
               {contactPage.heroTitleLine2}
@@ -419,7 +418,6 @@ const Contact: React.FC = () => {
                     <h2 className="text-2xl font-semibold mb-2" style={{ color: '#000000' }}>{contactPage.formTitle}</h2>
                     <p className="text-sm text-gray-500">{contactPage.formSubtitle}</p>
                   </div>
-  +++++++ REPLACE
                   <span className="text-xs font-medium uppercase tracking-wider text-gray-400">01 / Form</span>
                 </div>
 
@@ -462,7 +460,6 @@ const Contact: React.FC = () => {
               <div>
                 <span className="text-xs font-medium uppercase tracking-wider mb-2 block text-gray-400">{contactPage.socialSectionLabel}</span>
                 <h2 className="text-3xl md:text-4xl font-semibold" style={{ color: '#000000' }}>{contactPage.socialSectionTitle}</h2>
-  +++++++ REPLACE
               </div>
               <p className="text-sm max-w-[384px] text-gray-500">{contactPage.socialSectionDescription}</p>
             </div>
@@ -493,7 +490,6 @@ const Contact: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-base font-semibold mb-0.5 transition-colors duration-300" style={{ color: '#000000' }}>{card.title}</h3>
-  +++++++ REPLACE
                       <p className="text-xs text-gray-500 transition-colors duration-300">{card.subtitle}</p>
                     </div>
                   </div>
