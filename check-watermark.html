@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص شريط إخفاء اللوغوهات</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .value {
+            background: #3a3a3a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>فحص شريط إخفاء اللوغوهات</h1>
+        
+        <div class="section">
+            <h2>القيم الحالية في localStorage</h2>
+            <div id="currentValues"></div>
+        </div>
+        
+        <div class="section">
+            <h2>القيم الافتراضية المطلوبة</h2>
+            <div class="value">watermarkMaskMobilePx: 70</div>
+            <div class="value">watermarkMaskDesktopPx: 90</div>
+            <div class="value">watermarkMaskWidthMobilePx: 160</div>
+            <div class="value">watermarkMaskWidthDesktopPx: 220</div>
+            <div class="value">watermarkMaskRightMobilePx: 12</div>
+            <div class="value">watermarkMaskRightDesktopPx: 24</div>
+            <div class="value">watermarkMaskBottomMobilePx: 12</div>
+            <div class="value">watermarkMaskBottomDesktopPx: 16</div>
+        </div>
+        
+        <div class="section">
+            <h2>الإجراءات</h2>
+            <button onclick="fixValues()">إصلاح القيم</button>
+            <button onclick="clearStorage()">مسح localStorage</button>
+            <button onclick="checkValues()">فحص القيم</button>
+        </div>
+        
+        <div class="section">
+            <h2>النتيجة</h2>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkValues() {
+            const storageKey = 'portfolio.site-config.v1';
+            const stored = localStorage.getItem(storageKey);
+            const resultDiv = document.getElementById('result');
+            const currentDiv = document.getElementById('currentValues');
+            
+            if (!stored) {
+                currentDiv.innerHTML = '<div class="error">لا توجد قيم مخزنة في localStorage</div>';
+                resultDiv.innerHTML = '<div class="warning">يجب عليك زيارة الموقع أولاً لإنشاء localStorage</div>';
+                return;
+            }
+            
+            try {
+                const config = JSON.parse(stored);
+                const globalFrame = config.globalFrame;
+                
+                let html = '';
+                const fields = [
+                    { key: 'watermarkMaskMobilePx', name: 'ارتفاع الشريط (موبايل)' },
+                    { key: 'watermarkMaskDesktopPx', name: 'ارتفاع الشريط (ديسكتوب)' },
+                    { key: 'watermarkMaskWidthMobilePx', name: 'عرض الشريط (موبايل)' },
+                    { key: 'watermarkMaskWidthDesktopPx', name: 'عرض الشريط (ديسكتوب)' },
+                    { key: 'watermarkMaskRightMobilePx', name: 'المسافة من اليمين (موبايل)' },
+                    { key: 'watermarkMaskRightDesktopPx', name: 'المسافة من اليمين (ديسكتوب)' },
+                    { key: 'watermarkMaskBottomMobilePx', name: 'المسافة من الأسفل (موبايل)' },
+                    { key: 'watermarkMaskBottomDesktopPx', name: 'المسافة من الأسفل (ديسكتوب)' }
+                ];
+                
+                let hasIssues = false;
+                fields.forEach(field => {
+                    const value = globalFrame[field.key];
+                    const isZero = value === 0;
+                    const isInvalid = value === undefined || value === null || isNaN(value);
+                    
+                    if (isZero || isInvalid) {
+                        hasIssues = true;
+                        html += `<div class="value error">${field.name}: ${value} <span class="error">(مشكلة!)</span></div>`;
+                    } else {
+                        html += `<div class="value success">${field.name}: ${value} <span class="success">(جيد)</span></div>`;
+                    }
+                });
+                
+                currentDiv.innerHTML = html;
+                
+                if (hasIssues) {
+                    resultDiv.innerHTML = '<div class="error">هناك مشاكل في القيم! اضغط على "إصلاح القيم" لإصلاحها</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="success">جميع القيم صحيحة! الشريط يجب أن يعمل بشكل صحيح</div>';
+                }
+            } catch (e) {
+                currentDiv.innerHTML = `<div class="error">خطأ في قراءة القيم: ${e.message}</div>`;
+                resultDiv.innerHTML = '<div class="error">حدث خطأ في قراءة localStorage</div>';
+            }
+        }
+        
+        function fixValues() {
+            const storageKey = 'portfolio.site-config.v1';
+            const stored = localStorage.getItem(storageKey);
+            const resultDiv = document.getElementById('result');
+            
+            if (!stored) {
+                resultDiv.innerHTML = '<div class="error">لا توجد قيم مخزنة! يجب عليك زيارة الموقع أولاً</div>';
+                return;
+            }
+            
+            try {
+                const config = JSON.parse(stored);
+                
+                // إصلاح القيم
+                if (!config.globalFrame) {
+                    config.globalFrame = {};
+                }
+                
+                config.globalFrame.watermarkMaskMobilePx = 70;
+                config.globalFrame.watermarkMaskDesktopPx = 90;
+                config.globalFrame.watermarkMaskWidthMobilePx = 160;
+                config.globalFrame.watermarkMaskWidthDesktopPx = 220;
+                config.globalFrame.watermarkMaskRightMobilePx = 12;
+                config.globalFrame.watermarkMaskRightDesktopPx = 24;
+                config.globalFrame.watermarkMaskBottomMobilePx = 12;
+                config.globalFrame.watermarkMaskBottomDesktopPx = 16;
+                
+                localStorage.setItem(storageKey, JSON.stringify(config));
+                resultDiv.innerHTML = '<div class="success">تم إصلاح القيم بنجاح! أعد تحميل الصفحة في الموقع الرئيسي</div>';
+                checkValues();
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="error">خطأ في إصلاح القيم: ${e.message}</div>`;
+            }
+        }
+        
+        function clearStorage() {
+            const storageKey = 'portfolio.site-config.v1';
+            localStorage.removeItem(storageKey);
+            document.getElementById('result').innerHTML = '<div class="success">تم مسح localStorage بنجاح! الموقع سيستخدم القيم الافتراضية</div>';
+            checkValues();
+        }
+        
+        // فحص القيم عند التحميل
+        window.onload = checkValues;
+    </script>
+</body>
+</html>
