@@ -1311,13 +1311,13 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       },
       {
         id: 'card-twitter',
-        title: 'Twitter',
+        title: 'X',
         subtitle: 'Follow for updates',
         icon: 'twitter',
         href: 'https://twitter.com/oussama',
         action: 'Follow',
-        color: '#1DA1F2',
-        hoverColor: '#0D8BD9',
+        color: '#000000',
+        hoverColor: '#333333',
         visible: true,
       },
         {
@@ -4256,7 +4256,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         ),
       },
       vignette: {
-        enabled: asBoolean(crt?.vignette?.enabled, DEFAULT_SITE_CONFIG.crt.vignette.enabled),
+        enabled: asBoolean((crt?.vignette as any)?.enabled, DEFAULT_SITE_CONFIG.crt.vignette.enabled),
         opacity: asBoundedNumber(crt?.vignette?.opacity, DEFAULT_SITE_CONFIG.crt.vignette.opacity, 0, 1),
         size: asBoundedNumber(crt?.vignette?.size, DEFAULT_SITE_CONFIG.crt.vignette.size, 0, 1),
       },
@@ -4312,9 +4312,9 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         intensity: asBoundedNumber(crt?.phosphorMask?.intensity, DEFAULT_SITE_CONFIG.crt.phosphorMask.intensity, 0, 1),
       },
       phosphorGlow: {
-        enabled: asBoolean(crt?.phosphorGlow?.enabled, DEFAULT_SITE_CONFIG.crt.phosphorGlow.enabled),
-        intensity: asBoundedNumber(crt?.phosphorGlow?.intensity, DEFAULT_SITE_CONFIG.crt.phosphorGlow.intensity, 0, 1),
-        spread: asBoundedNumber(crt?.phosphorGlow?.spread, DEFAULT_SITE_CONFIG.crt.phosphorGlow.spread, 0, 1),
+        enabled: asBoolean((crt?.phosphorGlow as any)?.enabled, DEFAULT_SITE_CONFIG.crt.phosphorGlow.enabled),
+        intensity: asBoundedNumber((crt?.phosphorGlow as any)?.intensity, DEFAULT_SITE_CONFIG.crt.phosphorGlow.intensity, 0, 1),
+        spread: asBoundedNumber((crt?.phosphorGlow as any)?.spread, DEFAULT_SITE_CONFIG.crt.phosphorGlow.spread, 0, 1),
         color: asString((crt?.phosphorGlow as any)?.color, DEFAULT_SITE_CONFIG.crt.phosphorGlow.color),
       },
     },
