@@ -126,10 +126,21 @@ const readFromUpstashRedis = async () => {
   try {
     console.log('[API:Config] Reading from Upstash Redis...');
     const url = `${storageConfig.upstashRedis.url}/get/${CONFIG_KEY}`;
-    const response = await makeRedisRequest(url, storageConfig.upstashRedis.token);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
+      },
+    });
     
-    if (response.result) {
-      return typeof response.result === 'string' ? JSON.parse(response.result) : response.result;
+    if (!response.ok) {
+      console.error('[API:Config] Upstash read failed:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    if (data.result) {
+      return typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
     }
     return null;
   } catch (error) {
@@ -145,13 +156,26 @@ const writeToUpstashRedis = async (data) => {
   if (!storageConfig.upstashRedis.enabled) return false;
   try {
     console.log('[API:Config] Writing to Upstash Redis...');
-    const url = `${storageConfig.upstashRedis.url}/set/${CONFIG_KEY}`;
-    const payload = {
-      value: JSON.stringify(data),
-      ex: 31536000, // 1 year TTL
-    };
+    const configJson = JSON.stringify(data);
+    const encodedValue = Buffer.from(configJson).toString('base64');
     
-    await makeRedisRequest(url, storageConfig.upstashRedis.token, 'POST', payload);
+    // Use SET command with EX (expiry in seconds, 1 year)
+    const url = `${storageConfig.upstashRedis.url}/set/${CONFIG_KEY}/${encodeURIComponent(configJson)}/EX/31536000`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[API:Config] Upstash write failed:', response.status, error);
+      return false;
+    }
+    
     console.log('[API:Config] Successfully wrote to Upstash Redis');
     return true;
   } catch (error) {
