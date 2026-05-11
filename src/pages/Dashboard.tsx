@@ -633,6 +633,8 @@ const dashboardActionButtonPrimaryClass =
   `${dashboardActionButtonBaseClass} border-[#b6f45b]/38 bg-[#b6f45b] text-[#0a0d11] hover:bg-[#c4ff67] focus-visible:ring-[#b6f45b]/45`;
 const dashboardActionButtonSecondaryClass =
   `${dashboardActionButtonBaseClass} border-white/16 bg-white/[0.06] text-white hover:bg-white/[0.12] focus-visible:ring-white/22`;
+const dashboardActionButtonApiClass =
+  `${dashboardActionButtonBaseClass} border-[#3b82f6]/40 bg-[#3b82f6] text-white hover:bg-[#60a5fa] focus-visible:ring-[#3b82f6]/50`;
 const dashboardActionButtonDangerClass =
   `${dashboardActionButtonBaseClass} border-[#ef4444]/42 bg-[#ef4444]/14 text-[#fecaca] hover:bg-[#ef4444]/22 focus-visible:ring-[#ef4444]/30`;
 const dashboardStatusSuccessClass =
@@ -7333,7 +7335,7 @@ export const Dashboard: React.FC = () => {
                   }
                 }}
                 title="Save to API"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#b6f45b]/46 bg-[#b6f45b] text-[#0a0d11]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#3b82f6]/46 bg-[#3b82f6] text-white hover:bg-[#60a5fa] transition-colors"
               >
                 <SaveIcon size={16} strokeWidth={1.9} />
               </button>
@@ -7486,7 +7488,7 @@ export const Dashboard: React.FC = () => {
                     alert("Error: " + errMsg + "\n\n(Did you configure Upstash Redis on Vercel?)");
                   }
                 }}
-                className={dashboardActionButtonPrimaryClass}
+                className={dashboardActionButtonApiClass}
               >
                 Save to API
               </button>
