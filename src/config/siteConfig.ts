@@ -361,6 +361,7 @@ export interface SiteGlobalFrameConfig {
   topOffsetDesktopPx: number;
   bottomOffsetMobilePx: number;
   bottomOffsetDesktopPx: number;
+  watermarkMaskEnabled: boolean;
   watermarkMaskMobilePx: number;
   watermarkMaskDesktopPx: number;
   watermarkMaskWidthMobilePx: number;
@@ -2061,6 +2062,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     topOffsetDesktopPx: 120,
     bottomOffsetMobilePx: 40,
     bottomOffsetDesktopPx: 80,
+    watermarkMaskEnabled: true,
     watermarkMaskMobilePx: 70,
     watermarkMaskDesktopPx: 90,
     watermarkMaskWidthMobilePx: 160,
@@ -4151,6 +4153,10 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         DEFAULT_SITE_CONFIG.globalFrame.bottomOffsetDesktopPx,
         0,
         360,
+      ),
+      watermarkMaskEnabled: asBoolean(
+        globalFrame.watermarkMaskEnabled,
+        DEFAULT_SITE_CONFIG.globalFrame.watermarkMaskEnabled,
       ),
       watermarkMaskMobilePx: asBoundedNumber(
         globalFrame.watermarkMaskMobilePx,
