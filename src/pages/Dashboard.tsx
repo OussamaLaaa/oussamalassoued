@@ -6788,7 +6788,7 @@ export const Dashboard: React.FC = () => {
                     }}
                     className="flex items-center justify-center gap-2 rounded-[10px] border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-400 transition-all hover:bg-red-500/20"
                   >
-                    <RotateCcw size={16} />
+                    <RotateCcwIcon size={16} />
                     Reset All Data
                   </button>
                 </div>
