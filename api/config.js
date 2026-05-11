@@ -4,8 +4,9 @@
  * Supports multiple backends: Vercel KV, Upstash Redis, Local File
  */
 
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
 
 // ============================================================================
 // ENVIRONMENT & CONFIGURATION
@@ -45,51 +46,57 @@ console.log('[API:Config] Storage backends available:', {
 // ============================================================================
 
 /**
- * Make HTTP request to Redis/KV backend
- */
-const makeRedisRequest = async (url, token, method = 'GET', body = null) => {
-  try {
-    const options = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    };
-    
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Redis request failed: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('[API:Config] Redis request error:', error?.message || error);
-    throw error;
-  }
-};
-
-/**
  * Read config from Vercel KV
  */
 const readFromVercelKv = async () => {
   if (!storageConfig.vercelKv.enabled) return null;
   try {
     console.log('[API:Config] Reading from Vercel KV...');
-    const url = `${storageConfig.vercelKv.url}/get/${CONFIG_KEY}`;
-    const response = await makeRedisRequest(url, storageConfig.vercelKv.token);
     
-    if (response.result) {
-      return typeof response.result === 'string' ? JSON.parse(response.result) : response.result;
-    }
-    return null;
+    const url = new URL(`${storageConfig.vercelKv.url}/get/${CONFIG_KEY}`);
+    
+    return new Promise((resolve) => {
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${storageConfig.vercelKv.token}`,
+        },
+      };
+
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          if (response.statusCode === 200) {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.result) {
+                const config = typeof parsed.result === 'string' ? JSON.parse(parsed.result) : parsed.result;
+                return resolve(config);
+              }
+              return resolve(null);
+            } catch (e) {
+              console.error('[API:Config] Parse error:', e.message);
+              return resolve(null);
+            }
+          } else {
+            console.error('[API:Config] Vercel KV read failed:', response.statusCode);
+            return resolve(null);
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        console.error('[API:Config] Vercel KV request error:', error.message);
+        resolve(null);
+      });
+
+      request.end();
+    });
   } catch (error) {
     console.error('[API:Config] Failed to read from Vercel KV:', error?.message);
     return null;
@@ -103,15 +110,51 @@ const writeToVercelKv = async (data) => {
   if (!storageConfig.vercelKv.enabled) return false;
   try {
     console.log('[API:Config] Writing to Vercel KV...');
-    const url = `${storageConfig.vercelKv.url}/set/${CONFIG_KEY}`;
+    
     const payload = {
       value: JSON.stringify(data),
-      ex: 31536000, // 1 year TTL
+      ex: 31536000,
     };
+    const postData = JSON.stringify(payload);
     
-    await makeRedisRequest(url, storageConfig.vercelKv.token, 'POST', payload);
-    console.log('[API:Config] Successfully wrote to Vercel KV');
-    return true;
+    const url = new URL(`${storageConfig.vercelKv.url}/set/${CONFIG_KEY}`);
+    
+    return new Promise((resolve) => {
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${storageConfig.vercelKv.token}`,
+          'Content-Type': 'application/json',
+          'Content-Length': postData.length,
+        },
+      };
+
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          if (response.statusCode === 200) {
+            console.log('[API:Config] Successfully wrote to Vercel KV');
+            return resolve(true);
+          } else {
+            console.error('[API:Config] Vercel KV write failed:', response.statusCode);
+            return resolve(false);
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        console.error('[API:Config] Vercel KV write error:', error.message);
+        resolve(false);
+      });
+
+      request.write(postData);
+      request.end();
+    });
   } catch (error) {
     console.error('[API:Config] Failed to write to Vercel KV:', error?.message);
     return false;
@@ -125,24 +168,58 @@ const readFromUpstashRedis = async () => {
   if (!storageConfig.upstashRedis.enabled) return null;
   try {
     console.log('[API:Config] Reading from Upstash Redis...');
-    const url = `${storageConfig.upstashRedis.url}/get/${CONFIG_KEY}`;
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
-      },
+    
+    const url = new URL(storageConfig.upstashRedis.url);
+    const postData = JSON.stringify({
+      command: ['GET', CONFIG_KEY],
     });
-    
-    if (!response.ok) {
-      console.error('[API:Config] Upstash read failed:', response.status);
-      return null;
-    }
-    
-    const data = await response.json();
-    if (data.result) {
-      return typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
-    }
-    return null;
+
+    return new Promise((resolve) => {
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
+          'Content-Type': 'application/json',
+          'Content-Length': postData.length,
+        },
+      };
+
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          if (response.statusCode === 200) {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.result) {
+                const resultValue = parsed.result;
+                const config = typeof resultValue === 'string' ? JSON.parse(resultValue) : resultValue;
+                return resolve(config);
+              }
+              return resolve(null);
+            } catch (e) {
+              console.error('[API:Config] Parse error:', e.message);
+              return resolve(null);
+            }
+          } else {
+            console.error('[API:Config] Upstash read failed:', response.statusCode);
+            return resolve(null);
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        console.error('[API:Config] Upstash request error:', error.message);
+        resolve(null);
+      });
+
+      request.write(postData);
+      request.end();
+    });
   } catch (error) {
     console.error('[API:Config] Failed to read from Upstash:', error?.message);
     return null;
@@ -157,27 +234,48 @@ const writeToUpstashRedis = async (data) => {
   try {
     console.log('[API:Config] Writing to Upstash Redis...');
     const configJson = JSON.stringify(data);
-    const encodedValue = Buffer.from(configJson).toString('base64');
     
-    // Use SET command with EX (expiry in seconds, 1 year)
-    const url = `${storageConfig.upstashRedis.url}/set/${CONFIG_KEY}/${encodeURIComponent(configJson)}/EX/31536000`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
-        'Content-Type': 'application/json',
-      },
+    const url = new URL(storageConfig.upstashRedis.url);
+    const postData = JSON.stringify({
+      command: ['SET', CONFIG_KEY, configJson, 'EX', '31536000'],
     });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('[API:Config] Upstash write failed:', response.status, error);
-      return false;
-    }
-    
-    console.log('[API:Config] Successfully wrote to Upstash Redis');
-    return true;
+
+    return new Promise((resolve) => {
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${storageConfig.upstashRedis.token}`,
+          'Content-Type': 'application/json',
+          'Content-Length': postData.length,
+        },
+      };
+
+      const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => {
+          data += chunk;
+        });
+        response.on('end', () => {
+          if (response.statusCode === 200) {
+            console.log('[API:Config] Successfully wrote to Upstash Redis');
+            return resolve(true);
+          } else {
+            console.error('[API:Config] Upstash write failed:', response.statusCode, data.substring(0, 200));
+            return resolve(false);
+          }
+        });
+      });
+
+      request.on('error', (error) => {
+        console.error('[API:Config] Upstash write error:', error.message);
+        resolve(false);
+      });
+
+      request.write(postData);
+      request.end();
+    });
   } catch (error) {
     console.error('[API:Config] Failed to write to Upstash:', error?.message);
     return false;
@@ -247,7 +345,7 @@ const parseRequestBody = async (req) => {
 // MAIN HANDLER
 // ============================================================================
 
-export default async (req, res) => {
+module.exports = async (req, res) => {
   // Set CORS & content type headers
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -395,16 +493,4 @@ export default async (req, res) => {
       message: error?.message || 'Unknown error occurred',
     });
   }
-};
-        error: 'No persistent storage available. Configure Upstash/Vercel KV environment variables for production.',
-        availableStorages: {
-          vercel_kv: hasVercelKvConfig,
-          upstash_redis: hasUpstashConfig,
-          file_storage: !isProduction
-        }
-      });
-    })();
-  }
-
-  return res.status(405).json({ error: 'Method not allowed' });
 };
