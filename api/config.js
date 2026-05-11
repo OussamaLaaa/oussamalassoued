@@ -20,6 +20,17 @@ const hasUpstashConfig =
   typeof process.env.UPSTASH_REDIS_REST_TOKEN === 'string' &&
   process.env.UPSTASH_REDIS_REST_TOKEN.length > 0;
 
+// Log storage availability on startup
+if (typeof process !== 'undefined' && process.env.NODE_ENV) {
+  const storageStatus = {
+    vercel_kv: hasVercelKvConfig,
+    upstash_redis: hasUpstashConfig,
+    file: !isProduction,
+    environment: isProduction ? 'production' : 'development',
+  };
+  console.log('[Config API] Storage availability:', JSON.stringify(storageStatus));
+}
+
 const redis = hasUpstashConfig
   ? new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,
@@ -117,6 +128,29 @@ export default (req, res) => {
     return res.status(200).end();
   }
 
+  // GET /api/config/status - check storage availability
+  if (req.method === 'GET' && req.url && req.url.includes('/status')) {
+    return res.status(200).json({
+      success: true,
+      storage: {
+        vercel_kv: {
+          available: hasVercelKvConfig,
+          description: 'Vercel KV - Primary persistent storage'
+        },
+        upstash_redis: {
+          available: hasUpstashConfig,
+          description: 'Upstash Redis - Secondary persistent storage'
+        },
+        file: {
+          available: !isProduction,
+          description: 'Local file - Development only'
+        }
+      },
+      environment: isProduction ? 'production' : 'development',
+      message: hasVercelKvConfig || hasUpstashConfig ? 'Persistent storage configured' : 'No persistent storage - configure Upstash/Vercel KV'
+    });
+  }
+
   // GET - return stored config if available
   if (req.method === 'GET') {
     return (async () => {
@@ -153,32 +187,73 @@ export default (req, res) => {
           body = req.body;
         }
       } catch (e) {
-        console.warn('Invalid JSON body for config update');
+        console.warn('[Config API] Invalid JSON body for config update');
         return res.status(400).json({ success: false, error: 'Invalid JSON body' });
       }
 
-      const kvOk = await writeToVercelKv(body);
-      if (kvOk) {
-        return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'vercel-kv' });
+      console.log('[Config API] Attempting to persist config...');
+      
+      // Try Vercel KV first
+      if (hasVercelKvConfig) {
+        console.log('[Config API] Trying Vercel KV...');
+        const kvOk = await writeToVercelKv(body);
+        if (kvOk) {
+          console.log('[Config API] Successfully saved to Vercel KV');
+          return res.status(200).json({ 
+            success: true, 
+            lastUpdated: Date.now(), 
+            source: 'vercel-kv',
+            message: 'Saved to Vercel KV - visible to all users'
+          });
+        }
+        console.warn('[Config API] Vercel KV write failed');
+      } else {
+        console.warn('[Config API] Vercel KV not configured');
       }
 
-      // First priority: shared persistence via Upstash
-      const redisOk = await writeToRedis(body);
-      if (redisOk) {
-        return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'upstash' });
+      // Try Upstash Redis
+      if (hasUpstashConfig) {
+        console.log('[Config API] Trying Upstash Redis...');
+        const redisOk = await writeToRedis(body);
+        if (redisOk) {
+          console.log('[Config API] Successfully saved to Upstash Redis');
+          return res.status(200).json({ 
+            success: true, 
+            lastUpdated: Date.now(), 
+            source: 'upstash',
+            message: 'Saved to Upstash Redis - visible to all users'
+          });
+        }
+        console.warn('[Config API] Upstash Redis write failed');
+      } else {
+        console.warn('[Config API] Upstash Redis not configured');
       }
 
       // Fallback for local development only
       if (!isProduction) {
+        console.log('[Config API] Falling back to local file storage (development only)');
         const fileOk = writeStoredConfig(body);
         if (fileOk) {
-          return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'file' });
+          console.log('[Config API] Successfully saved to local file');
+          return res.status(200).json({ 
+            success: true, 
+            lastUpdated: Date.now(), 
+            source: 'file',
+            warning: 'Saved to local file only - not visible to other users'
+          });
         }
+        console.error('[Config API] Local file write also failed');
       }
 
+      console.error('[Config API] All storage methods failed');
       return res.status(500).json({
         success: false,
-        error: 'No persistent storage available. Configure Upstash env vars for production.',
+        error: 'No persistent storage available. Configure Upstash/Vercel KV environment variables for production.',
+        availableStorages: {
+          vercel_kv: hasVercelKvConfig,
+          upstash_redis: hasUpstashConfig,
+          file_storage: !isProduction
+        }
       });
     })();
   }

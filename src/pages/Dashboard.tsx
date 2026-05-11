@@ -7253,7 +7253,8 @@ export const Dashboard: React.FC = () => {
                   clearUploadFeedback();
                   const result = await saveToAPI();
                   if (result.success) {
-                    setUploadMessage('Changes saved to API successfully!');
+                    const storageInfo = result.message ? ` (${result.message})` : '';
+                    setUploadMessage(`Changes saved to API successfully!${storageInfo}`);
                     setHasUnsavedChanges(false);
                   } else {
                     setUploadError(result.error || 'Failed to save to API.');
@@ -7402,7 +7403,8 @@ export const Dashboard: React.FC = () => {
                   clearUploadFeedback();
                   const result = await saveToAPI();
                   if (result.success) {
-                    setUploadMessage('Changes saved to API successfully! The live site will update automatically.');
+                    const storageInfo = result.message ? ` (${result.message})` : '';
+                    setUploadMessage(`Changes saved to API successfully!${storageInfo} The live site will update automatically.`);
                     setHasUnsavedChanges(false);
                   } else {
                     setUploadError(result.error || 'Failed to save to API. Please try again.');

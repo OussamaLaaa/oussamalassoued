@@ -15,6 +15,12 @@ export interface ApiResponse<T> {
   authenticated?: boolean;
   source?: string;
   warning?: string;
+  message?: string;
+  availableStorages?: {
+    vercel_kv: boolean;
+    upstash_redis: boolean;
+    file: boolean;
+  };
 }
 
 export interface AuthResponse {
@@ -157,6 +163,48 @@ export async function logoutFromDashboard(): Promise<AuthResponse> {
       success: false,
       authenticated: false,
       error: error instanceof Error ? error.message : 'Logout failed',
+    };
+  }
+}
+
+/**
+ * Check storage availability
+ */
+export async function checkStorageStatus(): Promise<{
+  vercel_kv: boolean;
+  upstash_redis: boolean;
+  file: boolean;
+  environment: 'production' | 'development';
+}> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/config/status`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return {
+        vercel_kv: false,
+        upstash_redis: false,
+        file: false,
+        environment: 'production',
+      };
+    }
+
+    const data = await response.json();
+    return {
+      vercel_kv: data.storage?.vercel_kv?.available ?? false,
+      upstash_redis: data.storage?.upstash_redis?.available ?? false,
+      file: data.storage?.file?.available ?? false,
+      environment: data.environment ?? 'production',
+    };
+  } catch (error) {
+    console.error('Error checking storage status:', error);
+    return {
+      vercel_kv: false,
+      upstash_redis: false,
+      file: false,
+      environment: 'production',
     };
   }
 }

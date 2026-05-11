@@ -389,6 +389,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const response = await updateSiteConfig(siteConfig);
           if (response.success) {
             const source = response.source || 'unknown';
+            const message = response.message || '';
             const isLocalHost =
               typeof window !== 'undefined' &&
               (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -408,11 +409,19 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               };
             }
 
-            console.log('Config saved to API successfully');
-            return { success: true };
+            console.log('Config saved to API successfully', { source, message });
+            return { success: true, message };
           } else {
             console.error('Failed to save config to API:', response.error);
-            return { success: false, error: response.error };
+            const availableStorages = response.availableStorages;
+            let errorMessage = response.error || 'Failed to save to API';
+            
+            // Provide helpful error message based on available storage
+            if (availableStorages && !availableStorages.vercel_kv && !availableStorages.upstash_redis) {
+              errorMessage = 'No persistent storage available. Please configure Upstash Redis or Vercel KV in your environment variables.';
+            }
+            
+            return { success: false, error: errorMessage };
           }
         } catch (error) {
           console.error('Error saving config to API:', error);
