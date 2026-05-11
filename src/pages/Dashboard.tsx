@@ -647,6 +647,7 @@ export const Dashboard: React.FC = () => {
     siteConfig,
     setSiteConfig,
     resetSiteConfig,
+    saveToAPI,
     storageInfo,
     versionHistory,
     exportStorage,
