@@ -13,6 +13,8 @@ export interface ApiResponse<T> {
   lastUpdated?: number;
   version?: string;
   authenticated?: boolean;
+  source?: string;
+  warning?: string;
 }
 
 export interface AuthResponse {

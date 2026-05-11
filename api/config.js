@@ -1,10 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import { Redis } from '@upstash/redis';
+import { kv } from '@vercel/kv';
 
 const STORAGE_PATH = path.resolve(process.cwd(), 'data');
 const STORAGE_FILE = path.join(STORAGE_PATH, 'site-config.json');
 const CONFIG_KEY = 'site:config';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const hasVercelKvConfig =
+  typeof process.env.KV_REST_API_URL === 'string' &&
+  process.env.KV_REST_API_URL.length > 0 &&
+  typeof process.env.KV_REST_API_TOKEN === 'string' &&
+  process.env.KV_REST_API_TOKEN.length > 0;
 
 const hasUpstashConfig =
   typeof process.env.UPSTASH_REDIS_REST_URL === 'string' &&
@@ -54,6 +62,29 @@ const writeStoredConfig = (data) => {
   }
 };
 
+const readFromVercelKv = async () => {
+  if (!hasVercelKvConfig) return null;
+  try {
+    const value = await kv.get(CONFIG_KEY);
+    if (!value || typeof value !== 'object') return null;
+    return value;
+  } catch (e) {
+    console.error('Failed to read config from Vercel KV:', e?.message || e);
+    return null;
+  }
+};
+
+const writeToVercelKv = async (data) => {
+  if (!hasVercelKvConfig) return false;
+  try {
+    await kv.set(CONFIG_KEY, data);
+    return true;
+  } catch (e) {
+    console.error('Failed to write config to Vercel KV:', e?.message || e);
+    return false;
+  }
+};
+
 const readFromRedis = async () => {
   if (!redis) return null;
   try {
@@ -89,14 +120,21 @@ export default (req, res) => {
   // GET - return stored config if available
   if (req.method === 'GET') {
     return (async () => {
+      const vercelKvData = await readFromVercelKv();
+      if (vercelKvData) {
+        return res.status(200).json({ success: true, data: vercelKvData, source: 'vercel-kv' });
+      }
+
       const redisData = await readFromRedis();
       if (redisData) {
         return res.status(200).json({ success: true, data: redisData, source: 'upstash' });
       }
 
-      const stored = readStoredConfig();
-      if (stored) {
-        return res.status(200).json({ success: true, data: stored, source: 'file' });
+      if (!isProduction) {
+        const stored = readStoredConfig();
+        if (stored) {
+          return res.status(200).json({ success: true, data: stored, source: 'file' });
+        }
       }
 
       // Fallback: empty but successful response
@@ -119,16 +157,23 @@ export default (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid JSON body' });
       }
 
+      const kvOk = await writeToVercelKv(body);
+      if (kvOk) {
+        return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'vercel-kv' });
+      }
+
       // First priority: shared persistence via Upstash
       const redisOk = await writeToRedis(body);
       if (redisOk) {
         return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'upstash' });
       }
 
-      // Fallback for local development
-      const fileOk = writeStoredConfig(body);
-      if (fileOk) {
-        return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'file' });
+      // Fallback for local development only
+      if (!isProduction) {
+        const fileOk = writeStoredConfig(body);
+        if (fileOk) {
+          return res.status(200).json({ success: true, lastUpdated: Date.now(), source: 'file' });
+        }
       }
 
       return res.status(500).json({

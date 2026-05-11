@@ -1182,7 +1182,7 @@ export const Dashboard: React.FC = () => {
     try {
       window.localStorage.setItem(SITE_CONFIG_STORAGE_KEY, JSON.stringify(siteConfig));
       setHasUnsavedChanges(false);
-      setUploadMessage('Changes saved successfully.');
+      setUploadMessage('Saved locally in this browser only. Use "Save to API" to publish for everyone.');
       return true;
     } catch {
       setUploadError('Unable to save changes. Try reducing uploaded file sizes and save again.');
@@ -7432,12 +7432,12 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <section className="mt-4 space-y-4">
-              {activeWorkspace !== 'site' && uploadError ? (
+              {uploadError ? (
                 <div className={`rounded-[12px] border px-4 py-3 text-sm ${dashboardStatusFailureClass}`}>
                   {uploadError}
                 </div>
               ) : null}
-              {activeWorkspace !== 'site' && uploadMessage ? (
+              {uploadMessage ? (
                 <div className={`rounded-[12px] border px-4 py-3 text-sm ${dashboardStatusSuccessClass}`}>
                   {uploadMessage}
                 </div>

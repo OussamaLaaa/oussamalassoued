@@ -388,6 +388,26 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try {
           const response = await updateSiteConfig(siteConfig);
           if (response.success) {
+            const source = response.source || 'unknown';
+            const isLocalHost =
+              typeof window !== 'undefined' &&
+              (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+            // In production, file-backed saves are not globally reliable for all visitors.
+            if (!isLocalHost && source === 'file') {
+              return {
+                success: false,
+                error: 'Saved to local server file only. Configure Upstash/Vercel KV so changes are visible to all visitors.',
+              };
+            }
+
+            if (response.warning) {
+              return {
+                success: false,
+                error: response.warning,
+              };
+            }
+
             console.log('Config saved to API successfully');
             return { success: true };
           } else {
