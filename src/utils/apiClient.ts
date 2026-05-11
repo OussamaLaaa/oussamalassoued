@@ -210,9 +210,6 @@ export async function getApiDiagnostics(): Promise<{
     errorMessages: errors,
   };
 }
-    return false;
-  }
-}
 
 export async function checkDashboardAuth(): Promise<boolean> {
   try {
