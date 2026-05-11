@@ -315,7 +315,19 @@ const writeToLocalFile = (data) => {
  * Parse request body
  */
 const parseRequestBody = async (req) => {
+  // Vercel Serverless Functions automatically parse JSON bodies.
+  // If req.body is already parsed (it's an object), we can just return it.
+  if (req.body && typeof req.body === 'object') {
+    return req.body;
+  }
+  
+  // Fallback for non-Vercel environments (like local node scripts if any)
   return new Promise((resolve) => {
+    // If the socket has already ended and we didn't have req.body, just resolve empty
+    if (req.readableEnded) {
+      return resolve({});
+    }
+
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
@@ -328,6 +340,9 @@ const parseRequestBody = async (req) => {
         resolve({});
       }
     });
+
+    // In case there's an error reading the stream
+    req.on('error', () => resolve({}));
   });
 };
 
