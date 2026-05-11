@@ -7322,10 +7322,14 @@ export const Dashboard: React.FC = () => {
                   const result = await saveToAPI();
                   if (result.success) {
                     const storageInfo = result.message ? ` (${result.message})` : '';
-                    setUploadMessage(`Changes saved to API successfully!${storageInfo}`);
+                    const msg = `Changes saved to API successfully!${storageInfo}`;
+                    setUploadMessage(msg);
+                    alert(msg); // <--- Added Alert so user definitely sees it
                     setHasUnsavedChanges(false);
                   } else {
-                    setUploadError(result.error || 'Failed to save to API.');
+                    const errMsg = result.error || 'Failed to save to API.';
+                    setUploadError(errMsg);
+                    alert("Error: " + errMsg + "\n\n(Did you configure Upstash Redis on Vercel?)"); // <--- Added Alert
                   }
                 }}
                 title="Save to API"
@@ -7472,10 +7476,14 @@ export const Dashboard: React.FC = () => {
                   const result = await saveToAPI();
                   if (result.success) {
                     const storageInfo = result.message ? ` (${result.message})` : '';
-                    setUploadMessage(`Changes saved to API successfully!${storageInfo} The live site will update automatically.`);
+                    const msg = `Changes saved to API successfully!${storageInfo} The live site will update automatically.`;
+                    setUploadMessage(msg);
+                    alert(msg);
                     setHasUnsavedChanges(false);
                   } else {
-                    setUploadError(result.error || 'Failed to save to API. Please try again.');
+                    const errMsg = result.error || 'Failed to save to API. Please try again.';
+                    setUploadError(errMsg);
+                    alert("Error: " + errMsg + "\n\n(Did you configure Upstash Redis on Vercel?)");
                   }
                 }}
                 className={dashboardActionButtonPrimaryClass}
