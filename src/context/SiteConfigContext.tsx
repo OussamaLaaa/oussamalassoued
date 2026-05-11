@@ -328,7 +328,13 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const value = useMemo<SiteConfigContextValue>(() => {
-    const versionHistory = getVersionHistory();
+    let versionHistory: ReturnType<typeof getVersionHistory> = [];
+    try {
+      versionHistory = getVersionHistory();
+    } catch (error) {
+      console.error('Failed to get version history:', error);
+      versionHistory = [];
+    }
 
     return {
       siteConfig,

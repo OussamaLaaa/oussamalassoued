@@ -222,18 +222,23 @@ const loadVersionHistory = (): StorageVersionSnapshot[] => {
 
     return parsed
       .map((entry, index) => {
-        if (!entry || typeof entry !== 'object') return null;
-        const snapshot = entry as Partial<StorageVersionSnapshot> & { config?: unknown };
-        const config = hydrateSiteConfig(snapshot.config);
+        try {
+          if (!entry || typeof entry !== 'object') return null;
+          const snapshot = entry as Partial<StorageVersionSnapshot> & { config?: unknown };
+          const config = hydrateSiteConfig(snapshot.config);
 
-        return {
-          id: typeof snapshot.id === 'string' && snapshot.id.trim() ? snapshot.id : `version-${index + 1}`,
-          label: typeof snapshot.label === 'string' && snapshot.label.trim() ? snapshot.label : `Version ${index + 1}`,
-          savedAt: typeof snapshot.savedAt === 'number' ? snapshot.savedAt : Date.now(),
-          checksum: typeof snapshot.checksum === 'string' ? snapshot.checksum : '',
-          size: typeof snapshot.size === 'number' ? snapshot.size : 0,
-          config,
-        };
+          return {
+            id: typeof snapshot.id === 'string' && snapshot.id.trim() ? snapshot.id : `version-${index + 1}`,
+            label: typeof snapshot.label === 'string' && snapshot.label.trim() ? snapshot.label : `Version ${index + 1}`,
+            savedAt: typeof snapshot.savedAt === 'number' ? snapshot.savedAt : Date.now(),
+            checksum: typeof snapshot.checksum === 'string' ? snapshot.checksum : '',
+            size: typeof snapshot.size === 'number' ? snapshot.size : 0,
+            config,
+          };
+        } catch (entryError) {
+          console.warn(`Failed to load version ${index + 1}:`, entryError);
+          return null;
+        }
       })
       .filter((item): item is StorageVersionSnapshot => !!item);
   } catch (error) {
@@ -576,7 +581,14 @@ export const getStorageInfo = () => {
   const backupSize = safeGetItem(STORAGE_KEYS.BACKUP)?.length || 0;
   const sessionSize = safeSessionStorageGetItem(STORAGE_KEYS.SESSION)?.length || 0;
   const recoverySize = safeGetItem(STORAGE_KEYS.RECOVERY)?.length || 0;
-  const history = loadVersionHistory();
+  
+  let history: StorageVersionSnapshot[] = [];
+  try {
+    history = loadVersionHistory();
+  } catch (error) {
+    console.warn('Failed to load version history in getStorageInfo:', error);
+    history = [];
+  }
 
   return {
     metadata,

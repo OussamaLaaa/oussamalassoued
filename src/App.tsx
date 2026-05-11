@@ -48,6 +48,54 @@ const getRoute = (): AppRoute => {
   return { page: 'home' };
 };
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'white', background: '#000', minHeight: '100vh' }}>
+          <h1>Something went wrong</h1>
+          <p style={{ color: '#888', marginTop: '10px' }}>{this.state.error?.message}</p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              background: '#b6f45b',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   const [route, setRoute] = useState<AppRoute>(() => getRoute());
 
@@ -74,25 +122,27 @@ function App() {
   }, [route.page]);
 
   return (
-    <SiteConfigProvider>
-      {route.page === 'dashboard' ? (
-        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-          <Dashboard />
-        </Suspense>
-      ) : route.page === 'contact' ? (
-        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-          <Contact />
-        </Suspense>
-      ) : route.page === 'articles' ? (
-        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-          <Articles slug={route.slug} />
-        </Suspense>
-      ) : (
-        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-          <Home />
-        </Suspense>
-      )}
-    </SiteConfigProvider>
+    <ErrorBoundary>
+      <SiteConfigProvider>
+        {route.page === 'dashboard' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Dashboard />
+          </Suspense>
+        ) : route.page === 'contact' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Contact />
+          </Suspense>
+        ) : route.page === 'articles' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Articles slug={route.slug} />
+          </Suspense>
+        ) : (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Home />
+          </Suspense>
+        )}
+      </SiteConfigProvider>
+    </ErrorBoundary>
   );
 }
 
