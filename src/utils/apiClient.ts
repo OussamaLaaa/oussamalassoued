@@ -42,18 +42,43 @@ export interface HealthCheckResponse {
   timestamp?: string;
 }
 
+const DEFAULT_TIMEOUT_MS = 12000;
+
+const createTimeoutSignal = (timeoutMs = DEFAULT_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(timeoutId),
+  };
+};
+
+const safeParseJson = (text: string) => {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Check API health and storage backend status
  */
 export async function checkApiHealth(): Promise<HealthCheckResponse> {
   try {
+    const { signal, clear } = createTimeoutSignal();
     const response = await fetch(`${API_BASE_URL}/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
+      signal,
     });
+    const raw = await response.text();
+    clear();
+    const data = safeParseJson(raw);
 
     if (!response.ok) {
       console.error('[API Health] HTTP error:', response.status);
@@ -64,7 +89,14 @@ export async function checkApiHealth(): Promise<HealthCheckResponse> {
       };
     }
 
-    const data = await response.json();
+    if (!data) {
+      return {
+        success: false,
+        status: 'error',
+        recommendations: ['API health response is not valid JSON.'],
+      };
+    }
+
     return data as HealthCheckResponse;
   } catch (error) {
     console.error('[API Health] Error checking health:', error);
@@ -84,6 +116,7 @@ export async function checkApiHealth(): Promise<HealthCheckResponse> {
  */
 export async function fetchSiteConfig(): Promise<ApiResponse<SiteConfig>> {
   try {
+    const { signal, clear } = createTimeoutSignal();
     const response = await fetch(`${API_BASE_URL}/config`, {
       method: 'GET',
       headers: {
@@ -91,15 +124,28 @@ export async function fetchSiteConfig(): Promise<ApiResponse<SiteConfig>> {
       },
       credentials: 'include',
       cache: 'no-store', // Always fetch fresh data
+      signal,
     });
+    const raw = await response.text();
+    clear();
 
+    const data = safeParseJson(raw);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        success: false,
+        error: data?.error || `HTTP error! status: ${response.status}`,
+      };
     }
 
-    const data = await response.json();
+    if (!data) {
+      return {
+        success: false,
+        error: 'API returned non-JSON response for config fetch.',
+      };
+    }
+
     console.log('[API Fetch] Config loaded from:', data.source);
-    return data;
+    return data as ApiResponse<SiteConfig>;
   } catch (error) {
     console.error('[API Fetch] Error fetching site config:', error);
     return {
@@ -115,7 +161,8 @@ export async function fetchSiteConfig(): Promise<ApiResponse<SiteConfig>> {
 export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<SiteConfig>> {
   try {
     console.log('[API Update] Starting config update...');
-    
+
+    const { signal, clear } = createTimeoutSignal();
     const response = await fetch(`${API_BASE_URL}/config`, {
       method: 'PUT',
       headers: {
@@ -123,12 +170,21 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
       },
       credentials: 'include',
       body: JSON.stringify(config),
+      signal,
     });
-
-    const data = await response.json();
+    const raw = await response.text();
+    clear();
+    const data = safeParseJson(raw) || {};
 
     if (!response.ok) {
       console.error('[API Update] Update failed:', data);
+
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'API request blocked (401). Your domain may be protected by Vercel authentication. Use the production domain or disable protection.',
+        };
+      }
       
       // Provide helpful error messages based on response
       if (response.status === 503) {
@@ -146,11 +202,21 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
         };
       }
 
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        success: false,
+        error: data?.error || `HTTP error! status: ${response.status}`,
+      };
+    }
+
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        error: 'API returned non-JSON response for config update.',
+      };
     }
 
     console.log('[API Update] Config saved successfully to:', data.source);
-    return data;
+    return data as ApiResponse<SiteConfig>;
   } catch (error) {
     console.error('[API Update] Error updating config:', error);
     
@@ -159,6 +225,13 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
       return {
         success: false,
         error: 'Network error: Cannot reach the API endpoint. Check your connection and that the site is deployed.',
+      };
+    }
+
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'API request timed out. The server did not respond in time.',
       };
     }
 
