@@ -8,6 +8,7 @@ import {
   type SurfaceTone,
 } from '../components/designSystem';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { loginToDashboard, checkDashboardAuth, logoutFromDashboard } from '../utils/apiClient';
 import {
   DEFAULT_SITE_CONFIG,
   SITE_BUTTON_VARIANTS,
@@ -46,8 +47,6 @@ import {
   UploadIcon,
 } from '../components/icons';
 
-const DASHBOARD_PASSWORD = '00000008';
-const DASHBOARD_AUTH_KEY = 'portfolio.dashboard.auth.v1';
 const DASHBOARD_LOGO_FALLBACK_SRC = new URL('../../my logo/white.png', import.meta.url).href;
 
 const MAX_IMAGE_UPLOAD_BYTES = 1_500_000;
@@ -642,7 +641,16 @@ const dashboardStatusFailureClass =
   'border-[#ef4444]/40 bg-[#ef4444]/14 text-[#fecaca]';
 
 export const Dashboard: React.FC = () => {
-  const { siteConfig, setSiteConfig, resetSiteConfig, storageInfo, exportStorage, importStorage } = useSiteConfig();
+  const {
+    siteConfig,
+    setSiteConfig,
+    resetSiteConfig,
+    storageInfo,
+    versionHistory,
+    exportStorage,
+    importStorage,
+    restoreVersion,
+  } = useSiteConfig();
 
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -660,10 +668,24 @@ export const Dashboard: React.FC = () => {
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
   const [activeCardStudio, setActiveCardStudio] = useState<SiteCardVariant>('card-1');
   const previewAnimationAreaRef = useRef<HTMLDivElement | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.sessionStorage.getItem(DASHBOARD_AUTH_KEY) === 'ok';
-  });
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const verifySession = async () => {
+      const authenticated = await checkDashboardAuth();
+      if (isMounted) {
+        setIsUnlocked(authenticated);
+      }
+    };
+
+    void verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const updateConfig = (updater: (prev: SiteConfig) => SiteConfig) => {
     setSiteConfig((prev) => updater(prev));
@@ -1440,28 +1462,24 @@ export const Dashboard: React.FC = () => {
   const dashboardLogoSrc = DASHBOARD_LOGO_FALLBACK_SRC;
   const dashboardLogoAlt = siteConfig.persistentUI.logoAlt || 'Studio Logo';
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== DASHBOARD_PASSWORD) {
-      setAuthError('Wrong password');
+    const response = await loginToDashboard(password);
+    if (!response.success || !response.authenticated) {
+      setAuthError(response.error || 'Wrong password');
       return;
     }
 
     setAuthError('');
     setIsUnlocked(true);
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(DASHBOARD_AUTH_KEY, 'ok');
-    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutFromDashboard();
     setIsUnlocked(false);
     setPassword('');
     setAuthError('');
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(DASHBOARD_AUTH_KEY);
-    }
   };
 
   const renderSectionContent = () => {
@@ -6659,6 +6677,12 @@ export const Dashboard: React.FC = () => {
                         {storageInfo.sizes.recovery > 0 ? 'Available' : 'None'}
                       </span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/72">Version History</span>
+                      <span className={`text-xs font-semibold ${storageInfo.historyCount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {storageInfo.historyCount > 0 ? `${storageInfo.historyCount} saved` : 'Empty'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -6680,6 +6704,10 @@ export const Dashboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-white/72">Recovery</span>
                       <span className="text-xs font-semibold text-white">{(storageInfo.sizes.recovery / 1024).toFixed(2)} KB</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/72">History</span>
+                      <span className="text-xs font-semibold text-white">{((storageInfo.sizes.history ?? 0) / 1024).toFixed(2)} KB</span>
                     </div>
                     <div className="mt-2 pt-2 border-t border-white/10">
                       <div className="flex items-center justify-between">
@@ -6723,11 +6751,11 @@ export const Dashboard: React.FC = () => {
                     className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12]"
                   >
                     <DownloadIcon size={16} />
-                    Export Backup
+                    Export Package
                   </button>
                   <label className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12] cursor-pointer">
                     <UploadIcon size={16} />
-                    Import Backup
+                    Import Package
                     <input
                       type="file"
                       accept=".json"
@@ -6739,9 +6767,9 @@ export const Dashboard: React.FC = () => {
                           reader.onload = (event) => {
                             const data = event.target?.result as string;
                             if (importStorage(data)) {
-                              alert('Backup imported successfully!');
+                              alert('Customization package imported successfully!');
                             } else {
-                              alert('Failed to import backup. Please check the file format.');
+                              alert('Failed to import package. Please check the file format.');
                             }
                           };
                           reader.readAsText(file);
@@ -6763,6 +6791,48 @@ export const Dashboard: React.FC = () => {
                     <RotateCcw size={16} />
                     Reset All Data
                   </button>
+                </div>
+
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Version History</p>
+                    <span className="text-xs text-white/52">{versionHistory.length} snapshots</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {versionHistory.length > 0 ? (
+                      versionHistory.slice(0, 5).map((version) => (
+                        <div key={version.id} className="rounded-[10px] border border-white/10 bg-white/[0.03] px-3 py-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-white">{version.label}</p>
+                              <p className="mt-0.5 text-[11px] text-white/56">
+                                {new Date(version.savedAt).toLocaleString()} · {(version.size / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Restore ${version.label}? This will replace the current dashboard data.`)) {
+                                  const restored = restoreVersion(version.id);
+                                  if (restored) {
+                                    setUploadMessage(`${version.label} restored successfully.`);
+                                    setHasUnsavedChanges(true);
+                                  } else {
+                                    setUploadError('Failed to restore the selected version.');
+                                  }
+                                }
+                              }}
+                              className="rounded-[8px] border border-white/14 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white transition-all hover:bg-white/[0.12]"
+                            >
+                              Restore
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-white/56">No saved versions yet. Every successful save creates a snapshot.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

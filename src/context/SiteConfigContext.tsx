@@ -15,7 +15,16 @@
     type SiteAITracking,
     type SiteAIReport,
   } from '../config/siteConfig';
-  import { loadSiteConfig, saveSiteConfig, resetAllStorage, getStorageInfo } from '../utils/storageSystem';
+  import {
+    loadSiteConfig,
+    saveSiteConfig,
+    resetAllStorage,
+    getStorageInfo,
+    exportStorageData,
+    importStorageData,
+    getVersionHistory,
+    restoreVersionSnapshot,
+  } from '../utils/storageSystem';
   import { fetchSiteConfig, updateSiteConfig, checkApiHealth } from '../utils/apiClient';
 
   interface SiteConfigContextValue {
@@ -23,8 +32,10 @@
   setSiteConfig: React.Dispatch<React.SetStateAction<SiteConfig>>;
   resetSiteConfig: () => void;
   storageInfo: ReturnType<typeof getStorageInfo>;
+  versionHistory: ReturnType<typeof getVersionHistory>;
   exportStorage: () => string | null;
   importStorage: (data: string) => boolean;
+  restoreVersion: (snapshotId: string) => boolean;
   saveToAPI: () => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -322,6 +333,8 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const value = useMemo<SiteConfigContextValue>(() => {
+    const versionHistory = getVersionHistory();
+
     return {
       siteConfig,
       setSiteConfig,
@@ -331,14 +344,16 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setStorageInfo(getStorageInfo());
       },
       storageInfo,
+      versionHistory,
       exportStorage: () => {
         if (typeof window === 'undefined') return null;
-        const data = JSON.stringify(siteConfig, null, 2);
+        const data = exportStorageData(siteConfig);
+        if (!data) return null;
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `site-config-backup-${Date.now()}.json`;
+        a.download = `site-customization-package-${Date.now()}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -347,14 +362,26 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       },
       importStorage: (jsonData: string) => {
         try {
+          const success = importStorageData(jsonData);
+          if (!success) return false;
+
           const parsed = JSON.parse(jsonData);
-          const hydrated = hydrateSiteConfig(parsed);
-          setSiteConfig(hydrated);
+          const nextConfig = parsed?.config ? hydrateSiteConfig(parsed.config) : hydrateSiteConfig(parsed);
+          setSiteConfig(nextConfig);
+          setStorageInfo(getStorageInfo());
           return true;
         } catch (error) {
           console.error('Failed to import storage data:', error);
           return false;
         }
+      },
+      restoreVersion: (snapshotId: string) => {
+        const restored = restoreVersionSnapshot(snapshotId);
+        if (!restored) return false;
+
+        setSiteConfig(restored);
+        setStorageInfo(getStorageInfo());
+        return true;
       },
       saveToAPI: async () => {
         try {

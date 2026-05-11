@@ -6,18 +6,16 @@
  */
 
 const { Redis } = require('@upstash/redis');
+const crypto = require('crypto');
 
 // Load default config
-let defaultConfig = null;
-try {
-  const defaultConfigModule = require('../src/config/siteConfig.js');
-  defaultConfig = defaultConfigModule.DEFAULT_SITE_CONFIG;
-} catch (error) {
-  console.error('Failed to load default config:', error);
-}
+const defaultConfig = {};
 
 // Authentication password (should be in environment variables in production)
 const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || '00000008';
+const DASHBOARD_SESSION_SECRET = process.env.DASHBOARD_SESSION_SECRET || DASHBOARD_PASSWORD;
+const AUTH_COOKIE_NAME = 'dashboard_session';
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 // Initialize Redis client
 let redis = null;
@@ -71,6 +69,51 @@ async function saveSiteConfig(config) {
   }
 }
 
+function parseCookies(cookieHeader) {
+  return String(cookieHeader || '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((accumulator, part) => {
+      const separatorIndex = part.indexOf('=');
+      if (separatorIndex === -1) return accumulator;
+      const key = part.slice(0, separatorIndex).trim();
+      const value = part.slice(separatorIndex + 1).trim();
+      accumulator[key] = decodeURIComponent(value);
+      return accumulator;
+    }, {});
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return false;
+
+  const [issuedAt, signature] = token.split('.');
+  if (!issuedAt || !signature) return false;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', DASHBOARD_SESSION_SECRET)
+    .update(issuedAt)
+    .digest('hex');
+
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+  if (signatureBuffer.length !== expectedBuffer.length) return false;
+
+  const isSignatureValid = crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+  if (!isSignatureValid) return false;
+
+  const issuedAtNumber = Number.parseInt(issuedAt, 10);
+  if (!Number.isFinite(issuedAtNumber)) return false;
+
+  return Date.now() - issuedAtNumber <= SESSION_MAX_AGE_SECONDS * 1000;
+}
+
+function isAuthenticatedRequest(req) {
+  const cookies = parseCookies(req.headers.cookie);
+  return verifySessionToken(cookies[AUTH_COOKIE_NAME]);
+}
+
 /**
  * GET /api/config
  * Returns the current site configuration
@@ -78,7 +121,7 @@ async function saveSiteConfig(config) {
 module.exports = async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.APP_ORIGIN || req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -110,20 +153,10 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'PUT') {
     try {
-      // Check authentication
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (!isAuthenticatedRequest(req)) {
         return res.status(401).json({
           success: false,
-          error: 'Missing or invalid authorization header',
-        });
-      }
-
-      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-      if (token !== DASHBOARD_PASSWORD) {
-        return res.status(403).json({
-          success: false,
-          error: 'Invalid authentication token',
+          error: 'Missing or invalid dashboard session',
         });
       }
 
@@ -131,7 +164,7 @@ module.exports = async function handler(req, res) {
       const body = req.body;
       
       // Validate the config structure
-      if (!body || typeof body !== 'object') {
+      if (!body || typeof body !== 'object' || Array.isArray(body)) {
         return res.status(400).json({
           success: false,
           error: 'Invalid request body',

@@ -3,7 +3,7 @@
  * Multi-layer storage with automatic backups, error recovery, and data validation
  */
 
-import { DEFAULT_SITE_CONFIG, type SiteConfig } from '../config/siteConfig';
+import { DEFAULT_SITE_CONFIG, hydrateSiteConfig, type SiteConfig } from '../config/siteConfig';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -12,7 +12,10 @@ const STORAGE_KEYS = {
   SESSION: 'portfolio.site-config.session.v1',
   METADATA: 'portfolio.site-config.metadata.v1',
   RECOVERY: 'portfolio.site-config.recovery.v1',
+  HISTORY: 'portfolio.site-config.history.v1',
 } as const;
+
+const MAX_VERSION_HISTORY = 12;
 
 // Storage metadata
 interface StorageMetadata {
@@ -31,6 +34,24 @@ interface StorageResult {
   error?: string;
   source?: 'primary' | 'backup' | 'session' | 'recovery' | 'default';
   metadata?: StorageMetadata;
+}
+
+interface StorageVersionSnapshot {
+  id: string;
+  label: string;
+  savedAt: number;
+  checksum: string;
+  size: number;
+  config: SiteConfig;
+}
+
+interface CustomizationPackage {
+  format: 'webiiiiiiiiiiiiiii.customization-package';
+  version: '2.0.0';
+  exportedAt: number;
+  config: SiteConfig;
+  history: StorageVersionSnapshot[];
+  metadata: StorageMetadata;
 }
 
 // Compression utilities
@@ -155,7 +176,7 @@ const getMetadata = (): StorageMetadata => {
 };
 
 // Update storage metadata
-const updateMetadata = (data: string, isBackup: boolean = false): void => {
+const updateMetadata = (data: string, isBackup: boolean = false, incrementSaveCount: boolean = true): void => {
   const metadata = getMetadata();
   const now = Date.now();
 
@@ -165,9 +186,66 @@ const updateMetadata = (data: string, isBackup: boolean = false): void => {
   }
   metadata.checksum = calculateChecksum(data);
   metadata.size = new Blob([data]).size;
-  metadata.saveCount += 1;
+  if (incrementSaveCount) {
+    metadata.saveCount += 1;
+  }
 
   safeSetItem(STORAGE_KEYS.METADATA, JSON.stringify(metadata));
+};
+
+const loadVersionHistory = (): StorageVersionSnapshot[] => {
+  const data = safeGetItem(STORAGE_KEYS.HISTORY);
+  if (!data) return [];
+
+  try {
+    const parsed = JSON.parse(data) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((entry, index) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const snapshot = entry as Partial<StorageVersionSnapshot> & { config?: unknown };
+        const config = hydrateSiteConfig(snapshot.config);
+
+        return {
+          id: typeof snapshot.id === 'string' && snapshot.id.trim() ? snapshot.id : `version-${index + 1}`,
+          label: typeof snapshot.label === 'string' && snapshot.label.trim() ? snapshot.label : `Version ${index + 1}`,
+          savedAt: typeof snapshot.savedAt === 'number' ? snapshot.savedAt : Date.now(),
+          checksum: typeof snapshot.checksum === 'string' ? snapshot.checksum : '',
+          size: typeof snapshot.size === 'number' ? snapshot.size : 0,
+          config,
+        };
+      })
+      .filter((item): item is StorageVersionSnapshot => !!item);
+  } catch (error) {
+    console.error('Failed to load version history:', error);
+    return [];
+  }
+};
+
+const saveVersionHistory = (history: StorageVersionSnapshot[]): void => {
+  safeSetItem(STORAGE_KEYS.HISTORY, JSON.stringify(history.slice(0, MAX_VERSION_HISTORY)));
+};
+
+const createVersionSnapshot = (config: SiteConfig): StorageVersionSnapshot => {
+  const savedAt = Date.now();
+  const serializedConfig = JSON.stringify(config);
+  const metadata = getMetadata();
+  const nextVersionNumber = Math.max(1, metadata.saveCount);
+
+  return {
+    id: `version-${savedAt}`,
+    label: `Version ${nextVersionNumber}`,
+    savedAt,
+    checksum: calculateChecksum(serializedConfig),
+    size: new Blob([serializedConfig]).size,
+    config,
+  };
+};
+
+const appendVersionSnapshot = (config: SiteConfig): void => {
+  const nextHistory = [createVersionSnapshot(config), ...loadVersionHistory()].slice(0, MAX_VERSION_HISTORY);
+  saveVersionHistory(nextHistory);
 };
 
 // Save to primary storage
@@ -179,7 +257,7 @@ const saveToPrimary = (config: SiteConfig): boolean => {
   const success = safeSetItem(STORAGE_KEYS.PRIMARY, compressed);
 
   if (success) {
-    updateMetadata(compressed, false);
+    updateMetadata(compressed, false, true);
   }
 
   return success;
@@ -194,7 +272,7 @@ const saveToBackup = (config: SiteConfig): boolean => {
   const success = safeSetItem(STORAGE_KEYS.BACKUP, compressed);
 
   if (success) {
-    updateMetadata(compressed, true);
+    updateMetadata(compressed, true, false);
   }
 
   return success;
@@ -232,6 +310,10 @@ const createRecoveryPoint = (config: SiteConfig): boolean => {
     console.error('Failed to create recovery point:', error);
     return false;
   }
+};
+
+const saveCurrentConfigToHistory = (config: SiteConfig): void => {
+  appendVersionSnapshot(config);
 };
 
 // Load from primary storage
@@ -427,6 +509,8 @@ export const saveSiteConfig = (config: SiteConfig): StorageResult => {
     };
   }
 
+  saveCurrentConfigToHistory(config);
+
   // Log warnings for failed layers
   if (!results.primary) {
     console.warn('Failed to save to primary storage');
@@ -474,27 +558,33 @@ export const getStorageInfo = () => {
   const backupSize = safeGetItem(STORAGE_KEYS.BACKUP)?.length || 0;
   const sessionSize = sessionStorage.getItem(STORAGE_KEYS.SESSION)?.length || 0;
   const recoverySize = safeGetItem(STORAGE_KEYS.RECOVERY)?.length || 0;
+  const history = loadVersionHistory();
 
   return {
     metadata,
+    history,
+    historyCount: history.length,
     sizes: {
       primary: primarySize,
       backup: backupSize,
       session: sessionSize,
       recovery: recoverySize,
+      history: safeGetItem(STORAGE_KEYS.HISTORY)?.length || 0,
     },
-    total: primarySize + backupSize + sessionSize + recoverySize,
+    total: primarySize + backupSize + sessionSize + recoverySize + (safeGetItem(STORAGE_KEYS.HISTORY)?.length || 0),
   };
 };
 
 // Export storage data as JSON (for manual backup)
-export const exportStorageData = (): string | null => {
+export const exportStorageData = (config?: SiteConfig): string | null => {
   try {
+    const fallbackConfig = config ?? loadSiteConfig().data ?? DEFAULT_SITE_CONFIG;
     const data = {
-      timestamp: Date.now(),
-      version: '1.0.0',
-      primary: safeGetItem(STORAGE_KEYS.PRIMARY),
-      backup: safeGetItem(STORAGE_KEYS.BACKUP),
+      format: 'webiiiiiiiiiiiiiii.customization-package',
+      version: '2.0.0',
+      exportedAt: Date.now(),
+      config: fallbackConfig,
+      history: loadVersionHistory(),
       metadata: getMetadata(),
     };
 
@@ -510,7 +600,43 @@ export const importStorageData = (jsonData: string): boolean => {
   try {
     const data = JSON.parse(jsonData);
 
+    if (data?.format === 'webiiiiiiiiiiiiiii.customization-package' && data.config) {
+      const config = hydrateSiteConfig(data.config);
+      if (!validateSiteConfig(config)) {
+        throw new Error('Invalid configuration data');
+      }
+
+      saveSiteConfig(config);
+
+      if (Array.isArray(data.history)) {
+        const restoredHistory = data.history
+          .map((entry: unknown, index: number) => {
+            if (!entry || typeof entry !== 'object') return null;
+            const snapshot = entry as Partial<StorageVersionSnapshot> & { config?: unknown };
+            return {
+              id: typeof snapshot.id === 'string' ? snapshot.id : `version-${index + 1}`,
+              label: typeof snapshot.label === 'string' ? snapshot.label : `Version ${index + 1}`,
+              savedAt: typeof snapshot.savedAt === 'number' ? snapshot.savedAt : Date.now(),
+              checksum: typeof snapshot.checksum === 'string' ? snapshot.checksum : '',
+              size: typeof snapshot.size === 'number' ? snapshot.size : 0,
+              config: hydrateSiteConfig(snapshot.config),
+            };
+          })
+          .filter((entry): entry is StorageVersionSnapshot => !!entry)
+          .slice(0, MAX_VERSION_HISTORY);
+
+        saveVersionHistory(restoredHistory);
+      }
+
+      if (data.metadata) {
+        safeSetItem(STORAGE_KEYS.METADATA, JSON.stringify(data.metadata));
+      }
+
+      return true;
+    }
+
     if (!data.primary || !data.backup) {
+      // Backward-compatible raw storage import
       throw new Error('Invalid storage data format');
     }
 
@@ -528,9 +654,28 @@ export const importStorageData = (jsonData: string): boolean => {
       safeSetItem(STORAGE_KEYS.METADATA, JSON.stringify(data.metadata));
     }
 
+    if (Array.isArray(data.history)) {
+      saveVersionHistory(data.history as StorageVersionSnapshot[]);
+    }
+
     return true;
   } catch (error) {
     console.error('Failed to import storage data:', error);
     return false;
   }
+};
+
+export const getVersionHistory = (): StorageVersionSnapshot[] => {
+  return loadVersionHistory();
+};
+
+export const restoreVersionSnapshot = (snapshotId: string): SiteConfig | null => {
+  const snapshot = loadVersionHistory().find((entry) => entry.id === snapshotId);
+  if (!snapshot) return null;
+
+  const hydrated = hydrateSiteConfig(snapshot.config);
+  if (!validateSiteConfig(hydrated)) return null;
+
+  saveSiteConfig(hydrated);
+  return hydrated;
 };

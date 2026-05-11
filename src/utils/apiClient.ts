@@ -4,9 +4,7 @@
  */
 
 import { type SiteConfig } from '../config/siteConfig';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
-const DASHBOARD_PASSWORD = '00000008'; // Should match server password
+import { API_BASE_URL, DASHBOARD_PASSWORD } from '../config/runtimeConfig';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -14,6 +12,13 @@ export interface ApiResponse<T> {
   error?: string;
   lastUpdated?: number;
   version?: string;
+  authenticated?: boolean;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  authenticated: boolean;
+  error?: string;
 }
 
 /**
@@ -26,6 +31,7 @@ export async function fetchSiteConfig(): Promise<ApiResponse<SiteConfig>> {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       cache: 'no-store', // Always fetch fresh data
     });
 
@@ -53,8 +59,8 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DASHBOARD_PASSWORD}`,
       },
+      credentials: 'include',
       body: JSON.stringify(config),
     });
 
@@ -85,5 +91,70 @@ export async function checkApiHealth(): Promise<boolean> {
     return response.ok;
   } catch {
     return false;
+  }
+}
+
+export async function checkDashboardAuth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) return false;
+
+    const data = (await response.json()) as AuthResponse;
+    return Boolean(data.authenticated);
+  } catch {
+    return false;
+  }
+}
+
+export async function loginToDashboard(password: string): Promise<AuthResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ password }),
+    });
+
+    const data = (await response.json()) as AuthResponse;
+    if (!response.ok) {
+      return { success: false, authenticated: false, error: data.error || 'Authentication failed' };
+    }
+
+    return data;
+  } catch (error) {
+    return {
+      success: false,
+      authenticated: false,
+      error: error instanceof Error ? error.message : 'Authentication failed',
+    };
+  }
+}
+
+export async function logoutFromDashboard(): Promise<AuthResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    const data = (await response.json()) as AuthResponse;
+    if (!response.ok) {
+      return { success: false, authenticated: false, error: data.error || 'Logout failed' };
+    }
+
+    return data;
+  } catch (error) {
+    return {
+      success: false,
+      authenticated: false,
+      error: error instanceof Error ? error.message : 'Logout failed',
+    };
   }
 }
