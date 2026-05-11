@@ -55,21 +55,6 @@ const SiteConfigContext = createContext<SiteConfigContextValue | null>(null);
     return DEFAULT_SITE_CONFIG;
   };
 
-  // Fetch config from API on mount (for public site)
-  const fetchConfigFromAPI = async () => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const response = await fetchSiteConfig();
-      if (response.success && response.data) {
-        const hydratedConfig = hydrateSiteConfig(response.data);
-        setSiteConfig(hydratedConfig);
-        console.log('Config loaded from API successfully');
-      }
-    } catch (error) {
-      console.error('Failed to fetch config from API:', error);
-    }
-  };
 
 const applyDesignSystemVariables = (siteConfig: SiteConfig) => {
   if (typeof document === 'undefined') return;
@@ -325,10 +310,20 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Fetch config from API on mount (for public site)
   useEffect(() => {
     // Only fetch from API if we're not in dashboard mode
-    // Check if current path is not dashboard
     const isDashboard = window.location.pathname.includes('/dashboard');
     if (!isDashboard) {
-      fetchConfigFromAPI();
+      (async () => {
+        try {
+          const response = await fetchSiteConfig();
+          if (response.success && response.data) {
+            const hydratedConfig = hydrateSiteConfig(response.data);
+            setSiteConfig(hydratedConfig);
+            console.log('Config loaded from API successfully');
+          }
+        } catch (error) {
+          console.error('Failed to fetch config from API:', error);
+        }
+      })();
     }
   }, []);
 
