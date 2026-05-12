@@ -37,6 +37,14 @@ export const getFramesForScene = (sceneName: string): string[] => {
   return generatedFrames;
 };
 
+export const hasFrameAssets = (scenes: string[]): boolean => {
+  return scenes.some((scene) => {
+    const manifestFrames = __FRAME_MANIFEST__?.[scene];
+    if (manifestFrames && manifestFrames.length > 0) return true;
+    return (__FRAME_COUNTS__[scene] ?? 0) > 0;
+  });
+};
+
 interface PreloadState {
   progress: number;
   images: Record<string, HTMLImageElement[]>;

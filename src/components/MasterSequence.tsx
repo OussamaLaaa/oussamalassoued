@@ -190,10 +190,33 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
       if (bufferedEnd && bufferedEnd > 0) {
         nextTime = Math.min(nextTime, Math.max(0, bufferedEnd - 0.001));
       }
+      const queueDrawWhenReady = () => {
+        if (!mounted) return;
+        if (isDrawableVideo(video)) {
+          scheduleDraw(video, isScene07);
+          return;
+        }
+        const handleReady = () => {
+          video.removeEventListener('seeked', handleReady);
+          video.removeEventListener('loadeddata', handleReady);
+          if (!mounted) return;
+          scheduleDraw(video, isScene07);
+        };
+        video.addEventListener('seeked', handleReady, { once: true });
+        video.addEventListener('loadeddata', handleReady, { once: true });
+      };
+
       if (Math.abs(video.currentTime - nextTime) > 0.01) {
-        video.currentTime = nextTime;
+        try {
+          video.currentTime = nextTime;
+        } catch (error) {
+          console.warn('Video seek failed:', error);
+        }
+        queueDrawWhenReady();
+        return;
       }
-      scheduleDraw(video, isScene07);
+
+      queueDrawWhenReady();
     };
 
     let virtualProgress = clampProgress(lastProgressRef.current);

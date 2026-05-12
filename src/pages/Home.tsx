@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { usePreloadFrames } from '../hooks/usePreloadFrames';
+import { hasFrameAssets, usePreloadFrames } from '../hooks/usePreloadFrames';
 import { usePreloadVideos } from '../hooks/usePreloadVideos';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { MasterSequence } from '../components/MasterSequence';
@@ -31,14 +31,15 @@ export const Home: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { visibility, globalFrame, crt } = siteConfig;
   const videoState = usePreloadVideos(SCENES);
+  const hasFrames = hasFrameAssets(SCENES);
   const [useFramesFallback, setUseFramesFallback] = useState(false);
   React.useEffect(() => {
-    if (videoState.shouldFallback) {
+    if (videoState.shouldFallback && hasFrames) {
       setUseFramesFallback(true);
     }
-  }, [videoState.shouldFallback]);
+  }, [videoState.shouldFallback, hasFrames]);
 
-  const shouldUseVideo = videoState.hasVideoSupport && !useFramesFallback;
+  const shouldUseVideo = videoState.hasVideoSupport && (!useFramesFallback || !hasFrames);
   const frameScenes = shouldUseVideo ? [] : SCENES;
   const frameState = usePreloadFrames(frameScenes);
   const progress = shouldUseVideo ? videoState.progress : frameState.progress;

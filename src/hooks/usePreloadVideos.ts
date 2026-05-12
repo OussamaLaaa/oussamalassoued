@@ -86,7 +86,7 @@ export function usePreloadVideos(scenes: string[]): VideoPreloadState {
 
     const buildVideo = (scene: string) => {
       const video = document.createElement('video');
-      video.preload = scene === firstScene ? 'auto' : 'metadata';
+      video.preload = 'auto';
       video.muted = true;
       video.playsInline = true;
       video.loop = false;
@@ -123,6 +123,11 @@ export function usePreloadVideos(scenes: string[]): VideoPreloadState {
         metadataSeen = true;
         durations[scene] = Number.isFinite(video.duration) ? video.duration : 0;
         metadataLoaded.add(scene);
+        try {
+          video.currentTime = Math.min(0.001, Math.max(0, video.duration - 0.001));
+        } catch (error) {
+          console.warn('Video seek failed for metadata priming:', error);
+        }
         updateState();
       };
 
