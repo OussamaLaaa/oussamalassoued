@@ -38,32 +38,23 @@
   bottom: var(--watermark-mask-bottom-mobile, 0px);
   left: auto;
   position: absolute;
-  background-color: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3);
   border-radius: 16px;
   overflow: hidden;
   isolation: isolate;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px;
 }
 
 .cinematic-watermark-cover::before {
-  content: 'Oussama Lassoued';
+  content: '';
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
   pointer-events: none;
-  text-align: center;
-  line-height: 1.4;
 }
 
 .cinematic-watermark-cover::after {
