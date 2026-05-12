@@ -103,6 +103,18 @@ export function usePreloadFrames(scenes: string[]) {
       }
     }
 
+    if (scenes.length === 0) {
+      const nextState = {
+        progress: 100,
+        images: {},
+        isComplete: true,
+        isFullyLoaded: true,
+      };
+      preloadStateCache.set(scenesKey, nextState);
+      setState(nextState);
+      return;
+    }
+
     if (!supportsAvif) {
       console.warn('[Frames] AVIF is not supported by this browser. Frame images may not render.');
     }

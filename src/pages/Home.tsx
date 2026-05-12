@@ -45,6 +45,11 @@ export const Home: React.FC = () => {
   const progress = shouldUseVideo ? videoState.progress : frameState.progress;
   const isComplete = shouldUseVideo ? videoState.isComplete && videoState.isReady : frameState.isComplete;
   const images = frameState.images;
+  const videoDurations = {
+    scene02: videoState.durations[SCENE_02] ?? 0,
+    scene03: videoState.durations[SCENE_03] ?? 0,
+    scene07: videoState.durations[SCENE_07] ?? 0,
+  };
    
   const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);
   const [finalFadeOpacity, setFinalFadeOpacity] = useState(0);
@@ -118,7 +123,7 @@ export const Home: React.FC = () => {
             scene02Video={shouldUseVideo ? videoState.videos[SCENE_02] : null}
             scene03Video={shouldUseVideo ? videoState.videos[SCENE_03] : null}
             scene07Video={shouldUseVideo ? videoState.videos[SCENE_07] : null}
-            videoDurations={videoState.durations}
+            videoDurations={videoDurations}
             useVideo={shouldUseVideo}
             isInputLocked={isPortfolioActive || scene05Progress >= 0}
             onGlobalProgress={(p) => {
