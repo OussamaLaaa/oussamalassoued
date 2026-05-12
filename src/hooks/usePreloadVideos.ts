@@ -130,6 +130,20 @@ export function usePreloadVideos(scenes: string[]): VideoPreloadState {
         } catch (error) {
           console.warn('Video seek failed for metadata priming:', error);
         }
+        try {
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.then === 'function') {
+            playPromise.then(() => {
+              video.pause();
+            }).catch(() => {
+              video.pause();
+            });
+          } else {
+            video.pause();
+          }
+        } catch (error) {
+          console.warn('Video play/pause priming failed:', error);
+        }
         updateState();
       };
 

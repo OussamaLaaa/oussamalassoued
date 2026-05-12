@@ -361,6 +361,9 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
       }
       e.preventDefault();
       queueMomentum(e.deltaY);
+      if (lastVideo) {
+        scheduleDraw(lastVideo, lastVideoIsScene07);
+      }
     };
 
     let touchStartY = 0;
@@ -378,6 +381,9 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
       const diff = touchStartY - touchEndY;
       queueMomentum(diff, scrollSettingsRef.current.touchMultiplier);
       touchStartY = touchEndY;
+      if (lastVideo) {
+        scheduleDraw(lastVideo, lastVideoIsScene07);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
