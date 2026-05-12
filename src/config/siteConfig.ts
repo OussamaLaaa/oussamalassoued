@@ -1123,7 +1123,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         year: '2024',
         credentialUrl: '#',
         logoSrc: 'https://logo.clearbit.com/google.com',
-        visible: true,
+        visible: false,
       },
       {
         id: 'cert-2',
@@ -1132,7 +1132,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         year: '2024',
         credentialUrl: '#',
         logoSrc: 'https://logo.clearbit.com/ibm.com',
-        visible: true,
+        visible: false,
       },
       {
         id: 'cert-3',
@@ -1141,7 +1141,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         year: '2023',
         credentialUrl: '#',
         logoSrc: 'https://logo.clearbit.com/harvard.edu',
-        visible: true,
+        visible: false,
       },
     ],
     companyLogosTitle: 'Companies I Collaborated With',
@@ -1151,28 +1151,28 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         name: 'Upwork',
         logoSrc: 'https://logo.clearbit.com/upwork.com',
         href: 'https://www.upwork.com/',
-        visible: true,
+        visible: false,
       },
       {
         id: 'company-2',
         name: 'Webflow',
         logoSrc: 'https://logo.clearbit.com/webflow.com',
         href: 'https://webflow.com/',
-        visible: true,
+        visible: false,
       },
       {
         id: 'company-3',
         name: 'Framer',
         logoSrc: 'https://logo.clearbit.com/framer.com',
         href: 'https://www.framer.com/',
-        visible: true,
+        visible: false,
       },
       {
         id: 'company-4',
         name: 'Notion',
         logoSrc: 'https://logo.clearbit.com/notion.so',
         href: 'https://www.notion.so/',
-        visible: true,
+        visible: false,
       },
     ],
     aiTitle: 'Designing with AI in Mind',
@@ -2189,6 +2189,17 @@ const asBoolean = (value: unknown, fallback: boolean) => {
   return typeof value === 'boolean' ? value : fallback;
 };
 
+const isClearbitLogo = (value: string) => value.includes('logo.clearbit.com');
+
+const sanitizeFramePath = (value: string, fallback: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  const normalized = trimmed.toLowerCase();
+  if (!normalized.startsWith('/frames/')) return trimmed;
+  if (normalized.endsWith('.avif')) return trimmed;
+  return fallback;
+};
+
 const asButtonVariant = (value: unknown, fallback: SiteButtonVariant): SiteButtonVariant => {
   return typeof value === 'string' && SITE_BUTTON_VARIANTS.includes(value as SiteButtonVariant)
     ? (value as SiteButtonVariant)
@@ -2371,11 +2382,13 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? value.projects
         .map((item, index) => {
           if (!isRecord(item)) return null;
+          const fallback = DEFAULT_SITE_CONFIG.projects[Math.min(index, DEFAULT_SITE_CONFIG.projects.length - 1)];
+          const fallbackImg = fallback?.img ?? '';
           return {
             id: asString(item.id, `project-${index + 1}`),
             title: asString(item.title, ''),
             tags: asString(item.tags, ''),
-            img: asString(item.img, ''),
+            img: sanitizeFramePath(asString(item.img, fallbackImg), fallbackImg),
             behance: asString(item.behance, '#'),
             live: asString(item.live, '#'),
             buttonType: (item.buttonType === 'caseStudy' ? 'caseStudy' : 'live') as 'live' | 'caseStudy',
@@ -2553,7 +2566,10 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             slug: asString(item.slug, `article-${index + 1}`),
             excerpt: asString(item.excerpt, fallback?.excerpt ?? ''),
             content: asString(item.content, fallback?.content ?? ''),
-            coverImage: asString(item.coverImage, fallback?.coverImage ?? ''),
+            coverImage: sanitizeFramePath(
+              asString(item.coverImage, fallback?.coverImage ?? ''),
+              fallback?.coverImage ?? '',
+            ),
             author: asString(item.author, fallback?.author ?? ''),
             category: asString(item.category, fallback?.category ?? ''),
             tags: Array.isArray(item.tags)
@@ -2580,7 +2596,10 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             title: asString(item.title, fallback?.title ?? ''),
             description: asString(item.description, fallback?.description ?? ''),
             videoUrl: asString(item.videoUrl, fallback?.videoUrl ?? ''),
-            thumbnail: asString(item.thumbnail, fallback?.thumbnail ?? ''),
+            thumbnail: sanitizeFramePath(
+              asString(item.thumbnail, fallback?.thumbnail ?? ''),
+              fallback?.thumbnail ?? '',
+            ),
             platform: asVideoPlatform(item.platform, fallback?.platform ?? 'other'),
             durationLabel: asString(item.durationLabel, fallback?.durationLabel ?? ''),
             publishedAt: asString(item.publishedAt, fallback?.publishedAt ?? ''),
@@ -2648,12 +2667,13 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? scene05.companyLogos
         .map((item, index) => {
           if (!isRecord(item)) return null;
+          const logoSrc = asString(item.logoSrc, '');
           return {
             id: asString(item.id, `company-${index + 1}`),
             name: asString(item.name, ''),
-            logoSrc: asString(item.logoSrc, ''),
+            logoSrc,
             href: asString(item.href, '#'),
-            visible: asBoolean(item.visible, true),
+            visible: asBoolean(item.visible, true) && !isClearbitLogo(logoSrc),
           };
         })
         .filter(
@@ -2666,14 +2686,15 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? scene05.featuredCertifications
         .map((item, index) => {
           if (!isRecord(item)) return null;
+          const logoSrc = asString(item.logoSrc, '');
           return {
             id: asString(item.id, `cert-${index + 1}`),
             title: asString(item.title, ''),
             issuer: asString(item.issuer, ''),
             year: asString(item.year, ''),
             credentialUrl: asString(item.credentialUrl, '#'),
-            logoSrc: asString(item.logoSrc, ''),
-            visible: asBoolean(item.visible, true),
+            logoSrc,
+            visible: asBoolean(item.visible, true) && !isClearbitLogo(logoSrc),
           };
         })
         .filter(
@@ -2736,7 +2757,10 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       badge: asString(scene05.badge, DEFAULT_SITE_CONFIG.scene05.badge),
       name: migratedScene05Name,
       role: migratedScene05Role,
-      portraitImage: asString(scene05.portraitImage, DEFAULT_SITE_CONFIG.scene05.portraitImage),
+      portraitImage: sanitizeFramePath(
+        asString(scene05.portraitImage, DEFAULT_SITE_CONFIG.scene05.portraitImage),
+        DEFAULT_SITE_CONFIG.scene05.portraitImage,
+      ),
       portraitAlt: asString(scene05.portraitAlt, DEFAULT_SITE_CONFIG.scene05.portraitAlt),
       portraitCaption: asString(scene05.portraitCaption, DEFAULT_SITE_CONFIG.scene05.portraitCaption),
       visionTitle: asString(scene05.visionTitle, DEFAULT_SITE_CONFIG.scene05.visionTitle),
