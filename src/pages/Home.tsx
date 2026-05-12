@@ -45,11 +45,11 @@ export const Home: React.FC = () => {
   const progress = shouldUseVideo ? videoState.progress : frameState.progress;
   const isComplete = shouldUseVideo ? videoState.isComplete && videoState.isReady : frameState.isComplete;
   const images = frameState.images;
-  const videoDurations = {
+  const videoDurations = videoState.isReady ? {
     scene02: videoState.durations[SCENE_02] ?? 0,
     scene03: videoState.durations[SCENE_03] ?? 0,
     scene07: videoState.durations[SCENE_07] ?? 0,
-  };
+  } : undefined;
    
   const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);
   const [finalFadeOpacity, setFinalFadeOpacity] = useState(0);

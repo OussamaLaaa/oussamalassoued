@@ -70,14 +70,24 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     scrollSettingsRef.current = siteConfig.cinematicSequence.scroll;
   }, [siteConfig.cinematicSequence.scroll]);
 
+  const getVideoDuration = (video: HTMLVideoElement | null, duration?: number) => {
+    if (duration && duration > 0) return duration;
+    const fallback = video?.duration ?? 0;
+    return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+  };
+
+  const scene02Duration = getVideoDuration(scene02Video ?? null, videoDurations?.scene02);
+  const scene03Duration = getVideoDuration(scene03Video ?? null, videoDurations?.scene03);
+  const scene07Duration = getVideoDuration(scene07Video ?? null, videoDurations?.scene07);
+
   const useVideoMode = Boolean(
     useVideo &&
     scene02Video &&
     scene03Video &&
     scene07Video &&
-    (videoDurations?.scene02 ?? 0) > 0 &&
-    (videoDurations?.scene03 ?? 0) > 0 &&
-    (videoDurations?.scene07 ?? 0) > 0
+    scene02Duration > 0 &&
+    scene03Duration > 0 &&
+    scene07Duration > 0
   );
 
   const l1 = scene02Images ? scene02Images.length : 0;
@@ -94,9 +104,12 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const scene02Duration = videoDurations?.scene02 ?? scene02Video?.duration ?? 0;
-    const scene03Duration = videoDurations?.scene03 ?? scene03Video?.duration ?? 0;
-    const scene07Duration = videoDurations?.scene07 ?? scene07Video?.duration ?? 0;
+    const precomputedScene02 = scene02Duration;
+    const precomputedScene03 = scene03Duration;
+    const precomputedScene07 = scene07Duration;
+    const scene02Duration = precomputedScene02;
+    const scene03Duration = precomputedScene03;
+    const scene07Duration = precomputedScene07;
     const preHeroDuration = scene02Duration + scene03Duration;
 
     if (!scene02Duration || !scene03Duration || !scene07Duration) return;
