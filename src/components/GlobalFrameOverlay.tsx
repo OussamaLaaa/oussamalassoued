@@ -71,8 +71,6 @@ export const GlobalFrameOverlay: React.FC<GlobalFrameOverlayProps> = ({
             inset 0 2px 4px rgba(255, 240, 220, ${0.08 * innerShadowIntensity}),
             inset 0 -2px 12px rgba(0,0,0,${0.3 * innerShadowIntensity})
           `,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
         }}
       >
         {/* Subtle glass texture scoped ONLY to the hole opening. */}

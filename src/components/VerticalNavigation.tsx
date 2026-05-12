@@ -182,8 +182,8 @@ export const VerticalNavigation: React.FC<VerticalNavigationProps> = ({ isLightM
           }
 
           @keyframes container-float {
-            0%, 100% { transform: translateY(-50%) translateX(0); }
-            50% { transform: translateY(-50%) translateX(-2px); }
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-2px); }
           }
 
           .vertical-nav-item {
@@ -207,7 +207,7 @@ export const VerticalNavigation: React.FC<VerticalNavigationProps> = ({ isLightM
           }
 
           .vertical-nav-container:hover {
-            transform: translateY(-50%) translateX(-4px);
+            transform: translateX(-4px);
           }
 
           .vertical-nav-tooltip {
@@ -233,7 +233,7 @@ export const VerticalNavigation: React.FC<VerticalNavigationProps> = ({ isLightM
       {/* Vertical Navigation Sidebar */}
       <div
         ref={containerRef}
-        className={`vertical-nav-container fixed right-8 top-1/2 -translate-y-1/2 z-[240] ${
+        className={`vertical-nav-container fixed right-8 bottom-8 z-[240] ${
           isLightMode
             ? 'bg-white/20 border-gray-200/30'
             : 'bg-black/10 border-white/5'
