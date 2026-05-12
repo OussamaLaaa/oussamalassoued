@@ -3,21 +3,9 @@ export interface FrameEngineConfig {
   objectFit?: 'cover' | 'contain';
 }
 
-type FrameSource = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement;
-
-const getSourceSize = (source: FrameSource) => {
-  if (source instanceof HTMLVideoElement) {
-    return { width: source.videoWidth, height: source.videoHeight };
-  }
-  if (source instanceof HTMLImageElement) {
-    return { width: source.naturalWidth || source.width, height: source.naturalHeight || source.height };
-  }
-  return { width: source.width, height: source.height };
-};
-
 export function drawCoverFrame(
   ctx: CanvasRenderingContext2D,
-  image: FrameSource,
+  image: HTMLImageElement,
   config: FrameEngineConfig = {}
 ) {
   const { zoomFactor = 1, objectFit = 'cover' } = config;
@@ -25,11 +13,8 @@ export function drawCoverFrame(
   const canvasObj = ctx.canvas;
   const cw = canvasObj.width;
   const ch = canvasObj.height;
-  const { width: iw, height: ih } = getSourceSize(image);
-
-  if (!iw || !ih) {
-    return;
-  }
+  const iw = image.width;
+  const ih = image.height;
 
   let scale = 1;
   if (objectFit === 'contain') {

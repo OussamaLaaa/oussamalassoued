@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { usePreloadVideos } from '../hooks/usePreloadVideos';
+import { usePreloadFrames } from '../hooks/usePreloadFrames';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { MasterSequence } from '../components/MasterSequence';
 import { GlobalFrameOverlay } from '../components/GlobalFrameOverlay';
@@ -29,16 +29,7 @@ let hasHomeBootCompleted = false;
 export const Home: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { visibility, globalFrame, crt } = siteConfig;
-  const videoState = usePreloadVideos(SCENES);
-  const shouldUseVideo = videoState.hasVideoSupport;
-  const progress = videoState.progress;
-  const isComplete = videoState.isComplete && videoState.isReady;
-  const images: Record<string, HTMLImageElement[]> = {};
-  const videoDurations = videoState.isReady ? {
-    scene02: videoState.durations[SCENE_02] ?? 0,
-    scene03: videoState.durations[SCENE_03] ?? 0,
-    scene07: videoState.durations[SCENE_07] ?? 0,
-  } : undefined;
+  const { progress, images, isComplete } = usePreloadFrames(SCENES);
    
   const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);
   const [finalFadeOpacity, setFinalFadeOpacity] = useState(0);
@@ -109,11 +100,6 @@ export const Home: React.FC = () => {
             scene02Images={images[SCENE_02] || []}
             scene03Images={images[SCENE_03] || []}
             scene07Images={images[SCENE_07] || []}
-            scene02Video={shouldUseVideo ? videoState.videos[SCENE_02] : null}
-            scene03Video={shouldUseVideo ? videoState.videos[SCENE_03] : null}
-            scene07Video={shouldUseVideo ? videoState.videos[SCENE_07] : null}
-            videoDurations={videoDurations}
-            useVideo={shouldUseVideo}
             isInputLocked={isPortfolioActive || scene05Progress >= 0}
             onGlobalProgress={(p) => {
               const scrolled = p > 0.005;

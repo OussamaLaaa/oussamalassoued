@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "convert:videos": "tsx scripts/convert-frames.ts",
     "lint": "tsgo --noEmit",
     "test": "vitest run"
   },
