@@ -76,18 +76,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
   };
 
-  const scene02Duration = getVideoDuration(scene02Video ?? null, videoDurations?.scene02);
-  const scene03Duration = getVideoDuration(scene03Video ?? null, videoDurations?.scene03);
-  const scene07Duration = getVideoDuration(scene07Video ?? null, videoDurations?.scene07);
-
   const useVideoMode = Boolean(
     useVideo &&
     scene02Video &&
     scene03Video &&
-    scene07Video &&
-    scene02Duration > 0 &&
-    scene03Duration > 0 &&
-    scene07Duration > 0
+    scene07Video
   );
 
   const l1 = scene02Images ? scene02Images.length : 0;
@@ -104,12 +97,10 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const scene02DurationValue = scene02Duration;
-    const scene03DurationValue = scene03Duration;
-    const scene07DurationValue = scene07Duration;
-    const preHeroDuration = scene02DurationValue + scene03DurationValue;
-
-    if (!scene02DurationValue || !scene03DurationValue || !scene07DurationValue) return;
+    const getDurationValue = (video: HTMLVideoElement | null, duration?: number) => {
+      const resolved = getVideoDuration(video, duration);
+      return resolved > 0 ? resolved : 1;
+    };
 
     let resizeCallback = 0;
     let isVisible = true;
@@ -234,6 +225,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     const updatePlayhead = (p: number) => {
       const clampP = clampProgress(p);
       lastProgressRef.current = clampP;
+
+      const scene02DurationValue = getDurationValue(scene02Video ?? null, videoDurations?.scene02);
+      const scene03DurationValue = getDurationValue(scene03Video ?? null, videoDurations?.scene03);
+      const scene07DurationValue = getDurationValue(scene07Video ?? null, videoDurations?.scene07);
+      const preHeroDuration = scene02DurationValue + scene03DurationValue;
 
       if (clampP < PHASE_PLAY_SCENE_02_03_END) {
         const subP = clampP / PHASE_PLAY_SCENE_02_03_END;
