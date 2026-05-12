@@ -422,7 +422,7 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
         <WebGLFog />
         {frameConfig.watermarkMaskEnabled && (frameConfig.watermarkMaskMobilePx > 0 || frameConfig.watermarkMaskDesktopPx > 0) ? (
           <div
-            className="cinematic-watermark-cover pointer-events-none absolute z-[5]"
+            className="cinematic-watermark-cover pointer-events-none absolute z-[25]"
             style={{
               '--watermark-mask-mobile': `${frameConfig.watermarkMaskMobilePx}px`,
               '--watermark-mask-desktop': `${frameConfig.watermarkMaskDesktopPx}px`,
