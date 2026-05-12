@@ -235,9 +235,9 @@ export const VerticalNavigation: React.FC<VerticalNavigationProps> = ({ isLightM
         ref={containerRef}
         className={`vertical-nav-container fixed right-8 top-1/2 -translate-y-1/2 z-[240] ${
           isLightMode
-            ? 'bg-white/95 border-gray-200/50'
-            : 'bg-[#0a0a0b]/95 border-white/10'
-        } backdrop-blur-xl rounded-2xl border shadow-2xl`}
+            ? 'bg-white/20 border-gray-200/30'
+            : 'bg-black/10 border-white/5'
+        } backdrop-blur-[40px] rounded-2xl border shadow-2xl`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
