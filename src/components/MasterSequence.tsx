@@ -18,9 +18,18 @@ const TRANSITION_DURATION_SCALE = 0.95;
 const SCENE_07_ACCELERATION_POWER = 0.72;
 
 interface MasterSequenceProps {
-  scene02Images: HTMLImageElement[];
-  scene03Images: HTMLImageElement[];
-  scene07Images: HTMLImageElement[];
+  scene02Images?: HTMLImageElement[];
+  scene03Images?: HTMLImageElement[];
+  scene07Images?: HTMLImageElement[];
+  scene02Video?: HTMLVideoElement | null;
+  scene03Video?: HTMLVideoElement | null;
+  scene07Video?: HTMLVideoElement | null;
+  videoDurations?: {
+    scene02: number;
+    scene03: number;
+    scene07: number;
+  };
+  useVideo?: boolean;
   isInputLocked?: boolean;
   onGlobalProgress?: (progress: number) => void;
 }
@@ -29,6 +38,11 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
   scene02Images, 
   scene03Images, 
   scene07Images,
+  scene02Video,
+  scene03Video,
+  scene07Video,
+  videoDurations,
+  useVideo = false,
   isInputLocked = false,
   onGlobalProgress 
 }) => {
@@ -56,6 +70,16 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
     scrollSettingsRef.current = siteConfig.cinematicSequence.scroll;
   }, [siteConfig.cinematicSequence.scroll]);
 
+  const useVideoMode = Boolean(
+    useVideo &&
+    scene02Video &&
+    scene03Video &&
+    scene07Video &&
+    (videoDurations?.scene02 ?? 0) > 0 &&
+    (videoDurations?.scene03 ?? 0) > 0 &&
+    (videoDurations?.scene07 ?? 0) > 0
+  );
+
   const l1 = scene02Images ? scene02Images.length : 0;
   const l2 = scene03Images ? scene03Images.length : 0;
   const l6 = scene07Images ? scene07Images.length : 0;
@@ -64,6 +88,347 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
   const scene07Start = preHeroLength;
 
   useEffect(() => {
+    if (!useVideoMode || !containerRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const scene02Duration = videoDurations?.scene02 ?? scene02Video?.duration ?? 0;
+    const scene03Duration = videoDurations?.scene03 ?? scene03Video?.duration ?? 0;
+    const scene07Duration = videoDurations?.scene07 ?? scene07Video?.duration ?? 0;
+    const preHeroDuration = scene02Duration + scene03Duration;
+
+    if (!scene02Duration || !scene03Duration || !scene07Duration) return;
+
+    let resizeCallback = 0;
+    let isVisible = true;
+    let isRendering = false;
+    let lastVideo: HTMLVideoElement | null = null;
+    let lastVideoIsScene07 = false;
+    let mounted = true;
+
+    const observer = new IntersectionObserver((entries) => {
+      isVisible = entries[0].isIntersecting;
+      if (isVisible && !isRendering) {
+        isRendering = true;
+        if (lastVideo) {
+          scheduleDraw(lastVideo, lastVideoIsScene07);
+        }
+      }
+    }, { threshold: 0.1 });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+    const clampProgress = (value: number) => {
+      if (value < 0.0005) return 0;
+      if (value > 0.9995) return 1;
+      return clamp(value, 0, 1);
+    };
+
+    const getTweenDuration = () => {
+      return Math.max(0.0001, scrollSettingsRef.current.smoothDurationMs / 1000);
+    };
+
+    const getInputCooldownMs = () => {
+      return Math.max(80, scrollSettingsRef.current.inputCooldownMs);
+    };
+
+    const ensureCanvasSize = () => {
+      const { innerWidth, innerHeight } = window;
+      const optimizedWidth = Math.floor(innerWidth * 0.75);
+      const optimizedHeight = Math.floor(innerHeight * 0.75);
+      if (canvas.width !== optimizedWidth || canvas.height !== optimizedHeight) {
+        canvas.width = optimizedWidth;
+        canvas.height = optimizedHeight;
+      }
+    };
+
+    const isDrawableVideo = (video: HTMLVideoElement | null) => {
+      return !!video && video.readyState >= 2 && video.videoWidth > 0;
+    };
+
+    const drawVideoFrame = (video: HTMLVideoElement, isScene07: boolean) => {
+      if (!isVisible || !isDrawableVideo(video)) return;
+      ensureCanvasSize();
+      drawCoverFrame(ctx, video, {
+        zoomFactor: 1,
+        objectFit: isScene07 ? 'contain' : 'cover',
+      });
+    };
+
+    const scheduleDraw = (video: HTMLVideoElement, isScene07: boolean) => {
+      if (!mounted || !isVisible) return;
+      lastVideo = video;
+      lastVideoIsScene07 = isScene07;
+      if ('requestVideoFrameCallback' in video) {
+        (video as HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number }).requestVideoFrameCallback?.(() => {
+          if (!mounted) return;
+          drawVideoFrame(video, isScene07);
+        });
+      } else {
+        requestAnimationFrame(() => {
+          if (!mounted) return;
+          drawVideoFrame(video, isScene07);
+        });
+      }
+    };
+
+    const getBufferedEnd = (video: HTMLVideoElement) => {
+      if (video.buffered.length === 0) return null;
+      return video.buffered.end(video.buffered.length - 1);
+    };
+
+    const setVideoTime = (video: HTMLVideoElement, time: number, isScene07: boolean) => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      const maxTime = duration > 0 ? Math.max(0, duration - 0.001) : 0;
+      let nextTime = clamp(time, 0, maxTime);
+      const bufferedEnd = getBufferedEnd(video);
+      if (bufferedEnd && bufferedEnd > 0) {
+        nextTime = Math.min(nextTime, Math.max(0, bufferedEnd - 0.001));
+      }
+      if (Math.abs(video.currentTime - nextTime) > 0.01) {
+        video.currentTime = nextTime;
+      }
+      scheduleDraw(video, isScene07);
+    };
+
+    let virtualProgress = clampProgress(lastProgressRef.current);
+    const playhead = { p: virtualProgress };
+    const updatePlayhead = (p: number) => {
+      const clampP = clampProgress(p);
+      lastProgressRef.current = clampP;
+
+      if (clampP < PHASE_PLAY_SCENE_02_03_END) {
+        const subP = clampP / PHASE_PLAY_SCENE_02_03_END;
+        const targetTime = subP * preHeroDuration;
+        if (targetTime <= scene02Duration) {
+          if (scene02Video) {
+            setVideoTime(scene02Video, targetTime, false);
+          }
+        } else if (scene03Video) {
+          setVideoTime(scene03Video, targetTime - scene02Duration, false);
+        }
+      } else if (clampP < PHASE_ABOUT_END) {
+        if (scene03Video) {
+          setVideoTime(scene03Video, Math.max(0, scene03Duration - 0.001), false);
+        }
+      } else if (clampP <= PHASE_SCENE_07_END) {
+        if (scene07Video) {
+          const rawSubP = clamp((clampP - PHASE_ABOUT_END) / (PHASE_SCENE_07_END - PHASE_ABOUT_END), 0, 1);
+          const subP = Math.pow(rawSubP, SCENE_07_ACCELERATION_POWER);
+          const targetTime = subP >= 0.995
+            ? scene07Duration - 0.001
+            : subP * scene07Duration;
+          setVideoTime(scene07Video, targetTime, true);
+        }
+      } else if (scene07Video) {
+        setVideoTime(scene07Video, Math.max(0, scene07Duration - 0.001), true);
+      }
+
+      if (onGlobalProgressRef.current) {
+        onGlobalProgressRef.current(clampP);
+      }
+    };
+
+    updatePlayhead(playhead.p);
+
+    let momentum = 0;
+    let momentumFrame: number | null = null;
+    let playheadTween: gsap.core.Tween | null = null;
+    const MOMENTUM_CAP = 0.08;
+    const MIN_MOMENTUM = 0.000002;
+    let navLockUntil = 0;
+
+    const stopMomentum = () => {
+      if (momentumFrame) {
+        cancelAnimationFrame(momentumFrame);
+      }
+      momentumFrame = null;
+      momentum = 0;
+    };
+
+    const tweenToProgress = (targetP: number, options?: { immediate?: boolean }) => {
+      const clampedP = clampProgress(targetP);
+      virtualProgress = clampedP;
+      playheadTween?.kill();
+      playheadTween = gsap.to(playhead, {
+        p: clampedP,
+        duration: options?.immediate ? 0.001 : getTweenDuration(),
+        ease: 'power2.out',
+        overwrite: 'auto',
+        onUpdate: () => updatePlayhead(playhead.p),
+      });
+    };
+
+    const stepMomentum = () => {
+      const target = clampProgress(virtualProgress + momentum);
+      tweenToProgress(target);
+      momentum *= scrollSettingsRef.current.momentumDamping;
+
+      if (Math.abs(momentum) > MIN_MOMENTUM) {
+        momentumFrame = requestAnimationFrame(stepMomentum);
+      } else {
+        stopMomentum();
+      }
+    };
+
+    let lastInputAt = 0;
+    let lastDirection = 0;
+    let lastForwardAt = 0;
+    let lastBackwardAt = 0;
+
+    const queueMomentum = (delta: number, multiplier = 1) => {
+      if (Date.now() < navLockUntil) return;
+      if (delta === 0) return;
+      const scrollSettings = scrollSettingsRef.current;
+      const limitedDelta = clamp(delta, -scrollSettings.maxWheelDelta, scrollSettings.maxWheelDelta);
+      const now = Date.now();
+      const direction = Math.sign(limitedDelta);
+      const inputCooldownMs = getInputCooldownMs();
+
+      if (
+        direction !== 0 &&
+        lastDirection !== 0 &&
+        direction !== lastDirection &&
+        now - lastInputAt < inputCooldownMs
+      ) {
+        return;
+      }
+
+      if (direction > 0) {
+        lastForwardAt = now;
+      } else if (direction < 0) {
+        lastBackwardAt = now;
+      }
+
+      if (direction < 0 && virtualProgress < 0.08 && now - lastForwardAt < inputCooldownMs * 2) {
+        return;
+      }
+
+      if (direction !== 0 && direction !== lastDirection) {
+        stopMomentum();
+      }
+
+      if (direction !== 0) {
+        lastDirection = direction;
+      }
+      lastInputAt = now;
+      const impulse = limitedDelta * scrollSettings.wheelIntensity * multiplier;
+      momentum = clamp(momentum + impulse, -MOMENTUM_CAP, MOMENTUM_CAP);
+
+      if (!momentumFrame) {
+        momentumFrame = requestAnimationFrame(stepMomentum);
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      if (isInputLockedRef.current) {
+        stopMomentum();
+        return;
+      }
+      e.preventDefault();
+      queueMomentum(e.deltaY);
+    };
+
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isInputLockedRef.current) {
+        stopMomentum();
+        return;
+      }
+      e.preventDefault();
+      const touchEndY = e.touches[0].clientY;
+      const diff = touchStartY - touchEndY;
+      queueMomentum(diff, scrollSettingsRef.current.touchMultiplier);
+      touchStartY = touchEndY;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputLockedRef.current) {
+        stopMomentum();
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        tweenToProgress(virtualProgress + scrollSettingsRef.current.keyboardStep);
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        tweenToProgress(virtualProgress - scrollSettingsRef.current.keyboardStep);
+      }
+    };
+
+    const handleNavToSection = (e: Event) => {
+      const { section } = (e as CustomEvent).detail;
+      let target = 0;
+      navLockUntil = Date.now() + getInputCooldownMs();
+      if (section === 'home') target = 0;
+      else if (section === 'home-sequence') {
+        target = Math.max(0, PHASE_PLAY_SCENE_02_03_END - HOME_REVERSE_ENTRY_EPSILON);
+      }
+      else if (section === 'about') target = PHASE_ABOUT_END;
+      else if (section === 'projects-sequence') {
+        target = PHASE_ABOUT_END + SCENE_07_ENTRY_EPSILON;
+      }
+      else if (section === 'projects-sequence-end') {
+        target = Math.max(
+          PHASE_ABOUT_END + SCENE_07_ENTRY_EPSILON,
+          PHASE_SCENE_07_END - SCENE_07_REVERSE_ENTRY_EPSILON,
+        );
+      }
+      else if (section === 'projects' || section === 'testimonials') target = 1.0;
+      stopMomentum();
+      tweenToProgress(target, { immediate: true });
+    };
+
+    const handleResize = () => {
+      cancelAnimationFrame(resizeCallback);
+      resizeCallback = requestAnimationFrame(() => {
+        if (lastVideo) {
+          scheduleDraw(lastVideo, lastVideoIsScene07);
+        }
+      });
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('nav-to-section', handleNavToSection);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('nav-to-section', handleNavToSection);
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(resizeCallback);
+      stopMomentum();
+      playheadTween?.kill();
+      observer.disconnect();
+    };
+  }, [
+    useVideoMode,
+    scene02Video,
+    scene03Video,
+    scene07Video,
+    videoDurations?.scene02,
+    videoDurations?.scene03,
+    videoDurations?.scene07,
+  ]);
+
+  useEffect(() => {
+    if (useVideoMode) return;
     if (!containerRef.current || !canvasRef.current || totalLength === 0) return;
 
     const canvas = canvasRef.current;
@@ -392,6 +757,7 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
       observer.disconnect();
     };
   }, [
+    useVideoMode,
     l1,
     l2,
     l6,
