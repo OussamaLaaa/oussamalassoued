@@ -235,13 +235,21 @@ export const VerticalNavigation: React.FC<VerticalNavigationProps> = ({ isLightM
         ref={containerRef}
         className={`vertical-nav-container fixed right-8 bottom-8 z-[240] ${
           isLightMode
-            ? 'bg-white/20 border-gray-200/30'
-            : 'bg-black/10 border-white/5'
-        } backdrop-blur-[40px] rounded-2xl border shadow-2xl`}
+            ? 'bg-white border-gray-200'
+            : 'bg-black border-white/10'
+        } rounded-2xl border shadow-2xl`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative py-4 px-2" ref={navItemsRef}>
+        <div className="relative py-4 px-3" ref={navItemsRef}>
+          {/* Name Label */}
+          <div className="mb-3 pb-3 border-b border-white/10">
+            <p className={`text-sm font-semibold ${
+              isLightMode ? 'text-black' : 'text-white'
+            }`}>
+              Oussama Lassoued
+            </p>
+          </div>
           {/* Active Indicator */}
           <div
             ref={indicatorRef}
