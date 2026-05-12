@@ -147,12 +147,9 @@ export const MasterSequence: React.FC<MasterSequenceProps> = memo(({
         canvas.height = optimizedHeight;
       }
 
-      const isScene07 = drawableIndex >= scene07Start;
-      const isScene03 = drawableIndex >= l1 && drawableIndex < l1 + l2;
-
       drawCoverFrame(ctx, drawableImage, {
         zoomFactor: 1,
-        objectFit: isScene07 || isScene03 ? 'contain' : 'cover'
+        objectFit: 'cover'
       });
       lastDrawnIndex = drawableIndex;
     };
