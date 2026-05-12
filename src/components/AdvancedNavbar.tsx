@@ -458,6 +458,40 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
             </svg>
           </button>
 
+          {/* Mobile Music Toggle */}
+          {visibility.musicToggle ? (
+            <button
+              onClick={toggleMusic}
+              className={`md:hidden fixed top-4 right-20 z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
+                isLightMode
+                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
+                  : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
+              }`}
+              aria-label="Toggle Music"
+            >
+              {isMusicPlaying ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="5" y="6" width="3" height="12" rx="1.5" className="eq-bar" />
+                  <rect x="10.5" y="3" width="3" height="18" rx="1.5" className="eq-bar" />
+                  <rect x="16" y="8" width="3" height="8" rx="1.5" className="eq-bar" />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12h3l2.5-4 5 8 2.5-4h3"></path>
+                </svg>
+              )}
+            </button>
+          ) : null}
+
           {/* Mobile Menu Overlay */}
           {isMobileMenuOpen && (
             <div
