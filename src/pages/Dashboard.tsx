@@ -708,10 +708,9 @@ export const Dashboard: React.FC = () => {
         } catch (error) {
           console.error('Failed to fetch messages:', error);
         } finally {
-          setIsFetchingMessages(false);
+        setIsFetchingMessages(false);
         }
-  +++++++ REPLACE
-      };
+        };
 
       void loadMessages();
     }
