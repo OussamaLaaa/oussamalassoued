@@ -83,8 +83,9 @@ export const Footer: React.FC = () => {
   return (
     <footer className="w-full bg-white text-[#0a0a0b] border-t border-[#0a0a0b]/10 relative z-10 selection:bg-[#0a0a0b]/10 font-mono uppercase text-[10px] sm:text-[11px] tracking-[0.15em] leading-relaxed">
       <div className="site-shell py-12 md:py-16">
-        <div className="grid gap-8 lg:grid-cols-3 items-start">
-          <div className="flex flex-col gap-8">
+        <div className="grid gap-8 lg:grid-cols-2 items-center">
+          {/* Left Column: Email & Social Links */}
+          <div className="flex flex-col gap-6">
             {visibility.footerEmail ? (
               <a
                 href={`mailto:${footer.email}`}
@@ -124,6 +125,7 @@ export const Footer: React.FC = () => {
             ) : null}
           </div>
 
+          {/* Right Column: Navigation Links */}
           {visibility.footerNavLinks && syncedNavLinks.length > 0 ? (
             <ul className="flex flex-col gap-4">
               {syncedNavLinks.map((item) => (
@@ -139,20 +141,6 @@ export const Footer: React.FC = () => {
                 </li>
               ))}
             </ul>
-          ) : null}
-
-          {visibility.footerOffice ? (
-            <div className="flex flex-col gap-4">
-              <p className="text-[#0a0a0b] font-bold tracking-[0.2em]">{footer.officeTitle}</p>
-              <p className="text-[#0a0a0b]/60 leading-loose font-medium">
-                {footer.officeAddress.split('\n').map((line, idx) => (
-                  <React.Fragment key={`${line}-${idx}`}>
-                    {line}
-                    <br />
-                  </React.Fragment>
-                ))}
-              </p>
-            </div>
           ) : null}
         </div>
 
