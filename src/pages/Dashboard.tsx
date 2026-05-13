@@ -7163,7 +7163,6 @@ export const Dashboard: React.FC = () => {
                     setIsFetchingMessages(false);
                   }
                 }}
-  +++++++ REPLACE
                 disabled={isFetchingMessages}
                 className={`flex items-center gap-2 rounded-[10px] border px-3 py-2 text-xs font-medium transition-all ${
                   isFetchingMessages
@@ -7174,7 +7173,6 @@ export const Dashboard: React.FC = () => {
                 <RefreshCwIcon size={14} className={isFetchingMessages ? 'animate-spin' : ''} />
                 {isFetchingMessages ? 'Refreshing...' : 'Refresh'}
               </button>
-
               <button
                 type="button"
                 onClick={() => {

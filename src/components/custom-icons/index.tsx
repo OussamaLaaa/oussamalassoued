@@ -581,24 +581,47 @@ export const DownloadIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-// Upload Icon
-export const UploadIcon: React.FC<IconProps> = ({
-  size = 24,
-  strokeWidth = 1.5,
-  className = ''
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 8L12 3L17 8M12 3V15" />
-  </svg>
-);
+  // Upload Icon
+  export const UploadIcon: React.FC<IconProps> = ({
+    size = 24,
+    strokeWidth = 1.5,
+    className = ''
+  }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M7 8L12 3L17 8M12 3V15" />
+    </svg>
+  );
+
+  // RefreshCw Icon
+  export const RefreshCwIcon: React.FC<IconProps> = ({
+    size = 24,
+    strokeWidth = 1.5,
+    className = ''
+  }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M3 12C3 13.78 3.52784 15.5201 4.51677 17.0001C5.50571 18.4802 6.91131 19.6337 8.55585 20.3149C10.2004 20.9961 12.01 21.1743 13.7558 20.8271C15.5016 20.4798 17.1053 19.6226 18.364 18.364C19.6226 17.1053 20.4798 15.5016 20.8271 13.7558C21.1743 12.01 20.9961 10.2004 20.3149 8.55585C19.6337 6.91131 18.4802 5.50571 17.0001 4.51677C15.5201 3.52784 13.78 3 12 3C9.48395 3.00947 7.06897 3.99122 5.26 5.74L3 8M8 8H3V3" />
+      <path d="M21 12C21 10.22 20.4722 8.47991 19.4832 6.99991C18.4943 5.51982 17.0887 4.36633 15.4442 3.68514C13.7996 3.00395 11.99 2.82573 10.2442 3.17291C8.49844 3.52009 6.89474 4.37736 5.636 5.636C4.37736 6.89474 3.52009 8.49844 3.17291 10.2442C2.82573 11.99 3.00395 13.7996 3.68514 15.4442C4.36633 17.0887 5.51982 18.4943 6.99991 19.4832C8.47991 20.4722 10.22 21 12 21C14.516 20.9905 16.931 20.0088 18.74 18.26L21 16M16 16H21V21" />
+    </svg>
+  );
