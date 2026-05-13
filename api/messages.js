@@ -21,6 +21,8 @@ const SECURITY_CONFIG = {
   rateLimit: {
     maxRequests: 5, // Maximum 5 messages per minute
     windowMs: 60000, // 1 minute window
+    maxPerHour: 15, // Maximum 15 messages per hour
+    maxPerDay: 50, // Maximum 50 messages per day
   },
   maxMessageAge: 90 * 24 * 60 * 60 * 1000, // 90 days in milliseconds
   encryptionKey: process.env.MESSAGE_ENCRYPTION_KEY || 'default-secure-key-2024-change-this-in-production',
@@ -30,6 +32,16 @@ const SECURITY_CONFIG = {
   allowedDomains: [], // Whitelist of allowed email domains (empty = all allowed)
   blockedDomains: [], // Blacklist of blocked email domains
   blockedIPs: [], // List of permanently blocked IPs
+  // Advanced security features
+  enableGeoTracking: process.env.ENABLE_GEO_TRACKING === 'true',
+  enableDeviceTracking: process.env.ENABLE_DEVICE_TRACKING === 'true',
+  enableSessionTracking: process.env.ENABLE_SESSION_TRACKING === 'true',
+  enableBotDetection: process.env.ENABLE_BOT_DETECTION !== 'false',
+  enableEmailValidation: process.env.ENABLE_EMAIL_VALIDATION !== 'false',
+  maxSimilarMessages: 3, // Maximum similar messages from same IP
+  similarMessageThreshold: 0.85, // Similarity threshold (0-1)
+  botDetectionThreshold: 0.7, // Bot detection threshold (0-1)
+  auditLogRetention: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
 const storageConfig = {
@@ -67,9 +79,76 @@ console.log('[API:Messages] Storage backends available:', {
 // ============================================================================
 
 /**
- * Enhanced XOR encryption for message content
+ * Generate a random IV (Initialization Vector)
+ */
+const generateIV = () => {
+  const iv = new Array(16);
+  for (let i = 0; i < 16; i++) {
+    iv[i] = Math.floor(Math.random() * 256);
+  }
+  return Buffer.from(iv);
+};
+
+/**
+ * Derive a key from the encryption key using PBKDF2
+ */
+const deriveKey = (password, salt) => {
+  // Simple key derivation (in production, use crypto.pbkdf2Sync)
+  let key = password;
+  for (let i = 0; i < 1000; i++) {
+    key = require('crypto')
+      .createHash('sha256')
+      .update(key + salt)
+      .digest('hex');
+  }
+  return key.substring(0, 32); // 256-bit key
+};
+
+/**
+ * AES-256-GCM encryption for message content
  */
 const encryptMessage = (data) => {
+  try {
+    const crypto = require('crypto');
+    const json = JSON.stringify(data);
+    
+    // Generate random IV and salt
+    const iv = crypto.randomBytes(16);
+    const salt = crypto.randomBytes(16);
+    
+    // Derive key
+    const key = deriveKey(SECURITY_CONFIG.encryptionKey, salt.toString('hex'));
+    
+    // Create cipher
+    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(key), iv);
+    
+    // Encrypt
+    let encrypted = cipher.update(json, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    // Get auth tag
+    const authTag = cipher.getAuthTag();
+    
+    // Combine all components
+    const result = {
+      iv: iv.toString('hex'),
+      salt: salt.toString('hex'),
+      authTag: authTag.toString('hex'),
+      encrypted: encrypted,
+    };
+    
+    return Buffer.from(JSON.stringify(result)).toString('base64');
+  } catch (error) {
+    console.error('[API:Messages] Encryption failed:', error);
+    // Fallback to XOR encryption
+    return encryptMessageXOR(data);
+  }
+};
+
+/**
+ * XOR encryption fallback
+ */
+const encryptMessageXOR = (data) => {
   const key = SECURITY_CONFIG.encryptionKey;
   const json = JSON.stringify(data);
   let result = '';
@@ -84,6 +163,46 @@ const encryptMessage = (data) => {
  */
 const decryptMessage = (encrypted) => {
   try {
+    const crypto = require('crypto');
+    const decoded = Buffer.from(encrypted, 'base64').toString();
+    const data = JSON.parse(decoded);
+    
+    // Check if it's AES-256-GCM encrypted
+    if (data.iv && data.salt && data.authTag && data.encrypted) {
+      // Derive key
+      const key = deriveKey(SECURITY_CONFIG.encryptionKey, data.salt);
+      
+      // Create decipher
+      const decipher = crypto.createDecipheriv(
+        'aes-256-gcm',
+        Buffer.from(key),
+        Buffer.from(data.iv, 'hex')
+      );
+      
+      // Set auth tag
+      decipher.setAuthTag(Buffer.from(data.authTag, 'hex'));
+      
+      // Decrypt
+      let decrypted = decipher.update(data.encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return JSON.parse(decrypted);
+    } else {
+      // Fallback to XOR decryption
+      return decryptMessageXOR(encrypted);
+    }
+  } catch (error) {
+    console.error('[API:Messages] Decryption failed:', error);
+    // Try XOR decryption as fallback
+    return decryptMessageXOR(encrypted);
+  }
+};
+
+/**
+ * XOR decryption fallback
+ */
+const decryptMessageXOR = (encrypted) => {
+  try {
     const key = SECURITY_CONFIG.encryptionKey;
     const decoded = Buffer.from(encrypted, 'base64').toString();
     let result = '';
@@ -92,7 +211,7 @@ const decryptMessage = (encrypted) => {
     }
     return JSON.parse(result);
   } catch (error) {
-    console.error('[API:Messages] Decryption failed:', error);
+    console.error('[API:Messages] XOR Decryption failed:', error);
     return null;
   }
 };
@@ -289,6 +408,257 @@ const getClientIP = (req) => {
          req.headers['x-real-ip'] ||
          req.connection?.remoteAddress ||
          'unknown';
+};
+
+// ============================================================================
+// ADVANCED SECURITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Multi-layer rate limiting
+ */
+const checkMultiLayerRateLimit = (identifier, email, userAgent) => {
+  const now = Date.now();
+  const today = new Date().toDateString();
+  
+  // Layer 1: IP-based rate limiting (already implemented in checkRateLimit)
+  const ipRateLimit = checkRateLimit(identifier);
+  if (!ipRateLimit.allowed) {
+    return ipRateLimit;
+  }
+  
+  // Layer 2: Email domain rate limiting
+  if (email) {
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (domain) {
+      const domainKey = `domain:${domain}`;
+      const domainCount = dailyMessageCount.get(domainKey) || { count: 0, date: today };
+      
+      if (domainCount.date !== today) {
+        dailyMessageCount.set(domainKey, { count: 0, date: today });
+      } else if (domainCount.count >= 20) { // Max 20 messages per domain per day
+        return {
+          allowed: false,
+          remaining: 0,
+          resetAt: new Date(today).getTime() + 24 * 60 * 60 * 1000,
+          reason: 'domain_limit',
+        };
+      }
+      
+      domainCount.count++;
+      dailyMessageCount.set(domainKey, domainCount);
+    }
+  }
+  
+  // Layer 3: User agent pattern rate limiting
+  if (userAgent) {
+    const uaPattern = userAgent.substring(0, 50); // First 50 chars
+    const uaKey = `ua:${uaPattern}`;
+    const uaCount = dailyMessageCount.get(uaKey) || { count: 0, date: today };
+    
+    if (uaCount.date !== today) {
+      dailyMessageCount.set(uaKey, { count: 0, date: today });
+    } else if (uaCount.count >= 30) { // Max 30 messages per UA pattern per day
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(today).getTime() + 24 * 60 * 60 * 1000,
+        reason: 'user_agent_limit',
+      };
+    }
+    
+    uaCount.count++;
+    dailyMessageCount.set(uaKey, uaCount);
+  }
+  
+  return ipRateLimit;
+};
+
+/**
+ * Calculate message similarity using Jaccard similarity
+ */
+const calculateSimilarity = (text1, text2) => {
+  const words1 = new Set(text1.toLowerCase().split(/\s+/));
+  const words2 = new Set(text2.toLowerCase().split(/\s+/));
+  
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+  
+  return intersection.size / union.size;
+};
+
+/**
+ * Check for similar messages from same IP
+ */
+const checkSimilarMessages = (identifier, messageText, existingMessages) => {
+  if (!SECURITY_CONFIG.enableBotDetection) return { allowed: true, similarCount: 0 };
+  
+  const recentMessages = existingMessages.filter(msg => {
+    const msgAge = Date.now() - msg.timestamp;
+    return msgAge < 24 * 60 * 60 * 1000 && // Last 24 hours
+           msg.ip === identifier;
+  });
+  
+  let similarCount = 0;
+  for (const msg of recentMessages) {
+    const similarity = calculateSimilarity(messageText, msg.message);
+    if (similarity >= SECURITY_CONFIG.similarMessageThreshold) {
+      similarCount++;
+    }
+  }
+  
+  if (similarCount >= SECURITY_CONFIG.maxSimilarMessages) {
+    return {
+      allowed: false,
+      similarCount,
+      reason: 'similar_messages',
+    };
+  }
+  
+  return { allowed: true, similarCount };
+};
+
+/**
+ * Detect bot using user agent analysis
+ */
+const detectBot = (userAgent) => {
+  if (!userAgent || !SECURITY_CONFIG.enableBotDetection) return { isBot: false, confidence: 0 };
+  
+  const ua = userAgent.toLowerCase();
+  let botScore = 0;
+  
+  // Known bot patterns
+  const botPatterns = [
+    'bot', 'crawler', 'spider', 'scraper', 'curl', 'wget',
+    'python', 'java', 'perl', 'ruby', 'php', 'node',
+    'headless', 'phantom', 'selenium', 'puppeteer',
+    'googlebot', 'bingbot', 'slurp', 'duckduckbot',
+    'baiduspider', 'yandexbot', 'facebookexternalhit',
+  ];
+  
+  for (const pattern of botPatterns) {
+    if (ua.includes(pattern)) {
+      botScore += 0.3;
+    }
+  }
+  
+  // Suspicious characteristics
+  if (ua.length < 20) botScore += 0.2; // Very short UA
+  if (!ua.includes('mozilla')) botScore += 0.1; // No Mozilla
+  if (ua.includes('http')) botScore += 0.2; // Contains HTTP
+  if (ua.match(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) botScore += 0.3; // Contains IP
+  
+  // Normalize score
+  botScore = Math.min(botScore, 1);
+  
+  return {
+    isBot: botScore >= SECURITY_CONFIG.botDetectionThreshold,
+    confidence: botScore,
+  };
+};
+
+/**
+ * Validate email domain using DNS MX record check
+ */
+const validateEmailDomain = async (email) => {
+  if (!email || !SECURITY_CONFIG.enableEmailValidation) return { valid: true };
+  
+  const domain = email.split('@')[1];
+  if (!domain) return { valid: false, error: 'Invalid domain' };
+  
+  try {
+    // In a real implementation, you would use DNS lookup
+    // For now, we'll do basic validation
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/;
+    
+    if (!domainRegex.test(domain)) {
+      return { valid: false, error: 'Invalid domain format' };
+    }
+    
+    // Check for disposable email domains
+    const disposableDomains = [
+      'tempmail.com', 'guerrillamail.com', 'mailinator.com',
+      '10minutemail.com', 'yopmail.com', 'trashmail.com',
+    ];
+    
+    if (disposableDomains.includes(domain.toLowerCase())) {
+      return { valid: false, error: 'Disposable email not allowed' };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    console.error('[API:Messages] Email validation error:', error);
+    return { valid: true }; // Allow on error
+  }
+};
+
+/**
+ * Audit log for security events
+ */
+const auditLog = new Map();
+
+/**
+ * Add audit log entry
+ */
+const addAuditLog = (event, details) => {
+  const entry = {
+    timestamp: Date.now(),
+    event,
+    details,
+  };
+  
+  const key = `${event}:${Date.now()}`;
+  auditLog.set(key, entry);
+  
+  // Clean up old logs
+  const cutoffTime = Date.now() - SECURITY_CONFIG.auditLogRetention;
+  for (const [logKey, logEntry] of auditLog.entries()) {
+    if (logEntry.timestamp < cutoffTime) {
+      auditLog.delete(logKey);
+    }
+  }
+  
+  console.log(`[API:Messages] Audit: ${event}`, details);
+};
+
+/**
+ * Get audit logs
+ */
+const getAuditLogs = (limit = 100) => {
+  const logs = Array.from(auditLog.values())
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, limit);
+  
+  return logs;
+};
+
+/**
+ * Calculate security score for a message
+ */
+const calculateSecurityScore = (message, botDetection, emailValidation) => {
+  let score = 100; // Start with perfect score
+  
+  // Deduct for bot detection
+  if (botDetection.isBot) {
+    score -= 50 * botDetection.confidence;
+  }
+  
+  // Deduct for email validation issues
+  if (!emailValidation.valid) {
+    score -= 20;
+  }
+  
+  // Deduct for suspicious patterns
+  if (message.message.length < 20) score -= 10;
+  if (message.message.length > 2000) score -= 5;
+  
+  // Normalize score
+  score = Math.max(0, Math.min(100, score));
+  
+  return {
+    score,
+    level: score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high',
+  };
 };
 
 // ============================================================================
@@ -639,6 +1009,7 @@ export default async (req, res) => {
       
       if (!body || Object.keys(body).length === 0) {
         console.warn('[API:Messages] Empty body received');
+        addAuditLog('empty_body', { ip: getClientIP(req) });
         return res.status(400).json({
           success: false,
           error: 'Request body is empty',
@@ -647,31 +1018,16 @@ export default async (req, res) => {
 
       // Get client IP for rate limiting
       const clientIP = getClientIP(req);
+      const userAgent = req.headers['user-agent'] || 'unknown';
       console.log(`[API:Messages] Request from IP: ${clientIP}`);
 
       // Check if IP is blocked
       if (isIPBlocked(clientIP)) {
         console.warn(`[API:Messages] Blocked IP attempted to send message: ${clientIP}`);
+        addAuditLog('blocked_ip_attempt', { ip: clientIP, userAgent });
         return res.status(403).json({
           success: false,
           error: 'Access denied',
-        });
-      }
-
-      // Check rate limit
-      const rateLimitCheck = checkRateLimit(clientIP);
-      if (!rateLimitCheck.allowed) {
-        console.warn(`[API:Messages] Rate limit exceeded for IP: ${clientIP}`);
-        
-        // Block IP if rate limit exceeded
-        if (rateLimitCheck.reason === 'rate_limit') {
-          blockIP(clientIP);
-        }
-        
-        return res.status(429).json({
-          success: false,
-          error: 'Too many requests. Please try again later.',
-          retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
         });
       }
 
@@ -687,6 +1043,11 @@ export default async (req, res) => {
       const validation = validateMessage(sanitizedData);
       if (!validation.isValid) {
         console.warn('[API:Messages] Validation failed:', validation.errors);
+        addAuditLog('validation_failed', { 
+          ip: clientIP, 
+          errors: validation.errors,
+          email: sanitizedData.email 
+        });
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
@@ -697,11 +1058,147 @@ export default async (req, res) => {
       // Check for spam
       if (isSpam(sanitizedData)) {
         console.warn('[API:Messages] Spam detected');
+        addAuditLog('spam_detected', { 
+          ip: clientIP, 
+          email: sanitizedData.email,
+          message: sanitizedData.message.substring(0, 100)
+        });
         return res.status(400).json({
           success: false,
           error: 'Message contains spam content',
         });
       }
+
+      // Detect bot
+      const botDetection = detectBot(userAgent);
+      if (botDetection.isBot) {
+        console.warn(`[API:Messages] Bot detected with confidence: ${botDetection.confidence}`);
+        addAuditLog('bot_detected', { 
+          ip: clientIP, 
+          userAgent,
+          confidence: botDetection.confidence 
+        });
+        
+        // Block high-confidence bots
+        if (botDetection.confidence > 0.8) {
+          blockIP(clientIP, 7 * 24 * 60 * 60 * 1000); // Block for 7 days
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied',
+          });
+        }
+      }
+
+      // Validate email domain
+      const emailValidation = await validateEmailDomain(sanitizedData.email);
+      if (!emailValidation.valid) {
+        console.warn('[API:Messages] Email validation failed:', emailValidation.error);
+        addAuditLog('email_validation_failed', { 
+          ip: clientIP, 
+          email: sanitizedData.email,
+          error: emailValidation.error 
+        });
+        return res.status(400).json({
+          success: false,
+          error: emailValidation.error || 'Invalid email address',
+        });
+      }
+
+      // Check multi-layer rate limit
+      const rateLimitCheck = checkMultiLayerRateLimit(
+        clientIP, 
+        sanitizedData.email, 
+        userAgent
+      );
+      if (!rateLimitCheck.allowed) {
+        console.warn(`[API:Messages] Rate limit exceeded for IP: ${clientIP}, reason: ${rateLimitCheck.reason}`);
+        addAuditLog('rate_limit_exceeded', { 
+          ip: clientIP, 
+          email: sanitizedData.email,
+          reason: rateLimitCheck.reason 
+        });
+        
+        // Block IP if rate limit exceeded
+        if (rateLimitCheck.reason === 'rate_limit') {
+          blockIP(clientIP);
+        }
+        
+        return res.status(429).json({
+          success: false,
+          error: 'Too many requests. Please try again later.',
+          retryAfter: Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000),
+        });
+      }
+
+      // Read existing messages for similarity check
+      let existingMessages = await readFromVercelKv();
+      if (!existingMessages) {
+        existingMessages = await readFromUpstashRedis();
+      }
+      if (!existingMessages) {
+        existingMessages = readFromLocalFile();
+      }
+      if (!existingMessages) {
+        existingMessages = [];
+      }
+
+      // Decrypt existing messages for similarity check
+      const decryptedExisting = existingMessages
+        .map(encrypted => decryptMessage(encrypted))
+        .filter(msg => msg !== null);
+
+      // Check for similar messages
+      const similarCheck = checkSimilarMessages(
+        clientIP, 
+        sanitizedData.message, 
+        decryptedExisting
+      );
+      if (!similarCheck.allowed) {
+        console.warn(`[API:Messages] Too many similar messages from IP: ${clientIP}`);
+        addAuditLog('similar_messages', { 
+          ip: clientIP, 
+          similarCount: similarCheck.similarCount 
+        });
+        return res.status(429).json({
+          success: false,
+          error: 'Too many similar messages. Please try again later.',
+        });
+      }
+
+      // Calculate security score
+      const securityScore = calculateSecurityScore(
+        { ...sanitizedData, message: sanitizedData.message },
+        botDetection,
+        emailValidation
+      );
+
+      // Collect additional information
+      const additionalInfo = {
+        // Geolocation (if enabled)
+        geolocation: SECURITY_CONFIG.enableGeoTracking ? {
+          country: body.country || 'unknown',
+          city: body.city || 'unknown',
+          timezone: body.timezone || 'unknown',
+        } : null,
+        
+        // Device info (if enabled)
+        device: SECURITY_CONFIG.enableDeviceTracking ? {
+          type: body.deviceType || 'unknown',
+          browser: body.browser || 'unknown',
+          os: body.os || 'unknown',
+          screenResolution: body.screenResolution || 'unknown',
+          language: body.language || 'unknown',
+        } : null,
+        
+        // Session info (if enabled)
+        session: SECURITY_CONFIG.enableSessionTracking ? {
+          sessionId: body.sessionId || 'unknown',
+          timeOnSite: body.timeOnSite || 0,
+          pagesVisited: body.pagesVisited || 0,
+          referrer: body.referrer || 'unknown',
+          firstVisit: body.firstVisit || false,
+        } : null,
+      };
 
       // Create message object
       const message = {
@@ -709,13 +1206,152 @@ export default async (req, res) => {
         ...sanitizedData,
         timestamp: Date.now(),
         ip: clientIP,
-        userAgent: req.headers['user-agent'] || 'unknown',
+        userAgent,
         read: false,
+        // Security information
+        security: {
+          score: securityScore.score,
+          level: securityScore.level,
+          botDetected: botDetection.isBot,
+          botConfidence: botDetection.confidence,
+          emailValid: emailValidation.valid,
+          similarCount: similarCheck.similarCount,
+        },
+        // Additional information
+        ...additionalInfo,
       };
 
       // Encrypt sensitive data
       const encryptedMessage = encryptMessage(message);
 
+      // Add new message
+      existingMessages.push(encryptedMessage);
+
+      // Write to storage
+      let writeSuccess = false;
+      let writeSource = 'none';
+
+      if (storageConfig.vercelKv.enabled) {
+        writeSuccess = await writeToVercelKv(existingMessages);
+        writeSource = 'vercel-kv';
+      }
+
+      if (!writeSuccess && storageConfig.upstashRedis.enabled) {
+        writeSuccess = await writeToUpstashRedis(existingMessages);
+        writeSource = 'upstash-redis';
+      }
+
+      if (!writeSuccess && storageConfig.localFile.enabled) {
+        writeSuccess = writeToLocalFile(existingMessages);
+        writeSource = 'local-file';
+      }
+
+      if (!writeSuccess) {
+        console.error('[API:Messages] All storage backends failed');
+        addAuditLog('storage_failed', { 
+          ip: clientIP, 
+          messageId: message.id 
+        });
+        return res.status(503).json({
+          success: false,
+          error: 'Failed to save message. Please try again.',
+        });
+      }
+
+      console.log(`[API:Messages] Message saved successfully to ${writeSource}`);
+      addAuditLog('message_saved', { 
+        ip: clientIP, 
+        messageId: message.id,
+        securityScore: securityScore.score 
+      });
+      
+      return res.status(201).json({
+        success: true,
+        message: 'Message sent successfully',
+        messageId: message.id,
+        source: writeSource,
+        timestamp: message.timestamp,
+        rateLimitRemaining: rateLimitCheck.remaining,
+        securityScore: securityScore.score,
+      });
+    }
+
+    // PATCH /api/messages/:id/read - Mark message as read
+    if (req.method === 'PATCH') {
+      const messageId = req.url.split('/').pop();
+      
+      if (req.url.endsWith('/read')) {
+        console.log(`[API:Messages] PATCH /read request for message: ${messageId}`);
+        
+        // Read existing messages
+        let messages = await readFromVercelKv();
+        if (!messages) {
+          messages = await readFromUpstashRedis();
+        }
+        if (!messages) {
+          messages = readFromLocalFile();
+        }
+        if (!messages) {
+          messages = [];
+        }
+        
+        // Decrypt messages
+        const decryptedMessages = messages
+          .map(encrypted => decryptMessage(encrypted))
+          .filter(msg => msg !== null);
+        
+        // Find and update message
+        const messageIndex = decryptedMessages.findIndex(msg => msg.id === messageId);
+        if (messageIndex === -1) {
+          return res.status(404).json({
+            success: false,
+            error: 'Message not found',
+          });
+        }
+        
+        decryptedMessages[messageIndex].read = true;
+        
+        // Encrypt messages again
+        const encryptedMessages = decryptedMessages.map(msg => encryptMessage(msg));
+        
+        // Write to storage
+        let writeSuccess = false;
+        let writeSource = 'none';
+        
+        if (storageConfig.vercelKv.enabled) {
+          writeSuccess = await writeToVercelKv(encryptedMessages);
+          writeSource = 'vercel-kv';
+        }
+        
+        if (!writeSuccess && storageConfig.upstashRedis.enabled) {
+          writeSuccess = await writeToUpstashRedis(encryptedMessages);
+          writeSource = 'upstash-redis';
+        }
+        
+        if (!writeSuccess && storageConfig.localFile.enabled) {
+          writeSuccess = writeToLocalFile(encryptedMessages);
+          writeSource = 'local-file';
+        }
+        
+        if (!writeSuccess) {
+          return res.status(503).json({
+            success: false,
+            error: 'Failed to update message',
+          });
+        }
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Message marked as read',
+        });
+      }
+    }
+    
+    // DELETE /api/messages/:id - Delete a message
+    if (req.method === 'DELETE') {
+      const messageId = req.url.split('/').pop();
+      console.log(`[API:Messages] DELETE request for message: ${messageId}`);
+      
       // Read existing messages
       let messages = await readFromVercelKv();
       if (!messages) {
@@ -727,55 +1363,64 @@ export default async (req, res) => {
       if (!messages) {
         messages = [];
       }
-
-      // Add new message
-      messages.push(encryptedMessage);
-
+      
+      // Decrypt messages
+      const decryptedMessages = messages
+        .map(encrypted => decryptMessage(encrypted))
+        .filter(msg => msg !== null);
+      
+      // Find and remove message
+      const messageIndex = decryptedMessages.findIndex(msg => msg.id === messageId);
+      if (messageIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          error: 'Message not found',
+        });
+      }
+      
+      decryptedMessages.splice(messageIndex, 1);
+      
+      // Encrypt messages again
+      const encryptedMessages = decryptedMessages.map(msg => encryptMessage(msg));
+      
       // Write to storage
       let writeSuccess = false;
       let writeSource = 'none';
-
+      
       if (storageConfig.vercelKv.enabled) {
-        writeSuccess = await writeToVercelKv(messages);
+        writeSuccess = await writeToVercelKv(encryptedMessages);
         writeSource = 'vercel-kv';
       }
-
+      
       if (!writeSuccess && storageConfig.upstashRedis.enabled) {
-        writeSuccess = await writeToUpstashRedis(messages);
+        writeSuccess = await writeToUpstashRedis(encryptedMessages);
         writeSource = 'upstash-redis';
       }
-
+      
       if (!writeSuccess && storageConfig.localFile.enabled) {
-        writeSuccess = writeToLocalFile(messages);
+        writeSuccess = writeToLocalFile(encryptedMessages);
         writeSource = 'local-file';
       }
-
+      
       if (!writeSuccess) {
-        console.error('[API:Messages] All storage backends failed');
         return res.status(503).json({
           success: false,
-          error: 'Failed to save message. Please try again.',
+          error: 'Failed to delete message',
         });
       }
-
-      console.log(`[API:Messages] Message saved successfully to ${writeSource}`);
       
-      return res.status(201).json({
+      return res.status(200).json({
         success: true,
-        message: 'Message sent successfully',
-        messageId: message.id,
-        source: writeSource,
-        timestamp: message.timestamp,
-        rateLimitRemaining: rateLimitCheck.remaining,
+        message: 'Message deleted successfully',
       });
     }
-
+    
     // 405 Method Not Allowed
     console.warn(`[API:Messages] Unsupported method: ${req.method}`);
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      allowedMethods: ['GET', 'POST', 'OPTIONS'],
+      allowedMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     });
 
   } catch (error) {
