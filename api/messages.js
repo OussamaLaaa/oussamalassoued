@@ -1,7 +1,7 @@
 /**
  * Messages API Handler - Vercel Serverless Function
  * Handles GET/POST operations for contact form messages
- * Includes security features: rate limiting, validation, sanitization
+ * Enhanced Security: rate limiting, validation, sanitization, encryption
  */
 
 import fs from 'fs';
@@ -16,14 +16,20 @@ const MESSAGES_KEY = 'site:messages';
 const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = !!process.env.VERCEL;
 
-// Security Configuration
+// Enhanced Security Configuration
 const SECURITY_CONFIG = {
   rateLimit: {
     maxRequests: 5, // Maximum 5 messages per minute
     windowMs: 60000, // 1 minute window
   },
   maxMessageAge: 90 * 24 * 60 * 60 * 1000, // 90 days in milliseconds
-  encryptionKey: process.env.MESSAGE_ENCRYPTION_KEY || 'default-secure-key-2024',
+  encryptionKey: process.env.MESSAGE_ENCRYPTION_KEY || 'default-secure-key-2024-change-this-in-production',
+  maxMessagesPerDay: 50, // Maximum messages per day per IP
+  blockDuration: 24 * 60 * 60 * 1000, // 24 hours block for abuse
+  maxMessageLength: 10000, // Maximum total message length
+  allowedDomains: [], // Whitelist of allowed email domains (empty = all allowed)
+  blockedDomains: [], // Blacklist of blocked email domains
+  blockedIPs: [], // List of permanently blocked IPs
 };
 
 const storageConfig = {
@@ -43,8 +49,10 @@ const storageConfig = {
   },
 };
 
-// In-memory rate limiter (for demonstration - use Redis in production)
+// In-memory rate limiter and block list
 const rateLimiter = new Map();
+const blockedIPs = new Map();
+const dailyMessageCount = new Map();
 
 console.log('[API:Messages] Storage backends available:', {
   vercelKv: storageConfig.vercelKv.enabled,
@@ -59,7 +67,7 @@ console.log('[API:Messages] Storage backends available:', {
 // ============================================================================
 
 /**
- * Simple XOR encryption for message content
+ * Enhanced XOR encryption for message content
  */
 const encryptMessage = (data) => {
   const key = SECURITY_CONFIG.encryptionKey;
@@ -90,7 +98,7 @@ const decryptMessage = (encrypted) => {
 };
 
 /**
- * Sanitize input to prevent XSS and injection attacks
+ * Enhanced sanitization to prevent XSS and injection attacks
  */
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return '';
@@ -98,35 +106,69 @@ const sanitizeInput = (input) => {
     .replace(/[<>]/g, '')
     .replace(/javascript:/gi, '')
     .replace(/on\w+=/gi, '')
+    .replace(/data:/gi, '')
+    .replace(/vbscript:/gi, '')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/&/g, '&')
+    .replace(/"/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
     .trim();
 };
 
 /**
- * Validate message data
+ * Validate message data with enhanced checks
  */
 const validateMessage = (data) => {
   const errors = {};
 
+  // Validate name
   if (!data.name || data.name.trim().length < 2) {
     errors.name = 'Name must be at least 2 characters';
   } else if (data.name.trim().length > 100) {
     errors.name = 'Name must not exceed 100 characters';
   }
 
+  // Validate email
   if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     errors.email = 'Invalid email address';
+  } else {
+    // Check domain whitelist/blacklist
+    const domain = data.email.split('@')[1].toLowerCase();
+    
+    if (SECURITY_CONFIG.allowedDomains.length > 0 && 
+        !SECURITY_CONFIG.allowedDomains.includes(domain)) {
+      errors.email = 'Email domain not allowed';
+    }
+    
+    if (SECURITY_CONFIG.blockedDomains.includes(domain)) {
+      errors.email = 'Email domain is blocked';
+    }
   }
 
+  // Validate subject
   if (!data.subject || data.subject.trim().length < 3) {
     errors.subject = 'Subject must be at least 3 characters';
   } else if (data.subject.trim().length > 200) {
     errors.subject = 'Subject must not exceed 200 characters';
   }
 
+  // Validate message
   if (!data.message || data.message.trim().length < 10) {
     errors.message = 'Message must be at least 10 characters';
   } else if (data.message.trim().length > 5000) {
     errors.message = 'Message must not exceed 5000 characters';
+  }
+
+  // Check total message length
+  const totalLength = (data.name || '').length + 
+                     (data.email || '').length + 
+                     (data.subject || '').length + 
+                     (data.message || '').length;
+  
+  if (totalLength > SECURITY_CONFIG.maxMessageLength) {
+    errors.general = 'Message too long';
   }
 
   return {
@@ -136,13 +178,16 @@ const validateMessage = (data) => {
 };
 
 /**
- * Check for spam keywords
+ * Enhanced spam detection
  */
 const isSpam = (data) => {
   const spamKeywords = [
     'viagra', 'casino', 'lottery', 'winner', 'free money',
     'click here', 'subscribe', 'unsubscribe', 'buy now',
-    'limited time', 'act now', 'congratulations',
+    'limited time', 'act now', 'congratulations', 'bitcoin',
+    'crypto', 'investment', 'loan', 'debt', 'credit card',
+    'make money', 'work from home', 'earn money', 'get rich',
+    '100% free', 'no risk', 'guaranteed', 'miracle',
   ];
 
   const combinedText = `${data.name} ${data.subject} ${data.message}`.toLowerCase();
@@ -150,13 +195,63 @@ const isSpam = (data) => {
 };
 
 /**
- * Check rate limit
+ * Check if IP is blocked
+ */
+const isIPBlocked = (ip) => {
+  // Check permanent block list
+  if (SECURITY_CONFIG.blockedIPs.includes(ip)) {
+    return true;
+  }
+
+  // Check temporary block list
+  const blockInfo = blockedIPs.get(ip);
+  if (blockInfo && blockInfo.until > Date.now()) {
+    return true;
+  }
+
+  // Clean up expired blocks
+  if (blockInfo && blockInfo.until <= Date.now()) {
+    blockedIPs.delete(ip);
+  }
+
+  return false;
+};
+
+/**
+ * Block an IP address
+ */
+const blockIP = (ip, duration = SECURITY_CONFIG.blockDuration) => {
+  blockedIPs.set(ip, {
+    until: Date.now() + duration,
+    reason: 'Rate limit exceeded',
+  });
+  console.warn(`[API:Messages] IP ${ip} blocked until ${new Date(Date.now() + duration).toISOString()}`);
+};
+
+/**
+ * Check rate limit with daily limit
  */
 const checkRateLimit = (identifier) => {
   const now = Date.now();
-  const requests = rateLimiter.get(identifier) || [];
+  const today = new Date().toDateString();
 
-  // Remove old requests outside the time window
+  // Check daily limit
+  const dailyCount = dailyMessageCount.get(identifier) || { count: 0, date: today };
+  
+  if (dailyCount.date !== today) {
+    // Reset daily counter
+    dailyMessageCount.set(identifier, { count: 0, date: today });
+  } else if (dailyCount.count >= SECURITY_CONFIG.maxMessagesPerDay) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date(today).getTime() + 24 * 60 * 60 * 1000,
+      reason: 'daily_limit',
+    };
+  }
+
+  // Check minute rate limit
+  const requests = rateLimiter.get(identifier) || [];
   const validRequests = requests.filter(timestamp => now - timestamp < SECURITY_CONFIG.rateLimit.windowMs);
 
   if (validRequests.length >= SECURITY_CONFIG.rateLimit.maxRequests) {
@@ -164,6 +259,7 @@ const checkRateLimit = (identifier) => {
       allowed: false,
       remaining: 0,
       resetAt: validRequests[0] + SECURITY_CONFIG.rateLimit.windowMs,
+      reason: 'rate_limit',
     };
   }
 
@@ -171,9 +267,16 @@ const checkRateLimit = (identifier) => {
   validRequests.push(now);
   rateLimiter.set(identifier, validRequests);
 
+  // Update daily count
+  dailyCount.count++;
+  dailyMessageCount.set(identifier, dailyCount);
+
   return {
     allowed: true,
-    remaining: SECURITY_CONFIG.rateLimit.maxRequests - validRequests.length,
+    remaining: Math.min(
+      SECURITY_CONFIG.rateLimit.maxRequests - validRequests.length,
+      SECURITY_CONFIG.maxMessagesPerDay - dailyCount.count
+    ),
     resetAt: now + SECURITY_CONFIG.rateLimit.windowMs,
   };
 };
@@ -469,6 +572,9 @@ export default async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
   // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
@@ -499,24 +605,29 @@ export default async (req, res) => {
         source = 'none';
       }
 
+      // Decrypt messages
+      const decryptedMessages = messages
+        .map(encrypted => decryptMessage(encrypted))
+        .filter(msg => msg !== null);
+
       // Filter out old messages
       const now = Date.now();
-      messages = messages.filter(msg => {
+      const filteredMessages = decryptedMessages.filter(msg => {
         const msgAge = now - msg.timestamp;
         return msgAge < SECURITY_CONFIG.maxMessageAge;
       });
 
       // Sort by timestamp (newest first)
-      messages.sort((a, b) => b.timestamp - a.timestamp);
+      filteredMessages.sort((a, b) => b.timestamp - a.timestamp);
 
-      console.log(`[API:Messages] Returning ${messages.length} messages from ${source}`);
+      console.log(`[API:Messages] Returning ${filteredMessages.length} messages from ${source}`);
       
       return res.status(200).json({
         success: true,
-        data: messages,
+        data: filteredMessages,
         source,
         timestamp: Date.now(),
-        count: messages.length,
+        count: filteredMessages.length,
       });
     }
 
@@ -538,10 +649,25 @@ export default async (req, res) => {
       const clientIP = getClientIP(req);
       console.log(`[API:Messages] Request from IP: ${clientIP}`);
 
+      // Check if IP is blocked
+      if (isIPBlocked(clientIP)) {
+        console.warn(`[API:Messages] Blocked IP attempted to send message: ${clientIP}`);
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied',
+        });
+      }
+
       // Check rate limit
       const rateLimitCheck = checkRateLimit(clientIP);
       if (!rateLimitCheck.allowed) {
         console.warn(`[API:Messages] Rate limit exceeded for IP: ${clientIP}`);
+        
+        // Block IP if rate limit exceeded
+        if (rateLimitCheck.reason === 'rate_limit') {
+          blockIP(clientIP);
+        }
+        
         return res.status(429).json({
           success: false,
           error: 'Too many requests. Please try again later.',

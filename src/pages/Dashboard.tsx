@@ -701,15 +701,16 @@ export const Dashboard: React.FC = () => {
         setIsFetchingMessages(true);
         try {
           const response = await fetchMessages();
-          if (response.success && response.messages) {
+          if (response.success && response.data) {
             // Update inbox with fetched messages
-            updateDashboardInbox('items', response.messages);
+            updateDashboardInbox('items', response.data);
           }
         } catch (error) {
           console.error('Failed to fetch messages:', error);
         } finally {
           setIsFetchingMessages(false);
         }
+  +++++++ REPLACE
       };
 
       void loadMessages();
@@ -7154,8 +7155,8 @@ export const Dashboard: React.FC = () => {
                   setIsFetchingMessages(true);
                   try {
                     const response = await fetchMessages();
-                    if (response.success && response.messages) {
-                      updateDashboardInbox('items', response.messages);
+                    if (response.success && response.data) {
+                      updateDashboardInbox('items', response.data);
                     }
                   } catch (error) {
                     console.error('Failed to fetch messages:', error);
@@ -7163,6 +7164,7 @@ export const Dashboard: React.FC = () => {
                     setIsFetchingMessages(false);
                   }
                 }}
+  +++++++ REPLACE
                 disabled={isFetchingMessages}
                 className={`flex items-center gap-2 rounded-[10px] border px-3 py-2 text-xs font-medium transition-all ${
                   isFetchingMessages
