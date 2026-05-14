@@ -240,7 +240,6 @@ const Contact: React.FC = () => {
       }
       
       gsap.to(card, {
-        boxShadow: `0 4px 6px -1px ${color}33`,
         duration: 0.4,
       });
     } else {
@@ -285,7 +284,6 @@ const Contact: React.FC = () => {
       }
       
       gsap.to(card, {
-        boxShadow: 'none',
         duration: 0.4,
       });
     }
