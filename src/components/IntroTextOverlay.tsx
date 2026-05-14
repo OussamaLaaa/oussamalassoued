@@ -30,9 +30,9 @@ export const IntroTextOverlay: React.FC<IntroTextOverlayProps> = ({ hasStarted, 
   if (!hasStarted && !mounted) return null;
 
   // Cinematic transitions for the glass window
-  const enter = 'opacity-100 scale-100 translate-y-0 blur-none';
-  const exit = 'opacity-0 scale-[0.98] translate-y-[-10px] blur-[8px] pointer-events-none';
-  const initial = 'opacity-0 scale-[0.95] translate-y-[20px] blur-[12px]';
+  const enter = 'opacity-100 translate-y-0';
+  const exit = 'opacity-0 translate-y-[-20px]';
+  const initial = 'opacity-0 translate-y-[20px]';
 
   const containerState = isScrolling ? exit : mounted ? enter : initial;
   const primaryText = siteConfig.introText.trim();
@@ -93,7 +93,7 @@ export const IntroTextOverlay: React.FC<IntroTextOverlayProps> = ({ hasStarted, 
         ) : null}
         {scrollPrompt ? (
           <p
-            className="intro-glow-text intro-scroll-prompt font-sans text-white/80"
+            className="intro-glow-text intro-scroll-prompt font-sans text-white/90 animate-pulse"
             style={{
               fontSize: promptFontSize,
               fontWeight: Math.min(620, Math.max(480, headingWeight)),
