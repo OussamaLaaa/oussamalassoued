@@ -240,7 +240,7 @@ const Contact: React.FC = () => {
       }
       
       gsap.to(card, {
-        boxShadow: `0 20px 40px -10px ${color}80`,
+        boxShadow: `0 4px 6px -1px ${color}33`,
         duration: 0.4,
       });
     } else {
