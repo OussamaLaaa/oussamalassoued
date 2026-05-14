@@ -408,6 +408,22 @@ export interface MessageData {
   email: string;
   subject: string;
   message: string;
+  metadata?: {
+    sessionId?: string;
+    timeOnSite?: number;
+    pagesVisited?: number;
+    referrer?: string;
+    firstVisit?: boolean;
+    deviceType?: string;
+    browser?: string;
+    os?: string;
+    screenResolution?: string;
+    language?: string;
+    country?: string;
+    city?: string;
+    timezone?: string;
+    timestamp?: string;
+  };
 }
 
 export interface MessagesResponse {

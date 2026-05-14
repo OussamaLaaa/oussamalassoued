@@ -178,6 +178,41 @@ export interface SiteInboxMessage {
   receivedAt: string;
   status: SiteMessageStatus;
   source: string;
+  // Security information
+  security?: {
+    score: number;
+    level: 'low' | 'medium' | 'high';
+    isBot: boolean;
+    botConfidence: number;
+    emailValid: boolean;
+    similarMessages: number;
+  };
+  // Geolocation information
+  geolocation?: {
+    country: string;
+    city: string;
+    timezone: string;
+  };
+  // Device information
+  device?: {
+    type: string;
+    browser: string;
+    os: string;
+    screenResolution: string;
+    language: string;
+  };
+  // Session information
+  session?: {
+    sessionId: string;
+    timeOnSite: number;
+    pagesVisited: number;
+    referrer: string;
+    firstVisit: boolean;
+  };
+  // Raw metadata
+  ip?: string;
+  userAgent?: string;
+  timestamp?: number;
 }
 
 export interface SiteDashboardTopChannel {
