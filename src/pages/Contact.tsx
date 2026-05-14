@@ -324,7 +324,7 @@ const Contact: React.FC = () => {
       
       if (response.success) {
         setSubmitStatus('success');
-        setSubmitMessage('Your message has been sent successfully! We will contact you soon.');
+        setSubmitMessage('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً.');
         setFormData({ name: '', email: '', subject: '', message: '' });
         
         // Reset status after 5 seconds
@@ -334,11 +334,11 @@ const Contact: React.FC = () => {
         }, 5000);
       } else {
         setSubmitStatus('error');
-        setSubmitMessage(response.error || 'Failed to send message. Please try again.');
+        setSubmitMessage(response.error || 'فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.');
       }
     } catch (error) {
       setSubmitStatus('error');
-      setSubmitMessage('An error occurred while sending the message. Please try again.');
+      setSubmitMessage('حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.');
       console.error('Error submitting form:', error);
     } finally {
       setIsSubmitting(false);
@@ -512,7 +512,7 @@ const Contact: React.FC = () => {
                             <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" strokeOpacity="1" />
                           </svg>
-                          Sending...
+                          جاري الإرسال...
                         </>
                       ) : (
                         <>

@@ -408,22 +408,6 @@ export interface MessageData {
   email: string;
   subject: string;
   message: string;
-  metadata?: {
-    sessionId?: string;
-    timeOnSite?: number;
-    pagesVisited?: number;
-    referrer?: string;
-    firstVisit?: boolean;
-    deviceType?: string;
-    browser?: string;
-    os?: string;
-    screenResolution?: string;
-    language?: string;
-    country?: string;
-    city?: string;
-    timezone?: string;
-    timestamp?: string;
-  };
 }
 
 export interface MessagesResponse {
@@ -495,214 +479,46 @@ export async function sendMessage(messageData: MessageData): Promise<SendMessage
 /**
  * Fetch all messages
  */
-  export async function fetchMessages(): Promise<MessagesResponse> {
-    try {
-      console.log('[API Messages] Fetching messages...');
-      
-      const { signal, clear } = createTimeoutSignal();
-      const response = await fetch(`${API_BASE_URL}/messages`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-        signal,
-      });
-      const raw = await response.text();
-      clear();
+export async function fetchMessages(): Promise<MessagesResponse> {
+  try {
+    console.log('[API Messages] Fetching messages...');
+    
+    const { signal, clear } = createTimeoutSignal();
+    const response = await fetch(`${API_BASE_URL}/messages`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+      signal,
+    });
+    const raw = await response.text();
+    clear();
 
-      const data = safeParseJson(raw);
-      
-      if (!response.ok) {
-        console.error('[API Messages] Fetch failed:', data);
-        return {
-          success: false,
-          error: data?.error || `HTTP error! status: ${response.status}`,
-        };
-      }
-
-      if (!data) {
-        return {
-          success: false,
-          error: 'API returned non-JSON response for messages fetch.',
-        };
-      }
-
-      console.log(`[API Messages] Fetched ${data.count || 0} messages from ${data.source}`);
-      return data as MessagesResponse;
-    } catch (error) {
-      console.error('[API Messages] Error fetching messages:', error);
+    const data = safeParseJson(raw);
+    
+    if (!response.ok) {
+      console.error('[API Messages] Fetch failed:', data);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch messages',
+        error: data?.error || `HTTP error! status: ${response.status}`,
       };
     }
+
+    if (!data) {
+      return {
+        success: false,
+        error: 'API returned non-JSON response for messages fetch.',
+      };
+    }
+
+    console.log(`[API Messages] Fetched ${data.count || 0} messages from ${data.source}`);
+    return data as MessagesResponse;
+  } catch (error) {
+    console.error('[API Messages] Error fetching messages:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch messages',
+    };
   }
-
-  /**
-   * API Client object for making HTTP requests
-   */
-  export const apiClient = {
-    async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-      try {
-        const { signal, clear } = createTimeoutSignal();
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          cache: 'no-store',
-          signal,
-        });
-        const raw = await response.text();
-        clear();
-
-        const data = safeParseJson(raw);
-        
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `HTTP error! status: ${response.status}`,
-          };
-        }
-
-        if (!data) {
-          return {
-            success: false,
-            error: 'API returned non-JSON response.',
-          };
-        }
-
-        return data as ApiResponse<T>;
-      } catch (error) {
-        console.error('[API Client] GET error:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Request failed',
-        };
-      }
-    },
-
-    async post<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
-      try {
-        const { signal, clear } = createTimeoutSignal();
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(body),
-          signal,
-        });
-        const raw = await response.text();
-        clear();
-
-        const data = safeParseJson(raw);
-        
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `HTTP error! status: ${response.status}`,
-          };
-        }
-
-        if (!data) {
-          return {
-            success: false,
-            error: 'API returned non-JSON response.',
-          };
-        }
-
-        return data as ApiResponse<T>;
-      } catch (error) {
-        console.error('[API Client] POST error:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Request failed',
-        };
-      }
-    },
-
-    async patch<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-      try {
-        const { signal, clear } = createTimeoutSignal();
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: body ? JSON.stringify(body) : undefined,
-          signal,
-        });
-        const raw = await response.text();
-        clear();
-
-        const data = safeParseJson(raw);
-        
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `HTTP error! status: ${response.status}`,
-          };
-        }
-
-        if (!data) {
-          return {
-            success: false,
-            error: 'API returned non-JSON response.',
-          };
-        }
-
-        return data as ApiResponse<T>;
-      } catch (error) {
-        console.error('[API Client] PATCH error:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Request failed',
-        };
-      }
-    },
-
-    async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-      try {
-        const { signal, clear } = createTimeoutSignal();
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          signal,
-        });
-        const raw = await response.text();
-        clear();
-
-        const data = safeParseJson(raw);
-        
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `HTTP error! status: ${response.status}`,
-          };
-        }
-
-        if (!data) {
-          return {
-            success: false,
-            error: 'API returned non-JSON response.',
-          };
-        }
-
-        return data as ApiResponse<T>;
-      } catch (error) {
-        console.error('[API Client] DELETE error:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Request failed',
-        };
-      }
-    },
-  };
+}

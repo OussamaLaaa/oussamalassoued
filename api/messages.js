@@ -983,12 +983,12 @@ export default async (req, res) => {
       // Filter out old messages
       const now = Date.now();
       const filteredMessages = decryptedMessages.filter(msg => {
-        const msgAge = now - new Date(msg.receivedAt).getTime();
+        const msgAge = now - msg.timestamp;
         return msgAge < SECURITY_CONFIG.maxMessageAge;
       });
 
-      // Sort by receivedAt (newest first)
-      filteredMessages.sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
+      // Sort by timestamp (newest first)
+      filteredMessages.sort((a, b) => b.timestamp - a.timestamp);
 
       console.log(`[API:Messages] Returning ${filteredMessages.length} messages from ${source}`);
       
@@ -1204,7 +1204,7 @@ export default async (req, res) => {
       const message = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...sanitizedData,
-        receivedAt: Date.now().toString(),
+        timestamp: Date.now(),
         ip: clientIP,
         userAgent,
         read: false,
@@ -1212,10 +1212,10 @@ export default async (req, res) => {
         security: {
           score: securityScore.score,
           level: securityScore.level,
-          isBot: botDetection.isBot,
+          botDetected: botDetection.isBot,
           botConfidence: botDetection.confidence,
           emailValid: emailValidation.valid,
-          similarMessages: similarCheck.similarCount,
+          similarCount: similarCheck.similarCount,
         },
         // Additional information
         ...additionalInfo,

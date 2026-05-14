@@ -11,23 +11,23 @@ interface Message {
   email: string;
   subject: string;
   message: string;
-  receivedAt: string; // Changed from timestamp to receivedAt to match SiteInboxMessage
+  timestamp: string;
   ip?: string;
-  userAgent?: string;
   security?: {
+    level: 'high' | 'medium' | 'low';
     score: number;
-    level: 'low' | 'medium' | 'high';
     isBot: boolean;
     botConfidence: number;
     emailValid: boolean;
     similarMessages: number;
   };
   device?: {
-    type: string;
+    type: 'desktop' | 'mobile' | 'tablet';
     browser: string;
     os: string;
     screenResolution: string;
     language: string;
+    timezone: string;
   };
   session?: {
     sessionId: string;
@@ -321,7 +321,7 @@ const Dashboard: React.FC = () => {
                       {message.subject}
                     </p>
                     <p className={`text-xs ${selectedMessage?.id === message.id ? 'text-white/60' : 'text-gray-400'}`}>
-                      {formatDate(message.receivedAt)}
+                      {formatDate(message.timestamp)}
                     </p>
                   </div>
                 ))
@@ -381,7 +381,7 @@ const Dashboard: React.FC = () => {
                     <label className="block text-xs font-medium uppercase tracking-wider text-gray-500 mb-1">
                       الوقت
                     </label>
-                    <p className="text-sm font-medium">{formatDate(selectedMessage.receivedAt)}</p>
+                    <p className="text-sm font-medium">{formatDate(selectedMessage.timestamp)}</p>
                   </div>
                   {selectedMessage.ip && (
                     <div>
