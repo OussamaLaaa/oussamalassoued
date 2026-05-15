@@ -6,11 +6,15 @@ const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Articles = lazy(() => import('./pages/Articles'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 type AppRoute =
   | { page: 'home' }
   | { page: 'dashboard' }
   | { page: 'contact' }
+  | { page: 'terms' }
+  | { page: 'privacy' }
   | {
       page: 'articles';
       slug?: string;
@@ -43,6 +47,14 @@ const getRoute = (): AppRoute => {
       page: 'articles',
       slug,
     };
+  }
+
+  if (section === 'terms-of-service') {
+    return { page: 'terms' };
+  }
+
+  if (section === 'privacy-policy') {
+    return { page: 'privacy' };
   }
 
   return { page: 'home' };
@@ -135,6 +147,14 @@ function App() {
         ) : route.page === 'articles' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
             <Articles slug={route.slug} />
+          </Suspense>
+        ) : route.page === 'terms' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <TermsOfService />
+          </Suspense>
+        ) : route.page === 'privacy' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <PrivacyPolicy />
           </Suspense>
         ) : (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>

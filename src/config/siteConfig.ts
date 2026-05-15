@@ -856,6 +856,16 @@ export interface SiteConfig {
     legalLinks: SiteFooterLink[];
     navLinks: SiteFooterLink[];
   };
+  legalPages: {
+    termsTitle: string;
+    termsLastUpdated: string;
+    termsContent: string;
+    privacyTitle: string;
+    privacyLastUpdated: string;
+    privacyContent: string;
+    lastUpdatedLabel: string;
+    backToHomeLabel: string;
+  };
   articlesPage: {
     title: string;
     subtitle: string;
@@ -1240,8 +1250,8 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       { id: 'social-mail', label: 'Mail', href: 'mailto:hello@example.com', icon: 'mail', visible: true },
     ],
     legalLinks: [
-      { id: 'legal-terms', label: 'Terms of Service', href: '#', visible: true },
-      { id: 'legal-privacy', label: 'Privacy Policy', href: '#', visible: true },
+      { id: 'legal-terms', label: 'Terms of Service', href: '#/terms-of-service', visible: true },
+      { id: 'legal-privacy', label: 'Privacy Policy', href: '#/privacy-policy', visible: true },
     ],
     navLinks: [
       { id: 'footer-nav-home', label: 'Home', href: '#home', visible: true },
@@ -1251,6 +1261,18 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       { id: 'footer-nav-contact', label: 'Contact', href: '#contact', visible: true },
       { id: 'footer-nav-articles', label: 'Articles', href: '#/articles', visible: false },
     ],
+  },
+  legalPages: {
+    termsTitle: 'Terms of Service',
+    termsLastUpdated: 'May 15, 2026',
+    termsContent:
+      'By using this website, you agree to use it lawfully and respectfully.\n\nAll content is provided for informational and portfolio purposes. Unauthorized copying, misuse, or harmful activity is prohibited.\n\nThese terms may be updated over time. Continued use of the website means you accept the latest version.',
+    privacyTitle: 'Privacy Policy',
+    privacyLastUpdated: 'May 15, 2026',
+    privacyContent:
+      'We only collect the information you voluntarily provide, such as contact form submissions.\n\nYour information is used only to respond to your requests and improve services. We do not sell your personal data.\n\nIf you have questions about your data, please contact us through the available contact channels.',
+    lastUpdatedLabel: 'Last updated',
+    backToHomeLabel: 'Back to Home',
   },
   articlesPage: {
     title: 'Journal & Articles',
@@ -1315,7 +1337,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     formMessageLabel: 'Message',
     formMessagePlaceholder: 'Tell me about your project...',
     formPrivacyText: 'By submitting, you agree to our',
-    formPrivacyLink: '/privacy-policy',
+    formPrivacyLink: '#/privacy-policy',
     formSubmitButton: 'Send Message',
     // Social Channels Section
     socialSectionLabel: 'Social Channels',
@@ -2348,6 +2370,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const scene05 = isRecord(value.scene05) ? value.scene05 : {};
   const persistentUI = isRecord(value.persistentUI) ? value.persistentUI : {};
   const footer = isRecord(value.footer) ? value.footer : {};
+  const legalPages = isRecord(value.legalPages) ? value.legalPages : {};
   const articlesPage = isRecord(value.articlesPage) ? value.articlesPage : {};
   const footerSocialRecord = isRecord(footer.socialLinks) ? footer.socialLinks : {};
   const footerSocialArray = Array.isArray(footer.socialLinks) ? footer.socialLinks : [];
@@ -2483,6 +2506,16 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         })
         .filter((item): item is SiteFooterLink => !!item)
     : DEFAULT_SITE_CONFIG.footer.legalLinks;
+
+  const legalLinksWithRoutes = legalLinks.map((link) => {
+    if (link.id === 'legal-terms' && link.href.trim() === '#') {
+      return { ...link, href: '#/terms-of-service' };
+    }
+    if (link.id === 'legal-privacy' && link.href.trim() === '#') {
+      return { ...link, href: '#/privacy-policy' };
+    }
+    return link;
+  });
 
   const navLinks = Array.isArray(footer.navLinks)
     ? footer.navLinks
@@ -2849,8 +2882,21 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       officeTitle: asString(footer.officeTitle, DEFAULT_SITE_CONFIG.footer.officeTitle),
       officeAddress: asString(footer.officeAddress, DEFAULT_SITE_CONFIG.footer.officeAddress),
       socialLinks: socialLinks.length > 0 ? socialLinks : DEFAULT_SITE_CONFIG.footer.socialLinks,
-      legalLinks: legalLinks.length > 0 ? legalLinks : DEFAULT_SITE_CONFIG.footer.legalLinks,
+      legalLinks: legalLinksWithRoutes.length > 0 ? legalLinksWithRoutes : DEFAULT_SITE_CONFIG.footer.legalLinks,
       navLinks: navLinksWithArticles,
+    },
+    legalPages: {
+      termsTitle: asString(legalPages.termsTitle, DEFAULT_SITE_CONFIG.legalPages.termsTitle),
+      termsLastUpdated: asString(legalPages.termsLastUpdated, DEFAULT_SITE_CONFIG.legalPages.termsLastUpdated),
+      termsContent: asString(legalPages.termsContent, DEFAULT_SITE_CONFIG.legalPages.termsContent),
+      privacyTitle: asString(legalPages.privacyTitle, DEFAULT_SITE_CONFIG.legalPages.privacyTitle),
+      privacyLastUpdated: asString(
+        legalPages.privacyLastUpdated,
+        DEFAULT_SITE_CONFIG.legalPages.privacyLastUpdated,
+      ),
+      privacyContent: asString(legalPages.privacyContent, DEFAULT_SITE_CONFIG.legalPages.privacyContent),
+      lastUpdatedLabel: asString(legalPages.lastUpdatedLabel, DEFAULT_SITE_CONFIG.legalPages.lastUpdatedLabel),
+      backToHomeLabel: asString(legalPages.backToHomeLabel, DEFAULT_SITE_CONFIG.legalPages.backToHomeLabel),
     },
     articlesPage: {
       title: asString(articlesPage.title, DEFAULT_SITE_CONFIG.articlesPage.title),
@@ -3013,10 +3059,11 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         contactPage?.formPrivacyText,
         DEFAULT_SITE_CONFIG.contactPage.formPrivacyText,
       ),
-      formPrivacyLink: asString(
-        contactPage?.formPrivacyLink,
-        DEFAULT_SITE_CONFIG.contactPage.formPrivacyLink,
-      ),
+      formPrivacyLink:
+        asString(contactPage?.formPrivacyLink, DEFAULT_SITE_CONFIG.contactPage.formPrivacyLink).trim() ===
+        '/privacy-policy'
+          ? '#/privacy-policy'
+          : asString(contactPage?.formPrivacyLink, DEFAULT_SITE_CONFIG.contactPage.formPrivacyLink),
       formSubmitButton: asString(
         contactPage?.formSubmitButton,
         DEFAULT_SITE_CONFIG.contactPage.formSubmitButton,

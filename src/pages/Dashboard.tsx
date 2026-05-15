@@ -3146,6 +3146,98 @@ export const Dashboard: React.FC = () => {
                 ))}
               </div>
 
+              <div className="space-y-3 rounded-[10px] border border-white/10 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Legal Pages</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Input
+                    label="Terms page title"
+                    value={siteConfig.legalPages.termsTitle}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, termsTitle: next },
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Terms last updated"
+                    value={siteConfig.legalPages.termsLastUpdated}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, termsLastUpdated: next },
+                      }))
+                    }
+                  />
+                </div>
+                <Textarea
+                  label="Terms content"
+                  value={siteConfig.legalPages.termsContent}
+                  rows={6}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      legalPages: { ...prev.legalPages, termsContent: next },
+                    }))
+                  }
+                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Input
+                    label="Privacy page title"
+                    value={siteConfig.legalPages.privacyTitle}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, privacyTitle: next },
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Privacy last updated"
+                    value={siteConfig.legalPages.privacyLastUpdated}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, privacyLastUpdated: next },
+                      }))
+                    }
+                  />
+                </div>
+                <Textarea
+                  label="Privacy content"
+                  value={siteConfig.legalPages.privacyContent}
+                  rows={6}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      legalPages: { ...prev.legalPages, privacyContent: next },
+                    }))
+                  }
+                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Input
+                    label="Last updated label"
+                    value={siteConfig.legalPages.lastUpdatedLabel}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, lastUpdatedLabel: next },
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Back button label"
+                    value={siteConfig.legalPages.backToHomeLabel}
+                    onChange={(next) =>
+                      updateConfig((prev) => ({
+                        ...prev,
+                        legalPages: { ...prev.legalPages, backToHomeLabel: next },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="space-y-3 rounded-[10px] border border-white/10 bg-black/20 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Footer nav links</p>
                 <p className="text-xs text-white/56">
@@ -7685,6 +7777,5 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
 
 
