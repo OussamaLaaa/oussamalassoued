@@ -367,7 +367,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
             ) : null}
 
             {/* Right Actions */}
-            <div className="ms-auto flex items-center gap-4 flex-shrink-0">
+            <div className="flex items-center gap-4 flex-shrink-0 justify-self-end">
               {visibility.musicToggle ? <audio ref={audioRef} src={persistentUI.musicSrc} loop /> : null}
 
               {/* Language Toggle */}
