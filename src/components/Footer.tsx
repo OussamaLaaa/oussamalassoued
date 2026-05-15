@@ -105,12 +105,12 @@ export const Footer: React.FC = () => {
   const ctaSection = getSectionFromHref(footer.ctaButtonHref);
 
   return (
-    <footer className="relative z-10 w-full border-t border-[#111217]/8 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
+    <footer className="relative z-10 w-full border-t border-[#111217]/10 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
       <div className="site-shell pb-7 pt-16 md:pb-8 md:pt-20">
         <div className="grid gap-12 border-b border-[#111217]/10 pb-12 md:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1fr_1.1fr] xl:gap-14">
           <div className="space-y-5">
             <p className="text-[2.1rem] font-semibold leading-none tracking-tight text-[#111217]">{footer.brandTitle}</p>
-            <p className="max-w-[33ch] text-[1.05rem] leading-9 text-[#111217]/72">{footer.brandDescription}</p>
+            <p className="max-w-[33ch] text-[1.05rem] leading-9 text-[#111217]/70">{footer.brandDescription}</p>
             {visibility.footerEmail ? (
               <a
                 href={`mailto:${footer.email}`}
