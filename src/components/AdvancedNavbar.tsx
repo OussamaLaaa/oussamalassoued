@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { DEFAULT_SITE_CONFIG } from '../config/siteConfig';
 
 interface AdvancedNavbarProps {
   isLightMode?: boolean;
@@ -9,10 +10,9 @@ interface AdvancedNavbarProps {
 const PENDING_NAV_SECTION_KEY = 'portfolio.pending-nav-section.v1';
 
 export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = false }) => {
-  const { siteConfig, setSiteConfig } = useSiteConfig();
+  const { siteConfig } = useSiteConfig();
   const { persistentUI } = siteConfig;
   const { visibility } = siteConfig;
-  const isAr = siteConfig.language === 'ar';
 
   const [activeSection, setActiveSection] = useState<string>('');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
@@ -23,8 +23,6 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
   const navContainerRef = useRef<HTMLDivElement>(null);
   const navLinksRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
-  const languageLabelEn = (persistentUI.languageToggleLabelEn || 'English').trim() || 'English';
-  const languageLabelAr = (persistentUI.languageToggleLabelAr || 'العربية').trim() || 'العربية';
 
   const visibleNavItems = useMemo(() => {
     const baseNavItems = [...persistentUI.navItems];
@@ -209,9 +207,6 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
   const navigationLogoSrc = isLightMode
     ? persistentUI.logoLightSrc || '/logo-black.png'
     : persistentUI.logoDarkSrc || '/logo-white.png';
-  const letsTalkLabel = isAr
-    ? (persistentUI.letsTalkLabelAr || persistentUI.letsTalkLabel)
-    : persistentUI.letsTalkLabel;
 
   if (!visibility.persistentUI) return null;
 
@@ -353,7 +348,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                             : 'text-gray-200 hover:text-white hover:bg-white/8'
                       }`}
                     >
-                      {isAr ? item.labelAr || item.label : item.label}
+                      {item.label}
                     </a>
                   ))}
                 </div>
@@ -361,43 +356,8 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
             ) : null}
 
             {/* Right Actions */}
-            <div className={`${isAr ? 'mr-auto' : 'ml-auto'} flex items-center gap-4 flex-shrink-0`}>
+            <div className="ml-auto flex items-center gap-4 flex-shrink-0">
               {visibility.musicToggle ? <audio ref={audioRef} src={persistentUI.musicSrc} loop /> : null}
-
-              <div
-                className={`hidden sm:flex items-center rounded-xl border p-1 ${
-                  isLightMode ? 'bg-gray-100 border-gray-200' : 'bg-white/15 border-white/30'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setSiteConfig((prev) => ({ ...prev, language: 'en' }))}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                    !isAr
-                      ? 'bg-white text-black'
-                      : isLightMode
-                        ? 'text-gray-700 hover:text-black'
-                        : 'text-gray-200 hover:text-white'
-                  }`}
-                  aria-pressed={!isAr}
-                >
-                  {languageLabelEn}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSiteConfig((prev) => ({ ...prev, language: 'ar' }))}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                    isAr
-                      ? 'bg-white text-black'
-                      : isLightMode
-                        ? 'text-gray-700 hover:text-black'
-                        : 'text-gray-200 hover:text-white'
-                  }`}
-                  aria-pressed={isAr}
-                >
-                  {languageLabelAr}
-                </button>
-              </div>
 
               {visibility.musicToggle ? (
                 <button
@@ -407,11 +367,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                       ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
                       : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
                   }`}
-                  aria-label={
-                    isAr
-                      ? (persistentUI.musicToggleAriaLabelAr || persistentUI.musicToggleAriaLabel)
-                      : persistentUI.musicToggleAriaLabel
-                  }
+                  aria-label="Toggle Music"
                 >
                   {isMusicPlaying ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -445,7 +401,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                       : 'bg-white text-black hover:bg-gray-100 hover:shadow-lg hover:shadow-white/20'
                   }`}
                 >
-                  {letsTalkLabel}
+                  {persistentUI.letsTalkLabel}
                   <svg
                     width="16"
                     height="16"
@@ -472,12 +428,12 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`md:hidden fixed top-4 ${isAr ? 'left-4' : 'right-4'} z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
+            className={`md:hidden fixed top-4 right-4 z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
               isLightMode
                 ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
                 : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
             }`}
-            aria-label={isAr ? persistentUI.menuToggleAriaLabelAr : persistentUI.menuToggleAriaLabel}
+            aria-label="Toggle Menu"
           >
             <svg
               width="22"
@@ -506,16 +462,12 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
           {visibility.musicToggle ? (
             <button
               onClick={toggleMusic}
-              className={`md:hidden fixed top-4 ${isAr ? 'left-20' : 'right-20'} z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
+              className={`md:hidden fixed top-4 right-20 z-[260] h-12 w-12 flex items-center justify-center rounded-xl transition-all duration-400 ${
                 isLightMode
                   ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200'
                   : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'
               }`}
-              aria-label={
-                isAr
-                  ? (persistentUI.musicToggleAriaLabelAr || persistentUI.musicToggleAriaLabel)
-                  : persistentUI.musicToggleAriaLabel
-              }
+              aria-label="Toggle Music"
             >
               {isMusicPlaying ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -548,34 +500,6 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <div className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} z-[260] flex items-center rounded-xl border p-1 ${
-                isLightMode ? 'bg-gray-100 border-gray-200' : 'bg-white/15 border-white/30'
-              }`}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSiteConfig((prev) => ({ ...prev, language: 'en' }));
-                  }}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                    !isAr ? 'bg-white text-black' : isLightMode ? 'text-gray-700' : 'text-gray-200'
-                  }`}
-                >
-                  {languageLabelEn}
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSiteConfig((prev) => ({ ...prev, language: 'ar' }));
-                  }}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                    isAr ? 'bg-white text-black' : isLightMode ? 'text-gray-700' : 'text-gray-200'
-                  }`}
-                >
-                  {languageLabelAr}
-                </button>
-              </div>
               <div className="flex flex-col items-center justify-center h-full gap-8">
                 {visibleNavItems.map((item) => (
                   <a
@@ -595,7 +519,7 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
                           : 'text-gray-300 hover:text-white'
                     }`}
                   >
-                    {isAr ? item.labelAr || item.label : item.label}
+                    {item.label}
                   </a>
                 ))}
               </div>

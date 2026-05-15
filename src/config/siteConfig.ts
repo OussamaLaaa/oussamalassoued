@@ -36,7 +36,6 @@ export const SITE_GLASS_VARIANTS: SiteGlassVariant[] = ['glass-1', 'glass-2', 'g
 export interface SiteNavItem {
   id: string;
   label: string;
-  labelAr?: string;
   section: SiteSection;
   visible: boolean;
 }
@@ -777,7 +776,6 @@ export interface SiteAIReport {
 }
 
 export interface SiteConfig {
-  language: 'en' | 'ar';
   introText: string;
   introScrollPrompt: string;
   introOverlayBackdropColor: string;
@@ -833,14 +831,8 @@ export interface SiteConfig {
     logoLightSrc: string;
     logoDarkSrc: string;
     musicToggleAriaLabel: string;
-    musicToggleAriaLabelAr: string;
-    menuToggleAriaLabel: string;
-    menuToggleAriaLabelAr: string;
-    languageToggleLabelEn: string;
-    languageToggleLabelAr: string;
     navItems: SiteNavItem[];
     letsTalkLabel: string;
-    letsTalkLabelAr: string;
     letsTalkHref: string;
     musicSrc: string;
     musicVolume: number;
@@ -995,7 +987,6 @@ export interface SiteConfig {
 export const SITE_CONFIG_STORAGE_KEY = 'portfolio.site-config.v1';
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
-  language: 'en',
   introText:
     'I design thoughtful digital products and cinematic user experiences that connect user needs with business success through AI.',
   introScrollPrompt: 'Scroll to explore the work',
@@ -1201,21 +1192,15 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     logoLightSrc: '/logo-black.png',
     logoDarkSrc: '/logo-white.png',
     musicToggleAriaLabel: 'Toggle Music',
-    musicToggleAriaLabelAr: 'تبديل الموسيقى',
-    menuToggleAriaLabel: 'Toggle Menu',
-    menuToggleAriaLabelAr: 'تبديل القائمة',
-    languageToggleLabelEn: 'English',
-    languageToggleLabelAr: 'العربية',
     navItems: [
-      { id: 'nav-home', label: 'Home', labelAr: 'الرئيسية', section: 'home', visible: true },
-      { id: 'nav-about', label: 'About Me', labelAr: 'من أنا', section: 'about', visible: true },
-      { id: 'nav-projects', label: 'Projects', labelAr: 'المشاريع', section: 'projects', visible: true },
-      { id: 'nav-testimonials', label: 'Testimonials', labelAr: 'آراء العملاء', section: 'testimonials', visible: true },
-      { id: 'nav-contact', label: 'Contact', labelAr: 'تواصل', section: 'contact', visible: true },
-      { id: 'nav-articles', label: 'Articles', labelAr: 'المقالات', section: 'articles', visible: false },
+      { id: 'nav-home', label: 'Home', section: 'home', visible: true },
+      { id: 'nav-about', label: 'About Me', section: 'about', visible: true },
+      { id: 'nav-projects', label: 'Projects', section: 'projects', visible: true },
+      { id: 'nav-testimonials', label: 'Testimonials', section: 'testimonials', visible: true },
+      { id: 'nav-contact', label: 'Contact', section: 'contact', visible: true },
+      { id: 'nav-articles', label: 'Articles', section: 'articles', visible: false },
     ],
     letsTalkLabel: "Let's Talk",
-    letsTalkLabelAr: 'تواصل معنا',
     letsTalkHref: 'mailto:hello@example.com',
     musicSrc: '/audio/for_website_1.mp3',
     musicVolume: 0.3,
@@ -2453,7 +2438,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
           return {
             id: asString(item.id, `nav-${index + 1}`),
             label: asString(item.label, ''),
-            labelAr: asString(item.labelAr, ''),
             section,
             visible: asBoolean(item.visible, true),
           };
@@ -2736,7 +2720,6 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       : rawScene05Role || DEFAULT_SITE_CONFIG.scene05.role;
 
   return {
-    language: asString(value.language, DEFAULT_SITE_CONFIG.language) === 'ar' ? 'ar' : 'en',
     introText: asString(value.introText, DEFAULT_SITE_CONFIG.introText),
     introScrollPrompt: asString(value.introScrollPrompt, DEFAULT_SITE_CONFIG.introScrollPrompt),
     introOverlayBackdropColor: asString(
@@ -2820,32 +2803,8 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         persistentUI.musicToggleAriaLabel,
         DEFAULT_SITE_CONFIG.persistentUI.musicToggleAriaLabel,
       ),
-      musicToggleAriaLabelAr: asString(
-        persistentUI.musicToggleAriaLabelAr,
-        DEFAULT_SITE_CONFIG.persistentUI.musicToggleAriaLabelAr,
-      ),
-      menuToggleAriaLabel: asString(
-        persistentUI.menuToggleAriaLabel,
-        DEFAULT_SITE_CONFIG.persistentUI.menuToggleAriaLabel,
-      ),
-      menuToggleAriaLabelAr: asString(
-        persistentUI.menuToggleAriaLabelAr,
-        DEFAULT_SITE_CONFIG.persistentUI.menuToggleAriaLabelAr,
-      ),
-      languageToggleLabelEn: asString(
-        persistentUI.languageToggleLabelEn,
-        DEFAULT_SITE_CONFIG.persistentUI.languageToggleLabelEn,
-      ),
-      languageToggleLabelAr: asString(
-        persistentUI.languageToggleLabelAr,
-        DEFAULT_SITE_CONFIG.persistentUI.languageToggleLabelAr,
-      ),
       navItems: navItemsWithContact,
       letsTalkLabel: asString(persistentUI.letsTalkLabel, DEFAULT_SITE_CONFIG.persistentUI.letsTalkLabel),
-      letsTalkLabelAr: asString(
-        persistentUI.letsTalkLabelAr,
-        DEFAULT_SITE_CONFIG.persistentUI.letsTalkLabelAr,
-      ),
       letsTalkHref: asString(persistentUI.letsTalkHref, DEFAULT_SITE_CONFIG.persistentUI.letsTalkHref),
       musicSrc: asString(persistentUI.musicSrc, DEFAULT_SITE_CONFIG.persistentUI.musicSrc),
       musicVolume: asNumber(persistentUI.musicVolume, DEFAULT_SITE_CONFIG.persistentUI.musicVolume),

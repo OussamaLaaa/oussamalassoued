@@ -265,14 +265,6 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     applyBrowserMetadata(siteConfig);
   }, [siteConfig]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const isArabic = siteConfig.language === 'ar';
-    document.documentElement.lang = isArabic ? 'ar' : 'en';
-    document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
-    document.body.dir = isArabic ? 'rtl' : 'ltr';
-  }, [siteConfig.language]);
-
   // Save to storage with advanced system
   useEffect(() => {
     if (typeof window === 'undefined') return;

@@ -14,11 +14,11 @@ type PaginationItem = number | 'left-ellipsis' | 'right-ellipsis';
 const ALL_TOPICS_TOKEN = '__all';
 const ARTICLES_PER_PAGE = 9;
 
-const parseDateLabel = (value: string, undatedLabel: string, locale: string) => {
+const parseDateLabel = (value: string, undatedLabel: string) => {
   if (!value) return undatedLabel;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -77,7 +77,6 @@ const buildPagination = (currentPage: number, totalPages: number): PaginationIte
 export const Articles: React.FC<ArticlesPageProps> = ({ slug }) => {
   const { siteConfig } = useSiteConfig();
   const { articlesPage, articles, designSystem, visibility, animation } = siteConfig;
-  const locale = siteConfig.language === 'ar' ? 'ar' : 'en-US';
   const foundation = designSystem.foundation;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -263,7 +262,7 @@ export const Articles: React.FC<ArticlesPageProps> = ({ slug }) => {
                 </span>
                 <span className="h-[3px] w-[3px] rounded-full bg-[#111217]/35" aria-hidden />
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/65">
-                  {parseDateLabel(currentArticle.publishedAt, articlesPage.undatedLabel, locale)}
+                  {parseDateLabel(currentArticle.publishedAt, articlesPage.undatedLabel)}
                 </span>
                 <span className="h-[3px] w-[3px] rounded-full bg-[#111217]/35" aria-hidden />
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217]/65">
