@@ -55,6 +55,138 @@ const SiteConfigContext = createContext<SiteConfigContextValue | null>(null);
     return DEFAULT_SITE_CONFIG;
   };
 
+const getLocalizedSiteConfig = (siteConfig: SiteConfig, isDashboardRoute: boolean): SiteConfig => {
+  if (isDashboardRoute || siteConfig.language !== 'ar') return siteConfig;
+
+  const ar = siteConfig.arTranslations;
+
+  const localizedNavItems = siteConfig.persistentUI.navItems.map((item) => {
+    if (item.section === 'home') return { ...item, label: ar.navHome };
+    if (item.section === 'about') return { ...item, label: ar.navAbout };
+    if (item.section === 'projects') return { ...item, label: ar.navProjects };
+    if (item.section === 'testimonials') return { ...item, label: ar.navTestimonials };
+    if (item.section === 'contact') return { ...item, label: ar.navContact };
+    if (item.section === 'articles') return { ...item, label: ar.navArticles };
+    return item;
+  });
+
+  const localizedFooterNavLinks = siteConfig.footer.navLinks.map((link) => {
+    const href = link.href.toLowerCase();
+    if (href.includes('home')) return { ...link, label: ar.navHome };
+    if (href.includes('about')) return { ...link, label: ar.navAbout };
+    if (href.includes('projects')) return { ...link, label: ar.navProjects };
+    if (href.includes('testimonials')) return { ...link, label: ar.navTestimonials };
+    if (href.includes('contact')) return { ...link, label: ar.navContact };
+    if (href.includes('articles')) return { ...link, label: ar.navArticles };
+    return link;
+  });
+
+  return {
+    ...siteConfig,
+    introText: ar.introText,
+    introScrollPrompt: ar.introScrollPrompt,
+    featured: {
+      ...siteConfig.featured,
+      titleLine1: ar.featuredTitleLine1,
+      titleLine2: ar.featuredTitleLine2,
+      description: ar.featuredDescription,
+      caseStudyLabel: ar.featuredCaseStudyLabel,
+      liveLabel: ar.featuredLiveLabel,
+      viewAllLabel: ar.featuredViewAllLabel,
+      ctaTitleLine1: ar.featuredCtaTitleLine1,
+      ctaTitleLine2: ar.featuredCtaTitleLine2,
+      ctaDescription: ar.featuredCtaDescription,
+      ctaButtonText: ar.featuredCtaButtonText,
+    },
+    persistentUI: {
+      ...siteConfig.persistentUI,
+      navItems: localizedNavItems,
+      letsTalkLabel: ar.letsTalkLabel,
+    },
+    scene05: {
+      ...siteConfig.scene05,
+      badge: ar.scene05Badge,
+      role: ar.scene05Role,
+      visionTitle: ar.scene05VisionTitle,
+      visionText: ar.scene05VisionText,
+      storyTitle: ar.scene05StoryTitle,
+      skillsTitle: ar.scene05SkillsTitle,
+      certificationsTitle: ar.scene05CertificationsTitle,
+      credentialButtonLabel: ar.scene05CredentialButtonLabel,
+      companyLogosTitle: ar.scene05CompanyLogosTitle,
+      aiTitle: ar.scene05AiTitle,
+      aiText: ar.scene05AiText,
+      actionLabel: ar.scene05ActionLabel,
+    },
+    footer: {
+      ...siteConfig.footer,
+      copyrightText: ar.footerCopyrightText,
+      officeTitle: ar.footerOfficeTitle,
+      navLinks: localizedFooterNavLinks,
+    },
+    articlesPage: {
+      ...siteConfig.articlesPage,
+      title: ar.articlesTitle,
+      subtitle: ar.articlesSubtitle,
+      description: ar.articlesDescription,
+      latestArticlesLabel: ar.articlesLatestLabel,
+      allTopicsLabel: ar.articlesAllTopicsLabel,
+      searchPlaceholder: ar.articlesSearchPlaceholder,
+      continueReadingLabel: ar.articlesContinueReadingLabel,
+      minReadLabel: ar.articlesMinReadLabel,
+      undatedLabel: ar.articlesUndatedLabel,
+      byAuthorPrefix: ar.articlesByAuthorPrefix,
+      articleNotFoundTitle: ar.articlesNotFoundTitle,
+      articleNotFoundDescription: ar.articlesNotFoundDescription,
+      backToArticlesLabel: ar.articlesBackLabel,
+      featuredArticleLabel: ar.articlesFeaturedLabel,
+      noResultsTitle: ar.articlesNoResultsTitle,
+      noResultsDescription: ar.articlesNoResultsDescription,
+      previousPageLabel: ar.articlesPreviousLabel,
+      nextPageLabel: ar.articlesNextLabel,
+      newsletterTitle: ar.articlesNewsletterTitle,
+      newsletterDescription: ar.articlesNewsletterDescription,
+      newsletterInputPlaceholder: ar.articlesNewsletterInputPlaceholder,
+      newsletterButtonLabel: ar.articlesNewsletterButtonLabel,
+      videosSectionTitle: ar.articlesVideosSectionTitle,
+      videosSectionDescription: ar.articlesVideosSectionDescription,
+    },
+    contactPage: {
+      ...siteConfig.contactPage,
+      heroTitleLine1: ar.contactHeroTitleLine1,
+      heroTitleLine2: ar.contactHeroTitleLine2,
+      heroSubtitle: ar.contactHeroSubtitle,
+      directContactTitle: ar.contactDirectContactTitle,
+      phoneLabel: ar.contactPhoneLabel,
+      emailLabel: ar.contactEmailLabel,
+      officeLabel: ar.contactOfficeLabel,
+      availabilityText: ar.contactAvailabilityText,
+      responseTimeLabel: ar.contactResponseTimeLabel,
+      responseTimeDescription: ar.contactResponseTimeDescription,
+      formTitle: ar.contactFormTitle,
+      formSubtitle: ar.contactFormSubtitle,
+      formNameLabel: ar.contactFormNameLabel,
+      formNamePlaceholder: ar.contactFormNamePlaceholder,
+      formEmailLabel: ar.contactFormEmailLabel,
+      formEmailPlaceholder: ar.contactFormEmailPlaceholder,
+      formSubjectLabel: ar.contactFormSubjectLabel,
+      formSubjectPlaceholder: ar.contactFormSubjectPlaceholder,
+      formMessageLabel: ar.contactFormMessageLabel,
+      formMessagePlaceholder: ar.contactFormMessagePlaceholder,
+      formPrivacyText: ar.contactFormPrivacyText,
+      formSubmitButton: ar.contactFormSubmitButton,
+      socialSectionLabel: ar.contactSocialSectionLabel,
+      socialSectionTitle: ar.contactSocialSectionTitle,
+      socialSectionDescription: ar.contactSocialSectionDescription,
+      formSuccessTitle: ar.contactFormSuccessTitle,
+      formSuccessMessage: ar.contactFormSuccessMessage,
+      validationRequired: ar.contactValidationRequired,
+      validationInvalidEmail: ar.contactValidationInvalidEmail,
+      validationMinLength: ar.contactValidationMinLength,
+    },
+  };
+};
+
 
 const applyDesignSystemVariables = (siteConfig: SiteConfig) => {
   if (typeof document === 'undefined') return;
@@ -256,6 +388,13 @@ const applyBrowserMetadata = (siteConfig: SiteConfig) => {
 export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => getInitialSiteConfig());
   const [storageInfo, setStorageInfo] = useState(() => getStorageInfo());
+  const routeLocationKey =
+    typeof window === 'undefined' ? '' : `${window.location.pathname}|${window.location.hash}`;
+  const isDashboardRoute = routeLocationKey.includes('/dashboard') || routeLocationKey.includes('#/dashboard');
+  const resolvedSiteConfig = useMemo(
+    () => getLocalizedSiteConfig(siteConfig, isDashboardRoute),
+    [siteConfig, isDashboardRoute],
+  );
 
   useEffect(() => {
     applyDesignSystemVariables(siteConfig);
@@ -343,7 +482,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     return {
-      siteConfig,
+      siteConfig: resolvedSiteConfig,
       setSiteConfig,
       resetSiteConfig: () => {
         setSiteConfig(DEFAULT_SITE_CONFIG);
@@ -438,7 +577,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       },
     };
-  }, [siteConfig, storageInfo]);
+  }, [resolvedSiteConfig, siteConfig, storageInfo]);
 
   return <SiteConfigContext.Provider value={value}>{children}</SiteConfigContext.Provider>;
 };

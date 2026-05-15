@@ -3,7 +3,6 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass } from './designSystem';
 import { getSocialIconComponent } from './icons';
 import { WebGLFog } from './WebGLFog';
-import { useLanguage } from '../hooks/useLanguage';
 
 interface CinematicAboutProps {
   progress: number;
@@ -40,7 +39,6 @@ const getInitials = (value: string) => {
 export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   const { siteConfig } = useSiteConfig();
   const { scene05, designSystem, footer } = siteConfig;
-  const { isAr, ar } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const navLockUntilRef = useRef(0);
   const lastScrollTopRef = useRef(0);

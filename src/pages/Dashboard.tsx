@@ -675,6 +675,10 @@ export const Dashboard: React.FC = () => {
   const previewAnimationAreaRef = useRef<HTMLDivElement | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
+  const [arTranslationsJson, setArTranslationsJson] = useState(() =>
+    JSON.stringify(siteConfig.arTranslations, null, 2),
+  );
+  const [arTranslationsError, setArTranslationsError] = useState('');
 
   // Fetch messages from API when entering messages workspace
   React.useEffect(() => {
@@ -693,6 +697,10 @@ export const Dashboard: React.FC = () => {
       isMounted = false;
     };
   }, []);
+
+  React.useEffect(() => {
+    setArTranslationsJson(JSON.stringify(siteConfig.arTranslations, null, 2));
+  }, [siteConfig.arTranslations]);
 
   // Auto-fetch messages when switching to messages workspace
   React.useEffect(() => {
@@ -719,6 +727,22 @@ export const Dashboard: React.FC = () => {
   const updateConfig = (updater: (prev: SiteConfig) => SiteConfig) => {
     setSiteConfig((prev) => updater(prev));
     setHasUnsavedChanges(true);
+  };
+
+  const applyArabicTranslationsJson = () => {
+    try {
+      const parsed = JSON.parse(arTranslationsJson) as Partial<SiteConfig['arTranslations']>;
+      setArTranslationsError('');
+      updateConfig((prev) => ({
+        ...prev,
+        arTranslations: {
+          ...prev.arTranslations,
+          ...parsed,
+        },
+      }));
+    } catch {
+      setArTranslationsError('Invalid JSON. Fix syntax and try again.');
+    }
   };
 
   const updateProject = (projectId: string, updater: (project: SiteProject) => SiteProject) => {
@@ -2660,6 +2684,37 @@ export const Dashboard: React.FC = () => {
                   }))
                 }
               />
+
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <SelectInput
+                  label="Site language"
+                  value={siteConfig.language}
+                  options={[
+                    { value: 'en', label: 'English (LTR)' },
+                    { value: 'ar', label: 'Arabic (RTL)' },
+                  ]}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      language: next === 'ar' ? 'ar' : 'en',
+                    }))
+                  }
+                />
+                <Textarea
+                  label="Arabic translations JSON"
+                  value={arTranslationsJson}
+                  rows={10}
+                  onChange={(next) => setArTranslationsJson(next)}
+                />
+                {arTranslationsError ? <p className="text-xs text-red-300">{arTranslationsError}</p> : null}
+                <button
+                  type="button"
+                  onClick={applyArabicTranslationsJson}
+                  className="rounded-[10px] border border-white/20 bg-white/10 px-3 py-2 text-xs text-white transition hover:bg-white/20"
+                >
+                  Apply Arabic translations
+                </button>
+              </div>
 
               <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
@@ -7624,6 +7679,3 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-
-
