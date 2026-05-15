@@ -2860,7 +2860,53 @@ export const Dashboard: React.FC = () => {
       case 'footer':
         return (
           <div className="grid gap-4">
-            <Card title="Footer + Social + Legal" subtitle="Email, address, links, socials">
+            <Card title="Footer + Social + Legal" subtitle="Brand, quick links, socials, CTA, and legal">
+              <Input
+                label="Brand title"
+                value={siteConfig.footer.brandTitle}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, brandTitle: next } }))}
+              />
+              <Textarea
+                label="Brand description"
+                value={siteConfig.footer.brandDescription}
+                rows={3}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, brandDescription: next } }))}
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Quick links title"
+                  value={siteConfig.footer.quickLinksTitle}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, quickLinksTitle: next } }))}
+                />
+                <Input
+                  label="Follow section title"
+                  value={siteConfig.footer.followTitle}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, followTitle: next } }))}
+                />
+              </div>
+              <Input
+                label="CTA title"
+                value={siteConfig.footer.ctaTitle}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, ctaTitle: next } }))}
+              />
+              <Textarea
+                label="CTA description"
+                value={siteConfig.footer.ctaDescription}
+                rows={3}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, ctaDescription: next } }))}
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="CTA button label"
+                  value={siteConfig.footer.ctaButtonLabel}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, ctaButtonLabel: next } }))}
+                />
+                <Input
+                  label="CTA button href"
+                  value={siteConfig.footer.ctaButtonHref}
+                  onChange={(next) => updateConfig((prev) => ({ ...prev, footer: { ...prev.footer, ctaButtonHref: next } }))}
+                />
+              </div>
               <Input
                 label="Footer email"
                 value={siteConfig.footer.email}
@@ -3018,19 +3064,34 @@ export const Dashboard: React.FC = () => {
                   }))
                 }
               />
-              <Input
-                label="Copyright text"
-                value={siteConfig.footer.copyrightText}
-                onChange={(next) =>
-                  updateConfig((prev) => ({
-                    ...prev,
-                    footer: {
-                      ...prev.footer,
-                      copyrightText: next,
-                    },
-                  }))
-                }
-              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Copyright text"
+                  value={siteConfig.footer.copyrightText}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      footer: {
+                        ...prev.footer,
+                        copyrightText: next,
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  label="Bottom note text"
+                  value={siteConfig.footer.bottomNote}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      footer: {
+                        ...prev.footer,
+                        bottomNote: next,
+                      },
+                    }))
+                  }
+                />
+              </div>
 
               <div className="space-y-2 rounded-[10px] border border-white/10 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Legal links</p>

@@ -838,6 +838,15 @@ export interface SiteConfig {
     musicVolume: number;
   };
   footer: {
+    brandTitle: string;
+    brandDescription: string;
+    quickLinksTitle: string;
+    followTitle: string;
+    ctaTitle: string;
+    ctaDescription: string;
+    ctaButtonLabel: string;
+    ctaButtonHref: string;
+    bottomNote: string;
     email: string;
     copyrightText: string;
     officeTitle: string;
@@ -1206,14 +1215,28 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     musicVolume: 0.3,
   },
   footer: {
+    brandTitle: 'Oussama Lassoued',
+    brandDescription:
+      'Digital product designer and AI expert. I help companies craft better products and practical AI workflows.',
+    quickLinksTitle: 'Quick Links',
+    followTitle: 'Follow Me',
+    ctaTitle: 'Need a designer for your product?',
+    ctaDescription:
+      'If your company needs UX/UI design, SaaS design, Webflow development, or AI consulting, book a free 30-minute call.',
+    ctaButtonLabel: 'Get in Touch',
+    ctaButtonHref: '#contact',
+    bottomNote: 'Made with love by Oussama Lassoued',
     email: 'hello@example.com',
-    copyrightText: 'Oussama Lassoued All rights reserved.',
+    copyrightText: 'Oussama Lassoued. All rights reserved.',
     officeTitle: 'Oussama Office',
-    officeAddress: '123 Cinematic Blvd,\nParis, France',
+    officeAddress: '123 Cinematic Blvd,
+Paris, France',
     socialLinks: [
-      { id: 'social-behance', label: 'Behance', href: '#', icon: 'behance', visible: true },
+      { id: 'social-youtube', label: 'YouTube', href: '#', icon: 'youtube', visible: true },
+      { id: 'social-twitter', label: 'X', href: '#', icon: 'twitter', visible: true },
       { id: 'social-linkedin', label: 'LinkedIn', href: '#', icon: 'linkedin', visible: true },
       { id: 'social-instagram', label: 'Instagram', href: '#', icon: 'instagram', visible: true },
+      { id: 'social-mail', label: 'Mail', href: 'mailto:hello@example.com', icon: 'mail', visible: true },
     ],
     legalLinks: [
       { id: 'legal-terms', label: 'Terms of Service', href: '#', visible: true },
@@ -1224,6 +1247,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       { id: 'footer-nav-about', label: 'About Me', href: '#about', visible: true },
       { id: 'footer-nav-projects', label: 'Projects', href: '#projects', visible: true },
       { id: 'footer-nav-testimonials', label: 'Testimonials', href: '#testimonials', visible: true },
+      { id: 'footer-nav-contact', label: 'Contact', href: '#contact', visible: true },
       { id: 'footer-nav-articles', label: 'Articles', href: '#/articles', visible: false },
     ],
   },
@@ -2810,6 +2834,15 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       musicVolume: asNumber(persistentUI.musicVolume, DEFAULT_SITE_CONFIG.persistentUI.musicVolume),
     },
     footer: {
+      brandTitle: asString(footer.brandTitle, DEFAULT_SITE_CONFIG.footer.brandTitle),
+      brandDescription: asString(footer.brandDescription, DEFAULT_SITE_CONFIG.footer.brandDescription),
+      quickLinksTitle: asString(footer.quickLinksTitle, DEFAULT_SITE_CONFIG.footer.quickLinksTitle),
+      followTitle: asString(footer.followTitle, DEFAULT_SITE_CONFIG.footer.followTitle),
+      ctaTitle: asString(footer.ctaTitle, DEFAULT_SITE_CONFIG.footer.ctaTitle),
+      ctaDescription: asString(footer.ctaDescription, DEFAULT_SITE_CONFIG.footer.ctaDescription),
+      ctaButtonLabel: asString(footer.ctaButtonLabel, DEFAULT_SITE_CONFIG.footer.ctaButtonLabel),
+      ctaButtonHref: asString(footer.ctaButtonHref, DEFAULT_SITE_CONFIG.footer.ctaButtonHref),
+      bottomNote: asString(footer.bottomNote, DEFAULT_SITE_CONFIG.footer.bottomNote),
       email: asString(footer.email, DEFAULT_SITE_CONFIG.footer.email),
       copyrightText: asString(footer.copyrightText, DEFAULT_SITE_CONFIG.footer.copyrightText),
       officeTitle: asString(footer.officeTitle, DEFAULT_SITE_CONFIG.footer.officeTitle),
