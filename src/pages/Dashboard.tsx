@@ -61,6 +61,7 @@ type DashboardSectionId =
   | 'testimonials'
   | 'navigation'
   | 'footer'
+  | 'contact'
   | 'visibility'
   | 'scene05'
   | 'designSystem'
@@ -174,7 +175,7 @@ const formatVariantLabel = (variant: string) => {
 };
 
 const isValidSection = (value: string): value is SiteSection => {
-  return ['home', 'about', 'projects', 'testimonials', 'articles'].includes(value);
+  return ['home', 'about', 'projects', 'testimonials', 'articles', 'contact'].includes(value);
 };
 
 const splitLines = (value: string) => {
@@ -2640,6 +2641,82 @@ export const Dashboard: React.FC = () => {
                   }))
                 }
               />
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Site language</span>
+                <select
+                  value={siteConfig.language}
+                  onChange={(e) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      language: e.target.value === 'ar' ? 'ar' : 'en',
+                    }))
+                  }
+                  className="rounded-[10px] border border-white/15 bg-black/35 px-3 py-2 text-[13px] text-white outline-none focus:border-white/40"
+                >
+                  <option value="en">English (LTR)</option>
+                  <option value="ar">Arabic (RTL)</option>
+                </select>
+              </label>
+              <Input
+                label="Language button - English label"
+                value={siteConfig.persistentUI.languageToggleLabelEn}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, languageToggleLabelEn: next },
+                  }))
+                }
+              />
+              <Input
+                label="Language button - Arabic label"
+                value={siteConfig.persistentUI.languageToggleLabelAr}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, languageToggleLabelAr: next },
+                  }))
+                }
+              />
+              <Input
+                label="Music toggle aria label (English)"
+                value={siteConfig.persistentUI.musicToggleAriaLabel}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, musicToggleAriaLabel: next },
+                  }))
+                }
+              />
+              <Input
+                label="Music toggle aria label (Arabic)"
+                value={siteConfig.persistentUI.musicToggleAriaLabelAr}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, musicToggleAriaLabelAr: next },
+                  }))
+                }
+              />
+              <Input
+                label="Menu toggle aria label (English)"
+                value={siteConfig.persistentUI.menuToggleAriaLabel}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, menuToggleAriaLabel: next },
+                  }))
+                }
+              />
+              <Input
+                label="Menu toggle aria label (Arabic)"
+                value={siteConfig.persistentUI.menuToggleAriaLabelAr}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, menuToggleAriaLabelAr: next },
+                  }))
+                }
+              />
               <Input
                 label="Let's Talk label"
                 value={siteConfig.persistentUI.letsTalkLabel}
@@ -2647,6 +2724,16 @@ export const Dashboard: React.FC = () => {
                   updateConfig((prev) => ({
                     ...prev,
                     persistentUI: { ...prev.persistentUI, letsTalkLabel: next },
+                  }))
+                }
+              />
+              <Input
+                label="Let's Talk Arabic label"
+                value={siteConfig.persistentUI.letsTalkLabelAr}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    persistentUI: { ...prev.persistentUI, letsTalkLabelAr: next },
                   }))
                 }
               />
@@ -2711,6 +2798,21 @@ export const Dashboard: React.FC = () => {
                       }));
                     }}
                   />
+                  <Input
+                    label="Arabic label"
+                    value={item.labelAr ?? ''}
+                    onChange={(next) => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        persistentUI: {
+                          ...prev.persistentUI,
+                          navItems: prev.persistentUI.navItems.map((navItem) =>
+                            navItem.id === item.id ? { ...navItem, labelAr: next } : navItem,
+                          ),
+                        },
+                      }));
+                    }}
+                  />
 
                   <Toggle
                     label="Visible on site"
@@ -2752,6 +2854,7 @@ export const Dashboard: React.FC = () => {
                       <option value="projects">projects</option>
                       <option value="testimonials">testimonials</option>
                       <option value="articles">articles</option>
+                      <option value="contact">contact</option>
                     </select>
                   </label>
 
@@ -2779,6 +2882,7 @@ export const Dashboard: React.FC = () => {
                   const nextNavItem: SiteNavItem = {
                     id: `nav-${Date.now()}`,
                     label: 'New Item',
+                    labelAr: '',
                     section: 'home',
                     visible: true,
                   };
@@ -7624,6 +7728,3 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-
-
