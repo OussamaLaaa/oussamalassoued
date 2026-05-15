@@ -50,6 +50,28 @@ export const TwitterIcon: React.FC<IconProps> = ({
   </svg>
 );
 
+// Telegram Icon
+export const TelegramIcon: React.FC<IconProps> = ({
+  size = 24,
+  strokeWidth = 1.5,
+  className = ''
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M21.5 4.5L18.4 19.1C18.23 19.86 17.73 20.05 17.08 19.68L12.4 16.23L10.14 18.43C9.9 18.67 9.69 18.88 9.22 18.88L9.56 13.95L18.53 5.86C18.92 5.52 18.45 5.34 17.93 5.68L6.83 12.67L2.05 11.18C1.27 10.94 1.25 10.41 2.21 10.04L20.24 3.09C21.08 2.79 21.81 3.29 21.5 4.5Z" />
+  </svg>
+);
+
 // Instagram Icon
 export const InstagramIcon: React.FC<IconProps> = ({
   size = 24,

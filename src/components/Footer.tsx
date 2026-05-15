@@ -99,22 +99,22 @@ export const Footer: React.FC = () => {
     designSystem.components.featuredCtaButtonVariant,
     'light',
     'md',
-    'min-w-[190px] justify-center gap-2',
+    'min-w-[190px] justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]',
   );
 
   const ctaSection = getSectionFromHref(footer.ctaButtonHref);
 
   return (
-    <footer className="relative z-10 w-full border-t border-[#0a0a0b]/10 bg-[#f2f4f6] text-[#111217] selection:bg-[#111217]/10">
-      <div className="site-shell pb-8 pt-14 md:pb-10 md:pt-16">
-        <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr_1.15fr]">
-          <div className="space-y-4">
-            <p className="text-[2rem] font-semibold leading-none tracking-tight text-[#111217]">{footer.brandTitle}</p>
-            <p className="max-w-[34ch] text-base leading-8 text-[#111217]/70">{footer.brandDescription}</p>
+    <footer className="relative z-10 w-full border-t border-[#111217]/8 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
+      <div className="site-shell pb-7 pt-16 md:pb-8 md:pt-20">
+        <div className="grid gap-12 border-b border-[#111217]/10 pb-12 md:grid-cols-2 xl:grid-cols-[1.1fr_1fr_1fr_1.1fr] xl:gap-14">
+          <div className="space-y-5">
+            <p className="text-[2.1rem] font-semibold leading-none tracking-tight text-[#111217]">{footer.brandTitle}</p>
+            <p className="max-w-[33ch] text-[1.05rem] leading-9 text-[#111217]/72">{footer.brandDescription}</p>
             {visibility.footerEmail ? (
               <a
                 href={`mailto:${footer.email}`}
-                className="inline-flex items-center gap-2 text-sm font-medium text-[#111217]/80 transition-colors hover:text-[#111217]"
+                className="inline-flex items-center gap-2 text-[0.96rem] font-medium text-[#111217]/70 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
               >
                 <MailIcon size={16} strokeWidth={1.8} />
                 {footer.email}
@@ -123,17 +123,15 @@ export const Footer: React.FC = () => {
           </div>
 
           {visibility.footerNavLinks && syncedNavLinks.length > 0 ? (
-            <div className="space-y-4">
-              <p className="font-sans text-[2rem] font-semibold leading-none tracking-tight text-[#111217] md:text-[1.9rem]">
-                {footer.quickLinksTitle}
-              </p>
-              <ul className="space-y-3">
+            <div className="space-y-6">
+              <p className="text-[2rem] font-semibold leading-none tracking-tight text-[#111217] md:text-[1.95rem]">{footer.quickLinksTitle}</p>
+              <ul className="space-y-3.5">
                 {syncedNavLinks.map((item) => (
                   <li key={item.id}>
                     <a
                       href={item.href}
                       onClick={(e) => handleSectionNav(e, item.section)}
-                      className="text-[1.02rem] text-[#111217]/68 transition-colors hover:text-[#111217]"
+                      className="text-[1.03rem] text-[#111217]/65 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
                     >
                       {item.label}
                     </a>
@@ -144,11 +142,9 @@ export const Footer: React.FC = () => {
           ) : null}
 
           {visibility.footerSocialLinks && visibleSocialLinks.length > 0 ? (
-            <div className="space-y-4">
-              <p className="font-sans text-[2rem] font-semibold leading-none tracking-tight text-[#111217] md:text-[1.9rem]">
-                {footer.followTitle}
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="space-y-6">
+              <p className="text-[2rem] font-semibold leading-none tracking-tight text-[#111217] md:text-[1.95rem]">{footer.followTitle}</p>
+              <div className="flex flex-wrap items-center gap-2.5">
                 {visibleSocialLinks.map((social) => {
                   const SocialIcon = getSocialIconComponent(social.icon);
                   return (
@@ -160,9 +156,9 @@ export const Footer: React.FC = () => {
                       rel={isPlaceholderHref(social.href) ? undefined : 'noopener noreferrer'}
                       aria-label={social.label}
                       title={social.label}
-                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#111217]/15 bg-white/65 text-[#111217]/75 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#111217]/30 hover:text-[#111217]"
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[#111217]/14 bg-white/55 text-[#111217]/66 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#111217]/30 hover:bg-white/85 hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
                     >
-                      <SocialIcon size={21} strokeWidth={1.8} />
+                      <SocialIcon size={20} strokeWidth={1.8} />
                     </a>
                   );
                 })}
@@ -170,9 +166,9 @@ export const Footer: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="space-y-4">
-            <p className="max-w-[19ch] text-[1.9rem] font-semibold leading-tight tracking-tight text-[#111217]">{footer.ctaTitle}</p>
-            <p className="max-w-[32ch] text-base leading-8 text-[#111217]/70">{footer.ctaDescription}</p>
+          <div className="space-y-5">
+            <p className="max-w-[20ch] text-[2rem] font-semibold leading-tight tracking-tight text-[#111217]">{footer.ctaTitle}</p>
+            <p className="max-w-[32ch] text-[1.03rem] leading-9 text-[#111217]/70">{footer.ctaDescription}</p>
             {ctaSection ? (
               <a href={footer.ctaButtonHref} onClick={(e) => handleSectionNav(e, ctaSection)} className={buttonClass}>
                 <MailIcon size={17} strokeWidth={1.9} />
@@ -198,7 +194,7 @@ export const Footer: React.FC = () => {
             )}
 
             {visibility.footerOffice ? (
-              <div className="pt-1 text-sm leading-6 text-[#111217]/62">
+              <div className="pt-2 text-sm leading-6 text-[#111217]/62">
                 <p className="font-medium text-[#111217]/80">{footer.officeTitle}</p>
                 <p className="whitespace-pre-line">{footer.officeAddress}</p>
               </div>
@@ -206,16 +202,16 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-[#111217]/10 pt-5 text-[0.94rem] text-[#111217]/60 md:flex-row md:items-center md:justify-between">
+        <div className="mt-5 flex flex-col gap-3.5 pt-3 text-[0.94rem] text-[#111217]/57 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} {footer.copyrightText}</p>
           {visibility.footerLegalLinks && visibleLegalLinks.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2 text-[#111217]/55">
+            <div className="flex flex-wrap items-center gap-2 text-[#111217]/52">
               {visibleLegalLinks.map((link, index) => (
                 <React.Fragment key={link.id}>
                   <a
                     href={link.href}
                     onClick={(e) => handlePlaceholderLinkClick(e, link.href)}
-                    className="transition-colors hover:text-[#111217]"
+                    className="transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
                   >
                     {link.label}
                   </a>

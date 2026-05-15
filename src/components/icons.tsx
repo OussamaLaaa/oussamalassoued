@@ -2,6 +2,7 @@
   import {
     FacebookIcon,
     TwitterIcon,
+    TelegramIcon,
     InstagramIcon,
     LinkedinIcon,
     GithubIcon,
@@ -41,6 +42,7 @@
   export { 
     FacebookIcon, 
     TwitterIcon, 
+    TelegramIcon,
     InstagramIcon, 
     LinkedinIcon, 
     GithubIcon, 
@@ -77,6 +79,7 @@ export const SOCIAL_ICON_COMPONENTS: Record<SiteSocialIconKey, SocialIconCompone
   instagram: InstagramIcon,
   github: GithubIcon,
   twitter: TwitterIcon,
+  telegram: TelegramIcon,
   facebook: FacebookIcon,
   youtube: YoutubeIcon,
   dribbble: DribbbleIcon,
