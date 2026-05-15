@@ -96,7 +96,7 @@ export function usePreloadFrames(scenes: string[]) {
       loadedImagesRecord[scene] = new Array(totalScenesUrls.find(s => s.scene === scene)?.urls.length || 0).fill(null);
     });
 
-    // Determine first scene and half its frame count
+    // تحديد المشهد الأول ونصف عدد إطاراته
     const firstScene = scenes[0];
     const firstSceneUrls = totalScenesUrls.find(s => s.scene === firstScene)?.urls || [];
     const firstSceneFrameCount = firstSceneUrls.length;
@@ -107,13 +107,13 @@ export function usePreloadFrames(scenes: string[]) {
       loadedCount++;
       const currentProgress = Math.floor((loadedCount / totalFrames) * 100);
 
-      // Calculate number of frames loaded for the first scene
+      // حساب عدد الإطارات المحملة للمشهد الأول
       const firstSceneLoadedCount = loadedImagesRecord[firstScene]?.filter(img => img !== null).length || 0;
 
       const nextState: PreloadState = {
         progress: currentProgress,
         images: loadedImagesRecord,
-        // Hide loading when first scene half frames loaded or all frames complete
+        // إخفاء التحميل عند تحميل نصف إطارات المشهد الأول أو اكتمال كل الإطارات
         isComplete: firstSceneLoadedCount >= halfFirstSceneFrames || loadedCount === totalFrames
       };
 

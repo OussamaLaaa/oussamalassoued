@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getScaledRem } from './designSystem';
-import { useLanguage } from '../hooks/useLanguage';
 
 interface IntroTextOverlayProps {
   hasStarted: boolean;
@@ -10,7 +9,6 @@ interface IntroTextOverlayProps {
 
 export const IntroTextOverlay: React.FC<IntroTextOverlayProps> = ({ hasStarted, isScrolling }) => {
   const { siteConfig } = useSiteConfig();
-  const { isAr, ar } = useLanguage();
   const {
     headingScale,
     displayTitleSizeRem,
@@ -32,13 +30,13 @@ export const IntroTextOverlay: React.FC<IntroTextOverlayProps> = ({ hasStarted, 
   if (!hasStarted && !mounted) return null;
 
   // Cinematic transitions for the glass window
-  const enter = 'opacity-100 translate-y-0';
-  const exit = 'opacity-0 translate-y-[-20px]';
-  const initial = 'opacity-0 translate-y-[20px]';
+  const enter = 'opacity-100 scale-100 translate-y-0 blur-none';
+  const exit = 'opacity-0 scale-[0.98] translate-y-[-10px] blur-[8px] pointer-events-none';
+  const initial = 'opacity-0 scale-[0.95] translate-y-[20px] blur-[12px]';
 
   const containerState = isScrolling ? exit : mounted ? enter : initial;
-  const primaryText = isAr ? ar.introText : siteConfig.introText.trim();
-  const scrollPrompt = isAr ? ar.introScrollPrompt : siteConfig.introScrollPrompt.trim();
+  const primaryText = siteConfig.introText.trim();
+  const scrollPrompt = siteConfig.introScrollPrompt.trim();
   const backdropColor = siteConfig.introOverlayBackdropColor;
   const backdropOpacity = mounted && !isScrolling ? siteConfig.introOverlayBackdropOpacity : 0;
   const headlineBoost = 1.4;
@@ -95,7 +93,7 @@ export const IntroTextOverlay: React.FC<IntroTextOverlayProps> = ({ hasStarted, 
         ) : null}
         {scrollPrompt ? (
           <p
-            className="intro-glow-text intro-scroll-prompt font-sans text-white/90 animate-pulse"
+            className="intro-glow-text intro-scroll-prompt font-sans text-white/80"
             style={{
               fontSize: promptFontSize,
               fontWeight: Math.min(620, Math.max(480, headingWeight)),
