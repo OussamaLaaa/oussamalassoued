@@ -1229,8 +1229,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     email: 'hello@example.com',
     copyrightText: 'Oussama Lassoued. All rights reserved.',
     officeTitle: 'Oussama Office',
-    officeAddress: '123 Cinematic Blvd,
-Paris, France',
+    officeAddress: '123 Cinematic Blvd\nParis, France',
     socialLinks: [
       { id: 'social-youtube', label: 'YouTube', href: '#', icon: 'youtube', visible: true },
       { id: 'social-twitter', label: 'X', href: '#', icon: 'twitter', visible: true },
