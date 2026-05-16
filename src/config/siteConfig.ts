@@ -1013,7 +1013,7 @@ export const SITE_CONFIG_STORAGE_KEY = 'portfolio.site-config.v1';
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   introText:
-    'Oussama Lassoued is a UX/UI designer in Tunisia, AI product builder, and design engineer focused on user experience and user interface design.',
+    'Oussama Lassoued is a UX/UI designer in Tunisia, AI product builder, and design engineer focused on user experience and user interface design. مصمم UX/UI في تونس وخبير تجربة المستخدم والواجهات.',
   introScrollPrompt: 'Scroll to explore UX, UI, and AI product work',
   introOverlayBackdropColor: 'rgba(0, 0, 0, 0.6)',
   introOverlayBackdropOpacity: 0.35,
@@ -1119,7 +1119,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     portraitCaption: '',
     visionTitle: 'Vision & Value',
     visionText:
-      'I design user experiences and user interfaces that are visually refined, intentionally structured, and built to support real business growth.',
+      'I design user experiences and user interfaces that are visually refined, intentionally structured, and built to support real business growth. أصمم تجارب وواجهات مستخدم واضحة ومقنعة في تونس.',
     storyTitle: 'What I Actually Bring',
     storyParagraphs: [
       'I work across the full product arc: research, information architecture, interaction modeling, design systems, and production-quality frontend implementation.',
