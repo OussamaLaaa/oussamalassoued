@@ -108,12 +108,12 @@ export const Footer: React.FC = () => {
   return (
     <footer className="relative z-10 w-full border-t border-[#111217]/10 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
       <div className="site-shell pb-8 pt-14 md:pb-10 md:pt-16">
-        <div className="grid gap-8 border-b border-[#111217]/10 pb-12 md:grid-cols-2 md:gap-10 xl:grid-cols-4 xl:gap-8">
+        <div className="grid items-start gap-8 border-b border-[#111217]/10 pb-12 md:grid-cols-2 md:gap-10 xl:grid-cols-[1.6fr_1fr_0.9fr_1.4fr] xl:gap-8">
           <div className="space-y-4">
             <p className="text-[1.42rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.56rem]">
               {footer.brandTitle}
             </p>
-            <p className="max-w-[33ch] text-[0.9rem] leading-6 text-[#111217]/70">{footer.brandDescription}</p>
+            <p className="max-w-[30ch] text-[0.9rem] leading-6 text-[#111217]/70">{footer.brandDescription}</p>
             {visibility.footerEmail ? (
               <a
                 href={`mailto:${footer.email}`}
@@ -130,7 +130,7 @@ export const Footer: React.FC = () => {
               <p className="text-[1.08rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.15rem]">
                 {footer.quickLinksTitle}
               </p>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 {syncedNavLinks.map((item) => (
                   <li key={item.id}>
                     <a
@@ -151,7 +151,7 @@ export const Footer: React.FC = () => {
               <p className="text-[1.08rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.15rem]">
                 {footer.followTitle}
               </p>
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 {visibleSocialLinks.map((social) => {
                   const SocialIcon = getSocialIconComponent(social.icon);
                   return (
