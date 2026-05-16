@@ -121,3 +121,27 @@
     opacity: 0.3;
   }
 }
+
+/* Bottom-left numeric progress counter */
+#pre-counter {
+  position: fixed;
+  left: 18px;
+  bottom: 14px;
+  z-index: 9100;
+  color: rgba(245, 245, 245, 0.95);
+  font-size: 13px;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  letter-spacing: 0.4px;
+  background: rgba(255,255,255,0.02);
+  padding: 6px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  will-change: opacity, transform;
+  transition: opacity 180ms ease, transform 240ms cubic-bezier(.2,.9,.2,1);
+}
+
+#pre.is-waiting #pre-counter {
+  transform: translateY(0);
+  opacity: 1;
+}

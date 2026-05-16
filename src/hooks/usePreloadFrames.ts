@@ -96,25 +96,34 @@ export function usePreloadFrames(scenes: string[]) {
       loadedImagesRecord[scene] = new Array(totalScenesUrls.find(s => s.scene === scene)?.urls.length || 0).fill(null);
     });
 
-    // تحديد المشهد الأول ونصف عدد إطاراته
+    // تحديد المشهد الأول والثاني ونسبة الإكمال المطلوبة (70%)
     const firstScene = scenes[0];
+    const secondScene = scenes[1];
     const firstSceneUrls = totalScenesUrls.find(s => s.scene === firstScene)?.urls || [];
+    const secondSceneUrls = totalScenesUrls.find(s => s.scene === secondScene)?.urls || [];
     const firstSceneFrameCount = firstSceneUrls.length;
-    const halfFirstSceneFrames = Math.ceil(firstSceneFrameCount / 2);
+    const secondSceneFrameCount = secondSceneUrls.length;
+    const REQUIRED_PERCENT = 0.7;
 
     const updateProgress = () => {
       if (!mounted) return;
       loadedCount++;
       const currentProgress = Math.floor((loadedCount / totalFrames) * 100);
 
-      // حساب عدد الإطارات المحملة للمشهد الأول
+      // حساب عدد الإطارات المحملة للمشهد الأول والثاني
       const firstSceneLoadedCount = loadedImagesRecord[firstScene]?.filter(img => img !== null).length || 0;
+      const secondSceneLoadedCount = secondScene ? (loadedImagesRecord[secondScene]?.filter(img => img !== null).length || 0) : 0;
+
+      const firstSceneRatio = firstSceneFrameCount > 0 ? firstSceneLoadedCount / firstSceneFrameCount : 1;
+      const secondSceneRatio = secondSceneFrameCount > 0 ? secondSceneLoadedCount / secondSceneFrameCount : 1;
+
+      // نعتبر التحميل مكتملًا عندما تصل كل من المشهد الأول والثاني إلى 70% أو عند اكتمال كل الإطارات
+      const openingScenesReady = firstSceneRatio >= REQUIRED_PERCENT && (secondScene ? secondSceneRatio >= REQUIRED_PERCENT : true);
 
       const nextState: PreloadState = {
         progress: currentProgress,
         images: loadedImagesRecord,
-        // إخفاء التحميل عند تحميل نصف إطارات المشهد الأول أو اكتمال كل الإطارات
-        isComplete: firstSceneLoadedCount >= halfFirstSceneFrames || loadedCount === totalFrames
+        isComplete: openingScenesReady || loadedCount === totalFrames
       };
 
       preloadStateCache.set(scenesKey, nextState);

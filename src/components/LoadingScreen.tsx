@@ -146,7 +146,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, isComple
         />
       </svg>
 
-      <div id="pre-line" />
+      <div id="pre-counter" aria-live="polite">{progress}%</div>
     </div>
   );
 };
