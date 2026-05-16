@@ -9,6 +9,7 @@ type PositionMode = 'fixed' | 'absolute';
 
 interface CursorAnimationLayerProps {
   animation: CursorAnimationConfig;
+  forcedMode?: SiteConfig['animation']['activeCursorAnimation'];
   positionMode?: PositionMode;
   className?: string;
   containerStyle?: CSSProperties;
@@ -866,12 +867,15 @@ const PlasmaCursorLayer: React.FC<PlasmaCursorLayerProps> = ({
 
 export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
   animation,
+  forcedMode,
   positionMode = 'fixed',
   className,
   containerStyle,
   trackingTargetRef,
 }) => {
-  if (animation.activeCursorAnimation === 'aura') {
+  const activeMode = forcedMode ?? animation.activeCursorAnimation;
+
+  if (activeMode === 'aura') {
     return (
       <AuraCursorLayer
         aura={animation.aura}
@@ -883,7 +887,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'orbit') {
+  if (activeMode === 'orbit') {
     return (
       <OrbitCursorLayer
         orbit={animation.orbit}
@@ -895,7 +899,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'comet') {
+  if (activeMode === 'comet') {
     return (
       <CometCursorLayer
         comet={animation.comet}
@@ -907,7 +911,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'ripple') {
+  if (activeMode === 'ripple') {
     return (
       <RippleCursorLayer
         ripple={animation.ripple}
@@ -919,7 +923,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'spark') {
+  if (activeMode === 'spark') {
     return (
       <SparkCursorLayer
         spark={animation.spark}
@@ -931,7 +935,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'beam') {
+  if (activeMode === 'beam') {
     return (
       <BeamCursorLayer
         beam={animation.beam}
@@ -943,7 +947,7 @@ export const CursorAnimationLayer: React.FC<CursorAnimationLayerProps> = memo(({
     );
   }
 
-  if (animation.activeCursorAnimation === 'plasma') {
+  if (activeMode === 'plasma') {
     return (
       <PlasmaCursorLayer
         plasma={animation.plasma}

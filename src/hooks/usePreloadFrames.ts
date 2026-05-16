@@ -123,11 +123,8 @@ export function usePreloadFrames(scenes: string[]) {
 
     // Load scenes in order to reach the opening scene threshold sooner.
     const loadImagesInChunks = async () => {
-      const chunkSize = 20;
-
-      for (const { scene, urls } of totalScenesUrls) {
-        if (!mounted) break;
-        const sceneLoaders: Array<() => Promise<void>> = urls.map((url, frameIndex) => () => new Promise((resolve) => {
+      const createLoadersForScene = (scene: string, urls: string[]) => {
+        return urls.map((url, frameIndex) => () => new Promise<void>((resolve) => {
           const img = new Image();
           img.decoding = 'async';
           img.onload = () => {
@@ -143,14 +140,68 @@ export function usePreloadFrames(scenes: string[]) {
           };
           img.src = url;
         }));
+      };
 
-        for (let i = 0; i < sceneLoaders.length; i += chunkSize) {
-          if (!mounted) break;
-          const chunk = sceneLoaders.slice(i, i + chunkSize);
-          await Promise.all(chunk.map(loader => loader()));
-          // Yield to main thread for a frame
-          await new Promise(r => requestAnimationFrame(r));
+      const yieldMainThread = async (preferIdle = false) => {
+        if (!mounted) return;
+        if (preferIdle && typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          await new Promise<void>((resolve) => {
+            (window as unknown as { requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number }).requestIdleCallback(
+              () => resolve(),
+              { timeout: 120 },
+            );
+          });
+          return;
         }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      };
+
+      const runChunkedLoaders = async (
+        sceneLoaders: Array<() => Promise<void>>,
+        startIndex: number,
+        endIndexExclusive: number,
+        chunkSize: number,
+        preferIdle: boolean,
+      ) => {
+        for (let i = startIndex; i < endIndexExclusive; i += chunkSize) {
+          if (!mounted) break;
+          const chunk = sceneLoaders.slice(i, Math.min(i + chunkSize, endIndexExclusive));
+          await Promise.all(chunk.map(loader => loader()));
+          await yieldMainThread(preferIdle);
+        }
+      };
+
+      const loadersByScene = new Map<string, Array<() => Promise<void>>>();
+      for (const { scene, urls } of totalScenesUrls) {
+        loadersByScene.set(scene, createLoadersForScene(scene, urls));
+      }
+
+      // Phase 1: fast-track the first scene until half is ready (for quick first meaningful render).
+      const firstSceneLoaders = loadersByScene.get(firstScene) ?? [];
+      await runChunkedLoaders(firstSceneLoaders, 0, halfFirstSceneFrames, 12, false);
+
+      // Phase 2: progressively fill the rest in idle-friendly batches.
+      const nextIndexByScene = new Map<string, number>();
+      for (const { scene } of totalScenesUrls) {
+        nextIndexByScene.set(scene, scene === firstScene ? halfFirstSceneFrames : 0);
+      }
+
+      let hasPending = true;
+      while (mounted && hasPending) {
+        hasPending = false;
+
+        for (const { scene } of totalScenesUrls) {
+          if (!mounted) break;
+          const sceneLoaders = loadersByScene.get(scene) ?? [];
+          const cursor = nextIndexByScene.get(scene) ?? 0;
+          if (cursor >= sceneLoaders.length) continue;
+          hasPending = true;
+          const nextCursor = Math.min(sceneLoaders.length, cursor + 6);
+          await Promise.all(sceneLoaders.slice(cursor, nextCursor).map((loader) => loader()));
+          nextIndexByScene.set(scene, nextCursor);
+        }
+
+        await yieldMainThread(true);
       }
     };
 

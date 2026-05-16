@@ -47,6 +47,9 @@ const snapshot: InteractionSnapshot = {
 };
 
 let isListening = false;
+let pointerMoveRafId = 0;
+let refreshSurfaceRafId = 0;
+let pendingPointer: { clientX: number; clientY: number } | null = null;
 
 const MEDIA_INTENSITY_BY_SURFACE: Record<SurfaceType, number> = {
   hero: 1.0,
@@ -127,6 +130,14 @@ const refreshSurface = () => {
   emitSnapshot();
 };
 
+const scheduleRefreshSurface = () => {
+  if (refreshSurfaceRafId) return;
+  refreshSurfaceRafId = window.requestAnimationFrame(() => {
+    refreshSurfaceRafId = 0;
+    refreshSurface();
+  });
+};
+
 const updatePointerState = (clientX: number, clientY: number, hasPointer: boolean) => {
   snapshot.clientX = clientX;
   snapshot.clientY = clientY;
@@ -136,13 +147,27 @@ const updatePointerState = (clientX: number, clientY: number, hasPointer: boolea
 };
 
 const handlePointerMove = (event: PointerEvent) => {
-  updatePointerState(event.clientX, event.clientY, true);
+  pendingPointer = { clientX: event.clientX, clientY: event.clientY };
+  if (pointerMoveRafId) return;
+  pointerMoveRafId = window.requestAnimationFrame(() => {
+    pointerMoveRafId = 0;
+    if (!pendingPointer) return;
+    updatePointerState(pendingPointer.clientX, pendingPointer.clientY, true);
+    pendingPointer = null;
+  });
 };
 
 const handleTouchMove = (event: TouchEvent) => {
   const touch = event.touches[0];
   if (!touch) return;
-  updatePointerState(touch.clientX, touch.clientY, true);
+  pendingPointer = { clientX: touch.clientX, clientY: touch.clientY };
+  if (pointerMoveRafId) return;
+  pointerMoveRafId = window.requestAnimationFrame(() => {
+    pointerMoveRafId = 0;
+    if (!pendingPointer) return;
+    updatePointerState(pendingPointer.clientX, pendingPointer.clientY, true);
+    pendingPointer = null;
+  });
 };
 
 const handlePointerLeave = () => {
@@ -158,8 +183,8 @@ const startGlobalListeners = () => {
 
   window.addEventListener('pointermove', handlePointerMove, { passive: true });
   window.addEventListener('touchmove', handleTouchMove, { passive: true });
-  window.addEventListener('resize', refreshSurface, { passive: true });
-  window.addEventListener('scroll', refreshSurface, { passive: true, capture: true });
+  window.addEventListener('resize', scheduleRefreshSurface, { passive: true });
+  window.addEventListener('scroll', scheduleRefreshSurface, { passive: true, capture: true });
   window.addEventListener('blur', handlePointerLeave);
   document.addEventListener('mouseleave', handlePointerLeave);
 };
@@ -170,10 +195,19 @@ const stopGlobalListeners = () => {
 
   window.removeEventListener('pointermove', handlePointerMove);
   window.removeEventListener('touchmove', handleTouchMove);
-  window.removeEventListener('resize', refreshSurface);
-  window.removeEventListener('scroll', refreshSurface, true);
+  window.removeEventListener('resize', scheduleRefreshSurface);
+  window.removeEventListener('scroll', scheduleRefreshSurface, true);
   window.removeEventListener('blur', handlePointerLeave);
   document.removeEventListener('mouseleave', handlePointerLeave);
+  if (pointerMoveRafId) {
+    window.cancelAnimationFrame(pointerMoveRafId);
+    pointerMoveRafId = 0;
+  }
+  if (refreshSurfaceRafId) {
+    window.cancelAnimationFrame(refreshSurfaceRafId);
+    refreshSurfaceRafId = 0;
+  }
+  pendingPointer = null;
 };
 
 export const subscribeInteractionSnapshot = (listener: SnapshotListener) => {

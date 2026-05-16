@@ -8,6 +8,7 @@ import { PersistentUI } from '../components/PersistentUI';
 import CursorAnimationLayer from '../components/CursorAnimationLayer';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { CRTEdgeOverlay } from '../components/CRTFrame';
+import { useAdaptivePerformance } from '../hooks/useAdaptivePerformance';
 
 import { Scene05Overlay } from '../components/Scene05Overlay';
 import { FeaturedWork } from '../components/FeaturedWork';
@@ -37,6 +38,31 @@ export const Home: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState(false);
   const [scene05Progress, setScene05Progress] = useState(-1);
   const lastNavSectionRef = useRef<string>('home');
+  const lastScrollingRef = useRef(false);
+  const lastScene05ProgressRef = useRef(-1);
+  const lastFadeOpacityRef = useRef(0);
+
+  const { qualityTier } = useAdaptivePerformance(siteConfig.performance, hasStarted);
+  const shouldDisableFluidCursor =
+    qualityTier === 'low' &&
+    siteConfig.performance.disableFluidCursorOnLow &&
+    siteConfig.animation.activeCursorAnimation === 'fluid';
+  const shouldShowFog = !(
+    qualityTier === 'low' && siteConfig.performance.disableFogOnLow
+  );
+  const shouldShowCRT = !(
+    qualityTier === 'low' && siteConfig.performance.disableCRTOnLow
+  );
+  const visualTier =
+    qualityTier === 'low' && siteConfig.performance.reduceBackdropBlurOnLow ? 'low' : qualityTier;
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.setAttribute('data-performance-tier', visualTier);
+    return () => {
+      document.body.removeAttribute('data-performance-tier');
+    };
+  }, [visualTier]);
 
   const handleFadeComplete = () => {
     hasHomeBootCompleted = true;
@@ -73,7 +99,7 @@ export const Home: React.FC = () => {
   return (
     <div className="bg-[#111113] min-h-screen text-white selection:bg-white/20" data-surface="base">
       {/* CRT Edge Overlay - Full Screen Retro TV Effect */}
-      {crt.enabled ? <CRTEdgeOverlay intensity={crt.intensity} /> : null}
+      {crt.enabled && shouldShowCRT ? <CRTEdgeOverlay intensity={crt.intensity} /> : null}
 
       {visibility.globalFrameOverlay ? (
         <GlobalFrameOverlay innerShadowIntensity={hasStarted ? 0.3 : 0} frameConfig={globalFrame} />
@@ -88,7 +114,10 @@ export const Home: React.FC = () => {
 
       {hasStarted && <PersistentUI isLightMode={scene05Progress >= 0 || isPortfolioActive} />}
       {hasStarted && visibility.cursorAnimation ? (
-        <CursorAnimationLayer animation={siteConfig.animation} />
+        <CursorAnimationLayer
+          animation={siteConfig.animation}
+          forcedMode={shouldDisableFluidCursor ? 'aura' : undefined}
+        />
       ) : null}
 
       {visibility.introOverlay ? <IntroTextOverlay hasStarted={hasStarted} isScrolling={isScrolling} /> : null}
@@ -100,10 +129,15 @@ export const Home: React.FC = () => {
             scene02Images={images[SCENE_02] || []}
             scene03Images={images[SCENE_03] || []}
             scene07Images={images[SCENE_07] || []}
+            enableFog={shouldShowFog}
+            fogQualityTier={qualityTier}
             isInputLocked={isPortfolioActive || scene05Progress >= 0}
             onGlobalProgress={(p) => {
               const scrolled = p > 0.005;
-              setIsScrolling(prev => prev !== scrolled ? scrolled : prev);
+              if (lastScrollingRef.current !== scrolled) {
+                lastScrollingRef.current = scrolled;
+                setIsScrolling(scrolled);
+              }
 
               let nextSection = 'home';
               if (p >= ABOUT_UI_START && p <= ABOUT_UI_END) {
@@ -118,19 +152,28 @@ export const Home: React.FC = () => {
               }
 
               // Keep About overlay tied to the merged opening scene handoff.
+              let nextScene05Progress = -1;
               if (p >= ABOUT_UI_START && p <= ABOUT_UI_END) {
-                const s5p = Math.min(1, (p - ABOUT_UI_START) / (ABOUT_UI_END - ABOUT_UI_START));
-                setScene05Progress(s5p);
-              } else {
-                // Keep a distinct sentinel for "outside About" so 0 can represent About start.
-                setScene05Progress(-1);
+                nextScene05Progress = Math.min(1, (p - ABOUT_UI_START) / (ABOUT_UI_END - ABOUT_UI_START));
+              }
+              const shouldUpdateScene05 =
+                (nextScene05Progress < 0 && lastScene05ProgressRef.current >= 0) ||
+                (nextScene05Progress >= 0 &&
+                  (lastScene05ProgressRef.current < 0 ||
+                    Math.abs(nextScene05Progress - lastScene05ProgressRef.current) >= 0.01));
+              if (shouldUpdateScene05) {
+                lastScene05ProgressRef.current = nextScene05Progress;
+                setScene05Progress(nextScene05Progress);
               }
 
+              let nextFadeOpacity = 0;
               if (p >= FINAL_FADE_IN_START) {
                 const fade = (p - FINAL_FADE_IN_START) / (1.0 - FINAL_FADE_IN_START);
-                setFinalFadeOpacity(Math.min(1, fade));
-              } else {
-                setFinalFadeOpacity(0);
+                nextFadeOpacity = Math.min(1, fade);
+              }
+              if (Math.abs(nextFadeOpacity - lastFadeOpacityRef.current) >= 0.015) {
+                lastFadeOpacityRef.current = nextFadeOpacity;
+                setFinalFadeOpacity(nextFadeOpacity);
               }
 
               setIsPortfolioActive((prev) =>
