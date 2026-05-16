@@ -3,6 +3,7 @@ import { AdvancedNavbar } from '../components/AdvancedNavbar';
 import { Footer } from '../components/Footer';
 import { getCardClass, getScaledRem } from '../components/designSystem';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { useSeoMeta } from '../hooks/useSeoMeta';
 
 type LegalDocumentKind = 'terms' | 'privacy';
 
@@ -25,6 +26,13 @@ const LegalDocumentPage: React.FC<LegalDocumentPageProps> = ({ kind }) => {
   const title = isTerms ? legalPages.termsTitle : legalPages.privacyTitle;
   const lastUpdated = isTerms ? legalPages.termsLastUpdated : legalPages.privacyLastUpdated;
   const content = isTerms ? legalPages.termsContent : legalPages.privacyContent;
+  const description = useMemo(() => splitParagraphs(content)[0] ?? title, [content, title]);
+
+  useSeoMeta({
+    title: `${title} | Oussama Lassoued`,
+    description,
+    canonicalUrl: `https://www.oussamalassoued.me/${isTerms ? 'terms-of-service' : 'privacy-policy'}`,
+  });
 
   const paragraphs = useMemo(() => splitParagraphs(content), [content]);
 

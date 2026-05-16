@@ -3,6 +3,7 @@ import CursorAnimationLayer from '../components/CursorAnimationLayer';
 import { Footer } from '../components/Footer';
 import { PersistentUI } from '../components/PersistentUI';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { useSeoMeta } from '../hooks/useSeoMeta';
 import { getButtonClass, getCardClass, getGlassClass, getScaledRem } from '../components/designSystem';
 
 interface ArticlesPageProps {
@@ -78,6 +79,7 @@ export const Articles: React.FC<ArticlesPageProps> = ({ slug }) => {
   const { siteConfig } = useSiteConfig();
   const { articlesPage, articles, designSystem, visibility, animation } = siteConfig;
   const foundation = designSystem.foundation;
+  const baseUrl = 'https://www.oussamalassoued.me';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTopic, setActiveTopic] = useState(ALL_TOPICS_TOKEN);
@@ -161,6 +163,23 @@ export const Articles: React.FC<ArticlesPageProps> = ({ slug }) => {
   }, [currentPage, filteredArticles]);
 
   const pageArticles = paginatedArticles;
+
+  const seoTitle = currentArticle ? `${currentArticle.title} | Oussama Lassoued` : `${articlesPage.title} | Oussama Lassoued`;
+  const seoDescription = currentArticle?.excerpt || articlesPage.description;
+  const seoImage = currentArticle
+    ? new URL(currentArticle.coverImage, `${baseUrl}/`).href
+    : `${baseUrl}/og-image.svg`;
+  const seoCanonical = currentArticle
+    ? `${baseUrl}/articles/${currentArticle.slug}`
+    : `${baseUrl}/articles`;
+
+  useSeoMeta({
+    title: seoTitle,
+    description: seoDescription,
+    canonicalUrl: seoCanonical,
+    imageUrl: seoImage,
+    type: currentArticle ? 'article' : 'website',
+  });
 
   useEffect(() => {
     setCurrentPage(1);

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { useSeoMeta } from '../hooks/useSeoMeta';
 import { getButtonClass, getCardClass, getScaledRem } from '../components/designSystem';
 import { AdvancedNavbar } from '../components/AdvancedNavbar';
 import { sendMessage, type MessageData } from '../utils/apiClient';
@@ -119,6 +120,12 @@ const Contact: React.FC = () => {
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
+
+  useSeoMeta({
+    title: `${contactPage.heroTitleLine1} ${contactPage.heroTitleLine2} | Oussama Lassoued`,
+    description: contactPage.heroSubtitle,
+    canonicalUrl: 'https://www.oussamalassoued.me/contact',
+  });
 
   // Build contact cards from siteConfig.contactPage
   const contactCards: ContactCard[] = useMemo(() => {
