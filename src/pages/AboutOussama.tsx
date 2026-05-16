@@ -13,7 +13,7 @@ export const AboutOussama: React.FC = () => {
   useSeoMeta({
     title: 'About Oussama Lassoued | UX/UI Designer & Design Engineer | Tunisia',
     description: 'Meet Oussama Lassoued, Google UX Design Professional Certified designer and design engineer from Tunisia. Specializing in user-centered design, AI products, and design systems.',
-    canonicalUrl: 'https://oussamalassoued.me/about-oussama-lassoued',
+    canonicalUrl: 'https://www.oussamalassoued.me/about-oussama-lassoued',
     robots: 'index, follow',
   });
 

@@ -14,7 +14,7 @@ export const UXUIDesignerTunisia: React.FC = () => {
   useSeoMeta({
     title: 'Best UX/UI Designer in Tunisia | Oussama Lassoued | User-Centered Design',
     description: 'Expert UX/UI designer in Tunisia specializing in user-centered design & AI product design. Google UX Design Professional Certified. Transform your digital experience today.',
-    canonicalUrl: 'https://oussamalassoued.me/ux-ui-designer-tunisia',
+    canonicalUrl: 'https://www.oussamalassoued.me/ux-ui-designer-tunisia',
     robots: 'index, follow',
   });
 

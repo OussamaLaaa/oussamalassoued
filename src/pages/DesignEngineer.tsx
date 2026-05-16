@@ -14,7 +14,7 @@ export const DesignEngineer: React.FC = () => {
   useSeoMeta({
     title: 'Design Engineer | Oussama Lassoued | Design Systems & Component Libraries',
     description: 'Design Engineer bridging design and development. Expert in design systems, component libraries, and scalable UI solutions. Build faster with design-to-code excellence.',
-    canonicalUrl: 'https://oussamalassoued.me/design-engineer',
+    canonicalUrl: 'https://www.oussamalassoued.me/design-engineer',
     robots: 'index, follow',
   });
 

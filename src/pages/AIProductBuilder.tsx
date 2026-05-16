@@ -14,7 +14,7 @@ export const AIProductBuilder: React.FC = () => {
   useSeoMeta({
     title: 'AI Product Builder & Designer | Oussama Lassoued | AI UX/UI Expert',
     description: 'AI Product Builder specializing in designing intuitive AI/ML-powered products. Build user-centered AI experiences that users trust. Explore design for artificial intelligence.',
-    canonicalUrl: 'https://oussamalassoued.me/ai-product-builder',
+    canonicalUrl: 'https://www.oussamalassoued.me/ai-product-builder',
     robots: 'index, follow',
   });
 
