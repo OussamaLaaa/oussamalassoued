@@ -1013,15 +1013,15 @@ export const SITE_CONFIG_STORAGE_KEY = 'portfolio.site-config.v1';
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   introText:
-    'I design thoughtful digital products and cinematic user experiences that connect user needs with business success through AI.',
-  introScrollPrompt: 'Scroll to explore the work',
+    'Oussama Lassoued is a UX/UI designer in Tunisia, AI product builder, and design engineer focused on user experience and user interface design.',
+  introScrollPrompt: 'Scroll to explore UX, UI, and AI product work',
   introOverlayBackdropColor: 'rgba(0, 0, 0, 0.6)',
   introOverlayBackdropOpacity: 0.35,
   featured: {
     titleLine1: 'Featured',
     titleLine2: 'Work',
     description:
-      'A selection of immersive digital experiences created for ambitious brands and forward thinking teams.',
+      'UX/UI case studies, AI product experiments, and design system work created for ambitious brands and forward thinking teams.',
     caseStudyLabel: 'Case Study',
     liveLabel: 'Live App',
     viewAllLabel: 'View All Projects',
@@ -1113,13 +1113,13 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   scene05: {
     badge: 'ABOUT ME',
     name: 'Oussama Lassoued',
-    role: 'UX Designer and AI Product Builder',
+    role: 'UX/UI Designer in Tunisia and AI Product Builder',
     portraitImage: '/frames/scene-02-desk-focus/ezgif-frame-001.avif',
     portraitAlt: 'Portrait image',
     portraitCaption: '',
     visionTitle: 'Vision & Value',
     visionText:
-      'I design interfaces that are not only visually refined, but also intentionally structured. My goal is to build digital products that feel natural to users and highly profitable for businesses.',
+      'I design user experiences and user interfaces that are visually refined, intentionally structured, and built to support real business growth.',
     storyTitle: 'What I Actually Bring',
     storyParagraphs: [
       'I work across the full product arc: research, information architecture, interaction modeling, design systems, and production-quality frontend implementation.',
@@ -1552,7 +1552,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   ],
   dashboard: {
     browser: {
-      browserTabTitle: 'Oussama Lassoued — Product Designer',
+      browserTabTitle: 'Oussama Lassoued | UX/UI Designer in Tunisia',
       faviconUrl: '/logo-white.png',
     },
     integrations: {
@@ -2457,6 +2457,17 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const dashboardInbox = isRecord(dashboard.inbox) ? dashboard.inbox : {};
   const contactPage = isRecord(value.contactPage) ? value.contactPage : {};
 
+  const rawBrowserTitle = asString(
+    dashboardBrowser.browserTabTitle,
+    DEFAULT_SITE_CONFIG.dashboard.browser.browserTabTitle,
+  ).trim();
+  const migratedBrowserTitle =
+    rawBrowserTitle === 'Oussama Lassoued — Product Designer' ||
+    rawBrowserTitle === 'Oussama Lassoued - Product Designer' ||
+    rawBrowserTitle === 'Oussama Lassoued ΓÇö Product Designer'
+      ? DEFAULT_SITE_CONFIG.dashboard.browser.browserTabTitle
+      : rawBrowserTitle || DEFAULT_SITE_CONFIG.dashboard.browser.browserTabTitle;
+
   const projects = Array.isArray(value.projects)
     ? value.projects
         .map((item, index) => {
@@ -3198,10 +3209,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     videos: videos.length > 0 ? videos : DEFAULT_SITE_CONFIG.videos,
     dashboard: {
       browser: {
-        browserTabTitle: asString(
-          dashboardBrowser.browserTabTitle,
-          DEFAULT_SITE_CONFIG.dashboard.browser.browserTabTitle,
-        ),
+        browserTabTitle: migratedBrowserTitle,
         faviconUrl: asString(
           dashboardBrowser.faviconUrl,
           DEFAULT_SITE_CONFIG.dashboard.browser.faviconUrl,
