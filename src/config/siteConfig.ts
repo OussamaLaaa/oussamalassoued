@@ -13,6 +13,8 @@ export type SiteCursorAnimationMode =
   | 'beam'
   | 'plasma';
 
+export type SitePerformanceQualityTier = 'low' | 'medium' | 'high';
+
 export const SITE_SOCIAL_ICON_KEYS = [
   'behance',
   'linkedin',
@@ -432,6 +434,22 @@ export interface SiteCRTConfig {
     spread: number;
     color: string;
   };
+}
+
+export interface SitePerformanceConfig {
+  adaptiveEnabled: boolean;
+  defaultQualityTier: SitePerformanceQualityTier;
+  minQualityTier: SitePerformanceQualityTier;
+  maxQualityTier: SitePerformanceQualityTier;
+  sampleWindowMs: number;
+  lowFpsThreshold: number;
+  recoverFpsThreshold: number;
+  longTaskThresholdMs: number;
+  maxLongTasksPerWindow: number;
+  disableFluidCursorOnLow: boolean;
+  disableFogOnLow: boolean;
+  disableCRTOnLow: boolean;
+  reduceBackdropBlurOnLow: boolean;
 }
 
 export interface SiteButtonStylePreset {
@@ -989,6 +1007,7 @@ export interface SiteConfig {
   cinematicSequence: SiteCinematicSequenceConfig;
   globalFrame: SiteGlobalFrameConfig;
   crt: SiteCRTConfig;
+  performance: SitePerformanceConfig;
   visibility: SiteVisibilityConfig;
   // Personal Hub sections
   partners: SitePartner[];
@@ -2185,6 +2204,21 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       color: '#00ff00',
     },
   },
+  performance: {
+    adaptiveEnabled: true,
+    defaultQualityTier: 'high',
+    minQualityTier: 'low',
+    maxQualityTier: 'high',
+    sampleWindowMs: 1800,
+    lowFpsThreshold: 43,
+    recoverFpsThreshold: 56,
+    longTaskThresholdMs: 80,
+    maxLongTasksPerWindow: 2,
+    disableFluidCursorOnLow: true,
+    disableFogOnLow: true,
+    disableCRTOnLow: true,
+    reduceBackdropBlurOnLow: true,
+  },
   visibility: {
     globalFrameOverlay: true,
     cursorAnimation: true,
@@ -2277,6 +2311,15 @@ const asCursorAnimationMode = (
 ): SiteCursorAnimationMode => {
   return typeof value === 'string' && ['fluid', 'aura', 'orbit', 'comet', 'ripple', 'spark', 'beam', 'plasma'].includes(value)
     ? (value as SiteCursorAnimationMode)
+    : fallback;
+};
+
+const asPerformanceQualityTier = (
+  value: unknown,
+  fallback: SitePerformanceQualityTier,
+): SitePerformanceQualityTier => {
+  return typeof value === 'string' && ['low', 'medium', 'high'].includes(value)
+    ? (value as SitePerformanceQualityTier)
     : fallback;
 };
 
@@ -2424,6 +2467,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const cinematicScroll = isRecord(cinematicSequence.scroll) ? cinematicSequence.scroll : {};
   const globalFrame = isRecord(value.globalFrame) ? value.globalFrame : {};
   const crt = isRecord(value.crt) ? value.crt : {};
+  const performance = isRecord(value.performance) ? value.performance : {};
   const visibility = isRecord(value.visibility) ? value.visibility : {};
   const dashboard = isRecord(value.dashboard) ? value.dashboard : {};
   const dashboardBrowser = isRecord(dashboard.browser) ? dashboard.browser : {};
@@ -4440,6 +4484,70 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         spread: asBoundedNumber((crt?.phosphorGlow as any)?.spread, DEFAULT_SITE_CONFIG.crt.phosphorGlow.spread, 0, 1),
         color: asString((crt?.phosphorGlow as any)?.color, DEFAULT_SITE_CONFIG.crt.phosphorGlow.color),
       },
+    },
+    performance: {
+      adaptiveEnabled: asBoolean(
+        performance.adaptiveEnabled,
+        DEFAULT_SITE_CONFIG.performance.adaptiveEnabled,
+      ),
+      defaultQualityTier: asPerformanceQualityTier(
+        performance.defaultQualityTier,
+        DEFAULT_SITE_CONFIG.performance.defaultQualityTier,
+      ),
+      minQualityTier: asPerformanceQualityTier(
+        performance.minQualityTier,
+        DEFAULT_SITE_CONFIG.performance.minQualityTier,
+      ),
+      maxQualityTier: asPerformanceQualityTier(
+        performance.maxQualityTier,
+        DEFAULT_SITE_CONFIG.performance.maxQualityTier,
+      ),
+      sampleWindowMs: asBoundedNumber(
+        performance.sampleWindowMs,
+        DEFAULT_SITE_CONFIG.performance.sampleWindowMs,
+        600,
+        6000,
+      ),
+      lowFpsThreshold: asBoundedNumber(
+        performance.lowFpsThreshold,
+        DEFAULT_SITE_CONFIG.performance.lowFpsThreshold,
+        20,
+        59,
+      ),
+      recoverFpsThreshold: asBoundedNumber(
+        performance.recoverFpsThreshold,
+        DEFAULT_SITE_CONFIG.performance.recoverFpsThreshold,
+        24,
+        90,
+      ),
+      longTaskThresholdMs: asBoundedNumber(
+        performance.longTaskThresholdMs,
+        DEFAULT_SITE_CONFIG.performance.longTaskThresholdMs,
+        20,
+        250,
+      ),
+      maxLongTasksPerWindow: asBoundedNumber(
+        performance.maxLongTasksPerWindow,
+        DEFAULT_SITE_CONFIG.performance.maxLongTasksPerWindow,
+        0,
+        12,
+      ),
+      disableFluidCursorOnLow: asBoolean(
+        performance.disableFluidCursorOnLow,
+        DEFAULT_SITE_CONFIG.performance.disableFluidCursorOnLow,
+      ),
+      disableFogOnLow: asBoolean(
+        performance.disableFogOnLow,
+        DEFAULT_SITE_CONFIG.performance.disableFogOnLow,
+      ),
+      disableCRTOnLow: asBoolean(
+        performance.disableCRTOnLow,
+        DEFAULT_SITE_CONFIG.performance.disableCRTOnLow,
+      ),
+      reduceBackdropBlurOnLow: asBoolean(
+        performance.reduceBackdropBlurOnLow,
+        DEFAULT_SITE_CONFIG.performance.reduceBackdropBlurOnLow,
+      ),
     },
     visibility: {
       globalFrameOverlay: asBoolean(

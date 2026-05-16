@@ -394,6 +394,13 @@ body {
   contain: layout style;
 }
 
+body[data-performance-tier='low'] .glass-panel,
+body[data-performance-tier='low'] .glass-navbar,
+body[data-performance-tier='low'] .glass-tag {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
 /* Canonical Design System Buttons */
 .ds-btn {
   display: inline-flex;

@@ -6084,6 +6084,207 @@ export const Dashboard: React.FC = () => {
       case 'crt':
         return (
           <div className="grid gap-4 lg:grid-cols-2">
+            <Card title="Adaptive Performance Mode" subtitle="Auto quality tiers based on runtime FPS and long tasks">
+              <Toggle
+                label="Enable Adaptive Mode"
+                checked={siteConfig.performance.adaptiveEnabled}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    performance: { ...prev.performance, adaptiveEnabled: next },
+                  }))
+                }
+              />
+              <SelectInput
+                label="Default quality tier"
+                value={siteConfig.performance.defaultQualityTier}
+                options={[
+                  { value: 'low', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'high', label: 'High' },
+                ]}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    performance: { ...prev.performance, defaultQualityTier: next as 'low' | 'medium' | 'high' },
+                  }))
+                }
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SelectInput
+                  label="Minimum tier"
+                  value={siteConfig.performance.minQualityTier}
+                  options={[
+                    { value: 'low', label: 'Low' },
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'high', label: 'High' },
+                  ]}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, minQualityTier: next as 'low' | 'medium' | 'high' },
+                    }))
+                  }
+                />
+                <SelectInput
+                  label="Maximum tier"
+                  value={siteConfig.performance.maxQualityTier}
+                  options={[
+                    { value: 'low', label: 'Low' },
+                    { value: 'medium', label: 'Medium' },
+                    { value: 'high', label: 'High' },
+                  ]}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, maxQualityTier: next as 'low' | 'medium' | 'high' },
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input
+                  label="Sample window (ms)"
+                  type="number"
+                  min={600}
+                  max={6000}
+                  step={100}
+                  value={siteConfig.performance.sampleWindowMs}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: {
+                        ...prev.performance,
+                        sampleWindowMs: toSafeNumberInRange(next, prev.performance.sampleWindowMs, 600, 6000),
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  label="Low FPS threshold"
+                  type="number"
+                  min={20}
+                  max={59}
+                  step={1}
+                  value={siteConfig.performance.lowFpsThreshold}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: {
+                        ...prev.performance,
+                        lowFpsThreshold: toSafeNumberInRange(next, prev.performance.lowFpsThreshold, 20, 59),
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  label="Recover FPS threshold"
+                  type="number"
+                  min={24}
+                  max={90}
+                  step={1}
+                  value={siteConfig.performance.recoverFpsThreshold}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: {
+                        ...prev.performance,
+                        recoverFpsThreshold: toSafeNumberInRange(next, prev.performance.recoverFpsThreshold, 24, 90),
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  label="Long task threshold (ms)"
+                  type="number"
+                  min={20}
+                  max={250}
+                  step={5}
+                  value={siteConfig.performance.longTaskThresholdMs}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: {
+                        ...prev.performance,
+                        longTaskThresholdMs: toSafeNumberInRange(next, prev.performance.longTaskThresholdMs, 20, 250),
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  label="Max long tasks/window"
+                  type="number"
+                  min={0}
+                  max={12}
+                  step={1}
+                  value={siteConfig.performance.maxLongTasksPerWindow}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: {
+                        ...prev.performance,
+                        maxLongTasksPerWindow: toSafeNumberInRange(next, prev.performance.maxLongTasksPerWindow, 0, 12),
+                      },
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Toggle
+                  label="Disable fluid cursor on low tier"
+                  checked={siteConfig.performance.disableFluidCursorOnLow}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, disableFluidCursorOnLow: next },
+                    }))
+                  }
+                />
+                <Toggle
+                  label="Disable WebGL fog on low tier"
+                  checked={siteConfig.performance.disableFogOnLow}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, disableFogOnLow: next },
+                    }))
+                  }
+                />
+                <Toggle
+                  label="Disable CRT on low tier"
+                  checked={siteConfig.performance.disableCRTOnLow}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, disableCRTOnLow: next },
+                    }))
+                  }
+                />
+                <Toggle
+                  label="Reduce glass blur on low tier"
+                  checked={siteConfig.performance.reduceBackdropBlurOnLow}
+                  onChange={(next) =>
+                    updateConfig((prev) => ({
+                      ...prev,
+                      performance: { ...prev.performance, reduceBackdropBlurOnLow: next },
+                    }))
+                  }
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    performance: { ...DEFAULT_SITE_CONFIG.performance },
+                  }))
+                }
+                className="rounded-[10px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+              >
+                Reset Adaptive Performance Defaults
+              </button>
+            </Card>
+
             <Card title="CRT Effect Controls" subtitle="Master controls for retro screen effects">
               <Toggle
                 label="Enable CRT Effect"
@@ -7812,4 +8013,3 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
