@@ -101,23 +101,23 @@ export const Footer: React.FC = () => {
     'md',
     'min-w-[190px] justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]',
   );
-  const socialButtonClass = getButtonClass(designSystem.components.featuredCtaButtonVariant, 'light', 'icon', 'h-11 w-11');
+  const socialButtonClass = getButtonClass(designSystem.components.featuredCtaButtonVariant, 'light', 'icon', 'h-10 w-10');
 
   const ctaSection = getSectionFromHref(footer.ctaButtonHref);
 
   return (
     <footer className="relative z-10 w-full border-t border-[#111217]/10 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
       <div className="site-shell pb-8 pt-14 md:pb-10 md:pt-16">
-        <div className="grid gap-10 border-b border-[#111217]/10 pb-12 md:grid-cols-2 xl:grid-cols-[1.05fr_0.95fr_0.95fr_1.05fr] xl:gap-12">
-          <div className="space-y-5">
-            <p className="text-[1.6rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.75rem]">
+        <div className="grid gap-8 border-b border-[#111217]/10 pb-12 md:grid-cols-2 md:gap-10 xl:grid-cols-4 xl:gap-10">
+          <div className="space-y-4">
+            <p className="text-[1.42rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.56rem]">
               {footer.brandTitle}
             </p>
-            <p className="max-w-[33ch] text-[0.94rem] leading-7 text-[#111217]/70">{footer.brandDescription}</p>
+            <p className="max-w-[33ch] text-[0.9rem] leading-6 text-[#111217]/70">{footer.brandDescription}</p>
             {visibility.footerEmail ? (
               <a
                 href={`mailto:${footer.email}`}
-                className="inline-flex items-center gap-2 text-[0.9rem] font-medium text-[#111217]/70 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
+                className="inline-flex items-center gap-2 text-[0.86rem] font-medium text-[#111217]/70 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
               >
                 <MailIcon size={16} strokeWidth={1.8} />
                 {footer.email}
@@ -126,17 +126,17 @@ export const Footer: React.FC = () => {
           </div>
 
           {visibility.footerNavLinks && syncedNavLinks.length > 0 ? (
-            <div className="space-y-5">
-              <p className="text-[1.2rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.28rem]">
+            <div className="space-y-4">
+              <p className="text-[1.08rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.15rem]">
                 {footer.quickLinksTitle}
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {syncedNavLinks.map((item) => (
                   <li key={item.id}>
                     <a
                       href={item.href}
                       onClick={(e) => handleSectionNav(e, item.section)}
-                      className="text-[0.94rem] text-[#111217]/65 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
+                      className="text-[0.9rem] text-[#111217]/65 transition-colors hover:text-[#111217] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]"
                     >
                       {item.label}
                     </a>
@@ -147,11 +147,11 @@ export const Footer: React.FC = () => {
           ) : null}
 
           {visibility.footerSocialLinks && visibleSocialLinks.length > 0 ? (
-            <div className="space-y-5">
-              <p className="text-[1.2rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.28rem]">
+            <div className="space-y-4">
+              <p className="text-[1.08rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.15rem]">
                 {footer.followTitle}
               </p>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {visibleSocialLinks.map((social) => {
                   const SocialIcon = getSocialIconComponent(social.icon);
                   return (
@@ -170,7 +170,7 @@ export const Footer: React.FC = () => {
                         color: footer.socialIconColor,
                       }}
                     >
-                      <SocialIcon size={17} strokeWidth={1.9} />
+                      <SocialIcon size={16} strokeWidth={1.9} />
                     </a>
                   );
                 })}
@@ -178,11 +178,11 @@ export const Footer: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="space-y-5">
-            <p className="max-w-[24ch] text-[1.22rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.3rem]">
+          <div className="space-y-4">
+            <p className="max-w-[24ch] text-[1.08rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.16rem]">
               {footer.ctaTitle}
             </p>
-            <p className="max-w-[34ch] text-[0.94rem] leading-7 text-[#111217]/70">{footer.ctaDescription}</p>
+            <p className="max-w-[34ch] text-[0.9rem] leading-6 text-[#111217]/70">{footer.ctaDescription}</p>
             {ctaSection ? (
               <a href={footer.ctaButtonHref} onClick={(e) => handleSectionNav(e, ctaSection)} className={buttonClass}>
                 <MailIcon size={17} strokeWidth={1.9} />
