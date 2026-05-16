@@ -78,8 +78,8 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
   const isActive = progress >= 0;
 
   const visibleSocialLinks = useMemo(
-    () => siteConfig.footer.socialLinks.filter((item) => item.visible),
-    [siteConfig.footer.socialLinks],
+    () => scene05.socialLinks.filter((item) => item.visible),
+    [scene05.socialLinks],
   );
 
   const visibleCompanyLogos = useMemo(

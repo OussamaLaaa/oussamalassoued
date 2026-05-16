@@ -4203,6 +4203,135 @@ export const Dashboard: React.FC = () => {
               />
 
               <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                    About social links
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateConfig((prev) => ({
+                        ...prev,
+                        scene05: {
+                          ...prev.scene05,
+                          socialLinks: [
+                            ...prev.scene05.socialLinks,
+                            {
+                              id: `about-social-${Date.now()}`,
+                              label: 'New Social',
+                              href: 'https://',
+                              icon: 'globe',
+                              visible: true,
+                            },
+                          ],
+                        },
+                      }));
+                    }}
+                    className="rounded-[8px] border border-white/20 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                  >
+                    Add About Social Link
+                  </button>
+                </div>
+
+                {siteConfig.scene05.socialLinks.map((link) => (
+                  <div key={link.id} className="grid gap-2 rounded-[10px] border border-white/10 bg-black/20 p-3">
+                    <Input
+                      label="Label"
+                      value={link.label}
+                      onChange={(next) => {
+                        updateConfig((prev) => ({
+                          ...prev,
+                          scene05: {
+                            ...prev.scene05,
+                            socialLinks: prev.scene05.socialLinks.map((item) =>
+                              item.id === link.id ? { ...item, label: next } : item,
+                            ),
+                          },
+                        }));
+                      }}
+                    />
+
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <SelectInput
+                        label="Icon"
+                        value={link.icon}
+                        options={SITE_SOCIAL_ICON_KEYS.map((iconKey) => ({
+                          value: iconKey,
+                          label: iconKey,
+                        }))}
+                        onChange={(next) => {
+                          updateConfig((prev) => ({
+                            ...prev,
+                            scene05: {
+                              ...prev.scene05,
+                              socialLinks: prev.scene05.socialLinks.map((item) =>
+                                item.id === link.id
+                                  ? {
+                                      ...item,
+                                      icon: next as SiteConfig['scene05']['socialLinks'][number]['icon'],
+                                    }
+                                  : item,
+                              ),
+                            },
+                          }));
+                        }}
+                      />
+
+                      <Input
+                        label="Href"
+                        value={link.href}
+                        onChange={(next) => {
+                          updateConfig((prev) => ({
+                            ...prev,
+                            scene05: {
+                              ...prev.scene05,
+                              socialLinks: prev.scene05.socialLinks.map((item) =>
+                                item.id === link.id ? { ...item, href: next } : item,
+                              ),
+                            },
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <Toggle
+                        label="Visible"
+                        checked={link.visible}
+                        onChange={(next) => {
+                          updateConfig((prev) => ({
+                            ...prev,
+                            scene05: {
+                              ...prev.scene05,
+                              socialLinks: prev.scene05.socialLinks.map((item) =>
+                                item.id === link.id ? { ...item, visible: next } : item,
+                              ),
+                            },
+                          }));
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateConfig((prev) => ({
+                            ...prev,
+                            scene05: {
+                              ...prev.scene05,
+                              socialLinks: prev.scene05.socialLinks.filter((item) => item.id !== link.id),
+                            },
+                          }));
+                        }}
+                        className="rounded-[10px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                      >
+                        Remove About Social Link
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
                   Company Logos
                 </p>

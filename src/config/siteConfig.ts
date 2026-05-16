@@ -19,6 +19,7 @@ export const SITE_SOCIAL_ICON_KEYS = [
   'instagram',
   'github',
   'twitter',
+  'x',
   'telegram',
   'facebook',
   'youtube',
@@ -819,6 +820,7 @@ export interface SiteConfig {
     aiTitle: string;
     aiText: string;
     aiTags: string[];
+    socialLinks: SiteSocialLink[];
     actionLabel: string;
     actionHref: string;
     animations?: {
@@ -1202,6 +1204,29 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     aiText:
       'My focus is shifting toward AI-driven products. I believe AI succeeds through well-designed interactions using it as a tool-not a gimmick-to enhance clarity, efficiency, and commercial viability.',
     aiTags: ['AI Workflows', 'Figma', 'Claude Code', 'Systems'],
+    socialLinks: [
+      {
+        id: 'about-social-behance',
+        label: 'Behance',
+        href: '#',
+        icon: 'behance',
+        visible: true,
+      },
+      {
+        id: 'about-social-linkedin',
+        label: 'LinkedIn',
+        href: '#',
+        icon: 'linkedin',
+        visible: true,
+      },
+      {
+        id: 'about-social-instagram',
+        label: 'Instagram',
+        href: '#',
+        icon: 'instagram',
+        visible: true,
+      },
+    ],
     actionLabel: 'Connect With Me',
     actionHref: '#',
     animations: {
@@ -2771,6 +2796,21 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? scene05.aiTags.map((item) => asString(item, '')).filter(Boolean)
     : DEFAULT_SITE_CONFIG.scene05.aiTags;
 
+  const sceneSocialLinks = Array.isArray(scene05.socialLinks)
+    ? scene05.socialLinks
+        .map((item, index) => {
+          if (!isRecord(item)) return null;
+          return {
+            id: asString(item.id, `about-social-${index + 1}`),
+            label: asString(item.label, `Social ${index + 1}`),
+            href: asString(item.href, '#'),
+            icon: asSocialIconKey(item.icon, 'globe'),
+            visible: asBoolean(item.visible, true),
+          };
+        })
+        .filter((item): item is SiteSocialLink => !!item)
+    : [];
+
   const rawScene05Name = asString(scene05.name, DEFAULT_SITE_CONFIG.scene05.name).trim();
   const migratedScene05Name =
     rawScene05Name === '╪ú╪│╪º┘à╪⌐'
@@ -2856,6 +2896,12 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       aiTitle: asString(scene05.aiTitle, DEFAULT_SITE_CONFIG.scene05.aiTitle),
       aiText: asString(scene05.aiText, DEFAULT_SITE_CONFIG.scene05.aiText),
       aiTags: aiTags.length > 0 ? aiTags : DEFAULT_SITE_CONFIG.scene05.aiTags,
+      socialLinks:
+        sceneSocialLinks.length > 0
+          ? sceneSocialLinks
+          : socialLinks.length > 0
+            ? socialLinks
+            : DEFAULT_SITE_CONFIG.scene05.socialLinks,
       actionLabel: asString(scene05.actionLabel, DEFAULT_SITE_CONFIG.scene05.actionLabel),
       actionHref: asString(scene05.actionHref, DEFAULT_SITE_CONFIG.scene05.actionHref),
     },

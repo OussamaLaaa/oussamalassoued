@@ -79,6 +79,7 @@ export const SOCIAL_ICON_COMPONENTS: Record<SiteSocialIconKey, SocialIconCompone
   instagram: InstagramIcon,
   github: GithubIcon,
   twitter: TwitterIcon,
+  x: XIcon,
   telegram: TelegramIcon,
   facebook: FacebookIcon,
   youtube: YoutubeIcon,

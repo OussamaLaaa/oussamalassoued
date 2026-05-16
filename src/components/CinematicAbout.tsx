@@ -37,7 +37,7 @@ const getInitials = (value: string) => {
 
 export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   const { siteConfig } = useSiteConfig();
-  const { scene05, designSystem, footer } = siteConfig;
+  const { scene05, designSystem } = siteConfig;
   const containerRef = useRef<HTMLDivElement>(null);
   const navLockUntilRef = useRef(0);
   const lastScrollTopRef = useRef(0);
@@ -98,8 +98,8 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
   }, [scene05.certifications, scene05.certificationsTitle, scene05.featuredCertifications]);
 
   const aboutSocialLinks = useMemo(() => {
-    return footer.socialLinks.filter((item) => item.visible);
-  }, [footer.socialLinks]);
+    return scene05.socialLinks.filter((item) => item.visible);
+  }, [scene05.socialLinks]);
 
   useEffect(() => {
     const scroller = containerRef.current;
