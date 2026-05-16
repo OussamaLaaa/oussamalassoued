@@ -108,7 +108,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="relative z-10 w-full border-t border-[#111217]/10 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
       <div className="site-shell pb-8 pt-14 md:pb-10 md:pt-16">
-        <div className="grid gap-8 border-b border-[#111217]/10 pb-12 md:grid-cols-2 md:gap-10 xl:grid-cols-[2fr_1.4fr_1.4fr_2fr] xl:gap-12">
+        <div className="grid gap-8 border-b border-[#111217]/10 pb-12 md:grid-cols-2 md:gap-10 xl:grid-cols-4 xl:gap-8">
           <div className="space-y-4">
             <p className="text-[1.42rem] font-semibold leading-tight tracking-tight text-[#111217] md:text-[1.56rem]">
               {footer.brandTitle}
