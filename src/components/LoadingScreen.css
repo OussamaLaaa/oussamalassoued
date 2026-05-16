@@ -125,12 +125,13 @@
 /* Large centered bottom numeric progress counter (matches provided image) */
 #pre-counter {
   position: fixed;
-  left: 50%;
+  left: 18px;
   bottom: 26px;
-  transform: translateX(-50%);
+  transform: none;
   z-index: 9100;
   color: #ffffff;
-  font-size: min(220px, 28vw);
+  /* 70% of previous size (min(220px,28vw) * 0.7 => min(154px,19.6vw)) */
+  font-size: min(154px, 19.6vw);
   font-weight: 300;
   line-height: 0.9;
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
@@ -141,14 +142,14 @@
   will-change: opacity, transform;
   transition: opacity 180ms ease, transform 240ms cubic-bezier(.2,.9,.2,1);
   display: inline-block;
-  text-align: center;
+  text-align: left;
 }
 
-/* Thin underline that spans the viewport width under the number */
+/* Thin underline that spans most of the viewport but starts at the counter's left */
 #pre-counter::after {
   content: '';
   position: fixed;
-  left: 0;
+  left: 18px;
   right: 0;
   bottom: 10px;
   height: 2px;
@@ -160,7 +161,7 @@
 @media (max-width: 480px) {
   #pre-counter {
     bottom: 18px;
-    font-size: min(160px, 36vw);
+    font-size: min(112px, 25vw);
   }
   #pre-counter::after {
     bottom: 8px;
