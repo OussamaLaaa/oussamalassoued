@@ -95,13 +95,9 @@ export const Footer: React.FC = () => {
     return null;
   };
 
-  const buttonClass = getButtonClass(
-    designSystem.components.featuredCtaButtonVariant,
-    'light',
-    'md',
-    'min-w-[190px] justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]',
-  );
   const socialButtonClass = getButtonClass(designSystem.components.featuredCtaButtonVariant, 'light', 'icon', 'h-10 w-10');
+  const ctaButtonClass =
+    'inline-flex min-w-[190px] items-center justify-center gap-3 rounded-[18px] bg-[#050505] px-7 py-4 text-[1.02rem] font-semibold tracking-[-0.02em] text-white shadow-[0_16px_30px_rgba(0,0,0,0.14)] transition-transform duration-200 hover:-translate-y-[1px] hover:bg-[#080808] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111217]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f6f7]';
 
   const ctaSection = getSectionFromHref(footer.ctaButtonHref);
 
@@ -183,9 +179,11 @@ export const Footer: React.FC = () => {
             </p>
             <p className="max-w-[34ch] text-[0.9rem] leading-6 text-[#111217]/70">{footer.ctaDescription}</p>
             {ctaSection ? (
-              <a href={footer.ctaButtonHref} onClick={(e) => handleSectionNav(e, ctaSection)} className={buttonClass}>
-                <MailIcon size={17} strokeWidth={1.9} />
+              <a href={footer.ctaButtonHref} onClick={(e) => handleSectionNav(e, ctaSection)} className={ctaButtonClass}>
                 <span>{footer.ctaButtonLabel}</span>
+                <span aria-hidden className="text-[1.2rem] leading-none">
+                  →
+                </span>
               </a>
             ) : (
               <a
@@ -199,10 +197,12 @@ export const Footer: React.FC = () => {
                     ? undefined
                     : 'noopener noreferrer'
                 }
-                className={buttonClass}
+                className={ctaButtonClass}
               >
-                <MailIcon size={17} strokeWidth={1.9} />
                 <span>{footer.ctaButtonLabel}</span>
+                <span aria-hidden className="text-[1.2rem] leading-none">
+                  →
+                </span>
               </a>
             )}
           </div>
