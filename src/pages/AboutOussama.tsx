@@ -310,7 +310,7 @@ export const AboutOussama: React.FC = () => {
             {
               title: 'Continuous Improvement',
               content:
-                'The best product today won't be the best tomorrow. I monitor metrics, gather feedback, and iterate continuously to improve user experience.',
+                "The best product today won't be the best tomorrow. I monitor metrics, gather feedback, and iterate continuously to improve user experience.",
             },
           ].map((philosophy, idx) => (
             <article
