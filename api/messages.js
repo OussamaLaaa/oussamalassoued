@@ -9,10 +9,17 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import { Resend } from 'resend';
-import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (development only)
+// Vercel automatically loads from Environment Variables dashboard
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const dotenv = await import('dotenv');
+    dotenv.config();
+  } catch (error) {
+    console.log('[API:Messages] dotenv not needed in production');
+  }
+}
 
 // ============================================================================
 // ENVIRONMENT & CONFIGURATION
@@ -36,10 +43,19 @@ let resendClient = null;
 if (emailConfig.enabled) {
   try {
     resendClient = new Resend(emailConfig.apiKey);
-    console.log('[API:Messages] Resend email service initialized');
+    console.log('[API:Messages] ✅ Resend email service initialized');
+    console.log(`[API:Messages] 📧 Email will be sent to: ${emailConfig.toEmail}`);
+    console.log(`[API:Messages] 📤 From: ${emailConfig.fromName} <${emailConfig.fromEmail}>`);
   } catch (error) {
-    console.error('[API:Messages] Failed to initialize Resend:', error.message);
+    console.error('[API:Messages] ❌ Failed to initialize Resend:', error.message);
   }
+} else {
+  console.warn('[API:Messages] ⚠️ Email notifications DISABLED');
+  console.warn(`[API:Messages] Missing: ${!process.env.RESEND_API_KEY ? 'RESEND_API_KEY' : ''} ${!process.env.CONTACT_EMAIL_TO ? 'CONTACT_EMAIL_TO' : ''}`);
+  console.log(`[API:Messages] RESEND_API_KEY: ${process.env.RESEND_API_KEY ? '✓ Set' : '✗ Missing'}`);
+  console.log(`[API:Messages] CONTACT_EMAIL_TO: ${process.env.CONTACT_EMAIL_TO ? '✓ Set' : '✗ Missing'}`);
+  console.log(`[API:Messages] RESEND_FROM_EMAIL: ${process.env.RESEND_FROM_EMAIL ? '✓ Set' : '✗ Missing'}`);
+  console.log(`[API:Messages] RESEND_FROM_NAME: ${process.env.RESEND_FROM_NAME ? '✓ Set' : '✗ Missing'}`);
 }
 
 // Enhanced Security Configuration
