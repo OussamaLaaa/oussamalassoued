@@ -247,8 +247,26 @@ const loadVersionHistory = (): StorageVersionSnapshot[] => {
   }
 };
 
-const saveVersionHistory = (history: StorageVersionSnapshot[]): void => {
-  safeSetItem(STORAGE_KEYS.HISTORY, JSON.stringify(history.slice(0, MAX_VERSION_HISTORY)));
+const saveVersionHistory = (history: StorageVersionSnapshot[]): boolean => {
+  const trimmedHistory = history.slice(0, MAX_VERSION_HISTORY);
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(trimmedHistory));
+    return true;
+  } catch (error) {
+    console.error('Failed to save version history:', error);
+
+    // If quota is exceeded, fall back to a much smaller history so the dashboard keeps working.
+    try {
+      const compactHistory = trimmedHistory.slice(0, 1);
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(compactHistory));
+      return true;
+    } catch (compactError) {
+      console.error('Failed to save compact version history:', compactError);
+      safeRemoveItem(STORAGE_KEYS.HISTORY);
+      return false;
+    }
+  }
 };
 
 const createVersionSnapshot = (config: SiteConfig): StorageVersionSnapshot => {
@@ -267,9 +285,9 @@ const createVersionSnapshot = (config: SiteConfig): StorageVersionSnapshot => {
   };
 };
 
-const appendVersionSnapshot = (config: SiteConfig): void => {
+const appendVersionSnapshot = (config: SiteConfig): boolean => {
   const nextHistory = [createVersionSnapshot(config), ...loadVersionHistory()].slice(0, MAX_VERSION_HISTORY);
-  saveVersionHistory(nextHistory);
+  return saveVersionHistory(nextHistory);
 };
 
 // Save to primary storage

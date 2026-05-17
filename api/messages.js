@@ -987,23 +987,32 @@ export default async (req, res) => {
         writeSource = 'local-file';
       }
 
+      const emailResult = await sendEmailNotification(message);
+
       if (!writeSuccess) {
-        console.error('[API:Messages] All storage backends failed');
-        const payload = {
-          success: false,
-          error: 'Failed to save message. Please try again.',
+        console.warn('[API:Messages] Storage unavailable, but email notification was still attempted.');
+        const responseBody = {
+          success: Boolean(emailResult?.success),
+          message: emailResult?.success
+            ? 'Message sent successfully'
+            : 'Message received, but email notification failed',
+          messageId: message.id,
+          source: 'email-only',
+          timestamp: message.timestamp,
+          rateLimitRemaining: rateLimitCheck.remaining,
+          email: emailResult,
+          warning: 'Message storage is unavailable in this environment.',
         };
+
         if (process.env.NODE_ENV !== 'production') {
-          payload.debug = { lastStorageError, storageConfig };
+          responseBody.debug = { lastStorageError, storageConfig, writeSource };
         }
-        return res.status(503).json(payload);
+
+        return res.status(emailResult?.success ? 201 : 202).json(responseBody);
       }
 
       console.log(`[API:Messages] Message saved successfully to ${writeSource}`);
-      
-      // Send email notification asynchronously (don't wait for it)
-      const emailResult = await sendEmailNotification(message);
-      
+
       return res.status(201).json({
         success: true,
         message: 'Message sent successfully',
