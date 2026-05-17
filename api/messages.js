@@ -2,11 +2,17 @@
  * Messages API Handler - Vercel Serverless Function
  * Handles GET/POST operations for contact form messages
  * Enhanced Security: rate limiting, validation, sanitization, encryption
+ * Email Notifications: Powered by Resend
  */
 
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
+import { Resend } from 'resend';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // ============================================================================
 // ENVIRONMENT & CONFIGURATION
@@ -15,6 +21,26 @@ import https from 'https';
 const MESSAGES_KEY = 'site:messages';
 const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = !!process.env.VERCEL;
+
+// Email Configuration
+const emailConfig = {
+  enabled: !!(process.env.RESEND_API_KEY && process.env.CONTACT_EMAIL_TO),
+  apiKey: process.env.RESEND_API_KEY,
+  fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+  fromName: process.env.RESEND_FROM_NAME || 'Contact Form',
+  toEmail: process.env.CONTACT_EMAIL_TO,
+};
+
+// Initialize Resend client only if email is enabled
+let resendClient = null;
+if (emailConfig.enabled) {
+  try {
+    resendClient = new Resend(emailConfig.apiKey);
+    console.log('[API:Messages] Resend email service initialized');
+  } catch (error) {
+    console.error('[API:Messages] Failed to initialize Resend:', error.message);
+  }
+}
 
 // Enhanced Security Configuration
 const SECURITY_CONFIG = {
@@ -61,6 +87,223 @@ console.log('[API:Messages] Storage backends available:', {
   environment: isProduction ? 'production' : 'development',
   isVercel,
 });
+
+// ============================================================================
+// EMAIL FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate professional HTML email template
+ */
+const generateEmailTemplate = (messageData) => {
+  const { name, email, subject, message, timestamp } = messageData;
+  const formattedDate = new Date(timestamp).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+          line-height: 1.6;
+          color: #333;
+          margin: 0;
+          padding: 0;
+          background-color: #f5f5f5;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background-color: white;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 32px;
+          text-align: center;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 600;
+        }
+        .header p {
+          margin: 8px 0 0 0;
+          font-size: 14px;
+          opacity: 0.9;
+        }
+        .content {
+          padding: 32px;
+        }
+        .alert {
+          background-color: #f0f4ff;
+          border-left: 4px solid #667eea;
+          padding: 16px;
+          margin-bottom: 24px;
+          border-radius: 4px;
+        }
+        .alert p {
+          margin: 0;
+          color: #667eea;
+          font-weight: 500;
+        }
+        .field {
+          margin-bottom: 20px;
+        }
+        .field-label {
+          font-weight: 600;
+          color: #667eea;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+        }
+        .field-value {
+          color: #333;
+          word-break: break-word;
+          white-space: pre-wrap;
+        }
+        .message-box {
+          background-color: #f9f9f9;
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          padding: 16px;
+          margin-top: 8px;
+        }
+        .footer {
+          background-color: #f5f5f5;
+          padding: 24px;
+          text-align: center;
+          font-size: 12px;
+          color: #666;
+          border-top: 1px solid #e0e0e0;
+        }
+        .footer p {
+          margin: 0;
+          line-height: 1.8;
+        }
+        .divider {
+          height: 1px;
+          background-color: #e0e0e0;
+          margin: 24px 0;
+        }
+        a {
+          color: #667eea;
+          text-decoration: none;
+        }
+        a:hover {
+          text-decoration: underline;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📨 New Contact Form Submission</h1>
+          <p>You have received a new message from your contact form</p>
+        </div>
+        <div class="content">
+          <div class="alert">
+            <p>✨ New message received at ${formattedDate}</p>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">From (Name)</div>
+            <div class="field-value">${name}</div>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">Email Address</div>
+            <div class="field-value">
+              <a href="mailto:${email}">${email}</a>
+            </div>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">Subject</div>
+            <div class="field-value">${subject}</div>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">Message</div>
+            <div class="field-value">
+              <div class="message-box">${message}</div>
+            </div>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div style="background-color: #f0f4ff; padding: 16px; border-radius: 6px; text-align: center;">
+            <p style="margin: 0; color: #667eea; font-size: 14px;">
+              <strong>💡 Tip:</strong> You can reply directly to this email to respond to the sender.
+            </p>
+          </div>
+        </div>
+        <div class="footer">
+          <p>This is an automated email from your contact form. Please do not reply to this address directly.</p>
+          <p>If you did not expect this email, please contact your website administrator.</p>
+          <p style="margin-top: 12px; opacity: 0.7;">Powered by Resend</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+/**
+ * Send email notification via Resend
+ */
+const sendEmailNotification = async (messageData) => {
+  if (!resendClient || !emailConfig.enabled) {
+    console.log('[API:Messages] Email notifications disabled - skipping');
+    return { success: true, skipped: true };
+  }
+
+  try {
+    console.log('[API:Messages] Sending email notification...');
+    
+    const htmlContent = generateEmailTemplate(messageData);
+    
+    const response = await resendClient.emails.send({
+      from: `${emailConfig.fromName} <${emailConfig.fromEmail}>`,
+      to: emailConfig.toEmail,
+      subject: `📨 New Contact: ${messageData.subject}`,
+      html: htmlContent,
+      replyTo: messageData.email,
+    });
+
+    console.log('[API:Messages] Email sent successfully:', response.id);
+    return {
+      success: true,
+      emailId: response.id,
+      timestamp: Date.now(),
+    };
+  } catch (error) {
+    // Don't fail the entire message submission if email fails
+    console.error('[API:Messages] Email notification failed:', error.message);
+    return {
+      success: false,
+      error: error.message,
+      timestamp: Date.now(),
+      note: 'Message saved but email notification failed',
+    };
+  }
+};
 
 // ============================================================================
 // SECURITY FUNCTIONS
@@ -760,6 +1003,9 @@ export default async (req, res) => {
 
       console.log(`[API:Messages] Message saved successfully to ${writeSource}`);
       
+      // Send email notification asynchronously (don't wait for it)
+      const emailResult = await sendEmailNotification(sanitizedData);
+      
       return res.status(201).json({
         success: true,
         message: 'Message sent successfully',
@@ -767,6 +1013,7 @@ export default async (req, res) => {
         source: writeSource,
         timestamp: message.timestamp,
         rateLimitRemaining: rateLimitCheck.remaining,
+        email: emailResult,
       });
     }
 
