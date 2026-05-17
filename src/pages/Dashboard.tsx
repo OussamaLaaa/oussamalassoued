@@ -6662,6 +6662,11 @@ export const Dashboard: React.FC = () => {
                 checked={siteConfig.dashboard.integrations.googleAnalyticsEnabled}
                 onChange={(next) => updateDashboardIntegration('googleAnalyticsEnabled', next)}
               />
+              <Toggle
+                label="Enable Reduced Motion (Low-motion mode)"
+                checked={Boolean(siteConfig.reducedMotion)}
+                onChange={(next) => updateConfig((prev) => ({ ...prev, reducedMotion: next }))}
+              />
             </Card>
 
             <Card title="Connection Health" subtitle="Current integration readiness and missing requirements">

@@ -328,11 +328,11 @@ export function ContactEmailTemplate(props: ContactEmailProps) {
                   <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
                     <tbody>
                       <tr>
-                        <td style={styles.metaRow}>
-                          <td style={{ ...styles.metaRow, ...styles.metaLabel }}>IP address</td>
-                        </td>
-                      </tbody>
-                    </table>
+                        <td style={{ ...styles.metaRow, ...styles.metaLabel }}>IP address</td>
+                        <td style={{ ...styles.metaRow, ...styles.metaValue }}>{ipAddress || '—'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </td>
               </tr>
 

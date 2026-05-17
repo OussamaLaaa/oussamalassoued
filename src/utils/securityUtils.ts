@@ -73,7 +73,7 @@ export const isValidEmail = (email: string): boolean => {
 /**
  * Get client IP address (for logging purposes)
  */
-export const getClientIP = async (): Promise<string> {
+export const getClientIP = async (): Promise<string> => {
   try {
     const response = await fetch('https://api.ipify.org?format=json');
     const data = await response.json();

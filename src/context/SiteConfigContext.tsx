@@ -265,6 +265,24 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     applyBrowserMetadata(siteConfig);
   }, [siteConfig]);
 
+  // Apply reduced-motion class to document root when enabled in config
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const enabled = Boolean(siteConfig.reducedMotion);
+    try {
+      if (enabled) {
+        document.documentElement.classList.add('reduced-motion');
+        if (document.body) document.body.classList.add('reduced-motion');
+      } else {
+        document.documentElement.classList.remove('reduced-motion');
+        if (document.body) document.body.classList.remove('reduced-motion');
+      }
+    } catch (err) {
+      // swallow DOM update errors in non-browser environments
+    }
+  }, [siteConfig.reducedMotion]);
+
   // Save to storage with advanced system
   useEffect(() => {
     if (typeof window === 'undefined') return;

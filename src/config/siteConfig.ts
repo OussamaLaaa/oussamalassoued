@@ -1007,6 +1007,7 @@ export interface SiteConfig {
   // AI Intelligence
   aiTracking: SiteAITracking[];
   aiReports: SiteAIReport[];
+  reducedMotion?: boolean;
 }
 
 export const SITE_CONFIG_STORAGE_KEY = 'portfolio.site-config.v1';
@@ -1017,6 +1018,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   introScrollPrompt: 'Scroll to explore UX, UI, and AI product work',
   introOverlayBackdropColor: 'rgba(0, 0, 0, 0.6)',
   introOverlayBackdropOpacity: 0.35,
+  reducedMotion: false,
   featured: {
     titleLine1: 'مميز / Featured',
     titleLine2: 'الأعمال / Work',
@@ -2456,6 +2458,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
   const dashboardAnalytics = isRecord(dashboard.analytics) ? dashboard.analytics : {};
   const dashboardInbox = isRecord(dashboard.inbox) ? dashboard.inbox : {};
   const contactPage = isRecord(value.contactPage) ? value.contactPage : {};
+  const reducedMotion = asBoolean(value.reducedMotion, DEFAULT_SITE_CONFIG.reducedMotion);
 
   const rawBrowserTitle = asString(
     dashboardBrowser.browserTabTitle,
@@ -2847,6 +2850,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       0,
       0.95,
     ),
+    reducedMotion: reducedMotion,
     featured: {
       titleLine1: asString(featured.titleLine1, DEFAULT_SITE_CONFIG.featured.titleLine1),
       titleLine2: asString(featured.titleLine2, DEFAULT_SITE_CONFIG.featured.titleLine2),

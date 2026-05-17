@@ -232,6 +232,31 @@
   }
 }
 
+/* Global reduced-motion utility class: disables heavy motion, transitions, and filters */
+.reduced-motion,
+html.reduced-motion,
+body.reduced-motion {
+  animation: none !important;
+  transition: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  -webkit-animation: none !important;
+  -webkit-transition: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reduced-motion,
+  html.reduced-motion,
+  body.reduced-motion {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
 :root {
   --ds-color-primary: #111217;
   --ds-color-secondary: #7a8192;

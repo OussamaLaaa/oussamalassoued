@@ -76,7 +76,7 @@ export const getGlassClass = (variant: SiteGlassVariant, tone: SurfaceTone = 'da
   return joinClasses('ds-glass', GLASS_TONE_CLASSES[variant][tone], extra);
 };
 
-export const getScaledRem = (baseRem: number, scale: number) => {
+export const getScaledRem = (baseRem: number, scale: number = 1) => {
   const safeScale = Number.isFinite(scale) ? Math.min(1.8, Math.max(0.7, scale)) : 1;
   return `${(baseRem * safeScale).toFixed(3)}rem`;
 };
