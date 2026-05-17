@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import { Resend } from 'resend';
+import UAParser from 'ua-parser-js';
 
 // Load environment variables (development only)
 // Vercel automatically loads from Environment Variables dashboard
@@ -112,7 +113,7 @@ console.log('[API:Messages] Storage backends available:', {
  * Generate professional HTML email template
  */
 const generateEmailTemplate = (messageData) => {
-  const { name, email, subject, message, timestamp } = messageData;
+  const { name, email, subject, message, timestamp, ip, userAgent, ua } = messageData;
   const formattedDate = new Date(timestamp).toLocaleString('en-US', {
     weekday: 'short',
     year: 'numeric',
@@ -123,8 +124,8 @@ const generateEmailTemplate = (messageData) => {
   });
 
   const escapedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-  const escapedName = name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const escapedSubject = subject.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escapedName = (name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escapedSubject = (subject || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -335,6 +336,34 @@ const generateEmailTemplate = (messageData) => {
               </div>
             </div>
           </div>
+
+          <div class="info-row">
+            <div class="info-icon">🖥️</div>
+            <div class="info-content">
+              <span class="info-label">Client Info</span>
+              <div class="info-value">
+                <div><strong>IP:</strong> ${ip || 'unknown'}</div>
+                <div><strong>Browser:</strong> ${ua?.browser || 'unknown'}</div>
+                <div><strong>OS:</strong> ${ua?.os || 'unknown'}</div>
+                <div><strong>Device:</strong> ${ua?.device || 'unknown'}</div>
+                <div><strong>User-Agent:</strong> <small style="color:#6c757d;">${(userAgent||'').substring(0, 240)}</small></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-row">
+            <div class="info-icon">🗺️</div>
+            <div class="info-content">
+              <span class="info-label">Geo (IP)</span>
+              <div class="info-value">
+                <div><strong>Country:</strong> ${messageData.geo?.country || 'unknown'}</div>
+                <div><strong>Region:</strong> ${messageData.geo?.region || 'unknown'}</div>
+                <div><strong>City:</strong> ${messageData.geo?.city || 'unknown'}</div>
+                <div><strong>ISP:</strong> ${messageData.geo?.isp || 'unknown'}</div>
+                <div><strong>Coordinates:</strong> ${messageData.geo?.lat ? `${messageData.geo.lat}, ${messageData.geo.lon}` : 'unknown'}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -354,7 +383,6 @@ const generateEmailTemplate = (messageData) => {
   </div>
 </body>
 </html>`;
-  `;
 };
 
 /**
@@ -1045,8 +1073,20 @@ export default async (req, res) => {
         timestamp: Date.now(),
         ip: clientIP,
         userAgent: req.headers['user-agent'] || 'unknown',
+        ua: parseUserAgent(req.headers['user-agent'] || ''),
+        referer: req.headers['referer'] || req.headers['origin'] || 'unknown',
         read: false,
       };
+
+      // Try to enrich with geo information (non-blocking but await here to include in saved message)
+      try {
+        const geo = await fetchGeoForIP(clientIP);
+        if (geo) {
+          message.geo = geo;
+        }
+      } catch (e) {
+        console.warn('[API:Messages] Geo enrichment error:', e?.message);
+      }
 
       // Encrypt sensitive data
       const encryptedMessage = encryptMessage(message);
@@ -1096,7 +1136,7 @@ export default async (req, res) => {
       console.log(`[API:Messages] Message saved successfully to ${writeSource}`);
       
       // Send email notification asynchronously (don't wait for it)
-      const emailResult = await sendEmailNotification(sanitizedData);
+      const emailResult = await sendEmailNotification(message);
       
       return res.status(201).json({
         success: true,
@@ -1124,5 +1164,51 @@ export default async (req, res) => {
       error: 'Internal server error',
       message: error?.message || 'Unknown error occurred',
     });
+  }
+};
+
+/**
+ * Simple User-Agent parser to extract browser, os, and device hints
+ */
+const parseUserAgent = (uaString = '') => {
+  try {
+    const parser = new UAParser(uaString || '');
+    const r = parser.getResult();
+    const device = r.device && r.device.type ? r.device.type : 'desktop';
+    return {
+      browser: r.browser?.name || 'unknown',
+      os: r.os?.name || 'unknown',
+      device: device.charAt(0).toUpperCase() + device.slice(1),
+    };
+  } catch (e) {
+    return { browser: 'unknown', os: 'unknown', device: 'unknown' };
+  }
+};
+
+/**
+ * Fetch geo info for IP using ip-api.com (free, rate-limited)
+ */
+const fetchGeoForIP = async (ip) => {
+  if (!ip || ip === '127.0.0.1' || ip === '::1') return null;
+  try {
+    const url = `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city,zip,lat,lon,isp,query,message`;
+    const resp = await fetch(url, { method: 'GET' });
+    const json = await resp.json();
+    if (json && json.status === 'success') {
+      return {
+        country: json.country,
+        region: json.regionName,
+        city: json.city,
+        zip: json.zip,
+        lat: json.lat,
+        lon: json.lon,
+        isp: json.isp,
+        query: json.query,
+      };
+    }
+    return null;
+  } catch (e) {
+    console.warn('[API:Messages] Geo lookup failed:', e?.message);
+    return null;
   }
 };
