@@ -9,6 +9,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 
 import { Scene05Overlay } from '../components/Scene05Overlay';
 import { FeaturedWork } from '../components/FeaturedWork';
+import { StaticHomeLayout } from '../components/StaticHomeLayout';
 
 const SCENE_02 = 'scene-02-desk-focus';
 const SCENE_03 = 'scene-03-screen-entry';
@@ -27,14 +28,22 @@ let hasHomeBootCompleted = false;
 export const Home: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { visibility } = siteConfig;
-  const { progress, images, isComplete } = usePreloadFrames(SCENES);
+  const isStaticHomeLayout = visibility.staticHomeLayout;
+  const { progress, images, isComplete } = usePreloadFrames(isStaticHomeLayout ? [] : SCENES);
    
-  const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);
+  const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted || isStaticHomeLayout);
   const [finalFadeOpacity, setFinalFadeOpacity] = useState(0);
   const [isPortfolioActive, setIsPortfolioActive] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [scene05Progress, setScene05Progress] = useState(-1);
   const lastNavSectionRef = useRef<string>('home');
+
+  React.useEffect(() => {
+    if (isStaticHomeLayout && !hasStarted) {
+      hasHomeBootCompleted = true;
+      setHasStarted(true);
+    }
+  }, [hasStarted, isStaticHomeLayout]);
 
   const handleFadeComplete = () => {
     hasHomeBootCompleted = true;
@@ -70,7 +79,7 @@ export const Home: React.FC = () => {
 
   return (
     <div className="bg-[#111113] min-h-screen text-white selection:bg-white/20" data-surface="base">
-      {!hasStarted ? (
+      {!isStaticHomeLayout && !hasStarted ? (
         <LoadingScreen 
           progress={progress} 
           isComplete={isComplete} 
@@ -79,13 +88,15 @@ export const Home: React.FC = () => {
       ) : null}
 
       {hasStarted && <PersistentUI isLightMode={scene05Progress >= 0 || isPortfolioActive} />}
-      {hasStarted && visibility.cursorAnimation ? (
+      {hasStarted && !isStaticHomeLayout && visibility.cursorAnimation ? (
         <CursorAnimationLayer animation={siteConfig.animation} />
       ) : null}
 
-      {visibility.introOverlay ? <IntroTextOverlay hasStarted={hasStarted} isScrolling={isScrolling} /> : null}
+      {!isStaticHomeLayout && visibility.introOverlay ? <IntroTextOverlay hasStarted={hasStarted} isScrolling={isScrolling} /> : null}
 
-      {hasStarted && (
+      {isStaticHomeLayout ? (
+        <StaticHomeLayout />
+      ) : hasStarted ? (
         <main className="relative w-full bg-black" data-surface="ambient">
           
           <MasterSequence 
@@ -141,7 +152,7 @@ export const Home: React.FC = () => {
           
           {visibility.featuredWork ? <FeaturedWork isActive={isPortfolioActive} /> : null}
         </main>
-      )}
+      ) : null}
     </div>
   );
 };

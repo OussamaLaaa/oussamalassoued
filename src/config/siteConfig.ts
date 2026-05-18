@@ -322,6 +322,7 @@ export interface SiteVisibilityConfig {
   cursorAnimation: boolean;
   introOverlay: boolean;
   scene05Overlay: boolean;
+  staticHomeLayout: boolean;
   persistentUI: boolean;
   navigationLogo: boolean;
   navigationMenu: boolean;
@@ -2217,6 +2218,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     cursorAnimation: true,
     introOverlay: true,
     scene05Overlay: true,
+    staticHomeLayout: false,
     persistentUI: true,
     navigationLogo: true,
     navigationMenu: true,
@@ -4507,6 +4509,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       cursorAnimation: asBoolean(visibility.cursorAnimation, DEFAULT_SITE_CONFIG.visibility.cursorAnimation),
       introOverlay: asBoolean(visibility.introOverlay, DEFAULT_SITE_CONFIG.visibility.introOverlay),
       scene05Overlay: asBoolean(visibility.scene05Overlay, DEFAULT_SITE_CONFIG.visibility.scene05Overlay),
+      staticHomeLayout: asBoolean(visibility.staticHomeLayout, DEFAULT_SITE_CONFIG.visibility.staticHomeLayout),
       persistentUI: asBoolean(visibility.persistentUI, DEFAULT_SITE_CONFIG.visibility.persistentUI),
       navigationLogo: asBoolean(visibility.navigationLogo, DEFAULT_SITE_CONFIG.visibility.navigationLogo),
       navigationMenu: asBoolean(visibility.navigationMenu, DEFAULT_SITE_CONFIG.visibility.navigationMenu),

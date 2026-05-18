@@ -3728,6 +3728,14 @@ export const Dashboard: React.FC = () => {
                 onChange={(next) => updateVisibility('scene05Overlay', next)}
               />
               <Toggle
+                label="Static home layout"
+                checked={siteConfig.visibility.staticHomeLayout}
+                onChange={(next) => updateVisibility('staticHomeLayout', next)}
+              />
+              <p className="rounded-[10px] border border-white/10 bg-black/25 px-3 py-2 text-xs text-white/58">
+                When enabled, the home page switches to a static hero, about, projects, and testimonials layout and skips the cinematic opening scenes.
+              </p>
+              <Toggle
                 label="Persistent top bar"
                 checked={siteConfig.visibility.persistentUI}
                 onChange={(next) => updateVisibility('persistentUI', next)}
