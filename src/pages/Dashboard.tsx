@@ -2138,6 +2138,16 @@ export const Dashboard: React.FC = () => {
                 }
               />
               <Input
+                label="Testimonials title"
+                value={siteConfig.featured.testimonialsTitle}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    featured: { ...prev.featured, testimonialsTitle: next },
+                  }))
+                }
+              />
+              <Input
                 label="Case Study button label"
                 value={siteConfig.featured.caseStudyLabel}
                 onChange={(next) =>
