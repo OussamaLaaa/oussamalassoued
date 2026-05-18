@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { Footer } from './Footer';
-import { getButtonClass } from './designSystem';
-import { getSocialIconComponent } from './icons';
+import { getButtonClass, getCardClass, getGlassClass } from './designSystem';
+import { BriefcaseIcon, FileTextIcon, MessageSquareIcon, SlidersHorizontalIcon } from './icons';
 
 const SECTION_IDS = ['home', 'about', 'projects', 'testimonials', 'contact'] as const;
 
@@ -51,6 +51,8 @@ const SectionEyebrow: React.FC<{ children: ReactNode; className?: string }> = ({
   <p className={`font-mono text-[0.7rem] uppercase tracking-[0.3em] ${className}`}>{children}</p>
 );
 
+const VALUE_ICONS = [MessageSquareIcon, SlidersHorizontalIcon, FileTextIcon, BriefcaseIcon];
+
 export const StaticHomeLayout: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { scene05, featured, visibility, persistentUI, footer, designSystem } = siteConfig;
@@ -61,7 +63,6 @@ export const StaticHomeLayout: React.FC = () => {
     [siteConfig.testimonials],
   );
   const visibleSkills = useMemo(() => scene05.skills.map((skill) => skill.trim()).filter(Boolean), [scene05.skills]);
-  const visibleSocialLinks = useMemo(() => scene05.socialLinks.filter((link) => link.visible), [scene05.socialLinks]);
   const featuredCertifications = useMemo(
     () => scene05.featuredCertifications.filter((item) => item.visible),
     [scene05.featuredCertifications],
@@ -70,10 +71,14 @@ export const StaticHomeLayout: React.FC = () => {
     () => scene05.companyLogos.filter((item) => item.visible),
     [scene05.companyLogos],
   );
+  const visibleValueCards = useMemo(
+    () => scene05.valueCards.filter((item) => item.visible),
+    [scene05.valueCards],
+  );
 
   const visibleLogos = visibleCompanyLogos.length > 0 ? visibleCompanyLogos : scene05.companyLogos;
   const visibleCertificates = featuredCertifications.length > 0 ? featuredCertifications : scene05.certifications;
-  const certificateLogos = featuredCertifications.length > 0 ? featuredCertifications : scene05.featuredCertifications;
+  const valueCards = visibleValueCards.length > 0 ? visibleValueCards : scene05.valueCards;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -112,35 +117,57 @@ export const StaticHomeLayout: React.FC = () => {
   const navLabel = (section: string, fallback: string) =>
     persistentUI.navItems.find((item) => item.section === section)?.label || fallback;
 
-  const homeLabel = navLabel('home', scene05.badge);
-  const aboutLabel = navLabel('about', scene05.badge);
-  const projectsLabel = navLabel('projects', featured.titleLine2);
-  const testimonialsLabel = navLabel('testimonials', featured.titleLine1);
+  const testimonialsLabel = navLabel('testimonials', featured.titleLine2);
 
-  const storyParagraphs = scene05.storyParagraphs.map((item) => item.trim()).filter(Boolean);
+  const storyParagraphs = useMemo(
+    () => scene05.storyParagraphs.map((item) => item.trim()).filter(Boolean),
+    [scene05.storyParagraphs],
+  );
   const aboutParagraphs = storyParagraphs.length > 0 ? storyParagraphs : [scene05.visionText];
+  const aboutHighlights = useMemo(() => {
+    const highlights = scene05.aboutHighlights.map((item) => item.trim()).filter(Boolean);
+    if (highlights.length > 0) return highlights;
+    return storyParagraphs.length > 0 ? storyParagraphs : [scene05.visionText];
+  }, [scene05.aboutHighlights, scene05.visionText, storyParagraphs]);
 
-  const services = visibleSkills.slice(0, 4);
-  const serviceDescriptions = services.map((_, index) => storyParagraphs[index] || scene05.visionText);
+  const heroTestimonials = useMemo(() => {
+    const source = visibleTestimonials.length > 0 ? visibleTestimonials : siteConfig.testimonials;
+    return source.filter((item) => item.avatar).slice(0, 3);
+  }, [siteConfig.testimonials, visibleTestimonials]);
 
-  const heroStats = [
-    { label: scene05.skillsTitle, value: String(visibleSkills.length) },
-    { label: scene05.certificationsTitle, value: String(visibleCertificates.length) },
-    { label: scene05.companyLogosTitle, value: String(visibleLogos.length) },
-  ];
+  const companyNames = useMemo(() => {
+    const names = visibleLogos.map((logo) => logo.name).filter(Boolean);
+    return names.length > 0 ? names : [];
+  }, [visibleLogos]);
 
   const contactHref = persistentUI.letsTalkHref || footer.ctaButtonHref || scene05.actionHref;
+  const primaryHeroHref = featured.ctaButtonHref || contactHref;
   const primaryCtaClass = getButtonClass(
     designSystem.components.featuredCtaButtonVariant,
     'light',
-    'md',
-    'rounded-full px-6 shadow-[0_18px_34px_rgba(17,18,23,0.18)] hover:-translate-y-0.5',
+    'lg',
+    'rounded-full h-12 px-6 shadow-lg',
   );
   const secondaryCtaClass = getButtonClass(
     designSystem.components.featuredViewAllButtonVariant,
     'light',
-    'md',
-    'rounded-full px-6 border border-[#111217]/12 bg-white text-[#111217] hover:-translate-y-0.5',
+    'lg',
+    'rounded-full h-12 px-6 bg-white/60 backdrop-blur-sm border border-[#111217]/12 text-[#111217]',
+  );
+  const valueCardClass = `${getCardClass(
+    designSystem.components.scene05CardVariant,
+    'light',
+    'rounded-2xl p-6 transition-shadow hover:shadow-md',
+  )} ${getGlassClass(designSystem.components.globalGlassVariant, 'light')}`;
+  const aboutCardClass = `${getCardClass(
+    designSystem.components.scene05CardVariant,
+    'light',
+    'rounded-2xl bg-white/70 p-8 md:p-10',
+  )} ${getGlassClass(designSystem.components.globalGlassVariant, 'light')}`;
+  const projectCardClass = getCardClass(
+    designSystem.components.featuredProjectCardVariant,
+    'light',
+    'rounded-2xl overflow-hidden group cursor-pointer hover:shadow-lg transition-all p-0 gap-0',
   );
 
   const handlePlaceholderLinkClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -150,397 +177,370 @@ export const StaticHomeLayout: React.FC = () => {
   };
 
   return (
-    <main className="relative overflow-hidden bg-[#f8f6f2] text-[#111217]" data-surface="static-home">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-6%] top-[-10%] h-[24rem] w-[24rem] rounded-full bg-[#d8b27a]/20 blur-3xl" />
-        <div className="absolute right-[-8%] top-[12%] h-[20rem] w-[20rem] rounded-full bg-[#7ea8ff]/12 blur-3xl" />
-        <div className="absolute bottom-[14%] left-[20%] h-[16rem] w-[16rem] rounded-full bg-[#111217]/5 blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-[#f7f7f5] text-[#111217]" data-surface="static-home">
+      <section id="home" className="relative overflow-hidden border-b border-[#111217]/8">
+        <div className="absolute inset-0 -z-10">
+          <div
+            className="absolute inset-0 opacity-[0.4]"
+            style={{
+              backgroundImage:
+                'linear-gradient(to right, rgba(17,18,23,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(17,18,23,0.06) 1px, transparent 1px)',
+              backgroundSize: '56px 56px',
+              maskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 80%)',
+              WebkitMaskImage:
+                'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 80%)',
+            }}
+          />
+          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[#111217]/5 blur-3xl" />
+          <div className="absolute top-20 -right-32 h-96 w-96 rounded-full bg-[#111217]/5 blur-3xl" />
+        </div>
 
-      <section id="home" className="relative border-b border-[#111217]/8">
-        <div className="site-shell grid gap-12 py-20 md:py-24 xl:grid-cols-[1.05fr_0.95fr] xl:items-center">
-          <div className="space-y-8">
-            <Reveal>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#111217]/12 bg-white px-4 py-2 text-[0.72rem] font-medium uppercase tracking-[0.24em] text-[#111217]/65 shadow-[0_10px_26px_rgba(17,18,23,0.06)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#111217]" />
-                {scene05.badge}
-              </div>
-            </Reveal>
-
-            <div className="space-y-5">
-              <Reveal delayMs={80}>
-                <p className="max-w-[30ch] font-mono text-[0.72rem] uppercase tracking-[0.28em] text-[#111217]/42">
-                  {scene05.role}
-                </p>
-              </Reveal>
-
-              <Reveal delayMs={120}>
-                <h1 className="max-w-[14ch] text-balance text-4xl font-semibold tracking-[-0.06em] text-[#111217] md:text-5xl xl:text-[3.6rem] xl:leading-[1.05]">
-                  {scene05.name}
-                </h1>
-              </Reveal>
-
-              <Reveal delayMs={170}>
-                <p className="max-w-[40rem] text-[1rem] leading-8 text-[#111217]/72 md:text-[1.08rem]">
-                  {scene05.visionText}
-                </p>
-              </Reveal>
-            </div>
-
-            <Reveal delayMs={220}>
-              <div className="flex flex-wrap items-center gap-3">
-                <a
-                  href={contactHref}
-                  onClick={(event) => handlePlaceholderLinkClick(event, contactHref)}
-                  target={isPlaceholderHref(contactHref) ? undefined : '_blank'}
-                  rel={isPlaceholderHref(contactHref) ? undefined : 'noopener noreferrer'}
-                  className={primaryCtaClass}
-                >
-                  {footer.ctaButtonLabel || scene05.actionLabel}
-                </a>
-                <a href="#projects" className={secondaryCtaClass}>
-                  {featured.viewAllLabel}
-                </a>
-              </div>
-            </Reveal>
-
-            <Reveal delayMs={260}>
-              <div className="flex flex-wrap items-center gap-4 text-[#111217]/55">
-                {visibleSocialLinks.map((link) => {
-                  const SocialIcon = getSocialIconComponent(link.icon);
-                  return (
-                    <a
-                      key={link.id}
-                      href={link.href}
-                      onClick={(event) => handlePlaceholderLinkClick(event, link.href)}
-                      target={isPlaceholderHref(link.href) ? undefined : '_blank'}
-                      rel={isPlaceholderHref(link.href) ? undefined : 'noopener noreferrer'}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#111217]/10 bg-white text-[#111217]/60 transition-all duration-300 hover:-translate-y-0.5 hover:text-[#111217]"
-                      aria-label={link.label}
-                    >
-                      <SocialIcon size={18} strokeWidth={1.8} />
-                    </a>
-                  );
-                })}
-              </div>
-            </Reveal>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {heroStats.map((stat, index) => (
-                <Reveal key={stat.label} delayMs={200 + index * 60}>
-                  <div className="rounded-[22px] border border-[#111217]/8 bg-white p-4 shadow-[0_12px_24px_rgba(17,18,23,0.05)]">
-                    <p className="font-mono text-[0.66rem] uppercase tracking-[0.24em] text-[#111217]/42">{stat.label}</p>
-                    <p className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-[#111217]">{stat.value}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-
-          <Reveal className="flex items-center justify-center xl:justify-end" delayMs={160}>
-            <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border border-dashed border-[#111217]/20" />
-              <div className="rounded-full border border-[#111217]/10 bg-white p-3 shadow-[0_18px_40px_rgba(17,18,23,0.12)]">
-                <img
-                  src={scene05.portraitImage}
-                  alt={scene05.portraitAlt}
-                  className="h-64 w-64 rounded-full object-cover md:h-72 md:w-72"
-                />
-              </div>
+        <div className="site-shell max-w-5xl px-6 pt-28 pb-20 text-center md:pt-36">
+          <Reveal>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#111217]/12 bg-white/80 px-4 py-2 text-[0.72rem] font-medium uppercase tracking-[0.24em] text-[#111217]/65 shadow-[0_10px_26px_rgba(17,18,23,0.06)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#111217]/70 opacity-60 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#111217]" />
+              </span>
+              <span className="text-xs">{scene05.badge}</span>
             </div>
           </Reveal>
+
+          <Reveal delayMs={100}>
+            <h1
+              className="mx-auto mt-8 max-w-4xl tracking-tight"
+              style={{
+                fontSize: 'clamp(2.75rem, 7vw, 5.5rem)',
+                lineHeight: 1.02,
+                fontWeight: 600,
+                letterSpacing: '-0.04em',
+              }}
+            >
+              {scene05.heroTitleLine1}{' '}
+              <span className="relative inline-block">
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(110deg, #111217 0%, rgba(17,18,23,0.45) 100%)',
+                  }}
+                >
+                  {scene05.heroTitleLine2}
+                </span>
+                <svg
+                  viewBox="0 0 300 12"
+                  className="absolute -bottom-2 left-0 h-3 w-full text-[#111217]/30"
+                  preserveAspectRatio="none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <path d="M2 8 Q 75 2, 150 6 T 298 4" />
+                </svg>
+              </span>
+            </h1>
+          </Reveal>
+
+          <Reveal delayMs={160}>
+            <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-[#111217]/68 md:text-xl">
+              {scene05.heroSubtitle}
+            </p>
+          </Reveal>
+
+          <Reveal delayMs={220}>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href={primaryHeroHref}
+                onClick={(event) => handlePlaceholderLinkClick(event, primaryHeroHref)}
+                target={isPlaceholderHref(primaryHeroHref) ? undefined : '_blank'}
+                rel={isPlaceholderHref(primaryHeroHref) ? undefined : 'noopener noreferrer'}
+                className={primaryCtaClass}
+              >
+                {featured.ctaButtonText}
+                <span aria-hidden="true">-&gt;</span>
+              </a>
+              <a href="#projects" className={secondaryCtaClass}>
+                {featured.viewAllLabel}
+                <span aria-hidden="true">-&gt;</span>
+              </a>
+            </div>
+          </Reveal>
+
+          {heroTestimonials.length > 0 || scene05.portraitCaption ? (
+            <Reveal delayMs={280}>
+              <div className="mt-14 flex flex-wrap items-center justify-center gap-4">
+                {heroTestimonials.length > 0 ? (
+                  <div className="flex -space-x-3">
+                    {heroTestimonials.map((item) => (
+                      <img
+                        key={item.id}
+                        src={item.avatar}
+                        alt={item.name}
+                        className="h-10 w-10 rounded-full border-2 border-[#f7f7f5] object-cover"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                <div className="text-left">
+                  <div className="flex items-center gap-1 text-[#111217]">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg key={i} viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+                        <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    ))}
+                  </div>
+                  {scene05.portraitCaption ? (
+                    <p className="text-sm text-[#111217]/62">{scene05.portraitCaption}</p>
+                  ) : null}
+                </div>
+              </div>
+            </Reveal>
+          ) : null}
         </div>
+
+        {companyNames.length > 0 ? (
+          <div className="site-shell max-w-6xl px-6 pb-20">
+            <p className="mb-6 text-center text-xs uppercase tracking-widest text-[#111217]/55">
+              {scene05.companyLogosTitle}
+            </p>
+            <div
+              className="relative overflow-hidden"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+                WebkitMaskImage:
+                  'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+              }}
+            >
+              <div className="flex w-max gap-14 whitespace-nowrap animate-[marquee_30s_linear_infinite]">
+                {[...companyNames, ...companyNames].map((name, i) => (
+                  <span
+                    key={`${name}-${i}`}
+                    className="text-2xl tracking-tight text-[#111217]/55 transition-colors hover:text-[#111217]"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <style>{`
+              @keyframes marquee {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50%); }
+              }
+            `}</style>
+          </div>
+        ) : null}
       </section>
 
-      <section id="services" className="relative border-b border-[#111217]/8 bg-white/60 py-20 md:py-24">
-        <div className="site-shell space-y-8">
-          <Reveal>
-            <div className="max-w-[52rem] space-y-4">
-              <SectionEyebrow className="text-[#111217]/45">{scene05.skillsTitle}</SectionEyebrow>
-              <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#111217] md:text-4xl">
-                {scene05.visionTitle}
-              </h2>
-              <p className="text-[1rem] leading-8 text-[#111217]/68 md:text-[1.04rem]">
-                {scene05.visionText}
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {services.map((service, index) => (
-              <Reveal key={service} delayMs={index * 80}>
-                <article className="h-full rounded-[26px] border border-[#111217]/8 bg-white p-5 shadow-[0_16px_40px_rgba(17,18,23,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(17,18,23,0.1)]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-[0.2em] text-[#111217]/45">{String(index + 1).padStart(2, '0')}</span>
-                    <span className="h-2 w-2 rounded-full bg-[#111217]/30" />
+      <section id="values" className="site-shell max-w-6xl px-6 py-20">
+        <div className="mb-12">
+          <SectionEyebrow className="text-[#111217]/55">{scene05.valuesEyebrow}</SectionEyebrow>
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+            {scene05.visionTitle}
+          </h2>
+          <p className="mt-3 max-w-2xl text-[#111217]/65">{scene05.visionText}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {valueCards.map((card, index) => {
+            const Icon = VALUE_ICONS[index % VALUE_ICONS.length];
+            return (
+              <Reveal key={card.id} delayMs={index * 70}>
+                <article className={valueCardClass}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111217]/10 text-[#111217]">
+                    <Icon size={18} strokeWidth={1.6} />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold tracking-[-0.03em] text-[#111217]">{service}</h3>
-                  <p className="mt-3 text-[0.92rem] leading-7 text-[#111217]/68">
-                    {serviceDescriptions[index]}
-                  </p>
+                  <h3 className="mt-4 text-lg font-semibold">{card.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#111217]/65">{card.description}</p>
                 </article>
               </Reveal>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </section>
 
-      <section id="about" className="relative border-b border-[#111217]/8 py-20 md:py-24">
-        <div className="site-shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+      <section id="about" className="site-shell max-w-6xl px-6 py-20">
+        <div className="grid gap-10 lg:grid-cols-2">
           <Reveal>
-            <div className="rounded-[32px] border border-[#111217]/8 bg-white p-6 shadow-[0_18px_46px_rgba(17,18,23,0.08)] md:p-8">
-              <SectionEyebrow className="text-[#111217]/45">{aboutLabel}</SectionEyebrow>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#111217] md:text-4xl">
+            <div className={aboutCardClass}>
+              <h2 className="text-2xl font-semibold tracking-[-0.02em] md:text-[2rem]">
                 {scene05.storyTitle}
               </h2>
-              <div className="mt-6 space-y-4 text-[0.98rem] leading-8 text-[#111217]/72">
-                {aboutParagraphs.map((paragraph, index) => (
-                  <Reveal key={paragraph} delayMs={index * 80}>
-                    <p>{paragraph}</p>
-                  </Reveal>
+              <div className="mt-6 space-y-4 text-[#111217]/68">
+                {aboutParagraphs.map((paragraph) => (
+                  <p key={paragraph} className="leading-relaxed">
+                    {paragraph}
+                  </p>
                 ))}
               </div>
-            </div>
-          </Reveal>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Reveal delayMs={50}>
-              <div className="rounded-[28px] border border-[#111217]/8 bg-white p-5 shadow-[0_16px_40px_rgba(17,18,23,0.05)]">
-                <SectionEyebrow className="text-[#111217]/45">{scene05.companyLogosTitle}</SectionEyebrow>
-                <div className="mt-4 grid gap-3">
-                  {visibleLogos.slice(0, 4).map((logo, index) => (
-                    <Reveal key={logo.id} delayMs={index * 60}>
-                      <div className="flex items-center gap-3 rounded-[18px] border border-[#111217]/8 bg-[#faf8f4] px-4 py-3">
-                        <img src={logo.logoSrc} alt={logo.name} className="h-9 w-9 rounded-full object-cover" />
-                        <div>
-                          <p className="text-sm font-medium text-[#111217]">{logo.name}</p>
-                        </div>
-                      </div>
-                    </Reveal>
+              {aboutHighlights.length > 0 ? (
+                <ul className="mt-6 space-y-3">
+                  {aboutHighlights.map((line) => (
+                    <li key={line} className="flex items-start gap-3 text-sm">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mt-0.5 h-5 w-5 text-[#111217]"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      <span>{line}</span>
+                    </li>
                   ))}
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delayMs={120}>
-              <div className="rounded-[28px] border border-[#111217]/8 bg-white p-5 shadow-[0_16px_40px_rgba(17,18,23,0.05)]">
-                <SectionEyebrow className="text-[#111217]/45">{scene05.certificationsTitle}</SectionEyebrow>
-                <div className="mt-4 grid gap-3">
-                  {visibleCertificates.slice(0, 4).map((item, index) => {
-                    const title = typeof item === 'string' ? item : item.title;
-                    const issuer = typeof item === 'string' ? '' : item.issuer;
-                    return (
-                      <Reveal key={`${title}-${index}`} delayMs={index * 70}>
-                        <div className="rounded-[18px] border border-[#111217]/8 bg-[#faf8f4] px-4 py-3">
-                          <p className="text-sm font-medium text-[#111217]">{title}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#111217]/45">{issuer}</p>
-                        </div>
-                      </Reveal>
-                    );
-                  })}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative border-b border-[#111217]/8 bg-white/55 py-6 md:py-7">
-        <div className="site-shell">
-          <Reveal>
-            <div className="overflow-hidden rounded-[30px] border border-[#111217]/8 bg-white px-4 py-5 shadow-[0_16px_40px_rgba(17,18,23,0.05)] md:px-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <SectionEyebrow className="text-[#111217]/45">{scene05.companyLogosTitle}</SectionEyebrow>
-                  <p className="mt-2 text-sm text-[#111217]/58">{scene05.companyLogosTitle}</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {visibleLogos.map((logo, index) => (
-                  <Reveal key={logo.id} delayMs={index * 60}>
-                    <a
-                      href={logo.href}
-                      onClick={(event) => handlePlaceholderLinkClick(event, logo.href)}
-                      target={isPlaceholderHref(logo.href) ? undefined : '_blank'}
-                      rel={isPlaceholderHref(logo.href) ? undefined : 'noopener noreferrer'}
-                      className="flex h-full min-h-[4.5rem] items-center justify-center rounded-[20px] border border-[#111217]/8 bg-[#faf8f4] px-5 py-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#111217]/16 hover:bg-white"
-                      aria-label={logo.name}
-                    >
-                      <img src={logo.logoSrc} alt={logo.name} className="max-h-8 max-w-[9rem] object-contain opacity-80" />
-                    </a>
-                  </Reveal>
-                ))}
-              </div>
+                </ul>
+              ) : null}
             </div>
           </Reveal>
-        </div>
-      </section>
 
-      <section className="relative border-b border-[#111217]/8 bg-white/60 py-10 md:py-12">
-        <div className="site-shell">
-          <Reveal>
-            <div className="overflow-hidden rounded-[30px] border border-[#111217]/8 bg-white px-4 py-5 shadow-[0_16px_40px_rgba(17,18,23,0.05)] md:px-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <SectionEyebrow className="text-[#111217]/45">{scene05.certificationsTitle}</SectionEyebrow>
-                  <p className="mt-2 text-sm text-[#111217]/58">{scene05.certificationsTitle}</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {certificateLogos.map((item, index) => {
+          <div className="space-y-6">
+            <div>
+              <SectionEyebrow className="text-[#111217]/55">{scene05.skillsEyebrow}</SectionEyebrow>
+              <h3 className="mt-3 text-xl font-semibold tracking-tight">{scene05.skillsTitle}</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {visibleSkills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-[#111217]/10 bg-white px-4 py-1.5 text-sm text-[#111217]/75"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+            <div className="h-px bg-[#111217]/10" />
+            <div>
+              <SectionEyebrow className="text-[#111217]/55">{scene05.certificationsTitle}</SectionEyebrow>
+              <div className="mt-4 space-y-2">
+                {visibleCertificates.map((item, index) => {
                   const title = typeof item === 'string' ? item : item.title;
-                  const logoSrc = typeof item === 'string' ? '' : item.logoSrc;
                   const issuer = typeof item === 'string' ? '' : item.issuer;
                   return (
-                    <Reveal key={`cert-logo-${title}-${index}`} delayMs={index * 45}>
-                      <div className="flex h-full min-h-[4.75rem] items-center gap-3 rounded-[20px] border border-[#111217]/8 bg-[#faf8f4] px-4 py-3">
-                        {logoSrc ? (
-                          <img src={logoSrc} alt={title} className="h-8 w-8 rounded-full object-cover" />
-                        ) : (
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[0.68rem] font-medium text-[#111217]/60 shadow-[0_8px_16px_rgba(17,18,23,0.04)]">
-                            {title.slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-[#111217]">{title}</p>
-                          <p className="text-[0.68rem] uppercase tracking-[0.18em] text-[#111217]/42">{issuer}</p>
-                        </div>
-                      </div>
-                    </Reveal>
+                    <div key={`${title}-${index}`} className="rounded-xl border border-[#111217]/10 bg-white/80 p-3">
+                      <div className="text-sm font-medium text-[#111217]">{title}</div>
+                      {issuer ? (
+                        <div className="text-xs uppercase tracking-[0.2em] text-[#111217]/45">{issuer}</div>
+                      ) : null}
+                    </div>
                   );
                 })}
               </div>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
       {visibility.featuredWork ? (
-        <section id="projects" className="relative border-b border-[#111217]/8 py-20 md:py-24">
-          <div className="site-shell space-y-8">
-            <Reveal>
-              <div className="max-w-[56rem] space-y-4">
-                <SectionEyebrow className="text-[#111217]/45">{projectsLabel}</SectionEyebrow>
-                <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#111217] md:text-4xl">
-                  {featured.titleLine2}
-                </h2>
-                <p className="max-w-[52rem] text-[1rem] leading-8 text-[#111217]/68 md:text-[1.04rem]">
-                  {featured.description}
-                </p>
-              </div>
-            </Reveal>
-
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {visibleProjects.map((project, index) => {
-                const targetHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
-
-                return (
-                  <Reveal key={project.id} delayMs={index * 80}>
-                    <article className="group overflow-hidden rounded-[28px] border border-[#111217]/8 bg-white shadow-[0_16px_40px_rgba(17,18,23,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(17,18,23,0.1)]">
-                      <div className="relative aspect-[16/10] overflow-hidden bg-[#f3eee8]">
-                        <img
-                          src={project.img}
-                          alt={project.title}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#111217]/8 via-transparent to-transparent" />
-                      </div>
-                      <div className="space-y-4 p-5 md:p-6">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-semibold tracking-[-0.04em] text-[#111217]">{project.title}</h3>
-                          <p className="text-xs uppercase tracking-[0.2em] text-[#111217]/42">{project.tags}</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <a
-                            href={targetHref}
-                            onClick={(event) => handlePlaceholderLinkClick(event, targetHref)}
-                            target={isPlaceholderHref(targetHref) ? undefined : '_blank'}
-                            rel={isPlaceholderHref(targetHref) ? undefined : 'noopener noreferrer'}
-                            className="inline-flex items-center justify-center rounded-full bg-[#111217] px-5 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:bg-black"
-                          >
-                            {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}
-                          </a>
-                        </div>
-                      </div>
-                    </article>
-                  </Reveal>
-                );
-              })}
+        <section id="projects" className="site-shell max-w-6xl px-6 py-20">
+          <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <SectionEyebrow className="text-[#111217]/55">{featured.titleLine1}</SectionEyebrow>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+                {featured.titleLine2}
+              </h2>
+              <p className="mt-3 max-w-xl text-[#111217]/65">{featured.description}</p>
             </div>
+            <a href="#projects" className={secondaryCtaClass}>
+              {featured.viewAllLabel}
+            </a>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {visibleProjects.map((project, index) => {
+              const targetHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
+              const buttonLabel = project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel;
+              return (
+                <Reveal key={project.id} delayMs={index * 80}>
+                  <article className={projectCardClass}>
+                    <div className="aspect-[4/3] overflow-hidden bg-[#f1f1f1]">
+                      <img
+                        src={project.img}
+                        alt={project.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <span className="inline-flex rounded-full border border-[#111217]/10 bg-white px-3 py-1 text-xs uppercase tracking-[0.14em] text-[#111217]/60">
+                        {project.tags}
+                      </span>
+                      <h3 className="mt-3 text-lg font-semibold tracking-tight">{project.title}</h3>
+                      <div className="mt-5 inline-flex items-center text-sm text-[#111217]">
+                        <a
+                          href={targetHref}
+                          onClick={(event) => handlePlaceholderLinkClick(event, targetHref)}
+                          target={isPlaceholderHref(targetHref) ? undefined : '_blank'}
+                          rel={isPlaceholderHref(targetHref) ? undefined : 'noopener noreferrer'}
+                          className="inline-flex items-center gap-2"
+                        >
+                          {buttonLabel}
+                          <span aria-hidden="true">-&gt;</span>
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                </Reveal>
+              );
+            })}
           </div>
         </section>
       ) : null}
 
       {visibility.testimonialsSection ? (
-        <section id="testimonials" className="relative border-b border-[#111217]/8 py-20 md:py-24">
-          <div className="site-shell space-y-8">
-            <Reveal>
-              <div className="max-w-[56rem] space-y-4">
-                <SectionEyebrow className="text-[#111217]/45">{featured.titleLine1}</SectionEyebrow>
-                <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#111217] md:text-4xl">
-                  {testimonialsLabel}
-                </h2>
-              </div>
-            </Reveal>
-
-            <div className="grid gap-5 lg:grid-cols-3">
-              {visibleTestimonials.map((testimonial, index) => (
-                <Reveal key={testimonial.id} delayMs={index * 80}>
-                  <article className="h-full rounded-[26px] border border-[#111217]/8 bg-white p-5 shadow-[0_16px_34px_rgba(17,18,23,0.05)] md:p-6">
-                    <div className="flex items-center gap-4">
-                      <img src={testimonial.avatar} alt={testimonial.name} className="h-14 w-14 rounded-full object-cover" />
-                      <div>
-                        <p className="text-base font-medium text-[#111217]">{testimonial.name}</p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#111217]/45">{testimonial.title}</p>
-                      </div>
+        <section id="testimonials" className="site-shell max-w-6xl px-6 py-20">
+          <div className="mb-12">
+            <SectionEyebrow className="text-[#111217]/55">{featured.testimonialsEyebrow}</SectionEyebrow>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+              {testimonialsLabel}
+            </h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {visibleTestimonials.map((testimonial, index) => (
+              <Reveal key={testimonial.id} delayMs={index * 80}>
+                <article className={valueCardClass}>
+                  <p className="text-sm leading-relaxed text-[#111217]/75">{testimonial.quote}</p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <img src={testimonial.avatar} alt={testimonial.name} className="h-10 w-10 rounded-full object-cover" />
+                    <div>
+                      <div className="text-sm font-medium">{testimonial.name}</div>
+                      <div className="text-xs uppercase tracking-[0.16em] text-[#111217]/50">{testimonial.title}</div>
                     </div>
-                    <p className="mt-5 text-[0.96rem] leading-8 text-[#111217]/72">{testimonial.quote}</p>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
           </div>
         </section>
       ) : null}
 
-      <section id="contact" className="relative py-20 md:py-24">
-        <div className="site-shell">
-          <Reveal>
-            <div className="rounded-[32px] border border-[#111217]/8 bg-[#111217] px-6 py-8 text-white shadow-[0_24px_60px_rgba(17,18,23,0.16)] md:px-10 md:py-10">
-              <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                <div className="space-y-4">
-                  <SectionEyebrow className="text-white/55">{scene05.actionLabel}</SectionEyebrow>
-                  <h2 className="text-3xl font-semibold tracking-[-0.04em] md:text-4xl">
-                    {footer.ctaTitle}
-                  </h2>
-                  <p className="max-w-[46rem] text-[0.98rem] leading-8 text-white/72">
-                    {footer.ctaDescription}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-3 lg:justify-end">
-                  <a
-                    href={contactHref}
-                    onClick={(event) => handlePlaceholderLinkClick(event, contactHref)}
-                    target={isPlaceholderHref(contactHref) ? undefined : '_blank'}
-                    rel={isPlaceholderHref(contactHref) ? undefined : 'noopener noreferrer'}
-                    className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3.5 text-sm font-medium text-[#111217] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#f1efe9]"
-                  >
-                    {footer.ctaButtonLabel}
-                  </a>
-                  <a
-                    href="#about"
-                    className="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3.5 text-sm font-medium text-white transition-all duration-300 hover:bg-white/8"
-                  >
-                    {aboutLabel}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
+      <section id="contact" className="site-shell max-w-5xl px-6 py-28 text-center">
+        <h2
+          className="mx-auto max-w-4xl tracking-tight"
+          style={{
+            fontSize: 'clamp(3rem, 8vw, 6rem)',
+            lineHeight: 1,
+            fontWeight: 600,
+            letterSpacing: '-0.04em',
+          }}
+        >
+          {featured.ctaTitleLine1}
+          <br />
+          {featured.ctaTitleLine2}
+        </h2>
+        <p className="mx-auto mt-8 max-w-xl text-[#111217]/65">{featured.ctaDescription}</p>
+        <a
+          href={featured.ctaButtonHref || contactHref}
+          onClick={(event) => handlePlaceholderLinkClick(event, featured.ctaButtonHref || contactHref)}
+          target={isPlaceholderHref(featured.ctaButtonHref || contactHref) ? undefined : '_blank'}
+          rel={isPlaceholderHref(featured.ctaButtonHref || contactHref) ? undefined : 'noopener noreferrer'}
+          className={`${primaryCtaClass} mt-10 inline-flex`}
+        >
+          {featured.ctaButtonText}
+          <span aria-hidden="true">-&gt;</span>
+        </a>
       </section>
 
       <Footer />

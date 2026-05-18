@@ -574,6 +574,13 @@ export interface SiteScene05Certification {
   visible: boolean;
 }
 
+export interface SiteScene05ValueCard {
+  id: string;
+  title: string;
+  description: string;
+  visible: boolean;
+}
+
 export interface SiteMotionSystem {
   durationFastMs: number;
   durationBaseMs: number;
@@ -787,6 +794,7 @@ export interface SiteConfig {
     titleLine1: string;
     titleLine2: string;
     description: string;
+    testimonialsEyebrow: string;
     caseStudyLabel: string;
     liveLabel: string;
     viewAllLabel: string;
@@ -803,18 +811,25 @@ export interface SiteConfig {
     badge: string;
     name: string;
     role: string;
+    heroTitleLine1: string;
+    heroTitleLine2: string;
+    heroSubtitle: string;
     portraitImage: string;
     portraitAlt: string;
     portraitCaption: string;
+    valuesEyebrow: string;
     visionTitle: string;
     visionText: string;
     storyTitle: string;
     storyParagraphs: string[];
+    aboutHighlights: string[];
+    skillsEyebrow: string;
     skillsTitle: string;
     skills: string[];
     certificationsTitle: string;
     certifications: string[];
     credentialButtonLabel: string;
+    valueCards: SiteScene05ValueCard[];
     featuredCertifications: SiteScene05Certification[];
     companyLogosTitle: string;
     companyLogos: SiteScene05LogoItem[];
@@ -1021,59 +1036,50 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   introOverlayBackdropOpacity: 0.35,
   reducedMotion: false,
   featured: {
-    titleLine1: 'مميز / Featured',
-    titleLine2: 'الأعمال / Work',
+    titleLine1: 'Selected projects',
+    titleLine2: 'Work',
     description:
-      'دراسات حالة UX/UI، وتجارب منتجات الذكاء الاصطناعي، وأعمال أنظمة التصميم للعلامات الطموحة والفرق المتقدمة.',
-    caseStudyLabel: 'دراسة حالة / Case Study',
-    liveLabel: 'تطبيق مباشر / Live App',
-    viewAllLabel: 'عرض الكل / View All Projects',
-    ctaTitleLine1: 'خذ منتجك',
-    ctaTitleLine2: 'إلى المستوى التالي',
+      'A curated set of recent engagements — research, systems thinking, and shipping experiences that move the needle.',
+    testimonialsEyebrow: 'Kind words',
+    caseStudyLabel: 'View Case',
+    liveLabel: 'Live Preview',
+    viewAllLabel: 'View All',
+    ctaTitleLine1: 'Take your product',
+    ctaTitleLine2: 'to the next level',
     ctaDescription:
-      'لنصمم تجارب رقمية واضحة ومقنعة وعالية الأداء تحقق نتائج حقيقية وتدعم نمو الأعمال.',
-    ctaButtonText: 'ابدأ مشروعًا / Start a project',
+      "Gain complete visibility over your digital experience. Let's design intuitive, engaging, and high-performing interfaces that drive real business outcomes.",
+    ctaButtonText: 'Start a project',
     ctaButtonHref: 'mailto:hello@example.com',
   },
   projects: [
     {
       id: 'project-1',
-      title: 'Oryzo AI',
-      tags: 'CONCEPT ΓÇó WEB ΓÇó DESIGN ΓÇó DEVELOPMENT ΓÇó 3D ΓÇó ANIMATION',
-      img: '/frames/scene-02-desk-focus/ezgif-frame-001.avif',
-      behance: '#',
-      live: '#',
-      buttonType: 'live',
-      visible: true,
-    },
-    {
-      id: 'project-2',
-      title: 'Of The Oak',
-      tags: 'WEB ΓÇó DESIGN ΓÇó DEVELOPMENT ΓÇó 3D ΓÇó ANIMATION',
-      img: '/frames/scene-03-screen-entry/ezgif-frame-001.avif',
-      behance: '#',
-      live: '#',
-      buttonType: 'live',
-      visible: true,
-    },
-    {
-      id: 'project-3',
-      title: 'Devin AI',
-      tags: 'WEB ΓÇó DESIGN ΓÇó DEVELOPMENT ΓÇó 3D',
-      img: '/frames/scene-03-screen-entry/ezgif-frame-001.avif',
+      title: 'Trinya Case Study',
+      tags: 'Fintech',
+      img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=80',
       behance: '#',
       live: '#',
       buttonType: 'caseStudy',
       visible: true,
     },
     {
-      id: 'project-4',
-      title: 'Porsche: Dream Machine',
-      tags: 'CONCEPT ΓÇó 3D ILLUSTRATION ΓÇó MOGRAPH ΓÇó VIDEO',
-      img: '/frames/scene-07/ezgif-frame-001.avif',
+      id: 'project-2',
+      title: 'Al-Mihwar',
+      tags: 'EdTech',
+      img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80',
       behance: '#',
       live: '#',
-      buttonType: 'live',
+      buttonType: 'caseStudy',
+      visible: true,
+    },
+    {
+      id: 'project-3',
+      title: 'Old Phone Portfolio',
+      tags: 'Experimental',
+      img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200&q=80',
+      behance: '#',
+      live: '#',
+      buttonType: 'caseStudy',
       visible: true,
     },
   ],
@@ -1087,62 +1093,108 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   testimonials: [
     {
       id: 'testimonial-1',
-      name: 'Alice Pang',
-      title: 'Principal at Purpose Built Ventures',
+      name: 'Amal Karim',
+      title: 'Product Lead, Trinya',
       quote:
-        'Project-based hiring allows me the flexibility to book great creatives and freelancers quickly for our portfolio companies to deliver on project needs.',
-      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
+        'Oussama brought rare calm and clarity to a chaotic redesign. He listens, then ships work that just feels right.',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',
       visible: true,
     },
     {
       id: 'testimonial-2',
-      name: 'John Doe',
-      title: 'Creative Director at Studio X',
+      name: 'Mohamed Chabbi',
+      title: 'Engineering Manager',
       quote:
-        'Working with Oussama was an absolute game changer. The level of cinematic detail and performant code delivered was beyond our highest expectations.',
-      avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+        'Hand-off was effortless. Tokens, states, edge cases - everything documented. Our velocity doubled.',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
       visible: true,
     },
     {
       id: 'testimonial-3',
-      name: 'Sarah Jenkins',
-      title: 'Founder of TechNova',
+      name: 'Mohamed Amine Issifi',
+      title: 'Founder, Lighthouse',
       quote:
-        'A true visionary. He perfectly blended 3D and web technologies to create a digital experience that our users are still talking about today.',
-      avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d',
+        'A genuine product thinker. He challenged our assumptions and the result spoke for itself in user feedback.',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80',
       visible: true,
     },
   ],
   scene05: {
-    badge: 'نبذة عني / About Me',
+    badge: 'Available for new projects - May 2026',
     name: 'Oussama Lassoued',
-    role: 'مصمم UX/UI في تونس / UX/UI Designer in Tunisia',
+    role: 'Product Designer',
+    heroTitleLine1: 'Designing products that',
+    heroTitleLine2: 'feel right.',
+    heroSubtitle:
+      "I'm Oussama Lassoued - a product designer helping ambitious founders and teams turn fuzzy ideas into interfaces people actually want to use.",
     portraitImage: '/frames/scene-02-desk-focus/ezgif-frame-001.avif',
     portraitAlt: 'Portrait image',
-    portraitCaption: '',
-    visionTitle: 'الرؤية والقيمة / Vision & Value',
-    visionText:
-      'I design user experiences and user interfaces that are visually refined, intentionally structured, and built to support real business growth. أصمم تجارب وواجهات مستخدم واضحة ومقنعة في تونس.',
-    storyTitle: 'ما أقدمه / What I Bring',
+    portraitCaption: 'Trusted by 15+ founders worldwide',
+    valuesEyebrow: 'What I do',
+    visionTitle: 'Vision & Value',
+    visionText: 'Four pillars I lean on to take products from ambiguous brief to confident launch.',
+    storyTitle: 'What I Actually Bring',
     storyParagraphs: [
-      'أعمل عبر الدورة الكاملة للمنتج: البحث، هيكلة المعلومات، نمذجة التفاعل، أنظمة التصميم، والتنفيذ الأمامي بجودة إنتاجية.',
-      'تبدأ منهجيتي من نية العمل وسلوك المستخدم، ثم تتحول إلى واجهات واضحة وقابلة للقياس وقوية تجاريًا.',
-      'أركز على وضوح القرار: يجب أن تقلل كل شاشة الاحتكاك، وتدعم التحويل، وتحافظ على هوية بصرية قوية في الوقت نفسه.',
+      'Beyond pixels: a structured way of thinking. I translate fuzzy business problems into clear user journeys, validate assumptions early, and partner tightly with engineering so what ships matches what was designed.',
     ],
-    skillsTitle: 'المهارات الأساسية / Core Skills',
+    aboutHighlights: [
+      'End-to-end product design from discovery to handoff',
+      'Living design systems that scale with your team',
+      'Honest collaboration - I will push back when it matters',
+      'Bilingual delivery (EN/AR) with RTL fluency',
+    ],
+    skillsEyebrow: 'Toolbox',
+    skillsTitle: 'Skills & Tools',
     skills: [
-      'UX Research & Strategy',
-      'Design Systems & Libs',
-      'Interaction & Prototyping',
-      'Product Thinking',
+      'Figma',
+      'Design Systems',
+      'User Research',
+      'Wireframing',
+      'Prototyping',
+      'Design Tokens',
+      'Accessibility',
+      'Motion Design',
+      'Webflow',
+      'HTML / CSS',
     ],
-    certificationsTitle: 'الشهادات / Certifications',
+    certificationsTitle: 'Certifications',
     certifications: [
-      'Google UX Design Prof.',
-      'HarvardX Leadership',
-      'Generative AI for Everyone',
+      'Google UX Design Professional Certificate',
+      'Interaction Design Foundation Member',
+      'Nielsen Norman UX Certification',
+      'Product Management Fundamentals',
     ],
     credentialButtonLabel: 'View Credential',
+    valueCards: [
+      {
+        id: 'value-1',
+        title: 'UX Research & Analysis',
+        description:
+          'Diving deep into user behavior - interviews, surveys, usability tests - to ground every decision in evidence, not assumption.',
+        visible: true,
+      },
+      {
+        id: 'value-2',
+        title: 'Design Systems & Components',
+        description:
+          'Building scalable, token-driven systems that keep brand, code, and design perfectly in sync as products grow.',
+        visible: true,
+      },
+      {
+        id: 'value-3',
+        title: 'Interaction & Prototyping',
+        description:
+          'Rapid, high-fidelity prototypes that turn ideas into testable experiences before a single line of code is written.',
+        visible: true,
+      },
+      {
+        id: 'value-4',
+        title: 'Product Thinking',
+        description:
+          'Aligning design with business goals to ship features that move metrics - not just look beautiful.',
+        visible: true,
+      },
+    ],
     featuredCertifications: [
       {
         id: 'cert-1',
@@ -1172,40 +1224,75 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         visible: false,
       },
     ],
-    companyLogosTitle: 'شركات تعاونت معها / Companies I Collaborated With',
+    companyLogosTitle: 'Trusted by teams at',
     companyLogos: [
       {
         id: 'company-1',
-        name: 'Upwork',
-        logoSrc: 'https://logo.clearbit.com/upwork.com',
-        href: 'https://www.upwork.com/',
-        visible: false,
+        name: 'Vercel',
+        logoSrc: 'https://logo.clearbit.com/vercel.com',
+        href: 'https://vercel.com/',
+        visible: true,
       },
       {
         id: 'company-2',
-        name: 'Webflow',
-        logoSrc: 'https://logo.clearbit.com/webflow.com',
-        href: 'https://webflow.com/',
-        visible: false,
+        name: 'Linear',
+        logoSrc: 'https://logo.clearbit.com/linear.app',
+        href: 'https://linear.app/',
+        visible: true,
       },
       {
         id: 'company-3',
-        name: 'Framer',
-        logoSrc: 'https://logo.clearbit.com/framer.com',
-        href: 'https://www.framer.com/',
-        visible: false,
+        name: 'Stripe',
+        logoSrc: 'https://logo.clearbit.com/stripe.com',
+        href: 'https://stripe.com/',
+        visible: true,
       },
       {
         id: 'company-4',
         name: 'Notion',
         logoSrc: 'https://logo.clearbit.com/notion.so',
         href: 'https://www.notion.so/',
-        visible: false,
+        visible: true,
+      },
+      {
+        id: 'company-5',
+        name: 'Figma',
+        logoSrc: 'https://logo.clearbit.com/figma.com',
+        href: 'https://www.figma.com/',
+        visible: true,
+      },
+      {
+        id: 'company-6',
+        name: 'Framer',
+        logoSrc: 'https://logo.clearbit.com/framer.com',
+        href: 'https://www.framer.com/',
+        visible: true,
+      },
+      {
+        id: 'company-7',
+        name: 'Loom',
+        logoSrc: 'https://logo.clearbit.com/loom.com',
+        href: 'https://www.loom.com/',
+        visible: true,
+      },
+      {
+        id: 'company-8',
+        name: 'Raycast',
+        logoSrc: 'https://logo.clearbit.com/raycast.com',
+        href: 'https://www.raycast.com/',
+        visible: true,
+      },
+      {
+        id: 'company-9',
+        name: 'Arc',
+        logoSrc: 'https://logo.clearbit.com/thebrowser.company',
+        href: 'https://arc.net/',
+        visible: true,
       },
     ],
-    aiTitle: 'التصميم مع الذكاء الاصطناعي / Designing with AI',
+    aiTitle: 'Designing with AI',
     aiText:
-      'يتجه تركيزي نحو المنتجات المدعومة بالذكاء الاصطناعي. أؤمن أن نجاح الذكاء الاصطناعي يعتمد على تفاعلات مصممة جيدًا، تُستخدم كأداة لا كحيلة، لرفع الوضوح والكفاءة والجدوى التجارية.',
+      'My focus is shifting toward AI-powered products. I believe AI only succeeds when interaction design makes the tech feel clear, useful, and commercially viable.',
     aiTags: ['AI Workflows', 'Figma', 'Claude Code', 'Systems'],
     socialLinks: [
       {
@@ -1230,7 +1317,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
         visible: true,
       },
     ],
-    actionLabel: 'تواصل معي / Connect With Me',
+    actionLabel: 'Connect With Me',
     actionHref: '#',
     animations: {
       enabled: true,
@@ -2767,6 +2854,27 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     ? scene05.storyParagraphs.map((item) => asString(item, '')).filter(Boolean)
     : DEFAULT_SITE_CONFIG.scene05.storyParagraphs;
 
+  const aboutHighlights = Array.isArray(scene05.aboutHighlights)
+    ? scene05.aboutHighlights.map((item) => asString(item, '')).filter(Boolean)
+    : DEFAULT_SITE_CONFIG.scene05.aboutHighlights;
+
+  const valueCards = Array.isArray(scene05.valueCards)
+    ? scene05.valueCards
+        .map((item, index) => {
+          if (!isRecord(item)) return null;
+          return {
+            id: asString(item.id, `value-${index + 1}`),
+            title: asString(item.title, ''),
+            description: asString(item.description, ''),
+            visible: asBoolean(item.visible, true),
+          };
+        })
+        .filter(
+          (item): item is SiteScene05ValueCard =>
+            !!item && (item.title.length > 0 || item.description.length > 0),
+        )
+    : DEFAULT_SITE_CONFIG.scene05.valueCards;
+
 
   const companyLogos = Array.isArray(scene05.companyLogos)
     ? scene05.companyLogos
@@ -2857,6 +2965,10 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       titleLine1: asString(featured.titleLine1, DEFAULT_SITE_CONFIG.featured.titleLine1),
       titleLine2: asString(featured.titleLine2, DEFAULT_SITE_CONFIG.featured.titleLine2),
       description: asString(featured.description, DEFAULT_SITE_CONFIG.featured.description),
+      testimonialsEyebrow: asString(
+        featured.testimonialsEyebrow,
+        DEFAULT_SITE_CONFIG.featured.testimonialsEyebrow,
+      ),
       caseStudyLabel: asString(featured.caseStudyLabel, DEFAULT_SITE_CONFIG.featured.caseStudyLabel),
       liveLabel: asString(featured.liveLabel, DEFAULT_SITE_CONFIG.featured.liveLabel),
       viewAllLabel: asString(featured.viewAllLabel, DEFAULT_SITE_CONFIG.featured.viewAllLabel),
@@ -2878,17 +2990,24 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       badge: asString(scene05.badge, DEFAULT_SITE_CONFIG.scene05.badge),
       name: migratedScene05Name,
       role: migratedScene05Role,
+      heroTitleLine1: asString(scene05.heroTitleLine1, DEFAULT_SITE_CONFIG.scene05.heroTitleLine1),
+      heroTitleLine2: asString(scene05.heroTitleLine2, DEFAULT_SITE_CONFIG.scene05.heroTitleLine2),
+      heroSubtitle: asString(scene05.heroSubtitle, DEFAULT_SITE_CONFIG.scene05.heroSubtitle),
       portraitImage: sanitizeFramePath(
         asString(scene05.portraitImage, DEFAULT_SITE_CONFIG.scene05.portraitImage),
         DEFAULT_SITE_CONFIG.scene05.portraitImage,
       ),
       portraitAlt: asString(scene05.portraitAlt, DEFAULT_SITE_CONFIG.scene05.portraitAlt),
       portraitCaption: asString(scene05.portraitCaption, DEFAULT_SITE_CONFIG.scene05.portraitCaption),
+      valuesEyebrow: asString(scene05.valuesEyebrow, DEFAULT_SITE_CONFIG.scene05.valuesEyebrow),
       visionTitle: asString(scene05.visionTitle, DEFAULT_SITE_CONFIG.scene05.visionTitle),
       visionText: asString(scene05.visionText, DEFAULT_SITE_CONFIG.scene05.visionText),
       storyTitle: asString(scene05.storyTitle, DEFAULT_SITE_CONFIG.scene05.storyTitle),
       storyParagraphs:
         storyParagraphs.length > 0 ? storyParagraphs : DEFAULT_SITE_CONFIG.scene05.storyParagraphs,
+      aboutHighlights:
+        aboutHighlights.length > 0 ? aboutHighlights : DEFAULT_SITE_CONFIG.scene05.aboutHighlights,
+      skillsEyebrow: asString(scene05.skillsEyebrow, DEFAULT_SITE_CONFIG.scene05.skillsEyebrow),
       skillsTitle: asString(scene05.skillsTitle, DEFAULT_SITE_CONFIG.scene05.skillsTitle),
       skills: skills.length > 0 ? skills : DEFAULT_SITE_CONFIG.scene05.skills,
       certificationsTitle: asString(
@@ -2900,6 +3019,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
         scene05.credentialButtonLabel,
         DEFAULT_SITE_CONFIG.scene05.credentialButtonLabel,
       ),
+      valueCards: valueCards.length > 0 ? valueCards : DEFAULT_SITE_CONFIG.scene05.valueCards,
       featuredCertifications:
         featuredCertifications.length > 0
           ? featuredCertifications

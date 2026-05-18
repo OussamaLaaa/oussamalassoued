@@ -30,6 +30,7 @@ import {
     type SiteExperienceMarqueeItem,
     type SiteScene05Certification,
     type SiteScene05LogoItem,
+    type SiteScene05ValueCard,
     type SiteInboxMessage,
     type SiteMessageStatus,
   } from '../config/siteConfig';
@@ -839,6 +840,19 @@ export const Dashboard: React.FC = () => {
         featuredCertifications: prev.scene05.featuredCertifications.map((item) =>
           item.id === certificationId ? updater(item) : item,
         ),
+      },
+    }));
+  };
+
+  const updateScene05ValueCard = (
+    valueCardId: string,
+    updater: (item: SiteScene05ValueCard) => SiteScene05ValueCard,
+  ) => {
+    updateConfig((prev) => ({
+      ...prev,
+      scene05: {
+        ...prev.scene05,
+        valueCards: prev.scene05.valueCards.map((item) => (item.id === valueCardId ? updater(item) : item)),
       },
     }));
   };
@@ -2111,6 +2125,16 @@ export const Dashboard: React.FC = () => {
                 value={siteConfig.featured.description}
                 onChange={(next) =>
                   updateConfig((prev) => ({ ...prev, featured: { ...prev.featured, description: next } }))
+                }
+              />
+              <Input
+                label="Testimonials eyebrow"
+                value={siteConfig.featured.testimonialsEyebrow}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    featured: { ...prev.featured, testimonialsEyebrow: next },
+                  }))
                 }
               />
               <Input
@@ -3948,6 +3972,37 @@ export const Dashboard: React.FC = () => {
                 value={siteConfig.scene05.role}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, role: next } }))}
               />
+              <Input
+                label="Hero title line 1"
+                value={siteConfig.scene05.heroTitleLine1}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, heroTitleLine1: next },
+                  }))
+                }
+              />
+              <Input
+                label="Hero title line 2"
+                value={siteConfig.scene05.heroTitleLine2}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, heroTitleLine2: next },
+                  }))
+                }
+              />
+              <Textarea
+                label="Hero subtitle"
+                value={siteConfig.scene05.heroSubtitle}
+                rows={3}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, heroSubtitle: next },
+                  }))
+                }
+              />
               <label className="flex flex-col gap-1.5">
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload portrait image</span>
                 <input
@@ -3975,12 +4030,114 @@ export const Dashboard: React.FC = () => {
                   updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, portraitAlt: next } }))
                 }
               />
+              <Input
+                label="Hero trust line"
+                value={siteConfig.scene05.portraitCaption}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, portraitCaption: next },
+                  }))
+                }
+              />
+              <Input
+                label="Values eyebrow"
+                value={siteConfig.scene05.valuesEyebrow}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, valuesEyebrow: next },
+                  }))
+                }
+              />
+              <Input
+                label="Values title"
+                value={siteConfig.scene05.visionTitle}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, visionTitle: next },
+                  }))
+                }
+              />
               <Textarea
                 label="Vision text"
                 value={siteConfig.scene05.visionText}
                 rows={4}
                 onChange={(next) => updateConfig((prev) => ({ ...prev, scene05: { ...prev.scene05, visionText: next } }))}
               />
+
+              <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                  Value cards
+                </p>
+
+                {siteConfig.scene05.valueCards.map((card) => (
+                  <div key={card.id} className={listItemClass}>
+                    <Input
+                      label="Title"
+                      value={card.title}
+                      onChange={(next) =>
+                        updateScene05ValueCard(card.id, (prev) => ({ ...prev, title: next }))
+                      }
+                    />
+                    <Textarea
+                      label="Description"
+                      value={card.description}
+                      rows={3}
+                      onChange={(next) =>
+                        updateScene05ValueCard(card.id, (prev) => ({ ...prev, description: next }))
+                      }
+                    />
+                    <div className="flex items-center justify-between gap-4">
+                      <Toggle
+                        label="Visible"
+                        checked={card.visible}
+                        onChange={(next) =>
+                          updateScene05ValueCard(card.id, (prev) => ({ ...prev, visible: next }))
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateConfig((prev) => ({
+                            ...prev,
+                            scene05: {
+                              ...prev.scene05,
+                              valueCards: prev.scene05.valueCards.filter((entry) => entry.id !== card.id),
+                            },
+                          }));
+                        }}
+                        className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newCard: SiteScene05ValueCard = {
+                      id: `value-${Date.now()}`,
+                      title: 'New Value',
+                      description: 'Describe the focus area and value for clients.',
+                      visible: true,
+                    };
+                    updateConfig((prev) => ({
+                      ...prev,
+                      scene05: {
+                        ...prev.scene05,
+                        valueCards: [...prev.scene05.valueCards, newCard],
+                      },
+                    }));
+                  }}
+                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                >
+                  Add Value Card
+                </button>
+              </div>
 
               <Input
                 label="Story title"
@@ -4002,6 +4159,28 @@ export const Dashboard: React.FC = () => {
                 }
               />
 
+              <Textarea
+                label="About highlights (one per line)"
+                value={siteConfig.scene05.aboutHighlights.join('\n')}
+                rows={4}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, aboutHighlights: splitLines(next) },
+                  }))
+                }
+              />
+
+              <Input
+                label="Skills eyebrow"
+                value={siteConfig.scene05.skillsEyebrow}
+                onChange={(next) =>
+                  updateConfig((prev) => ({
+                    ...prev,
+                    scene05: { ...prev.scene05, skillsEyebrow: next },
+                  }))
+                }
+              />
               <Input
                 label="Skills title"
                 value={siteConfig.scene05.skillsTitle}
