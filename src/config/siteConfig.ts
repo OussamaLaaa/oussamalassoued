@@ -796,6 +796,7 @@ export interface SiteConfig {
     titleLine2: string;
     description: string;
     testimonialsEyebrow: string;
+    testimonialsTitle: string;
     caseStudyLabel: string;
     liveLabel: string;
     viewAllLabel: string;
@@ -1040,6 +1041,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   featured: {
     titleLine1: 'Selected projects',
     titleLine2: 'Work',
+    testimonialsTitle: 'What people say',
     description:
       'A curated set of recent engagements — research, systems thinking, and shipping experiences that move the needle.',
     testimonialsEyebrow: 'Kind words',
@@ -2971,6 +2973,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
     featured: {
       titleLine1: asString(featured.titleLine1, DEFAULT_SITE_CONFIG.featured.titleLine1),
       titleLine2: asString(featured.titleLine2, DEFAULT_SITE_CONFIG.featured.titleLine2),
+      testimonialsTitle: asString(featured.testimonialsTitle, DEFAULT_SITE_CONFIG.featured.testimonialsTitle),
       description: asString(featured.description, DEFAULT_SITE_CONFIG.featured.description),
       testimonialsEyebrow: asString(
         featured.testimonialsEyebrow,

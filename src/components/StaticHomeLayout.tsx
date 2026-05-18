@@ -575,7 +575,7 @@ export const StaticHomeLayout: React.FC = () => {
           <div className="mb-12">
             <SectionEyebrow>{featured.testimonialsEyebrow}</SectionEyebrow>
             <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
-              {featured.titleLine2}
+              {featured.testimonialsTitle}
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
