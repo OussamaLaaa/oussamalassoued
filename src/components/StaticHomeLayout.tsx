@@ -13,6 +13,7 @@ import {
   Award,
   Quote,
 } from 'lucide-react';
+import { ExperienceMarquee } from './ExperienceMarquee';
 
 const SECTION_IDS = ['home', 'about', 'projects', 'testimonials', 'contact'] as const;
 
@@ -392,37 +393,7 @@ export const StaticHomeLayout: React.FC = () => {
 
         {/* Trusted by companies marquee */}
         {companyNames.length > 0 ? (
-          <div className="mx-auto max-w-6xl px-6 pb-20">
-            <p className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-6">
-              {scene05.companyLogosTitle}
-            </p>
-            <div
-              className="relative overflow-hidden"
-              style={{
-                maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-                WebkitMaskImage:
-                  'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-              }}
-            >
-              <div className="flex gap-14 animate-[marquee_25s_linear_infinite] whitespace-nowrap w-max">
-                {[...companyNames, ...companyNames, ...companyNames, ...companyNames].map((name, i) => (
-                  <span
-                    key={`${name}-${i}`}
-                    className="text-2xl tracking-tight text-muted-foreground/70 hover:text-foreground transition-colors"
-                    style={{ fontWeight: 600 }}
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <style>{`
-              @keyframes marquee {
-                from { transform: translateX(0); }
-                to { transform: translateX(calc(-100% / 4)); }
-              }
-            `}</style>
-          </div>
+          <ExperienceMarquee title={scene05.companyLogosTitle} sceneLogos={visibleCompanyLogos} />
         ) : null}
       </section>
 

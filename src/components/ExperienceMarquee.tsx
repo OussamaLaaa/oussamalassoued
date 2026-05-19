@@ -1,14 +1,24 @@
 import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import type { SiteExperienceMarqueeItem, SiteScene05LogoItem } from '../config/siteConfig';
 
 interface ExperienceMarqueeProps {
   isActive?: boolean;
+  title?: string;
+  // allow passing scene05 company logos directly
+  sceneLogos?: SiteScene05LogoItem[];
 }
 
-export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive = true }) => {
+export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive = true, title, sceneLogos }) => {
   const { siteConfig } = useSiteConfig();
-  const items = siteConfig.experienceMarquee.filter((item) => item.visible);
+
+  // Prefer sceneLogos (companyLogos) if provided, otherwise fallback to legacy experienceMarquee
+  const logoItems: SiteExperienceMarqueeItem[] = (sceneLogos && sceneLogos.length > 0)
+    ? sceneLogos.filter((l) => l.visible).map((l) => ({ id: l.id, type: 'logo', value: l.logoSrc || l.name, visible: Boolean(l.visible) }))
+    : siteConfig.experienceMarquee.filter((item) => item.visible);
+
+  const items = logoItems;
   const marqueeRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -16,77 +26,64 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
     if (!isActive || !marqueeRef.current || !contentRef.current || items.length === 0) return;
 
     const ctx = gsap.context(() => {
-      // Get the width of one set of items
       const content = contentRef.current!;
-      const firstChild = content.firstElementChild as HTMLElement;
-      
-      if (!firstChild) return;
-      
-      // Wait for images to load
+
       const waitForLoad = () => {
         const images = content.querySelectorAll('img');
         let loadedCount = 0;
-        
+
         if (images.length === 0) {
           startAnimation();
           return;
         }
-        
+
         images.forEach((img) => {
-          if (img.complete) {
+          if ((img as HTMLImageElement).complete) {
             loadedCount++;
-            if (loadedCount === images.length) {
-              startAnimation();
-            }
+            if (loadedCount === images.length) startAnimation();
           } else {
             img.addEventListener('load', () => {
               loadedCount++;
-              if (loadedCount === images.length) {
-                startAnimation();
-              }
+              if (loadedCount === images.length) startAnimation();
             });
             img.addEventListener('error', () => {
               loadedCount++;
-              if (loadedCount === images.length) {
-                startAnimation();
-              }
+              if (loadedCount === images.length) startAnimation();
             });
           }
         });
       };
-      
+
       const startAnimation = () => {
-        // Calculate the width of ONE set of items
-        const oneSetWidth = content.scrollWidth / 4;
-        
-        // Create a timeline for seamless looping
+        // Duplicate content by 4 sets for smoothness
+        const oneSetWidth = content.scrollWidth / 4 || content.scrollWidth;
+
         const tl = gsap.timeline({ repeat: -1 });
-        
-        // Animate from 0 to -oneSetWidth
         tl.to(content, {
           x: -oneSetWidth,
           ease: 'none',
-          duration: 20,
-          immediateRender: false
+          duration: Math.max(12, oneSetWidth / 50),
+          immediateRender: false,
         });
-        
-        // Then instantly reset to 0 (seamless because it loops)
         tl.set(content, { x: 0 }, '+=0');
       };
-      
+
       waitForLoad();
     }, marqueeRef);
 
     return () => ctx.revert();
-  }, [isActive, items.length]);
+  }, [isActive, items.length, JSON.stringify(items.map((i) => i.value))]);
 
   if (items.length === 0) return null;
 
-  // Duplicate items 4 times to ensure smooth infinite scrolling
   const displayItems = [...items, ...items, ...items, ...items];
 
   return (
-    <div ref={marqueeRef} className="fw-reveal w-full mt-16 md:mt-24 py-16 overflow-hidden relative border-y border-[#0a0a0b]/12 bg-gradient-to-r from-[#f8f9fa] to-[#f4f5f7] opacity-0">
+    <div ref={marqueeRef} className="fw-reveal w-full mt-16 md:mt-24 py-16 overflow-hidden relative border-y border-[#0a0a0b]/12 bg-gradient-to-r from-[#f8f9fa] to-[#f4f5f7]">
+      {title ? (
+        <p className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-6">{title}</p>
+      ) : null}
+
       <div className="absolute left-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-r from-[#f8f9fa] to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-l from-[#f8f9fa] to-transparent z-10 pointer-events-none" />
 

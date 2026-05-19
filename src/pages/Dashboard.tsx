@@ -4642,79 +4642,49 @@ export const Dashboard: React.FC = () => {
                   }
                 />
 
-                {siteConfig.experienceMarquee.map((item) => (
-                  <div key={item.id} className={listItemClass}>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <SelectInput
-                        label="Type"
-                        value={item.type}
-                        options={[
-                          { value: 'text', label: 'Text' },
-                          { value: 'logo', label: 'Logo Image' },
-                        ]}
-                        onChange={(next) =>
-                          updateExperienceMarqueeItem(item.id, (prev) => ({
-                            ...prev,
-                            type: next as 'text' | 'logo',
-                          }))
-                        }
-                      />
-                      <Input
-                        label={item.type === 'text' ? 'Text content' : 'Image URL'}
-                        value={item.value}
-                        onChange={(next) =>
-                          updateExperienceMarqueeItem(item.id, (prev) => ({
-                            ...prev,
-                            value: next,
-                          }))
-                        }
-                      />
-                    </div>
-                    <Toggle
-                      label="Visible"
-                      checked={item.visible}
-                      onChange={(next) =>
-                        updateExperienceMarqueeItem(item.id, (prev) => ({
-                          ...prev,
-                          visible: next,
-                        }))
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateConfig((prev) => ({
-                          ...prev,
-                          experienceMarquee: prev.experienceMarquee.filter(
-                            (entry) => entry.id !== item.id,
-                          ),
-                        }));
-                      }}
-                      className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                    >
-                      Remove Item
-                    </button>
-                  </div>
-                ))}
+                <p className="text-[12px] text-white/66">
+                  The marquee now uses the <span className="font-mono">Company Logos</span> list above as its single source of truth. Edit logos, names, and visibility there.
+                </p>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newItem: SiteExperienceMarqueeItem = {
-                      id: `mq-${Date.now()}`,
-                      type: 'text',
-                      value: 'New Item',
-                      visible: true,
-                    };
-                    updateConfig((prev) => ({
-                      ...prev,
-                      experienceMarquee: [...prev.experienceMarquee, newItem],
-                    }));
-                  }}
-                  className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
-                >
-                  Add Marquee Item
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Migrate legacy experienceMarquee items into scene05.companyLogos
+                      updateConfig((prev) => {
+                        const migrated = prev.experienceMarquee.map((item) => ({
+                          id: `company-from-mq-${item.id}`,
+                          name: item.type === 'text' ? item.value : '',
+                          logoSrc: item.type === 'logo' ? item.value : '',
+                          href: '#',
+                          visible: Boolean(item.visible),
+                        }));
+
+                        return {
+                          ...prev,
+                          scene05: {
+                            ...prev.scene05,
+                            companyLogos: [...prev.scene05.companyLogos, ...migrated],
+                          },
+                        };
+                      });
+                    }}
+                    className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
+                  >
+                    Migrate legacy marquee items
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Clear legacy items after migration if desired
+                      updateConfig((prev) => ({ ...prev, experienceMarquee: [] }));
+                    }}
+                    className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
+                  >
+                    Clear legacy marquee items
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
