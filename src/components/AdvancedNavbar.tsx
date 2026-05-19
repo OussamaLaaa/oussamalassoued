@@ -182,26 +182,19 @@ export const AdvancedNavbar: React.FC<AdvancedNavbarProps> = ({ isLightMode = fa
       return;
     }
 
-    if (isStandaloneRoute()) {
-      if (typeof window !== 'undefined') {
-        try {
-          window.sessionStorage?.setItem(PENDING_NAV_SECTION_KEY, section);
-        } catch {
-          console.warn('Unable to set session storage');
-        }
-      }
-
+    if (section === 'home') {
       window.location.hash = '/';
-      const dispatchNavigation = () => {
-        window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section } }));
-      };
-
-      window.setTimeout(dispatchNavigation, 140);
-      window.setTimeout(dispatchNavigation, 420);
       return;
     }
 
-    window.dispatchEvent(new CustomEvent('nav-to-section', { detail: { section } }));
+    // For other sections, scroll to the element with that id
+    const element = document.getElementById(section);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Fallback if element doesn't exist
+      window.location.hash = section;
+    }
   };
 
   const navigationLogoSrc = isLightMode

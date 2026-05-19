@@ -10,17 +10,67 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
   const { siteConfig } = useSiteConfig();
   const items = siteConfig.experienceMarquee.filter((item) => item.visible);
   const marqueeRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isActive || !marqueeRef.current || items.length === 0) return;
+    if (!isActive || !marqueeRef.current || !contentRef.current || items.length === 0) return;
 
     const ctx = gsap.context(() => {
-      gsap.to('.marquee-content', {
-        xPercent: -50,
-        ease: 'none',
-        duration: 20,
-        repeat: -1,
-      });
+      // Get the width of one set of items
+      const content = contentRef.current!;
+      const firstChild = content.firstElementChild as HTMLElement;
+      
+      if (!firstChild) return;
+      
+      // Wait for images to load
+      const waitForLoad = () => {
+        const images = content.querySelectorAll('img');
+        let loadedCount = 0;
+        
+        if (images.length === 0) {
+          startAnimation();
+          return;
+        }
+        
+        images.forEach((img) => {
+          if (img.complete) {
+            loadedCount++;
+            if (loadedCount === images.length) {
+              startAnimation();
+            }
+          } else {
+            img.addEventListener('load', () => {
+              loadedCount++;
+              if (loadedCount === images.length) {
+                startAnimation();
+              }
+            });
+            img.addEventListener('error', () => {
+              loadedCount++;
+              if (loadedCount === images.length) {
+                startAnimation();
+              }
+            });
+          }
+        });
+      };
+      
+      const startAnimation = () => {
+        const contentWidth = content.scrollWidth / 4; // Divide by 4 because we have 4 sets
+        
+        gsap.fromTo(
+          content,
+          { x: 0 },
+          {
+            x: -contentWidth,
+            ease: 'none',
+            duration: 30,
+            repeat: -1,
+          }
+        );
+      };
+      
+      waitForLoad();
     }, marqueeRef);
 
     return () => ctx.revert();
@@ -28,7 +78,7 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
 
   if (items.length === 0) return null;
 
-  // Duplicate items to ensure smooth infinite scrolling
+  // Duplicate items 4 times to ensure smooth infinite scrolling
   const displayItems = [...items, ...items, ...items, ...items];
 
   return (
@@ -36,9 +86,9 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
       <div className="absolute left-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-r from-[#f8f9fa] to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-l from-[#f8f9fa] to-transparent z-10 pointer-events-none" />
 
-      <div className="marquee-content flex items-center whitespace-nowrap" style={{ width: 'fit-content' }}>
+      <div ref={contentRef} className="marquee-content flex items-center whitespace-nowrap" style={{ width: 'fit-content' }}>
         {displayItems.map((item, i) => (
-          <div key={`${item.id}-${i}`} className="flex items-center mx-10 md:mx-20">
+          <div key={`${item.id}-${i}`} className="flex items-center mx-10 md:mx-20 flex-shrink-0">
             {item.type === 'logo' ? (
               <img src={item.value} alt="Experience Logo" className="h-10 md:h-12 object-contain opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
             ) : (

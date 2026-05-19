@@ -543,29 +543,42 @@ export const StaticHomeLayout: React.FC = () => {
           </a>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <Card
-              key={project.id}
-              className="rounded-2xl overflow-hidden group cursor-pointer hover:shadow-lg transition-all p-0 gap-0"
-            >
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                <ImageWithFallback
-                  src={project.img}
-                  alt={project.title}
-                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <CardContent className="p-6">
-                <h3 className="tracking-tight" style={{ fontSize: '1.25rem', fontWeight: 600 }}>{project.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{project.summary}</p>
-                <div className="mt-5 inline-flex items-center text-sm text-foreground gap-1 group-hover:gap-2 transition-all">
-                  {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}{' '}
-                  <ArrowUpRight className="h-4 w-4" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid md:grid-cols-2 gap-6">
+          {projects.map((project) => {
+            const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
+            const isPlaceholder = !projectHref || projectHref.trim() === '#';
+            
+            return (
+              <a
+                key={project.id}
+                href={projectHref}
+                onClick={(e) => isPlaceholder && e.preventDefault()}
+                target={isPlaceholder ? undefined : '_blank'}
+                rel={isPlaceholder ? undefined : 'noopener noreferrer'}
+                className="group"
+              >
+                <Card
+                  className="rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0 gap-0 h-full"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    <ImageWithFallback
+                      src={project.img}
+                      alt={project.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="tracking-tight" style={{ fontSize: '1.25rem', fontWeight: 600 }}>{project.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{project.summary}</p>
+                    <div className="mt-5 inline-flex items-center text-sm text-foreground gap-1 group-hover:gap-2 transition-all">
+                      {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}{' '}
+                      <ArrowUpRight className="h-4 w-4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </a>
+            );
+          })}
         </div>
       </section>
 
