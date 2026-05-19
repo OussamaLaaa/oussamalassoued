@@ -109,7 +109,7 @@ export const Home: React.FC = () => {
       ) : null}
 
       {hasStarted && <PersistentUI isLightMode={isStaticHomeLayout || scene05Progress >= 0 || isPortfolioActive} />}
-      {hasStarted && !isStaticHomeLayout && visibility.cursorAnimation ? (
+      {hasStarted && visibility.cursorAnimation ? (
         <CursorAnimationLayer animation={siteConfig.animation} />
       ) : null}
 
