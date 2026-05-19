@@ -9,6 +9,7 @@ interface StaticLoadingScreenProps {
 export const StaticLoadingScreen: React.FC<StaticLoadingScreenProps> = ({
   onFadeComplete,
 }) => {
+  const preloaderSrc = `${import.meta.env.BASE_URL}static-preloader.html`;
   const onFadeCompleteRef = useRef(onFadeComplete);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export const StaticLoadingScreen: React.FC<StaticLoadingScreenProps> = ({
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9000, background: '#080808' }}>
       <iframe
-        src="/static-preloader.html"
+        src={preloaderSrc}
         title="Static preloader"
         style={{ width: '100%', height: '100%', border: 0, display: 'block', background: '#080808' }}
         loading="eager"
