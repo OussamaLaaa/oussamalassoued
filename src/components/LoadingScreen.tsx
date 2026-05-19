@@ -146,6 +146,14 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, isComple
 
   return (
     <div id="pre" className={isWaiting ? 'is-waiting' : undefined} ref={preRef}>
+      {/* Topbar (visual only, non-interactive during preload) */}
+      <div id="topbar" className={introDoneRef.current ? 'active' : undefined} aria-hidden>
+        <div className="tb-logo">Oussama</div>
+        <div className="tb-ctas">
+          <div className="tb-pill tb-pill-ghost">View</div>
+          <div className="tb-pill tb-pill-light">Contact</div>
+        </div>
+      </div>
       <svg
         id="pre-logo"
         ref={logoRef}
@@ -165,6 +173,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, isComple
           d="M542.84,581.88c-53.31-1.14-97.68-12.26-133.11-54.82-21.15-24.53-34.41-55.92-47.21-84.95-9.85-21.41-20.75-44.33-40.73-57.83-29.13-20.08-72.64-11.32-95.67,15.33-18.76,20.66-24.03,48.16-26.45,75.84-2.22,27.14-1.89,56.83-2.21,84.9-.09,27.66-.62,50.76.93,76.32,3.13,51.19,17.52,62.87,68.28,64.44,85.09,1.6,191.46,1.93,277.64,2.22,15.17-.13,31.58-.73,45.09-3.92,49.14-9.33,57.49-77.13,18.14-103.61-19.61-12.52-40.14-12.35-64.63-13.91h-.08Z"
         />
       </svg>
+      {/* progress line visual */}
+      <div id="pre-line" aria-hidden />
 
       <div id="pre-counter" aria-live="polite">{displayProgress}</div>
     </div>
