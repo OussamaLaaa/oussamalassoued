@@ -97,7 +97,7 @@ export const Home: React.FC = () => {
       data-surface={isStatic ? "static-home" : "base"}
       data-glow={isStatic ? "off" : "on"}
     >
-      {!isStaticHomeLayout && !hasStarted ? (
+      {!hasStarted ? (
         <LoadingScreen 
           progress={progress} 
           isComplete={isComplete} 
