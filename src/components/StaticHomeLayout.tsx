@@ -177,12 +177,13 @@ export const StaticHomeLayout: React.FC = () => {
   const certificationItems = useMemo(() => {
     if (featuredCertifications.length > 0) {
       return featuredCertifications.map((item) => ({
+        logoSrc: item.logoSrc,
         title: item.title,
         org: [item.issuer, item.year].filter(Boolean).join(' - '),
       }));
     }
 
-    return (scene05.certifications ?? []).map((title) => ({ title, org: '' }));
+    return (scene05.certifications ?? []).map((title) => ({ title, org: '', logoSrc: '' }));
   }, [featuredCertifications, scene05.certifications]);
 
   const projects = useMemo(() => {
@@ -458,16 +459,9 @@ export const StaticHomeLayout: React.FC = () => {
               </h3>
             </div>
             <div className="flex flex-wrap gap-2">
-              {visibleSkills.map((skill, idx) => {
-                const variants: Array<'default' | 'secondary' | 'outline'> = ['default', 'secondary', 'outline'];
-                const skillVariant = variants[idx % variants.length];
-                const extraClasses = skillVariant === 'default'
-                  ? 'rounded-full px-4 py-1.5 text-sm font-normal border-2 border-foreground/15'
-                  : skillVariant === 'secondary'
-                    ? 'rounded-full px-4 py-1.5 text-sm font-normal bg-secondary/80'
-                    : 'rounded-full px-4 py-1.5 text-sm font-normal border-2 border-foreground/10';
+              {visibleSkills.map((skill) => {
                 return (
-                  <Badge key={skill} variant={skillVariant} className={extraClasses}>
+                  <Badge key={skill} variant="default" className="rounded-full px-4 py-1.5 text-sm font-normal border-2 border-foreground/15">
                     {skill}
                   </Badge>
                 );
@@ -482,8 +476,12 @@ export const StaticHomeLayout: React.FC = () => {
                     key={item.title}
                     className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors"
                   >
-                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Award className="h-4 w-4 text-primary" />
+                    <div className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {item.logoSrc ? (
+                        <ImageWithFallback src={item.logoSrc} alt={item.org || item.title} className="h-5 w-5 object-contain" />
+                      ) : (
+                        <Award className="h-4 w-4 text-primary" />
+                      )}
                     </div>
                     <div>
                       <div className="text-sm">{item.title}</div>

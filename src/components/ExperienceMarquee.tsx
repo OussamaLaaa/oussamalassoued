@@ -79,7 +79,7 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
   const displayItems = [...items, ...items, ...items, ...items];
 
   return (
-    <div ref={marqueeRef} className="fw-reveal w-full mt-16 md:mt-24 py-16 overflow-hidden relative border-y border-[#0a0a0b]/12 bg-gradient-to-r from-[#f8f9fa] to-[#f4f5f7]">
+    <div ref={marqueeRef} className="fw-reveal w-full mt-8 md:mt-12 py-10 md:py-12 overflow-hidden relative border-y border-[#0a0a0b]/12 bg-gradient-to-r from-[#f8f9fa] to-[#f4f5f7]">
       {title ? (
         <p className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-6">{title}</p>
       ) : null}
