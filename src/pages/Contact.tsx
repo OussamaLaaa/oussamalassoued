@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { gsap } from 'gsap';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useSeoMeta } from '../hooks/useSeoMeta';
 import { getButtonClass, getCardClass, getScaledRem } from '../components/designSystem';
@@ -145,57 +144,8 @@ const Contact: React.FC = () => {
   }, [contactPage.contactCards]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    if (titleRef.current) {
-      gsap.fromTo(
-        titleRef.current,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.2 }
-      );
-    }
-
-    if (subtitleRef.current) {
-      gsap.fromTo(
-        subtitleRef.current,
-        { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.4 }
-      );
-    }
-
-    if (formRef.current) {
-      gsap.fromTo(
-        formRef.current,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out', delay: 0.6 }
-      );
-    }
-
-    const sidebar = containerRef.current.querySelector('.contact-sidebar');
-    if (sidebar) {
-      gsap.fromTo(
-        sidebar,
-        { opacity: 0, x: -40 },
-        { opacity: 1, x: 0, duration: 1, ease: 'power3.out', delay: 0.8 }
-      );
-    }
-
-    if (cardsRef.current) {
-      const cards = cardsRef.current.querySelectorAll('.social-card');
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 60, scale: 0.95 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.1,
-          delay: 1,
-        }
-      );
-    }
+    // Animations intentionally removed for static contact page.
+    return;
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -205,99 +155,7 @@ const Contact: React.FC = () => {
     });
   };
 
-  const handleCardHover = (card: HTMLElement, isEntering: boolean, color: string, hoverColor: string) => {
-    if (isEntering) {
-      gsap.to(card, {
-        scale: 1.05,
-        y: -8,
-        duration: 0.4,
-        ease: 'power2.out',
-        backgroundColor: color,
-        borderColor: color,
-      });
-      
-      const iconContainer = card.querySelector('.card-icon');
-      if (iconContainer) {
-        gsap.to(iconContainer, {
-          backgroundColor: 'rgba(255,255,255,0.2)',
-          duration: 0.3,
-        });
-        const svg = iconContainer.querySelector('svg');
-        if (svg) {
-          gsap.to(svg, {
-            color: '#ffffff',
-            duration: 0.3,
-          });
-        }
-      }
-      
-      const content = card.querySelector('.card-content');
-      if (content) {
-        const title = content.querySelector('h3');
-        const subtitle = content.querySelector('p');
-        if (title) gsap.to(title, { color: '#ffffff', duration: 0.3 });
-        if (subtitle) gsap.to(subtitle, { color: 'rgba(255,255,255,0.8)', duration: 0.3 });
-      }
-
-      const header = card.querySelector('.card-header');
-      if (header) {
-        const action = header.querySelector('span');
-        const arrow = header.querySelector('svg');
-        if (action) gsap.to(action, { color: 'rgba(255,255,255,0.9)', duration: 0.3 });
-        if (arrow) gsap.to(arrow, { color: '#ffffff', stroke: '#ffffff', duration: 0.3 });
-      }
-      
-      gsap.to(card, {
-        boxShadow: `0 16px 32px -8px ${color}40, 0 4px 12px -2px ${color}20`,
-        duration: 0.4,
-      });
-    } else {
-      gsap.to(card, {
-        scale: 1,
-        y: 0,
-        duration: 0.4,
-        ease: 'power2.out',
-        backgroundColor: 'transparent',
-        borderColor: 'rgba(0,0,0,0.08)',
-      });
-      
-      const iconContainer = card.querySelector('.card-icon');
-      if (iconContainer) {
-        gsap.to(iconContainer, {
-          backgroundColor: '#F3F4F6',
-          duration: 0.3,
-        });
-        const svg = iconContainer.querySelector('svg');
-        if (svg) {
-          gsap.to(svg, {
-            color: color,
-            duration: 0.3,
-          });
-        }
-      }
-      
-      const content = card.querySelector('.card-content');
-      if (content) {
-        const title = content.querySelector('h3');
-        const subtitle = content.querySelector('p');
-        if (title) gsap.to(title, { color: '#000000', duration: 0.3 });
-        if (subtitle) gsap.to(subtitle, { color: '#6B7280', duration: 0.3 });
-      }
-
-      const header = card.querySelector('.card-header');
-      if (header) {
-        const action = header.querySelector('span');
-        const arrow = header.querySelector('svg');
-        if (action) gsap.to(action, { color: '#6B7280', duration: 0.3 });
-        if (arrow) gsap.to(arrow, { color: '#9CA3AF', stroke: '#9CA3AF', duration: 0.3 });
-      }
-      
-      gsap.to(card, {
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
-        duration: 0.4,
-      });
-    }
-  };
+  // Hover JS animations removed; keep markup simple and static.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -453,7 +311,7 @@ const Contact: React.FC = () => {
 
                 <div className="pt-4 md:pt-6 mt-4 md:mt-6 border-t border-gray-200/80">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                     <p className="text-sm text-gray-600">{contactPage.availabilityText}</p>
                   </div>
                 </div>
@@ -510,7 +368,7 @@ const Contact: React.FC = () => {
                     >
                       {isSubmitting ? (
                         <>
-                          <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                             <path d="M12 2a10 10 0 0 1 10 10" strokeOpacity="1" />
                           </svg>
@@ -559,9 +417,7 @@ const Contact: React.FC = () => {
                   href={card.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`social-card group relative p-4 md:p-6 rounded-2xl border transition-all duration-400 ${getCardClass('card-2', 'light')}`}
-                  onMouseEnter={(e) => handleCardHover(e.currentTarget, true, card.color, card.hoverColor)}
-                  onMouseLeave={(e) => handleCardHover(e.currentTarget, false, card.color, card.hoverColor)}
+                  className={`social-card group relative p-4 md:p-6 rounded-2xl border ${getCardClass('card-2', 'light')}`}
                   style={{ borderColor: 'rgba(0,0,0,0.08)', boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)' }}
                 >
                   <div className="card-header flex items-center justify-between mb-4 md:mb-6">
