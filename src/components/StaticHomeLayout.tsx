@@ -326,9 +326,9 @@ export const StaticHomeLayout: React.FC = () => {
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-foreground/[0.04] blur-3xl -z-10" />
         <div className="absolute top-20 -right-32 h-96 w-96 rounded-full bg-foreground/[0.04] blur-3xl -z-10" />
 
-        <div className="mx-auto max-w-5xl px-6 pt-28 md:pt-36 pb-20 text-center">
+        <div className="mx-auto max-w-6xl px-6 pt-28 md:pt-36 pb-20 text-center">
           <h1 data-motion
-            className="tracking-tight mx-auto max-w-4xl"
+            className="tracking-tight mx-auto max-w-5xl"
             style={{
               fontSize: 'clamp(2.75rem, 7vw, 5.5rem)',
               lineHeight: 1.02,
