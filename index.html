@@ -104,46 +104,9 @@
       })();
     </script>
     
-    <!-- Basic loading styles -->
-    <style>
-      #loading-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        transition: opacity 0.3s ease;
-      }
-      #loading-screen.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border-radius: 0;
-        animation: none;
-      }
-      .loading-logo {
-        width: min(180px, 42vw);
-        height: auto;
-        display: block;
-        filter: drop-shadow(0 0 18px rgba(255,255,255,0.12));
-      }
-    </style>
   </head>
   <body>
     <a href="#root" class="skip-link">Skip to main content</a>
-    <!-- Loading screen -->
-    <div id="loading-screen">
-      <img class="loading-logo" src="/logo-white.png" alt="Oussama Lassoued" />
-    </div>
-    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
