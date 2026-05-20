@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useSeoMeta } from '../hooks/useSeoMeta';
-import { getButtonClass, getCardClass, getScaledRem } from '../components/designSystem';
+import { getButtonClass } from '../components/designSystem';
 import { AdvancedNavbar } from '../components/AdvancedNavbar';
 import { sendMessage, type MessageData } from '../utils/apiClient';
 import { validateMessage, sanitizeMessageData } from '../utils/messageValidator';
-import { ArrowRight, ArrowUpRight, CheckCircle2, Phone, Mail, MapPin, Clock, Copy, Send, Loader2, MessageSquare } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Phone, Mail, MapPin, Clock, Copy, Loader2, MessageSquare } from 'lucide-react';
 
 const iconSize = 24;
 
@@ -176,11 +176,27 @@ const Contact: React.FC = () => {
 
   if (!persistentUI) return null;
 
-  const cardBorder = 'border border-[#d0d0cb]';
-  const cardBg = 'bg-[#fbfbf8]';
-  const cardShadow = 'shadow-[0_8px_24px_-18px_rgba(0,0,0,0.14)]';
-  const inputClass = 'w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-[#f3f2ee] border border-[#d0d0cb] text-[#111827] placeholder-[#9ca3af] focus:outline-none focus:border-[#111111] focus:shadow-[0_0_0_3px_rgba(0,0,0,0.06)]';
-  const labelClass = 'block text-xs font-medium uppercase tracking-widest text-[#717182]';
+  const heroTitleStyle: React.CSSProperties = {
+    fontSize: 'clamp(3rem, 8vw, 6rem)',
+    lineHeight: 1,
+    fontWeight: 600,
+    letterSpacing: '-0.04em',
+  };
+  const sectionTitleStyle: React.CSSProperties = {
+    fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+    lineHeight: 1.1,
+    fontWeight: 600,
+    letterSpacing: '-0.03em',
+  };
+  const sectionEyebrowClass = 'text-sm text-muted-foreground uppercase tracking-widest mb-4';
+  const cardShellClass = 'rounded-2xl border border-[#d0d0cb] bg-[#fbfbf8] shadow-none transition-colors duration-300';
+  const cardIconClass = 'h-11 w-11 rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] flex items-center justify-center text-[#111827] transition-colors';
+  const cardMetaClass = 'text-xs font-medium uppercase tracking-widest text-muted-foreground';
+  const cardBodyClass = 'text-sm leading-relaxed text-[#111827]';
+  const labelClass = 'block text-xs font-medium uppercase tracking-widest text-muted-foreground';
+  const inputClass = 'w-full rounded-xl border border-[#d0d0cb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#8b8b8b] transition-colors focus:border-[#111111] focus:outline-none';
+  const primaryButtonClass = getButtonClass('button-1', 'light', 'md', 'inline-flex items-center gap-2 rounded-full');
+  const secondaryButtonClass = getButtonClass('button-2', 'light', 'icon', 'inline-flex h-9 w-9 items-center justify-center rounded-full');
 
   return (
     <div
@@ -205,18 +221,13 @@ const Contact: React.FC = () => {
         <section className="mx-auto max-w-6xl px-6 pt-28 md:pt-36 pb-20">
           {/* Hero */}
           <div data-motion className="max-w-3xl">
-            <p className="text-sm text-muted-foreground uppercase tracking-widest mb-4">
+            <p className={sectionEyebrowClass}>
               {contactPage.heroEyebrow || 'Contact'}
             </p>
             <h1
               ref={titleRef}
               className="tracking-tight"
-              style={{
-                fontSize: 'clamp(2.75rem, 7vw, 5.5rem)',
-                lineHeight: 1.02,
-                fontWeight: 600,
-                letterSpacing: '-0.04em',
-              }}
+              style={heroTitleStyle}
             >
               {contactPage.heroTitleLine1}{' '}
               <span className="relative inline-block">
@@ -235,7 +246,7 @@ const Contact: React.FC = () => {
             </h1>
             <p
               ref={subtitleRef}
-              className="mt-6 text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl"
+              className="mt-6 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed"
             >
               {contactPage.heroSubtitle}
             </p>
@@ -249,36 +260,37 @@ const Contact: React.FC = () => {
             {/* Sidebar */}
             <div data-motion className="lg:col-span-4 space-y-6">
               {/* Direct Contact Card */}
-              <div className={`rounded-2xl ${cardBorder} ${cardBg} ${cardShadow} p-6`}>
+              <div className={`${cardShellClass} p-6`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="h-10 w-10 rounded-xl bg-[#f3f2ee] flex items-center justify-center text-[#111827] border border-[#d0d0cb]">
+                  <div className={cardIconClass}>
                     <MessageSquare className="h-5 w-5" />
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  <span className={cardMetaClass}>
                     {contactPage.directContactTitle}
                   </span>
                 </div>
 
                 <div className="space-y-5">
                   <div className="flex items-start gap-3">
-                    <Phone className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">{contactPage.phoneLabel}</p>
-                      <p className="text-sm font-medium text-[#111827]">{contactPage.phoneNumber}</p>
+                      <p className="mb-0.5 text-xs uppercase tracking-widest text-muted-foreground">{contactPage.phoneLabel}</p>
+                      <p className={cardBodyClass}>{contactPage.phoneNumber}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <Mail className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <div className="flex-1">
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">{contactPage.emailLabel}</p>
+                      <p className="mb-0.5 text-xs uppercase tracking-widest text-muted-foreground">{contactPage.emailLabel}</p>
                       <div className="flex items-center gap-2">
                         <a href={`mailto:${contactPage.emailAddress}`} className="text-sm font-medium text-[#111827] hover:underline">
                           {contactPage.emailAddress}
                         </a>
                         <button
                           onClick={() => navigator.clipboard.writeText(contactPage.emailAddress)}
-                          className="h-6 w-6 rounded-full flex items-center justify-center bg-[#f3f2ee] hover:bg-[#e5e4df] transition-colors"
+                          className={secondaryButtonClass}
+                          aria-label={`Copy ${contactPage.emailAddress}`}
                         >
                           <Copy className="h-3 w-3 text-muted-foreground" />
                         </button>
@@ -287,44 +299,44 @@ const Contact: React.FC = () => {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">{contactPage.officeLabel}</p>
-                      <p className="text-sm leading-relaxed text-[#111827]">{contactPage.officeAddress}</p>
+                      <p className="mb-0.5 text-xs uppercase tracking-widest text-muted-foreground">{contactPage.officeLabel}</p>
+                      <p className={cardBodyClass}>{contactPage.officeAddress}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-[#d0d0cb]">
+                <div className="mt-6 border-t border-[#d0d0cb] pt-6">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <div className="h-2 w-2 rounded-full bg-[#111827]" />
                     <p className="text-sm text-muted-foreground">{contactPage.availabilityText}</p>
                   </div>
                 </div>
               </div>
 
               {/* Response Time Card */}
-              <div className={`rounded-2xl ${cardBorder} ${cardBg} ${cardShadow} p-6 hidden lg:block`}>
+              <div className={`${cardShellClass} p-6 hidden lg:block`}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-[#f3f2ee] flex items-center justify-center text-[#111827] border border-[#d0d0cb]">
+                  <div className={cardIconClass}>
                     <Clock className="h-5 w-5" />
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{contactPage.responseTimeLabel}</span>
+                  <span className={cardMetaClass}>{contactPage.responseTimeLabel}</span>
                 </div>
-                <p className="text-lg font-semibold text-[#111827] mb-2">{contactPage.responseTimeValue}</p>
+                <p className="mb-2 text-lg font-semibold text-[#111827]">{contactPage.responseTimeValue}</p>
                 <p className="text-sm leading-relaxed text-muted-foreground">{contactPage.responseTimeDescription}</p>
               </div>
             </div>
 
             {/* Form */}
             <div ref={formRef} data-motion className="lg:col-span-8">
-              <div className={`rounded-2xl ${cardBorder} ${cardBg} ${cardShadow} p-6 md:p-8`}>
+              <div className={`${cardShellClass} p-6 md:p-8`}>
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="tracking-tight text-2xl font-semibold text-[#111827]">{contactPage.formTitle}</h2>
                     <p className="text-sm text-muted-foreground mt-1">{contactPage.formSubtitle}</p>
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">01 / Form</span>
+                  <span className={cardMetaClass}>01 / Form</span>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -360,7 +372,7 @@ const Contact: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#030213] text-white text-sm font-medium hover:bg-[#1a1a2e] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className={primaryButtonClass}
                     >
                       {isSubmitting ? (
                         <>
@@ -394,10 +406,10 @@ const Contact: React.FC = () => {
           <div data-motion className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <p className="text-sm text-muted-foreground uppercase tracking-widest mb-3">
+                <p className={sectionEyebrowClass}>
                   {contactPage.socialSectionLabel}
                 </p>
-                <h2 className="tracking-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 600, lineHeight: 1.1 }}>
+                <h2 className="tracking-tight" style={sectionTitleStyle}>
                   {contactPage.socialSectionTitle}
                 </h2>
               </div>
@@ -413,23 +425,23 @@ const Contact: React.FC = () => {
                   href={card.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`group rounded-2xl ${cardBorder} ${cardBg} ${cardShadow} p-5 transition-all duration-300 cursor-pointer hover:border-[#111111] hover:shadow-[0_12px_28px_-18px_rgba(0,0,0,0.2)]`}
+                  className={`${cardShellClass} group cursor-pointer p-5 transition-colors duration-300 hover:border-[#111111]`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground group-hover:text-[#111827] transition-colors">
+                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-[#111827]">
                       {card.action}
                     </span>
-                    <div className="h-8 w-8 rounded-full bg-[#f3f2ee] flex items-center justify-center group-hover:bg-[#111827] transition-colors">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:bg-[#111827]">
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-[#f3f2ee] flex items-center justify-center border border-[#d0d0cb] group-hover:border-[#111111] transition-colors" style={{ color: card.color }}>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-[#111111]" style={{ color: card.color }}>
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-[#111827] truncate">{card.title}</h3>
-                      <p className="text-xs text-muted-foreground truncate">{card.subtitle}</p>
+                      <h3 className="truncate text-sm font-semibold text-[#111827]">{card.title}</h3>
+                      <p className="truncate text-xs text-muted-foreground">{card.subtitle}</p>
                     </div>
                   </div>
                 </a>
