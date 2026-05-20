@@ -27,41 +27,40 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
     initialized.current = true;
 
     try {
-      // ─── GLOBAL ENTRANCE: headings and section titles ───
+      // ─── HERO ENTANCE ───
       gsap.fromTo(
         '.tracking-tight, .fw-reveal h1, .fw-reveal h2, h1.tracking-tight',
         { y: 30, opacity: 0, rotation: -1 },
-        { y: 0, opacity: 1, rotation: 0, duration: 1.1, ease: 'power4.out', stagger: 0.04 },
+        { y: 0, opacity: 1, rotation: 0, duration: 1.2, ease: 'power4.out', stagger: 0.04 },
       );
 
-      // ─── GLOBAL ENTRANCE: paragraphs and small text ───
       gsap.fromTo(
         'section p, .CardContent p, .text-sm, .text-muted-foreground',
         { y: 12, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', stagger: 0.02, delay: 0.1 },
+        { y: 0, opacity: 1, duration: 0.85, ease: 'power3.out', stagger: 0.02, delay: 0.12 },
       );
 
-      // ─── ANTIGRAVITY: floating levitation for [data-motion] ───
-      const floatTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-motion]'));
+      // ─── ELEMENTS WITH data-motion: ANTIGRAVITY ENTRANCE ───
+      const entranceTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-motion]'));
 
-      const entranceTimeline = gsap.timeline({ delay: 0.1 });
+      const entranceTimeline = gsap.timeline({ delay: 0.15 });
 
-      floatTargets.forEach((el, i) => {
+      entranceTargets.forEach((el, i) => {
         const rect = el.getBoundingClientRect();
         const area = rect.width * rect.height;
         const areaFactor = Math.min(1, Math.max(0, area / (800 * 400)));
 
-        const baseOffsetY = 50 + areaFactor * 60;
-        const baseOffsetZ = 10 + areaFactor * 15;
-        const baseRot = (i % 2 === 0 ? 1 : -1) * (3 + Math.round(areaFactor * 5));
-        const baseDur = 0.9 + areaFactor * 1.1;
+        const offsetY = 50 + areaFactor * 60;
+        const offsetZ = 10 + areaFactor * 15;
+        const rot = (i % 2 === 0 ? 1 : -1) * (3 + Math.round(areaFactor * 5));
+        const dur = 0.9 + areaFactor * 1.1;
 
         entranceTimeline.fromTo(
           el,
           {
-            y: baseOffsetY,
-            z: baseOffsetZ,
-            rotation: baseRot * 0.7,
+            y: offsetY,
+            z: offsetZ,
+            rotation: rot * 0.7,
             opacity: 0,
             transformPerspective: 900,
           },
@@ -70,49 +69,20 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
             z: 0,
             rotation: 0,
             opacity: 1,
-            duration: baseDur,
+            duration: dur,
             ease: 'power4.out',
             force3D: true,
           },
           i * 0.07,
         );
 
-        // ── Continuous antigravity drift (multi-axis) ──
-        const ampY = 8 + (i % 5) * 2;
-        const ampX = 4 + (i % 4) * 1.5;
-        const rot = baseRot * 0.3;
-        const dur = 3.5 + (i % 6) * 0.5;
-
-        gsap.to(el, {
-          y: `+=${ampY}`,
-          x: `+=${ampX}`,
-          rotation: rot,
-          z: `+=${(i % 4) + 1}`,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          duration: dur,
-          delay: baseDur + (i % 5) * 0.05,
-          force3D: true,
-        });
-
-        // ── Subtle breathing scale ──
-        gsap.to(el, {
-          scale: 1.006 + areaFactor * 0.004,
-          duration: dur * 2.2,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          delay: baseDur + 0.15,
-        });
-
-        // ── Child text reveals inside element ──
+        // child text reveals inside element
         const texts = Array.from(el.querySelectorAll<HTMLElement>('h1,h2,h3,p,.text-sm,.text-muted-foreground'));
         if (texts.length > 0) {
           gsap.fromTo(
             texts,
             { y: 14, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out', stagger: 0.04, delay: baseDur * 0.3 },
+            { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out', stagger: 0.04, delay: dur * 0.3 },
           );
         }
       });
@@ -123,8 +93,6 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
       ));
 
       revealTargets.forEach((el) => {
-        if (floatTargets.includes(el)) return;
-
         const rect = el.getBoundingClientRect();
         const area = rect.width * rect.height;
         const areaFactor = Math.min(1, Math.max(0, area / (800 * 400)));
@@ -145,70 +113,6 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
             });
           },
           once: true,
-        });
-      });
-
-      // ─── ANTIGRAVITY FLOATING PARTICLES (ambient background dots) ───
-      const bgEl = document.querySelector('[data-surface="static-home"]');
-      if (bgEl) {
-        const particleContainer = document.createElement('div');
-        particleContainer.style.cssText =
-          'position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;opacity:0.35';
-        particleContainer.id = 'antigravity-particles';
-        bgEl.prepend(particleContainer);
-
-        const count = 18;
-        for (let i = 0; i < count; i++) {
-          const dot = document.createElement('div');
-          const size = 2 + Math.random() * 4;
-          dot.style.cssText = `
-            position:absolute;
-            width:${size}px;height:${size}px;
-            border-radius:50%;
-            background:rgba(10,10,10,0.12);
-            left:${Math.random() * 100}%;
-            top:${Math.random() * 100}%;
-          `;
-          particleContainer.appendChild(dot);
-
-          gsap.to(dot, {
-            y: `-=${60 + Math.random() * 120}`,
-            x: `+=${(Math.random() - 0.5) * 80}`,
-            duration: 8 + Math.random() * 12,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: Math.random() * 6,
-          });
-
-          gsap.to(dot, {
-            opacity: 0.1 + Math.random() * 0.35,
-            duration: 3 + Math.random() * 5,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: Math.random() * 4,
-          });
-        }
-      }
-
-      // ─── CARDS FLOATING ON HOVER ───
-      document.querySelectorAll<HTMLElement>('[data-motion].rounded-2xl').forEach((card) => {
-        card.addEventListener('mouseenter', () => {
-          gsap.to(card, {
-            y: -8,
-            duration: 0.4,
-            ease: 'power2.out',
-            force3D: true,
-          });
-        });
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            y: 0,
-            duration: 0.6,
-            ease: 'power3.out',
-            force3D: true,
-          });
         });
       });
 
