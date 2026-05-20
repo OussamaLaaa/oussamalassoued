@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import type { SiteExperienceMarqueeItem, SiteScene05LogoItem } from '../config/siteConfig';
+import { sanitizeImageSrc, isBlockedUrl } from '../utils/resourceFilter';
 
 interface ExperienceMarqueeProps {
   isActive?: boolean;
@@ -13,9 +14,8 @@ interface ExperienceMarqueeProps {
 export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive = true, title, sceneLogos }) => {
   const { siteConfig } = useSiteConfig();
 
-  // Prefer sceneLogos (companyLogos) if provided, otherwise fallback to legacy experienceMarquee
   const logoItems: SiteExperienceMarqueeItem[] = (sceneLogos && sceneLogos.length > 0)
-    ? sceneLogos.filter((l) => l.visible).map((l) => ({ id: l.id, type: 'logo', value: l.logoSrc || l.name, visible: Boolean(l.visible) }))
+    ? sceneLogos.filter((l) => l.visible).map((l) => ({ id: l.id, type: 'logo', value: sanitizeImageSrc(l.logoSrc) || l.name, visible: Boolean(l.visible) }))
     : siteConfig.experienceMarquee.filter((item) => item.visible);
 
   const items = logoItems;
@@ -91,7 +91,14 @@ export const ExperienceMarquee: React.FC<ExperienceMarqueeProps> = ({ isActive =
         {displayItems.map((item, i) => (
           <div key={`${item.id}-${i}`} className="flex items-center mx-10 md:mx-20 flex-shrink-0">
             {item.type === 'logo' ? (
-              <img src={item.value} alt="Experience Logo" className="h-10 md:h-12 object-contain opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
+              // If the value is an external URL that we blocked, show fallback text instead of loading
+              isBlockedUrl(item.value) || !item.value || item.value.trim().length === 0 ? (
+                <span className="font-mono text-[12px] md:text-sm uppercase tracking-[0.18em] text-[#0a0a0b]/80 font-medium">
+                  {item.id}
+                </span>
+              ) : (
+                <img src={item.value} alt="Experience Logo" className="h-10 md:h-12 object-contain opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500" />
+              )
             ) : (
               <span className="font-mono text-[12px] md:text-sm uppercase tracking-[0.18em] text-[#0a0a0b]/80 font-medium">
                 {item.value}

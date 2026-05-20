@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass } from './designSystem';
 import { getSocialIconComponent } from './icons';
+import { sanitizeImageSrc, isBlockedUrl } from '../utils/resourceFilter';
 
 interface CinematicAboutProps {
   progress: number;
@@ -506,11 +507,11 @@ export const CinematicAbout: React.FC<CinematicAboutProps> = ({ progress }) => {
                       <div className="relative flex items-center justify-between gap-4 md:justify-end">
                         <div className="flex items-center gap-3">
                           <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border border-[#0f1219]/15 bg-white shadow-[0_12px_24px_-18px_rgba(15,18,25,0.5)]">
-                            {item.logoSrc ? (
-                              <img src={item.logoSrc} alt={issuer} className="h-7 w-7 object-contain" />
-                            ) : (
-                              <span className="text-sm font-semibold text-[#0f1219]/60">{issuerInitial}</span>
-                            )}
+                            {item.logoSrc && !isBlockedUrl(item.logoSrc) ? (
+                                <img src={sanitizeImageSrc(item.logoSrc)} alt={issuer} className="h-7 w-7 object-contain" />
+                              ) : (
+                                <span className="text-sm font-semibold text-[#0f1219]/60">{issuerInitial}</span>
+                              )}
                           </div>
                           <div>
                             <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#0f1219]/55">Issuer</p>

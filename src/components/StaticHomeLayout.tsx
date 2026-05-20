@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { sanitizeImageSrc, isBlockedUrl } from '../utils/resourceFilter';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass } from './designSystem';
 import { getSocialIconComponent } from './icons';
@@ -113,7 +114,9 @@ const ImageWithFallback: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = (
 }) => {
   const [didError, setDidError] = useState(false);
 
-  if (didError) {
+  const safeSrc = sanitizeImageSrc(src as string | undefined);
+
+  if (didError || !safeSrc) {
     return (
       <div className={joinClasses('inline-block bg-gray-100 text-center align-middle', className)} style={style}>
         <div className="flex h-full w-full items-center justify-center">
@@ -125,7 +128,7 @@ const ImageWithFallback: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = (
 
   return (
     <img
-      src={src}
+      src={safeSrc}
       alt={alt}
       className={className}
       style={style}

@@ -5,6 +5,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { getSocialIconComponent } from './icons';
 import { getButtonClass, getCardClass, getGlassClass, getScaledRem } from './designSystem';
 import { CinematicAbout } from './CinematicAbout';
+import { isBlockedUrl } from '../utils/resourceFilter';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -466,7 +467,7 @@ export const Scene05Overlay: React.FC<Scene05OverlayProps> = ({ progress }) => {
                           <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[#0f1219]/70">
                             {getInitials(item.name)}
                           </span>
-                          {item.logoSrc ? (
+                          {item.logoSrc && !isBlockedUrl(item.logoSrc) ? (
                             <img
                               src={item.logoSrc}
                               alt={item.name}

@@ -149,38 +149,46 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
       }
 
       if (projectAnimations.enabled && (visibility.testimonialsSection || visibility.featuredCtaSection)) {
-        gsap.to('.projects-wrapper', {
-          x: '42%',
-          opacity: 0,
-          scale: 0.92,
-          duration: 1.2,
-          ease: 'power3.inOut',
-          scrollTrigger: {
-            trigger: '.next-page-slide',
-            scroller: containerRef.current,
-            start: 'top 92%',
-            toggleActions: 'play none none reverse',
-          },
-        });
+        const projectsWrapperEl = containerRef.current?.querySelector('.projects-wrapper');
+        const nextPageSlideEl = containerRef.current?.querySelector('.next-page-slide');
 
-        gsap.fromTo(
-          '.next-page-slide',
-          { x: '-86%', opacity: 0 },
-          {
-            x: '0%',
-            opacity: 1,
-            duration: 1.25,
-            ease: 'power4.out',
+        if (projectsWrapperEl) {
+          gsap.to(projectsWrapperEl, {
+            x: '42%',
+            opacity: 0,
+            scale: 0.92,
+            duration: 1.2,
+            ease: 'power3.inOut',
             scrollTrigger: {
-              trigger: '.next-page-slide',
+              trigger: nextPageSlideEl || containerRef.current,
               scroller: containerRef.current,
-              start: 'top 96%',
+              start: 'top 92%',
               toggleActions: 'play none none reverse',
             },
-          },
-        );
+          });
+        }
+
+        if (nextPageSlideEl) {
+          gsap.fromTo(
+            nextPageSlideEl,
+            { x: '-86%', opacity: 0 },
+            {
+              x: '0%',
+              opacity: 1,
+              duration: 1.25,
+              ease: 'power4.out',
+              scrollTrigger: {
+                trigger: nextPageSlideEl,
+                scroller: containerRef.current,
+                start: 'top 96%',
+                toggleActions: 'play none none reverse',
+              },
+            },
+          );
+        }
       } else if (!projectAnimations.enabled) {
-        gsap.set('.next-page-slide', { opacity: 1, x: 0 });
+        const nextPageSlideEl = containerRef.current?.querySelector('.next-page-slide');
+        if (nextPageSlideEl) gsap.set(nextPageSlideEl, { opacity: 1, x: 0 });
       }
 
       refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 100);
