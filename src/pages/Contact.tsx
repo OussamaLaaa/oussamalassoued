@@ -196,7 +196,7 @@ const Contact: React.FC = () => {
   const labelClass = 'block text-xs font-medium uppercase tracking-widest text-muted-foreground';
   const inputClass = 'w-full rounded-xl border border-[#d0d0cb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#8b8b8b] transition-colors focus:border-[#111111] focus:outline-none';
   const primaryButtonClass = getButtonClass('button-1', 'light', 'md', 'inline-flex items-center gap-2 rounded-full');
-  const secondaryButtonClass = getButtonClass('button-2', 'light', 'icon', 'inline-flex h-9 w-9 items-center justify-center rounded-full');
+  const secondaryButtonClass = getButtonClass('button-2', 'light', 'icon', 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full');
 
   return (
     <div
@@ -269,10 +269,10 @@ const Contact: React.FC = () => {
 
                   <div className="flex items-start gap-3">
                     <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <p className="mb-0.5 text-xs uppercase tracking-widest text-muted-foreground">{contactPage.emailLabel}</p>
-                      <div className="flex items-center gap-2">
-                        <a href={`mailto:${contactPage.emailAddress}`} className="text-sm font-medium text-[#111827] hover:underline">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <a href={`mailto:${contactPage.emailAddress}`} className="min-w-0 flex-1 break-words text-sm font-medium text-[#111827] hover:underline">
                           {contactPage.emailAddress}
                         </a>
                         <button
