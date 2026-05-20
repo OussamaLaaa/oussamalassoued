@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
 import './CreativeLoadingScreen.css';
 
 interface CreativeLoadingScreenProps {
@@ -12,69 +11,27 @@ const TOP =
 const BOT =
   'M345.54,457.34c-53.31-1.14-97.68-12.26-133.11-54.82-21.15-24.53-34.41-55.92-47.21-84.95-9.85-21.41-20.75-44.33-40.73-57.83-29.13-20.08-72.64-11.32-95.67,15.33-18.76,20.66-24.03,48.16-26.45,75.84C.15,378.05.48,407.74.16,435.81c-.09,27.66-.62,50.76.93,76.32,3.13,51.19,17.52,62.87,68.28,64.44,85.09,1.6,191.46,1.93,277.64,2.22,15.17-.13,31.58-.73,45.09-3.92,49.14-9.33,57.49-77.13,18.14-103.61-19.61-12.52-40.14-12.35-64.63-13.91h-.08,0Z';
 
-const CSS = `
-  @keyframes ls-revTop {
-    from { clip-path: inset(0 0 100% 0); transform: translateY(-10px); }
-    to   { clip-path: inset(0 0 0%   0); transform: translateY(0);     }
-  }
-  @keyframes ls-revBot {
-    from { clip-path: inset(100% 0 0 0); transform: translateY(10px); }
-    to   { clip-path: inset(0%   0 0 0); transform: translateY(0);    }
-  }
-  .ls-draw-top {
-    animation: ls-revTop 1600ms cubic-bezier(0.16,1,0.3,1) 300ms both;
-  }
-  .ls-draw-bot {
-    animation: ls-revBot 1600ms cubic-bezier(0.16,1,0.3,1) 650ms both;
-  }
-`;
-
 export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
   duration = 1200,
   onFadeComplete,
 }) => {
   const [hidden, setHidden] = useState(false);
-  const screenRef = useRef<HTMLDivElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const fp1Ref = useRef<SVGPathElement>(null);
-  const fp2Ref = useRef<SVGPathElement>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  function at(fn: () => void, ms: number) {
-    const t = setTimeout(fn, ms);
-    timers.current.push(t);
-  }
+  const onFadeCompleteRef = useRef(onFadeComplete);
 
   useEffect(() => {
-    const sc = screenRef.current!;
-    const lw = wrapRef.current!;
-    const p1 = fp1Ref.current!;
-    const p2 = fp2Ref.current!;
+    onFadeCompleteRef.current = onFadeComplete;
+  }, [onFadeComplete]);
 
-    // اللوجو يظهر بدون تأثيرات إضافية
-    at(() => {
-      p1.style.transition = 'fill 400ms ease';
-      p2.style.transition = 'fill 400ms ease';
-      p1.setAttribute('fill', '#dfdfdf');
-      p2.setAttribute('fill', '#dfdfdf');
-    }, 600);
-
-    // اللوجو يختفي والشاشة تختفي
-    at(() => {
-      lw.style.transition = 'opacity 400ms ease';
-      lw.style.opacity = '0';
-      sc.style.transition = 'opacity 400ms ease, background 400ms ease';
-      sc.style.background = '#fff';
-      sc.style.opacity = '0';
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setHidden(true);
+      onFadeCompleteRef.current?.();
     }, duration);
 
-    at(() => {
-      setHidden(true);
-      onFadeComplete?.();
-    }, duration + 400);
-
-    return () => timers.current.forEach(clearTimeout);
-  }, [duration, onFadeComplete]);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [duration]);
 
   if (hidden) return null;
 
@@ -90,36 +47,49 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
   };
 
   return (
-    <>
-      <style>{CSS}</style>
-      <div
-        ref={screenRef}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          background: '#ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          opacity: 1,
-        }}
-      >
-        <div ref={wrapRef} style={{ position: 'relative', width: 114, height: 151 }}>
-          <div className="ls-draw-top" style={layer}>
-            <svg viewBox="0 0 436.52 578.79" xmlns="http://www.w3.org/2000/svg" style={sharedSvg}>
-              <path ref={fp1Ref} fill="#161616" d={TOP} />
-            </svg>
-          </div>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        animation: `fadeOut ${duration}ms ease-in-out forwards`,
+      }}
+    >
+      <style>{`
+        @keyframes fadeOut {
+          0% {
+            opacity: 1;
+            background: #ffffff;
+          }
+          70% {
+            opacity: 1;
+            background: #ffffff;
+          }
+          100% {
+            opacity: 0;
+            background: #ffffff;
+            pointer-events: none;
+          }
+        }
+      `}</style>
+      <div style={{ position: 'relative', width: 114, height: 151 }}>
+        <div style={layer}>
+          <svg viewBox="0 0 436.52 578.79" xmlns="http://www.w3.org/2000/svg" style={sharedSvg}>
+            <path fill="#161616" d={TOP} />
+          </svg>
+        </div>
 
-          <div className="ls-draw-bot" style={layer}>
-            <svg viewBox="0 0 436.52 578.79" xmlns="http://www.w3.org/2000/svg" style={sharedSvg}>
-              <path ref={fp2Ref} fill="#161616" d={BOT} />
-            </svg>
-          </div>
+        <div style={layer}>
+          <svg viewBox="0 0 436.52 578.79" xmlns="http://www.w3.org/2000/svg" style={sharedSvg}>
+            <path fill="#161616" d={BOT} />
+          </svg>
         </div>
       </div>
-    </>
+    </div>
   );
 };
