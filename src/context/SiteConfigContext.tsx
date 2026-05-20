@@ -1,4 +1,4 @@
-  import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+  import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
   import {
     DEFAULT_SITE_CONFIG,
     hydrateSiteConfig,
@@ -22,7 +22,6 @@
     getStorageInfo,
     exportStorageData,
     importStorageData,
-    getVersionHistory,
     restoreVersionSnapshot,
   } from '../utils/storageSystem';
   import { fetchSiteConfig, updateSiteConfig, checkApiHealth } from '../utils/apiClient';
@@ -32,7 +31,7 @@
   setSiteConfig: React.Dispatch<React.SetStateAction<SiteConfig>>;
   resetSiteConfig: () => void;
   storageInfo: ReturnType<typeof getStorageInfo>;
-  versionHistory: ReturnType<typeof getVersionHistory>;
+  versionHistory: ReturnType<typeof getStorageInfo>['history'];
   exportStorage: () => string | null;
   importStorage: (data: string) => boolean;
   restoreVersion: (snapshotId: string) => boolean;
@@ -254,8 +253,12 @@ const applyBrowserMetadata = (siteConfig: SiteConfig) => {
 };
 
 export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const lastPersistedConfigKeyRef = useRef('');
+  const isBootstrappingRef = useRef(true);
+
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     const config = getInitialSiteConfig();
+    lastPersistedConfigKeyRef.current = JSON.stringify(config);
     if (typeof window !== 'undefined') {
       (window as any).INITIAL_SITE_CONFIG_DEBUG = {
         staticHomeLayout: config.visibility.staticHomeLayout,
@@ -296,6 +299,19 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    if (isBootstrappingRef.current) {
+      const bootstrapTimer = window.setTimeout(() => {
+        isBootstrappingRef.current = false;
+      }, 0);
+
+      return () => window.clearTimeout(bootstrapTimer);
+    }
+
+    const nextConfigKey = JSON.stringify(siteConfig);
+    if (nextConfigKey === lastPersistedConfigKeyRef.current) {
+      return;
+    }
+
     // Debounce saves to avoid excessive writes
     const timeoutId = setTimeout(() => {
       const result = saveSiteConfig(siteConfig);
@@ -303,8 +319,11 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!result.success) {
         console.error('Failed to save site config:', result.error);
       } else {
-        // Update storage info after successful save
-        setStorageInfo(getStorageInfo());
+        lastPersistedConfigKeyRef.current = nextConfigKey;
+        setStorageInfo((current) => ({
+          ...current,
+          metadata: result.metadata ?? current.metadata,
+        }));
       }
     }, 500); // 500ms debounce
 
@@ -385,6 +404,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Only fetch from API if we're not in dashboard mode
     const isDashboard = window.location.pathname.includes('/dashboard');
     if (!isDashboard) {
+      isBootstrappingRef.current = true;
       (async () => {
         try {
           const response = await fetchSiteConfig();
@@ -398,19 +418,17 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         } catch (error) {
           console.error('Failed to fetch config from API:', error);
+        } finally {
+          isBootstrappingRef.current = false;
         }
       })();
+    } else {
+      isBootstrappingRef.current = false;
     }
   }, []);
 
   const value = useMemo<SiteConfigContextValue>(() => {
-    let versionHistory: ReturnType<typeof getVersionHistory> = [];
-    try {
-      versionHistory = getVersionHistory();
-    } catch (error) {
-      console.error('Failed to get version history:', error);
-      versionHistory = [];
-    }
+    const versionHistory = storageInfo.history;
 
     return {
       siteConfig,
