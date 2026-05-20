@@ -421,16 +421,16 @@ const Contact: React.FC = () => {
                       {card.action}
                     </span>
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15">
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-white" />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15" style={{ color: card.color }}>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white" style={{ color: card.color }}>
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="truncate text-sm font-semibold text-[#111827] transition-colors group-hover:text-white">{card.title}</h3>
-                      <p className="truncate text-xs text-muted-foreground transition-colors group-hover:text-white/80">{card.subtitle}</p>
+                      <p className="truncate text-xs text-muted-foreground transition-colors group-hover:text-white/85">{card.subtitle}</p>
                     </div>
                   </div>
                 </a>
