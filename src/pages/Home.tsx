@@ -5,7 +5,6 @@ import { MasterSequence } from '../components/MasterSequence';
 import { IntroTextOverlay } from '../components/IntroTextOverlay';
 import { PersistentUI } from '../components/PersistentUI';
 import CursorAnimationLayer from '../components/CursorAnimationLayer';
-import GlobalMotionLayer from '../components/GlobalMotionLayer';
 import { useSiteConfig } from '../context/SiteConfigContext';
 
 import { Scene05Overlay } from '../components/Scene05Overlay';
@@ -99,7 +98,6 @@ export const Home: React.FC = () => {
       {isStatic ? (
         <>
           <StaticHomeLayout />
-          <GlobalMotionLayer />
         </>
       ) : hasStarted ? (
         <main className="relative w-full bg-black" data-surface="ambient">

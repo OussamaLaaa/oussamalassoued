@@ -16,6 +16,10 @@ import {
 import { ExperienceMarquee } from './ExperienceMarquee';
 
 const SECTION_IDS = ['home', 'about', 'projects', 'testimonials', 'contact'] as const;
+const deferredSectionStyle: React.CSSProperties = {
+  contentVisibility: 'auto',
+  containIntrinsicSize: '1px 1200px',
+};
 
 const isPlaceholderHref = (href: string) => href.trim() === '#';
 
@@ -84,7 +88,7 @@ const Avatar: React.FC<{ className?: string; children: ReactNode }> = ({ classNa
 );
 
 const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className, ...props }) => (
-  <img className={joinClasses('aspect-square size-full', className)} {...props} />
+  <img className={joinClasses('aspect-square size-full', className)} loading="lazy" decoding="async" {...props} />
 );
 
 const AvatarFallback: React.FC<{ className?: string; children: ReactNode }> = ({ className, children }) => (
@@ -408,7 +412,7 @@ export const StaticHomeLayout: React.FC = () => {
       </section>
 
       {/* ===================== VALUES SECTION ===================== */}
-      <section id="values" className="mx-auto max-w-6xl px-6 py-20">
+      <section id="values" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
         <div className="mb-12">
           <SectionEyebrow>{scene05.valuesEyebrow}</SectionEyebrow>
           <h2 className="tracking-tight max-w-2xl" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
@@ -439,7 +443,7 @@ export const StaticHomeLayout: React.FC = () => {
       </section>
 
       {/* ===================== ABOUT SECTION ===================== */}
-      <section id="about" className="mx-auto max-w-6xl px-6 py-20">
+      <section id="about" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
         <div className="grid lg:grid-cols-2 gap-10">
           <Card className="rounded-2xl bg-muted/30">
             <CardContent className="p-8 md:p-10 space-y-6">
@@ -505,7 +509,7 @@ export const StaticHomeLayout: React.FC = () => {
       </section>
 
       {/* ===================== PROJECTS SECTION ===================== */}
-      <section id="projects" className="mx-auto max-w-6xl px-6 py-20">
+      <section id="projects" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
         <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
           <div>
             <SectionEyebrow>{featured.titleLine1}</SectionEyebrow>
@@ -543,6 +547,10 @@ export const StaticHomeLayout: React.FC = () => {
                       src={project.img}
                       alt={project.title}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
+                      width={1200}
+                      height={900}
                     />
                   </div>
                   <CardContent className="p-6">
@@ -562,7 +570,7 @@ export const StaticHomeLayout: React.FC = () => {
 
       {/* ===================== TESTIMONIALS SECTION ===================== */}
       {visibility.testimonialsSection ? (
-        <section id="testimonials" className="mx-auto max-w-6xl px-6 py-20">
+        <section id="testimonials" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
           <div className="mb-12">
             <SectionEyebrow>{featured.testimonialsEyebrow}</SectionEyebrow>
             <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
@@ -593,7 +601,7 @@ export const StaticHomeLayout: React.FC = () => {
       ) : null}
 
       {/* ===================== CTA SECTION ===================== */}
-      <section id="contact" className="mx-auto max-w-5xl px-6 py-32 text-center">
+      <section id="contact" className="mx-auto max-w-5xl px-6 py-32 text-center" style={deferredSectionStyle}>
         <h2
           className="tracking-tight mx-auto max-w-4xl"
           style={{
@@ -616,7 +624,7 @@ export const StaticHomeLayout: React.FC = () => {
       </section>
 
       {/* ===================== FOOTER ===================== */}
-      <footer className="border-t mt-12">
+      <footer className="border-t mt-12" style={deferredSectionStyle}>
         <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4 space-y-4">
             <div className="font-semibold tracking-tight text-lg">{footer.brandTitle}</div>
