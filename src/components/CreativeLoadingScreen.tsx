@@ -9,6 +9,7 @@ interface CreativeLoadingScreenProps {
 export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ onFadeComplete }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const glowRef = useRef<HTMLDivElement | null>(null);
   const pathsRef = useRef<SVGPathElement[]>([]);
   const [isAnimating, setIsAnimating] = useState(true);
 
@@ -28,95 +29,159 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
       path.style.strokeDashoffset = strokeLengths[idx].toString();
       path.style.fill = 'none';
       path.style.stroke = 'black';
-      path.style.strokeWidth = '8';
+      path.style.strokeWidth = '6';
       path.style.strokeLinecap = 'round';
       path.style.strokeLinejoin = 'round';
+      path.style.opacity = '0.3';
     });
 
     const timeline = gsap.timeline();
 
-    // Animate paths drawing in with staggered timing
+    // Intro: Scale in from center with smooth entrance
+    timeline.from(
+      svgRef.current,
+      {
+        scale: 0.7,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'back.out(1.3)',
+      },
+      0
+    );
+
+    // Phase 1: Draw paths one by one with smooth animation
     paths.forEach((path, idx) => {
       timeline.to(
         path,
         {
           strokeDashoffset: 0,
-          duration: 1.5,
-          ease: 'power2.inOut',
+          duration: 2.2,
+          ease: 'power1.inOut',
         },
-        idx * 0.2 // Stagger paths
+        idx * 0.25 // Stagger with smooth spacing
+      );
+
+      // Opacity increase as path draws
+      timeline.to(
+        path,
+        {
+          opacity: 0.9,
+          duration: 2.2,
+          ease: 'power1.inOut',
+        },
+        idx * 0.25
       );
     });
 
-    // Add a glowing effect
+    // Phase 2: Ambient glow builds while drawing
     timeline.to(
-      paths,
+      glowRef.current,
       {
-        filter: 'drop-shadow(0 0 20px rgba(0, 0, 0, 0.4))',
-        duration: 0.6,
+        opacity: 0.3,
+        filter: 'blur(30px)',
+        duration: 0.8,
         ease: 'sine.inOut',
       },
       0.5
     );
 
-    // Pulse animation
-    timeline.to(
-      paths,
-      {
-        strokeWidth: 10,
-        duration: 0.4,
-        ease: 'sine.inOut',
-      },
-      1.5
-    );
-
+    // Phase 3: Enhance stroke after drawing
     timeline.to(
       paths,
       {
         strokeWidth: 8,
-        duration: 0.4,
+        opacity: 1,
+        duration: 0.6,
         ease: 'sine.inOut',
       },
-      1.9
+      '-=0.4'
     );
 
-    // Wait before fading out
+    // Phase 4: Glow intensity pulses
     timeline.to(
-      {},
-      { duration: 0.8 } // Hold on the completed logo
-    );
-
-    // Fill the paths and add final glow
-    timeline.to(
-      paths,
+      glowRef.current,
       {
-        fill: 'black',
-        opacity: 0.9,
-        filter: 'drop-shadow(0 0 30px rgba(0, 0, 0, 0.6))',
+        opacity: 0.5,
         duration: 0.5,
-        ease: 'power1.inOut',
-      },
-      '-=0.3'
-    );
-
-    // Scale and fade out
-    timeline.to(
-      svgRef.current,
-      {
-        scale: 1.2,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'power3.in',
+        ease: 'sine.inOut',
       },
       '-=0.2'
     );
 
-    // Fade out container
+    timeline.to(
+      glowRef.current,
+      {
+        opacity: 0.3,
+        duration: 0.5,
+        ease: 'sine.inOut',
+      }
+    );
+
+    // Phase 5: Hold on completed strokes
+    timeline.to(
+      {},
+      { duration: 0.8 }
+    );
+
+    // Phase 6: Beautiful fill transition with stagger
+    timeline.to(
+      paths,
+      {
+        fill: 'black',
+        fillOpacity: 1,
+        strokeOpacity: 0,
+        duration: 1,
+        ease: 'power2.inOut',
+        stagger: 0.08,
+      }
+    );
+
+    // Phase 7: Strong glow emerges after fill
+    timeline.to(
+      glowRef.current,
+      {
+        opacity: 0.7,
+        boxShadow: '0 0 100px rgba(0, 0, 0, 0.4), 0 0 50px rgba(0, 0, 0, 0.25)',
+        duration: 0.7,
+        ease: 'power1.inOut',
+      },
+      '-=0.6'
+    );
+
+    // Phase 8: Brief moment of perfection
+    timeline.to(
+      {},
+      { duration: 1.2 }
+    );
+
+    // Phase 9: Gentle upward float and fade
+    timeline.to(
+      svgRef.current,
+      {
+        y: -40,
+        scale: 1.15,
+        opacity: 0,
+        duration: 1.1,
+        ease: 'power3.in',
+      }
+    );
+
+    timeline.to(
+      glowRef.current,
+      {
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.in',
+      },
+      '-=0.8'
+    );
+
+    // Phase 10: Graceful container fade to transparent
     timeline.to(
       containerRef.current,
       {
         backgroundColor: 'rgba(255, 255, 255, 0)',
-        duration: 0.8,
+        duration: 1.1,
         ease: 'power2.inOut',
         onComplete: () => {
           setIsAnimating(false);
@@ -126,7 +191,7 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
           onFadeComplete();
         },
       },
-      '-=0.6'
+      '-=0.8'
     );
   }, [onFadeComplete]);
 
@@ -161,6 +226,7 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
           </g>
         </g>
       </svg>
+      <div ref={glowRef} className="loading-glow" />
     </div>
   );
 };

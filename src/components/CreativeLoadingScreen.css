@@ -10,7 +10,7 @@
   justify-content: center;
   z-index: 9999;
   overflow: hidden;
-  animation: fadeInBackground 0.3s ease-out;
+  animation: fadeInBackground 0.2s ease-out forwards;
 }
 
 @keyframes fadeInBackground {
@@ -23,42 +23,88 @@
 }
 
 .loading-logo {
-  width: 280px;
-  height: 280px;
-  max-width: 70vw;
-  max-height: 70vh;
-  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.1));
+  width: 340px;
+  height: 340px;
+  max-width: 85vw;
+  max-height: 85vh;
+  z-index: 10;
+  position: relative;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.03));
+  will-change: transform, opacity;
 }
 
-/* Subtle ambient glow animation */
-@keyframes ambientGlow {
-  0% {
-    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
-  }
-  50% {
-    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.3));
-  }
-  100% {
-    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
-  }
+.loading-glow {
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.18) 0%,
+    rgba(0, 0, 0, 0.08) 35%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  filter: blur(50px);
+  will-change: opacity, filter;
+  pointer-events: none;
+  z-index: 8;
+}
+
+/* Smooth SVG path animations */
+svg path {
+  will-change: stroke-dashoffset, fill, stroke-width, opacity;
+  transition: none; /* Prevent default CSS transitions */
 }
 
 /* Responsive design */
+@media (max-width: 1024px) {
+  .loading-logo {
+    width: 280px;
+    height: 280px;
+  }
+
+  .loading-glow {
+    width: 350px;
+    height: 350px;
+  }
+}
+
 @media (max-width: 768px) {
   .loading-logo {
-    width: 200px;
-    height: 200px;
+    width: 220px;
+    height: 220px;
+  }
+
+  .loading-glow {
+    width: 280px;
+    height: 280px;
   }
 }
 
 @media (max-width: 480px) {
   .loading-logo {
-    width: 150px;
-    height: 150px;
+    width: 160px;
+    height: 160px;
+  }
+
+  .loading-glow {
+    width: 200px;
+    height: 200px;
   }
 }
 
-/* Ensure smooth transitions */
-svg path {
-  will-change: stroke-dashoffset, fill, stroke-width, filter;
+/* GPU acceleration */
+.creative-loading-screen {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+svg {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
