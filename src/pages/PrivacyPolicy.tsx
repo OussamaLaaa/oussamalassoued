@@ -1,8 +1,8 @@
 import React from 'react';
-import LegalDocumentPage from './LegalDocumentPage';
+import StaticLegalDocumentPage from './StaticLegalDocumentPage';
 
 const PrivacyPolicy: React.FC = () => {
-  return <LegalDocumentPage kind="privacy" />;
+  return <StaticLegalDocumentPage kind="privacy" />;
 };
 
 export default PrivacyPolicy;

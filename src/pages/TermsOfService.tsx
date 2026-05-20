@@ -1,8 +1,8 @@
 import React from 'react';
-import LegalDocumentPage from './LegalDocumentPage';
+import StaticLegalDocumentPage from './StaticLegalDocumentPage';
 
 const TermsOfService: React.FC = () => {
-  return <LegalDocumentPage kind="terms" />;
+  return <StaticLegalDocumentPage kind="terms" />;
 };
 
 export default TermsOfService;
