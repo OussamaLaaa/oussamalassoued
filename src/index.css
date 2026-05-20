@@ -1051,26 +1051,20 @@ select:focus-visible {
 
 /* ─── ANTIGRAVITY ENTRANCE ANIMATIONS ─── */
 
-/* Initial hidden state */
-[data-surface="static-home"] .ag-motion {
-  opacity: 0;
-  transform: translateY(36px) rotate(-0.5deg);
-  transition:
-    opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 1s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-}
-
-/* Visible state */
-[data-surface="static-home"] .ag-motion.ag-visible {
-  opacity: 1;
-  transform: translateY(0) rotate(0deg);
+/* Ensure chars/words split by GSAP behave */
+[data-surface="static-home"] h1 span,
+[data-surface="static-home"] h2 span,
+[data-surface="static-home"] h3 span,
+[data-surface="static-home"] p span {
+  white-space: pre;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-surface="static-home"] .ag-motion {
-    opacity: 1;
-    transform: none;
-    transition: none;
+  [data-surface="static-home"] h1 span,
+  [data-surface="static-home"] h2 span,
+  [data-surface="static-home"] h3 span,
+  [data-surface="static-home"] p span {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
