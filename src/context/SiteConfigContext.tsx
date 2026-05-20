@@ -268,6 +268,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return config;
   });
   const [storageInfo, setStorageInfo] = useState(() => getStorageInfo());
+  const [isHydratingFromApi, setIsHydratingFromApi] = useState<boolean>(true);
 
   useEffect(() => {
     applyDesignSystemVariables(siteConfig);
@@ -434,6 +435,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isBootstrappingRef.current = true;
       (async () => {
         try {
+          setIsHydratingFromApi(true);
           const response = await fetchSiteConfig();
           // Only update config if we got actual data back (not an empty object)
           if (response.success && response.data && Object.keys(response.data).length > 0) {
@@ -447,6 +449,7 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.error('Failed to fetch config from API:', error);
         } finally {
           isBootstrappingRef.current = false;
+          setIsHydratingFromApi(false);
         }
       })();
     } else {
@@ -554,6 +557,18 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       },
     };
   }, [siteConfig, storageInfo]);
+
+  // Block rendering children until we attempted to hydrate from API
+  if (isHydratingFromApi) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ds-glass-tint, #fff)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: 18, background: '#111', opacity: 0.08, margin: '0 auto 12px' }} />
+          <div style={{ color: '#666' }}>Loading site configuration…</div>
+        </div>
+      </div>
+    );
+  }
 
   return <SiteConfigContext.Provider value={value}>{children}</SiteConfigContext.Provider>;
 };
