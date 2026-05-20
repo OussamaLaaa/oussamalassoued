@@ -413,23 +413,24 @@ const Contact: React.FC = () => {
                   href={card.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${cardShellClass} group cursor-pointer p-5 transition-colors duration-300 hover:border-[#111111]`}
+                  style={{ ['--contact-card-hover' as any]: card.hoverColor }}
+                  className={`${cardShellClass} group cursor-pointer p-5 transition-colors duration-300 hover:border-[var(--contact-card-hover)] hover:bg-[var(--contact-card-hover)]`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-[#111827]">
+                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-white">
                       {card.action}
                     </span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:bg-[#111827]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15">
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-white transition-colors" />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-[#111111]" style={{ color: card.color }}>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15" style={{ color: card.color }}>
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-[#111827]">{card.title}</h3>
-                      <p className="truncate text-xs text-muted-foreground">{card.subtitle}</p>
+                      <h3 className="truncate text-sm font-semibold text-[#111827] transition-colors group-hover:text-white">{card.title}</h3>
+                      <p className="truncate text-xs text-muted-foreground transition-colors group-hover:text-white/80">{card.subtitle}</p>
                     </div>
                   </div>
                 </a>
