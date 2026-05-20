@@ -74,14 +74,9 @@ export const isValidEmail = (email: string): boolean => {
  * Get client IP address (for logging purposes)
  */
 export const getClientIP = async (): Promise<string> => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip || 'unknown';
-  } catch (error) {
-    console.error('[Security] Failed to get client IP:', error);
-    return 'unknown';
-  }
+  // Avoid external requests by default — return 'unknown'. If IP is required,
+  // call an explicit diagnostics helper that can be enabled by the developer.
+  return 'unknown';
 };
 
 /**

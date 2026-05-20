@@ -93,11 +93,11 @@ export const LOCAL_SITE_CONFIG: SiteConfig = {
       browserTabTitle: "Oussama Lassoued | UX/UI Designer",
       faviconUrl: "",
     },
-    integrations: {
-      apiBaseUrl: "https://api.example.com",
-      customDomain: "portfolio.example.com",
-      googleAnalyticsMeasurementId: "G-PGKYQ61JPJ",
-      googleAnalyticsEnabled: true,
+    "integrations": {
+      "apiBaseUrl": "https://api.example.com",
+      "customDomain": "portfolio.example.com",
+      "googleAnalyticsMeasurementId": "G-PGKYQ61JPJ",
+      "googleAnalyticsEnabled": false,
     },
   },
   footer: {
