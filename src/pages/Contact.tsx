@@ -230,19 +230,7 @@ const Contact: React.FC = () => {
               style={heroTitleStyle}
             >
               {contactPage.heroTitleLine1}{' '}
-              <span className="relative inline-block">
-                <span
-                  className="bg-clip-text text-transparent"
-                  style={{
-                    backgroundImage: 'linear-gradient(110deg, var(--foreground) 0%, rgba(10, 10, 10, 0.45) 100%)',
-                  }}
-                >
-                  {contactPage.heroTitleLine2}
-                </span>
-                <svg viewBox="0 0 300 12" className="absolute -bottom-2 left-0 w-full h-3 text-foreground/30" preserveAspectRatio="none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M2 8 Q 75 2, 150 6 T 298 4" />
-                </svg>
-              </span>
+              <span>{contactPage.heroTitleLine2}</span>
             </h1>
             <p
               ref={subtitleRef}
