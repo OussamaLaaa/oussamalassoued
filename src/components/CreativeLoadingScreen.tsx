@@ -30,7 +30,7 @@ const CSS = `
 `;
 
 export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
-  duration = 3600,
+  duration = 1200,
   onFadeComplete,
 }) => {
   const [hidden, setHidden] = useState(false);
@@ -51,49 +51,27 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
     const p1 = fp1Ref.current!;
     const p2 = fp2Ref.current!;
 
+    // اللوجو يظهر بدون تأثيرات إضافية
     at(() => {
-      sc.style.transition = 'background 500ms ease';
-      sc.style.background = '#0a0a0a';
-      p1.style.transition = 'fill 500ms ease';
-      p2.style.transition = 'fill 500ms ease';
+      p1.style.transition = 'fill 400ms ease';
+      p2.style.transition = 'fill 400ms ease';
       p1.setAttribute('fill', '#dfdfdf');
       p2.setAttribute('fill', '#dfdfdf');
-    }, 1500);
+    }, 600);
 
+    // اللوجو يختفي والشاشة تختفي
     at(() => {
-      lw.style.transition = 'filter 550ms ease';
-      lw.style.filter =
-        'drop-shadow(0 0 10px rgba(255,255,255,.55)) drop-shadow(0 0 30px rgba(255,255,255,.3)) drop-shadow(0 0 65px rgba(255,255,255,.15))';
-    }, 2150);
-
-    at(() => {
-      lw.style.transition = 'filter 450ms ease';
-      lw.style.filter = 'drop-shadow(0 0 3px rgba(255,255,255,.2))';
-    }, 2750);
-
-    at(() => {
-      lw.style.transition = 'filter 500ms ease';
-      lw.style.filter =
-        'drop-shadow(0 0 16px rgba(255,255,255,.9)) drop-shadow(0 0 45px rgba(255,255,255,.55)) drop-shadow(0 0 90px rgba(255,255,255,.28)) drop-shadow(0 0 150px rgba(255,255,255,.12))';
-    }, 3150);
-
-    at(() => {
-      lw.style.transition = 'transform 520ms cubic-bezier(0.55,0,1,0.45), opacity 520ms ease, filter 520ms ease';
-      lw.style.transform = 'scale(1.8)';
+      lw.style.transition = 'opacity 400ms ease';
       lw.style.opacity = '0';
-      lw.style.filter = 'drop-shadow(0 0 18px rgba(255,255,255,.35))';
-    }, duration);
-
-    at(() => {
-      sc.style.transition = 'opacity 520ms ease, background 450ms ease';
+      sc.style.transition = 'opacity 400ms ease, background 400ms ease';
       sc.style.background = '#fff';
       sc.style.opacity = '0';
-    }, duration + 120);
+    }, duration);
 
     at(() => {
       setHidden(true);
       onFadeComplete?.();
-    }, duration + 520);
+    }, duration + 400);
 
     return () => timers.current.forEach(clearTimeout);
   }, [duration, onFadeComplete]);
