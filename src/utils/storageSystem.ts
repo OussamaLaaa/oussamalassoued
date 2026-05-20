@@ -121,12 +121,44 @@ const safeStringify = (data: unknown): string | null => {
   }
 };
 
+const isQuotaExceededError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+
+  const quotaError = error as DOMException & { code?: number };
+  return (
+    quotaError.name === 'QuotaExceededError' ||
+    quotaError.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    quotaError.code === 22 ||
+    quotaError.code === 1014
+  );
+};
+
+const pruneAncillaryStorage = (): void => {
+  safeRemoveItem(STORAGE_KEYS.HISTORY);
+  safeRemoveItem(STORAGE_KEYS.RECOVERY);
+  safeRemoveItem(STORAGE_KEYS.SESSION);
+};
+
 // Storage operations with error handling
 const safeSetItem = (key: string, value: string): boolean => {
   try {
     localStorage.setItem(key, value);
     return true;
   } catch (error) {
+    if (isQuotaExceededError(error)) {
+      pruneAncillaryStorage();
+
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (retryError) {
+        if (!isQuotaExceededError(retryError)) {
+          console.error(`Failed to set ${key}:`, retryError);
+        }
+        return false;
+      }
+    }
+
     console.error(`Failed to set ${key}:`, error);
     return false;
   }
@@ -249,24 +281,17 @@ const loadVersionHistory = (): StorageVersionSnapshot[] => {
 
 const saveVersionHistory = (history: StorageVersionSnapshot[]): boolean => {
   const trimmedHistory = history.slice(0, MAX_VERSION_HISTORY);
+  const attempts = [trimmedHistory, trimmedHistory.slice(0, 3), trimmedHistory.slice(0, 1)];
 
-  try {
-    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(trimmedHistory));
-    return true;
-  } catch (error) {
-    console.error('Failed to save version history:', error);
-
-    // If quota is exceeded, fall back to a much smaller history so the dashboard keeps working.
-    try {
-      const compactHistory = trimmedHistory.slice(0, 1);
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(compactHistory));
+  for (const candidate of attempts) {
+    const success = safeSetItem(STORAGE_KEYS.HISTORY, JSON.stringify(candidate));
+    if (success) {
       return true;
-    } catch (compactError) {
-      console.error('Failed to save compact version history:', compactError);
-      safeRemoveItem(STORAGE_KEYS.HISTORY);
-      return false;
     }
   }
+
+  safeRemoveItem(STORAGE_KEYS.HISTORY);
+  return false;
 };
 
 const createVersionSnapshot = (config: SiteConfig): StorageVersionSnapshot => {

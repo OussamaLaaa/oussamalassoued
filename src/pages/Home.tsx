@@ -31,20 +31,6 @@ export const Home: React.FC = () => {
   const { visibility } = siteConfig;
   const isStaticHomeLayout = visibility.staticHomeLayout;
   
-  // Debug logging
-  React.useEffect(() => {
-    // Log to window for debugging
-    if (typeof window !== 'undefined') {
-      (window as any).HOME_DEBUG = {
-        isStaticHomeLayout,
-        visibilityKeys: Object.keys(visibility),
-        staticHomeLayoutValue: visibility.staticHomeLayout,
-      };
-    }
-    console.log('DEBUG Home: isStaticHomeLayout =', isStaticHomeLayout);
-    console.log('DEBUG Home: visibility.staticHomeLayout =', visibility.staticHomeLayout);
-  }, [isStaticHomeLayout, visibility]);
-  
   const { progress, images, isComplete } = usePreloadFrames(isStaticHomeLayout ? [] : SCENES);
    
   const [hasStarted, setHasStarted] = useState(() => hasHomeBootCompleted);

@@ -15,7 +15,6 @@ import {
     SITE_CARD_VARIANTS,
     SITE_GLASS_VARIANTS,
     SITE_SOCIAL_ICON_KEYS,
-    SITE_CONFIG_STORAGE_KEY,
     type SiteButtonVariant,
     type SiteCardVariant,
     type SiteCursorAnimationMode,
@@ -34,6 +33,7 @@ import {
     type SiteInboxMessage,
     type SiteMessageStatus,
   } from '../config/siteConfig';
+  import { saveSiteConfig } from '../utils/storageSystem';
   import {
     BarChart3Icon,
     ExternalLinkIcon,
@@ -1221,7 +1221,12 @@ export const Dashboard: React.FC = () => {
     if (typeof window === 'undefined') return false;
 
     try {
-      window.localStorage.setItem(SITE_CONFIG_STORAGE_KEY, JSON.stringify(siteConfig));
+      const result = saveSiteConfig(siteConfig);
+      if (!result.success) {
+        setUploadError(result.error || 'Unable to save changes right now.');
+        return false;
+      }
+
       setHasUnsavedChanges(false);
       setUploadMessage('Saved locally in this browser only. Use "Save to API" to publish for everyone.');
       return true;
