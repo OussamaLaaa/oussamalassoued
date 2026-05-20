@@ -413,15 +413,15 @@ export const StaticHomeLayout: React.FC = () => {
           {valueCards.map((card, index) => {
             const Icon = valueIcons[index % valueIcons.length];
             return (
-                <Card key={card.id} className="rounded-2xl border border-secondary/40 bg-gradient-to-br from-secondary/8 to-transparent hover:shadow-lg hover:border-secondary/60 transition-all duration-300 cursor-pointer">
+                <Card key={card.id} className="rounded-2xl border border-[#d7d7d7] bg-white shadow-[0_8px_24px_-18px_rgba(0,0,0,0.16)] hover:border-black hover:shadow-[0_12px_28px_-18px_rgba(0,0,0,0.22)] transition-all duration-300 cursor-pointer">
                 <CardHeader>
-                    <div className="h-12 w-12 rounded-xl bg-secondary/15 flex items-center justify-center text-secondary-foreground/70 border border-secondary/40">
+                    <div className="h-12 w-12 rounded-xl bg-[#f7f7f4] flex items-center justify-center text-[#111827] border border-[#d7d7d7]">
                     <Icon className="h-6 w-6" />
                   </div>
-                    <CardTitle className="mt-4 text-secondary-foreground">{card.title}</CardTitle>
+                    <CardTitle className="mt-4 text-[#111827]">{card.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{card.description}</p>
+                  <p className="text-sm text-[#5b616b] leading-relaxed">{card.description}</p>
                 </CardContent>
               </Card>
             );
@@ -464,7 +464,7 @@ export const StaticHomeLayout: React.FC = () => {
                   <Badge
                     key={skill}
                     variant="default"
-                    className="rounded-full border border-[#cdd7ea] bg-[#edf2fb] px-4 py-1.5 text-sm font-normal text-[#2f405f]"
+                    className="rounded-full border border-[#d6d3cb] bg-white px-4 py-1.5 text-sm font-normal text-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                   >
                     {skill}
                   </Badge>
