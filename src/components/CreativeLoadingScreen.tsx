@@ -60,29 +60,25 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
     tl.to(svg, { scale: 0.9, duration: 0, force3D: true });
     tl.to(svg, { scale: 1, duration: 0.45, ease: 'expo.out' });
 
-    // Draw each path with a gentle stagger; keep the animation smooth and slower
-    paths.forEach((path, idx) => {
-      tl.to(
-        path,
-        { strokeDashoffset: 0, duration: 1.6, ease: 'power2.inOut' },
-        idx * 0.22
-      );
-    });
+    // Draw all paths continuously with a stagger to avoid start/stop pauses
+    tl.to(paths, {
+      strokeDashoffset: 0,
+      duration: 1.6,
+      ease: 'power2.inOut',
+      stagger: 0.18,
+    }, 0);
 
-    // Gentle glow build-up
-    if (glowEl) tl.to(glowEl, { opacity: 0.45, duration: 0.6, ease: 'sine.inOut' }, 0.6);
+    // Gentle glow build-up overlapping the draw
+    if (glowEl) tl.to(glowEl, { opacity: 0.45, duration: 0.5, ease: 'sine.inOut' }, 0.45);
 
-    // Stroke strengthen
-    tl.to(paths, { strokeWidth: 6.5, duration: 0.5, ease: 'sine.inOut' }, '-=0.2');
+    // Slight stroke strengthening as draw finishes
+    tl.to(paths, { strokeWidth: 6.5, duration: 0.4, ease: 'sine.inOut' }, '-=0.4');
 
-    // Small breathing pulse
-    if (glowEl) tl.to(glowEl, { opacity: 0.6, duration: 0.45, yoyo: true, repeat: 1, ease: 'sine.inOut' }, '-=0.1');
+    // Short hold so the logo doesn't linger too long
+    tl.to({}, { duration: 0.18 });
 
-    // Hold
-    tl.to({}, { duration: 0.6 });
-
-    // Fill in smoothly
-    tl.to(paths, { fill: 'black', fillOpacity: 1, strokeOpacity: 0, duration: 0.9, ease: 'power2.inOut', stagger: 0.06 });
+    // Fill in smoothly (faster)
+    tl.to(paths, { fill: 'black', fillOpacity: 1, strokeOpacity: 0, duration: 0.6, ease: 'power2.inOut', stagger: 0.04 });
 
     // Final moment then exit: upward float and fade
     tl.to(svg, { y: -38, scale: 1.08, opacity: 0, duration: 0.95, ease: 'power3.in' });
@@ -94,8 +90,15 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
       duration: 0.9,
       ease: 'power2.inOut',
       onComplete: () => {
+        // fully hide the overlay before revealing the app
+        try {
+          if (container) {
+            container.style.pointerEvents = 'none';
+            container.style.display = 'none';
+          }
+        } catch (e) {}
         setIsAnimating(false);
-        if (container) container.style.pointerEvents = 'none';
+        // now let the app start
         onFadeComplete();
       },
     });
