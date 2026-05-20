@@ -101,6 +101,86 @@ export const Footer: React.FC = () => {
 
   const ctaSection = getSectionFromHref(footer.ctaButtonHref);
 
+  const isStaticHome = visibility.staticHomeLayout;
+
+  if (isStaticHome) {
+    // Render static home footer layout so all pages can use the same static footer
+    return (
+      <footer className="border-t mt-12">
+        <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-12 gap-10">
+          <div className="md:col-span-4 space-y-4">
+            <div className="font-semibold tracking-tight text-lg">{footer.brandTitle}</div>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{footer.brandDescription}</p>
+          </div>
+          <div className="md:col-span-2 md:col-start-6">
+            <div className="text-sm font-medium mb-4 text-foreground">{footer.quickLinksTitle}</div>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              {syncedNavLinks.map((link) => (
+                <li key={link.id}>
+                  <a
+                    href={link.href}
+                    onClick={(event) => handlePlaceholderLinkClick(event, link.href)}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:col-span-2">
+            <div className="text-sm font-medium mb-4 text-foreground">{footer.followTitle}</div>
+            <div className="flex gap-3">
+              {visibleSocialLinks.map((link) => {
+                const SocialIcon = getSocialIconComponent(link.icon);
+                return (
+                  <a
+                    key={link.id}
+                    href={link.href}
+                    onClick={(event) => handlePlaceholderLinkClick(event, link.href)}
+                    target={isPlaceholderHref(link.href) ? undefined : '_blank'}
+                    rel={isPlaceholderHref(link.href) ? undefined : 'noopener noreferrer'}
+                    className="inline-flex items-center justify-center text-[#111217]/72 transition-colors hover:text-[#111217]"
+                    aria-label={link.label}
+                  >
+                    <SocialIcon className="h-5 w-5" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+          <div className="md:col-span-3 md:col-start-10">
+            <div className="text-sm font-medium mb-4 text-foreground">{footer.ctaTitle}</div>
+            <a
+              href={footer.ctaButtonHref || persistentUI.letsTalkHref}
+              onClick={(event) => handlePlaceholderLinkClick(event, footer.ctaButtonHref || persistentUI.letsTalkHref)}
+              className={ctaButtonClass}
+            >
+              {footer.ctaButtonLabel} <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+          </div>
+        </div>
+        <div className="border-t">
+          <div className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between text-xs text-muted-foreground">
+            <span>© {new Date().getFullYear()} {footer.copyrightText}</span>
+            <div className="flex gap-6">
+              {visibleLegalLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  onClick={(event) => handlePlaceholderLinkClick(event, link.href)}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="relative z-10 w-full border-t border-[#111217]/10 bg-[#f6f6f7] text-[#111217] selection:bg-[#111217]/10">
       <div className="site-shell pb-8 pt-14 md:pb-10 md:pt-16">

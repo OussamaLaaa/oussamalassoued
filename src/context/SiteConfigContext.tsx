@@ -558,18 +558,8 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [siteConfig, storageInfo]);
 
-  // Block rendering children until we attempted to hydrate from API
-  if (isHydratingFromApi) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ds-glass-tint, #fff)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 72, height: 72, borderRadius: 18, background: '#111', opacity: 0.08, margin: '0 auto 12px' }} />
-          <div style={{ color: '#666' }}>Loading site configuration…</div>
-        </div>
-      </div>
-    );
-  }
-
+  // Do not block rendering while hydrating from API — render children immediately
+  // This removes the initial full-page loading screen so the site appears instantly.
   return <SiteConfigContext.Provider value={value}>{children}</SiteConfigContext.Provider>;
 };
 
