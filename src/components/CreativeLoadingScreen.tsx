@@ -61,6 +61,54 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
       }}
     >
       <style>{`
+        @keyframes logoFloat {
+          0% {
+            transform: translateY(0) scale(1);
+          }
+          25% {
+            transform: translateY(-10px) scale(1.02) rotate(-1deg);
+          }
+          50% {
+            transform: translateY(0) scale(1.04) rotate(0deg);
+          }
+          75% {
+            transform: translateY(10px) scale(1.02) rotate(1deg);
+          }
+          100% {
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes logoGlow {
+          0% {
+            filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+            opacity: 0.92;
+          }
+          50% {
+            filter: drop-shadow(0 0 26px rgba(0, 0, 0, 0.14));
+            opacity: 1;
+          }
+          100% {
+            filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+            opacity: 0.92;
+          }
+        }
+
+        @keyframes ringPulse {
+          0% {
+            transform: scale(0.98);
+            opacity: 0.45;
+          }
+          50% {
+            transform: scale(1.08);
+            opacity: 0.1;
+          }
+          100% {
+            transform: scale(0.98);
+            opacity: 0.45;
+          }
+        }
+
         @keyframes fadeOut {
           0% {
             opacity: 1;
@@ -77,13 +125,29 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({
           }
         }
       `}</style>
-      <div style={{ position: 'relative', width: 120, height: 80 }}>
+      <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: 120,
+            height: 120,
+            borderRadius: '999px',
+            border: '1px solid rgba(0, 0, 0, 0.07)',
+            animation: 'ringPulse 2.8s ease-in-out infinite',
+          }}
+        />
         <img
           src="/logo-black.png"
           alt="Site Logo"
           width={120}
           height={80}
-          style={{ display: 'block', objectFit: 'contain' }}
+          style={{
+            display: 'block',
+            objectFit: 'contain',
+            transformOrigin: 'center center',
+            animation: 'logoFloat 3.6s ease-in-out infinite, logoGlow 2.8s ease-in-out infinite',
+          }}
           loading="eager"
         />
       </div>
