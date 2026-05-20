@@ -15,6 +15,7 @@ import https from 'https';
 const CONFIG_KEY = 'site:config';
 const isProduction = process.env.NODE_ENV === 'production';
 const isVercel = !!process.env.VERCEL;
+const REQUEST_TIMEOUT_MS = 4000;
 
 const storageConfig = {
   vercelKv: {
@@ -75,6 +76,10 @@ const sendUpstashCommand = async (commandParts) => {
 
     request.on('error', (error) => {
       resolve({ error: error.message });
+    });
+
+    request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      request.destroy(new Error(`Upstash request timed out after ${REQUEST_TIMEOUT_MS}ms`));
     });
 
     request.write(postData);
@@ -146,6 +151,10 @@ const readFromVercelKv = async () => {
         resolve(null);
       });
 
+      request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+        request.destroy(new Error(`Vercel KV request timed out after ${REQUEST_TIMEOUT_MS}ms`));
+      });
+
       request.end();
     });
   } catch (error) {
@@ -201,6 +210,10 @@ const writeToVercelKv = async (data) => {
       request.on('error', (error) => {
         console.error('[API:Config] Vercel KV write error:', error.message);
         resolve(false);
+      });
+
+      request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+        request.destroy(new Error(`Vercel KV write timed out after ${REQUEST_TIMEOUT_MS}ms`));
       });
 
       request.write(postData);

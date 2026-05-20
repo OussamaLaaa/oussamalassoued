@@ -23,6 +23,7 @@ const SECURITY_CONFIG = {
   maxMessageAge: 1000 * 60 * 60 * 24 * 30, // 30 days
   rateLimit: { windowMs: 60 * 1000, maxRequests: 6 },
 };
+const REQUEST_TIMEOUT_MS = 4000;
 
 // Load environment variables (development only)
 // Vercel automatically loads from Environment Variables dashboard
@@ -559,6 +560,9 @@ const sendUpstashCommand = async (commandParts) => {
     });
 
     request.on('error', (error) => { resolve({ error: error.message }); });
+    request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      request.destroy(new Error(`Upstash request timed out after ${REQUEST_TIMEOUT_MS}ms`));
+    });
     request.write(postData);
     request.end();
   });
@@ -605,6 +609,9 @@ const readFromVercelKv = async () => {
       request.on('error', (error) => {
         console.error('[API:Messages] Vercel KV request error:', error.message);
         resolve([]);
+      });
+      request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+        request.destroy(new Error(`Vercel KV request timed out after ${REQUEST_TIMEOUT_MS}ms`));
       });
       request.end();
     });
@@ -655,6 +662,9 @@ const writeToVercelKv = async (messages) => {
         console.error('[API:Messages] Vercel KV write error:', error.message);
         lastStorageError = error?.message || String(error);
         resolve(false);
+      });
+      request.setTimeout(REQUEST_TIMEOUT_MS, () => {
+        request.destroy(new Error(`Vercel KV write timed out after ${REQUEST_TIMEOUT_MS}ms`));
       });
       request.write(postData);
       request.end();
