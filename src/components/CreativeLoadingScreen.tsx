@@ -14,185 +14,100 @@ export const CreativeLoadingScreen: React.FC<CreativeLoadingScreenProps> = ({ on
   const [isAnimating, setIsAnimating] = useState(true);
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current || !containerRef.current) return;
 
     const svg = svgRef.current;
+    const container = containerRef.current;
+    const glowEl = glowRef.current;
     const paths = Array.from(svg.querySelectorAll('path')) as SVGPathElement[];
     pathsRef.current = paths;
 
-    // Get total stroke length for each path
-    const strokeLengths = paths.map(path => path.getTotalLength());
+    // Ensure overlay is fully opaque immediately to prevent flash of content
+    container.style.backgroundColor = 'white';
+    container.style.opacity = '1';
+    container.style.pointerEvents = 'auto';
 
-    // Set up paths for stroke animation
-    paths.forEach((path, idx) => {
-      path.style.strokeDasharray = strokeLengths[idx].toString();
-      path.style.strokeDashoffset = strokeLengths[idx].toString();
-      path.style.fill = 'none';
-      path.style.stroke = 'black';
-      path.style.strokeWidth = '6';
-      path.style.strokeLinecap = 'round';
-      path.style.strokeLinejoin = 'round';
-      path.style.opacity = '0.3';
+    // Prepare paths using gsap.set to avoid layout flicker
+    const strokeLengths = paths.map((p) => p.getTotalLength());
+    // Ensure svg uses center transform origin and block layout to avoid shift
+    gsap.set(svg, { transformOrigin: '50% 50%', force3D: true });
+    svg.style.display = 'block';
+    svg.style.margin = '0 auto';
+    gsap.set(paths, {
+      stroke: 'black',
+      fill: 'none',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      strokeWidth: 4,
+      opacity: 1,
+      vectorEffect: 'non-scaling-stroke',
     });
 
-    const timeline = gsap.timeline();
+    paths.forEach((path, i) => {
+      gsap.set(path, {
+        strokeDasharray: strokeLengths[i],
+        strokeDashoffset: strokeLengths[i],
+      });
+    });
 
-    // Intro: Scale in from center with smooth entrance
-    timeline.from(
-      svgRef.current,
-      {
-        scale: 0.7,
-        opacity: 0,
-        duration: 0.6,
-        ease: 'back.out(1.3)',
-      },
-      0
-    );
+    if (glowEl) {
+      gsap.set(glowEl, { opacity: 0, filter: 'blur(40px)' });
+    }
 
-    // Phase 1: Draw paths one by one with smooth animation
+    const tl = gsap.timeline({ defaults: { clearProps: 'all' } });
+
+    // Entrance: slight pop and settle
+    tl.to(svg, { scale: 0.9, duration: 0, force3D: true });
+    tl.to(svg, { scale: 1, duration: 0.45, ease: 'expo.out' });
+
+    // Draw each path with a gentle stagger; keep the animation smooth and slower
     paths.forEach((path, idx) => {
-      timeline.to(
+      tl.to(
         path,
-        {
-          strokeDashoffset: 0,
-          duration: 2.2,
-          ease: 'power1.inOut',
-        },
-        idx * 0.25 // Stagger with smooth spacing
-      );
-
-      // Opacity increase as path draws
-      timeline.to(
-        path,
-        {
-          opacity: 0.9,
-          duration: 2.2,
-          ease: 'power1.inOut',
-        },
-        idx * 0.25
+        { strokeDashoffset: 0, duration: 1.6, ease: 'power2.inOut' },
+        idx * 0.22
       );
     });
 
-    // Phase 2: Ambient glow builds while drawing
-    timeline.to(
-      glowRef.current,
-      {
-        opacity: 0.3,
-        filter: 'blur(30px)',
-        duration: 0.8,
-        ease: 'sine.inOut',
-      },
-      0.5
-    );
+    // Gentle glow build-up
+    if (glowEl) tl.to(glowEl, { opacity: 0.45, duration: 0.6, ease: 'sine.inOut' }, 0.6);
 
-    // Phase 3: Enhance stroke after drawing
-    timeline.to(
-      paths,
-      {
-        strokeWidth: 8,
-        opacity: 1,
-        duration: 0.6,
-        ease: 'sine.inOut',
-      },
-      '-=0.4'
-    );
+    // Stroke strengthen
+    tl.to(paths, { strokeWidth: 6.5, duration: 0.5, ease: 'sine.inOut' }, '-=0.2');
 
-    // Phase 4: Glow intensity pulses
-    timeline.to(
-      glowRef.current,
-      {
-        opacity: 0.5,
-        duration: 0.5,
-        ease: 'sine.inOut',
-      },
-      '-=0.2'
-    );
+    // Small breathing pulse
+    if (glowEl) tl.to(glowEl, { opacity: 0.6, duration: 0.45, yoyo: true, repeat: 1, ease: 'sine.inOut' }, '-=0.1');
 
-    timeline.to(
-      glowRef.current,
-      {
-        opacity: 0.3,
-        duration: 0.5,
-        ease: 'sine.inOut',
+    // Hold
+    tl.to({}, { duration: 0.6 });
+
+    // Fill in smoothly
+    tl.to(paths, { fill: 'black', fillOpacity: 1, strokeOpacity: 0, duration: 0.9, ease: 'power2.inOut', stagger: 0.06 });
+
+    // Final moment then exit: upward float and fade
+    tl.to(svg, { y: -38, scale: 1.08, opacity: 0, duration: 0.95, ease: 'power3.in' });
+    if (glowEl) tl.to(glowEl, { opacity: 0, duration: 0.8, ease: 'power2.in' }, '-=0.8');
+
+    // Only fade the container after svg fully faded to avoid showing page early
+    tl.to(container, {
+      backgroundColor: 'rgba(255,255,255,0)',
+      duration: 0.9,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        setIsAnimating(false);
+        if (container) container.style.pointerEvents = 'none';
+        onFadeComplete();
+      },
+    });
+
+    return () => {
+      tl.kill();
+      gsap.set(paths, { clearProps: 'all' });
+      if (glowEl) gsap.set(glowEl, { clearProps: 'all' });
+      if (container) {
+        container.style.pointerEvents = 'none';
       }
-    );
-
-    // Phase 5: Hold on completed strokes
-    timeline.to(
-      {},
-      { duration: 0.8 }
-    );
-
-    // Phase 6: Beautiful fill transition with stagger
-    timeline.to(
-      paths,
-      {
-        fill: 'black',
-        fillOpacity: 1,
-        strokeOpacity: 0,
-        duration: 1,
-        ease: 'power2.inOut',
-        stagger: 0.08,
-      }
-    );
-
-    // Phase 7: Strong glow emerges after fill
-    timeline.to(
-      glowRef.current,
-      {
-        opacity: 0.7,
-        boxShadow: '0 0 100px rgba(0, 0, 0, 0.4), 0 0 50px rgba(0, 0, 0, 0.25)',
-        duration: 0.7,
-        ease: 'power1.inOut',
-      },
-      '-=0.6'
-    );
-
-    // Phase 8: Brief moment of perfection
-    timeline.to(
-      {},
-      { duration: 1.2 }
-    );
-
-    // Phase 9: Gentle upward float and fade
-    timeline.to(
-      svgRef.current,
-      {
-        y: -40,
-        scale: 1.15,
-        opacity: 0,
-        duration: 1.1,
-        ease: 'power3.in',
-      }
-    );
-
-    timeline.to(
-      glowRef.current,
-      {
-        opacity: 0,
-        duration: 0.8,
-        ease: 'power2.in',
-      },
-      '-=0.8'
-    );
-
-    // Phase 10: Graceful container fade to transparent
-    timeline.to(
-      containerRef.current,
-      {
-        backgroundColor: 'rgba(255, 255, 255, 0)',
-        duration: 1.1,
-        ease: 'power2.inOut',
-        onComplete: () => {
-          setIsAnimating(false);
-          if (containerRef.current) {
-            containerRef.current.style.pointerEvents = 'none';
-          }
-          onFadeComplete();
-        },
-      },
-      '-=0.8'
-    );
+    };
   }, [onFadeComplete]);
 
   return (
