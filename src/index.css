@@ -1048,3 +1048,85 @@ select:focus-visible {
 [data-surface="static-home"] {
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
+
+/* ─── ANTIGRAVITY ANIMATIONS ─── */
+
+@keyframes antigravity-float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) translateX(3px) rotate(0.3deg);
+  }
+  50% {
+    transform: translateY(-4px) translateX(-2px) rotate(-0.2deg);
+  }
+  75% {
+    transform: translateY(-10px) translateX(1px) rotate(0.4deg);
+  }
+}
+
+@keyframes antigravity-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.97);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.002);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes antigravity-drift {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(6px, -8px);
+  }
+  66% {
+    transform: translate(-4px, -3px);
+  }
+}
+
+@keyframes antigravity-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.04));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.08));
+  }
+}
+
+@keyframes antigravity-particle-rise {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1);
+    opacity: 0;
+  }
+}
+
+[data-surface="static-home"] [data-motion] {
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="static-home"] [data-motion] {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}

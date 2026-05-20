@@ -10,6 +10,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { Scene05Overlay } from '../components/Scene05Overlay';
 import { FeaturedWork } from '../components/FeaturedWork';
 import { StaticHomeLayout } from '../components/StaticHomeLayout';
+import GlobalMotionLayer from '../components/GlobalMotionLayer';
 
 const SCENE_02 = 'scene-02-desk-focus';
 const SCENE_03 = 'scene-03-screen-entry';
@@ -97,6 +98,7 @@ export const Home: React.FC = () => {
 
       {isStatic ? (
         <>
+          <GlobalMotionLayer />
           <StaticHomeLayout />
         </>
       ) : hasStarted ? (

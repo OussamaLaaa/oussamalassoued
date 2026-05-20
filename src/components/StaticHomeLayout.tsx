@@ -381,7 +381,7 @@ export const StaticHomeLayout: React.FC = () => {
           </div>
 
           {/* Avatar + meta strip */}
-          <div className="mt-14 flex items-center justify-center gap-4 flex-wrap">
+          <div data-motion className="mt-14 flex items-center justify-center gap-4 flex-wrap">
             <div className="flex -space-x-3">
               {heroTestimonials.map((item) => (
                 <Avatar key={item.id} className="h-10 w-10 ring-2 ring-background">
@@ -413,7 +413,7 @@ export const StaticHomeLayout: React.FC = () => {
 
       {/* ===================== VALUES SECTION ===================== */}
       <section id="values" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
-        <div className="mb-12">
+        <div data-motion className="mb-12">
           <SectionEyebrow>{scene05.valuesEyebrow}</SectionEyebrow>
           <h2 className="tracking-tight max-w-2xl" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
             {scene05.visionTitle}
@@ -464,7 +464,7 @@ export const StaticHomeLayout: React.FC = () => {
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
+          <div data-motion className="space-y-6">
             <div>
               <SectionEyebrow>{scene05.skillsEyebrow}</SectionEyebrow>
               <h3 className="tracking-tight" style={{ fontSize: '1.5rem', fontWeight: 600 }}>
@@ -483,7 +483,7 @@ export const StaticHomeLayout: React.FC = () => {
             <Separator />
             <div>
               <SectionEyebrow>{scene05.certificationsTitle}</SectionEyebrow>
-              <div className="space-y-2">
+              <div data-motion className="space-y-2">
                 {certificationItems.map((item) => (
                   <div
                     key={item.title}
@@ -510,7 +510,7 @@ export const StaticHomeLayout: React.FC = () => {
 
       {/* ===================== PROJECTS SECTION ===================== */}
       <section id="projects" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
-        <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+        <div data-motion className="flex items-end justify-between mb-12 flex-wrap gap-4">
           <div>
             <SectionEyebrow>{featured.titleLine1}</SectionEyebrow>
             <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
@@ -525,7 +525,7 @@ export const StaticHomeLayout: React.FC = () => {
           </a>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div data-motion className="grid md:grid-cols-2 gap-6">
           {projects.map((project) => {
             const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
             const isPlaceholder = !projectHref || projectHref.trim() === '#';
@@ -571,13 +571,13 @@ export const StaticHomeLayout: React.FC = () => {
       {/* ===================== TESTIMONIALS SECTION ===================== */}
       {visibility.testimonialsSection ? (
         <section id="testimonials" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
-          <div className="mb-12">
+          <div data-motion className="mb-12">
             <SectionEyebrow>{featured.testimonialsEyebrow}</SectionEyebrow>
             <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
               {featured.testimonialsTitle}
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div data-motion className="grid md:grid-cols-3 gap-6">
             {testimonials.map((item) => (
               <Card key={item.id} className="rounded-2xl">
                 <CardContent className="p-6 space-y-5">
@@ -602,7 +602,7 @@ export const StaticHomeLayout: React.FC = () => {
 
       {/* ===================== CTA SECTION ===================== */}
       <section id="contact" className="mx-auto max-w-5xl px-6 py-32 text-center" style={deferredSectionStyle}>
-        <h2
+        <h2 data-motion
           className="tracking-tight mx-auto max-w-4xl"
           style={{
             fontSize: 'clamp(3rem, 8vw, 6rem)',
@@ -615,17 +615,17 @@ export const StaticHomeLayout: React.FC = () => {
           <br />
           {featured.ctaTitleLine2}
         </h2>
-        <p className="mx-auto max-w-xl mt-8 text-muted-foreground leading-relaxed">
+        <p data-motion className="mx-auto max-w-xl mt-8 text-muted-foreground leading-relaxed">
           {featured.ctaDescription}
         </p>
-        <a href={featured.ctaButtonHref || contactHref} className={joinClasses(footerCtaClass, 'mt-10')}>
+        <a data-motion href={featured.ctaButtonHref || contactHref} className={joinClasses(footerCtaClass, 'mt-10')}>
           {featured.ctaButtonText} <ArrowRight className="ml-2 h-4 w-4" />
         </a>
       </section>
 
       {/* ===================== FOOTER ===================== */}
       <footer className="border-t mt-12" style={deferredSectionStyle}>
-        <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-12 gap-10">
+        <div data-motion className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4 space-y-4">
             <div className="font-semibold tracking-tight text-lg">{footer.brandTitle}</div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{footer.brandDescription}</p>
@@ -679,7 +679,7 @@ export const StaticHomeLayout: React.FC = () => {
           </div>
         </div>
         <div className="border-t">
-          <div className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between text-xs text-muted-foreground">
+          <div data-motion className="mx-auto max-w-6xl px-6 py-6 flex items-center justify-between text-xs text-muted-foreground">
             <span>© {new Date().getFullYear()} {footer.copyrightText}</span>
             <div className="flex gap-6">
               {footerLegalLinks.map((link) => (
