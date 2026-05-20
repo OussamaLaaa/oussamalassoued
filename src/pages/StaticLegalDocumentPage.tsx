@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { AdvancedNavbar } from '../components/AdvancedNavbar';
-import { Footer } from '../components/Footer';
 import { getButtonClass } from '../components/designSystem';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useSeoMeta } from '../hooks/useSeoMeta';
+import { StaticFooter } from '../components/StaticFooter';
 
 type LegalDocumentKind = 'terms' | 'privacy';
 
@@ -73,7 +73,7 @@ const StaticLegalDocumentPage: React.FC<StaticLegalDocumentPageProps> = ({ kind 
         </section>
       </main>
 
-      <Footer />
+      <StaticFooter />
     </div>
   );
 };
