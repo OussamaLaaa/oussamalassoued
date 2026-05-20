@@ -425,7 +425,10 @@ const Contact: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15 group-hover:text-white" style={{ color: card.color }}>
+                    <div
+                      style={{ ['--contact-icon-color' as any]: card.color }}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15 text-[var(--contact-icon-color)] group-hover:text-white"
+                    >
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
