@@ -1,4 +1,5 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { SiteConfigProvider } from './context/SiteConfigContext';
 
 // Lazy load all pages including Home for better initial load performance
@@ -148,9 +149,12 @@ function App() {
     const firstSeg = routeSource.replace(/^\/+/, '').split('/')[0]?.toLowerCase();
     if (firstSeg === 'opportunities') {
       return (
-        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-          <Opportunities />
-        </Suspense>
+        <>
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Opportunities />
+          </Suspense>
+          <Analytics />
+        </>
       );
     }
   }
@@ -227,6 +231,7 @@ function App() {
             <Home />
           </Suspense>
         )}
+        <Analytics />
       </SiteConfigProvider>
     </ErrorBoundary>
   );
