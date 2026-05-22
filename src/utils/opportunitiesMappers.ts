@@ -7,6 +7,8 @@ import type {
   MessageInput,
   Deal,
   DealInput,
+  Project,
+  ProjectInput,
   MessageTemplate,
   MessageTemplateInput,
 } from '../types/opportunities';
@@ -230,4 +232,47 @@ export const templateToDb = (input: MessageTemplateInput) => ({
   subject: toNullableString(input.subject),
   body: input.body,
   is_active: input.isActive ?? true,
+});
+
+// ── Project mappers ──
+
+export const projectFromDb = (row: any, relatedCompanyName?: string, relatedPersonName?: string): Project => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  type: row?.type ?? undefined,
+  status: row?.status ?? undefined,
+  phase: row?.phase ?? undefined,
+  priority: row?.priority ?? undefined,
+  progress: safeNumber(row?.progress),
+  startDate: toIso(row?.start_date ?? row?.startDate),
+  deadline: toIso(row?.deadline ?? row?.deadline),
+  relatedCompanyId: row?.related_company_id ?? row?.relatedCompanyId ?? undefined,
+  relatedCompanyName,
+  relatedPersonId: row?.related_person_id ?? row?.relatedPersonId ?? undefined,
+  relatedPersonName,
+  portfolioUrl: row?.portfolio_url ?? row?.portfolioUrl ?? undefined,
+  figmaUrl: row?.figma_url ?? row?.figmaUrl ?? undefined,
+  githubUrl: row?.github_url ?? row?.githubUrl ?? undefined,
+  notes: row?.notes ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const projectToDb = (input: ProjectInput) => ({
+  name: input.name.trim(),
+  type: input.type || null,
+  status: input.status || 'planned',
+  phase: input.phase || 'idea',
+  priority: input.priority || 'medium',
+  progress: input.progress != null ? Math.max(0, Math.min(100, Number(input.progress))) : 0,
+  start_date: toNullableDate(input.startDate),
+  deadline: toNullableDate(input.deadline),
+  related_company_id: toNullableString(input.relatedCompanyId),
+  related_person_id: toNullableString(input.relatedPersonId),
+  portfolio_url: toNullableString(input.portfolioUrl),
+  figma_url: toNullableString(input.figmaUrl),
+  github_url: toNullableString(input.githubUrl),
+  notes: toNullableString(input.notes),
+  next_action: toNullableString(input.nextAction),
 });

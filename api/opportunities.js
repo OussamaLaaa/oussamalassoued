@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
-const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'message_templates']);
-const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'message_templates'];
+const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'projects', 'message_templates']);
+const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 
@@ -198,6 +198,7 @@ export default async function handler(req, res) {
         people: results.people || [],
         messages: results.messages || [],
         deals: results.deals || [],
+        projects: results.projects || [],
         message_templates: results.message_templates || [],
         templatesWarning,
         strategyNotes: [],

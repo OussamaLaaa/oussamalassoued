@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
 import MessagesTable, { type MessageFilters } from './MessagesTable';
 import DealsTable, { type DealFilters } from './DealsTable';
+import ProjectsPanel from './ProjectsPanel';
+import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
@@ -28,6 +30,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'people', label: 'People' },
   { id: 'messages', label: 'Messages' },
   { id: 'deals', label: 'Deals' },
+  { id: 'projects', label: 'Projects' },
   { id: 'queue', label: 'Outreach Queue' },
   { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
@@ -92,6 +95,24 @@ const toDealInput = (d: Deal): DealInput => ({
   stage: d.stage as DealInput['stage'],
   probability: d.probability !== undefined ? Math.round(d.probability * 100) : undefined,
   notes: d.notes,
+});
+
+const toProjectInput = (p: Project): ProjectInput => ({
+  name: p.name,
+  type: p.type as ProjectInput['type'],
+  status: p.status as ProjectInput['status'],
+  phase: p.phase as ProjectInput['phase'],
+  priority: p.priority as ProjectInput['priority'],
+  progress: p.progress,
+  startDate: p.startDate,
+  deadline: p.deadline,
+  relatedCompanyId: p.relatedCompanyId,
+  relatedPersonId: p.relatedPersonId,
+  portfolioUrl: p.portfolioUrl,
+  figmaUrl: p.figmaUrl,
+  githubUrl: p.githubUrl,
+  notes: p.notes,
+  nextAction: p.nextAction,
 });
 
 const defaultCompanyFilters: CompanyFilters = {
@@ -160,6 +181,7 @@ const OpportunitiesLayout: React.FC<{
     addPerson: (input: any) => void;
     addMessage: (input: any) => void;
     addDeal: (input: any) => void;
+    addProject: (input: ProjectInput) => Promise<any>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -169,6 +191,8 @@ const OpportunitiesLayout: React.FC<{
     deleteMessage: (id: string) => void;
     updateDeal: (id: string, input: DealInput) => void;
     deleteDeal: (id: string) => void;
+    updateProject: (id: string, input: ProjectInput) => Promise<any>;
+    deleteProject: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
     seedDefaultTemplates?: () => Promise<any>;
@@ -178,11 +202,12 @@ const OpportunitiesLayout: React.FC<{
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
-  const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | null>(null);
+  const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | 'project' | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showPeopleImport, setShowPeopleImport] = useState(false);
   const [templatePerson, setTemplatePerson] = useState<Person | null>(null);
@@ -207,12 +232,12 @@ const OpportunitiesLayout: React.FC<{
   };
 
   const {
-    companies, people, messages, deals, templates, strategyNotes,
-    addCompany, addPerson, addMessage, addDeal, addTemplate,
+    companies, people, messages, deals, projects, templates, strategyNotes,
+    addCompany, addPerson, addMessage, addDeal, addProject, addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
     updateMessage, deleteMessage,
-    updateDeal, deleteDeal, updateTemplate, deleteTemplate, seedDefaultTemplates,
+    updateDeal, deleteDeal, updateProject, deleteProject, updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
     importPeople,
@@ -269,6 +294,14 @@ const OpportunitiesLayout: React.FC<{
     deleteDeal(id);
   };
 
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    await deleteProject(id);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] dashboard-shell px-4 py-6">
       <div className="max-w-[1400px] mx-auto grid grid-cols-12 gap-4">
@@ -295,6 +328,8 @@ const OpportunitiesLayout: React.FC<{
                     ? messages.length
                   : t.id === 'deals'
                     ? deals.length
+                  : t.id === 'projects'
+                    ? projects.length
                   : t.id === 'queue'
                     ? getQueueTabCount(people, messages)
                   : t.id === 'templates'
@@ -548,6 +583,17 @@ const OpportunitiesLayout: React.FC<{
               />
             )}
 
+            {tab === 'projects' && (
+              <ProjectsPanel
+                projects={projects}
+                companies={companies}
+                people={people}
+                onAddProject={() => setActiveModal('project')}
+                onEdit={handleEditProject}
+                onDelete={handleDeleteProject}
+              />
+            )}
+
             {tab === 'templates' && (
               <TemplatesPanel
                 templates={templates}
@@ -675,6 +721,45 @@ const OpportunitiesLayout: React.FC<{
               }
             }}
             onCancel={() => setEditingMessage(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Add Project Modal */}
+      {activeModal === 'project' ? (
+        <OpportunityModal title="Add Project" onClose={() => setActiveModal(null)}>
+          <AddProjectForm
+            companies={companies}
+            people={people}
+            onSubmit={async (input) => {
+              try {
+                await addProject(input);
+                setActiveModal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to add project.', error);
+              }
+            }}
+            onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Edit Project Modal */}
+      {editingProject ? (
+        <OpportunityModal title="Edit Project" onClose={() => setEditingProject(null)}>
+          <AddProjectForm
+            companies={companies}
+            people={people}
+            initialData={toProjectInput(editingProject)}
+            onSubmit={async (input) => {
+              try {
+                await updateProject(editingProject.id, input);
+                setEditingProject(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to update project.', error);
+              }
+            }}
+            onCancel={() => setEditingProject(null)}
           />
         </OpportunityModal>
       ) : null}

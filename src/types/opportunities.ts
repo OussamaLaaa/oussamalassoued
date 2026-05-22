@@ -146,6 +146,47 @@ export interface DealInput {
   notes?: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  type?: 'portfolio' | 'client' | 'personal_product' | 'case_study' | 'learning' | 'experiment';
+  status?: 'planned' | 'active' | 'paused' | 'blocked' | 'completed' | 'archived';
+  phase?: 'idea' | 'research' | 'ux_audit' | 'wireframes' | 'ui_design' | 'prototype' | 'case_study' | 'published' | 'archived';
+  priority?: 'high' | 'medium' | 'low';
+  progress?: number;
+  startDate?: string;
+  deadline?: string;
+  relatedCompanyId?: string;
+  relatedCompanyName?: string;
+  relatedPersonId?: string;
+  relatedPersonName?: string;
+  portfolioUrl?: string;
+  figmaUrl?: string;
+  githubUrl?: string;
+  notes?: string;
+  nextAction?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectInput {
+  name: string;
+  type?: Project['type'];
+  status?: Project['status'];
+  phase?: Project['phase'];
+  priority?: Project['priority'];
+  progress?: number;
+  startDate?: string;
+  deadline?: string;
+  relatedCompanyId?: string;
+  relatedPersonId?: string;
+  portfolioUrl?: string;
+  figmaUrl?: string;
+  githubUrl?: string;
+  notes?: string;
+  nextAction?: string;
+}
+
 export interface MessageTemplateInput {
   name: string;
   audience: string;
@@ -161,6 +202,7 @@ export interface OpportunitiesData {
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
+  projects: Project[];
   templates: MessageTemplate[];
   strategyNotes: StrategyNote[];
 }
@@ -173,6 +215,6 @@ export interface StrategyNote {
   priority?: 'low' | 'medium' | 'high';
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'templates' | 'strategy' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';

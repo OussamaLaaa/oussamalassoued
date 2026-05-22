@@ -7,6 +7,7 @@ import {
   personFromDb as mapPersonRow, personToDb as toPersonDb,
   messageFromDb as mapMessageRow, messageToDb as toMessageDb,
   dealFromDb as mapDealRow, dealToDb as toDealDb,
+  projectFromDb as mapProjectRow, projectToDb as toProjectDb,
   templateFromDb as mapTemplateRow, templateToDb as toTemplateDb,
 } from '../utils/opportunitiesMappers';
 import type {
@@ -15,6 +16,8 @@ import type {
   PersonInput,
   MessageInput,
   DealInput,
+  Project,
+  ProjectInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -30,6 +33,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   people: seedData.people.map((item) => ({ ...item })),
   messages: seedData.messages.map((item) => ({ ...item })),
   deals: seedData.deals.map((item) => ({ ...item })),
+  projects: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
 });
@@ -48,6 +52,7 @@ type OpportunitiesApiResponse = {
   people?: any[];
   messages?: any[];
   deals?: any[];
+  projects?: any[];
   message_templates?: any[];
   strategyNotes?: any[];
 };
@@ -120,6 +125,7 @@ export const useOpportunitiesData = () => {
   const [people, setPeople] = useState<Person[]>(() => cloneSeedData().people);
   const [messages, setMessages] = useState<OutreachMessage[]>(() => cloneSeedData().messages);
   const [deals, setDeals] = useState<Deal[]>(() => cloneSeedData().deals);
+  const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(true);
@@ -130,6 +136,7 @@ export const useOpportunitiesData = () => {
     const nextPeopleRaw = Array.isArray(payload?.people) ? payload.people : [];
     const nextMessagesRaw = Array.isArray(payload?.messages) ? payload.messages : [];
     const nextDealsRaw = Array.isArray(payload?.deals) ? payload.deals : [];
+    const nextProjectsRaw = Array.isArray(payload?.projects) ? payload.projects : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
 
     const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
@@ -156,6 +163,13 @@ export const useOpportunitiesData = () => {
       return mapped;
     });
 
+    const nextProjects = nextProjectsRaw.map((row: any) => {
+      const mapped = mapProjectRow(row);
+      mapped.relatedCompanyName = mapped.relatedCompanyName || companyById.get(mapped.relatedCompanyId || '')?.name;
+      mapped.relatedPersonName = mapped.relatedPersonName || personById.get(mapped.relatedPersonId || '')?.fullName;
+      return mapped;
+    });
+
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
 
@@ -170,6 +184,7 @@ export const useOpportunitiesData = () => {
     setPeople(derived.people);
     setMessages(derived.messages);
     setDeals(derived.deals);
+    setProjects(nextProjects);
     setTemplates(nextTemplates);
   }, []);
 
@@ -219,7 +234,7 @@ export const useOpportunitiesData = () => {
     };
   }, [applyPayload]);
 
-  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', data: Record<string, unknown> | Record<string, unknown>[]) => {
+  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
       method: 'POST',
       body: JSON.stringify({ entity, action: 'insert', data }),
@@ -358,7 +373,7 @@ export const useOpportunitiesData = () => {
     return mapped;
   };
 
-  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', id: string, data: Record<string, unknown>) => {
+  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', id: string, data: Record<string, unknown>) => {
     const result = await requestOpportunities({
       method: 'PUT',
       body: JSON.stringify({ entity, action: 'update', id, data }),
@@ -374,7 +389,7 @@ export const useOpportunitiesData = () => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -456,6 +471,39 @@ export const useOpportunitiesData = () => {
     setDeals((current) => current.filter((d) => d.id !== id));
   };
 
+  const addProject = async (input: ProjectInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Project name is required.');
+    }
+
+    const row = await syncInsert('projects', toProjectDb(input));
+    const next = mapProjectRow(row);
+    next.relatedCompanyName = companies.find((c) => c.id === next.relatedCompanyId)?.name;
+    next.relatedPersonName = people.find((p) => p.id === next.relatedPersonId)?.fullName;
+    setProjects((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateProject = async (id: string, input: ProjectInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Project name is required.');
+    }
+
+    const row = await syncUpdate('projects', id, toProjectDb(input));
+    const next = mapProjectRow(row);
+    next.relatedCompanyName = companies.find((c) => c.id === next.relatedCompanyId)?.name;
+    next.relatedPersonName = people.find((p) => p.id === next.relatedPersonId)?.fullName;
+    setProjects((current) => current.map((p) => (p.id === id ? next : p)));
+    return next;
+  };
+
+  const deleteProject = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this project?');
+    if (!confirmed) return;
+    await syncDelete('projects', id);
+    setProjects((current) => current.filter((p) => p.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -519,6 +567,7 @@ export const useOpportunitiesData = () => {
     people,
     messages,
     deals,
+    projects,
     templates,
     strategyNotes,
     importCompaniesBatch,
@@ -526,6 +575,7 @@ export const useOpportunitiesData = () => {
     addPerson,
     addMessage,
     addDeal,
+    addProject,
     addTemplate,
     importPeople,
     updateCompany,
@@ -536,6 +586,8 @@ export const useOpportunitiesData = () => {
     deleteMessage,
     updateDeal,
     deleteDeal,
+    updateProject,
+    deleteProject,
     updateTemplate,
     deleteTemplate,
     seedDefaultTemplates,
