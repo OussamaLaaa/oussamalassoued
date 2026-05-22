@@ -8,11 +8,17 @@ const AddDealForm: React.FC<{
   people: Person[];
   onSubmit: (data: DealInput) => void;
   onCancel: () => void;
-}> = ({ companies, people, onSubmit, onCancel }) => {
-  const [companyId, setCompanyId] = useState(companies[0]?.id || '');
-  const filteredPeople = useMemo(() => people.filter((person) => !companyId || person.companyId === companyId), [companyId, people]);
-  const [personId, setPersonId] = useState(filteredPeople[0]?.id || '');
-  const [form, setForm] = useState<DealInput>({
+  initialData?: DealInput;
+}> = ({ companies, people, onSubmit, onCancel, initialData }) => {
+  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
+  const filteredPeople = useMemo(() => {
+    if (initialData?.companyId) {
+      return people.filter((person) => person.companyId === initialData.companyId);
+    }
+    return people.filter((person) => !companyId || person.companyId === companyId);
+  }, [companyId, people, initialData?.companyId]);
+  const [personId, setPersonId] = useState(initialData?.personId || filteredPeople[0]?.id || '');
+  const [form, setForm] = useState<DealInput>(initialData || {
     companyId: companies[0]?.id,
     personId: filteredPeople[0]?.id,
     servicePackage: '',

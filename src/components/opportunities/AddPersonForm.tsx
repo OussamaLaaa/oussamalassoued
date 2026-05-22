@@ -7,9 +7,10 @@ const AddPersonForm: React.FC<{
   companies: Company[];
   onSubmit: (data: PersonInput) => void;
   onCancel: () => void;
-}> = ({ companies, onSubmit, onCancel }) => {
-  const [companyId, setCompanyId] = useState(companies[0]?.id || '');
-  const [form, setForm] = useState<PersonInput>({
+  initialData?: PersonInput;
+}> = ({ companies, onSubmit, onCancel, initialData }) => {
+  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
+  const [form, setForm] = useState<PersonInput>(initialData || {
     companyId: companies[0]?.id,
     fullName: '',
     role: '',

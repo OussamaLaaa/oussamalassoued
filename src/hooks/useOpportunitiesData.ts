@@ -339,6 +339,104 @@ export const useOpportunitiesData = () => {
     return next;
   };
 
+  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string, data: Record<string, unknown>) => {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity, action: 'update', id, data }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result?.error || 'Failed to update Opportunities data.');
+    }
+
+    return result?.row;
+  };
+
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string) => {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity, action: 'delete', id }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result?.error || 'Failed to delete Opportunities data.');
+    }
+
+    return result?.success;
+  };
+
+  const updateCompany = async (id: string, input: CompanyInput) => {
+    const row = await syncUpdate('companies', id, toCompanyDb(input));
+    const next = mapCompanyRow(row);
+    setCompanies((current) => current.map((c) => (c.id === id ? next : c)));
+    return next;
+  };
+
+  const deleteCompany = async (id: string) => {
+    const confirmed = window.confirm('This may leave related people/messages/deals without a company. Continue?');
+    if (!confirmed) return;
+    await syncDelete('companies', id);
+    setCompanies((current) => current.filter((c) => c.id !== id));
+  };
+
+  const updatePerson = async (id: string, input: PersonInput) => {
+    const row = await syncUpdate('people', id, toPersonDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
+    const companyName = companies.find((company) => company.id === companyId)?.name;
+    const next = mapPersonRow(row, companyName);
+    setPeople((current) => current.map((p) => (p.id === id ? next : p)));
+    return next;
+  };
+
+  const deletePerson = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this person?');
+    if (!confirmed) return;
+    await syncDelete('people', id);
+    setPeople((current) => current.filter((p) => p.id !== id));
+  };
+
+  const updateMessage = async (id: string, input: MessageInput) => {
+    const row = await syncUpdate('messages', id, toMessageDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
+    const personId = getRowRefId(row, 'person_id', 'personId');
+    const companyName = companies.find((company) => company.id === companyId)?.name;
+    const personName = people.find((person) => person.id === personId)?.fullName;
+    const next = mapMessageRow(row, companyName, personName);
+    setMessages((current) => current.map((m) => (m.id === id ? next : m)));
+    return next;
+  };
+
+  const deleteMessage = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this message?');
+    if (!confirmed) return;
+    await syncDelete('messages', id);
+    setMessages((current) => current.filter((m) => m.id !== id));
+  };
+
+  const updateDeal = async (id: string, input: DealInput) => {
+    const row = await syncUpdate('deals', id, toDealDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
+    const personId = getRowRefId(row, 'person_id', 'personId');
+    const companyName = companies.find((company) => company.id === companyId)?.name;
+    const personName = people.find((person) => person.id === personId)?.fullName;
+    const next = mapDealRow(row, companyName, personName);
+    setDeals((current) => current.map((d) => (d.id === id ? next : d)));
+    return next;
+  };
+
+  const deleteDeal = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this deal?');
+    if (!confirmed) return;
+    await syncDelete('deals', id);
+    setDeals((current) => current.filter((d) => d.id !== id));
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -358,6 +456,14 @@ export const useOpportunitiesData = () => {
     addPerson,
     addMessage,
     addDeal,
+    updateCompany,
+    deleteCompany,
+    updatePerson,
+    deletePerson,
+    updateMessage,
+    deleteMessage,
+    updateDeal,
+    deleteDeal,
     resetToSeedData,
     loading,
     error,

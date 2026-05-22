@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { OpportunitiesTab, OpportunitiesData } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable from './CompaniesTable';
 import PeopleTable from './PeopleTable';
@@ -21,6 +21,67 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'strategy', label: 'Strategy' },
 ];
 
+const toCompanyInput = (c: Company): CompanyInput => ({
+  name: c.name,
+  databaseType: c.databaseType as CompanyInput['databaseType'],
+  category: c.category,
+  industry: c.industry,
+  country: c.country,
+  city: c.city,
+  website: c.website,
+  linkedin: c.linkedin,
+  priority: c.priority,
+  fitScore: c.fitScore,
+  ethicalFit: c.ethicalFit as CompanyInput['ethicalFit'],
+  status: c.status as CompanyInput['status'],
+  nextAction: c.nextAction,
+  notes: c.notes,
+});
+
+const toPersonInput = (p: Person): PersonInput => ({
+  companyId: p.companyId,
+  fullName: p.fullName,
+  role: p.role,
+  department: p.department,
+  seniority: p.seniority,
+  decisionPower: p.decisionPower !== undefined ? String(p.decisionPower) as PersonInput['decisionPower'] : undefined,
+  influencePower: p.influencePower !== undefined ? String(p.influencePower) as PersonInput['influencePower'] : undefined,
+  relevance: p.relevance !== undefined ? String(p.relevance) as PersonInput['relevance'] : undefined,
+  linkedin: p.linkedin,
+  emailPublic: p.emailPublic,
+  contactChannel: p.contactChannel,
+  relationshipStatus: p.relationshipStatus,
+  nextFollowUpDate: p.nextFollowUpDate,
+  notes: p.notes,
+});
+
+const toMessageInput = (m: OutreachMessage): MessageInput => ({
+  companyId: m.companyId,
+  personId: m.personId,
+  channel: m.channel as MessageInput['channel'],
+  language: m.language as MessageInput['language'],
+  messageType: m.messageType,
+  messageText: m.messageText,
+  sentDate: m.sentDate,
+  replyStatus: m.replyStatus,
+  replySummary: m.replySummary,
+  nextFollowUpDate: m.nextFollowUpDate,
+  status: m.status as MessageInput['status'],
+});
+
+const toDealInput = (d: Deal): DealInput => ({
+  companyId: d.companyId,
+  personId: d.personId,
+  servicePackage: d.servicePackage,
+  problem: d.problem,
+  proposedSolution: d.proposedSolution,
+  value: d.value,
+  currency: d.currency as DealInput['currency'],
+  stage: d.stage as DealInput['stage'],
+  probability: d.probability !== undefined ? Math.round(d.probability * 100) : undefined,
+  notes: d.notes,
+});
+
 const OpportunitiesLayout: React.FC<{
   theme?: 'light' | 'dark';
   setTheme?: (t: 'light' | 'dark') => void;
@@ -29,18 +90,70 @@ const OpportunitiesLayout: React.FC<{
     addPerson: (input: any) => void;
     addMessage: (input: any) => void;
     addDeal: (input: any) => void;
+    updateCompany: (id: string, input: CompanyInput) => void;
+    deleteCompany: (id: string) => void;
+    updatePerson: (id: string, input: PersonInput) => void;
+    deletePerson: (id: string) => void;
+    updateMessage: (id: string, input: MessageInput) => void;
+    deleteMessage: (id: string) => void;
+    updateDeal: (id: string, input: DealInput) => void;
+    deleteDeal: (id: string) => void;
     resetToSeedData: () => void;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
   const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
 
-  const { companies, people, messages, deals, strategyNotes, addCompany, addPerson, addMessage, addDeal, resetToSeedData } = data;
+  const {
+    companies, people, messages, deals, strategyNotes,
+    addCompany, addPerson, addMessage, addDeal,
+    updateCompany, deleteCompany,
+    updatePerson, deletePerson,
+    updateMessage, deleteMessage,
+    updateDeal, deleteDeal,
+    resetToSeedData,
+  } = data;
 
   const handleResetDemoData = () => {
     const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
     if (!confirmed) return;
     resetToSeedData();
+  };
+
+  const handleEditCompany = (company: Company) => {
+    setEditingCompany(company);
+  };
+
+  const handleDeleteCompany = (id: string) => {
+    deleteCompany(id);
+  };
+
+  const handleEditPerson = (person: Person) => {
+    setEditingPerson(person);
+  };
+
+  const handleDeletePerson = (id: string) => {
+    deletePerson(id);
+  };
+
+  const handleEditMessage = (message: OutreachMessage) => {
+    setEditingMessage(message);
+  };
+
+  const handleDeleteMessage = (id: string) => {
+    deleteMessage(id);
+  };
+
+  const handleEditDeal = (deal: Deal) => {
+    setEditingDeal(deal);
+  };
+
+  const handleDeleteDeal = (id: string) => {
+    deleteDeal(id);
   };
 
   return (
@@ -91,7 +204,7 @@ const OpportunitiesLayout: React.FC<{
               <div className="font-mono text-[11px] uppercase text-[#0f172a]">Quick Tips</div>
               <ul className="mt-2 list-disc list-inside text-xs text-[#64748b]">
                 <li>Use the cards to monitor pipeline health.</li>
-                <li>Click rows to review details (future).</li>
+                <li>Click Edit or Delete to manage records.</li>
               </ul>
             </div>
           </div>
@@ -113,19 +226,44 @@ const OpportunitiesLayout: React.FC<{
               />
             )}
 
-            {tab === 'companies' && <CompaniesTable companies={companies} />}
+            {tab === 'companies' && (
+              <CompaniesTable
+                companies={companies}
+                onEdit={handleEditCompany}
+                onDelete={handleDeleteCompany}
+              />
+            )}
 
-            {tab === 'people' && <PeopleTable people={people} />}
+            {tab === 'people' && (
+              <PeopleTable
+                people={people}
+                onEdit={handleEditPerson}
+                onDelete={handleDeletePerson}
+              />
+            )}
 
-            {tab === 'messages' && <MessagesTable messages={messages} />}
+            {tab === 'messages' && (
+              <MessagesTable
+                messages={messages}
+                onEdit={handleEditMessage}
+                onDelete={handleDeleteMessage}
+              />
+            )}
 
-            {tab === 'deals' && <DealsTable deals={deals} />}
+            {tab === 'deals' && (
+              <DealsTable
+                deals={deals}
+                onEdit={handleEditDeal}
+                onDelete={handleDeleteDeal}
+              />
+            )}
 
             {tab === 'strategy' && <StrategyPanel notes={strategyNotes} />}
           </div>
         </main>
       </div>
 
+      {/* Add Company Modal */}
       {activeModal === 'company' ? (
         <OpportunityModal title="Add Company" onClose={() => setActiveModal(null)}>
           <AddCompanyForm
@@ -142,6 +280,25 @@ const OpportunitiesLayout: React.FC<{
         </OpportunityModal>
       ) : null}
 
+      {/* Edit Company Modal */}
+      {editingCompany ? (
+        <OpportunityModal title="Edit Company" onClose={() => setEditingCompany(null)}>
+          <AddCompanyForm
+            initialData={toCompanyInput(editingCompany)}
+            onSubmit={async (input) => {
+              try {
+                await updateCompany(editingCompany.id, input);
+                setEditingCompany(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to update company.', error);
+              }
+            }}
+            onCancel={() => setEditingCompany(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Add Person Modal */}
       {activeModal === 'person' ? (
         <OpportunityModal title="Add Person" onClose={() => setActiveModal(null)}>
           <AddPersonForm
@@ -159,6 +316,26 @@ const OpportunitiesLayout: React.FC<{
         </OpportunityModal>
       ) : null}
 
+      {/* Edit Person Modal */}
+      {editingPerson ? (
+        <OpportunityModal title="Edit Person" onClose={() => setEditingPerson(null)}>
+          <AddPersonForm
+            companies={companies}
+            initialData={toPersonInput(editingPerson)}
+            onSubmit={async (input) => {
+              try {
+                await updatePerson(editingPerson.id, input);
+                setEditingPerson(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to update person.', error);
+              }
+            }}
+            onCancel={() => setEditingPerson(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Add Message Modal */}
       {activeModal === 'message' ? (
         <OpportunityModal title="Log Message" onClose={() => setActiveModal(null)}>
           <LogMessageForm
@@ -177,6 +354,27 @@ const OpportunitiesLayout: React.FC<{
         </OpportunityModal>
       ) : null}
 
+      {/* Edit Message Modal */}
+      {editingMessage ? (
+        <OpportunityModal title="Edit Message" onClose={() => setEditingMessage(null)}>
+          <LogMessageForm
+            companies={companies}
+            people={people}
+            initialData={toMessageInput(editingMessage)}
+            onSubmit={async (input) => {
+              try {
+                await updateMessage(editingMessage.id, input);
+                setEditingMessage(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to update message.', error);
+              }
+            }}
+            onCancel={() => setEditingMessage(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Add Deal Modal */}
       {activeModal === 'deal' ? (
         <OpportunityModal title="Add Deal" onClose={() => setActiveModal(null)}>
           <AddDealForm
@@ -191,6 +389,26 @@ const OpportunitiesLayout: React.FC<{
               }
             }}
             onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {/* Edit Deal Modal */}
+      {editingDeal ? (
+        <OpportunityModal title="Edit Deal" onClose={() => setEditingDeal(null)}>
+          <AddDealForm
+            companies={companies}
+            people={people}
+            initialData={toDealInput(editingDeal)}
+            onSubmit={async (input) => {
+              try {
+                await updateDeal(editingDeal.id, input);
+                setEditingDeal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to update deal.', error);
+              }
+            }}
+            onCancel={() => setEditingDeal(null)}
           />
         </OpportunityModal>
       ) : null}

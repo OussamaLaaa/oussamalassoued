@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const allowedEntities = new Set(['companies', 'people', 'messages', 'deals']);
 const tablesAttempted = ['companies', 'people', 'messages', 'deals'];
+const COOKIE_NAME = 'dashboard_session';
+const COOKIE_VALUE = 'test123';
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -64,10 +66,27 @@ const readBody = (req) => {
 
 const toSafeJson = (res, status, body) => res.status(status).json(body);
 
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
+  return cookieHeader.split(';').reduce((accumulator, part) => {
+    const separatorIndex = part.indexOf('=');
+    if (separatorIndex === -1) return accumulator;
+    const key = part.slice(0, separatorIndex).trim();
+    const value = part.slice(separatorIndex + 1).trim();
+    if (key) accumulator[key] = value;
+    return accumulator;
+  }, {});
+};
+
+const isAuthenticated = (req) => {
+  const cookies = parseCookies(req.headers?.cookie);
+  return cookies[COOKIE_NAME] === COOKIE_VALUE;
+};
+
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -180,6 +199,92 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error(`[Opportunities] Unexpected insert failure for ${entity}`, error);
       return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+    }
+  }
+
+  if (req.method === 'PUT') {
+    if (!isAuthenticated(req)) {
+      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
+    }
+
+    const body = readBody(req);
+    const { entity, action, id, data } = body || {};
+
+    if (action !== 'update') {
+      return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
+    }
+
+    if (!allowedEntities.has(entity)) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid entity.' });
+    }
+
+    if (!id) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing id.' });
+    }
+
+    if (!data || typeof data !== 'object') {
+      return toSafeJson(res, 400, { success: false, error: 'Missing data payload.' });
+    }
+
+    try {
+      const { data: updatedRow, error } = await supabase
+        .from(entity)
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`[Opportunities] Supabase update failed for ${entity}`, error);
+        return toSafeJson(res, 500, { success: false, error: 'Unable to update Opportunities data.' });
+      }
+
+      if (!updatedRow) {
+        return toSafeJson(res, 404, { success: false, error: 'Record not found.' });
+      }
+
+      return toSafeJson(res, 200, { success: true, row: updatedRow });
+    } catch (error) {
+      console.error(`[Opportunities] Unexpected update failure for ${entity}`, error);
+      return toSafeJson(res, 500, { success: false, error: 'Unable to update Opportunities data.' });
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    if (!isAuthenticated(req)) {
+      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
+    }
+
+    const body = readBody(req);
+    const { entity, action, id } = body || {};
+
+    if (action !== 'delete') {
+      return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
+    }
+
+    if (!allowedEntities.has(entity)) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid entity.' });
+    }
+
+    if (!id) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing id.' });
+    }
+
+    try {
+      const { error } = await supabase
+        .from(entity)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error(`[Opportunities] Supabase delete failed for ${entity}`, error);
+        return toSafeJson(res, 500, { success: false, error: 'Unable to delete Opportunities data.' });
+      }
+
+      return toSafeJson(res, 200, { success: true });
+    } catch (error) {
+      console.error(`[Opportunities] Unexpected delete failure for ${entity}`, error);
+      return toSafeJson(res, 500, { success: false, error: 'Unable to delete Opportunities data.' });
     }
   }
 

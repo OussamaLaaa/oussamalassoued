@@ -6,8 +6,9 @@ const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 
 const AddCompanyForm: React.FC<{
   onSubmit: (data: CompanyInput) => void;
   onCancel: () => void;
-}> = ({ onSubmit, onCancel }) => {
-  const [form, setForm] = useState<CompanyInput>({
+  initialData?: CompanyInput;
+}> = ({ onSubmit, onCancel, initialData }) => {
+  const [form, setForm] = useState<CompanyInput>(initialData || {
     name: '',
     databaseType: 'sme',
     category: '',
