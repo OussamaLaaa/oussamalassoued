@@ -588,6 +588,8 @@ const OpportunitiesLayout: React.FC<{
                 projects={projects}
                 companies={companies}
                 people={people}
+                messages={messages}
+                deals={deals}
                 onAddProject={() => setActiveModal('project')}
                 onEdit={handleEditProject}
                 onDelete={handleDeleteProject}

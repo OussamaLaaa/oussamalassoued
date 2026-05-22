@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import type { Company, Person, Project } from '../../types/opportunities';
+import React, { useMemo, useState } from 'react';
+import type { Company, Deal, OutreachMessage, Person, Project } from '../../types/opportunities';
+import ProjectDetailView from './ProjectDetailView';
 
 const stageColors: Record<string, string> = {
   active: 'bg-[#dcfce7] text-[#166534]',
@@ -36,10 +37,31 @@ const ProjectsPanel: React.FC<{
   projects: Project[];
   companies: Company[];
   people: Person[];
+  messages: OutreachMessage[];
+  deals: Deal[];
   onAddProject: () => void;
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
-}> = ({ projects, companies, people, onAddProject, onEdit, onDelete }) => {
+}> = ({ projects, companies, people, messages, deals, onAddProject, onEdit, onDelete }) => {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  if (selectedProject) {
+    return (
+      <ProjectDetailView
+        project={selectedProject}
+        companies={companies}
+        people={people}
+        messages={messages}
+        deals={deals}
+        onBack={() => setSelectedProject(null)}
+        onEditProject={() => {
+          onEdit(selectedProject);
+          setSelectedProject(null);
+        }}
+      />
+    );
+  }
+
   const stats = useMemo(() => ({
     total: projects.length,
     active: projects.filter((p) => p.status === 'active').length,
@@ -145,9 +167,9 @@ const ProjectsPanel: React.FC<{
               </thead>
               <tbody>
                 {projects.map((p) => (
-                  <tr key={p.id} className="border-t border-[#e5e7eb] hover:bg-[#f9fafb]">
+                  <tr key={p.id} className="border-t border-[#e5e7eb] hover:bg-[#f9fafb] cursor-pointer" onClick={() => setSelectedProject(p)}>
                     <td className="px-3 py-3">
-                      <div className="font-semibold text-[#0f172a]">{p.name}</div>
+                      <div className="font-semibold text-[#2563eb] hover:underline">{p.name}</div>
                       {p.notes && <div className="text-xs text-[#64748b] truncate max-w-[200px]">{p.notes}</div>}
                     </td>
                     <td className="px-3 py-3 text-sm text-[#0f172a]">{typeLabel(p.type)}</td>
