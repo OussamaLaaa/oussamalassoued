@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import OpportunitiesLayout from '../components/opportunities/OpportunitiesLayout';
+import { useOpportunitiesData } from '../hooks/useOpportunitiesData';
 
 const STORAGE_KEY = 'opportunities-theme';
 
 const OpportunitiesPage: React.FC = () => {
+  const opportunitiesData = useOpportunitiesData();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -39,7 +41,7 @@ const OpportunitiesPage: React.FC = () => {
 
   return (
     <div className={`opportunities-shell min-h-screen w-full relative z-[9999] overflow-x-hidden ${theme === 'light' ? 'opportunities-light' : 'opportunities-dark'}`}>
-      <OpportunitiesLayout theme={theme} setTheme={setTheme} />
+      <OpportunitiesLayout theme={theme} setTheme={setTheme} data={opportunitiesData} />
     </div>
   );
 };

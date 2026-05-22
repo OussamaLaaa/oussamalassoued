@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import type { OpportunitiesTab } from '../../types/opportunities';
-import { companies as seedCompanies, people as seedPeople, messages as seedMessages, deals as seedDeals, strategyNotes as seedStrategy } from '../../data/opportunitiesSeed';
+import type { OpportunitiesTab, OpportunitiesData } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable from './CompaniesTable';
 import PeopleTable from './PeopleTable';
 import MessagesTable from './MessagesTable';
 import DealsTable from './DealsTable';
 import StrategyPanel from './StrategyPanel';
+import OpportunityModal from './OpportunityModal';
+import AddCompanyForm from './AddCompanyForm';
+import AddPersonForm from './AddPersonForm';
+import LogMessageForm from './LogMessageForm';
+import AddDealForm from './AddDealForm';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -17,12 +21,27 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'strategy', label: 'Strategy' },
 ];
 
-const OpportunitiesLayout: React.FC<{ theme?: 'light' | 'dark'; setTheme?: (t: 'light' | 'dark') => void }> = ({ theme = 'light', setTheme }) => {
+const OpportunitiesLayout: React.FC<{
+  theme?: 'light' | 'dark';
+  setTheme?: (t: 'light' | 'dark') => void;
+  data: OpportunitiesData & {
+    addCompany: (input: any) => void;
+    addPerson: (input: any) => void;
+    addMessage: (input: any) => void;
+    addDeal: (input: any) => void;
+    resetToSeedData: () => void;
+  };
+}> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
-  const companies = seedCompanies;
-  const people = seedPeople;
-  const messages = seedMessages;
-  const deals = seedDeals;
+  const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | null>(null);
+
+  const { companies, people, messages, deals, strategyNotes, addCompany, addPerson, addMessage, addDeal, resetToSeedData } = data;
+
+  const handleResetDemoData = () => {
+    const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
+    if (!confirmed) return;
+    resetToSeedData();
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] dashboard-shell px-4 py-6">
@@ -81,21 +100,100 @@ const OpportunitiesLayout: React.FC<{ theme?: 'light' | 'dark'; setTheme?: (t: '
         <main className="col-span-12 md:col-span-9">
           <div className="space-y-6">
             {tab === 'dashboard' && (
-              <OpportunitiesDashboard companies={companies} people={people} messages={messages} deals={deals} />
+              <OpportunitiesDashboard
+                companies={companies}
+                people={people}
+                messages={messages}
+                deals={deals}
+                onAddCompany={() => setActiveModal('company')}
+                onAddPerson={() => setActiveModal('person')}
+                onAddMessage={() => setActiveModal('message')}
+                onAddDeal={() => setActiveModal('deal')}
+                onResetDemoData={handleResetDemoData}
+              />
             )}
 
-            {tab === 'companies' && <CompaniesTable companies={seedCompanies} />}
+            {tab === 'companies' && <CompaniesTable companies={companies} />}
 
-            {tab === 'people' && <PeopleTable people={seedPeople} />}
+            {tab === 'people' && <PeopleTable people={people} />}
 
-            {tab === 'messages' && <MessagesTable messages={seedMessages} />}
+            {tab === 'messages' && <MessagesTable messages={messages} />}
 
-            {tab === 'deals' && <DealsTable deals={seedDeals} />}
+            {tab === 'deals' && <DealsTable deals={deals} />}
 
-            {tab === 'strategy' && <StrategyPanel notes={seedStrategy} />}
+            {tab === 'strategy' && <StrategyPanel notes={strategyNotes} />}
           </div>
         </main>
       </div>
+
+      {activeModal === 'company' ? (
+        <OpportunityModal title="Add Company" onClose={() => setActiveModal(null)}>
+          <AddCompanyForm
+            onSubmit={async (input) => {
+              try {
+                await addCompany(input);
+                setActiveModal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to add company.', error);
+              }
+            }}
+            onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {activeModal === 'person' ? (
+        <OpportunityModal title="Add Person" onClose={() => setActiveModal(null)}>
+          <AddPersonForm
+            companies={companies}
+            onSubmit={async (input) => {
+              try {
+                await addPerson(input);
+                setActiveModal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to add person.', error);
+              }
+            }}
+            onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {activeModal === 'message' ? (
+        <OpportunityModal title="Log Message" onClose={() => setActiveModal(null)}>
+          <LogMessageForm
+            companies={companies}
+            people={people}
+            onSubmit={async (input) => {
+              try {
+                await addMessage(input);
+                setActiveModal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to add message.', error);
+              }
+            }}
+            onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {activeModal === 'deal' ? (
+        <OpportunityModal title="Add Deal" onClose={() => setActiveModal(null)}>
+          <AddDealForm
+            companies={companies}
+            people={people}
+            onSubmit={async (input) => {
+              try {
+                await addDeal(input);
+                setActiveModal(null);
+              } catch (error) {
+                console.error('[Opportunities] Failed to add deal.', error);
+              }
+            }}
+            onCancel={() => setActiveModal(null)}
+          />
+        </OpportunityModal>
+      ) : null}
     </div>
   );
 };

@@ -22,11 +22,28 @@ const formatDate = (d?: string | null) => {
   }
 };
 
-const OpportunitiesDashboard: React.FC<{ companies: Company[]; people: Person[]; messages: OutreachMessage[]; deals: Deal[] }> = ({ companies, people, messages, deals }) => {
+const isDue = (date?: string | null) => {
+  if (!date) return false;
+  const target = new Date(date);
+  const today = new Date();
+  return target.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0);
+};
+
+const OpportunitiesDashboard: React.FC<{
+  companies: Company[];
+  people: Person[];
+  messages: OutreachMessage[];
+  deals: Deal[];
+  onAddCompany: () => void;
+  onAddPerson: () => void;
+  onAddMessage: () => void;
+  onAddDeal: () => void;
+  onResetDemoData: () => void;
+}> = ({ companies, people, messages, deals, onAddCompany, onAddPerson, onAddMessage, onAddDeal, onResetDemoData }) => {
   const totalCompanies = companies.length;
   const totalPeople = people.length;
   const messagesSent = messages.length;
-  const followupsDue = messages.filter(m => m.nextFollowUpDate && new Date(m.nextFollowUpDate) <= new Date()).length;
+  const followupsDue = [...messages, ...people].filter((item) => 'nextFollowUpDate' in item && isDue(item.nextFollowUpDate)).length;
   const openDeals = deals.length;
   const highPriorityCompanies = companies.filter(c => c.priority === 'high');
 
@@ -56,10 +73,10 @@ const OpportunitiesDashboard: React.FC<{ companies: Company[]; people: Person[];
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <button className="text-sm px-3 py-2 rounded-md bg-[#2563eb] text-white border border-[#2563eb] shadow-sm">Add Company</button>
-          <button className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Add Person</button>
-          <button className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Log Message</button>
-          <button className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Add Deal</button>
+          <button type="button" onClick={onAddCompany} className="text-sm px-3 py-2 rounded-md bg-[#2563eb] text-white border border-[#2563eb] shadow-sm">Add Company</button>
+          <button type="button" onClick={onAddPerson} className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Add Person</button>
+          <button type="button" onClick={onAddMessage} className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Log Message</button>
+          <button type="button" onClick={onAddDeal} className="text-sm px-3 py-2 rounded-md bg-white text-[#0f172a] border border-[#e5e7eb] hover:bg-[#f8fafc]">Add Deal</button>
         </div>
       </div>
 
@@ -133,11 +150,11 @@ const OpportunitiesDashboard: React.FC<{ companies: Company[]; people: Person[];
               {followups.length === 0 ? (
                 <div className="text-sm text-[#64748b]">No follow-ups due today.</div>
               ) : (
-                followups.map((m) => (
-                  <div key={m.id} className="p-2 rounded-md bg-[#f8fafc] border border-[#e5e7eb]">
-                    <div className="font-semibold text-[#0f172a]">{m.personName} — {m.companyName}</div>
-                    <div className="text-xs text-[#64748b]">{m.channel} • Reply: {m.replyStatus}</div>
-                    <div className="text-xs text-[#94a3b8]">Due: {formatDate(m.nextFollowUpDate)}</div>
+                followups.map((item) => (
+                  <div key={item.id} className="p-2 rounded-md bg-[#f8fafc] border border-[#e5e7eb]">
+                    <div className="font-semibold text-[#0f172a]">{'personName' in item ? `${item.personName} — ${item.companyName}` : item.fullName}</div>
+                    <div className="text-xs text-[#64748b]">{'channel' in item && item.channel ? `${item.channel} • Reply: ${item.replyStatus}` : 'Person follow-up'}</div>
+                    <div className="text-xs text-[#94a3b8]">Due: {formatDate(item.nextFollowUpDate)}</div>
                   </div>
                 ))
               )}
@@ -151,6 +168,11 @@ const OpportunitiesDashboard: React.FC<{ companies: Company[]; people: Person[];
               <div>Total People<span className="float-right">{totalPeople}</span></div>
               <div>Open Deals<span className="float-right">{openDeals}</span></div>
               <div>Follow-ups Due<span className="float-right">{followupsDue}</span></div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button type="button" onClick={onResetDemoData} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+                Reset demo data
+              </button>
             </div>
           </div>
         </aside>
