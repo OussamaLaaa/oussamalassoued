@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type {
-  Company, Deal, OutreachMessage, Person, Project,
+  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
   ProjectTask, ProjectTaskInput,
   ProjectTimeLog, ProjectTimeLogInput,
   ProjectMeeting, ProjectMeetingInput,
@@ -53,6 +53,7 @@ const ProjectsPanel: React.FC<{
   projectFinanceItems: ProjectFinanceItem[];
   onAddProject: () => void;
   onEdit: (project: Project) => void;
+  onUpdateProject: (id: string, input: ProjectInput) => Promise<any>;
   onDelete: (id: string) => void;
   onAddTask: (input: ProjectTaskInput) => Promise<any>;
   onUpdateTask: (id: string, input: Partial<ProjectTaskInput>) => Promise<any>;
@@ -65,7 +66,7 @@ const ProjectsPanel: React.FC<{
   onDeleteDocument: (id: string) => Promise<void>;
   onAddFinanceItem: (input: ProjectFinanceItemInput) => Promise<any>;
   onDeleteFinanceItem: (id: string) => Promise<void>;
-}> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
+}> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onUpdateProject, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const stats = useMemo(() => ({
@@ -98,6 +99,7 @@ const ProjectsPanel: React.FC<{
           onEdit(selectedProject);
           setSelectedProject(null);
         }}
+        onUpdateProject={onUpdateProject}
         onAddTask={onAddTask}
         onUpdateTask={onUpdateTask}
         onDeleteTask={onDeleteTask}

@@ -603,6 +603,7 @@ const OpportunitiesLayout: React.FC<{
                 projectFinanceItems={projectFinanceItems}
                 onAddProject={() => setActiveModal('project')}
                 onEdit={handleEditProject}
+                onUpdateProject={updateProject}
                 onDelete={handleDeleteProject}
                 onAddTask={addProjectTask}
                 onUpdateTask={updateProjectTask}
