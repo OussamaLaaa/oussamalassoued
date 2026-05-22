@@ -74,6 +74,14 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  if (req.method === 'GET' && (req?.query?.health === '1' || req?.query?.health === 1)) {
+    return toSafeJson(res, 200, {
+      success: true,
+      route: 'api/opportunities.js',
+      message: 'Opportunities API is reachable',
+    });
+  }
+
   const debug = isDebugEnabled(req);
   const envPresent = getEnvPresence();
   const supabase = getSupabaseClient();
