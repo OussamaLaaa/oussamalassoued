@@ -173,4 +173,6 @@ export interface StrategyNote {
   priority?: 'low' | 'medium' | 'high';
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'templates' | 'strategy';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'templates' | 'strategy' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+
+export type SegmentType = 'big_company' | 'sme' | 'freelance';

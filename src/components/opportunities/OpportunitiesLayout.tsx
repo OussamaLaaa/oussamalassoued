@@ -16,14 +16,18 @@ import CsvImportModal from './CsvImportModal';
 import ImportPeopleModal from './ImportPeopleModal';
 import OutreachTemplateModal from './OutreachTemplateModal';
 import TemplatesPanel from './TemplatesPanel';
+import CompanySegmentView from './CompanySegmentView';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'queue', label: 'Outreach Queue' },
-  { id: 'companies', label: 'Companies' },
+  { id: 'big_companies', label: 'Big Companies' },
+  { id: 'sme_companies', label: 'SME Companies' },
+  { id: 'freelance_leads', label: 'Freelance Leads' },
+  { id: 'companies', label: 'All Companies' },
   { id: 'people', label: 'People' },
   { id: 'messages', label: 'Messages' },
   { id: 'deals', label: 'Deals' },
+  { id: 'queue', label: 'Outreach Queue' },
   { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
 ];
@@ -360,6 +364,54 @@ const OpportunitiesLayout: React.FC<{
                 onAddMessage={() => setActiveModal('message')}
                 onAddDeal={() => setActiveModal('deal')}
                 onResetDemoData={handleResetDemoData}
+              />
+            )}
+
+            {tab === 'big_companies' && (
+              <CompanySegmentView
+                segmentType="big_company"
+                title="Big Companies"
+                subtitle="Enterprise-level targets — internships, junior roles, recruiter relationships."
+                companies={companies}
+                people={people}
+                messages={messages}
+                deals={deals}
+                onAddCompany={() => setActiveModal('company')}
+                onEdit={handleEditCompany}
+                onDelete={handleDeleteCompany}
+                onImportCompaniesBatch={importCompaniesBatch}
+              />
+            )}
+
+            {tab === 'sme_companies' && (
+              <CompanySegmentView
+                segmentType="sme"
+                title="SME Companies"
+                subtitle="Small & medium businesses — faster decisions, partnership potential, agency work."
+                companies={companies}
+                people={people}
+                messages={messages}
+                deals={deals}
+                onAddCompany={() => setActiveModal('company')}
+                onEdit={handleEditCompany}
+                onDelete={handleDeleteCompany}
+                onImportCompaniesBatch={importCompaniesBatch}
+              />
+            )}
+
+            {tab === 'freelance_leads' && (
+              <CompanySegmentView
+                segmentType="freelance"
+                title="Freelance Leads"
+                subtitle="Independent professionals — paid UX/UI work, audits, recurring clients."
+                companies={companies}
+                people={people}
+                messages={messages}
+                deals={deals}
+                onAddCompany={() => setActiveModal('company')}
+                onEdit={handleEditCompany}
+                onDelete={handleDeleteCompany}
+                onImportCompaniesBatch={importCompaniesBatch}
               />
             )}
 
