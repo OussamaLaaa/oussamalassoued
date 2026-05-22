@@ -45,6 +45,18 @@ const ProjectsPanel: React.FC<{
 }> = ({ projects, companies, people, messages, deals, onAddProject, onEdit, onDelete }) => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  const stats = useMemo(() => ({
+    total: projects.length,
+    active: projects.filter((p) => p.status === 'active').length,
+    portfolio: projects.filter((p) => p.type === 'portfolio').length,
+    client: projects.filter((p) => p.type === 'client').length,
+    completed: projects.filter((p) => p.status === 'completed').length,
+    blocked: projects.filter((p) => p.status === 'blocked').length,
+  }), [projects]);
+
+  const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
+  const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
+
   if (selectedProject) {
     return (
       <ProjectDetailView
@@ -61,18 +73,6 @@ const ProjectsPanel: React.FC<{
       />
     );
   }
-
-  const stats = useMemo(() => ({
-    total: projects.length,
-    active: projects.filter((p) => p.status === 'active').length,
-    portfolio: projects.filter((p) => p.type === 'portfolio').length,
-    client: projects.filter((p) => p.type === 'client').length,
-    completed: projects.filter((p) => p.status === 'completed').length,
-    blocked: projects.filter((p) => p.status === 'blocked').length,
-  }), [projects]);
-
-  const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
-  const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
 
   const typeLabel = (type?: string) => {
     const labels: Record<string, string> = {
