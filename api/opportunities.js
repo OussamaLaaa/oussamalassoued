@@ -113,7 +113,7 @@ const toSafeJson = (res, status, body) => res.status(status).json(body);
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -125,6 +125,26 @@ export default async function handler(req, res) {
       success: true,
       route: 'api/opportunities.js',
       message: 'Opportunities API is reachable',
+    });
+  }
+
+  const debug = isDebugEnabled(req);
+
+  // When debug is requested, return safe, non-secret diagnostics about auth and env
+  if (debug) {
+    const cookies = parseCookies(req.headers?.cookie);
+    const hasCookie = Boolean(cookies[DASHBOARD_SESSION_COOKIE]);
+    const cookieMatches = cookies[DASHBOARD_SESSION_COOKIE] === DASHBOARD_SESSION_VALUE;
+
+    return toSafeJson(res, 200, {
+      success: true,
+      debug: true,
+      auth: {
+        isAuthenticated: isDashboardAuthenticated(req),
+        hasCookie,
+        cookieMatches,
+      },
+      envPresent: getEnvPresence(),
     });
   }
 
