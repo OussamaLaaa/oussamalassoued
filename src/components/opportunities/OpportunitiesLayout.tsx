@@ -6,6 +6,7 @@ import PeopleTable, { type PersonFilters } from './PeopleTable';
 import MessagesTable, { type MessageFilters } from './MessagesTable';
 import DealsTable, { type DealFilters } from './DealsTable';
 import StrategyPanel from './StrategyPanel';
+import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
 import AddPersonForm from './AddPersonForm';
@@ -18,6 +19,7 @@ import TemplatesPanel from './TemplatesPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'queue', label: 'Outreach Queue' },
   { id: 'companies', label: 'Companies' },
   { id: 'people', label: 'People' },
   { id: 'messages', label: 'Messages' },
@@ -115,6 +117,36 @@ const defaultDealFilters: DealFilters = {
   probabilityMax: '',
 };
 
+const toDayKey = (value?: string) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const isNoContact = (value?: string) => !value || value.trim() === '' || value.trim().toLowerCase() === 'no contact';
+
+const isHighPriorityPerson = (person: Person) => [person.relevance, person.decisionPower, person.influencePower].some((value) => typeof value === 'number' && value >= 8);
+
+const getQueueTabCount = (people: Person[], messages: OutreachMessage[]) => {
+  const today = toDayKey(new Date().toISOString()) || '';
+  const highPriority = people.filter((person) => isHighPriorityPerson(person) && isNoContact(person.relationshipStatus)).length;
+  const dueToday = people.filter((person) => toDayKey(person.nextFollowUpDate) === today).length + messages.filter((message) => toDayKey(message.nextFollowUpDate) === today).length;
+  const overdue = people.filter((person) => {
+    const next = toDayKey(person.nextFollowUpDate);
+    return Boolean(next && next < today);
+  }).length + messages.filter((message) => {
+    const next = toDayKey(message.nextFollowUpDate);
+    return Boolean(next && next < today);
+  }).length;
+  const newContacts = people.filter((person) => isNoContact(person.relationshipStatus)).length;
+
+  return highPriority + dueToday + overdue + newContacts;
+};
+
 const OpportunitiesLayout: React.FC<{
   theme?: 'light' | 'dark';
   setTheme?: (t: 'light' | 'dark') => void;
@@ -149,6 +181,7 @@ const OpportunitiesLayout: React.FC<{
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showPeopleImport, setShowPeopleImport] = useState(false);
   const [templatePerson, setTemplatePerson] = useState<Person | null>(null);
+  const [messageDraft, setMessageDraft] = useState<MessageInput | null>(null);
 
   // Global search state
   const [globalSearch, setGlobalSearch] = useState('');
@@ -238,6 +271,8 @@ const OpportunitiesLayout: React.FC<{
                       ? messages.length
                       : t.id === 'deals'
                         ? deals.length
+                        : t.id === 'queue'
+                          ? getQueueTabCount(people, messages)
                         : t.id === 'templates'
                           ? templates.length
                           : 0;
@@ -325,6 +360,56 @@ const OpportunitiesLayout: React.FC<{
                 onAddMessage={() => setActiveModal('message')}
                 onAddDeal={() => setActiveModal('deal')}
                 onResetDemoData={handleResetDemoData}
+              />
+            )}
+
+            {tab === 'queue' && (
+              <OutreachQueuePanel
+                companies={companies}
+                people={people}
+                messages={messages}
+                onUseTemplate={(person) => setTemplatePerson(person)}
+                onLogMessage={(person) => {
+                  setMessageDraft({
+                    companyId: person.companyId,
+                    personId: person.id,
+                    channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
+                    language: 'English',
+                    messageType: 'outreach',
+                    messageText: '',
+                    sentDate: new Date().toISOString().slice(0, 16),
+                    replyStatus: 'no_reply',
+                    replySummary: '',
+                    nextFollowUpDate: '',
+                    status: 'sent',
+                  });
+                  setActiveModal('message');
+                }}
+                onMarkContacted={async (person) => {
+                  await updatePerson(person.id, {
+                    ...toPersonInput(person),
+                    relationshipStatus: 'Message Sent',
+                    nextFollowUpDate: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString(),
+                  });
+                }}
+                onReschedule={async (person, message, nextFollowUpDate) => {
+                  if (message) {
+                    await updateMessage(message.id, {
+                      ...toMessageInput(message),
+                      nextFollowUpDate,
+                    });
+                    return;
+                  }
+
+                  await updatePerson(person.id, {
+                    ...toPersonInput(person),
+                    nextFollowUpDate,
+                  });
+                }}
+                onOpenLinkedIn={(person) => {
+                  if (!person.linkedin) return;
+                  window.open(person.linkedin, '_blank', 'noopener,noreferrer');
+                }}
               />
             )}
 
@@ -480,7 +565,7 @@ const OpportunitiesLayout: React.FC<{
 
       {/* Add Message Modal */}
       {activeModal === 'message' ? (
-        <OpportunityModal title="Log Message" onClose={() => setActiveModal(null)}>
+        <OpportunityModal title="Log Message" onClose={() => { setActiveModal(null); setMessageDraft(null); }}>
           <LogMessageForm
             companies={companies}
             people={people}
@@ -488,11 +573,16 @@ const OpportunitiesLayout: React.FC<{
               try {
                 await addMessage(input);
                 setActiveModal(null);
+                setMessageDraft(null);
               } catch (error) {
                 console.error('[Opportunities] Failed to add message.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            initialData={messageDraft || undefined}
+            onCancel={() => {
+              setActiveModal(null);
+              setMessageDraft(null);
+            }}
           />
         </OpportunityModal>
       ) : null}
