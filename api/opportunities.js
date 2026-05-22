@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'message_templates']);
 const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'message_templates'];
@@ -63,6 +64,40 @@ const readBody = (req) => {
 };
 
 const toSafeJson = (res, status, body) => res.status(status).json(body);
+
+const toNullableString = (value) => {
+  if (value == null) return null;
+  const parsed = String(value).trim();
+  return parsed.length > 0 ? parsed : null;
+};
+
+const toRequiredString = (value, fallback = '') => {
+  const parsed = toNullableString(value);
+  return parsed ?? fallback;
+};
+
+const normalizeTemplateRow = (row, { forUpdate = false } = {}) => {
+  const base = {
+    name: toRequiredString(row?.name),
+    audience: toRequiredString(row?.audience),
+    goal: toRequiredString(row?.goal),
+    language: toRequiredString(row?.language),
+    subject: toNullableString(row?.subject),
+    body: toRequiredString(row?.body),
+    is_active: row?.is_active == null ? true : Boolean(row.is_active),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (forUpdate) {
+    return base;
+  }
+
+  return {
+    id: row?.id ?? randomUUID(),
+    ...base,
+    created_at: row?.created_at ?? new Date().toISOString(),
+  };
+};
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -207,10 +242,16 @@ export default async function handler(req, res) {
     }
 
     try {
+      const payload = entity === 'message_templates'
+        ? (Array.isArray(data)
+            ? data.map((row) => normalizeTemplateRow(row, { forUpdate: false }))
+            : normalizeTemplateRow(data, { forUpdate: false }))
+        : data;
+
       if (isBatch) {
         const { data: insertedRows, error } = await supabase
           .from(entity)
-          .insert(data)
+          .insert(payload)
           .select();
 
         if (error) {
@@ -224,7 +265,7 @@ export default async function handler(req, res) {
       // Single insert
       const { data: insertedRow, error } = await supabase
         .from(entity)
-        .insert([data])
+        .insert([payload])
         .select()
         .single();
 
@@ -265,9 +306,13 @@ export default async function handler(req, res) {
     }
 
     try {
+      const payload = entity === 'message_templates'
+        ? normalizeTemplateRow(data, { forUpdate: true })
+        : data;
+
       const { data: updatedRow, error } = await supabase
         .from(entity)
-        .update(data)
+        .update(payload)
         .eq('id', id)
         .select()
         .single();
