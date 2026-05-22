@@ -9,6 +9,11 @@ import {
   dealFromDb as mapDealRow, dealToDb as toDealDb,
   projectFromDb as mapProjectRow, projectToDb as toProjectDb,
   templateFromDb as mapTemplateRow, templateToDb as toTemplateDb,
+  projectTaskFromDb as mapProjectTaskRow, projectTaskToDb as toProjectTaskDb,
+  projectTimeLogFromDb as mapProjectTimeLogRow, projectTimeLogToDb as toProjectTimeLogDb,
+  projectMeetingFromDb as mapProjectMeetingRow, projectMeetingToDb as toProjectMeetingDb,
+  projectDocumentFromDb as mapProjectDocumentRow, projectDocumentToDb as toProjectDocumentDb,
+  projectFinanceItemFromDb as mapProjectFinanceItemRow, projectFinanceItemToDb as toProjectFinanceItemDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -18,6 +23,16 @@ import type {
   DealInput,
   Project,
   ProjectInput,
+  ProjectTask,
+  ProjectTaskInput,
+  ProjectTimeLog,
+  ProjectTimeLogInput,
+  ProjectMeeting,
+  ProjectMeetingInput,
+  ProjectDocument,
+  ProjectDocumentInput,
+  ProjectFinanceItem,
+  ProjectFinanceItemInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -34,6 +49,11 @@ const cloneSeedData = (): OpportunitiesData => ({
   messages: seedData.messages.map((item) => ({ ...item })),
   deals: seedData.deals.map((item) => ({ ...item })),
   projects: [],
+  projectTasks: [],
+  projectTimeLogs: [],
+  projectMeetings: [],
+  projectDocuments: [],
+  projectFinanceItems: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
 });
@@ -53,6 +73,11 @@ type OpportunitiesApiResponse = {
   messages?: any[];
   deals?: any[];
   projects?: any[];
+  project_tasks?: any[];
+  project_time_logs?: any[];
+  project_meetings?: any[];
+  project_documents?: any[];
+  project_finance_items?: any[];
   message_templates?: any[];
   strategyNotes?: any[];
 };
@@ -126,6 +151,11 @@ export const useOpportunitiesData = () => {
   const [messages, setMessages] = useState<OutreachMessage[]>(() => cloneSeedData().messages);
   const [deals, setDeals] = useState<Deal[]>(() => cloneSeedData().deals);
   const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
+  const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
+  const [projectTimeLogs, setProjectTimeLogs] = useState<ProjectTimeLog[]>([]);
+  const [projectMeetings, setProjectMeetings] = useState<ProjectMeeting[]>([]);
+  const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>([]);
+  const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(true);
@@ -137,6 +167,11 @@ export const useOpportunitiesData = () => {
     const nextMessagesRaw = Array.isArray(payload?.messages) ? payload.messages : [];
     const nextDealsRaw = Array.isArray(payload?.deals) ? payload.deals : [];
     const nextProjectsRaw = Array.isArray(payload?.projects) ? payload.projects : [];
+    const nextProjectTasksRaw = Array.isArray(payload?.project_tasks) ? payload.project_tasks : [];
+    const nextProjectTimeLogsRaw = Array.isArray(payload?.project_time_logs) ? payload.project_time_logs : [];
+    const nextProjectMeetingsRaw = Array.isArray(payload?.project_meetings) ? payload.project_meetings : [];
+    const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
+    const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
 
     const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
@@ -170,6 +205,12 @@ export const useOpportunitiesData = () => {
       return mapped;
     });
 
+    const nextProjectTasks = nextProjectTasksRaw.map((row: any) => mapProjectTaskRow(row));
+    const nextProjectTimeLogs = nextProjectTimeLogsRaw.map((row: any) => mapProjectTimeLogRow(row));
+    const nextProjectMeetings = nextProjectMeetingsRaw.map((row: any) => mapProjectMeetingRow(row));
+    const nextProjectDocuments = nextProjectDocumentsRaw.map((row: any) => mapProjectDocumentRow(row));
+    const nextProjectFinanceItems = nextProjectFinanceItemsRaw.map((row: any) => mapProjectFinanceItemRow(row));
+
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
 
@@ -185,6 +226,11 @@ export const useOpportunitiesData = () => {
     setMessages(derived.messages);
     setDeals(derived.deals);
     setProjects(nextProjects);
+    setProjectTasks(nextProjectTasks);
+    setProjectTimeLogs(nextProjectTimeLogs);
+    setProjectMeetings(nextProjectMeetings);
+    setProjectDocuments(nextProjectDocuments);
+    setProjectFinanceItems(nextProjectFinanceItems);
     setTemplates(nextTemplates);
   }, []);
 
@@ -234,7 +280,7 @@ export const useOpportunitiesData = () => {
     };
   }, [applyPayload]);
 
-  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', data: Record<string, unknown> | Record<string, unknown>[]) => {
+  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
       method: 'POST',
       body: JSON.stringify({ entity, action: 'insert', data }),
@@ -373,7 +419,7 @@ export const useOpportunitiesData = () => {
     return mapped;
   };
 
-  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', id: string, data: Record<string, unknown>) => {
+  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', id: string, data: Record<string, unknown>) => {
     const result = await requestOpportunities({
       method: 'PUT',
       body: JSON.stringify({ entity, action: 'update', id, data }),
@@ -389,7 +435,7 @@ export const useOpportunitiesData = () => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -504,6 +550,115 @@ export const useOpportunitiesData = () => {
     setProjects((current) => current.filter((p) => p.id !== id));
   };
 
+  // ── ProjectTasks CRUD ──
+
+  const addProjectTask = async (input: ProjectTaskInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Task title is required.');
+    }
+
+    const row = await syncInsert('project_tasks', toProjectTaskDb(input));
+    const next = mapProjectTaskRow(row);
+    next.assignedToPersonName = people.find((p) => p.id === next.assignedToPersonId)?.fullName;
+    setProjectTasks((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateProjectTask = async (id: string, input: Partial<ProjectTaskInput>) => {
+    const row = await syncUpdate('project_tasks', id, input as Record<string, unknown>);
+    const next = mapProjectTaskRow(row);
+    next.assignedToPersonName = people.find((p) => p.id === next.assignedToPersonId)?.fullName;
+    setProjectTasks((current) => current.map((t) => (t.id === id ? next : t)));
+    return next;
+  };
+
+  const deleteProjectTask = async (id: string) => {
+    const confirmed = window.confirm('Delete this task?');
+    if (!confirmed) return;
+    await syncDelete('project_tasks', id);
+    setProjectTasks((current) => current.filter((t) => t.id !== id));
+  };
+
+  // ── ProjectTimeLogs CRUD ──
+
+  const addProjectTimeLog = async (input: ProjectTimeLogInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Time log title is required.');
+    }
+
+    const row = await syncInsert('project_time_logs', toProjectTimeLogDb(input));
+    const next = mapProjectTimeLogRow(row);
+    setProjectTimeLogs((current) => [next, ...current]);
+    return next;
+  };
+
+  const deleteProjectTimeLog = async (id: string) => {
+    const confirmed = window.confirm('Delete this time log?');
+    if (!confirmed) return;
+    await syncDelete('project_time_logs', id);
+    setProjectTimeLogs((current) => current.filter((t) => t.id !== id));
+  };
+
+  // ── ProjectMeetings CRUD ──
+
+  const addProjectMeeting = async (input: ProjectMeetingInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Meeting title is required.');
+    }
+
+    const row = await syncInsert('project_meetings', toProjectMeetingDb(input));
+    const next = mapProjectMeetingRow(row);
+    setProjectMeetings((current) => [next, ...current]);
+    return next;
+  };
+
+  const deleteProjectMeeting = async (id: string) => {
+    const confirmed = window.confirm('Delete this meeting?');
+    if (!confirmed) return;
+    await syncDelete('project_meetings', id);
+    setProjectMeetings((current) => current.filter((m) => m.id !== id));
+  };
+
+  // ── ProjectDocuments CRUD ──
+
+  const addProjectDocument = async (input: ProjectDocumentInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Document name is required.');
+    }
+
+    const row = await syncInsert('project_documents', toProjectDocumentDb(input));
+    const next = mapProjectDocumentRow(row);
+    setProjectDocuments((current) => [next, ...current]);
+    return next;
+  };
+
+  const deleteProjectDocument = async (id: string) => {
+    const confirmed = window.confirm('Delete this document?');
+    if (!confirmed) return;
+    await syncDelete('project_documents', id);
+    setProjectDocuments((current) => current.filter((d) => d.id !== id));
+  };
+
+  // ── ProjectFinanceItems CRUD ──
+
+  const addProjectFinanceItem = async (input: ProjectFinanceItemInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Finance item title is required.');
+    }
+
+    const row = await syncInsert('project_finance_items', toProjectFinanceItemDb(input));
+    const next = mapProjectFinanceItemRow(row);
+    setProjectFinanceItems((current) => [next, ...current]);
+    return next;
+  };
+
+  const deleteProjectFinanceItem = async (id: string) => {
+    const confirmed = window.confirm('Delete this finance item?');
+    if (!confirmed) return;
+    await syncDelete('project_finance_items', id);
+    setProjectFinanceItems((current) => current.filter((f) => f.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -568,6 +723,11 @@ export const useOpportunitiesData = () => {
     messages,
     deals,
     projects,
+    projectTasks,
+    projectTimeLogs,
+    projectMeetings,
+    projectDocuments,
+    projectFinanceItems,
     templates,
     strategyNotes,
     importCompaniesBatch,
@@ -588,6 +748,17 @@ export const useOpportunitiesData = () => {
     deleteDeal,
     updateProject,
     deleteProject,
+    addProjectTask,
+    updateProjectTask,
+    deleteProjectTask,
+    addProjectTimeLog,
+    deleteProjectTimeLog,
+    addProjectMeeting,
+    deleteProjectMeeting,
+    addProjectDocument,
+    deleteProjectDocument,
+    addProjectFinanceItem,
+    deleteProjectFinanceItem,
     updateTemplate,
     deleteTemplate,
     seedDefaultTemplates,

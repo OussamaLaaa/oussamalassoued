@@ -233,6 +233,7 @@ const OpportunitiesLayout: React.FC<{
 
   const {
     companies, people, messages, deals, projects, templates, strategyNotes,
+    projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
     addCompany, addPerson, addMessage, addDeal, addProject, addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
@@ -241,6 +242,11 @@ const OpportunitiesLayout: React.FC<{
     resetToSeedData,
     importCompaniesBatch,
     importPeople,
+    addProjectTask, updateProjectTask, deleteProjectTask,
+    addProjectTimeLog, deleteProjectTimeLog,
+    addProjectMeeting, deleteProjectMeeting,
+    addProjectDocument, deleteProjectDocument,
+    addProjectFinanceItem, deleteProjectFinanceItem,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -590,9 +596,25 @@ const OpportunitiesLayout: React.FC<{
                 people={people}
                 messages={messages}
                 deals={deals}
+                projectTasks={projectTasks}
+                projectTimeLogs={projectTimeLogs}
+                projectMeetings={projectMeetings}
+                projectDocuments={projectDocuments}
+                projectFinanceItems={projectFinanceItems}
                 onAddProject={() => setActiveModal('project')}
                 onEdit={handleEditProject}
                 onDelete={handleDeleteProject}
+                onAddTask={addProjectTask}
+                onUpdateTask={updateProjectTask}
+                onDeleteTask={deleteProjectTask}
+                onAddTimeLog={addProjectTimeLog}
+                onDeleteTimeLog={deleteProjectTimeLog}
+                onAddMeeting={addProjectMeeting}
+                onDeleteMeeting={deleteProjectMeeting}
+                onAddDocument={addProjectDocument}
+                onDeleteDocument={deleteProjectDocument}
+                onAddFinanceItem={addProjectFinanceItem}
+                onDeleteFinanceItem={deleteProjectFinanceItem}
               />
             )}
 

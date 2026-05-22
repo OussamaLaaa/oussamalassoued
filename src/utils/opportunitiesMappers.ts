@@ -11,6 +11,16 @@ import type {
   ProjectInput,
   MessageTemplate,
   MessageTemplateInput,
+  ProjectTask,
+  ProjectTaskInput,
+  ProjectTimeLog,
+  ProjectTimeLogInput,
+  ProjectMeeting,
+  ProjectMeetingInput,
+  ProjectDocument,
+  ProjectDocumentInput,
+  ProjectFinanceItem,
+  ProjectFinanceItemInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -275,4 +285,129 @@ export const projectToDb = (input: ProjectInput) => ({
   github_url: toNullableString(input.githubUrl),
   notes: toNullableString(input.notes),
   next_action: toNullableString(input.nextAction),
+});
+
+// ── ProjectTask mappers ──
+
+export const projectTaskFromDb = (row: any): ProjectTask => ({
+  id: safeString(row?.id),
+  projectId: safeString(row?.project_id ?? row?.projectId),
+  title: safeString(row?.title),
+  description: row?.description ?? undefined,
+  status: row?.status ?? 'todo',
+  priority: row?.priority ?? 'medium',
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  assignedToPersonId: row?.assigned_to_person_id ?? row?.assignedToPersonId ?? undefined,
+  assignedToPersonName: undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const projectTaskToDb = (input: ProjectTaskInput) => ({
+  project_id: input.projectId,
+  title: input.title.trim(),
+  description: toNullableString(input.description),
+  status: input.status || 'todo',
+  priority: input.priority || 'medium',
+  due_date: toNullableDate(input.dueDate),
+  assigned_to_person_id: toNullableString(input.assignedToPersonId),
+});
+
+// ── ProjectTimeLog mappers ──
+
+export const projectTimeLogFromDb = (row: any): ProjectTimeLog => ({
+  id: safeString(row?.id),
+  projectId: safeString(row?.project_id ?? row?.projectId),
+  title: safeString(row?.title),
+  description: row?.description ?? undefined,
+  hours: safeNumber(row?.hours) ?? 0,
+  workDate: row?.work_date ?? row?.workDate ?? new Date().toISOString(),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+});
+
+export const projectTimeLogToDb = (input: ProjectTimeLogInput) => ({
+  project_id: input.projectId,
+  title: input.title.trim(),
+  description: toNullableString(input.description),
+  hours: input.hours,
+  work_date: input.workDate,
+});
+
+// ── ProjectMeeting mappers ──
+
+export const projectMeetingFromDb = (row: any): ProjectMeeting => ({
+  id: safeString(row?.id),
+  projectId: safeString(row?.project_id ?? row?.projectId),
+  title: safeString(row?.title),
+  meetingDate: row?.meeting_date ?? row?.meetingDate ?? new Date().toISOString(),
+  attendees: row?.attendees ?? undefined,
+  agenda: row?.agenda ?? undefined,
+  notes: row?.notes ?? undefined,
+  outcome: row?.outcome ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const projectMeetingToDb = (input: ProjectMeetingInput) => ({
+  project_id: input.projectId,
+  title: input.title.trim(),
+  meeting_date: input.meetingDate,
+  attendees: toNullableString(input.attendees),
+  agenda: toNullableString(input.agenda),
+  notes: toNullableString(input.notes),
+  outcome: toNullableString(input.outcome),
+  next_action: toNullableString(input.nextAction),
+});
+
+// ── ProjectDocument mappers ──
+
+export const projectDocumentFromDb = (row: any): ProjectDocument => ({
+  id: safeString(row?.id),
+  projectId: safeString(row?.project_id ?? row?.projectId),
+  name: safeString(row?.name),
+  type: row?.type ?? 'document',
+  status: row?.status ?? undefined,
+  url: row?.url ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const projectDocumentToDb = (input: ProjectDocumentInput) => ({
+  project_id: input.projectId,
+  name: input.name.trim(),
+  type: input.type || 'document',
+  status: toNullableString(input.status),
+  url: toNullableString(input.url),
+  notes: toNullableString(input.notes),
+});
+
+// ── ProjectFinanceItem mappers ──
+
+export const projectFinanceItemFromDb = (row: any): ProjectFinanceItem => ({
+  id: safeString(row?.id),
+  projectId: safeString(row?.project_id ?? row?.projectId),
+  title: safeString(row?.title),
+  type: row?.type ?? 'income',
+  amount: safeNumber(row?.amount) ?? 0,
+  currency: row?.currency ?? undefined,
+  status: row?.status ?? 'planned',
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  paidDate: toIso(row?.paid_date ?? row?.paidDate),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const projectFinanceItemToDb = (input: ProjectFinanceItemInput) => ({
+  project_id: input.projectId,
+  title: input.title.trim(),
+  type: input.type || 'income',
+  amount: input.amount,
+  currency: toNullableString(input.currency),
+  status: input.status || 'planned',
+  due_date: toNullableDate(input.dueDate),
+  paid_date: toNullableDate(input.paidDate),
+  notes: toNullableString(input.notes),
 });

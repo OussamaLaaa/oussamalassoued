@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import type { Company, Deal, OutreachMessage, Person, Project } from '../../types/opportunities';
+import type {
+  Company, Deal, OutreachMessage, Person, Project,
+  ProjectTask, ProjectTaskInput,
+  ProjectTimeLog, ProjectTimeLogInput,
+  ProjectMeeting, ProjectMeetingInput,
+  ProjectDocument, ProjectDocumentInput,
+  ProjectFinanceItem, ProjectFinanceItemInput,
+} from '../../types/opportunities';
 import ProjectDetailView from './ProjectDetailView';
 
 const stageColors: Record<string, string> = {
@@ -39,10 +46,26 @@ const ProjectsPanel: React.FC<{
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
+  projectTasks: ProjectTask[];
+  projectTimeLogs: ProjectTimeLog[];
+  projectMeetings: ProjectMeeting[];
+  projectDocuments: ProjectDocument[];
+  projectFinanceItems: ProjectFinanceItem[];
   onAddProject: () => void;
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
-}> = ({ projects, companies, people, messages, deals, onAddProject, onEdit, onDelete }) => {
+  onAddTask: (input: ProjectTaskInput) => Promise<any>;
+  onUpdateTask: (id: string, input: Partial<ProjectTaskInput>) => Promise<any>;
+  onDeleteTask: (id: string) => Promise<void>;
+  onAddTimeLog: (input: ProjectTimeLogInput) => Promise<any>;
+  onDeleteTimeLog: (id: string) => Promise<void>;
+  onAddMeeting: (input: ProjectMeetingInput) => Promise<any>;
+  onDeleteMeeting: (id: string) => Promise<void>;
+  onAddDocument: (input: ProjectDocumentInput) => Promise<any>;
+  onDeleteDocument: (id: string) => Promise<void>;
+  onAddFinanceItem: (input: ProjectFinanceItemInput) => Promise<any>;
+  onDeleteFinanceItem: (id: string) => Promise<void>;
+}> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const stats = useMemo(() => ({
@@ -65,11 +88,27 @@ const ProjectsPanel: React.FC<{
         people={people}
         messages={messages}
         deals={deals}
+        projectTasks={projectTasks}
+        projectTimeLogs={projectTimeLogs}
+        projectMeetings={projectMeetings}
+        projectDocuments={projectDocuments}
+        projectFinanceItems={projectFinanceItems}
         onBack={() => setSelectedProject(null)}
         onEditProject={() => {
           onEdit(selectedProject);
           setSelectedProject(null);
         }}
+        onAddTask={onAddTask}
+        onUpdateTask={onUpdateTask}
+        onDeleteTask={onDeleteTask}
+        onAddTimeLog={onAddTimeLog}
+        onDeleteTimeLog={onDeleteTimeLog}
+        onAddMeeting={onAddMeeting}
+        onDeleteMeeting={onDeleteMeeting}
+        onAddDocument={onAddDocument}
+        onDeleteDocument={onDeleteDocument}
+        onAddFinanceItem={onAddFinanceItem}
+        onDeleteFinanceItem={onDeleteFinanceItem}
       />
     );
   }

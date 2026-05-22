@@ -169,6 +169,121 @@ export interface Project {
   updatedAt?: string;
 }
 
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'doing' | 'done' | 'blocked';
+  priority: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  assignedToPersonId?: string;
+  assignedToPersonName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectTaskInput {
+  projectId: string;
+  title: string;
+  description?: string;
+  status?: 'todo' | 'doing' | 'done' | 'blocked';
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  assignedToPersonId?: string;
+}
+
+export interface ProjectTimeLog {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  hours: number;
+  workDate: string;
+  createdAt?: string;
+}
+
+export interface ProjectTimeLogInput {
+  projectId: string;
+  title: string;
+  description?: string;
+  hours: number;
+  workDate: string;
+}
+
+export interface ProjectMeeting {
+  id: string;
+  projectId: string;
+  title: string;
+  meetingDate: string;
+  attendees?: string;
+  agenda?: string;
+  notes?: string;
+  outcome?: string;
+  nextAction?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectMeetingInput {
+  projectId: string;
+  title: string;
+  meetingDate: string;
+  attendees?: string;
+  agenda?: string;
+  notes?: string;
+  outcome?: string;
+  nextAction?: string;
+}
+
+export interface ProjectDocument {
+  id: string;
+  projectId: string;
+  name: string;
+  type: 'contract' | 'invoice' | 'agreement' | 'brief' | 'receipt' | 'link' | 'document' | 'other';
+  status?: string;
+  url?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectDocumentInput {
+  projectId: string;
+  name: string;
+  type: ProjectDocument['type'];
+  status?: string;
+  url?: string;
+  notes?: string;
+}
+
+export interface ProjectFinanceItem {
+  id: string;
+  projectId: string;
+  title: string;
+  type: 'income' | 'expense' | 'invoice' | 'payment' | 'investment';
+  amount: number;
+  currency?: string;
+  status: 'planned' | 'sent' | 'paid' | 'unpaid' | 'overdue' | 'cancelled';
+  dueDate?: string;
+  paidDate?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectFinanceItemInput {
+  projectId: string;
+  title: string;
+  type: ProjectFinanceItem['type'];
+  amount: number;
+  currency?: string;
+  status?: ProjectFinanceItem['status'];
+  dueDate?: string;
+  paidDate?: string;
+  notes?: string;
+}
+
 export interface ProjectInput {
   name: string;
   type?: Project['type'];
@@ -203,6 +318,11 @@ export interface OpportunitiesData {
   messages: OutreachMessage[];
   deals: Deal[];
   projects: Project[];
+  projectTasks: ProjectTask[];
+  projectTimeLogs: ProjectTimeLog[];
+  projectMeetings: ProjectMeeting[];
+  projectDocuments: ProjectDocument[];
+  projectFinanceItems: ProjectFinanceItem[];
   templates: MessageTemplate[];
   strategyNotes: StrategyNote[];
 }
