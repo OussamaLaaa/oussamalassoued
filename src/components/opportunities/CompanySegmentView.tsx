@@ -1,20 +1,10 @@
 import React, { useMemo, useState } from 'react';
+import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import type { CompanyFilters } from './CompaniesTable';
 import type { SegmentType } from '../../types/opportunities';
 import CompaniesTable from './CompaniesTable';
 import CsvImportModal from './CsvImportModal';
-
-// ── Normalize databaseType for display/filtering ──
-const normalizeDatabaseType = (value?: string): SegmentType | null => {
-  if (!value) return null;
-  const v = value.trim().toLowerCase().replace(/\s+/g, '_');
-  if (v === 'big_company' || v === 'bigcompany') return 'big_company';
-  if (v === 'sme') return 'sme';
-  if (v === 'small') return 'sme';
-  if (v === 'freelance' || v === 'freelance_lead') return 'freelance';
-  return null;
-};
 
 const isSegmentMatch = (company: Company, segment: SegmentType): boolean => {
   return normalizeDatabaseType(company.databaseType) === segment;
@@ -262,7 +252,7 @@ const CompanySegmentView: React.FC<{
           onClose={() => setShowCsvImport(false)}
           onImport={async (rows) => {
             try {
-              const inserted = await onImportCompaniesBatch!(rows);
+              const inserted = await onImportCompaniesBatch!(rows, segmentType);
               return { success: true, count: inserted.length };
             } catch (err) {
               return { success: false, error: err instanceof Error ? err.message : 'Import failed.' };

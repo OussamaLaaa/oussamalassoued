@@ -4,6 +4,7 @@ export const companies: Company[] = [
   {
     id: 'c_bigco',
     name: 'Atlas Global Systems',
+    databaseType: 'big_company',
     category: 'Enterprise',
     industry: 'Finance',
     country: 'USA',
@@ -21,6 +22,7 @@ export const companies: Company[] = [
   {
     id: 'c_sme_1',
     name: 'BrightDesign Studio',
+    databaseType: 'sme',
     category: 'SME',
     industry: 'Design',
     country: 'Tunisia',
@@ -38,6 +40,7 @@ export const companies: Company[] = [
   {
     id: 'c_freelance_lead',
     name: 'Solo Founder (freelance)',
+    databaseType: 'freelance',
     category: 'Freelance',
     industry: 'SaaS',
     country: 'Remote',

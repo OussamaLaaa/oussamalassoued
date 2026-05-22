@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { Company } from '../../types/opportunities';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
@@ -32,7 +33,7 @@ const CompaniesTable: React.FC<{
       }
       if (filters.priority && c.priority !== filters.priority) return false;
       if (filters.status && c.status !== filters.status) return false;
-      if (filters.databaseType && c.databaseType !== filters.databaseType) return false;
+      if (filters.databaseType && normalizeDatabaseType(c.databaseType) !== filters.databaseType) return false;
       if (filters.country) {
         const q = filters.country.toLowerCase();
         if (!(c.country || '').toLowerCase().includes(q)) return false;

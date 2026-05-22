@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
@@ -217,6 +218,19 @@ const OpportunitiesLayout: React.FC<{
     importPeople,
   } = data;
 
+  const bigCompaniesCount = useMemo(
+    () => companies.filter((c) => normalizeDatabaseType(c.databaseType) === 'big_company').length,
+    [companies],
+  );
+  const smeCompaniesCount = useMemo(
+    () => companies.filter((c) => normalizeDatabaseType(c.databaseType) === 'sme').length,
+    [companies],
+  );
+  const freelanceLeadsCount = useMemo(
+    () => companies.filter((c) => normalizeDatabaseType(c.databaseType) === 'freelance').length,
+    [companies],
+  );
+
   const handleResetDemoData = () => {
     const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
     if (!confirmed) return;
@@ -269,17 +283,23 @@ const OpportunitiesLayout: React.FC<{
               {TABS.map((t) => {
                 const count = t.id === 'companies'
                   ? companies.length
+                  : t.id === 'big_companies'
+                    ? bigCompaniesCount
+                  : t.id === 'sme_companies'
+                    ? smeCompaniesCount
+                  : t.id === 'freelance_leads'
+                    ? freelanceLeadsCount
                   : t.id === 'people'
                     ? people.length
-                    : t.id === 'messages'
-                      ? messages.length
-                      : t.id === 'deals'
-                        ? deals.length
-                        : t.id === 'queue'
-                          ? getQueueTabCount(people, messages)
-                        : t.id === 'templates'
-                          ? templates.length
-                          : 0;
+                  : t.id === 'messages'
+                    ? messages.length
+                  : t.id === 'deals'
+                    ? deals.length
+                  : t.id === 'queue'
+                    ? getQueueTabCount(people, messages)
+                  : t.id === 'templates'
+                    ? templates.length
+                    : 0;
                 const active = tab === t.id;
                 return (
                   <button

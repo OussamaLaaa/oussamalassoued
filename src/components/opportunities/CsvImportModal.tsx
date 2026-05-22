@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 
 interface CsvRow {
   name: string;
+  databaseType?: string;
   country?: string;
   industry?: string;
   website?: string;
@@ -24,6 +25,7 @@ const parseCsvText = (text: string): { rows: CsvRow[]; errors: string[] } => {
 
   // Find column indices (case-insensitive)
   const nameIndex = headers.findIndex((h) => h.toLowerCase() === 'name');
+  const dbTypeIndex = headers.findIndex((h) => h.toLowerCase() === 'databasetype' || h.toLowerCase() === 'database_type');
   const countryIndex = headers.findIndex((h) => h.toLowerCase() === 'country');
   const industryIndex = headers.findIndex((h) => h.toLowerCase() === 'industry');
   const websiteIndex = headers.findIndex((h) => h.toLowerCase() === 'website');
@@ -49,6 +51,7 @@ const parseCsvText = (text: string): { rows: CsvRow[]; errors: string[] } => {
 
     rows.push({
       name,
+      databaseType: dbTypeIndex >= 0 ? values[dbTypeIndex] || undefined : undefined,
       country: countryIndex >= 0 ? values[countryIndex] || undefined : undefined,
       industry: industryIndex >= 0 ? values[industryIndex] || undefined : undefined,
       website: websiteIndex >= 0 ? values[websiteIndex] || undefined : undefined,
