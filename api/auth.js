@@ -1,9 +1,30 @@
+const COOKIE_NAME = 'dashboard_session';
+const COOKIE_VALUE = 'test123';
+
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
+
+  return cookieHeader.split(';').reduce((accumulator, part) => {
+    const separatorIndex = part.indexOf('=');
+    if (separatorIndex === -1) return accumulator;
+
+    const key = part.slice(0, separatorIndex).trim();
+    const value = part.slice(separatorIndex + 1).trim();
+    if (key) {
+      accumulator[key] = value;
+    }
+    return accumulator;
+  }, {});
+};
+
 export default (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   
   // GET - Check auth
   if (req.method === 'GET') {
-    return res.status(200).json({ success: true, authenticated: false });
+    const cookies = parseCookies(req.headers?.cookie);
+    const authenticated = cookies[COOKIE_NAME] === COOKIE_VALUE;
+    return res.status(200).json({ success: true, authenticated });
   }
   
   // POST - Login
@@ -23,7 +44,7 @@ export default (req, res) => {
     const correct = process.env.DASHBOARD_PASSWORD || '00000008';
     
     if (password === correct) {
-      res.setHeader('Set-Cookie', 'dashboard_session=test123; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200');
+      res.setHeader('Set-Cookie', `${COOKIE_NAME}=${COOKIE_VALUE}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200`);
       return res.status(200).json({ success: true, authenticated: true });
     }
     
@@ -32,7 +53,7 @@ export default (req, res) => {
   
   // DELETE - Logout
   if (req.method === 'DELETE') {
-    res.setHeader('Set-Cookie', 'dashboard_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
+    res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`);
     return res.status(200).json({ success: true, authenticated: false });
   }
   
