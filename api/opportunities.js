@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const allowedEntities = new Set(['companies', 'people', 'messages', 'deals']);
+const tablesAttempted = ['companies', 'people', 'messages', 'deals'];
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -14,6 +15,39 @@ const getSupabaseClient = () => {
     auth: { persistSession: false },
   });
 };
+
+const getEnvPresence = () => ({
+  SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
+  SUPABASE_SECRET_KEY: Boolean(process.env.SUPABASE_SECRET_KEY),
+});
+
+const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
+
+const summarizeSupabaseError = (error) => {
+  if (!error) return 'Unknown Supabase error';
+
+  const safeParts = [error.code, error.details, error.hint, error.message]
+    .filter(Boolean)
+    .map((part) => String(part).replace(/https?:\/\/\S+/gi, '[redacted]'));
+
+  return safeParts.join(' | ') || 'Unknown Supabase error';
+};
+
+const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
+  success: false,
+  ...(debug
+    ? {
+        envPresent,
+        tablesAttempted,
+        failedTable,
+        errorCode: error?.code ?? null,
+        errorMessage: summarizeSupabaseError(error),
+      }
+    : {
+        failedTable,
+        error: 'Unable to load Opportunities data from Supabase.',
+      }),
+});
 
 const readBody = (req) => {
   if (!req.body) return {};
@@ -40,41 +74,68 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  const debug = isDebugEnabled(req);
+  const envPresent = getEnvPresence();
   const supabase = getSupabaseClient();
   if (!supabase) {
     return toSafeJson(res, 500, {
       success: false,
-      error: 'Supabase environment variables are not configured.',
+      ...(debug
+        ? {
+            error: 'Missing Supabase environment variables',
+            envPresent,
+            tablesAttempted,
+            failedTable: null,
+            errorCode: null,
+            errorMessage: 'Missing Supabase environment variables',
+          }
+        : {
+            error: 'Missing Supabase environment variables',
+            failedTable: null,
+          }),
     });
   }
 
   if (req.method === 'GET') {
     try {
-      const [companiesResult, peopleResult, messagesResult, dealsResult] = await Promise.all([
-        supabase.from('companies').select('*'),
-        supabase.from('people').select('*'),
-        supabase.from('messages').select('*'),
-        supabase.from('deals').select('*'),
-      ]);
+      const results = {};
 
-      if (companiesResult.error || peopleResult.error || messagesResult.error || dealsResult.error) {
-        return toSafeJson(res, 500, {
-          success: false,
-          error: 'Unable to load Opportunities data from Supabase.',
-        });
+      for (const table of tablesAttempted) {
+        const { data, error } = await supabase.from(table).select('*');
+
+        if (error) {
+          console.error(`[Opportunities] Supabase query failed for ${table}`, error);
+          return toSafeJson(
+            res,
+            500,
+            buildFailurePayload({
+              debug,
+              failedTable: table,
+              error,
+              envPresent,
+            })
+          );
+        }
+
+        results[table] = data || [];
       }
 
       return toSafeJson(res, 200, {
-        companies: companiesResult.data || [],
-        people: peopleResult.data || [],
-        messages: messagesResult.data || [],
-        deals: dealsResult.data || [],
+        companies: results.companies || [],
+        people: results.people || [],
+        messages: results.messages || [],
+        deals: results.deals || [],
         strategyNotes: [],
       });
     } catch (error) {
+      console.error('[Opportunities] Unexpected GET failure', error);
       return toSafeJson(res, 500, {
-        success: false,
-        error: 'Unable to load Opportunities data from Supabase.',
+        ...buildFailurePayload({
+          debug,
+          failedTable: null,
+          error,
+          envPresent,
+        }),
       });
     }
   }
@@ -103,11 +164,13 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
+        console.error(`[Opportunities] Supabase insert failed for ${entity}`, error);
         return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
       }
 
       return toSafeJson(res, 200, { success: true, row: insertedRow });
     } catch (error) {
+      console.error(`[Opportunities] Unexpected insert failure for ${entity}`, error);
       return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
     }
   }
