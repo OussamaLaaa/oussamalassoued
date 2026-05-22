@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const allowedEntities = new Set(['companies', 'people', 'messages', 'deals']);
 const tablesAttempted = ['companies', 'people', 'messages', 'deals'];
+const DASHBOARD_SESSION_COOKIE = 'dashboard_session';
+const DASHBOARD_SESSION_VALUE = 'test123';
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -22,6 +24,27 @@ const getEnvPresence = () => ({
 });
 
 const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
+
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
+
+  return cookieHeader.split(';').reduce((accumulator, part) => {
+    const separatorIndex = part.indexOf('=');
+    if (separatorIndex === -1) return accumulator;
+
+    const key = part.slice(0, separatorIndex).trim();
+    const value = part.slice(separatorIndex + 1).trim();
+    if (key) {
+      accumulator[key] = value;
+    }
+    return accumulator;
+  }, {});
+};
+
+const isDashboardAuthenticated = (req) => {
+  const cookies = parseCookies(req?.headers?.cookie);
+  return cookies[DASHBOARD_SESSION_COOKIE] === DASHBOARD_SESSION_VALUE;
+};
 
 const summarizeSupabaseError = (error) => {
   if (!error) return 'Unknown Supabase error';
@@ -66,7 +89,6 @@ const toSafeJson = (res, status, body) => res.status(status).json(body);
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -79,6 +101,13 @@ export default async function handler(req, res) {
       success: true,
       route: 'api/opportunities.js',
       message: 'Opportunities API is reachable',
+    });
+  }
+
+  if (!isDashboardAuthenticated(req)) {
+    return toSafeJson(res, 401, {
+      success: false,
+      error: 'Unauthorized',
     });
   }
 
