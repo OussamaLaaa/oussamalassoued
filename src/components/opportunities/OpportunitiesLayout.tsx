@@ -12,6 +12,7 @@ import AddPersonForm from './AddPersonForm';
 import LogMessageForm from './LogMessageForm';
 import AddDealForm from './AddDealForm';
 import CsvImportModal from './CsvImportModal';
+import ImportPeopleModal from './ImportPeopleModal';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -129,6 +130,7 @@ const OpportunitiesLayout: React.FC<{
     deleteDeal: (id: string) => void;
     resetToSeedData: () => void;
     importCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => Promise<any>;
+    importPeople?: (rows: PersonInput[]) => Promise<any>;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
@@ -138,6 +140,7 @@ const OpportunitiesLayout: React.FC<{
   const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [showCsvImport, setShowCsvImport] = useState(false);
+  const [showPeopleImport, setShowPeopleImport] = useState(false);
 
   // Global search state
   const [globalSearch, setGlobalSearch] = useState('');
@@ -166,6 +169,7 @@ const OpportunitiesLayout: React.FC<{
     updateDeal, deleteDeal,
     resetToSeedData,
     importCompaniesBatch,
+    importPeople,
   } = data;
 
   const handleResetDemoData = () => {
@@ -327,13 +331,24 @@ const OpportunitiesLayout: React.FC<{
             )}
 
             {tab === 'people' && (
-              <PeopleTable
-                people={people}
-                onEdit={handleEditPerson}
-                onDelete={handleDeletePerson}
-                filters={personFilters}
-                onFilterChange={setPersonFilters}
-              />
+              <>
+                <div className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowPeopleImport(true)}
+                    className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
+                  >
+                    Import CSV
+                  </button>
+                </div>
+                <PeopleTable
+                  people={people}
+                  onEdit={handleEditPerson}
+                  onDelete={handleDeletePerson}
+                  filters={personFilters}
+                  onFilterChange={setPersonFilters}
+                />
+              </>
             )}
 
             {tab === 'messages' && (
@@ -524,6 +539,25 @@ const OpportunitiesLayout: React.FC<{
               return { success: true, count: inserted.length };
             } catch (err) {
               return { success: false, error: err instanceof Error ? err.message : 'Import failed.' };
+            }
+          }}
+        />
+      )}
+
+      {showPeopleImport && (
+        <ImportPeopleModal
+          companies={companies}
+          onClose={() => setShowPeopleImport(false)}
+          onImport={async (rows) => {
+            if (!importPeople) {
+              throw new Error('Import function not available.');
+            }
+
+            try {
+              const inserted = await importPeople(rows);
+              return inserted;
+            } catch (err) {
+              throw err instanceof Error ? err : new Error('Import failed.');
             }
           }}
         />

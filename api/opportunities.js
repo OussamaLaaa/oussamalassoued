@@ -184,7 +184,7 @@ export default async function handler(req, res) {
       return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
     }
 
-    if (action !== 'insert') {
+    if (action !== 'insert' && action !== 'bulk_insert') {
       return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
     }
 
@@ -196,15 +196,14 @@ export default async function handler(req, res) {
       return toSafeJson(res, 400, { success: false, error: 'Missing data payload.' });
     }
 
-    const isBatch = Array.isArray(data);
+    const isBatch = Array.isArray(data) || action === 'bulk_insert';
 
-    if (isBatch && data.length === 0) {
+    if (isBatch && (!Array.isArray(data) || data.length === 0)) {
       return toSafeJson(res, 400, { success: false, error: 'Empty batch payload.' });
     }
 
     try {
       if (isBatch) {
-        // Batch insert
         const { data: insertedRows, error } = await supabase
           .from(entity)
           .insert(data)

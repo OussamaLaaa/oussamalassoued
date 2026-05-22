@@ -457,6 +457,41 @@ export const useOpportunitiesData = () => {
     return next;
   };
 
+  const importPeople = async (peopleInput: PersonInput[]) => {
+    if (!Array.isArray(peopleInput) || peopleInput.length === 0) {
+      return [];
+    }
+
+    const result = await requestOpportunities({
+      method: 'POST',
+      body: JSON.stringify({
+        entity: 'people',
+        action: 'bulk_insert',
+        data: peopleInput.map((input) => toPersonDb(input)),
+      }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
+    });
+
+    if (result?.success === false) {
+      throw new Error(result?.error || 'Failed to import people.');
+    }
+
+    const inserted = Array.isArray(result?.rows) ? result.rows : [];
+    const mapped = inserted.map((row) => {
+      const companyId = getRowRefId(row, 'company_id', 'companyId');
+      const companyName = companies.find((company) => company.id === companyId)?.name;
+      return mapPersonRow(row, companyName);
+    });
+
+    if (mapped.length > 0) {
+      setPeople((current) => [...mapped, ...current]);
+    }
+
+    return mapped;
+  };
+
   const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string, data: Record<string, unknown>) => {
     const result = await requestOpportunities({
       method: 'PUT',
@@ -575,6 +610,7 @@ export const useOpportunitiesData = () => {
     addPerson,
     addMessage,
     addDeal,
+    importPeople,
     updateCompany,
     deleteCompany,
     updatePerson,
