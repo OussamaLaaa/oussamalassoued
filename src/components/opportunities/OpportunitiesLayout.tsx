@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
-import CompaniesTable from './CompaniesTable';
-import PeopleTable from './PeopleTable';
-import MessagesTable from './MessagesTable';
-import DealsTable from './DealsTable';
+import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
+import PeopleTable, { type PersonFilters } from './PeopleTable';
+import MessagesTable, { type MessageFilters } from './MessagesTable';
+import DealsTable, { type DealFilters } from './DealsTable';
 import StrategyPanel from './StrategyPanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -82,6 +82,34 @@ const toDealInput = (d: Deal): DealInput => ({
   notes: d.notes,
 });
 
+const defaultCompanyFilters: CompanyFilters = {
+  searchQuery: '',
+  priority: '',
+  status: '',
+  databaseType: '',
+  country: '',
+};
+
+const defaultPersonFilters: PersonFilters = {
+  searchQuery: '',
+  decisionPower: '',
+  relevance: '',
+  relationshipStatus: '',
+};
+
+const defaultMessageFilters: MessageFilters = {
+  searchQuery: '',
+  replyStatus: '',
+  followUp: '',
+};
+
+const defaultDealFilters: DealFilters = {
+  searchQuery: '',
+  stage: '',
+  probabilityMin: '',
+  probabilityMax: '',
+};
+
 const OpportunitiesLayout: React.FC<{
   theme?: 'light' | 'dark';
   setTheme?: (t: 'light' | 'dark') => void;
@@ -107,6 +135,24 @@ const OpportunitiesLayout: React.FC<{
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+
+  // Global search state
+  const [globalSearch, setGlobalSearch] = useState('');
+
+  // Per-table filter states
+  const [companyFilters, setCompanyFilters] = useState<CompanyFilters>(defaultCompanyFilters);
+  const [personFilters, setPersonFilters] = useState<PersonFilters>(defaultPersonFilters);
+  const [messageFilters, setMessageFilters] = useState<MessageFilters>(defaultMessageFilters);
+  const [dealFilters, setDealFilters] = useState<DealFilters>(defaultDealFilters);
+
+  // Sync global search to all table filters
+  const handleGlobalSearchChange = (value: string) => {
+    setGlobalSearch(value);
+    setCompanyFilters((prev) => ({ ...prev, searchQuery: value }));
+    setPersonFilters((prev) => ({ ...prev, searchQuery: value }));
+    setMessageFilters((prev) => ({ ...prev, searchQuery: value }));
+    setDealFilters((prev) => ({ ...prev, searchQuery: value }));
+  };
 
   const {
     companies, people, messages, deals, strategyNotes,
@@ -205,13 +251,40 @@ const OpportunitiesLayout: React.FC<{
               <ul className="mt-2 list-disc list-inside text-xs text-[#64748b]">
                 <li>Use the cards to monitor pipeline health.</li>
                 <li>Click Edit or Delete to manage records.</li>
+                <li>Use the search bar to find companies, people, emails, and LinkedIn profiles.</li>
+                <li>Combine filters for precise results.</li>
               </ul>
             </div>
           </div>
         </aside>
 
         <main className="col-span-12 md:col-span-9">
-          <div className="space-y-6">
+          <div className="space-y-4">
+            {/* Global Search Bar */}
+            <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#64748b] shrink-0">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  type="text"
+                  value={globalSearch}
+                  onChange={(e) => handleGlobalSearchChange(e.target.value)}
+                  placeholder="Search across companies, people, emails, LinkedIn..."
+                  className="w-full text-sm bg-transparent border-none outline-none text-[#0f172a] placeholder-[#94a3b8]"
+                />
+                {globalSearch && (
+                  <button
+                    type="button"
+                    onClick={() => handleGlobalSearchChange('')}
+                    className="text-xs px-2 py-1 rounded text-[#64748b] hover:text-[#dc2626] hover:bg-[#fef2f2]"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
             {tab === 'dashboard' && (
               <OpportunitiesDashboard
                 companies={companies}
@@ -231,6 +304,8 @@ const OpportunitiesLayout: React.FC<{
                 companies={companies}
                 onEdit={handleEditCompany}
                 onDelete={handleDeleteCompany}
+                filters={companyFilters}
+                onFilterChange={setCompanyFilters}
               />
             )}
 
@@ -239,6 +314,8 @@ const OpportunitiesLayout: React.FC<{
                 people={people}
                 onEdit={handleEditPerson}
                 onDelete={handleDeletePerson}
+                filters={personFilters}
+                onFilterChange={setPersonFilters}
               />
             )}
 
@@ -247,6 +324,8 @@ const OpportunitiesLayout: React.FC<{
                 messages={messages}
                 onEdit={handleEditMessage}
                 onDelete={handleDeleteMessage}
+                filters={messageFilters}
+                onFilterChange={setMessageFilters}
               />
             )}
 
@@ -255,6 +334,8 @@ const OpportunitiesLayout: React.FC<{
                 deals={deals}
                 onEdit={handleEditDeal}
                 onDelete={handleDeleteDeal}
+                filters={dealFilters}
+                onFilterChange={setDealFilters}
               />
             )}
 
