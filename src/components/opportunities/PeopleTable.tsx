@@ -12,9 +12,10 @@ const PeopleTable: React.FC<{
   people: Person[];
   onEdit?: (person: Person) => void;
   onDelete?: (id: string) => void;
+  onUseTemplate?: (person: Person) => void;
   filters?: PersonFilters;
   onFilterChange?: (filters: PersonFilters) => void;
-}> = ({ people, onEdit, onDelete, filters, onFilterChange }) => {
+}> = ({ people, onEdit, onDelete, onUseTemplate, filters, onFilterChange }) => {
   const filtered = useMemo(() => {
     if (!filters) return people;
     return people.filter((p) => {
@@ -136,6 +137,15 @@ const PeopleTable: React.FC<{
                 <td className="px-3 py-3 text-sm text-[#0f172a]">{p.contactChannel}</td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-1">
+                    {onUseTemplate && (
+                      <button
+                        type="button"
+                        onClick={() => onUseTemplate(p)}
+                        className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f8fafc]"
+                      >
+                        Use Template
+                      </button>
+                    )}
                     {onEdit && (
                       <button
                         type="button"

@@ -13,6 +13,7 @@ import LogMessageForm from './LogMessageForm';
 import AddDealForm from './AddDealForm';
 import CsvImportModal from './CsvImportModal';
 import ImportPeopleModal from './ImportPeopleModal';
+import OutreachTemplateModal from './OutreachTemplateModal';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -141,6 +142,7 @@ const OpportunitiesLayout: React.FC<{
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showPeopleImport, setShowPeopleImport] = useState(false);
+  const [templatePerson, setTemplatePerson] = useState<Person | null>(null);
 
   // Global search state
   const [globalSearch, setGlobalSearch] = useState('');
@@ -301,6 +303,7 @@ const OpportunitiesLayout: React.FC<{
                 deals={deals}
                 updatePerson={updatePerson}
                 updateMessage={updateMessage}
+                onUseTemplate={(person) => setTemplatePerson(person)}
                 onAddCompany={() => setActiveModal('company')}
                 onAddPerson={() => setActiveModal('person')}
                 onAddMessage={() => setActiveModal('message')}
@@ -345,6 +348,7 @@ const OpportunitiesLayout: React.FC<{
                   people={people}
                   onEdit={handleEditPerson}
                   onDelete={handleDeletePerson}
+                  onUseTemplate={(person) => setTemplatePerson(person)}
                   filters={personFilters}
                   onFilterChange={setPersonFilters}
                 />
@@ -562,6 +566,21 @@ const OpportunitiesLayout: React.FC<{
           }}
         />
       )}
+
+      {templatePerson ? (
+        <OutreachTemplateModal
+          isOpen
+          person={templatePerson}
+          company={companies.find((company) => company.id === templatePerson.companyId) || null}
+          onClose={() => setTemplatePerson(null)}
+          onLogMessage={async (messageInput) => {
+            await addMessage(messageInput);
+          }}
+          onUpdatePerson={async (id, input) => {
+            await updatePerson(id, input);
+          }}
+        />
+      ) : null}
     </div>
   );
 };

@@ -79,6 +79,7 @@ const toMessageInput = (message: OutreachMessage): MessageInput => ({
 type FollowUpItem = {
   kind: 'person' | 'message';
   id: string;
+  personId?: string;
   companyName: string;
   personName: string;
   channel?: string;
@@ -99,8 +100,9 @@ const OpportunitiesDashboard: React.FC<{
   onAddPerson: () => void;
   onAddMessage: () => void;
   onAddDeal: () => void;
+  onUseTemplate?: (person: Person) => void;
   onResetDemoData: () => void;
-}> = ({ companies, people, messages, deals, updatePerson, updateMessage, onAddCompany, onAddPerson, onAddMessage, onAddDeal, onResetDemoData }) => {
+}> = ({ companies, people, messages, deals, updatePerson, updateMessage, onAddCompany, onAddPerson, onAddMessage, onAddDeal, onUseTemplate, onResetDemoData }) => {
   const totalCompanies = companies.length;
   const totalPeople = people.length;
   const messagesSent = messages.length;
@@ -121,6 +123,7 @@ const OpportunitiesDashboard: React.FC<{
       return [{
         kind: 'person' as const,
         id: person.id,
+        personId: person.id,
         companyName: person.companyName || 'Unknown company',
         personName: person.fullName,
         statusText: person.relationshipStatus || '—',
@@ -137,6 +140,7 @@ const OpportunitiesDashboard: React.FC<{
       return [{
         kind: 'message' as const,
         id: message.id,
+        personId: message.personId,
         companyName: message.companyName || 'Unknown company',
         personName: message.personName || 'Unknown person',
         channel: message.channel,
@@ -238,6 +242,18 @@ const OpportunitiesDashboard: React.FC<{
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {onUseTemplate && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetPerson = people.find((person) => person.id === item.personId);
+                        if (targetPerson) onUseTemplate(targetPerson);
+                      }}
+                      className="rounded-md border border-[#dbe2ea] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]"
+                    >
+                      Use Template
+                    </button>
+                  )}
                   <button type="button" onClick={() => void handleMarkDone(item)} className="rounded-md border border-[#dbe2ea] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">
                     Mark Done
                   </button>
