@@ -5,28 +5,23 @@ const ALLOWED_TONES = new Set(['professional', 'friendly', 'concise']);
 const ALLOWED_LENGTHS = new Set(['short', 'medium']);
 const MAX_TEMPLATE_LENGTH = 4000;
 const MAX_OBSERVATION_LENGTH = 500;
-const VALIDATION_ERROR = 'Invalid AI message request.';
-const PROVIDER_NOT_CONFIGURED_ERROR = 'AI provider is not configured.';
-const CLEAN_MESSAGE_ERROR = 'Unable to generate a clean message.';
 
-const createDebug = (overrides = {}) => ({
-  phase: 'unknown',
-  model: 'gemini-2.0-flash',
-  provider: 'gemini',
-  hasTemplateText: false,
-  templateTextLength: 0,
-  language: '',
-  hasApiKey: false,
-  providerStatus: null,
-  providerErrorCode: null,
-  providerErrorMessage: null,
-  responseTextLength: null,
-  parseStep: null,
-  rejectionReason: null,
-  ...overrides,
-});
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
+  return cookieHeader.split(';').reduce((accumulator, part) => {
+    const separatorIndex = part.indexOf('=');
+    if (separatorIndex === -1) return accumulator;
+    const key = part.slice(0, separatorIndex).trim();
+    const value = part.slice(separatorIndex + 1).trim();
+    if (key) accumulator[key] = value;
+    return accumulator;
+  }, {});
+};
 
-const toSafeJson = (res, status, body) => res.status(status).json(body);
+const isAuthenticated = (req) => {
+  const cookies = parseCookies(req.headers?.cookie);
+  return cookies[COOKIE_NAME] === COOKIE_VALUE;
+};
 
 const readBody = (req) => {
   if (!req.body) return {};
@@ -41,27 +36,12 @@ const readBody = (req) => {
   return {};
 };
 
-const parseCookies = (cookieHeader) => {
-  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
-
-  return cookieHeader.split(';').reduce((accumulator, part) => {
-    const separatorIndex = part.indexOf('=');
-    if (separatorIndex === -1) return accumulator;
-
-    const key = part.slice(0, separatorIndex).trim();
-    const value = part.slice(separatorIndex + 1).trim();
-    if (key) accumulator[key] = value;
-    return accumulator;
-  }, {});
-};
-
-const isAuthenticated = (req) => {
-  const cookies = parseCookies(req.headers?.cookie);
-  return cookies[COOKIE_NAME] === COOKIE_VALUE;
-};
+const toSafeJson = (res, status, body) => res.status(status).json(body);
 
 const toCleanString = (value) => (value == null ? '' : String(value).trim());
-const truncate = (value, maxLength) => (value.length > maxLength ? value.slice(0, maxLength) : value);
+
+const truncate = (value, maxLength) =>
+  value.length > maxLength ? value.slice(0, maxLength) : value;
 
 const normalizeLanguage = (value) => {
   const language = toCleanString(value).toLowerCase();
@@ -94,14 +74,73 @@ const normalizeCompany = (company) => ({
   notes: truncate(toCleanString(company?.notes), 400),
 });
 
-const sanitizeJsonText = (value) => toCleanString(value)
-  .replace(/^```json\s*/i, '')
-  .replace(/^```\s*/i, '')
-  .replace(/\s*```$/i, '')
-  .trim();
+const getProviderConfig = () => {
+  const provider = toCleanString(process.env.AI_PROVIDER);
+  const apiKey = toCleanString(process.env.GEMINI_API_KEY);
+  const model = toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash';
+  return { provider, apiKey, model };
+};
+
+const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.2,
+      topP: 0.8,
+      maxOutputTokens: 500,
+      ...(useResponseMimeType ? { responseMimeType: 'application/json' } : {}),
+    },
+  };
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  );
+
+  const rawText = await response.text();
+  let json = null;
+  try {
+    json = JSON.parse(rawText);
+  } catch {
+    // raw text will be used directly
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    data: json,
+    rawText,
+    error: response.ok
+      ? null
+      : {
+          status: response.status,
+          code: json?.error?.code ? String(json.error.code) : null,
+          message: json?.error?.message ? String(json.error.message) : null,
+          statusText: json?.error?.status ? String(json.error.status) : null,
+        },
+  };
+};
+
+const readGeminiResponseText = (data) => {
+  if (!data?.candidates?.[0]?.content?.parts) return '';
+  return data.candidates[0].content.parts
+    .map((part) => (part && part.text ? part.text : ''))
+    .join('')
+    .trim();
+};
 
 const extractMessage = (value) => {
-  const sanitized = sanitizeJsonText(value);
+  let sanitized = toCleanString(value);
+  sanitized = sanitized.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
   if (!sanitized) return { message: '', parseStep: 'empty_text' };
 
   try {
@@ -118,7 +157,6 @@ const extractMessage = (value) => {
         return { message: '', parseStep: 'substring_json_parse_failed' };
       }
     }
-
     return { message: '', parseStep: 'json_parse_failed' };
   }
 };
@@ -148,140 +186,24 @@ const buildFallbackPrompt = ({ templateText, language }) => [
   `Template: ${templateText}`,
 ].join('\n');
 
-const buildRequestPayload = (prompt) => ({
-  contents: [
-    {
-      role: 'user',
-      parts: [{ text: prompt }],
-    },
-  ],
-  generationConfig: {
-    temperature: 0.2,
-    topP: 0.8,
-    maxOutputTokens: 500,
-    responseMimeType: 'application/json',
-  },
-});
-
-const readGeminiResponseText = (data) => data?.candidates?.[0]?.content?.parts
-  ?.map((part) => part?.text || '')
-  .join('')
-  .trim() || '';
-
 const generateMessage = async ({ apiKey, model, prompt }) => {
-  if (typeof fetch !== 'function') {
-    throw new Error('fetch unavailable');
-  }
-
-  const response = await fetch(
-const readProviderBody = async (response) => {
-  const text = await response.text();
-  if (!text) return { rawText: '', json: null };
-
-  try {
-    return { rawText: text, json: JSON.parse(text) };
-  } catch {
-    return { rawText: text, json: null };
-  }
-};
-
-const readGeminiResponseText = (data) => data?.candidates?.[0]?.content?.parts
-  ?.map((part) => part?.text || '')
-  .join('')
-  .trim() || '';
-
-const toProviderError = (status, body) => ({
-  status,
-  code: body?.error?.code ? String(body.error.code) : null,
-  message: body?.error?.message ? String(body.error.message) : null,
-  statusText: body?.error?.status ? String(body.error.status) : null,
-});
-
-const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
-  if (typeof fetch !== 'function') {
-    throw new Error('fetch unavailable');
-  }
-
-  const body = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: prompt }],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.2,
-      topP: 0.8,
-      maxOutputTokens: 500,
-      ...(useResponseMimeType ? { responseMimeType: 'application/json' } : {}),
-    },
-  };
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }
-  );
-
-  const payload = await readProviderBody(response);
-  return {
-    ok: response.ok,
-    status: response.status,
-    data: payload.json,
-    rawText: payload.rawText,
-    error: response.ok ? null : toProviderError(response.status, payload.json),
-  };
-};
-      body: JSON.stringify(buildRequestPayload(prompt)),
-const generateMessage = async ({ apiKey, model, prompt, debug }) => {
   const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
 
-  if (!firstAttempt.ok) {
-    const mimeRelated = /responseMimeType|mime|JSON|application\/json/i.test(firstAttempt.error?.message || '');
-    if (mimeRelated) {
-      const retryAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: false });
-      if (retryAttempt.ok) {
-        const text = readGeminiResponseText(retryAttempt.data);
-        const parsed = extractMessage(text);
-        return {
-          success: Boolean(parsed.message),
-          status: retryAttempt.status,
-          text,
-          message: parsed.message,
-          parseStep: parsed.parseStep,
-          providerError: null,
-          debug: {
-            ...debug,
-            providerStatus: retryAttempt.status,
-            responseTextLength: text.length,
-            parseStep: parsed.parseStep,
-          },
-        };
-      }
+  if (firstAttempt.ok) {
+    const text = readGeminiResponseText(firstAttempt.data);
+    const parsed = extractMessage(text);
+    return {
+      success: Boolean(parsed.message),
+      status: firstAttempt.status,
+      text,
+      message: parsed.message,
+      parseStep: parsed.parseStep,
+      providerError: null,
+    };
+  }
 
-      return {
-        success: false,
-        status: retryAttempt.status,
-        text: retryAttempt.rawText,
-        message: '',
-        parseStep: 'provider_error',
-        providerError: retryAttempt.error,
-        debug: {
-          ...debug,
-          phase: 'provider_response',
-          providerStatus: retryAttempt.status,
-          providerErrorCode: retryAttempt.error?.code || null,
-          providerErrorMessage: retryAttempt.error?.message || null,
-          responseTextLength: retryAttempt.rawText.length,
-          parseStep: 'provider_error',
-          rejectionReason: 'provider_request_failed',
-        },
-      };
-    }
-
+  const mimeRelated = /responseMimeType|mime|JSON|application\/json/i.test(firstAttempt.error?.message || '');
+  if (!mimeRelated) {
     return {
       success: false,
       status: firstAttempt.status,
@@ -289,84 +211,49 @@ const generateMessage = async ({ apiKey, model, prompt, debug }) => {
       message: '',
       parseStep: 'provider_error',
       providerError: firstAttempt.error,
-      debug: {
-        ...debug,
-        phase: 'provider_response',
-        providerStatus: firstAttempt.status,
-        providerErrorCode: firstAttempt.error?.code || null,
-        providerErrorMessage: firstAttempt.error?.message || null,
-        responseTextLength: firstAttempt.rawText.length,
-        parseStep: 'provider_error',
-        rejectionReason: 'provider_request_failed',
-      },
     };
   }
 
-  const text = readGeminiResponseText(firstAttempt.data);
-  const parsed = extractMessage(text);
-
-  return {
-    success: Boolean(parsed.message),
-    status: firstAttempt.status,
-    text,
-    message: parsed.message,
-    parseStep: parsed.parseStep,
-    providerError: null,
-    debug: {
-      ...debug,
-      phase: parsed.message ? 'validation_output' : 'parse',
-      providerStatus: firstAttempt.status,
-      responseTextLength: text.length,
+  const retryAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: false });
+  if (retryAttempt.ok) {
+    const text = readGeminiResponseText(retryAttempt.data);
+    const parsed = extractMessage(text);
+    return {
+      success: Boolean(parsed.message),
+      status: retryAttempt.status,
+      text,
+      message: parsed.message,
       parseStep: parsed.parseStep,
-      rejectionReason: parsed.message ? null : 'parse_failed',
-    },
-  };
-};
-
-const withDebug = (body, debugRequested, debug) => {
-  if (!debugRequested) return body;
-  return { ...body, debug };
-};
-
-const validateRequest = ({ templateText, language }) => {
-  if (!templateText || templateText.length < 10) {
-    return { ok: false, status: 400, error: VALIDATION_ERROR, phase: 'validation' };
+      providerError: null,
+    };
   }
 
-  if (!language) {
-    return { ok: false, status: 400, error: VALIDATION_ERROR, phase: 'validation' };
-  }
-
-  return { ok: true };
-};
-
-const makeSafeDebug = ({ phase, model, provider, hasTemplateText, templateTextLength, language, hasApiKey, providerStatus = null, providerErrorCode = null, providerErrorMessage = null, responseTextLength = null, parseStep = null, rejectionReason = null }) => ({
-  phase,
-  model,
-  provider,
-  hasTemplateText,
-  templateTextLength,
-  language,
-  hasApiKey,
-  providerStatus,
-  providerErrorCode,
-  providerErrorMessage,
-  responseTextLength,
-  parseStep,
-  rejectionReason,
-});
-
-  if (!response.ok) {
-    const errorMessage = data?.error?.message || `Gemini request failed with status ${response.status}`;
-    throw new Error(errorMessage);
-  }
-
-  const text = readGeminiResponseText(data);
   return {
-    text,
-    message: extractMessage(text),
+    success: false,
+    status: retryAttempt.status,
+    text: retryAttempt.rawText,
+    message: '',
+    parseStep: 'provider_error',
+    providerError: retryAttempt.error,
   };
 };
+
+const makeSafeDebug = (overrides = {}) => ({
+  phase: 'unknown',
+  model: 'gemini-2.0-flash',
+  provider: 'gemini',
+  hasTemplateText: false,
+  templateTextLength: 0,
+  language: '',
+  hasApiKey: false,
+  providerStatus: null,
+  providerErrorCode: null,
+  providerErrorMessage: null,
+  responseTextLength: null,
+  parseStep: null,
+  rejectionReason: null,
+  ...overrides,
+});
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -379,14 +266,19 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    if (req.method === 'GET' && req?.query?.health === '1') {
-      return toSafeJson(res, 200, {
-        success: true,
-        route: 'api/ai-message.js',
-        provider: process.env.AI_PROVIDER || null,
-        configured: Boolean(process.env.GEMINI_API_KEY),
-        model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
-      });
+    const { provider, apiKey, model } = getProviderConfig();
+
+    if (req.method === 'GET') {
+      if (req?.query?.health === '1') {
+        return toSafeJson(res, 200, {
+          success: true,
+          route: 'api/ai-message.js',
+          provider: process.env.AI_PROVIDER || null,
+          configured: Boolean(process.env.GEMINI_API_KEY),
+          model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+        });
+      }
+      return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
     }
 
     if (req.method !== 'POST') {
@@ -398,71 +290,65 @@ export default async function handler(req, res) {
     }
 
     const body = readBody(req);
-    const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
-    const testProvider = body?.testProvider === true || body?.testProvider === 'true' || body?.testProvider === 1;
-    const provider = toCleanString(process.env.AI_PROVIDER);
-    const apiKey = toCleanString(process.env.GEMINI_API_KEY);
-    const model = toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash';
-    const language = normalizeLanguage(body?.language);
+    const debugRequested =
+      body?.debug === true || body?.debug === 'true' || body?.debug === 1;
+
+    if (provider !== 'gemini' || !apiKey) {
+      return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
+    }
+
+    // --- testProvider mode ---
+    if (body?.testProvider === true || body?.testProvider === 'true' || body?.testProvider === 1) {
+      const testResult = await generateMessage({
+        apiKey,
+        model,
+        prompt: 'Return only JSON:\n{"message":"Hello from Gemini"}',
+      });
+
+      if (testResult.success) {
+        const responseBody = {
+          success: true,
+          message: testResult.message,
+          debug: {
+            providerStatus: testResult.status,
+            model,
+            responseTextLength: testResult.text.length,
+            parseStep: testResult.parseStep,
+          },
+        };
+        if (!debugRequested) delete responseBody.debug;
+        return toSafeJson(res, 200, responseBody);
+      }
+
+      const debug = {
+        phase: 'provider_response',
+        model,
+        provider: 'gemini',
+        providerStatus: testResult.status,
+        providerErrorMessage: testResult.providerError?.message || null,
+        responseTextLength: testResult.text ? testResult.text.length : 0,
+        parseStep: testResult.parseStep,
+      };
+
+      const responseBody = { success: false, error: 'Unable to generate a clean message.', debug };
+      if (!debugRequested) delete responseBody.debug;
+      return toSafeJson(res, 500, responseBody);
+    }
+
+    // --- Normal generation ---
     const templateText = truncate(toCleanString(body?.templateText), MAX_TEMPLATE_LENGTH);
+    const language = normalizeLanguage(body?.language);
+
+    if (!templateText || templateText.length < 10 || !language) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid AI message request.' });
+    }
+
     const tone = normalizeTone(body?.tone);
     const length = normalizeLength(body?.length);
     const observation = truncate(toCleanString(body?.observation), MAX_OBSERVATION_LENGTH);
     const person = normalizePerson(body?.person);
     const company = normalizeCompany(body?.company);
     const goal = truncate(toCleanString(body?.goal), 100);
-    const baseDebug = createDebug({
-      model,
-      provider,
-      hasTemplateText: Boolean(templateText),
-      templateTextLength: templateText.length,
-      language,
-      hasApiKey: Boolean(apiKey),
-    });
-
-    if (provider !== 'gemini' || !apiKey) {
-      return toSafeJson(res, 500, withDebug({ success: false, error: PROVIDER_NOT_CONFIGURED_ERROR }, debugRequested, {
-        ...baseDebug,
-        phase: 'provider_request',
-        rejectionReason: 'provider_not_configured',
-      }));
-    }
-
-    if (testProvider) {
-      const testPrompt = 'Return only JSON:\n{"message":"Hello from Gemini"}';
-      const testResult = await generateMessage({ apiKey, model, prompt: testPrompt, debug: baseDebug });
-
-      if (testResult.success) {
-        return toSafeJson(res, 200, withDebug({ success: true, message: testResult.message }, debugRequested, {
-          ...baseDebug,
-          phase: 'validation_output',
-          providerStatus: testResult.status,
-          responseTextLength: testResult.debug.responseTextLength,
-          parseStep: testResult.parseStep,
-        }));
-      }
-
-      console.error('[AI Message] api/ai-message.js failed', {
-        route: 'ai-message',
-        phase: testResult.debug.phase,
-        model,
-        providerStatus: testResult.debug.providerStatus,
-        providerErrorCode: testResult.debug.providerErrorCode,
-        providerErrorMessage: testResult.debug.providerErrorMessage,
-        message: testResult.providerError?.message || 'Unknown error',
-      });
-
-      return toSafeJson(res, 500, withDebug({ success: false, error: CLEAN_MESSAGE_ERROR }, debugRequested, testResult.debug));
-    }
-
-    const validation = validateRequest({ templateText, language });
-    if (!validation.ok) {
-      return toSafeJson(res, validation.status, withDebug({ success: false, error: validation.error }, debugRequested, {
-        ...baseDebug,
-        phase: validation.phase,
-        rejectionReason: 'invalid_request',
-      }));
-    }
 
     const primaryPrompt = buildPrompt({
       templateText,
@@ -475,54 +361,30 @@ export default async function handler(req, res) {
       language,
     });
 
-    const primary = await generateMessage({ apiKey, model, prompt: primaryPrompt, debug: baseDebug });
+    const primary = await generateMessage({ apiKey, model, prompt: primaryPrompt });
 
     if (primary.success) {
-      return toSafeJson(res, 200, withDebug({ success: true, message: primary.message }, debugRequested, {
-        ...baseDebug,
-        phase: primary.debug.phase,
-        providerStatus: primary.status,
-        responseTextLength: primary.debug.responseTextLength,
-        parseStep: primary.parseStep,
-      }));
+      return toSafeJson(res, 200, { success: true, message: primary.message });
     }
 
-    const fallback = await generateMessage({
-      apiKey,
-      model,
-      prompt: buildFallbackPrompt({ templateText, language }),
-      debug: baseDebug,
-    });
+    const fallbackPrompt = buildFallbackPrompt({ templateText, language });
+    const fallback = await generateMessage({ apiKey, model, prompt: fallbackPrompt });
 
     if (fallback.success) {
-      return toSafeJson(res, 200, withDebug({ success: true, message: fallback.message }, debugRequested, {
-        ...baseDebug,
-        phase: fallback.debug.phase,
-        providerStatus: fallback.status,
-        responseTextLength: fallback.debug.responseTextLength,
-        parseStep: fallback.parseStep,
-      }));
+      return toSafeJson(res, 200, { success: true, message: fallback.message });
     }
 
-    console.error('[AI Message] api/ai-message.js failed', {
+    console.error('[AI Message] Both primary and fallback failed', {
       route: 'ai-message',
-      phase: fallback.debug.phase,
       model,
-      providerStatus: fallback.debug.providerStatus,
-      providerErrorCode: fallback.debug.providerErrorCode,
-      providerErrorMessage: fallback.debug.providerErrorMessage,
-      message: fallback.providerError?.message || 'Unknown error',
+      providerStatus: fallback.status,
+      providerErrorMessage: fallback.providerError?.message || 'Unknown error',
     });
 
-    return toSafeJson(res, 200, withDebug({ success: false, error: CLEAN_MESSAGE_ERROR }, debugRequested, fallback.debug));
+    return toSafeJson(res, 200, { success: false, error: 'Unable to generate a clean message.' });
   } catch (error) {
-    console.error('[AI Message] api/ai-message.js failed', {
+    console.error('[AI Message] Unhandled error', {
       route: 'ai-message',
-      phase: 'unknown',
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
-      providerStatus: null,
-      providerErrorCode: null,
-      providerErrorMessage: null,
       method: req?.method,
       message: error instanceof Error ? error.message : 'Unknown error',
     });
