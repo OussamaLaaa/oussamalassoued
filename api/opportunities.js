@@ -148,7 +148,8 @@ export default async function handler(req, res) {
     });
   }
 
-  if (!isDashboardAuthenticated(req)) {
+  // Allow GET requests without authentication (read-only access)
+  if (req.method !== 'GET' && !isDashboardAuthenticated(req)) {
     return toSafeJson(res, 401, {
       success: false,
       error: 'Unauthorized',
