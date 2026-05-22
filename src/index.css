@@ -1069,6 +1069,36 @@ select:focus-visible {
   transition-delay: var(--ag-delay, 0ms);
 }
 
+/* When viewing the Opportunities mini-app, hide global homepage visuals and overlays */
+body.opportunities-page .cinematic-canvas,
+body.opportunities-page .cinematic-watermark-cover,
+body.opportunities-page [data-surface="static-home"],
+body.opportunities-page [data-surface="ambient"],
+body.opportunities-page [data-surface="hero"],
+body.opportunities-page .Scene05Overlay,
+body.opportunities-page .StaticHomeLayout,
+body.opportunities-page .FeaturedWork,
+body.opportunities-page .cursor-layer,
+body.opportunities-page .IntroTextOverlay,
+body.opportunities-page .CreativeLoadingScreen,
+body.opportunities-page .MasterSequence,
+body.opportunities-page .ExperienceMarquee,
+body.opportunities-page .cinematic-watermark-cover,
+body.opportunities-page [data-surface^="scene"],
+body.opportunities-page .featured-work,
+body.opportunities-page .scene-05-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Fully isolate opportunities shell to top layer */
+.opportunities-shell {
+  position: relative;
+  z-index: 9999;
+  isolation: isolate;
+}
+
 /* Headings: stronger offset */
 [data-surface="static-home"] h2.ag-m,
 [data-surface="static-home"] h3.ag-m {
@@ -1100,4 +1130,153 @@ select:focus-visible {
     transform: none !important;
     transition: none !important;
   }
+}
+
+/* === Opportunities: Light Theme Overrides (scoped) === */
+.opportunities-shell.opportunities-light {
+  /* Palette from design spec */
+  --opp-bg: #f8fafc; /* page background */
+  --opp-card: #ffffff; /* card background */
+  --opp-border: #e5e7eb; /* card border */
+  --opp-primary: #0f172a; /* primary text */
+  --opp-secondary: #64748b; /* secondary text */
+  --opp-muted: #94a3b8; /* muted */
+  --opp-accent: #2563eb; /* accent blue */
+  --opp-accent-bg: #eff6ff; /* accent soft bg */
+  --opp-success-text: #166534; --opp-success-bg: #dcfce7; --opp-success-border: #bbf7d0;
+  --opp-warning-text: #92400e; --opp-warning-bg: #fef3c7; --opp-warning-border: #fde68a;
+  --opp-danger-text: #991b1b; --opp-danger-bg: #fee2e2; --opp-danger-border: #fecaca;
+  --opp-neutral-text: #334155; --opp-neutral-bg: #f1f5f9; --opp-neutral-border: #cbd5e1;
+
+  background: var(--opp-bg) !important;
+  color: var(--opp-primary) !important;
+}
+
+.opportunities-shell.opportunities-light .rounded-lg,
+.opportunities-shell.opportunities-light .ds-card,
+.opportunities-shell.opportunities-light .glass-panel {
+  background: var(--opp-card) !important;
+  color: var(--opp-primary) !important;
+  border-color: var(--opp-border) !important;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
+
+/* Override text-white usages inside opportunities to dark text */
+
+/* Map dark helpers used in components to light-mode colors */
+.opportunities-shell.opportunities-light [class*="text-white"] {
+  color: var(--opp-primary) !important;
+}
+
+/* Muted whites */
+.opportunities-shell.opportunities-light [class*="text-white/86"] {
+  color: var(--opp-primary) !important;
+}
+.opportunities-shell.opportunities-light [class*="text-white/72"],
+.opportunities-shell.opportunities-light [class*="text-white/66"],
+.opportunities-shell.opportunities-light [class*="text-white\/66"],
+.opportunities-shell.opportunities-light [class*="text-white/60"] {
+  color: var(--opp-secondary) !important;
+}
+
+/* Replace dark backgrounds used for active items */
+.opportunities-shell.opportunities-light [class*="bg-black"] {
+  background-color: var(--opp-bg) !important;
+}
+
+/* Ensure shell root overrides any remaining bg-black/text-white at top-level */
+.opportunities-shell.opportunities-light.bg-black { background: var(--opp-bg) !important; }
+.opportunities-shell.opportunities-light.text-white { color: var(--opp-primary) !important; }
+
+/* Sidebar styling */
+.opportunities-shell.opportunities-light aside {
+  background: transparent;
+}
+.opportunities-shell.opportunities-light aside .rounded-lg {
+  background: var(--opp-card) !important;
+  border-color: var(--opp-border) !important;
+}
+
+/* Active tab look in light theme */
+.opportunities-shell.opportunities-light .scale-100 {
+  box-shadow: 0 6px 18px rgba(59,130,246,0.08) !important;
+}
+
+/* Buttons */
+.opportunities-shell.opportunities-light .ds-btn-v2-dark,
+.opportunities-shell.opportunities-light .ds-btn {
+  background: #ffffff !important;
+  border: 1px solid var(--opp-border) !important;
+  color: var(--opp-primary) !important;
+}
+.opportunities-shell.opportunities-light .ds-btn:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Primary button variant for quick actions */
+.opportunities-shell.opportunities-light .btn-primary {
+  background: var(--opp-accent) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+.opportunities-shell.opportunities-light .btn-secondary {
+  background: #ffffff !important;
+  color: var(--opp-primary) !important;
+  border: 1px solid var(--opp-border) !important;
+}
+
+/* Tables & rows */
+.opportunities-shell.opportunities-light table {
+  color: var(--opp-primary) !important;
+}
+.opportunities-shell.opportunities-light thead th {
+  background: var(--opp-bg) !important;
+  color: #475569 !important; /* header text */
+  border-bottom: 1px solid var(--opp-border) !important;
+}
+.opportunities-shell.opportunities-light tbody td {
+  color: var(--opp-primary) !important;
+  border-bottom: 1px solid var(--opp-border) !important;
+}
+.opportunities-shell.opportunities-light tbody tr:hover {
+  background: #f9fafb !important;
+}
+
+/* Make priority/status badges readable on light backgrounds (soften colors) */
+.opportunities-shell.opportunities-light .bg-red-600 { background-color: #fca5a5 !important; color: var(--opp-danger-text) !important; }
+.opportunities-shell.opportunities-light .bg-amber-600 { background-color: #fef3c7 !important; color: var(--opp-warning-text) !important; }
+.opportunities-shell.opportunities-light .bg-blue-600 { background-color: var(--opp-accent) !important; color: #ffffff !important; }
+.opportunities-shell.opportunities-light .bg-green-600 { background-color: #dcfce7 !important; color: var(--opp-success-text) !important; }
+.opportunities-shell.opportunities-light .bg-gray-500 { background-color: var(--opp-neutral-bg) !important; color: var(--opp-neutral-text) !important; }
+.opportunities-shell.opportunities-light .text-white { color: #ffffff !important; }
+
+/* Ensure badges with text-white use the semantic dark text on light backgrounds */
+.opportunities-shell.opportunities-light .bg-red-600.text-white { color: var(--opp-danger-text) !important; }
+.opportunities-shell.opportunities-light .bg-amber-600.text-white { color: var(--opp-warning-text) !important; }
+.opportunities-shell.opportunities-light .bg-green-600.text-white { color: var(--opp-success-text) !important; }
+.opportunities-shell.opportunities-light .bg-gray-500.text-white { color: var(--opp-neutral-text) !important; }
+
+/* Ensure overlays from homepage remain hidden */
+.opportunities-shell.opportunities-light .cinematic-canvas,
+.opportunities-shell.opportunities-light [data-surface="static-home"] {
+  display: none !important;
+}
+
+/* Ensure body and root are solid */
+body.opportunities-page {
+  background: var(--opp-bg) !important;
+  color: var(--opp-primary) !important;
+  overflow-x: hidden !important;
+}
+
+body.opportunities-page #root {
+  background: var(--opp-bg) !important;
+  min-height: 100vh;
+}
+
+body.opportunities-page .opportunities-shell {
+  background: var(--opp-bg) !important;
+  color: var(--opp-primary) !important;
+  min-height: 100vh;
+  isolation: isolate;
 }

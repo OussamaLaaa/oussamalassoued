@@ -5,6 +5,7 @@ import { SiteConfigProvider } from './context/SiteConfigContext';
 const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Opportunities = lazy(() => import('./pages/Opportunities'));
 const Articles = lazy(() => import('./pages/Articles'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -16,6 +17,7 @@ const AboutOussama = lazy(() => import('./pages/AboutOussama'));
 type AppRoute =
   | { page: 'home' }
   | { page: 'dashboard' }
+  | { page: 'opportunities' }
   | { page: 'contact' }
   | { page: 'terms' }
   | { page: 'privacy' }
@@ -43,6 +45,10 @@ const getRoute = (): AppRoute => {
 
   if (section === 'dashboard') {
     return { page: 'dashboard' };
+  }
+
+  if (section === 'opportunities') {
+    return { page: 'opportunities' };
   }
 
   if (section === 'contact') {
@@ -133,6 +139,22 @@ class ErrorBoundary extends React.Component<
 }
 
 function App() {
+  // Early route detection for isolated pages (Opportunities)
+  // This runs BEFORE any hooks so we can return a fully isolated render
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash.replace(/^#/, '');
+    const path = window.location.pathname;
+    const routeSource = hash && hash !== '/' ? hash : path;
+    const firstSeg = routeSource.replace(/^\/+/, '').split('/')[0]?.toLowerCase();
+    if (firstSeg === 'opportunities') {
+      return (
+        <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+          <Opportunities />
+        </Suspense>
+      );
+    }
+  }
+
   const [route, setRoute] = useState<AppRoute>(() => getRoute());
 
   useEffect(() => {
@@ -163,6 +185,10 @@ function App() {
         {route.page === 'dashboard' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
             <Dashboard />
+          </Suspense>
+        ) : route.page === 'opportunities' ? (
+          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
+            <Opportunities />
           </Suspense>
         ) : route.page === 'contact' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
