@@ -14,8 +14,6 @@ import type {
 
 const API_ENDPOINT = '/api/opportunities';
 
-type OpportunityEntity = 'companies' | 'people' | 'messages' | 'deals';
-
 const cloneSeedData = (): OpportunitiesData => ({
   companies: seedData.companies.map((item) => ({ ...item })),
   people: seedData.people.map((item) => ({ ...item })),
@@ -110,7 +108,7 @@ const mapDealRow = (row: any, companyName?: string, personName?: string): Deal =
   createdAt: toIso(row?.created_at ?? row?.createdAt),
 });
 
-const mapCompanyInputToDb = (input: CompanyInput) => ({
+const toCompanyDb = (input: CompanyInput) => ({
   name: input.name.trim(),
   database_type: input.databaseType,
   category: input.category,
@@ -127,7 +125,7 @@ const mapCompanyInputToDb = (input: CompanyInput) => ({
   notes: input.notes,
 });
 
-const mapPersonInputToDb = (input: PersonInput) => ({
+const toPersonDb = (input: PersonInput) => ({
   company_id: input.companyId,
   full_name: input.fullName.trim(),
   role: input.role,
@@ -144,7 +142,7 @@ const mapPersonInputToDb = (input: PersonInput) => ({
   notes: input.notes,
 });
 
-const mapMessageInputToDb = (input: MessageInput) => ({
+const toMessageDb = (input: MessageInput) => ({
   company_id: input.companyId,
   person_id: input.personId,
   channel: input.channel,
@@ -158,7 +156,7 @@ const mapMessageInputToDb = (input: MessageInput) => ({
   status: input.status,
 });
 
-const mapDealInputToDb = (input: DealInput) => ({
+const toDealDb = (input: DealInput) => ({
   company_id: input.companyId,
   person_id: input.personId,
   service_package: input.servicePackage,
@@ -197,8 +195,6 @@ const loadFromApi = async () => {
   const response = await fetch(API_ENDPOINT, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -206,22 +202,6 @@ const loadFromApi = async () => {
   }
 
   return response.json();
-};
-
-const syncMutation = async (method: 'POST' | 'PUT' | 'DELETE', body: Record<string, unknown>) => {
-  const response = await fetch(API_ENDPOINT, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify(body),
-  });
-
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(result?.error || 'Failed to save Opportunities data.');
-  }
-
-  return result;
 };
 
 export const useOpportunitiesData = () => {
@@ -305,110 +285,58 @@ export const useOpportunitiesData = () => {
     };
   }, [applyPayload]);
 
+  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals', data: Record<string, unknown>) => {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity, action: 'insert', data }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result?.error || 'Failed to save Opportunities data.');
+    }
+
+    return result?.row;
+  };
+
   const addCompany = async (input: CompanyInput) => {
-    const result = await syncMutation('POST', { entity: 'companies', action: 'insert', data: mapCompanyInputToDb(input) });
-    const next = mapCompanyRow(result?.row);
+    const row = await syncInsert('companies', toCompanyDb(input));
+    const next = mapCompanyRow(row);
     setCompanies((current) => [next, ...current]);
     return next;
   };
 
   const addPerson = async (input: PersonInput) => {
-    const result = await syncMutation('POST', { entity: 'people', action: 'insert', data: mapPersonInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
+    const row = await syncInsert('people', toPersonDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
     const companyName = companies.find((company) => company.id === companyId)?.name;
-    const next = mapPersonRow(result?.row, companyName);
+    const next = mapPersonRow(row, companyName);
     setPeople((current) => [next, ...current]);
     return next;
   };
 
   const addMessage = async (input: MessageInput) => {
-    const result = await syncMutation('POST', { entity: 'messages', action: 'insert', data: mapMessageInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
-    const personId = getRowRefId(result?.row, 'person_id', 'personId');
+    const row = await syncInsert('messages', toMessageDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
+    const personId = getRowRefId(row, 'person_id', 'personId');
     const companyName = companies.find((company) => company.id === companyId)?.name;
     const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapMessageRow(result?.row, companyName, personName);
+    const next = mapMessageRow(row, companyName, personName);
     setMessages((current) => [next, ...current]);
     return next;
   };
 
   const addDeal = async (input: DealInput) => {
-    const result = await syncMutation('POST', { entity: 'deals', action: 'insert', data: mapDealInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
-    const personId = getRowRefId(result?.row, 'person_id', 'personId');
+    const row = await syncInsert('deals', toDealDb(input));
+    const companyId = getRowRefId(row, 'company_id', 'companyId');
+    const personId = getRowRefId(row, 'person_id', 'personId');
     const companyName = companies.find((company) => company.id === companyId)?.name;
     const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapDealRow(result?.row, companyName, personName);
+    const next = mapDealRow(row, companyName, personName);
     setDeals((current) => [next, ...current]);
     return next;
-  };
-
-  const updateCompany = async (id: string, input: CompanyInput) => {
-    const result = await syncMutation('PUT', { entity: 'companies', action: 'update', id, data: mapCompanyInputToDb(input) });
-    const next = mapCompanyRow(result?.row);
-    setCompanies((current) => current.map((company) => (company.id === id ? next : company)));
-    setPeople((current) => current.map((person) => (person.companyId === id ? { ...person, companyName: next.name } : person)));
-    setMessages((current) => current.map((message) => (message.companyId === id ? { ...message, companyName: next.name } : message)));
-    setDeals((current) => current.map((deal) => (deal.companyId === id ? { ...deal, companyName: next.name } : deal)));
-    return next;
-  };
-
-  const deleteCompany = async (id: string) => {
-    await syncMutation('DELETE', { entity: 'companies', action: 'delete', id });
-    setCompanies((current) => current.filter((company) => company.id !== id));
-    setPeople((current) => current.map((person) => (person.companyId === id ? { ...person, companyName: undefined } : person)));
-    setMessages((current) => current.map((message) => (message.companyId === id ? { ...message, companyName: undefined } : message)));
-    setDeals((current) => current.map((deal) => (deal.companyId === id ? { ...deal, companyName: undefined } : deal)));
-  };
-
-  const updatePerson = async (id: string, input: PersonInput) => {
-    const result = await syncMutation('PUT', { entity: 'people', action: 'update', id, data: mapPersonInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
-    const companyName = companies.find((company) => company.id === companyId)?.name;
-    const next = mapPersonRow(result?.row, companyName);
-    setPeople((current) => current.map((person) => (person.id === id ? next : person)));
-    setMessages((current) => current.map((message) => (message.personId === id ? { ...message, personName: next.fullName } : message)));
-    setDeals((current) => current.map((deal) => (deal.personId === id ? { ...deal, personName: next.fullName } : deal)));
-    return next;
-  };
-
-  const deletePerson = async (id: string) => {
-    await syncMutation('DELETE', { entity: 'people', action: 'delete', id });
-    setPeople((current) => current.filter((person) => person.id !== id));
-    setMessages((current) => current.map((message) => (message.personId === id ? { ...message, personName: undefined } : message)));
-    setDeals((current) => current.map((deal) => (deal.personId === id ? { ...deal, personName: undefined } : deal)));
-  };
-
-  const updateMessage = async (id: string, input: MessageInput) => {
-    const result = await syncMutation('PUT', { entity: 'messages', action: 'update', id, data: mapMessageInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
-    const personId = getRowRefId(result?.row, 'person_id', 'personId');
-    const companyName = companies.find((company) => company.id === companyId)?.name;
-    const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapMessageRow(result?.row, companyName, personName);
-    setMessages((current) => current.map((message) => (message.id === id ? next : message)));
-    return next;
-  };
-
-  const deleteMessage = async (id: string) => {
-    await syncMutation('DELETE', { entity: 'messages', action: 'delete', id });
-    setMessages((current) => current.filter((message) => message.id !== id));
-  };
-
-  const updateDeal = async (id: string, input: DealInput) => {
-    const result = await syncMutation('PUT', { entity: 'deals', action: 'update', id, data: mapDealInputToDb(input) });
-    const companyId = getRowRefId(result?.row, 'company_id', 'companyId');
-    const personId = getRowRefId(result?.row, 'person_id', 'personId');
-    const companyName = companies.find((company) => company.id === companyId)?.name;
-    const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapDealRow(result?.row, companyName, personName);
-    setDeals((current) => current.map((deal) => (deal.id === id ? next : deal)));
-    return next;
-  };
-
-  const deleteDeal = async (id: string) => {
-    await syncMutation('DELETE', { entity: 'deals', action: 'delete', id });
-    setDeals((current) => current.filter((deal) => deal.id !== id));
   };
 
   const resetToSeedData = () => {
@@ -430,17 +358,203 @@ export const useOpportunitiesData = () => {
     addPerson,
     addMessage,
     addDeal,
-    updateCompany,
-    deleteCompany,
-    updatePerson,
-    deletePerson,
-    updateMessage,
-    deleteMessage,
-    updateDeal,
-    deleteDeal,
     resetToSeedData,
     loading,
     error,
+  };
+};
+
+export default useOpportunitiesData;
+  Company,
+  Person,
+  OutreachMessage,
+  Deal,
+} from '../types/opportunities';
+
+const STORAGE_KEY = 'opportunities-os-data';
+
+const cloneSeedData = (): OpportunitiesData => ({
+  companies: seedData.companies.map((item) => ({ ...item })),
+  people: seedData.people.map((item) => ({ ...item })),
+  messages: seedData.messages.map((item) => ({ ...item })),
+  deals: seedData.deals.map((item) => ({ ...item })),
+  strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
+});
+
+const safeParse = (value: string | null): OpportunitiesData | null => {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value) as Partial<OpportunitiesData>;
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    return {
+      companies: Array.isArray(parsed.companies) ? (parsed.companies as Company[]) : [],
+      people: Array.isArray(parsed.people) ? (parsed.people as Person[]) : [],
+      messages: Array.isArray(parsed.messages) ? (parsed.messages as OutreachMessage[]) : [],
+      deals: Array.isArray(parsed.deals) ? (parsed.deals as Deal[]) : [],
+      strategyNotes: Array.isArray(parsed.strategyNotes) ? parsed.strategyNotes : cloneSeedData().strategyNotes,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const loadInitialData = (): OpportunitiesData => {
+  if (typeof window === 'undefined') return cloneSeedData();
+
+  try {
+    const stored = safeParse(window.localStorage.getItem(STORAGE_KEY));
+    if (stored) return stored;
+  } catch {
+    // ignore and fallback to seed data
+  }
+
+  return cloneSeedData();
+};
+
+const saveData = (data: OpportunitiesData) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // ignore write errors for MVP
+  }
+};
+
+const createId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+export const useOpportunitiesData = () => {
+  const [data, setData] = useState<OpportunitiesData>(() => loadInitialData());
+
+  useEffect(() => {
+    saveData(data);
+  }, [data]);
+
+  const companiesById = useMemo(() => {
+    const map = new Map<string, Company>();
+    data.companies.forEach((company) => map.set(company.id, company));
+    return map;
+  }, [data.companies]);
+
+  const peopleById = useMemo(() => {
+    const map = new Map<string, Person>();
+    data.people.forEach((person) => map.set(person.id, person));
+    return map;
+  }, [data.people]);
+
+  const addCompany = (input: CompanyInput) => {
+    const next: Company = {
+      id: createId('company'),
+      name: input.name.trim(),
+      databaseType: input.databaseType,
+      category: input.category,
+      industry: input.industry,
+      country: input.country,
+      city: input.city,
+      website: input.website,
+      linkedin: input.linkedin,
+      priority: input.priority,
+      fitScore: input.fitScore,
+      ethicalFit: input.ethicalFit as Company['ethicalFit'],
+      status: input.status,
+      nextAction: input.nextAction,
+      notes: input.notes,
+      createdAt: new Date().toISOString(),
+    };
+
+    setData((current) => ({ ...current, companies: [next, ...current.companies] }));
+    return next;
+  };
+
+  const addPerson = (input: PersonInput) => {
+    const company = input.companyId ? companiesById.get(input.companyId) : undefined;
+    const next: Person = {
+      id: createId('person'),
+      companyId: input.companyId,
+      companyName: company?.name,
+      fullName: input.fullName.trim(),
+      role: input.role,
+      department: input.department,
+      seniority: input.seniority,
+      decisionPower: input.decisionPower === 'high' ? 8 : input.decisionPower === 'medium' ? 5 : input.decisionPower === 'low' ? 2 : undefined,
+      influencePower: input.influencePower === 'high' ? 8 : input.influencePower === 'medium' ? 5 : input.influencePower === 'low' ? 2 : undefined,
+      relevance: input.relevance === 'high' ? 9 : input.relevance === 'medium' ? 6 : input.relevance === 'low' ? 3 : undefined,
+      linkedin: input.linkedin,
+      emailPublic: input.emailPublic,
+      contactChannel: input.contactChannel,
+      relationshipStatus: input.relationshipStatus,
+      nextFollowUpDate: input.nextFollowUpDate,
+      notes: input.notes,
+    };
+
+    setData((current) => ({ ...current, people: [next, ...current.people] }));
+    return next;
+  };
+
+  const addMessage = (input: MessageInput) => {
+    const company = input.companyId ? companiesById.get(input.companyId) : undefined;
+    const person = input.personId ? peopleById.get(input.personId) : undefined;
+
+    const next: OutreachMessage = {
+      id: createId('message'),
+      companyId: input.companyId,
+      companyName: company?.name,
+      personId: input.personId,
+      personName: person?.fullName,
+      channel: input.channel,
+      language: input.language,
+      messageType: input.messageType,
+      messageText: input.messageText,
+      sentDate: input.sentDate || new Date().toISOString(),
+      replyStatus: input.replyStatus,
+      replySummary: input.replySummary,
+      nextFollowUpDate: input.nextFollowUpDate,
+      status: input.status,
+    };
+
+    setData((current) => ({ ...current, messages: [next, ...current.messages] }));
+    return next;
+  };
+
+  const addDeal = (input: DealInput) => {
+    const company = input.companyId ? companiesById.get(input.companyId) : undefined;
+    const person = input.personId ? peopleById.get(input.personId) : undefined;
+
+    const next: Deal = {
+      id: createId('deal'),
+      companyId: input.companyId,
+      companyName: company?.name,
+      personName: person?.fullName,
+      servicePackage: input.servicePackage,
+      problem: input.problem,
+      proposedSolution: input.proposedSolution,
+      value: typeof input.value === 'number' ? input.value : undefined,
+      currency: input.currency,
+      stage: input.stage,
+      probability: typeof input.probability === 'number' ? input.probability / 100 : undefined,
+      notes: input.notes,
+    };
+
+    setData((current) => ({ ...current, deals: [next, ...current.deals] }));
+    return next;
+  };
+
+  const resetToSeedData = () => {
+    setData(cloneSeedData());
+  };
+
+  return {
+    companies: data.companies,
+    people: data.people,
+    messages: data.messages,
+    deals: data.deals,
+    strategyNotes: data.strategyNotes,
+    addCompany,
+    addPerson,
+    addMessage,
+    addDeal,
+    resetToSeedData,
   };
 };
 

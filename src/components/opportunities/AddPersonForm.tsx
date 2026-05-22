@@ -1,55 +1,30 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Company, PersonInput } from '../../types/opportunities';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
 
 const AddPersonForm: React.FC<{
   companies: Company[];
-  initialData?: {
-    companyId?: string;
-    fullName?: string;
-    role?: string;
-    department?: string;
-    seniority?: string;
-    decisionPower?: PersonInput['decisionPower'];
-    influencePower?: PersonInput['influencePower'];
-    relevance?: PersonInput['relevance'];
-    linkedin?: string;
-    emailPublic?: string;
-    contactChannel?: string;
-    relationshipStatus?: string;
-    nextFollowUpDate?: string;
-    notes?: string;
-  };
-  submitLabel?: string;
   onSubmit: (data: PersonInput) => void;
   onCancel: () => void;
-}> = ({ companies, initialData, submitLabel = 'Save Person', onSubmit, onCancel }) => {
-  const createInitialForm = (): PersonInput => ({
-    companyId: initialData?.companyId || companies[0]?.id,
-    fullName: initialData?.fullName || '',
-    role: initialData?.role || '',
-    department: initialData?.department || '',
-    seniority: initialData?.seniority || '',
-    decisionPower: initialData?.decisionPower || 'unknown',
-    influencePower: initialData?.influencePower || 'unknown',
-    relevance: initialData?.relevance || 'medium',
-    linkedin: initialData?.linkedin || '',
-    emailPublic: initialData?.emailPublic || '',
-    contactChannel: initialData?.contactChannel || 'email',
-    relationshipStatus: initialData?.relationshipStatus || '',
-    nextFollowUpDate: initialData?.nextFollowUpDate || '',
-    notes: initialData?.notes || '',
+}> = ({ companies, onSubmit, onCancel }) => {
+  const [companyId, setCompanyId] = useState(companies[0]?.id || '');
+  const [form, setForm] = useState<PersonInput>({
+    companyId: companies[0]?.id,
+    fullName: '',
+    role: '',
+    department: '',
+    seniority: '',
+    decisionPower: 'unknown',
+    influencePower: 'unknown',
+    relevance: 'medium',
+    linkedin: '',
+    emailPublic: '',
+    contactChannel: 'email',
+    relationshipStatus: '',
+    nextFollowUpDate: '',
+    notes: '',
   });
-
-  const [companyId, setCompanyId] = useState(createInitialForm().companyId || '');
-  const [form, setForm] = useState<PersonInput>(() => createInitialForm());
-
-  useEffect(() => {
-    const next = createInitialForm();
-    setCompanyId(next.companyId || '');
-    setForm(next);
-  }, [companies, initialData]);
 
   const selectedCompany = useMemo(() => companies.find((company) => company.id === companyId), [companies, companyId]);
 
@@ -146,7 +121,7 @@ const AddPersonForm: React.FC<{
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Cancel</button>
-        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">{submitLabel}</button>
+        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">Save Person</button>
       </div>
     </form>
   );
