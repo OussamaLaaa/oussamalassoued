@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Company, MessageInput, MessageTemplate, Person, PersonInput } from '../../types/opportunities';
 import { audienceOptions, goalOptions, languageOptions, type TemplateAudience, type TemplateGoal, type TemplateLanguage } from '../../data/messageTemplates';
 import { renderMessageTemplate } from '../../utils/renderMessageTemplate';
@@ -11,6 +11,13 @@ const followUpDate = (days: number) => {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
+};
+
+const renderBaseMessage = (template: MessageTemplate | undefined, variables: Record<string, string>) => {
+  if (!template) return '';
+  const renderedSubject = template.subject ? renderMessageTemplate(template.subject, variables) : '';
+  const renderedBody = renderMessageTemplate(template.body, variables);
+  return [renderedSubject ? `Subject: ${renderedSubject}` : '', renderedBody].filter(Boolean).join('\n\n');
 };
 
 const filterTemplates = (templates: MessageTemplate[], audience: string, goal: string, language: string) => templates.filter((template) => {
@@ -35,9 +42,14 @@ const OutreachTemplateModal: React.FC<{
   const [language, setLanguage] = useState<TemplateLanguage | ''>('english');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [observation, setObservation] = useState('');
+  const [tone, setTone] = useState<'professional' | 'friendly' | 'concise'>('professional');
+  const [length, setLength] = useState<'short' | 'medium'>('short');
+  const [messageBody, setMessageBody] = useState('');
   const [isCopying, setIsCopying] = useState(false);
+  const [isImproving, setIsImproving] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
   const [status, setStatus] = useState('');
+  const bodyDirtyRef = useRef(false);
 
   const runtimeTemplates = templates;
 
@@ -61,9 +73,21 @@ const OutreachTemplateModal: React.FC<{
     observation: observation.trim(),
   };
 
+  const renderedMessage = renderBaseMessage(selectedTemplate, variables);
+
+  useEffect(() => {
+    bodyDirtyRef.current = false;
+    setMessageBody(renderedMessage);
+  }, [selectedTemplate?.id]);
+
+  useEffect(() => {
+    if (!bodyDirtyRef.current) {
+      setMessageBody(renderedMessage);
+    }
+  }, [renderedMessage]);
+
   const renderedSubject = selectedTemplate?.subject ? renderMessageTemplate(selectedTemplate.subject, variables) : '';
-  const renderedBody = selectedTemplate ? renderMessageTemplate(selectedTemplate.body, variables) : '';
-  const messageText = [renderedSubject ? `Subject: ${renderedSubject}` : '', renderedBody].filter(Boolean).join('\n\n');
+  const messageText = [renderedSubject ? `Subject: ${renderedSubject}` : '', messageBody].filter(Boolean).join('\n\n');
 
   const handleCopy = async () => {
     try {
@@ -78,6 +102,71 @@ const OutreachTemplateModal: React.FC<{
       setStatus('Could not copy the message.');
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleImproveWithAi = async () => {
+    if (!selectedTemplate) return;
+
+    setIsImproving(true);
+    setStatus('');
+
+    try {
+      const response = await fetch('/api/ai-message', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateText: messageBody || renderedMessage,
+          person: {
+            fullName: person.fullName,
+            role: person.role,
+            companyName: company?.name || person.companyName,
+            contactChannel: person.contactChannel,
+            relationshipStatus: person.relationshipStatus,
+          },
+          company: {
+            name: company?.name || person.companyName,
+            industry: company?.industry,
+            country: company?.country,
+            website: company?.website,
+            notes: company?.notes,
+          },
+          observation: observation.trim() || undefined,
+          goal: selectedTemplate.goal,
+          language: selectedTemplate.language as 'english' | 'french' | 'arabic',
+          tone,
+          length,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        setStatus('Authentication required. Please log in again.');
+        return;
+      }
+
+      if (!response.ok || result?.success === false) {
+        if (result?.error === 'AI provider is not configured.') {
+          setStatus('AI is not configured yet.');
+        } else {
+          setStatus(result?.error || 'Unable to generate message.');
+        }
+        return;
+      }
+
+      if (typeof result?.message === 'string' && result.message.trim()) {
+        bodyDirtyRef.current = true;
+        setMessageBody(result.message.trim());
+        setStatus('Message improved with AI.');
+      } else {
+        setStatus('Unable to generate message.');
+      }
+    } catch {
+      setStatus('Unable to generate message.');
+    } finally {
+      setIsImproving(false);
     }
   };
 
@@ -174,6 +263,24 @@ const OutreachTemplateModal: React.FC<{
               </label>
             </div>
 
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-xs text-[#64748b]">
+                <span>Tone</span>
+                <select className={baseInput} value={tone} onChange={(event) => setTone(event.target.value as 'professional' | 'friendly' | 'concise')}>
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="concise">Concise</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-xs text-[#64748b]">
+                <span>Length</span>
+                <select className={baseInput} value={length} onChange={(event) => setLength(event.target.value as 'short' | 'medium')}>
+                  <option value="short">Short</option>
+                  <option value="medium">Medium</option>
+                </select>
+              </label>
+            </div>
+
             <label className="block space-y-1 text-xs text-[#64748b]">
               <span>Template</span>
               <select className={baseInput} value={selectedTemplate?.id || ''} onChange={(event) => setSelectedTemplateId(event.target.value)}>
@@ -211,9 +318,13 @@ const OutreachTemplateModal: React.FC<{
                 </div>
               )}
               <textarea
-                readOnly
-                value={messageText}
-                className={`${baseInput} min-h-[360px] bg-[#f8fafc]`}
+                value={messageBody}
+                onChange={(event) => {
+                  bodyDirtyRef.current = true;
+                  setMessageBody(event.target.value);
+                }}
+                className={`${baseInput} min-h-[360px]`}
+                placeholder="Your message will appear here. You can edit it manually."
               />
             </div>
 
@@ -224,6 +335,14 @@ const OutreachTemplateModal: React.FC<{
             )}
 
             <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => void handleImproveWithAi()}
+                disabled={isImproving || !selectedTemplate}
+                className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm text-[#1d4ed8] hover:bg-[#dbeafe] disabled:opacity-50"
+              >
+                {isImproving ? 'Improving...' : 'Improve with AI'}
+              </button>
               <button
                 type="button"
                 onClick={handleCopy}
