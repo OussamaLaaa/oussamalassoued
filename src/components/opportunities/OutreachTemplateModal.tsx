@@ -3,6 +3,15 @@ import type { Company, MessageInput, MessageTemplate, Person, PersonInput } from
 import { audienceOptions, goalOptions, languageOptions, type TemplateAudience, type TemplateGoal, type TemplateLanguage } from '../../data/messageTemplates';
 import { renderMessageTemplate } from '../../utils/renderMessageTemplate';
 
+const CTA_TYPES = [
+  { value: 'ask_permission_to_send_audit', label: 'Ask for UX audit permission' },
+  { value: 'ask_for_feedback', label: 'Ask for feedback' },
+  { value: 'ask_for_call', label: 'Ask for a call' },
+  { value: 'ask_for_referral', label: 'Ask for referral' },
+  { value: 'ask_for_opportunity', label: 'Ask for opportunity' },
+  { value: 'soft_follow_up', label: 'Soft follow-up' },
+] as const;
+
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
@@ -44,6 +53,7 @@ const OutreachTemplateModal: React.FC<{
   const [observation, setObservation] = useState('');
   const [tone, setTone] = useState<'professional' | 'friendly' | 'concise'>('professional');
   const [length, setLength] = useState<'short' | 'medium'>('short');
+  const [ctaType, setCtaType] = useState<string>('ask_permission_to_send_audit');
   const [messageBody, setMessageBody] = useState('');
   const [isCopying, setIsCopying] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
@@ -155,6 +165,7 @@ const OutreachTemplateModal: React.FC<{
           language: selectedTemplate.language as 'english' | 'french' | 'arabic',
           tone,
           length,
+          ctaType,
         }),
       });
 
@@ -285,7 +296,7 @@ const OutreachTemplateModal: React.FC<{
               </label>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className="space-y-1 text-xs text-[#64748b]">
                 <span>Tone</span>
                 <select className={baseInput} value={tone} onChange={(event) => setTone(event.target.value as 'professional' | 'friendly' | 'concise')}>
@@ -299,6 +310,14 @@ const OutreachTemplateModal: React.FC<{
                 <select className={baseInput} value={length} onChange={(event) => setLength(event.target.value as 'short' | 'medium')}>
                   <option value="short">Short</option>
                   <option value="medium">Medium</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-xs text-[#64748b]">
+                <span>CTA Type</span>
+                <select className={baseInput} value={ctaType} onChange={(event) => setCtaType(event.target.value)}>
+                  {CTA_TYPES.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
               </label>
             </div>

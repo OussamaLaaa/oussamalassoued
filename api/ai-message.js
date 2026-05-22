@@ -3,6 +3,14 @@ const COOKIE_VALUE = 'test123';
 const ALLOWED_LANGUAGES = new Set(['english', 'french', 'arabic']);
 const ALLOWED_TONES = new Set(['professional', 'friendly', 'concise']);
 const ALLOWED_LENGTHS = new Set(['short', 'medium']);
+const ALLOWED_CTA_TYPES = new Set([
+  'ask_permission_to_send_audit',
+  'ask_for_feedback',
+  'ask_for_call',
+  'ask_for_referral',
+  'ask_for_opportunity',
+  'soft_follow_up',
+]);
 const MAX_TEMPLATE_LENGTH = 4000;
 const MAX_OBSERVATION_LENGTH = 500;
 
@@ -56,6 +64,11 @@ const normalizeTone = (value) => {
 const normalizeLength = (value) => {
   const length = toCleanString(value).toLowerCase();
   return ALLOWED_LENGTHS.has(length) ? length : 'short';
+};
+
+const normalizeCtaType = (value) => {
+  const ctaType = toCleanString(value).toLowerCase();
+  return ALLOWED_CTA_TYPES.has(ctaType) ? ctaType : 'ask_permission_to_send_audit';
 };
 
 const normalizePerson = (person) => ({
@@ -161,22 +174,54 @@ const extractMessage = (value) => {
   }
 };
 
-const buildPrompt = ({ templateText, person, company, observation, goal, tone, length, language }) => [
-  'Return JSON only in this exact shape:',
-  '{"message":"..."}',
-  'No markdown. No code fences. No explanations. No metadata.',
-  'Write one concise outreach message in the selected language only.',
-  'Do not invent facts or mention anything not provided.',
-  '',
-  `Template: ${templateText}`,
-  `Person: ${person.fullName || ''}${person.role ? ` | ${person.role}` : ''}`,
-  `Company: ${company.name || ''}${company.industry ? ` | ${company.industry}` : ''}${company.country ? ` | ${company.country}` : ''}${company.website ? ` | ${company.website}` : ''}`,
-  `Observation: ${observation || ''}`,
-  `Goal: ${goal || ''}`,
-  `Tone: ${tone}`,
-  `Length: ${length}`,
-  `Language: ${language}`,
-].join('\n');
+const getCtaInstruction = (ctaType) => {
+  const instructions = {
+    ask_permission_to_send_audit: 'End the message by asking politely if the person would be open to a short 3-point UX audit of their site or product. Make it genuine and low-pressure.',
+    ask_for_feedback: 'End the message by asking for 2-3 quick notes, thoughts, or feedback on the topic discussed. Keep it easy to respond to.',
+    ask_for_call: 'End the message by asking if a short call would make sense to discuss further. Suggest a specific duration (e.g. 10-15 min).',
+    ask_for_referral: 'End the message by asking if they are the right person to talk to, or if there is someone else on their team who would be a better fit.',
+    ask_for_opportunity: 'End the message by asking if there are any junior, internship, freelance, or collaboration opportunities available.',
+    soft_follow_up: 'End the message with a gentle follow-up and no pressure. Acknowledge they are busy and offer to reconnect at a better time.',
+  };
+  return instructions[ctaType] || instructions.ask_permission_to_send_audit;
+};
+
+const buildPrompt = ({ templateText, person, company, observation, goal, tone, length, language, ctaType }) => {
+  const toneRule = tone !== 'friendly'
+    ? 'Do not use "I hope this message finds you well" or similar platitudes.'
+    : 'A warm opening is fine since tone is friendly.';
+  const lengthRule = length === 'short'
+    ? 'Keep the total message under 120 words.'
+    : '';
+
+  return [
+    'Return JSON only in this exact shape:',
+    '{"message":"..."}',
+    'No markdown. No code fences. No explanations. No metadata.',
+    'Write one concise outreach message in the selected language only.',
+    'Do not invent facts or mention anything not provided.',
+    '',
+    '--- STYLE RULES ---',
+    'Avoid generic phrases like "I hope this message finds you well" unless tone is "friendly".',
+    'Mention the person\'s company and role if context is available to make it specific.',
+    'Keep the message human, direct, and personalized rather than templated.',
+    toneRule,
+    lengthRule,
+    '',
+    '--- CTA INSTRUCTION ---',
+    getCtaInstruction(ctaType),
+    '',
+    `Template: ${templateText}`,
+    `Person: ${person.fullName || ''}${person.role ? ` | ${person.role}` : ''}`,
+    `Company: ${company.name || ''}${company.industry ? ` | ${company.industry}` : ''}${company.country ? ` | ${company.country}` : ''}${company.website ? ` | ${company.website}` : ''}`,
+    `Observation: ${observation || ''}`,
+    `Goal: ${goal || ''}`,
+    `Tone: ${tone}`,
+    `Length: ${length}`,
+    `Language: ${language}`,
+    `CTA Type: ${ctaType}`,
+  ].join('\n');
+};
 
 const buildFallbackPrompt = ({ templateText, language }) => [
   'Return JSON only in this exact shape:',
@@ -350,6 +395,7 @@ export default async function handler(req, res) {
     const company = normalizeCompany(body?.company);
     const goal = truncate(toCleanString(body?.goal), 100);
 
+    const ctaType = normalizeCtaType(body?.ctaType);
     const primaryPrompt = buildPrompt({
       templateText,
       person,
@@ -359,6 +405,7 @@ export default async function handler(req, res) {
       tone,
       length,
       language,
+      ctaType,
     });
 
     const primary = await generateMessage({ apiKey, model, prompt: primaryPrompt });
