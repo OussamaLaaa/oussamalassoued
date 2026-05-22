@@ -154,8 +154,6 @@ export default async function handler(req, res) {
       error: 'Unauthorized',
     });
   }
-
-  const debug = isDebugEnabled(req);
   const envPresent = getEnvPresence();
   const supabase = getSupabaseClient();
   if (!supabase) {
