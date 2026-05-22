@@ -173,12 +173,16 @@ const OpportunitiesDashboard: React.FC<{
   };
 
   const handleMarkDone = async (item: FollowUpItem) => {
-    if (item.kind === 'person') {
-      await updatePerson(item.id, { ...toPersonInput(item.source as Person), nextFollowUpDate: null as unknown as string });
-      return;
-    }
+    try {
+      if (item.kind === 'person') {
+        await updatePerson(item.id, { ...toPersonInput(item.source as Person), nextFollowUpDate: null as unknown as string });
+        return;
+      }
 
-    await updateMessage(item.id, { ...toMessageInput(item.source as OutreachMessage), nextFollowUpDate: null as unknown as string });
+      await updateMessage(item.id, { ...toMessageInput(item.source as OutreachMessage), nextFollowUpDate: null as unknown as string });
+    } catch (error) {
+      console.error('[Opportunities] Failed to mark follow-up done.', error);
+    }
   };
 
   const handleOpenReschedule = (item: FollowUpItem) => {
@@ -189,13 +193,17 @@ const OpportunitiesDashboard: React.FC<{
   const handleSaveReschedule = async () => {
     if (!rescheduleTarget || !rescheduleDate) return;
 
-    if (rescheduleTarget.kind === 'person') {
-      await updatePerson(rescheduleTarget.id, { ...toPersonInput(rescheduleTarget.source as Person), nextFollowUpDate: rescheduleDate });
-    } else {
-      await updateMessage(rescheduleTarget.id, { ...toMessageInput(rescheduleTarget.source as OutreachMessage), nextFollowUpDate: rescheduleDate });
-    }
+    try {
+      if (rescheduleTarget.kind === 'person') {
+        await updatePerson(rescheduleTarget.id, { ...toPersonInput(rescheduleTarget.source as Person), nextFollowUpDate: rescheduleDate });
+      } else {
+        await updateMessage(rescheduleTarget.id, { ...toMessageInput(rescheduleTarget.source as OutreachMessage), nextFollowUpDate: rescheduleDate });
+      }
 
-    clearReschedule();
+      clearReschedule();
+    } catch (error) {
+      console.error('[Opportunities] Failed to reschedule follow-up.', error);
+    }
   };
 
   const renderFollowUpSection = (title: string, items: FollowUpItem[], emptyText: string, highlight = false) => (
