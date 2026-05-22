@@ -7,9 +7,9 @@ import {
   personFromDb as mapPersonRow, personToDb as toPersonDb,
   messageFromDb as mapMessageRow, messageToDb as toMessageDb,
   dealFromDb as mapDealRow, dealToDb as toDealDb,
-  projectFromDb as mapProjectRow, projectToDb as toProjectDb,
+  projectFromDb as mapProjectRow, projectToDb as toProjectDb, projectToDbUpdate as toProjectDbUpdate,
   templateFromDb as mapTemplateRow, templateToDb as toTemplateDb,
-  projectTaskFromDb as mapProjectTaskRow, projectTaskToDb as toProjectTaskDb,
+  projectTaskFromDb as mapProjectTaskRow, projectTaskToDb as toProjectTaskDb, projectTaskToDbUpdate as toProjectTaskDbUpdate,
   projectTimeLogFromDb as mapProjectTimeLogRow, projectTimeLogToDb as toProjectTimeLogDb,
   projectMeetingFromDb as mapProjectMeetingRow, projectMeetingToDb as toProjectMeetingDb,
   projectDocumentFromDb as mapProjectDocumentRow, projectDocumentToDb as toProjectDocumentDb,
@@ -111,6 +111,12 @@ const getDerivedCollections = (companies: Company[], people: Person[], messages:
       personName: deal.personName || personById.get(deal.personId || '')?.fullName,
     })),
   };
+};
+
+const logDevError = (context: string, details: Record<string, unknown>) => {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    console.error(`[Opportunities] ${context}`, details);
+  }
 };
 
 const parseApiError = (result: OpportunitiesApiResponse, status: number): ApiError => {
@@ -280,16 +286,18 @@ export const useOpportunitiesData = () => {
     };
   }, [applyPayload]);
 
-  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', data: Record<string, unknown> | Record<string, unknown>[]) => {
+  const syncInsert = async (entity: string, data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
       method: 'POST',
       body: JSON.stringify({ entity, action: 'insert', data }),
     }).catch((error: ApiError) => {
+      logDevError('syncInsert failed', { entity, errorMessage: error.message, errorCode: error.errorCode });
       if (error.status === 401) setError('Authentication required. Please log in again.');
       throw error;
     });
 
     if (result?.success === false) {
+      logDevError('syncInsert result error', { entity, error: result?.error });
       throw new Error(result?.error || 'Failed to save Opportunities data.');
     }
 
@@ -419,16 +427,18 @@ export const useOpportunitiesData = () => {
     return mapped;
   };
 
-  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', id: string, data: Record<string, unknown>) => {
+  const syncUpdate = async (entity: string, id: string, data: Record<string, unknown>) => {
     const result = await requestOpportunities({
       method: 'PUT',
       body: JSON.stringify({ entity, action: 'update', id, data }),
     }).catch((error: ApiError) => {
+      logDevError('syncUpdate failed', { entity, id, errorMessage: error.message, errorCode: error.errorCode });
       if (error.status === 401) setError('Authentication required. Please log in again.');
       throw error;
     });
 
     if (result?.success === false) {
+      logDevError('syncUpdate result error', { entity, id, error: result?.error });
       throw new Error(result?.error || 'Failed to update Opportunities data.');
     }
 
@@ -530,12 +540,12 @@ export const useOpportunitiesData = () => {
     return next;
   };
 
-  const updateProject = async (id: string, input: ProjectInput) => {
-    if (!String(input.name || '').trim()) {
+  const updateProject = async (id: string, input: Partial<ProjectInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
       throw new Error('Project name is required.');
     }
 
-    const row = await syncUpdate('projects', id, toProjectDb(input));
+    const row = await syncUpdate('projects', id, toProjectDbUpdate(input));
     const next = mapProjectRow(row);
     next.relatedCompanyName = companies.find((c) => c.id === next.relatedCompanyId)?.name;
     next.relatedPersonName = people.find((p) => p.id === next.relatedPersonId)?.fullName;
@@ -565,7 +575,7 @@ export const useOpportunitiesData = () => {
   };
 
   const updateProjectTask = async (id: string, input: Partial<ProjectTaskInput>) => {
-    const row = await syncUpdate('project_tasks', id, input as Record<string, unknown>);
+    const row = await syncUpdate('project_tasks', id, toProjectTaskDbUpdate(input));
     const next = mapProjectTaskRow(row);
     next.assignedToPersonName = people.find((p) => p.id === next.assignedToPersonId)?.fullName;
     setProjectTasks((current) => current.map((t) => (t.id === id ? next : t)));

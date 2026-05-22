@@ -13,7 +13,6 @@ type InternalTab = 'overview' | 'tasks' | 'milestones' | 'time' | 'meetings' | '
 const INTERNAL_TABS: { id: InternalTab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'tasks', label: 'Tasks' },
-  { id: 'milestones', label: 'Milestones' },
   { id: 'time', label: 'Time' },
   { id: 'meetings', label: 'Meetings' },
   { id: 'finance', label: 'Finance' },
@@ -758,84 +757,37 @@ const ProjectDetailView: React.FC<{
       </div>
 
       {/* ── Main Content ── */}
-      <div className="max-w-full px-4 py-4 space-y-4">
-        {/* Stats cards row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          <StatCard title="Open Tasks" value={taskStats.open} />
-          <StatCard title="Completed" value={taskStats.completed} />
-          <StatCard title="Hours" value={totalHours.toFixed(1)} />
-          <StatCard title="Meetings" value={projectMeetingList.length} />
-          <StatCard title="Docs" value={projectDocumentList.length} />
-        </div>
+      <div className="max-w-full px-4 py-4">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6">
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <StatCard title="Income" value={`${financeStats.income.toLocaleString()}`} />
-          <StatCard title="Expenses" value={`${financeStats.expenses.toLocaleString()}`} />
-          <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-[#fef2f2]' : ''} />
-          <StatCard title="Deadline" value={daysRemaining !== null ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d`) : '—'} className={daysRemaining !== null && daysRemaining < 0 ? 'bg-[#fef2f2]' : ''} />
-        </div>
+          {/* ── Left Column: Tab Content ── */}
+          <div className="space-y-4">
 
-        {/* ── Tab Content ── */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-                <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Project Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Current Phase</div><div className="mt-1 text-sm text-[#0f172a]">{phaseLabel(project.phase)}</div></div>
-                  <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Status</div><div className="mt-1 text-sm text-[#0f172a] capitalize">{project.status || '—'}</div></div>
-                  <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Next Action</div><div className="mt-1 text-sm text-[#0f172a]">{project.nextAction || '—'}</div></div>
-                  <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Deadline</div><div className="mt-1 text-sm text-[#0f172a]">{formatDate(project.deadline)}</div></div>
-                </div>
-                {project.notes && (
-                  <div className="mt-4"><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium mb-1">Notes</div><p className="text-sm text-[#64748b]">{project.notes}</p></div>
-                )}
-                {(project.portfolioUrl || project.figmaUrl || project.githubUrl) && (
-                  <div className="mt-4"><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium mb-2">Links</div>
-                    <div className="flex flex-wrap gap-2">
-                      {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-lg border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Portfolio ↗</a>}
-                      {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-lg border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Figma ↗</a>}
-                      {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-lg border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">GitHub ↗</a>}
-                    </div>
-                  </div>
-                )}
+          <div className="space-y-4">
+            <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Project Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Current Phase</div><div className="mt-1 text-sm text-[#0f172a]">{phaseLabel(project.phase)}</div></div>
+                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Status</div><div className="mt-1 text-sm text-[#0f172a] capitalize">{project.status || '—'}</div></div>
+                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Next Action</div><div className="mt-1 text-sm text-[#0f172a]">{project.nextAction || '—'}</div></div>
+                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Deadline</div><div className="mt-1 text-sm text-[#0f172a]">{formatDate(project.deadline)}</div></div>
               </div>
-
-              {company && (
-                <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-                  <h3 className="text-sm font-semibold text-[#0f172a] mb-2">Linked Company</h3>
-                  <div className="text-sm text-[#64748b]">
-                    <div className="font-medium text-[#0f172a]">{company.name}</div>
-                    {company.industry && <div className="mt-1">Industry: {company.industry}</div>}
-                    {company.country && <div>Location: {company.city ? `${company.city}, ` : ''}{company.country}</div>}
-                    {company.website && <div>Website: {company.website}</div>}
-                  </div>
-                </div>
-              )}
-
-              {person1 && (
-                <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-                  <h3 className="text-sm font-semibold text-[#0f172a] mb-2">Linked Person</h3>
-                  <div className="text-sm text-[#64748b]">
-                    <div className="font-medium text-[#0f172a]">{person1.fullName}</div>
-                    {person1.role && <div className="mt-1">Role: {person1.role}</div>}
-                    {person1.emailPublic && <div>Email: {person1.emailPublic}</div>}
-                    {person1.linkedin && <div>LinkedIn: {person1.linkedin}</div>}
-                  </div>
-                </div>
+              {project.notes && (
+                <div className="mt-4"><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium mb-1">Notes</div><p className="text-sm text-[#64748b]">{project.notes}</p></div>
               )}
             </div>
 
             {/* Activity Feed in Overview */}
-            <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4 max-h-[600px] overflow-y-auto">
+            <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
               <h3 className="text-sm font-semibold text-[#0f172a] mb-3 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Activity
               </h3>
               {activityFeed.length === 0 ? (
-                <div className="text-center py-8"><div className="text-sm text-[#64748b]">No activity yet.</div><div className="text-xs text-[#94a3b8] mt-1">Project activity will appear here as you work.</div></div>
+                <div className="text-center py-6"><div className="text-sm text-[#64748b]">No activity yet.</div><div className="text-xs text-[#94a3b8] mt-1">Project activity will appear here as you work.</div></div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1 max-h-[400px] overflow-y-auto">
                   {activityFeed.slice(0, 50).map((item) => (
                     <div key={item.id} className="flex items-start gap-2 text-xs py-1.5 border-b border-[#f1f5f9] last:border-0">
                       <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
@@ -938,13 +890,6 @@ const ProjectDetailView: React.FC<{
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Milestones Tab ── */}
-        {activeTab === 'milestones' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-6">
-            <EmptyStateDisplay message="No milestones yet." hint="Define key milestones and track progress toward each one." />
           </div>
         )}
 
@@ -1202,7 +1147,86 @@ const ProjectDetailView: React.FC<{
             )}
           </div>
         )}
-      </div>
+      </div> {/* end left column */}
+
+      {/* ── Right Sidebar ── */}
+      <div className="space-y-4">
+        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Project Summary</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-[#64748b]">Status</span><span className="font-medium text-[#0f172a] capitalize">{project.status || '—'}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Phase</span><span className="font-medium text-[#0f172a]">{phaseLabel(project.phase)}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Priority</span><span className={`font-medium ${priorityColors[project.priority || ''] || ''}`}>{priorityLabel(project.priority)}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Progress</span><span className="font-medium text-[#0f172a]">{project.progress ?? 0}%</span></div>
+          </div>
+          <div className="mt-3"><ProgressBar value={project.progress ?? 0} /></div>
+        </div>
+
+        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Quick Stats</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <StatCard title="Tasks" value={taskStats.open} />
+            <StatCard title="Done" value={taskStats.completed} />
+            <StatCard title="Hours" value={totalHours.toFixed(1)} />
+            <StatCard title="Meetings" value={projectMeetingList.length} />
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Finance</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-[#64748b]">Income</span><span className="font-medium text-[#0f172a]">{(financeStats.income || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Expenses</span><span className="font-medium text-[#0f172a]">{(financeStats.expenses || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Unpaid</span><span className={`font-medium ${financeStats.unpaid > 0 ? 'text-[#dc2626]' : 'text-[#0f172a]'}`}>{(financeStats.unpaid || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Paid</span><span className="font-medium text-[#0f172a]">{(financeStats.paid || 0).toLocaleString()}</span></div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Linked</h3>
+          <div className="space-y-2 text-sm">
+            {company ? (
+              <div>
+                <div className="text-xs text-[#94a3b8] uppercase">Company</div>
+                <div className="font-medium text-[#0f172a]">{company.name}</div>
+                {company.industry && <div className="text-[#64748b] text-xs">{company.industry}</div>}
+              </div>
+            ) : (
+              <div><div className="text-xs text-[#94a3b8] uppercase">Company</div><div className="text-[#64748b]">No company linked</div></div>
+            )}
+            {person1 ? (
+              <div className="mt-2">
+                <div className="text-xs text-[#94a3b8] uppercase">Person</div>
+                <div className="font-medium text-[#0f172a]">{person1.fullName}</div>
+                {person1.role && <div className="text-[#64748b] text-xs">{person1.role}</div>}
+              </div>
+            ) : (
+              <div className="mt-2"><div className="text-xs text-[#94a3b8] uppercase">Person</div><div className="text-[#64748b]">No person linked</div></div>
+            )}
+          </div>
+        </div>
+
+        {project.nextAction && (
+          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+            <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-1">Next Action</h3>
+            <p className="text-sm text-[#64748b]">{project.nextAction}</p>
+          </div>
+        )}
+
+        {(project.portfolioUrl || project.figmaUrl || project.githubUrl) && (
+          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+            <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-2">Links</h3>
+            <div className="flex flex-wrap gap-2">
+              {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Portfolio ↗</a>}
+              {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Figma ↗</a>}
+              {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">GitHub ↗</a>}
+            </div>
+          </div>
+        )}
+      </div> {/* end right sidebar */}
+
+      </div> {/* end grid */}
+      </div> {/* end main content */}
 
       {/* ── Task Detail Drawer ── */}
       {selectedTask && (

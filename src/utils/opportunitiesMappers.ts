@@ -287,6 +287,26 @@ export const projectToDb = (input: ProjectInput) => ({
   next_action: toNullableString(input.nextAction),
 });
 
+export const projectToDbUpdate = (input: Partial<ProjectInput>) => {
+  const db: Record<string, unknown> = {};
+  if (input.name !== undefined) db.name = input.name.trim();
+  if (input.type !== undefined) db.type = input.type || null;
+  if (input.status !== undefined) db.status = input.status;
+  if (input.phase !== undefined) db.phase = input.phase;
+  if (input.priority !== undefined) db.priority = input.priority;
+  if (input.progress !== undefined) db.progress = Math.max(0, Math.min(100, Number(input.progress)));
+  if (input.startDate !== undefined) db.start_date = toNullableDate(input.startDate);
+  if (input.deadline !== undefined) db.deadline = toNullableDate(input.deadline);
+  if (input.relatedCompanyId !== undefined) db.related_company_id = toNullableString(input.relatedCompanyId);
+  if (input.relatedPersonId !== undefined) db.related_person_id = toNullableString(input.relatedPersonId);
+  if (input.portfolioUrl !== undefined) db.portfolio_url = toNullableString(input.portfolioUrl);
+  if (input.figmaUrl !== undefined) db.figma_url = toNullableString(input.figmaUrl);
+  if (input.githubUrl !== undefined) db.github_url = toNullableString(input.githubUrl);
+  if (input.notes !== undefined) db.notes = toNullableString(input.notes);
+  if (input.nextAction !== undefined) db.next_action = toNullableString(input.nextAction);
+  return db;
+};
+
 // ── ProjectTask mappers ──
 
 export const projectTaskFromDb = (row: any): ProjectTask => ({
@@ -312,6 +332,18 @@ export const projectTaskToDb = (input: ProjectTaskInput) => ({
   due_date: toNullableDate(input.dueDate),
   assigned_to_person_id: toNullableString(input.assignedToPersonId),
 });
+
+export const projectTaskToDbUpdate = (input: Partial<ProjectTaskInput>) => {
+  const db: Record<string, unknown> = {};
+  if (input.projectId !== undefined) db.project_id = input.projectId;
+  if (input.title !== undefined) db.title = input.title.trim();
+  if (input.description !== undefined) db.description = toNullableString(input.description);
+  if (input.status !== undefined) db.status = input.status;
+  if (input.priority !== undefined) db.priority = input.priority;
+  if (input.dueDate !== undefined) db.due_date = toNullableDate(input.dueDate);
+  if (input.assignedToPersonId !== undefined) db.assigned_to_person_id = toNullableString(input.assignedToPersonId);
+  return db;
+};
 
 // ── ProjectTimeLog mappers ──
 
