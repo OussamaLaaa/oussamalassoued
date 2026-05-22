@@ -301,6 +301,37 @@ export const useOpportunitiesData = () => {
     return result?.row;
   };
 
+  const importCompaniesBatch = async (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => {
+    const dbRows = rows.map((row) => ({
+      name: row.name.trim(),
+      country: row.country || null,
+      industry: row.industry || null,
+      website: row.website || null,
+      priority: 'medium',
+      status: 'prospect',
+      database_type: 'sme',
+    }));
+
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity: 'companies', action: 'insert', data: dbRows }),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result?.error || 'Failed to import companies.');
+    }
+
+    const inserted = Array.isArray(result?.rows) ? result.rows.map(mapCompanyRow) : [];
+    if (inserted.length > 0) {
+      setCompanies((current) => [...inserted, ...current]);
+    }
+
+    return inserted;
+  };
+
   const addCompany = async (input: CompanyInput) => {
     const row = await syncInsert('companies', toCompanyDb(input));
     const next = mapCompanyRow(row);
@@ -452,6 +483,7 @@ export const useOpportunitiesData = () => {
     messages,
     deals,
     strategyNotes,
+    importCompaniesBatch,
     addCompany,
     addPerson,
     addMessage,

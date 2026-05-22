@@ -183,7 +183,29 @@ export default async function handler(req, res) {
       return toSafeJson(res, 400, { success: false, error: 'Missing data payload.' });
     }
 
+    const isBatch = Array.isArray(data);
+
+    if (isBatch && data.length === 0) {
+      return toSafeJson(res, 400, { success: false, error: 'Empty batch payload.' });
+    }
+
     try {
+      if (isBatch) {
+        // Batch insert
+        const { data: insertedRows, error } = await supabase
+          .from(entity)
+          .insert(data)
+          .select();
+
+        if (error) {
+          console.error(`[Opportunities] Supabase batch insert failed for ${entity}`, error);
+          return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+        }
+
+        return toSafeJson(res, 200, { success: true, rows: insertedRows || [] });
+      }
+
+      // Single insert
       const { data: insertedRow, error } = await supabase
         .from(entity)
         .insert([data])
