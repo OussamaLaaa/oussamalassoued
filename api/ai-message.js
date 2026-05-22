@@ -44,28 +44,6 @@ const toCleanString = (value) => (value == null ? '' : String(value).trim());
 
 const truncate = (value, maxLength) => (value.length > maxLength ? value.slice(0, maxLength) : value);
 
-const stripMarkdownFences = (value) => value.replace(/^```(?:[a-zA-Z]+)?\s*/g, '').replace(/\s*```$/g, '');
-
-const stripOuterQuotes = (value) => {
-  const trimmed = value.trim();
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1).trim();
-  }
-  return trimmed;
-};
-
-const hasDocumentArtifacts = (value) => /(^|\b)(Seite|Page |পৃষ্ঠা|von |document)(\b|$)/i.test(value);
-
-const isClearlyInvalidOutput = (value, language) => {
-  if (!value || value.length < 20) return true;
-  if (/^(\{|\[)/.test(value.trim())) return true;
-  if (language !== 'arabic' && /[A-Za-z]/.test(value) && /\b(Seite|Page|document|von)\b/i.test(value)) return true;
-  if (language !== 'french' && /\b(Bonjour|Cordialement|Merci)\b/i.test(value) && language === 'english') {
-    return false;
-  }
-  return hasDocumentArtifacts(value);
-};
-
 const normalizeLanguage = (value) => {
   const language = toCleanString(value).toLowerCase();
   return ALLOWED_LANGUAGES.has(language) ? language : '';
@@ -97,75 +75,108 @@ const normalizeCompany = (company) => ({
   notes: truncate(toCleanString(company?.notes), 400),
 });
 
+const cleanModelOutput = (value) => toCleanString(value).replace(/^```(?:[a-zA-Z]+)?\s*/g, '').replace(/\s*```$/g, '').replace(/^["']|["']$/g, '').trim();
+
+const hasDocumentArtifacts = (value) => /(?:^|\s)(Seite|Page\s*\d+|পৃষ্ঠা|von\s+\d+|document)(?:\s|$)/i.test(value);
+
+const looksTooFragmented = (value) => {
+  const lines = value.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (lines.length >= 4 && lines.every((line) => line.length < 40)) return true;
+  const pageHits = (value.match(/\b(Page\s*\d+|Seite\s*\d+)\b/gi) || []).length;
+  return pageHits >= 2;
+};
+
+const hasSentenceStructure = (value) => /[.!?]/.test(value) || /\n/.test(value) || /^[-*•]/m.test(value);
+
+const validateModelOutput = (value, language) => {
+  const message = cleanModelOutput(value);
+  if (!message) {
+    return { ok: false, rejectionReason: 'empty_response', message: '' };
+  }
+  if (message.length < 30) {
+    return { ok: false, rejectionReason: 'too_short', message };
+  }
+  if (language !== 'arabic' && /\bSeite\b/i.test(message)) {
+    return { ok: false, rejectionReason: 'garbage_detected', message };
+  }
+  if (language !== 'arabic' && hasDocumentArtifacts(message)) {
+    return { ok: false, rejectionReason: 'garbage_detected', message };
+  }
+  if (looksTooFragmented(message) && message.length < 100) {
+    return { ok: false, rejectionReason: 'garbage_detected', message };
+  }
+  if (!hasSentenceStructure(message) && message.length < 100) {
+    return { ok: false, rejectionReason: 'garbage_detected', message };
+  }
+  return { ok: true, rejectionReason: null, message };
+};
+
 const extractResponseText = async (response) => {
-  const directText = response?.text;
-  if (typeof directText === 'string' && directText.trim()) {
-    return directText;
+  if (!response) {
+    return { text: '', method: 'fallback' };
   }
 
+  const directText = response.text;
   if (typeof directText === 'function') {
     try {
       const resolved = await directText.call(response);
-      if (typeof resolved === 'string' && resolved.trim()) return resolved;
+      if (typeof resolved === 'string' && resolved.trim()) {
+        return { text: resolved, method: 'response.text' };
+      }
     } catch {
-      // fall through to candidate parsing
+      // fall through
     }
+  } else if (typeof directText === 'string' && directText.trim()) {
+    return { text: directText, method: 'response.text' };
   }
 
   const parts = response?.candidates?.[0]?.content?.parts;
-  if (Array.isArray(parts) && parts.length > 0) {
+  if (Array.isArray(parts)) {
     const merged = parts
-      .map((part) => (typeof part?.text === 'string' ? part.text : ''))
+      .map((part) => {
+        if (typeof part?.text === 'string') return part.text;
+        if (typeof part?.toString === 'function') {
+          const rendered = part.toString();
+          return typeof rendered === 'string' ? rendered : '';
+        }
+        return '';
+      })
       .join('')
       .trim();
-    if (merged) return merged;
+
+    if (merged) {
+      return { text: merged, method: 'candidates.parts' };
+    }
   }
 
-  return '';
+  return { text: '', method: 'fallback' };
 };
 
-const cleanModelOutput = (value) => {
-  let output = toCleanString(value);
-  output = stripMarkdownFences(output);
-  output = stripOuterQuotes(output);
-  output = output.replace(/\r\n/g, '\n').trim();
-  return output;
-};
+const buildPrompt = ({ templateText, person, company, observation, goal, tone, length, language }) => [
+  'You are writing one concise professional outreach message.',
+  'Output only the final message.',
+  'Do not explain.',
+  'Do not add metadata.',
+  'Do not invent facts.',
+  'Do not mention anything not provided.',
+  'Use only the selected language.',
+  'Keep it short and human.',
+  '',
+  `Template: ${templateText}`,
+  `Person: ${person.fullName || ''}${person.role ? ` | ${person.role}` : ''}`,
+  `Company: ${company.name || ''}${company.industry ? ` | ${company.industry}` : ''}${company.country ? ` | ${company.country}` : ''}${company.website ? ` | ${company.website}` : ''}`,
+  `Observation: ${observation || ''}`,
+  `Goal: ${goal || ''}`,
+  `Tone: ${tone}`,
+  `Length: ${length}`,
+  `Language: ${language}`,
+].join('\n');
 
-const buildPrompt = ({ templateText, person, company, observation, goal, tone, length, language }) => {
-  const systemInstruction = [
-    'You are helping write concise professional outreach messages for UX/UI career and freelance opportunities.',
-    'You must write exactly one outreach message.',
-    'Do not output analysis.',
-    'Do not output bullet points unless the template requires it.',
-    'Do not output German unless language is German, which is not supported here.',
-    'Do not include page labels, document fragments, metadata, explanations, or unrelated text.',
-    'Output only the final message.',
-    'Do not invent facts.',
-    'Do not claim experience or results not provided.',
-    'Do not sound spammy.',
-    'Do not manipulate.',
-    'Keep the message natural, respectful, and specific.',
-    'If there is not enough context, still produce a clean generic outreach message based on the template. Do not invent facts.',
-    `Language rules: english => output only English; french => output only French; arabic => output only Arabic.`,
-  ].join(' ');
+const buildFallbackPrompt = ({ templateText, language }) => `Rewrite this outreach message in ${language}. Output only one clean professional message. Template: ${templateText}`;
 
-  const contextLines = [
-    `Template: ${templateText}`,
-    person.fullName ? `Person name: ${person.fullName}` : 'Person name: ',
-    person.role ? `Person role: ${person.role}` : 'Person role: ',
-    company.name ? `Company name: ${company.name}` : 'Company name: ',
-    company.industry ? `Company industry: ${company.industry}` : 'Company industry: ',
-    company.country ? `Company country: ${company.country}` : 'Company country: ',
-    company.website ? `Company website: ${company.website}` : 'Company website: ',
-    observation ? `Observation: ${observation}` : 'Observation: ',
-    goal ? `Goal: ${goal}` : 'Goal: ',
-    `Tone: ${tone}`,
-    `Length: ${length}`,
-    `Language: ${language}`,
-  ];
-
-  return `${systemInstruction}\n\n${contextLines.join('\n')}`;
+const withDebug = ({ success, error, debugRequested, debug }) => {
+  if (!debugRequested) return { success, error };
+  return { success, error, debug };
 };
 
 export default async function handler(req, res) {
@@ -186,15 +197,37 @@ export default async function handler(req, res) {
     return toSafeJson(res, 401, { success: false, error: 'Unauthorized' });
   }
 
+  const body = readBody(req);
+  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
   const provider = toCleanString(process.env.AI_PROVIDER);
   const apiKey = toCleanString(process.env.GEMINI_API_KEY);
   const model = toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash';
 
+  const baseDebug = {
+    hasTemplateText: Boolean(toCleanString(body?.templateText)),
+    templateTextLength: toCleanString(body?.templateText).length,
+    language: toCleanString(body?.language),
+    tone: normalizeTone(body?.tone),
+    length: normalizeLength(body?.length),
+    hasPerson: Boolean(body?.person && typeof body.person === 'object'),
+    hasCompany: Boolean(body?.company && typeof body.company === 'object'),
+    hasObservation: Boolean(toCleanString(body?.observation)),
+    model,
+    aiProvider: 'gemini',
+    responseTextLength: 0,
+    extractionMethod: 'fallback',
+    rejectionReason: 'provider_error',
+  };
+
   if (provider !== 'gemini' || !apiKey) {
-    return toSafeJson(res, 200, { success: false, error: 'AI provider is not configured.' });
+    return toSafeJson(res, 200, withDebug({
+      success: false,
+      error: 'AI provider is not configured.',
+      debugRequested,
+      debug: baseDebug,
+    }));
   }
 
-  const body = readBody(req);
   const templateText = truncate(toCleanString(body?.templateText), MAX_TEMPLATE_LENGTH);
   const language = normalizeLanguage(body?.language);
   const tone = normalizeTone(body?.tone);
@@ -205,7 +238,23 @@ export default async function handler(req, res) {
   const goal = truncate(toCleanString(body?.goal), 100);
 
   if (!templateText || !language) {
-    return toSafeJson(res, 400, { success: false, error: 'Invalid AI message request.' });
+    return toSafeJson(res, 400, withDebug({
+      success: false,
+      error: 'Invalid AI message request.',
+      debugRequested,
+      debug: {
+        ...baseDebug,
+        hasTemplateText: Boolean(templateText),
+        templateTextLength: templateText.length,
+        language,
+        tone,
+        length,
+        hasPerson: Boolean(body?.person && typeof body.person === 'object'),
+        hasCompany: Boolean(body?.company && typeof body.company === 'object'),
+        hasObservation: Boolean(observation),
+        rejectionReason: 'invalid_input',
+      },
+    }));
   }
 
   const prompt = buildPrompt({
@@ -219,25 +268,58 @@ export default async function handler(req, res) {
     language,
   });
 
+  const ai = new GoogleGenAI({ apiKey });
+
+  const runModel = async (contents) => {
+    const response = await ai.models.generateContent({ model, contents });
+    const extracted = await extractResponseText(response);
+    const validation = validateModelOutput(extracted.text, language);
+    return {
+      responseTextLength: extracted.text.length,
+      extractionMethod: extracted.method,
+      validation,
+    };
+  };
+
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-    });
+    const primary = await runModel(prompt);
 
-    const rawText = await extractResponseText(response);
-    const message = cleanModelOutput(rawText);
-
-    if (!message || isClearlyInvalidOutput(message, language)) {
-      return toSafeJson(res, 200, { success: false, error: 'AI generated an invalid message. Please try again.' });
+    if (primary.validation.ok) {
+      return toSafeJson(res, 200, { success: true, message: primary.validation.message });
     }
 
-    return toSafeJson(res, 200, { success: true, message });
+    const fallbackPrompt = buildFallbackPrompt({ templateText, language });
+    const fallback = await runModel(fallbackPrompt);
+
+    if (fallback.validation.ok) {
+      return toSafeJson(res, 200, { success: true, message: fallback.validation.message });
+    }
+
+    return toSafeJson(res, 200, withDebug({
+      success: false,
+      error: fallback.validation.rejectionReason === 'garbage_detected'
+        ? 'AI generated an invalid message. Please try again.'
+        : 'Unable to generate message.',
+      debugRequested,
+      debug: {
+        ...baseDebug,
+        responseTextLength: fallback.responseTextLength,
+        extractionMethod: fallback.extractionMethod,
+        rejectionReason: fallback.validation.rejectionReason || 'provider_error',
+      },
+    }));
   } catch (error) {
     console.error('[AI Message] Generation failed', {
       message: error instanceof Error ? error.message : 'Unknown error',
     });
-    return toSafeJson(res, 200, { success: false, error: 'Unable to generate message.' });
+    return toSafeJson(res, 200, withDebug({
+      success: false,
+      error: 'Unable to generate message.',
+      debugRequested,
+      debug: {
+        ...baseDebug,
+        rejectionReason: 'provider_error',
+      },
+    }));
   }
 }

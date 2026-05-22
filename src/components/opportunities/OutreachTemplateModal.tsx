@@ -134,6 +134,7 @@ const OutreachTemplateModal: React.FC<{
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          debug: import.meta.env.DEV,
           templateText: currentEditableMessageOrRenderedTemplate,
           person: {
             fullName: person.fullName,
@@ -165,6 +166,14 @@ const OutreachTemplateModal: React.FC<{
       }
 
       if (!response.ok || result?.success === false) {
+        if (import.meta.env.DEV) {
+          console.error('[OutreachTemplateModal] AI message generation failed', {
+            status: response.status,
+            error: result?.error,
+            debug: result?.debug,
+          });
+        }
+
         if (result?.error === 'AI provider is not configured.') {
           setStatus('AI is not configured yet.');
         } else if (result?.error === 'AI generated an invalid message. Please try again.') {
