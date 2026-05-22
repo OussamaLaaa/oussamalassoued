@@ -295,6 +295,8 @@ const OpportunitiesLayout: React.FC<{
                 people={people}
                 messages={messages}
                 deals={deals}
+                updatePerson={updatePerson}
+                updateMessage={updateMessage}
                 onAddCompany={() => setActiveModal('company')}
                 onAddPerson={() => setActiveModal('person')}
                 onAddMessage={() => setActiveModal('message')}
