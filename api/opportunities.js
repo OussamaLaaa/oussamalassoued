@@ -128,11 +128,20 @@ export default async function handler(req, res) {
 
     try {
       const results = {};
+      let templatesWarning = null;
 
       for (const table of tablesAttempted) {
         const { data, error } = await supabase.from(table).select('*');
 
         if (error) {
+          // Keep main CRM data available even if templates table is unavailable/misconfigured.
+          if (table === 'message_templates') {
+            templatesWarning = 'Templates are temporarily unavailable.';
+            results[table] = [];
+            console.warn('[Opportunities] Optional table query failed for message_templates', error);
+            continue;
+          }
+
           console.error(`[Opportunities] Supabase query failed for ${table}`, error);
           return toSafeJson(
             res,
@@ -155,6 +164,7 @@ export default async function handler(req, res) {
         messages: results.messages || [],
         deals: results.deals || [],
         message_templates: results.message_templates || [],
+        templatesWarning,
         strategyNotes: [],
       });
     } catch (error) {
