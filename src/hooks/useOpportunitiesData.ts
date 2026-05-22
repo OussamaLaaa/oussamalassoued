@@ -24,6 +24,48 @@ const cloneSeedData = (): OpportunitiesData => ({
 
 const safeString = (value: unknown) => (typeof value === 'string' ? value : value == null ? '' : String(value));
 const safeNumber = (value: unknown) => (typeof value === 'number' ? value : Number.isFinite(Number(value)) ? Number(value) : undefined);
+const isBlank = (value: unknown) => value == null || (typeof value === 'string' && value.trim() === '');
+
+const toNullableString = (value: unknown) => (isBlank(value) ? null : String(value).trim());
+
+const toNullableNumber = (value: unknown) => {
+  if (isBlank(value)) return null;
+  const parsed = typeof value === 'number' ? value : Number(String(value).trim());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toNullableDate = (value: unknown) => {
+  if (isBlank(value)) return null;
+
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    return value.trim();
+  }
+
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
+
+type OpportunitiesApiResponse = {
+  success?: boolean;
+  error?: string;
+  errorCode?: string | null;
+  entity?: string;
+  action?: string;
+  row?: any;
+  rows?: any[];
+  companies?: any[];
+  people?: any[];
+  messages?: any[];
+  deals?: any[];
+  strategyNotes?: any[];
+};
+
+type ApiError = Error & {
+  status?: number;
+  entity?: string;
+  action?: string;
+  errorCode?: string | null;
+};
 
 const toIso = (value: unknown) => {
   if (!value) return undefined;
@@ -118,7 +160,7 @@ const toCompanyDb = (input: CompanyInput) => ({
   website: input.website,
   linkedin: input.linkedin,
   priority: input.priority,
-  fit_score: input.fitScore,
+  fit_score: toNullableNumber(input.fitScore),
   ethical_fit: input.ethicalFit,
   status: input.status,
   next_action: input.nextAction,
@@ -126,7 +168,7 @@ const toCompanyDb = (input: CompanyInput) => ({
 });
 
 const toPersonDb = (input: PersonInput) => ({
-  company_id: input.companyId,
+  company_id: toNullableString(input.companyId),
   full_name: input.fullName.trim(),
   role: input.role,
   department: input.department,
@@ -138,34 +180,34 @@ const toPersonDb = (input: PersonInput) => ({
   email_public: input.emailPublic,
   contact_channel: input.contactChannel,
   relationship_status: input.relationshipStatus,
-  next_followup_date: input.nextFollowUpDate,
+  next_followup_date: toNullableDate(input.nextFollowUpDate),
   notes: input.notes,
 });
 
 const toMessageDb = (input: MessageInput) => ({
-  company_id: input.companyId,
-  person_id: input.personId,
+  company_id: toNullableString(input.companyId),
+  person_id: toNullableString(input.personId),
   channel: input.channel,
   language: input.language,
   message_type: input.messageType,
   message_text: input.messageText,
-  sent_date: input.sentDate,
+  sent_date: toNullableDate(input.sentDate),
   reply_status: input.replyStatus,
   reply_summary: input.replySummary,
-  next_followup_date: input.nextFollowUpDate,
+  next_followup_date: toNullableDate(input.nextFollowUpDate),
   status: input.status,
 });
 
 const toDealDb = (input: DealInput) => ({
-  company_id: input.companyId,
-  person_id: input.personId,
+  company_id: toNullableString(input.companyId),
+  person_id: toNullableString(input.personId),
   service_package: input.servicePackage,
   problem: input.problem,
   proposed_solution: input.proposedSolution,
-  value: input.value,
+  value: toNullableNumber(input.value),
   currency: input.currency,
   stage: input.stage,
-  probability: typeof input.probability === 'number' ? input.probability / 100 : undefined,
+  probability: toNullableNumber(input.probability) == null ? null : toNullableNumber(input.probability)! / 100,
   notes: input.notes,
 });
 
@@ -191,17 +233,36 @@ const getDerivedCollections = (companies: Company[], people: Person[], messages:
   };
 };
 
-const loadFromApi = async () => {
+const parseApiError = (result: OpportunitiesApiResponse, status: number): ApiError => {
+  const message = status === 401
+    ? 'Authentication required. Please log in again.'
+    : result?.error || 'Failed to save Opportunities data.';
+
+  const error = new Error(message) as ApiError;
+  error.status = status;
+  error.entity = result?.entity;
+  error.action = result?.action;
+  error.errorCode = result?.errorCode ?? null;
+  return error;
+};
+
+const requestOpportunities = async (init: RequestInit): Promise<OpportunitiesApiResponse> => {
   const response = await fetch(API_ENDPOINT, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    ...init,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init.headers || {}),
+    },
   });
 
+  const result = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    throw new Error(`Failed to load Opportunities data (${response.status})`);
+    throw parseApiError(result, response.status);
   }
 
-  return response.json();
+  return result;
 };
 
 export const useOpportunitiesData = () => {
@@ -259,12 +320,22 @@ export const useOpportunitiesData = () => {
       setError(null);
 
       try {
-        const payload = await loadFromApi();
+        const payload = await requestOpportunities({ method: 'GET' });
         if (!mounted) return;
         applyPayload(payload);
       } catch (apiError) {
-        console.error('[Opportunities] Failed to load from /api/opportunities, falling back to seed data.', apiError);
         if (!mounted) return;
+        if ((apiError as ApiError)?.status === 401) {
+          console.error('[Opportunities] Authentication required to load data.', apiError);
+          setError('Authentication required. Please log in again.');
+          setCompanies([]);
+          setPeople([]);
+          setMessages([]);
+          setDeals([]);
+          return;
+        }
+
+        console.error('[Opportunities] Failed to load from /api/opportunities, falling back to seed data.', apiError);
         const fallback = cloneSeedData();
         setCompanies(fallback.companies);
         setPeople(fallback.people);
@@ -286,15 +357,15 @@ export const useOpportunitiesData = () => {
   }, [applyPayload]);
 
   const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals', data: Record<string, unknown>) => {
-    const response = await fetch(API_ENDPOINT, {
+    const result = await requestOpportunities({
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity, action: 'insert', data }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
     });
 
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
+    if (result?.success === false) {
       throw new Error(result?.error || 'Failed to save Opportunities data.');
     }
 
@@ -312,15 +383,15 @@ export const useOpportunitiesData = () => {
       database_type: 'sme',
     }));
 
-    const response = await fetch(API_ENDPOINT, {
+    const result = await requestOpportunities({
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity: 'companies', action: 'insert', data: dbRows }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
     });
 
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
+    if (result?.success === false) {
       throw new Error(result?.error || 'Failed to import companies.');
     }
 
@@ -340,6 +411,14 @@ export const useOpportunitiesData = () => {
   };
 
   const addPerson = async (input: PersonInput) => {
+    if (!String(input.companyId || '').trim()) {
+      throw new Error('Please select a company before adding a person.');
+    }
+
+    if (!String(input.fullName || '').trim()) {
+      throw new Error('Please enter a full name before adding a person.');
+    }
+
     const row = await syncInsert('people', toPersonDb(input));
     const companyId = getRowRefId(row, 'company_id', 'companyId');
     const companyName = companies.find((company) => company.id === companyId)?.name;
@@ -349,6 +428,10 @@ export const useOpportunitiesData = () => {
   };
 
   const addMessage = async (input: MessageInput) => {
+    if (!String(input.companyId || '').trim()) {
+      throw new Error('Please select a company before adding a message.');
+    }
+
     const row = await syncInsert('messages', toMessageDb(input));
     const companyId = getRowRefId(row, 'company_id', 'companyId');
     const personId = getRowRefId(row, 'person_id', 'personId');
@@ -360,6 +443,10 @@ export const useOpportunitiesData = () => {
   };
 
   const addDeal = async (input: DealInput) => {
+    if (!String(input.companyId || '').trim()) {
+      throw new Error('Please select a company before adding a deal.');
+    }
+
     const row = await syncInsert('deals', toDealDb(input));
     const companyId = getRowRefId(row, 'company_id', 'companyId');
     const personId = getRowRefId(row, 'person_id', 'personId');
@@ -371,15 +458,15 @@ export const useOpportunitiesData = () => {
   };
 
   const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string, data: Record<string, unknown>) => {
-    const response = await fetch(API_ENDPOINT, {
+    const result = await requestOpportunities({
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity, action: 'update', id, data }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
     });
 
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
+    if (result?.success === false) {
       throw new Error(result?.error || 'Failed to update Opportunities data.');
     }
 
@@ -387,15 +474,15 @@ export const useOpportunitiesData = () => {
   };
 
   const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string) => {
-    const response = await fetch(API_ENDPOINT, {
+    const result = await requestOpportunities({
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity, action: 'delete', id }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
     });
 
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
+    if (result?.success === false) {
       throw new Error(result?.error || 'Failed to delete Opportunities data.');
     }
 

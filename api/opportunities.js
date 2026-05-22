@@ -35,6 +35,15 @@ const summarizeSupabaseError = (error) => {
   return safeParts.join(' | ') || 'Unknown Supabase error';
 };
 
+const buildMutationFailurePayload = ({ entity, action, error }) => ({
+  success: false,
+  error: action === 'update' ? 'Unable to update Opportunities data.' : action === 'delete' ? 'Unable to delete Opportunities data.' : 'Unable to save Opportunities data.',
+  entity,
+  action,
+  errorCode: error?.code ?? null,
+  errorMessage: summarizeSupabaseError(error),
+});
+
 const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
   success: false,
   ...(debug
@@ -171,6 +180,10 @@ export default async function handler(req, res) {
     const body = readBody(req);
     const { entity, action, data } = body || {};
 
+    if (!isAuthenticated(req)) {
+      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
+    }
+
     if (action !== 'insert') {
       return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
     }
@@ -198,8 +211,8 @@ export default async function handler(req, res) {
           .select();
 
         if (error) {
-          console.error(`[Opportunities] Supabase batch insert failed for ${entity}`, error);
-          return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+          console.error('[Opportunities] Supabase batch insert failed', { entity, action, error });
+          return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
         }
 
         return toSafeJson(res, 200, { success: true, rows: insertedRows || [] });
@@ -213,14 +226,14 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error(`[Opportunities] Supabase insert failed for ${entity}`, error);
-        return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+        console.error('[Opportunities] Supabase insert failed', { entity, action, error });
+        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
       }
 
       return toSafeJson(res, 200, { success: true, row: insertedRow });
     } catch (error) {
-      console.error(`[Opportunities] Unexpected insert failure for ${entity}`, error);
-      return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+      console.error('[Opportunities] Unexpected insert failure', { entity, action, error });
+      return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
     }
   }
 
@@ -257,8 +270,8 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error(`[Opportunities] Supabase update failed for ${entity}`, error);
-        return toSafeJson(res, 500, { success: false, error: 'Unable to update Opportunities data.' });
+        console.error('[Opportunities] Supabase update failed', { entity, action, id, error });
+        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
       }
 
       if (!updatedRow) {
@@ -267,8 +280,8 @@ export default async function handler(req, res) {
 
       return toSafeJson(res, 200, { success: true, row: updatedRow });
     } catch (error) {
-      console.error(`[Opportunities] Unexpected update failure for ${entity}`, error);
-      return toSafeJson(res, 500, { success: false, error: 'Unable to update Opportunities data.' });
+      console.error('[Opportunities] Unexpected update failure', { entity, action, id, error });
+      return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
     }
   }
 
@@ -299,14 +312,14 @@ export default async function handler(req, res) {
         .eq('id', id);
 
       if (error) {
-        console.error(`[Opportunities] Supabase delete failed for ${entity}`, error);
-        return toSafeJson(res, 500, { success: false, error: 'Unable to delete Opportunities data.' });
+        console.error('[Opportunities] Supabase delete failed', { entity, action, id, error });
+        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
       }
 
       return toSafeJson(res, 200, { success: true });
     } catch (error) {
-      console.error(`[Opportunities] Unexpected delete failure for ${entity}`, error);
-      return toSafeJson(res, 500, { success: false, error: 'Unable to delete Opportunities data.' });
+      console.error('[Opportunities] Unexpected delete failure', { entity, action, id, error });
+      return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
     }
   }
 

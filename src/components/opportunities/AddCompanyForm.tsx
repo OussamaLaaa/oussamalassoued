@@ -84,7 +84,7 @@ const AddCompanyForm: React.FC<{
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Fit Score</span>
-          <input type="number" min="1" max="10" className={baseInput} value={form.fitScore ?? ''} onChange={(e) => setField('fitScore', Number(e.target.value))} />
+          <input type="number" min="1" max="10" className={baseInput} value={form.fitScore ?? ''} onChange={(e) => setField('fitScore', e.target.value === '' ? undefined : Number(e.target.value))} />
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Ethical Fit</span>

@@ -1,5 +1,6 @@
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
+const buildCookieAttributes = () => `Path=/; HttpOnly; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -44,7 +45,7 @@ export default (req, res) => {
     const correct = process.env.DASHBOARD_PASSWORD || '00000008';
     
     if (password === correct) {
-      res.setHeader('Set-Cookie', `${COOKIE_NAME}=${COOKIE_VALUE}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200`);
+      res.setHeader('Set-Cookie', `${COOKIE_NAME}=${COOKIE_VALUE}; ${buildCookieAttributes()}; Max-Age=43200`);
       return res.status(200).json({ success: true, authenticated: true });
     }
     
@@ -53,7 +54,7 @@ export default (req, res) => {
   
   // DELETE - Logout
   if (req.method === 'DELETE') {
-    res.setHeader('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`);
+    res.setHeader('Set-Cookie', `${COOKIE_NAME}=; ${buildCookieAttributes()}; Max-Age=0`);
     return res.status(200).json({ success: true, authenticated: false });
   }
   

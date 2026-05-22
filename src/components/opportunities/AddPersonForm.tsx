@@ -10,6 +10,7 @@ const AddPersonForm: React.FC<{
   initialData?: PersonInput;
 }> = ({ companies, onSubmit, onCancel, initialData }) => {
   const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
+  const [error, setError] = useState('');
   const [form, setForm] = useState<PersonInput>(initialData || {
     companyId: companies[0]?.id,
     fullName: '',
@@ -30,6 +31,7 @@ const AddPersonForm: React.FC<{
   const selectedCompany = useMemo(() => companies.find((company) => company.id === companyId), [companies, companyId]);
 
   const setField = <K extends keyof PersonInput>(key: K, value: PersonInput[K]) => {
+    setError('');
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -38,6 +40,10 @@ const AddPersonForm: React.FC<{
       className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
+        if (!companyId) {
+          setError('Please select a company before adding a person.');
+          return;
+        }
         onSubmit({ ...form, companyId });
       }}
     >
@@ -45,6 +51,7 @@ const AddPersonForm: React.FC<{
         <label className="space-y-1 md:col-span-2">
           <span className="text-sm font-medium text-[#0f172a]">Company</span>
           <select className={baseInput} value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+            <option value="">Select a company</option>
             {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
           </select>
         </label>
@@ -115,6 +122,12 @@ const AddPersonForm: React.FC<{
           <textarea className={`${baseInput} min-h-24`} value={form.notes || ''} onChange={(e) => setField('notes', e.target.value)} />
         </label>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">
+          {error}
+        </div>
+      )}
 
       <div className="rounded-md border border-[#e5e7eb] bg-[#f8fafc] p-3 text-xs text-[#64748b]">
         Selected company: <span className="font-medium text-[#0f172a]">{selectedCompany?.name || 'None'}</span>

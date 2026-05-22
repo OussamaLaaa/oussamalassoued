@@ -82,7 +82,7 @@ const AddDealForm: React.FC<{
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Value</span>
-          <input type="number" min="0" className={baseInput} value={form.value ?? ''} onChange={(e) => setField('value', Number(e.target.value))} />
+          <input type="number" min="0" className={baseInput} value={form.value ?? ''} onChange={(e) => setField('value', e.target.value === '' ? undefined : Number(e.target.value))} />
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Currency</span>
@@ -105,7 +105,7 @@ const AddDealForm: React.FC<{
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Probability</span>
-          <input type="number" min="0" max="100" className={baseInput} value={form.probability ?? ''} onChange={(e) => setField('probability', Number(e.target.value))} />
+          <input type="number" min="0" max="100" className={baseInput} value={form.probability ?? ''} onChange={(e) => setField('probability', e.target.value === '' ? undefined : Number(e.target.value))} />
         </label>
         <label className="space-y-1 md:col-span-2">
           <span className="text-sm font-medium text-[#0f172a]">Notes</span>
