@@ -174,13 +174,7 @@ const OutreachTemplateModal: React.FC<{
           });
         }
 
-        if (result?.error === 'AI provider is not configured.') {
-          setStatus('AI is not configured yet.');
-        } else if (result?.error === 'AI generated an invalid message. Please try again.') {
-          setStatus('AI could not generate a clean message. Try again or edit manually.');
-        } else {
-          setStatus('AI could not generate a clean message. Try again or edit manually.');
-        }
+        setStatus('AI could not generate a clean message. Try again or edit manually.');
         return;
       }
 

@@ -9,6 +9,7 @@ const MAX_TEMPLATE_LENGTH = 4000;
 const MAX_OBSERVATION_LENGTH = 500;
 
 const readBody = (req) => {
+  // Read the body of the request
   if (!req.body) return {};
   if (typeof req.body === 'string') {
     try {
@@ -24,6 +25,7 @@ const readBody = (req) => {
 const toSafeJson = (res, status, body) => res.status(status).json(body);
 
 const parseCookies = (cookieHeader) => {
+  // Parse cookies from the request header
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
   return cookieHeader.split(';').reduce((accumulator, part) => {
     const separatorIndex = part.indexOf('=');
@@ -36,6 +38,7 @@ const parseCookies = (cookieHeader) => {
 };
 
 const isAuthenticated = (req) => {
+  // Check if the request is authenticated
   const cookies = parseCookies(req.headers?.cookie);
   return cookies[COOKIE_NAME] === COOKIE_VALUE;
 };
@@ -45,6 +48,7 @@ const toCleanString = (value) => (value == null ? '' : String(value).trim());
 const truncate = (value, maxLength) => (value.length > maxLength ? value.slice(0, maxLength) : value);
 
 const normalizeLanguage = (value) => {
+  // Normalize the language input
   const language = toCleanString(value).toLowerCase();
   return ALLOWED_LANGUAGES.has(language) ? language : '';
 };
@@ -55,6 +59,7 @@ const normalizeTone = (value) => {
 };
 
 const normalizeLength = (value) => {
+  // Normalize the length input
   const length = toCleanString(value).toLowerCase();
   return ALLOWED_LENGTHS.has(length) ? length : 'short';
 };
@@ -120,7 +125,9 @@ const extractResponseText = async (response) => {
   if (typeof directText === 'function') {
     try {
       const resolved = await directText.call(response);
-      if (typeof resolved === 'string' && resolved.trim()) {
+  const normalizeResponseText = (value) => toCleanString(value).replace(/\r\n/g, '\n').trim();
+
+  const stripMarkdownFences = (value) => value.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
         return { text: resolved, method: 'response.text' };
       }
     } catch {
