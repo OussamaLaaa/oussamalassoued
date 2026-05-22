@@ -108,6 +108,23 @@ const OutreachTemplateModal: React.FC<{
   const handleImproveWithAi = async () => {
     if (!selectedTemplate) return;
 
+    const currentEditableMessageOrRenderedTemplate = messageBody.trim() || renderedMessage.trim();
+    const hasTemplateText = Boolean(currentEditableMessageOrRenderedTemplate);
+
+    if (import.meta.env.DEV) {
+      console.debug('[OutreachTemplateModal] AI request context', {
+        hasTemplateText,
+        language: selectedTemplate.language,
+        hasPerson: Boolean(person),
+        hasCompany: Boolean(company),
+      });
+    }
+
+    if (!hasTemplateText) {
+      setStatus('AI could not generate a clean message. Try again or edit manually.');
+      return;
+    }
+
     setIsImproving(true);
     setStatus('');
 
@@ -117,7 +134,7 @@ const OutreachTemplateModal: React.FC<{
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          templateText: messageBody || renderedMessage,
+          templateText: currentEditableMessageOrRenderedTemplate,
           person: {
             fullName: person.fullName,
             role: person.role,
@@ -150,8 +167,10 @@ const OutreachTemplateModal: React.FC<{
       if (!response.ok || result?.success === false) {
         if (result?.error === 'AI provider is not configured.') {
           setStatus('AI is not configured yet.');
+        } else if (result?.error === 'AI generated an invalid message. Please try again.') {
+          setStatus('AI could not generate a clean message. Try again or edit manually.');
         } else {
-          setStatus(result?.error || 'Unable to generate message.');
+          setStatus('AI could not generate a clean message. Try again or edit manually.');
         }
         return;
       }
@@ -161,10 +180,10 @@ const OutreachTemplateModal: React.FC<{
         setMessageBody(result.message.trim());
         setStatus('Message improved with AI.');
       } else {
-        setStatus('Unable to generate message.');
+        setStatus('AI could not generate a clean message. Try again or edit manually.');
       }
     } catch {
-      setStatus('Unable to generate message.');
+      setStatus('AI could not generate a clean message. Try again or edit manually.');
     } finally {
       setIsImproving(false);
     }
