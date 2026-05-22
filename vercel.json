@@ -6,6 +6,14 @@
   "outputDirectory": "dist",
   "routes": [
     {
+      "src": "/api/opportunities",
+      "dest": "/api/opportunities.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
@@ -15,10 +23,6 @@
     {
       "src": "/frames/(.*)",
       "dest": "/frames/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
