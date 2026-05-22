@@ -3,7 +3,13 @@ import type { Company } from '../../types/opportunities';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 
-const CompaniesTable: React.FC<{ companies: Company[] }> = ({ companies }) => {
+const actionButtonClass = 'rounded-md border border-[#dbe2ea] bg-white px-2.5 py-1 text-[11px] font-medium text-[#0f172a] hover:bg-[#f8fafc]';
+
+const CompaniesTable: React.FC<{
+  companies: Company[];
+  onEdit: (company: Company) => void;
+  onDelete: (company: Company) => void;
+}> = ({ companies, onEdit, onDelete }) => {
   return (
     <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
       <h3 className="font-medium text-lg text-[#0f172a]">Companies</h3>
@@ -17,6 +23,7 @@ const CompaniesTable: React.FC<{ companies: Company[] }> = ({ companies }) => {
               <th className="px-3 py-2">Priority</th>
               <th className="px-3 py-2">Fit</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -31,6 +38,12 @@ const CompaniesTable: React.FC<{ companies: Company[] }> = ({ companies }) => {
                 <td className="px-3 py-3"><PriorityBadge priority={c.priority} /></td>
                 <td className="px-3 py-3 text-sm text-[#0f172a]">{c.fitScore ?? '—'}</td>
                 <td className="px-3 py-3"><StatusBadge status={c.status} /></td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <button type="button" className={actionButtonClass} onClick={() => onEdit(c)}>Edit</button>
+                    <button type="button" className={actionButtonClass} onClick={() => onDelete(c)}>Delete</button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -5,6 +5,21 @@ const tablesAttempted = ['companies', 'people', 'messages', 'deals'];
 const DASHBOARD_SESSION_COOKIE = 'dashboard_session';
 const DASHBOARD_SESSION_VALUE = 'test123';
 
+const ENTITY_CONFIG = {
+  companies: {
+    idField: 'id',
+  },
+  people: {
+    idField: 'id',
+  },
+  messages: {
+    idField: 'id',
+  },
+  deals: {
+    idField: 'id',
+  },
+};
+
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -84,6 +99,15 @@ const readBody = (req) => {
   if (typeof req.body === 'object') return req.body;
   return {};
 };
+
+const isValidEntity = (entity) => allowedEntities.has(entity);
+
+const isValidId = (value) => typeof value === 'string' && value.trim().length > 0;
+
+const buildMutationFailure = (message = 'Unable to save Opportunities data.') => ({
+  success: false,
+  error: message,
+});
 
 const toSafeJson = (res, status, body) => res.status(status).json(body);
 
@@ -185,7 +209,7 @@ export default async function handler(req, res) {
       return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
     }
 
-    if (!allowedEntities.has(entity)) {
+    if (!isValidEntity(entity)) {
       return toSafeJson(res, 400, { success: false, error: 'Invalid entity.' });
     }
 
@@ -209,6 +233,77 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error(`[Opportunities] Unexpected insert failure for ${entity}`, error);
       return toSafeJson(res, 500, { success: false, error: 'Unable to save Opportunities data.' });
+    }
+  }
+
+  if (req.method === 'PUT') {
+    const body = readBody(req);
+    const { entity, action, id, data } = body || {};
+
+    if (action !== 'update') {
+      return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
+    }
+
+    if (!isValidEntity(entity)) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid entity.' });
+    }
+
+    if (!isValidId(id)) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing id.' });
+    }
+
+    if (!data || typeof data !== 'object') {
+      return toSafeJson(res, 400, { success: false, error: 'Missing data payload.' });
+    }
+
+    try {
+      const { data: updatedRow, error } = await supabase
+        .from(entity)
+        .update(data)
+        .eq(ENTITY_CONFIG[entity].idField, id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`[Opportunities] Supabase update failed for ${entity}`, error);
+        return toSafeJson(res, 500, buildMutationFailure());
+      }
+
+      return toSafeJson(res, 200, { success: true, row: updatedRow });
+    } catch (error) {
+      console.error(`[Opportunities] Unexpected update failure for ${entity}`, error);
+      return toSafeJson(res, 500, buildMutationFailure());
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    const body = readBody(req);
+    const { entity, action, id } = body || {};
+
+    if (action !== 'delete') {
+      return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
+    }
+
+    if (!isValidEntity(entity)) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid entity.' });
+    }
+
+    if (!isValidId(id)) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing id.' });
+    }
+
+    try {
+      const { error } = await supabase.from(entity).delete().eq(ENTITY_CONFIG[entity].idField, id);
+
+      if (error) {
+        console.error(`[Opportunities] Supabase delete failed for ${entity}`, error);
+        return toSafeJson(res, 500, buildMutationFailure());
+      }
+
+      return toSafeJson(res, 200, { success: true });
+    } catch (error) {
+      console.error(`[Opportunities] Unexpected delete failure for ${entity}`, error);
+      return toSafeJson(res, 500, buildMutationFailure());
     }
   }
 

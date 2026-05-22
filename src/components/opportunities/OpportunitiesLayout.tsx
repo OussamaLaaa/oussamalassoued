@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { OpportunitiesTab, OpportunitiesData } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, Company, Person, OutreachMessage, Deal, CompanyInput, PersonInput, MessageInput, DealInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable from './CompaniesTable';
 import PeopleTable from './PeopleTable';
@@ -21,26 +21,102 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'strategy', label: 'Strategy' },
 ];
 
+type OpportunitiesEntity = 'company' | 'person' | 'message' | 'deal';
+
+type OpportunitiesModalState = {
+  entity: OpportunitiesEntity;
+  mode: 'add' | 'edit';
+  id?: string;
+} | null;
+
 const OpportunitiesLayout: React.FC<{
   theme?: 'light' | 'dark';
   setTheme?: (t: 'light' | 'dark') => void;
   data: OpportunitiesData & {
-    addCompany: (input: any) => void;
-    addPerson: (input: any) => void;
-    addMessage: (input: any) => void;
-    addDeal: (input: any) => void;
+    addCompany: (input: CompanyInput) => Promise<unknown>;
+    addPerson: (input: PersonInput) => Promise<unknown>;
+    addMessage: (input: MessageInput) => Promise<unknown>;
+    addDeal: (input: DealInput) => Promise<unknown>;
+    updateCompany: (id: string, input: CompanyInput) => Promise<unknown>;
+    deleteCompany: (id: string) => Promise<unknown>;
+    updatePerson: (id: string, input: PersonInput) => Promise<unknown>;
+    deletePerson: (id: string) => Promise<unknown>;
+    updateMessage: (id: string, input: MessageInput) => Promise<unknown>;
+    deleteMessage: (id: string) => Promise<unknown>;
+    updateDeal: (id: string, input: DealInput) => Promise<unknown>;
+    deleteDeal: (id: string) => Promise<unknown>;
     resetToSeedData: () => void;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
-  const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | null>(null);
+  const [activeModal, setActiveModal] = useState<OpportunitiesModalState>(null);
 
-  const { companies, people, messages, deals, strategyNotes, addCompany, addPerson, addMessage, addDeal, resetToSeedData } = data;
+  const {
+    companies,
+    people,
+    messages,
+    deals,
+    strategyNotes,
+    addCompany,
+    addPerson,
+    addMessage,
+    addDeal,
+    updateCompany,
+    deleteCompany,
+    updatePerson,
+    deletePerson,
+    updateMessage,
+    deleteMessage,
+    updateDeal,
+    deleteDeal,
+    resetToSeedData,
+  } = data;
+
+  const openAddModal = (entity: OpportunitiesEntity) => setActiveModal({ entity, mode: 'add' });
+  const openEditModal = (entity: OpportunitiesEntity, id: string) => setActiveModal({ entity, mode: 'edit', id });
+  const closeModal = () => setActiveModal(null);
+
+  const selectedCompany = activeModal?.entity === 'company' && activeModal.mode === 'edit'
+    ? companies.find((company) => company.id === activeModal.id)
+    : undefined;
+  const selectedPerson = activeModal?.entity === 'person' && activeModal.mode === 'edit'
+    ? people.find((person) => person.id === activeModal.id)
+    : undefined;
+  const selectedMessage = activeModal?.entity === 'message' && activeModal.mode === 'edit'
+    ? messages.find((message) => message.id === activeModal.id)
+    : undefined;
+  const selectedDeal = activeModal?.entity === 'deal' && activeModal.mode === 'edit'
+    ? deals.find((deal) => deal.id === activeModal.id)
+    : undefined;
 
   const handleResetDemoData = () => {
     const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
     if (!confirmed) return;
     resetToSeedData();
+  };
+
+  const handleDeleteCompany = async (company: Company) => {
+    const confirmed = window.confirm('This may leave related people/messages/deals without a company. Continue?');
+    if (!confirmed) return;
+    await deleteCompany(company.id);
+  };
+
+  const handleDeletePerson = async (person: Person) => {
+    const confirmed = window.confirm(`Delete ${person.fullName}?`);
+    if (!confirmed) return;
+    await deletePerson(person.id);
+  };
+
+  const handleDeleteMessage = async (message: OutreachMessage) => {
+    const confirmed = window.confirm('Delete this message?');
+    if (!confirmed) return;
+    await deleteMessage(message.id);
+  };
+
+  const handleDeleteDeal = async (deal: Deal) => {
+    const confirmed = window.confirm('Delete this deal?');
+    if (!confirmed) return;
+    await deleteDeal(deal.id);
   };
 
   return (
@@ -105,92 +181,140 @@ const OpportunitiesLayout: React.FC<{
                 people={people}
                 messages={messages}
                 deals={deals}
-                onAddCompany={() => setActiveModal('company')}
-                onAddPerson={() => setActiveModal('person')}
-                onAddMessage={() => setActiveModal('message')}
-                onAddDeal={() => setActiveModal('deal')}
+                onAddCompany={() => openAddModal('company')}
+                onAddPerson={() => openAddModal('person')}
+                onAddMessage={() => openAddModal('message')}
+                onAddDeal={() => openAddModal('deal')}
                 onResetDemoData={handleResetDemoData}
               />
             )}
 
-            {tab === 'companies' && <CompaniesTable companies={companies} />}
+            {tab === 'companies' && (
+              <CompaniesTable
+                companies={companies}
+                onEdit={(company) => openEditModal('company', company.id)}
+                onDelete={handleDeleteCompany}
+              />
+            )}
 
-            {tab === 'people' && <PeopleTable people={people} />}
+            {tab === 'people' && (
+              <PeopleTable
+                people={people}
+                onEdit={(person) => openEditModal('person', person.id)}
+                onDelete={handleDeletePerson}
+              />
+            )}
 
-            {tab === 'messages' && <MessagesTable messages={messages} />}
+            {tab === 'messages' && (
+              <MessagesTable
+                messages={messages}
+                onEdit={(message) => openEditModal('message', message.id)}
+                onDelete={handleDeleteMessage}
+              />
+            )}
 
-            {tab === 'deals' && <DealsTable deals={deals} />}
+            {tab === 'deals' && (
+              <DealsTable
+                deals={deals}
+                onEdit={(deal) => openEditModal('deal', deal.id)}
+                onDelete={handleDeleteDeal}
+              />
+            )}
 
             {tab === 'strategy' && <StrategyPanel notes={strategyNotes} />}
           </div>
         </main>
       </div>
 
-      {activeModal === 'company' ? (
-        <OpportunityModal title="Add Company" onClose={() => setActiveModal(null)}>
+      {activeModal?.entity === 'company' ? (
+        <OpportunityModal title={activeModal.mode === 'edit' ? 'Edit Company' : 'Add Company'} onClose={closeModal}>
           <AddCompanyForm
+            initialData={selectedCompany}
+            submitLabel={activeModal.mode === 'edit' ? 'Save Changes' : 'Save Company'}
             onSubmit={async (input) => {
               try {
-                await addCompany(input);
-                setActiveModal(null);
+                if (activeModal.mode === 'edit' && selectedCompany) {
+                  await updateCompany(selectedCompany.id, input);
+                } else {
+                  await addCompany(input);
+                }
+                closeModal();
               } catch (error) {
                 console.error('[Opportunities] Failed to add company.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            onCancel={closeModal}
           />
         </OpportunityModal>
       ) : null}
 
-      {activeModal === 'person' ? (
-        <OpportunityModal title="Add Person" onClose={() => setActiveModal(null)}>
+      {activeModal?.entity === 'person' ? (
+        <OpportunityModal title={activeModal.mode === 'edit' ? 'Edit Person' : 'Add Person'} onClose={closeModal}>
           <AddPersonForm
             companies={companies}
+            initialData={selectedPerson}
+            submitLabel={activeModal.mode === 'edit' ? 'Save Changes' : 'Save Person'}
             onSubmit={async (input) => {
               try {
-                await addPerson(input);
-                setActiveModal(null);
+                if (activeModal.mode === 'edit' && selectedPerson) {
+                  await updatePerson(selectedPerson.id, input);
+                } else {
+                  await addPerson(input);
+                }
+                closeModal();
               } catch (error) {
                 console.error('[Opportunities] Failed to add person.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            onCancel={closeModal}
           />
         </OpportunityModal>
       ) : null}
 
-      {activeModal === 'message' ? (
-        <OpportunityModal title="Log Message" onClose={() => setActiveModal(null)}>
+      {activeModal?.entity === 'message' ? (
+        <OpportunityModal title={activeModal.mode === 'edit' ? 'Edit Message' : 'Log Message'} onClose={closeModal}>
           <LogMessageForm
             companies={companies}
             people={people}
+            initialData={selectedMessage}
+            submitLabel={activeModal.mode === 'edit' ? 'Save Changes' : 'Save Message'}
             onSubmit={async (input) => {
               try {
-                await addMessage(input);
-                setActiveModal(null);
+                if (activeModal.mode === 'edit' && selectedMessage) {
+                  await updateMessage(selectedMessage.id, input);
+                } else {
+                  await addMessage(input);
+                }
+                closeModal();
               } catch (error) {
                 console.error('[Opportunities] Failed to add message.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            onCancel={closeModal}
           />
         </OpportunityModal>
       ) : null}
 
-      {activeModal === 'deal' ? (
-        <OpportunityModal title="Add Deal" onClose={() => setActiveModal(null)}>
+      {activeModal?.entity === 'deal' ? (
+        <OpportunityModal title={activeModal.mode === 'edit' ? 'Edit Deal' : 'Add Deal'} onClose={closeModal}>
           <AddDealForm
             companies={companies}
             people={people}
+            initialData={selectedDeal}
+            submitLabel={activeModal.mode === 'edit' ? 'Save Changes' : 'Save Deal'}
             onSubmit={async (input) => {
               try {
-                await addDeal(input);
-                setActiveModal(null);
+                if (activeModal.mode === 'edit' && selectedDeal) {
+                  await updateDeal(selectedDeal.id, input);
+                } else {
+                  await addDeal(input);
+                }
+                closeModal();
               } catch (error) {
                 console.error('[Opportunities] Failed to add deal.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            onCancel={closeModal}
           />
         </OpportunityModal>
       ) : null}

@@ -1,28 +1,36 @@
-import React, { useState } from 'react';
-import type { CompanyInput } from '../../types/opportunities';
+import React, { useEffect, useState } from 'react';
+import type { Company, CompanyInput } from '../../types/opportunities';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
 
 const AddCompanyForm: React.FC<{
+  initialData?: Company;
+  submitLabel?: string;
   onSubmit: (data: CompanyInput) => void;
   onCancel: () => void;
-}> = ({ onSubmit, onCancel }) => {
-  const [form, setForm] = useState<CompanyInput>({
-    name: '',
-    databaseType: 'sme',
-    category: '',
-    industry: '',
-    country: '',
-    city: '',
-    website: '',
-    linkedin: '',
-    priority: 'medium',
-    fitScore: 6,
-    ethicalFit: 'good',
-    status: 'prospect',
-    nextAction: '',
-    notes: '',
+}> = ({ initialData, submitLabel = 'Save Company', onSubmit, onCancel }) => {
+  const createInitialForm = (): CompanyInput => ({
+    name: initialData?.name || '',
+    databaseType: (initialData?.databaseType as CompanyInput['databaseType']) || 'sme',
+    category: initialData?.category || '',
+    industry: initialData?.industry || '',
+    country: initialData?.country || '',
+    city: initialData?.city || '',
+    website: initialData?.website || '',
+    linkedin: initialData?.linkedin || '',
+    priority: (initialData?.priority as CompanyInput['priority']) || 'medium',
+    fitScore: initialData?.fitScore ?? 6,
+    ethicalFit: (initialData?.ethicalFit as CompanyInput['ethicalFit']) || 'good',
+    status: initialData?.status || 'prospect',
+    nextAction: initialData?.nextAction || '',
+    notes: initialData?.notes || '',
   });
+
+  const [form, setForm] = useState<CompanyInput>(() => createInitialForm());
+
+  useEffect(() => {
+    setForm(createInitialForm());
+  }, [initialData]);
 
   const setField = <K extends keyof CompanyInput>(key: K, value: CompanyInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -115,7 +123,7 @@ const AddCompanyForm: React.FC<{
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Cancel</button>
-        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">Save Company</button>
+        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">{submitLabel}</button>
       </div>
     </form>
   );

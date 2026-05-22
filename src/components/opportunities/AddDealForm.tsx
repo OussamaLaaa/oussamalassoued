@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Company, DealInput, Person } from '../../types/opportunities';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
@@ -6,24 +6,36 @@ const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 
 const AddDealForm: React.FC<{
   companies: Company[];
   people: Person[];
+  initialData?: DealInput & { companyId?: string; personId?: string };
+  submitLabel?: string;
   onSubmit: (data: DealInput) => void;
   onCancel: () => void;
-}> = ({ companies, people, onSubmit, onCancel }) => {
-  const [companyId, setCompanyId] = useState(companies[0]?.id || '');
+}> = ({ companies, people, initialData, submitLabel = 'Save Deal', onSubmit, onCancel }) => {
+  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
   const filteredPeople = useMemo(() => people.filter((person) => !companyId || person.companyId === companyId), [companyId, people]);
-  const [personId, setPersonId] = useState(filteredPeople[0]?.id || '');
-  const [form, setForm] = useState<DealInput>({
-    companyId: companies[0]?.id,
-    personId: filteredPeople[0]?.id,
-    servicePackage: '',
-    problem: '',
-    proposedSolution: '',
-    value: 0,
-    currency: 'USD',
-    stage: 'discovery',
-    probability: 50,
-    notes: '',
+  const [personId, setPersonId] = useState(initialData?.personId || filteredPeople[0]?.id || '');
+
+  const createInitialForm = (): DealInput => ({
+    companyId: initialData?.companyId || companies[0]?.id,
+    personId: initialData?.personId || filteredPeople[0]?.id,
+    servicePackage: initialData?.servicePackage || '',
+    problem: initialData?.problem || '',
+    proposedSolution: initialData?.proposedSolution || '',
+    value: initialData?.value ?? 0,
+    currency: initialData?.currency || 'USD',
+    stage: initialData?.stage || 'discovery',
+    probability: initialData?.probability ?? 50,
+    notes: initialData?.notes || '',
   });
+
+  const [form, setForm] = useState<DealInput>(() => createInitialForm());
+
+  useEffect(() => {
+    const next = createInitialForm();
+    setCompanyId(next.companyId || '');
+    setPersonId(next.personId || '');
+    setForm(next);
+  }, [companies, people, initialData]);
 
   const setField = <K extends keyof DealInput>(key: K, value: DealInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -109,7 +121,7 @@ const AddDealForm: React.FC<{
 
       <div className="flex items-center justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Cancel</button>
-        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">Save Deal</button>
+        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">{submitLabel}</button>
       </div>
     </form>
   );
