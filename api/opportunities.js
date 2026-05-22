@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const allowedEntities = new Set(['companies', 'people', 'messages', 'deals']);
-const tablesAttempted = ['companies', 'people', 'messages', 'deals'];
+const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'message_templates']);
+const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'message_templates'];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 
@@ -25,23 +25,12 @@ const getEnvPresence = () => ({
 
 const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
 
-const summarizeSupabaseError = (error) => {
-  if (!error) return 'Unknown Supabase error';
-
-  const safeParts = [error.code, error.details, error.hint, error.message]
-    .filter(Boolean)
-    .map((part) => String(part).replace(/https?:\/\/\S+/gi, '[redacted]'));
-
-  return safeParts.join(' | ') || 'Unknown Supabase error';
-};
-
 const buildMutationFailurePayload = ({ entity, action, error }) => ({
   success: false,
   error: action === 'update' ? 'Unable to update Opportunities data.' : action === 'delete' ? 'Unable to delete Opportunities data.' : 'Unable to save Opportunities data.',
   entity,
   action,
   errorCode: error?.code ?? null,
-  errorMessage: summarizeSupabaseError(error),
 });
 
 const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
@@ -52,7 +41,7 @@ const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
         tablesAttempted,
         failedTable,
         errorCode: error?.code ?? null,
-        errorMessage: summarizeSupabaseError(error),
+        errorMessage: 'Unable to query Opportunities data.',
       }
     : {
         failedTable,
@@ -133,6 +122,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
+    if (!isAuthenticated(req)) {
+      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
+    }
+
     try {
       const results = {};
 
@@ -161,6 +154,7 @@ export default async function handler(req, res) {
         people: results.people || [],
         messages: results.messages || [],
         deals: results.deals || [],
+        message_templates: results.message_templates || [],
         strategyNotes: [],
       });
     } catch (error) {
@@ -305,10 +299,19 @@ export default async function handler(req, res) {
     }
 
     try {
-      const { error } = await supabase
-        .from(entity)
-        .delete()
-        .eq('id', id);
+      const query = entity === 'message_templates'
+        ? supabase
+            .from(entity)
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select('id')
+            .single()
+        : supabase
+            .from(entity)
+            .delete()
+            .eq('id', id);
+
+      const { error } = await query;
 
       if (error) {
         console.error('[Opportunities] Supabase delete failed', { entity, action, id, error });

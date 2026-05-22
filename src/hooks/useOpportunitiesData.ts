@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import seedData from '../data/opportunitiesSeed';
+import { messageTemplates as staticMessageTemplates } from '../data/messageTemplates';
 import type {
   OpportunitiesData,
   CompanyInput,
   PersonInput,
   MessageInput,
   DealInput,
+  MessageTemplateInput,
   Company,
   Person,
   OutreachMessage,
   Deal,
+  MessageTemplate,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -19,6 +22,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   people: seedData.people.map((item) => ({ ...item })),
   messages: seedData.messages.map((item) => ({ ...item })),
   deals: seedData.deals.map((item) => ({ ...item })),
+  templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
 });
 
@@ -57,6 +61,7 @@ type OpportunitiesApiResponse = {
   people?: any[];
   messages?: any[];
   deals?: any[];
+  message_templates?: any[];
   strategyNotes?: any[];
 };
 
@@ -150,6 +155,19 @@ const mapDealRow = (row: any, companyName?: string, personName?: string): Deal =
   createdAt: toIso(row?.created_at ?? row?.createdAt),
 });
 
+const mapTemplateRow = (row: any): MessageTemplate => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  audience: safeString(row?.audience),
+  goal: safeString(row?.goal),
+  language: safeString(row?.language),
+  subject: row?.subject ?? undefined,
+  body: safeString(row?.body),
+  isActive: row?.is_active ?? row?.isActive ?? true,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
 const toCompanyDb = (input: CompanyInput) => ({
   name: input.name.trim(),
   database_type: input.databaseType,
@@ -211,6 +229,16 @@ const toDealDb = (input: DealInput) => ({
   notes: input.notes,
 });
 
+const toTemplateDb = (input: MessageTemplateInput) => ({
+  name: input.name.trim(),
+  audience: toNullableString(input.audience),
+  goal: toNullableString(input.goal),
+  language: toNullableString(input.language),
+  subject: toNullableString(input.subject),
+  body: input.body,
+  is_active: input.isActive ?? true,
+});
+
 const getDerivedCollections = (companies: Company[], people: Person[], messages: OutreachMessage[], deals: Deal[]) => {
   const companyById = new Map(companies.map((company) => [company.id, company] as const));
   const personById = new Map(people.map((person) => [person.id, person] as const));
@@ -270,6 +298,7 @@ export const useOpportunitiesData = () => {
   const [people, setPeople] = useState<Person[]>(() => cloneSeedData().people);
   const [messages, setMessages] = useState<OutreachMessage[]>(() => cloneSeedData().messages);
   const [deals, setDeals] = useState<Deal[]>(() => cloneSeedData().deals);
+  const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -279,6 +308,7 @@ export const useOpportunitiesData = () => {
     const nextPeopleRaw = Array.isArray(payload?.people) ? payload.people : [];
     const nextMessagesRaw = Array.isArray(payload?.messages) ? payload.messages : [];
     const nextDealsRaw = Array.isArray(payload?.deals) ? payload.deals : [];
+    const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
 
     const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
     const personById = new Map<string, Person>();
@@ -305,11 +335,13 @@ export const useOpportunitiesData = () => {
     });
 
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
+    const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
 
     setCompanies(nextCompanies);
     setPeople(derived.people);
     setMessages(derived.messages);
     setDeals(derived.deals);
+    setTemplates(nextTemplates);
   }, []);
 
   useEffect(() => {
@@ -332,6 +364,7 @@ export const useOpportunitiesData = () => {
           setPeople([]);
           setMessages([]);
           setDeals([]);
+          setTemplates([]);
           return;
         }
 
@@ -341,6 +374,7 @@ export const useOpportunitiesData = () => {
         setPeople(fallback.people);
         setMessages(fallback.messages);
         setDeals(fallback.deals);
+        setTemplates(fallback.templates);
         setError('Using seed data fallback.');
       } finally {
         if (mounted) {
@@ -356,7 +390,7 @@ export const useOpportunitiesData = () => {
     };
   }, [applyPayload]);
 
-  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals', data: Record<string, unknown>) => {
+  const syncInsert = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
       method: 'POST',
       body: JSON.stringify({ entity, action: 'insert', data }),
@@ -369,7 +403,7 @@ export const useOpportunitiesData = () => {
       throw new Error(result?.error || 'Failed to save Opportunities data.');
     }
 
-    return result?.row;
+    return Array.isArray(data) ? (result?.rows || []) : result?.row;
   };
 
   const importCompaniesBatch = async (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => {
@@ -492,7 +526,7 @@ export const useOpportunitiesData = () => {
     return mapped;
   };
 
-  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string, data: Record<string, unknown>) => {
+  const syncUpdate = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', id: string, data: Record<string, unknown>) => {
     const result = await requestOpportunities({
       method: 'PUT',
       body: JSON.stringify({ entity, action: 'update', id, data }),
@@ -508,7 +542,7 @@ export const useOpportunitiesData = () => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'message_templates', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -590,6 +624,54 @@ export const useOpportunitiesData = () => {
     setDeals((current) => current.filter((d) => d.id !== id));
   };
 
+  const addTemplate = async (input: MessageTemplateInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Template name is required.');
+    }
+    if (!String(input.body || '').trim()) {
+      throw new Error('Template body is required.');
+    }
+
+    const row = await syncInsert('message_templates', toTemplateDb(input));
+    const next = mapTemplateRow(row);
+    setTemplates((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateTemplate = async (id: string, input: MessageTemplateInput) => {
+    const row = await syncUpdate('message_templates', id, toTemplateDb(input));
+    const next = mapTemplateRow(row);
+    setTemplates((current) => current.map((template) => (template.id === id ? next : template)));
+    return next;
+  };
+
+  const deleteTemplate = async (id: string) => {
+    const confirmed = window.confirm('Deactivate this template? It will be hidden from active outreach usage.');
+    if (!confirmed) return;
+    await syncDelete('message_templates', id);
+    setTemplates((current) => current.map((template) => (template.id === id ? { ...template, isActive: false } : template)));
+  };
+
+  const seedDefaultTemplates = async () => {
+    if (templates.length > 0) return [];
+    const result = await syncInsert('message_templates', staticMessageTemplates.map((template) => ({
+      name: template.name,
+      audience: template.audience,
+      goal: template.goal,
+      language: template.language,
+      subject: toNullableString(template.subject),
+      body: template.body,
+      is_active: true,
+    })));
+
+    const rows = Array.isArray(result) ? result : [];
+    const mapped = rows.map((row) => mapTemplateRow(row));
+    if (mapped.length > 0) {
+      setTemplates(mapped);
+    }
+    return mapped;
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -597,6 +679,7 @@ export const useOpportunitiesData = () => {
     setPeople(fallback.people);
     setMessages(fallback.messages);
     setDeals(fallback.deals);
+    setTemplates(fallback.templates);
   };
 
   return {
@@ -604,12 +687,14 @@ export const useOpportunitiesData = () => {
     people,
     messages,
     deals,
+    templates,
     strategyNotes,
     importCompaniesBatch,
     addCompany,
     addPerson,
     addMessage,
     addDeal,
+    addTemplate,
     importPeople,
     updateCompany,
     deleteCompany,
@@ -619,6 +704,9 @@ export const useOpportunitiesData = () => {
     deleteMessage,
     updateDeal,
     deleteDeal,
+    updateTemplate,
+    deleteTemplate,
+    seedDefaultTemplates,
     resetToSeedData,
     loading,
     error,

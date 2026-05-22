@@ -72,6 +72,19 @@ export interface Deal {
   createdAt?: string;
 }
 
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  audience: string;
+  goal: string;
+  language: string;
+  subject?: string;
+  body: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface CompanyInput {
   name: string;
   databaseType?: 'big_company' | 'sme' | 'freelance';
@@ -133,11 +146,22 @@ export interface DealInput {
   notes?: string;
 }
 
+export interface MessageTemplateInput {
+  name: string;
+  audience: string;
+  goal: string;
+  language: string;
+  subject?: string;
+  body: string;
+  isActive?: boolean;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
+  templates: MessageTemplate[];
   strategyNotes: StrategyNote[];
 }
 
@@ -149,4 +173,4 @@ export interface StrategyNote {
   priority?: 'low' | 'medium' | 'high';
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'strategy';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'templates' | 'strategy';

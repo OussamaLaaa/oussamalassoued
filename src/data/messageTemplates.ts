@@ -1,3 +1,5 @@
+import type { MessageTemplate } from '../types/opportunities';
+
 export type TemplateAudience =
   | 'founder'
   | 'recruiter'
@@ -15,16 +17,6 @@ export type TemplateGoal =
   | 'follow_up_2';
 
 export type TemplateLanguage = 'english' | 'french' | 'arabic';
-
-export interface MessageTemplate {
-  id: string;
-  name: string;
-  audience: TemplateAudience;
-  goal: TemplateGoal;
-  language: TemplateLanguage;
-  subject?: string;
-  body: string;
-}
 
 export const messageTemplates: MessageTemplate[] = [
   {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -14,6 +14,7 @@ import AddDealForm from './AddDealForm';
 import CsvImportModal from './CsvImportModal';
 import ImportPeopleModal from './ImportPeopleModal';
 import OutreachTemplateModal from './OutreachTemplateModal';
+import TemplatesPanel from './TemplatesPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -21,6 +22,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'people', label: 'People' },
   { id: 'messages', label: 'Messages' },
   { id: 'deals', label: 'Deals' },
+  { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
 ];
 
@@ -121,6 +123,7 @@ const OpportunitiesLayout: React.FC<{
     addPerson: (input: any) => void;
     addMessage: (input: any) => void;
     addDeal: (input: any) => void;
+    addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
     updatePerson: (id: string, input: PersonInput) => void;
@@ -129,6 +132,9 @@ const OpportunitiesLayout: React.FC<{
     deleteMessage: (id: string) => void;
     updateDeal: (id: string, input: DealInput) => void;
     deleteDeal: (id: string) => void;
+    updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
+    deleteTemplate: (id: string) => Promise<any>;
+    seedDefaultTemplates?: () => Promise<any>;
     resetToSeedData: () => void;
     importCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => Promise<any>;
     importPeople?: (rows: PersonInput[]) => Promise<any>;
@@ -163,12 +169,12 @@ const OpportunitiesLayout: React.FC<{
   };
 
   const {
-    companies, people, messages, deals, strategyNotes,
-    addCompany, addPerson, addMessage, addDeal,
+    companies, people, messages, deals, templates, strategyNotes,
+    addCompany, addPerson, addMessage, addDeal, addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
     updateMessage, deleteMessage,
-    updateDeal, deleteDeal,
+    updateDeal, deleteDeal, updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
     importPeople,
@@ -224,7 +230,17 @@ const OpportunitiesLayout: React.FC<{
 
             <div className="rounded-lg border border-[#e5e7eb] bg-white p-2 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
               {TABS.map((t) => {
-                const count = t.id === 'companies' ? companies.length : t.id === 'people' ? people.length : t.id === 'messages' ? messages.length : t.id === 'deals' ? deals.length : 0;
+                const count = t.id === 'companies'
+                  ? companies.length
+                  : t.id === 'people'
+                    ? people.length
+                    : t.id === 'messages'
+                      ? messages.length
+                      : t.id === 'deals'
+                        ? deals.length
+                        : t.id === 'templates'
+                          ? templates.length
+                          : 0;
                 const active = tab === t.id;
                 return (
                   <button
@@ -372,6 +388,16 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteDeal}
                 filters={dealFilters}
                 onFilterChange={setDealFilters}
+              />
+            )}
+
+            {tab === 'templates' && (
+              <TemplatesPanel
+                templates={templates}
+                onAddTemplate={addTemplate}
+                onUpdateTemplate={updateTemplate}
+                onDeleteTemplate={deleteTemplate}
+                onSeedDefaults={seedDefaultTemplates}
               />
             )}
 
@@ -572,6 +598,7 @@ const OpportunitiesLayout: React.FC<{
           isOpen
           person={templatePerson}
           company={companies.find((company) => company.id === templatePerson.companyId) || null}
+          templates={templates}
           onClose={() => setTemplatePerson(null)}
           onLogMessage={async (messageInput) => {
             await addMessage(messageInput);

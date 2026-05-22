@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import type { Company, MessageInput, Person, PersonInput } from '../../types/opportunities';
-import { audienceOptions, goalOptions, languageOptions, messageTemplates, type MessageTemplate, type TemplateAudience, type TemplateGoal, type TemplateLanguage } from '../../data/messageTemplates';
+import type { Company, MessageInput, MessageTemplate, Person, PersonInput } from '../../types/opportunities';
+import { audienceOptions, goalOptions, languageOptions, type TemplateAudience, type TemplateGoal, type TemplateLanguage } from '../../data/messageTemplates';
 import { renderMessageTemplate } from '../../utils/renderMessageTemplate';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
@@ -13,7 +13,8 @@ const followUpDate = (days: number) => {
   return date.toISOString().slice(0, 10);
 };
 
-const filterTemplates = (audience: string, goal: string, language: string) => messageTemplates.filter((template) => {
+const filterTemplates = (templates: MessageTemplate[], audience: string, goal: string, language: string) => templates.filter((template) => {
+  if (template.isActive === false) return false;
   if (audience && template.audience !== audience) return false;
   if (goal && template.goal !== goal) return false;
   if (language && template.language !== language) return false;
@@ -25,23 +26,31 @@ const OutreachTemplateModal: React.FC<{
   onClose: () => void;
   person: Person;
   company: Company | null;
+  templates: MessageTemplate[];
   onLogMessage: (input: MessageInput) => Promise<unknown>;
   onUpdatePerson?: (id: string, input: PersonInput) => Promise<unknown>;
-}> = ({ isOpen, onClose, person, company, onLogMessage, onUpdatePerson }) => {
+}> = ({ isOpen, onClose, person, company, templates, onLogMessage, onUpdatePerson }) => {
   const [audience, setAudience] = useState<TemplateAudience | ''>('founder');
   const [goal, setGoal] = useState<TemplateGoal | ''>('ux_audit_offer');
   const [language, setLanguage] = useState<TemplateLanguage | ''>('english');
-  const [selectedTemplateId, setSelectedTemplateId] = useState(messageTemplates[0]?.id || '');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [observation, setObservation] = useState('');
   const [isCopying, setIsCopying] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
   const [status, setStatus] = useState('');
 
-  const filteredTemplates = useMemo(() => filterTemplates(audience, goal, language), [audience, goal, language]);
+  const runtimeTemplates = templates;
+
+  const filteredTemplates = useMemo(
+    () => filterTemplates(runtimeTemplates, audience, goal, language),
+    [runtimeTemplates, audience, goal, language]
+  );
 
   const selectedTemplate = useMemo<MessageTemplate | undefined>(() => {
-    return filteredTemplates.find((template) => template.id === selectedTemplateId) || filteredTemplates[0] || messageTemplates.find((template) => template.id === selectedTemplateId);
-  }, [filteredTemplates, selectedTemplateId]);
+    return filteredTemplates.find((template) => template.id === selectedTemplateId)
+      || filteredTemplates[0]
+      || runtimeTemplates.find((template) => template.id === selectedTemplateId);
+  }, [filteredTemplates, selectedTemplateId, runtimeTemplates]);
 
   const variables = {
     personName: person.fullName,
