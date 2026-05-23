@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -11,6 +11,7 @@ import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
 import PlansPanel from './PlansPanel';
 import FinancePanel from './FinancePanel';
+import DocumentsPanel from './DocumentsPanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -38,6 +39,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'strategy', label: 'Strategy' },
   { id: 'plans', label: 'Plans' },
   { id: 'finance', label: 'Finance' },
+  { id: 'documents', label: 'Documents' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -192,6 +194,7 @@ const OpportunitiesLayout: React.FC<{
     addStrategyTactic: (input: StrategyTacticInput) => Promise<any>;
     addStrategyExperiment: (input: StrategyExperimentInput) => Promise<any>;
     addStrategyDecision: (input: StrategyDecisionInput) => Promise<any>;
+    addDocument: (input: DocumentInput) => Promise<DocumentItem>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -215,6 +218,8 @@ const OpportunitiesLayout: React.FC<{
     deleteStrategyExperiment: (id: string) => Promise<any>;
     updateStrategyDecision: (id: string, input: Partial<StrategyDecisionInput>) => Promise<any>;
     deleteStrategyDecision: (id: string) => Promise<any>;
+    updateDocument: (id: string, input: Partial<DocumentInput>) => Promise<DocumentItem>;
+    deleteDocument: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
     seedDefaultTemplates?: () => Promise<any>;
@@ -256,9 +261,11 @@ const OpportunitiesLayout: React.FC<{
   const {
     companies, people, messages, deals, projects, templates, strategyItems,
     strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
+    documents,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
     addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
+    addDocument,
     addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
@@ -270,6 +277,7 @@ const OpportunitiesLayout: React.FC<{
     updateStrategyTactic, deleteStrategyTactic,
     updateStrategyExperiment, deleteStrategyExperiment,
     updateStrategyDecision, deleteStrategyDecision,
+    updateDocument, deleteDocument,
     updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
@@ -386,6 +394,8 @@ const OpportunitiesLayout: React.FC<{
                     ? getQueueTabCount(people, messages)
                   : t.id === 'templates'
                     ? templates.length
+                  : t.id === 'documents'
+                    ? documents.length
                     : 0;
                 const active = tab === t.id;
                 return (
@@ -762,6 +772,19 @@ const OpportunitiesLayout: React.FC<{
                 onAddFinanceRecurringRule={addFinanceRecurringRule}
                 onUpdateFinanceRecurringRule={updateFinanceRecurringRule}
                 onDeleteFinanceRecurringRule={deleteFinanceRecurringRule}
+              />
+            )}
+
+            {tab === 'documents' && (
+              <DocumentsPanel
+                documents={documents}
+                projects={projects}
+                companies={companies}
+                people={people}
+                deals={deals}
+                onAddDocument={addDocument}
+                onUpdateDocument={updateDocument}
+                onDeleteDocument={deleteDocument}
               />
             )}
           </div>

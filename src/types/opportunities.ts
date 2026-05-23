@@ -284,6 +284,50 @@ export interface ProjectFinanceItemInput {
   notes?: string;
 }
 
+export type DocumentType = 'document' | 'invoice' | 'contract' | 'agreement' | 'receipt' | 'proposal' | 'legal' | 'admin' | 'other';
+export type DocumentStatus = 'draft' | 'sent' | 'signed' | 'paid' | 'unpaid' | 'overdue' | 'archived' | 'cancelled';
+
+export interface DocumentItem {
+  id: string;
+  name: string;
+  type: DocumentType;
+  status: DocumentStatus;
+  relatedProjectId?: string;
+  relatedProjectName?: string;
+  relatedCompanyId?: string;
+  relatedCompanyName?: string;
+  relatedPersonId?: string;
+  relatedPersonName?: string;
+  relatedDealId?: string;
+  relatedDealName?: string;
+  amount?: number;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  paidDate?: string;
+  url?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DocumentInput {
+  name: string;
+  type: DocumentType;
+  status: DocumentStatus;
+  relatedProjectId?: string;
+  relatedCompanyId?: string;
+  relatedPersonId?: string;
+  relatedDealId?: string;
+  amount?: number;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  paidDate?: string;
+  url?: string;
+  notes?: string;
+}
+
 export interface ProjectInput {
   name: string;
   type?: Project['type'];
@@ -323,6 +367,7 @@ export interface OpportunitiesData {
   projectMeetings: ProjectMeeting[];
   projectDocuments: ProjectDocument[];
   projectFinanceItems: ProjectFinanceItem[];
+  documents: DocumentItem[];
   templates: MessageTemplate[];
   strategyItems: StrategyItem[];
   strategyGoals: StrategyGoal[];
@@ -831,6 +876,6 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';

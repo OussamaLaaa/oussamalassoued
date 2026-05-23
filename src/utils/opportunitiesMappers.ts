@@ -21,6 +21,8 @@ import type {
   ProjectDocumentInput,
   ProjectFinanceItem,
   ProjectFinanceItemInput,
+  DocumentItem,
+  DocumentInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -443,3 +445,47 @@ export const projectFinanceItemToDb = (input: ProjectFinanceItemInput) => ({
   paid_date: toNullableDate(input.paidDate),
   notes: toNullableString(input.notes),
 });
+
+// ── Document mappers ──
+
+export const documentFromDb = (row: any): DocumentItem => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  type: row?.type ?? 'document',
+  status: row?.status ?? 'draft',
+  relatedProjectId: row?.related_project_id ?? row?.relatedProjectId ?? undefined,
+  relatedCompanyId: row?.related_company_id ?? row?.relatedCompanyId ?? undefined,
+  relatedPersonId: row?.related_person_id ?? row?.relatedPersonId ?? undefined,
+  relatedDealId: row?.related_deal_id ?? row?.relatedDealId ?? undefined,
+  amount: safeNumber(row?.amount),
+  currency: row?.currency ?? undefined,
+  issueDate: toIso(row?.issue_date ?? row?.issueDate),
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  paidDate: toIso(row?.paid_date ?? row?.paidDate),
+  url: row?.url ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const documentToDb = (input: Partial<DocumentInput>, options: { forUpdate?: boolean } = {}) => {
+  const payload: Record<string, unknown> = {};
+  const forUpdate = options.forUpdate ?? false;
+
+  if (!forUpdate || input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (!forUpdate || input.type !== undefined) payload.type = input.type || 'document';
+  if (!forUpdate || input.status !== undefined) payload.status = input.status || 'draft';
+  if (!forUpdate || input.relatedProjectId !== undefined) payload.related_project_id = toNullableString(input.relatedProjectId);
+  if (!forUpdate || input.relatedCompanyId !== undefined) payload.related_company_id = toNullableString(input.relatedCompanyId);
+  if (!forUpdate || input.relatedPersonId !== undefined) payload.related_person_id = toNullableString(input.relatedPersonId);
+  if (!forUpdate || input.relatedDealId !== undefined) payload.related_deal_id = toNullableString(input.relatedDealId);
+  if (!forUpdate || input.amount !== undefined) payload.amount = toNullableNumber(input.amount);
+  if (!forUpdate || input.currency !== undefined) payload.currency = toNullableString(input.currency);
+  if (!forUpdate || input.issueDate !== undefined) payload.issue_date = toNullableDate(input.issueDate);
+  if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
+  if (!forUpdate || input.paidDate !== undefined) payload.paid_date = toNullableDate(input.paidDate);
+  if (!forUpdate || input.url !== undefined) payload.url = toNullableString(input.url);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};

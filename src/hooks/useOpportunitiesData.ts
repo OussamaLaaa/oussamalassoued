@@ -14,6 +14,7 @@ import {
   projectMeetingFromDb as mapProjectMeetingRow, projectMeetingToDb as toProjectMeetingDb,
   projectDocumentFromDb as mapProjectDocumentRow, projectDocumentToDb as toProjectDocumentDb,
   projectFinanceItemFromDb as mapProjectFinanceItemRow, projectFinanceItemToDb as toProjectFinanceItemDb,
+  documentFromDb as mapDocumentRow, documentToDb as toDocumentDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -33,6 +34,8 @@ import type {
   ProjectDocumentInput,
   ProjectFinanceItem,
   ProjectFinanceItemInput,
+  DocumentItem,
+  DocumentInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -79,6 +82,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   projectMeetings: [],
   projectDocuments: [],
   projectFinanceItems: [],
+  documents: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -121,6 +125,7 @@ type OpportunitiesApiResponse = {
   project_documents?: any[];
   project_finance_items?: any[];
   message_templates?: any[];
+  documents?: any[];
   strategy_items?: any[];
   strategy_goals?: any[];
   strategy_plans?: any[];
@@ -170,6 +175,27 @@ const getDerivedCollections = (companies: Company[], people: Person[], messages:
       personName: deal.personName || personById.get(deal.personId || '')?.fullName,
     })),
   };
+};
+
+const attachDocumentLinkNames = (
+  items: DocumentItem[],
+  projects: Project[],
+  companies: Company[],
+  people: Person[],
+  deals: Deal[],
+) => {
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  const personById = new Map(people.map((person) => [person.id, person.fullName] as const));
+  const dealById = new Map(deals.map((deal) => [deal.id, deal.servicePackage || deal.id] as const));
+
+  return items.map((item) => ({
+    ...item,
+    relatedProjectName: item.relatedProjectName || projectById.get(item.relatedProjectId || ''),
+    relatedCompanyName: item.relatedCompanyName || companyById.get(item.relatedCompanyId || ''),
+    relatedPersonName: item.relatedPersonName || personById.get(item.relatedPersonId || ''),
+    relatedDealName: item.relatedDealName || dealById.get(item.relatedDealId || ''),
+  }));
 };
 
 const strategyItemFromDb = (row: any): StrategyItem => ({
@@ -968,6 +994,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [projectMeetings, setProjectMeetings] = useState<ProjectMeeting[]>([]);
   const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>([]);
   const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyItems, setStrategyItems] = useState<StrategyItem[]>([]);
   const [strategyGoals, setStrategyGoals] = useState<StrategyGoal[]>([]);
@@ -1001,6 +1028,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectMeetingsRaw = Array.isArray(payload?.project_meetings) ? payload.project_meetings : [];
     const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
     const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
+    const nextDocumentsRaw = Array.isArray(payload?.documents) ? payload.documents : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
     const nextPlansRaw = Array.isArray(payload?.plans) ? payload.plans : [];
     const nextPlanItemsRaw = Array.isArray(payload?.plan_items) ? payload.plan_items : [];
@@ -1056,6 +1084,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectMeetings = nextProjectMeetingsRaw.map((row: any) => mapProjectMeetingRow(row));
     const nextProjectDocuments = nextProjectDocumentsRaw.map((row: any) => mapProjectDocumentRow(row));
     const nextProjectFinanceItems = nextProjectFinanceItemsRaw.map((row: any) => mapProjectFinanceItemRow(row));
+    const nextDocuments = attachDocumentLinkNames(nextDocumentsRaw.map((row: any) => mapDocumentRow(row)), nextProjects, nextCompanies, nextPeople, nextDeals);
 
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
@@ -1103,6 +1132,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setProjectMeetings(nextProjectMeetings);
     setProjectDocuments(nextProjectDocuments);
     setProjectFinanceItems(nextProjectFinanceItems);
+    setDocuments(nextDocuments);
     setTemplates(nextTemplates);
     setStrategyGoals(nextStrategyGoals);
     setStrategyPlans(nextStrategyPlans);
@@ -1368,7 +1398,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1590,6 +1620,37 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('project_finance_items', id);
     setProjectFinanceItems((current) => current.filter((f) => f.id !== id));
+  };
+
+  // ── Documents CRUD ──
+
+  const addDocument = async (input: DocumentInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Document name is required.');
+    }
+
+    const row = await syncInsert('documents', toDocumentDb(input));
+    const next = attachDocumentLinkNames([mapDocumentRow(row)], projects, companies, people, deals)[0];
+    setDocuments((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateDocument = async (id: string, input: Partial<DocumentInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Document name is required.');
+    }
+
+    const row = await syncUpdate('documents', id, toDocumentDb(input, { forUpdate: true }));
+    const next = attachDocumentLinkNames([mapDocumentRow(row)], projects, companies, people, deals)[0];
+    setDocuments((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteDocument = async (id: string) => {
+    const confirmed = window.confirm('Delete this document?');
+    if (!confirmed) return;
+    await syncDelete('documents', id);
+    setDocuments((current) => current.filter((item) => item.id !== id));
   };
 
   const addStrategyItem = async (input: StrategyItemInput) => {
@@ -2243,6 +2304,13 @@ export const useOpportunitiesData = (enabled = true) => {
   }, [projects, companies]);
 
   useEffect(() => {
+    setDocuments((current) => {
+      const next = attachDocumentLinkNames(current, projects, companies, people, deals);
+      return shouldReplaceCollection(current, next, ['relatedProjectName', 'relatedCompanyName', 'relatedPersonName', 'relatedDealName']) ? next : current;
+    });
+  }, [projects, companies, people, deals]);
+
+  useEffect(() => {
     setPlans((current) => {
       const next = attachOsPlanLinkNames(current, projects, strategyGoals);
       return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedStrategyGoalTitle']) ? next : current;
@@ -2277,6 +2345,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
     setFinanceRecurringRules(fallback.financeRecurringRules);
     setStrategyItems(fallback.strategyItems);
+    setDocuments(fallback.documents);
   };
 
   return {
@@ -2290,6 +2359,7 @@ export const useOpportunitiesData = (enabled = true) => {
     projectMeetings,
     projectDocuments,
     projectFinanceItems,
+    documents,
     templates,
     strategyItems,
     strategyGoals,
@@ -2389,6 +2459,9 @@ export const useOpportunitiesData = (enabled = true) => {
     deleteProjectDocument,
     addProjectFinanceItem,
     deleteProjectFinanceItem,
+    addDocument,
+    updateDocument,
+    deleteDocument,
     updateTemplate,
     deleteTemplate,
     seedDefaultTemplates,

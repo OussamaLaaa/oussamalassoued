@@ -13,6 +13,7 @@ const allowedEntities = new Set([
   'project_meetings',
   'project_documents',
   'project_finance_items',
+  'documents',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -43,6 +44,7 @@ const tablesAttempted = [
   'project_meetings',
   'project_documents',
   'project_finance_items',
+  'documents',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -265,6 +267,27 @@ const normalizePlanRow = (row) => ({
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
 });
 
+const normalizeDocumentRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'document';
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'draft';
+  if (!forUpdate || row?.relatedProjectId !== undefined || row?.related_project_id !== undefined) payload.related_project_id = toNullableString(row?.related_project_id ?? row?.relatedProjectId);
+  if (!forUpdate || row?.relatedCompanyId !== undefined || row?.related_company_id !== undefined) payload.related_company_id = toNullableString(row?.related_company_id ?? row?.relatedCompanyId);
+  if (!forUpdate || row?.relatedPersonId !== undefined || row?.related_person_id !== undefined) payload.related_person_id = toNullableString(row?.related_person_id ?? row?.relatedPersonId);
+  if (!forUpdate || row?.relatedDealId !== undefined || row?.related_deal_id !== undefined) payload.related_deal_id = toNullableString(row?.related_deal_id ?? row?.relatedDealId);
+  if (!forUpdate || row?.amount !== undefined) payload.amount = toNullableNumber(row?.amount);
+  if (!forUpdate || row?.currency !== undefined) payload.currency = toNullableString(row?.currency);
+  if (!forUpdate || row?.issueDate !== undefined || row?.issue_date !== undefined) payload.issue_date = toNullableString(row?.issue_date ?? row?.issueDate);
+  if (!forUpdate || row?.dueDate !== undefined || row?.due_date !== undefined) payload.due_date = toNullableString(row?.due_date ?? row?.dueDate);
+  if (!forUpdate || row?.paidDate !== undefined || row?.paid_date !== undefined) payload.paid_date = toNullableString(row?.paid_date ?? row?.paidDate);
+  if (!forUpdate || row?.url !== undefined) payload.url = toNullableString(row?.url);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+
+  return payload;
+};
+
 const normalizePlanItemRow = (row) => ({
   plan_id: toRequiredString(row?.plan_id ?? row?.planId),
   title: toRequiredString(row?.title),
@@ -448,6 +471,7 @@ const normalizeStrategyEntityRow = (entity, row) => {
 
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
+  if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -561,6 +585,7 @@ export default async function handler(req, res) {
         project_meetings: results.project_meetings || [],
         project_documents: results.project_documents || [],
         project_finance_items: results.project_finance_items || [],
+        documents: results.documents || [],
         strategy_items: results.strategy_items || [],
         strategy_goals: results.strategy_goals || [],
         strategy_plans: results.strategy_plans || [],
@@ -685,6 +710,8 @@ export default async function handler(req, res) {
     try {
       const payload = entity === 'message_templates'
         ? normalizeTemplateRow(data, { forUpdate: true })
+        : entity === 'documents'
+          ? normalizeDocumentRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       const { data: updatedRow, error } = await supabase
