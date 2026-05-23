@@ -65,22 +65,39 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   };
 
   const buildPdf = async () => {
+    console.log('[PDF] Step 2: buildPdf called');
+    console.log('[PDF] Step 2a: pageRef.current exists:', !!pageRef?.current);
+    console.log('[PDF] Step 2b: previewDocument exists:', !!previewDocument);
+
     if (!pageRef.current || !previewDocument) {
+      console.error('[PDF] ERROR capture ref or document missing:', { hasRef: !!pageRef?.current, hasDoc: !!previewDocument });
       throw new Error('Printable document is not ready.');
     }
+
+    console.log('[PDF] Step 2c: capture element className:', pageRef.current.className);
+    console.log('[PDF] Step 3: Running html2canvas...');
 
     const canvas = await html2canvas(pageRef.current, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false,
+      logging: true,
       scrollX: 0,
-      scrollY: -window.scrollY,
+      scrollY: 0,
       windowWidth: pageRef.current.scrollWidth,
       windowHeight: pageRef.current.scrollHeight,
     });
 
+    if (!canvas) {
+      throw new Error('html2canvas returned null canvas');
+    }
+
+    console.log('[PDF] Step 4: Canvas generated, size:', canvas.width, 'x', canvas.height);
+    console.log('[PDF] Step 5: Creating jsPDF...');
+
     const pdf = new jsPDF('p', 'mm', 'a4');
+    console.log('[PDF] Step 5a: jsPDF created');
+
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const imageWidth = pageWidth;
@@ -99,22 +116,37 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
       remainingHeight -= pageHeight;
     }
 
+    console.log('[PDF] Step 6: PDF created, pages:', Math.ceil(imageHeight / pageHeight));
     return pdf.output('blob');
   };
 
   const generateAndStorePdf = async () => {
-    if (!previewDocument) return;
+    console.log('[PDF] Step 1: generateAndStorePdf STARTED');
+    console.log('[PDF] Step 1a: previewDocument?.id:', previewDocument?.id);
+    console.log('[PDF] Step 1b: previewDocument?.type:', previewDocument?.type);
+    console.log('[PDF] Step 1c: pageRef?.current?.tagName:', pageRef?.current?.tagName);
+
+    if (!previewDocument) {
+      console.error('[PDF] ERROR: previewDocument is null, cannot generate');
+      return;
+    }
 
     setStatusState('generating');
     setStatusMessage('Generating PDF...');
 
     try {
+      console.log('[PDF] Calling buildPdf...');
       const pdfBlob = await buildPdf();
+      console.log('[PDF] buildPdf returned blob, size:', pdfBlob?.size);
+
+      console.log('[PDF] Step 7: Converting blob to base64...');
       const pdfBase64 = await blobToBase64(pdfBlob);
+      console.log('[PDF] Step 8: Base64 ready, length:', pdfBase64?.length);
 
       setStatusState('uploading');
       setStatusMessage('Uploading PDF...');
 
+      console.log('[PDF] Step 9: Sending POST to /api/document-pdf-upload');
       const response = await fetch('/api/document-pdf-upload', {
         method: 'POST',
         credentials: 'include',
@@ -130,7 +162,9 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
         }),
       });
 
+      console.log('[PDF] Step 10: Response received, status:', response.status);
       const result = await response.json().catch(() => ({}));
+      console.log('[PDF] Step 10a: Response body:', result);
 
       if (!response.ok || !result?.success) {
         throw new Error(result?.error || 'Could not store PDF.');
@@ -143,9 +177,10 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
         await onStoredPdf(String(result.storagePath));
       }
     } catch (error) {
-      console.error('[Document PDF] Generate/store failed', error);
+      console.error('[PDF] FULL ERROR:', error);
+      console.error('[PDF] ERROR message:', error instanceof Error ? error.message : String(error));
       setStatusState('error');
-      setStatusMessage('Could not generate/store PDF. You can still use Print / Save as PDF.');
+      setStatusMessage('PDF generation failed. Check console for details.');
     }
   };
 
