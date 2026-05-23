@@ -26,6 +26,7 @@ type Props = {
   onUpdate: (id: string, input: Partial<StrategyGoalInput>) => Promise<StrategyGoal>;
   onDelete: (id: string) => Promise<void>;
   onEdit: (goal: StrategyGoal) => void;
+  onSelect: (goal: StrategyGoal) => void;
   onOpenNew: () => void;
   filterCategory: string;
   setFilterCategory: (v: string) => void;
@@ -38,7 +39,7 @@ type Props = {
 };
 
 const GoalsPanel: React.FC<Props> = ({
-  goals, goalForm, setGoalForm, onAdd, onUpdate, onDelete, onEdit, onOpenNew,
+  goals, goalForm, setGoalForm, onAdd, onUpdate, onDelete, onEdit, onSelect, onOpenNew,
   filterCategory, setFilterCategory, filterStatus, setFilterStatus, filterPriority, setFilterPriority,
   progressDraft, setProgressDraft,
 }) => {
@@ -98,6 +99,7 @@ const GoalsPanel: React.FC<Props> = ({
                     {goal.description ? <p className="mt-0.5 text-sm text-[#64748b]">{goal.description}</p> : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
+                    <button type="button" onClick={() => onSelect(goal)} className="rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-[#1d4ed8]">Open</button>
                     <button type="button" onClick={() => onEdit(goal)} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs font-medium text-[#475569] transition-all hover:border-[#2563eb] hover:text-[#2563eb]">Edit</button>
                     <button type="button" onClick={() => onDelete(goal.id)} className="rounded-lg border border-[#fecaca] bg-white px-3 py-1.5 text-xs font-medium text-[#991b1b] transition-all hover:bg-[#fef2f2]">Delete</button>
                   </div>

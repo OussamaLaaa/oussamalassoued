@@ -16,6 +16,7 @@ import TacticsPanel from './StrategyTacticsPanel';
 import ExperimentsPanel from './StrategyExperimentsPanel';
 import DecisionsPanel from './StrategyDecisionsPanel';
 import InsightSidebar from './StrategyInsightSidebar';
+import GoalDetailView from './StrategyGoalDetailView';
 import ItemModal, { type ModalState } from './StrategyItemModal';
 
 type StrategyPanelProps = {
@@ -89,6 +90,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   const [goalProgressDraft, setGoalProgressDraft] = useState<Record<string, number>>({});
   const [planProgressDraft, setPlanProgressDraft] = useState<Record<string, number>>({});
   const [planStatusDraft, setPlanStatusDraft] = useState<Record<string, StrategyStatus>>({});
+
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const selectedGoal = selectedGoalId ? strategyGoals.find(g => g.id === selectedGoalId) ?? null : null;
 
   const [goalForm, setGoalForm] = useState<StrategyGoalInput>(emptyGoalForm());
   const [planForm, setPlanForm] = useState<StrategyPlanInput>(emptyPlanForm());
@@ -216,7 +220,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     if (!goalForm.title?.trim()) { setFormError('Goal title is required.'); return; }
     setIsBusy(true); setFormError(null);
     try {
-      const payload: StrategyGoalInput = { ...goalForm, title: goalForm.title.trim(), targetDate: goalForm.targetDate || undefined, linkedProjectId: goalForm.linkedProjectId || undefined, linkedCompanyId: goalForm.linkedCompanyId || undefined };
+      const payload: StrategyGoalInput = { ...goalForm, title: goalForm.title.trim() };
       if (modalState?.type === 'goal' && modalState.item) await onUpdateStrategyGoal(modalState.item.id, payload);
       else await onAddStrategyGoal(payload);
       closeModal();
@@ -229,7 +233,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     if (!planForm.name?.trim()) { setFormError('Plan name is required.'); return; }
     setIsBusy(true); setFormError(null);
     try {
-      const payload: StrategyPlanInput = { ...planForm, name: planForm.name.trim(), linkedGoalId: planForm.linkedGoalId || undefined, linkedProjectId: planForm.linkedProjectId || undefined, targetDate: planForm.targetDate || undefined };
+      const payload: StrategyPlanInput = { ...planForm, name: planForm.name.trim() };
       if (modalState?.type === 'plan' && modalState.item) await onUpdateStrategyPlan(modalState.item.id, payload);
       else await onAddStrategyPlan(payload);
       closeModal();
@@ -242,7 +246,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     if (!tacticForm.title?.trim()) { setFormError('Tactic title is required.'); return; }
     setIsBusy(true); setFormError(null);
     try {
-      const payload: StrategyTacticInput = { ...tacticForm, title: tacticForm.title.trim(), linkedGoalId: tacticForm.linkedGoalId || undefined, linkedPlanId: tacticForm.linkedPlanId || undefined, linkedProjectId: tacticForm.linkedProjectId || undefined };
+      const payload: StrategyTacticInput = { ...tacticForm, title: tacticForm.title.trim() };
       if (modalState?.type === 'tactic' && modalState.item) await onUpdateStrategyTactic(modalState.item.id, payload);
       else await onAddStrategyTactic(payload);
       closeModal();
@@ -255,7 +259,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     if (!experimentForm.title?.trim()) { setFormError('Experiment title is required.'); return; }
     setIsBusy(true); setFormError(null);
     try {
-      const payload: StrategyExperimentInput = { ...experimentForm, title: experimentForm.title.trim(), startDate: experimentForm.startDate || undefined, endDate: experimentForm.endDate || undefined, linkedGoalId: experimentForm.linkedGoalId || undefined, linkedPlanId: experimentForm.linkedPlanId || undefined, linkedProjectId: experimentForm.linkedProjectId || undefined };
+      const payload: StrategyExperimentInput = { ...experimentForm, title: experimentForm.title.trim() };
       if (modalState?.type === 'experiment' && modalState.item) await onUpdateStrategyExperiment(modalState.item.id, payload);
       else await onAddStrategyExperiment(payload);
       closeModal();
@@ -268,7 +272,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     if (!decisionForm.title?.trim()) { setFormError('Decision title is required.'); return; }
     setIsBusy(true); setFormError(null);
     try {
-      const payload: StrategyDecisionInput = { ...decisionForm, title: decisionForm.title.trim(), reviewDate: decisionForm.reviewDate || undefined, linkedGoalId: decisionForm.linkedGoalId || undefined, linkedPlanId: decisionForm.linkedPlanId || undefined, linkedProjectId: decisionForm.linkedProjectId || undefined };
+      const payload: StrategyDecisionInput = { ...decisionForm, title: decisionForm.title.trim() };
       if (modalState?.type === 'decision' && modalState.item) await onUpdateStrategyDecision(modalState.item.id, payload);
       else await onAddStrategyDecision(payload);
       closeModal();
@@ -288,6 +292,15 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
       closeModal();
     } catch (error) { setFormError((error as Error)?.message || 'Unable to delete.'); }
     finally { setIsBusy(false); }
+  };
+
+  const openQuickAction = (type: 'plan' | 'tactic' | 'experiment' | 'decision') => {
+    setFormError(null);
+    const goalId = selectedGoalId || '';
+    if (type === 'plan') { setPlanForm({ ...emptyPlanForm(), linkedGoalId: goalId }); setModalState({ type: 'plan' }); }
+    else if (type === 'tactic') { setTacticForm({ ...emptyTacticForm(), linkedGoalId: goalId }); setModalState({ type: 'tactic' }); }
+    else if (type === 'experiment') { setExperimentForm({ ...emptyExperimentForm(), linkedGoalId: goalId }); setModalState({ type: 'experiment' }); }
+    else if (type === 'decision') { setDecisionForm({ ...emptyDecisionForm(), linkedGoalId: goalId }); setModalState({ type: 'decision' }); }
   };
 
   const handleCreateStarterSystem = async () => {
@@ -364,6 +377,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
             onUpdate={onUpdateStrategyGoal}
             onDelete={onDeleteStrategyGoal}
             onEdit={(goal) => openModal({ type: 'goal', item: goal })}
+            onSelect={(goal) => setSelectedGoalId(goal.id)}
             onOpenNew={() => openModal({ type: 'goal' })}
             filterCategory={goalFilterCategory}
             setFilterCategory={setGoalFilterCategory}
@@ -541,51 +555,82 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {starterVisible ? (
-        <div className="rounded-xl border-2 border-dashed border-[#2563eb]/30 bg-gradient-to-br from-[#eff6ff] to-white p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="text-base font-semibold text-[#0f172a]">Create Starter Strategy System</h3>
-              <p className="mt-1 text-sm text-[#475569]">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
+      {selectedGoal ? (
+        <GoalDetailView
+          goal={selectedGoal}
+          allGoals={strategyGoals}
+          strategyPlans={strategyPlans}
+          strategyTactics={strategyTactics}
+          strategyExperiments={strategyExperiments}
+          strategyDecisions={strategyDecisions}
+          projects={projects}
+          companies={companies}
+          onUpdateGoal={onUpdateStrategyGoal}
+          onAddPlan={onAddStrategyPlan}
+          onUpdatePlan={onUpdateStrategyPlan}
+          onDeletePlan={onDeleteStrategyPlan}
+          onAddTactic={onAddStrategyTactic}
+          onUpdateTactic={onUpdateStrategyTactic}
+          onDeleteTactic={onDeleteStrategyTactic}
+          onAddExperiment={onAddStrategyExperiment}
+          onUpdateExperiment={onUpdateStrategyExperiment}
+          onDeleteExperiment={onDeleteStrategyExperiment}
+          onAddDecision={onAddStrategyDecision}
+          onUpdateDecision={onUpdateStrategyDecision}
+          onDeleteDecision={onDeleteStrategyDecision}
+          onEditGoal={() => openModal({ type: 'goal', item: selectedGoal })}
+          onQuickAction={openQuickAction}
+          onBack={() => setSelectedGoalId(null)}
+        />
+      ) : (
+        <>
+          {starterVisible ? (
+            <div className="rounded-xl border-2 border-dashed border-[#2563eb]/30 bg-gradient-to-br from-[#eff6ff] to-white p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-semibold text-[#0f172a]">Create Starter Strategy System</h3>
+                  <p className="mt-1 text-sm text-[#475569]">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCreateStarterSystem}
+                  disabled={isBusy}
+                  className="rounded-lg bg-[#2563eb] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#1d4ed8] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isBusy ? 'Creating...' : 'Create Starter Strategy'}
+                </button>
+              </div>
+              {formError ? <p className="mt-3 text-sm text-[#b91c1c]">{formError}</p> : null}
             </div>
-            <button
-              type="button"
-              onClick={handleCreateStarterSystem}
-              disabled={isBusy}
-              className="rounded-lg bg-[#2563eb] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#1d4ed8] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isBusy ? 'Creating...' : 'Create Starter Strategy'}
-            </button>
+          ) : null}
+
+          <div className="flex flex-wrap gap-1.5 border-b border-[#e2e8f0] pb-2">
+            {SECTIONS.map((section) => (
+              <button
+                key={section.value}
+                type="button"
+                onClick={() => setActiveSection(section.value)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  activeSection === section.value
+                    ? 'bg-[#2563eb] text-white shadow-sm'
+                    : 'bg-[#f8fafc] text-[#475569] hover:bg-[#e2e8f0]'
+                }`}
+              >
+                {section.label}
+              </button>
+            ))}
           </div>
-          {formError ? <p className="mt-3 text-sm text-[#b91c1c]">{formError}</p> : null}
-        </div>
-      ) : null}
 
-      <div className="flex flex-wrap gap-1.5 border-b border-[#e2e8f0] pb-2">
-        {SECTIONS.map((section) => (
-          <button
-            key={section.value}
-            type="button"
-            onClick={() => setActiveSection(section.value)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-              activeSection === section.value
-                ? 'bg-[#2563eb] text-white shadow-sm'
-                : 'bg-[#f8fafc] text-[#475569] hover:bg-[#e2e8f0]'
-            }`}
-          >
-            {section.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="xl:col-span-9 rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          {renderMainSection()}
-        </div>
-        <div className="xl:col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <InsightSidebar goals={strategyGoals} plans={strategyPlans} decisions={strategyDecisions} />
-        </div>
-      </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+            <div className="xl:col-span-9 rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+              {renderMainSection()}
+            </div>
+            <div className="xl:col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+              <InsightSidebar goals={strategyGoals} plans={strategyPlans} decisions={strategyDecisions} />
+            </div>
+          </div>
+        </>
+      )}
 
       <ItemModal
         modalState={modalState}
