@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type {
   Company, Deal, OutreachMessage, Person, Project, ProjectInput,
   ProjectTask, ProjectTaskInput,
@@ -527,8 +527,13 @@ const ProjectDetailView: React.FC<{
   const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);
   const [inlineSaving, setInlineSaving] = useState<Record<string, boolean>>({});
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [progressDraft, setProgressDraft] = useState<number>(clampProgress(project.progress));
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState('');
+
+  useEffect(() => {
+    setProgressDraft(clampProgress(project.progress));
+  }, [project.id, project.progress]);
 
   const safeCompanies = Array.isArray(companies) ? companies : [];
   const safePeople = Array.isArray(people) ? people : [];
@@ -616,11 +621,22 @@ const ProjectDetailView: React.FC<{
     setInlineSaving((prev) => ({ ...prev, [field]: true }));
     try {
       await onUpdateProject(project.id, { [field]: patchValue });
+      return true;
     } catch (e) {
       console.error(`Failed to update ${field}`, e);
       setInlineError('Saving failed. Please try again.');
+      return false;
     } finally {
       setInlineSaving((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleProgressChange = async (value: number) => {
+    const nextProgress = clampProgress(value);
+    setProgressDraft(nextProgress);
+    const ok = await handleInlineUpdate('progress', nextProgress);
+    if (!ok) {
+      setProgressDraft(clampProgress(project.progress));
     }
   };
 
@@ -728,21 +744,23 @@ const ProjectDetailView: React.FC<{
               <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Progress</span>
               <div className="flex items-center gap-1">
                 <input
-                  type="number"
+                  type="range"
                   min="0"
                   max="100"
-                  value={clampProgress(project.progress)}
-                  onChange={(e) => handleInlineUpdate('progress', Number(e.target.value))}
-                  className="w-16 text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
+                  value={progressDraft}
+                  onChange={(e) => {
+                    void handleProgressChange(Number(e.target.value));
+                  }}
+                  className="w-24 h-1.5 accent-[#2563eb] cursor-pointer"
                 />
-                <span className="text-xs font-medium text-[#0f172a] min-w-[90px]">Progress {clampProgress(project.progress)}%</span>
+                <span className="text-xs font-medium text-[#0f172a] min-w-[90px]">Progress {progressDraft}%</span>
               </div>
               {inlineSaving['progress'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
           </div>
 
           <div className="mt-2 max-w-md">
-            <ProgressBar value={clampProgress(project.progress)} />
+            <ProgressBar value={progressDraft} />
           </div>
 
           {inlineError ? <div className="mt-2 text-xs text-[#991b1b]">{inlineError}</div> : null}
@@ -1181,9 +1199,9 @@ const ProjectDetailView: React.FC<{
             <div className="flex justify-between"><span className="text-[#64748b]">Status</span><span className="font-medium text-[#0f172a] capitalize">{project.status || '—'}</span></div>
             <div className="flex justify-between"><span className="text-[#64748b]">Phase</span><span className="font-medium text-[#0f172a]">{phaseLabel(project.phase)}</span></div>
             <div className="flex justify-between items-center"><span className="text-[#64748b]">Priority</span><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[project.priority || ''] || 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]'}`}>{priorityLabel(project.priority)}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Progress</span><span className="font-medium text-[#0f172a]">{project.progress ?? 0}%</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Progress</span><span className="font-medium text-[#0f172a]">{progressDraft}%</span></div>
           </div>
-          <div className="mt-3"><ProgressBar value={project.progress ?? 0} /></div>
+          <div className="mt-3"><ProgressBar value={progressDraft} /></div>
         </div>
 
         <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">

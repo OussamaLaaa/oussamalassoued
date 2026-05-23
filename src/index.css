@@ -1161,23 +1161,19 @@ body.opportunities-page .scene-05-overlay {
   box-shadow: 0 6px 18px rgba(16,24,40,0.04);
 }
 
-/* Override text-white usages inside opportunities to dark text */
-
-/* Map dark helpers used in components to light-mode colors */
-.opportunities-shell.opportunities-light [class*="text-white"] {
-  color: var(--opp-primary) !important;
+/* Do not force card styling on interactive controls. */
+.opportunities-shell.opportunities-light button.rounded-lg,
+.opportunities-shell.opportunities-light a.rounded-lg,
+.opportunities-shell.opportunities-light input.rounded-lg,
+.opportunities-shell.opportunities-light select.rounded-lg,
+.opportunities-shell.opportunities-light textarea.rounded-lg {
+  background: unset !important;
+  color: unset !important;
+  border-color: unset !important;
+  box-shadow: unset !important;
 }
 
-/* Muted whites */
-.opportunities-shell.opportunities-light [class*="text-white/86"] {
-  color: var(--opp-primary) !important;
-}
-.opportunities-shell.opportunities-light [class*="text-white/72"],
-.opportunities-shell.opportunities-light [class*="text-white/66"],
-.opportunities-shell.opportunities-light [class*="text-white\/66"],
-.opportunities-shell.opportunities-light [class*="text-white/60"] {
-  color: var(--opp-secondary) !important;
-}
+/* Preserve semantic text colors inside opportunities controls. */
 
 /* Replace dark backgrounds used for active items */
 .opportunities-shell.opportunities-light [class*="bg-black"] {
@@ -1248,7 +1244,6 @@ body.opportunities-page .scene-05-overlay {
 .opportunities-shell.opportunities-light .bg-blue-600 { background-color: var(--opp-accent) !important; color: #ffffff !important; }
 .opportunities-shell.opportunities-light .bg-green-600 { background-color: #dcfce7 !important; color: var(--opp-success-text) !important; }
 .opportunities-shell.opportunities-light .bg-gray-500 { background-color: var(--opp-neutral-bg) !important; color: var(--opp-neutral-text) !important; }
-.opportunities-shell.opportunities-light .text-white { color: #ffffff !important; }
 
 /* Ensure badges with text-white use the semantic dark text on light backgrounds */
 .opportunities-shell.opportunities-light .bg-red-600.text-white { color: var(--opp-danger-text) !important; }
