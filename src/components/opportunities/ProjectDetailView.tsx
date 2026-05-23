@@ -23,18 +23,18 @@ const INTERNAL_TABS: { id: InternalTab; label: string }[] = [
 ];
 
 const stageColors: Record<string, string> = {
-  active: 'bg-[#dcfce7] text-[#166534]',
-  planned: 'bg-[#f0f9ff] text-[#1e40af]',
-  paused: 'bg-[#fefce8] text-[#854d0e]',
-  blocked: 'bg-[#fef2f2] text-[#991b1b]',
-  completed: 'bg-[#e0f2fe] text-[#075985]',
-  archived: 'bg-[#f1f5f9] text-[#475569]',
+  active: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  planned: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  paused: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
+  blocked: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  completed: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  archived: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
 };
 
 const priorityColors: Record<string, string> = {
-  high: 'bg-[#fef2f2] text-[#dc2626]',
-  medium: 'bg-[#fefce8] text-[#d97706]',
-  low: 'bg-[#f0fdf4] text-[#16a34a]',
+  high: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  medium: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
+  low: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
 };
 
 const typeColors: Record<string, string> = {
@@ -47,46 +47,52 @@ const typeColors: Record<string, string> = {
 };
 
 const phaseColors: Record<string, string> = {
-  idea: 'bg-[#f1f5f9] text-[#475569]',
-  research: 'bg-[#f0f9ff] text-[#1e40af]',
-  ux_audit: 'bg-[#dbeafe] text-[#1d4ed8]',
-  wireframes: 'bg-[#e0f2fe] text-[#075985]',
-  ui_design: 'bg-[#f0fdf4] text-[#166534]',
-  prototype: 'bg-[#fefce8] text-[#854d0e]',
-  case_study: 'bg-[#f3e8ff] text-[#7c3aed]',
-  published: 'bg-[#dcfce7] text-[#166534]',
-  archived: 'bg-[#f1f5f9] text-[#475569]',
+  idea: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+  research: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  ux_audit: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  wireframes: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  ui_design: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  prototype: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  case_study: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  published: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  archived: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
 };
 
 const taskStatusColors: Record<string, string> = {
-  todo: 'bg-[#f1f5f9] text-[#475569] border border-[#e2e8f0]',
+  todo: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
   doing: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  done: 'bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]',
-  blocked: 'bg-[#fef2f2] text-[#dc2626] border border-[#fecaca]',
+  done: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  blocked: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
 };
 
 const taskStatusBg: Record<string, string> = {
   todo: 'bg-[#f8fafc]',
   doing: 'bg-[#eff6ff]',
   done: 'bg-[#f0fdf4]',
-  blocked: 'bg-[#fef2f2]',
+  blocked: 'bg-[#fee2e2]',
 };
 
 const financeTypeColors: Record<string, string> = {
-  income: 'bg-[#dcfce7] text-[#166534]',
-  expense: 'bg-[#fef2f2] text-[#dc2626]',
-  invoice: 'bg-[#dbeafe] text-[#1d4ed8]',
-  payment: 'bg-[#f0f9ff] text-[#1e40af]',
-  investment: 'bg-[#f3e8ff] text-[#7c3aed]',
+  income: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  expense: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  invoice: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  payment: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  investment: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
 };
 
 const financeStatusColors: Record<string, string> = {
-  planned: 'bg-[#f1f5f9] text-[#475569]',
-  sent: 'bg-[#dbeafe] text-[#1d4ed8]',
-  paid: 'bg-[#dcfce7] text-[#166534]',
-  unpaid: 'bg-[#fefce8] text-[#854d0e]',
-  overdue: 'bg-[#fef2f2] text-[#dc2626]',
-  cancelled: 'bg-[#f1f5f9] text-[#64748b]',
+  planned: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+  sent: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  paid: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  unpaid: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
+  overdue: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  cancelled: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+};
+
+const clampProgress = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, parsed));
 };
 
 const docTypeLabels: Record<string, string> = {
@@ -145,10 +151,10 @@ const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { opt
 const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({ variant = 'secondary', ...props }) => {
   const base = 'text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-150';
   const variants: Record<string, string> = {
-    primary: 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-[#2563eb] shadow-sm',
-    secondary: 'border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] hover:border-[#cbd5e1] shadow-sm',
-    danger: 'border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2]',
-    ghost: 'border-transparent text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]',
+    primary: 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent shadow-sm',
+    secondary: 'border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] shadow-sm',
+    danger: 'border border-[#fecaca] bg-white text-[#991b1b] hover:bg-[#fee2e2]',
+    ghost: 'border border-transparent bg-transparent text-[#475569] hover:bg-[#f1f5f9]',
   };
   return <button {...props} className={`${base} ${variants[variant]} ${props.className || ''}`} />;
 };
@@ -493,7 +499,7 @@ const ProjectDetailView: React.FC<{
   projectFinanceItems: ProjectFinanceItem[];
   onBack: () => void;
   onEditProject: () => void;
-  onUpdateProject: (id: string, input: ProjectInput) => Promise<any>;
+  onUpdateProject: (id: string, input: Partial<ProjectInput>) => Promise<any>;
   onAddTask: (input: ProjectTaskInput) => Promise<any>;
   onUpdateTask: (id: string, input: Partial<ProjectTaskInput>) => Promise<any>;
   onDeleteTask: (id: string) => Promise<void>;
@@ -520,6 +526,7 @@ const ProjectDetailView: React.FC<{
   const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
   const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);
   const [inlineSaving, setInlineSaving] = useState<Record<string, boolean>>({});
+  const [inlineError, setInlineError] = useState<string | null>(null);
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState('');
 
@@ -596,12 +603,22 @@ const ProjectDetailView: React.FC<{
     return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [projectTaskList, projectTimeLogList, projectMeetingList, projectDocumentList, projectFinanceList, relatedMessages]);
 
-  const handleInlineUpdate = async (field: string, value: any) => {
+  const handleInlineUpdate = async (field: 'status' | 'phase' | 'priority' | 'deadline' | 'progress', value: unknown) => {
+    let patchValue: unknown = value;
+    if (field === 'progress') {
+      patchValue = clampProgress(value);
+    }
+    if (field === 'deadline') {
+      patchValue = value ? String(value) : null;
+    }
+
+    setInlineError(null);
     setInlineSaving((prev) => ({ ...prev, [field]: true }));
     try {
-      await onUpdateProject(project.id, { name: project.name, [field]: value } as any);
+      await onUpdateProject(project.id, { [field]: patchValue });
     } catch (e) {
       console.error(`Failed to update ${field}`, e);
+      setInlineError('Saving failed. Please try again.');
     } finally {
       setInlineSaving((prev) => ({ ...prev, [field]: false }));
     }
@@ -610,7 +627,7 @@ const ProjectDetailView: React.FC<{
   const handleQuickNoteSave = async () => {
     if (!noteText.trim()) return;
     try {
-      await onUpdateProject(project.id, { name: project.name, notes: noteText.trim() });
+      await onUpdateProject(project.id, { notes: noteText.trim() });
       setShowNoteInput(false);
       setNoteText('');
     } catch (e) {
@@ -639,7 +656,7 @@ const ProjectDetailView: React.FC<{
     { key: 'todo', label: 'Todo', color: 'bg-[#f1f5f9]' },
     { key: 'doing', label: 'Doing', color: 'bg-[#eff6ff]' },
     { key: 'done', label: 'Done', color: 'bg-[#f0fdf4]' },
-    { key: 'blocked', label: 'Blocked', color: 'bg-[#fef2f2]' },
+    { key: 'blocked', label: 'Blocked', color: 'bg-[#fee2e2]' },
   ];
 
   const allModals = ['task', 'time', 'meeting', 'document', 'finance'] as const;
@@ -674,7 +691,7 @@ const ProjectDetailView: React.FC<{
                 <option value="planned">Planned</option><option value="active">Active</option><option value="paused">Paused</option>
                 <option value="blocked">Blocked</option><option value="completed">Completed</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['status'] && <span className="text-[10px] text-[#94a3b8]">saving...</span>}
+              {inlineSaving['status'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -686,7 +703,7 @@ const ProjectDetailView: React.FC<{
                 <option value="wireframes">Wireframes</option><option value="ui_design">UI Design</option><option value="prototype">Prototype</option>
                 <option value="case_study">Case Study</option><option value="published">Published</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['phase'] && <span className="text-[10px] text-[#94a3b8]">saving...</span>}
+              {inlineSaving['phase'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -696,7 +713,7 @@ const ProjectDetailView: React.FC<{
               >
                 <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
               </select>
-              {inlineSaving['priority'] && <span className="text-[10px] text-[#94a3b8]">saving...</span>}
+              {inlineSaving['priority'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -704,27 +721,34 @@ const ProjectDetailView: React.FC<{
               <input type="date" value={project.deadline ? project.deadline.slice(0, 10) : ''} onChange={(e) => handleInlineUpdate('deadline', e.target.value || null)}
                 className="text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
               />
-              {inlineSaving['deadline'] && <span className="text-[10px] text-[#94a3b8]">saving...</span>}
+              {inlineSaving['deadline'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Progress</span>
               <div className="flex items-center gap-1">
-                <input type="range" min="0" max="100" value={project.progress ?? 0} onChange={(e) => handleInlineUpdate('progress', parseInt(e.target.value))}
-                  className="w-20 h-1.5 accent-[#2563eb] cursor-pointer"
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={clampProgress(project.progress)}
+                  onChange={(e) => handleInlineUpdate('progress', Number(e.target.value))}
+                  className="w-16 text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
                 />
-                <span className="text-xs font-medium text-[#0f172a] w-8">{project.progress ?? 0}%</span>
+                <span className="text-xs font-medium text-[#0f172a] min-w-[90px]">Progress {clampProgress(project.progress)}%</span>
               </div>
-              {inlineSaving['progress'] && <span className="text-[10px] text-[#94a3b8]">saving...</span>}
+              {inlineSaving['progress'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
             </div>
           </div>
 
           <div className="mt-2 max-w-md">
-            <ProgressBar value={project.progress ?? 0} />
+            <ProgressBar value={clampProgress(project.progress)} />
           </div>
 
+          {inlineError ? <div className="mt-2 text-xs text-[#991b1b]">{inlineError}</div> : null}
+
           {project.deadline && daysRemaining !== null && (
-            <div className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-[#dc2626] font-medium' : 'text-[#64748b]'}`}>
+            <div className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-[#991b1b] font-medium' : 'text-[#64748b]'}`}>
               {daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days remaining`}
             </div>
           )}
@@ -868,7 +892,7 @@ const ProjectDetailView: React.FC<{
                                   )}
                                   {col.key !== 'blocked' && (
                                     <button type="button" onClick={(e) => { e.stopPropagation(); onUpdateTask(task.id, { status: 'blocked' as any }); }}
-                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#fecaca] text-[#dc2626] hover:bg-[#fef2f2] transition-all"
+                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#fecaca] text-[#991b1b] hover:bg-[#fee2e2] transition-all"
                                     >Blocked</button>
                                   )}
                                 </div>
@@ -878,7 +902,7 @@ const ProjectDetailView: React.FC<{
                                   className="px-1.5 py-0.5 text-[10px] rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all"
                                 >Edit</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
-                                  className="px-1.5 py-0.5 text-[10px] rounded border border-[#e5e7eb] text-[#dc2626] hover:bg-[#fef2f2] transition-all"
+                                  className="px-1.5 py-0.5 text-[10px] rounded border border-[#fecaca] text-[#991b1b] hover:bg-[#fee2e2] transition-all"
                                 >Del</button>
                               </div>
                             </div>
@@ -971,7 +995,7 @@ const ProjectDetailView: React.FC<{
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               <StatCard title="Income" value={`${financeStats.income.toLocaleString()}`} />
               <StatCard title="Expenses" value={`${financeStats.expenses.toLocaleString()}`} />
-              <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-[#fef2f2]' : ''} />
+              <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-[#fee2e2] border-[#fecaca]' : ''} />
               <StatCard title="Paid" value={`${financeStats.paid.toLocaleString()}`} />
             </div>
             <div className="flex items-center justify-between mb-3">
@@ -1156,7 +1180,7 @@ const ProjectDetailView: React.FC<{
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-[#64748b]">Status</span><span className="font-medium text-[#0f172a] capitalize">{project.status || '—'}</span></div>
             <div className="flex justify-between"><span className="text-[#64748b]">Phase</span><span className="font-medium text-[#0f172a]">{phaseLabel(project.phase)}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Priority</span><span className={`font-medium ${priorityColors[project.priority || ''] || ''}`}>{priorityLabel(project.priority)}</span></div>
+            <div className="flex justify-between items-center"><span className="text-[#64748b]">Priority</span><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[project.priority || ''] || 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]'}`}>{priorityLabel(project.priority)}</span></div>
             <div className="flex justify-between"><span className="text-[#64748b]">Progress</span><span className="font-medium text-[#0f172a]">{project.progress ?? 0}%</span></div>
           </div>
           <div className="mt-3"><ProgressBar value={project.progress ?? 0} /></div>
@@ -1177,7 +1201,7 @@ const ProjectDetailView: React.FC<{
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-[#64748b]">Income</span><span className="font-medium text-[#0f172a]">{(financeStats.income || 0).toLocaleString()}</span></div>
             <div className="flex justify-between"><span className="text-[#64748b]">Expenses</span><span className="font-medium text-[#0f172a]">{(financeStats.expenses || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Unpaid</span><span className={`font-medium ${financeStats.unpaid > 0 ? 'text-[#dc2626]' : 'text-[#0f172a]'}`}>{(financeStats.unpaid || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-[#64748b]">Unpaid</span><span className={`font-medium ${financeStats.unpaid > 0 ? 'text-[#991b1b]' : 'text-[#0f172a]'}`}>{(financeStats.unpaid || 0).toLocaleString()}</span></div>
             <div className="flex justify-between"><span className="text-[#64748b]">Paid</span><span className="font-medium text-[#0f172a]">{(financeStats.paid || 0).toLocaleString()}</span></div>
           </div>
         </div>

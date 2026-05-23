@@ -10,18 +10,24 @@ import type {
 import ProjectDetailView from './ProjectDetailView';
 
 const stageColors: Record<string, string> = {
-  active: 'bg-[#dcfce7] text-[#166534]',
-  planned: 'bg-[#f0f9ff] text-[#1e40af]',
-  paused: 'bg-[#fefce8] text-[#854d0e]',
-  blocked: 'bg-[#fef2f2] text-[#991b1b]',
-  completed: 'bg-[#e0f2fe] text-[#075985]',
-  archived: 'bg-[#f1f5f9] text-[#475569]',
+  active: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  planned: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
+  paused: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
+  blocked: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  completed: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
+  archived: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
 };
 
 const priorityColors: Record<string, string> = {
-  high: 'bg-[#fef2f2] text-[#dc2626]',
-  medium: 'bg-[#fefce8] text-[#d97706]',
-  low: 'bg-[#f0fdf4] text-[#16a34a]',
+  high: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
+  medium: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
+  low: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+};
+
+const clampProgress = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, parsed));
 };
 
 const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
@@ -53,7 +59,7 @@ const ProjectsPanel: React.FC<{
   projectFinanceItems: ProjectFinanceItem[];
   onAddProject: () => void;
   onEdit: (project: Project) => void;
-  onUpdateProject: (id: string, input: ProjectInput) => Promise<any>;
+  onUpdateProject: (id: string, input: Partial<ProjectInput>) => Promise<any>;
   onDelete: (id: string) => void;
   onAddTask: (input: ProjectTaskInput) => Promise<any>;
   onUpdateTask: (id: string, input: Partial<ProjectTaskInput>) => Promise<any>;
@@ -67,7 +73,11 @@ const ProjectsPanel: React.FC<{
   onAddFinanceItem: (input: ProjectFinanceItemInput) => Promise<any>;
   onDeleteFinanceItem: (id: string) => Promise<void>;
 }> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onUpdateProject, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const selectedProject = useMemo(
+    () => (selectedProjectId ? projects.find((project) => project.id === selectedProjectId) || null : null),
+    [projects, selectedProjectId],
+  );
 
   const stats = useMemo(() => ({
     total: projects.length,
@@ -79,8 +89,6 @@ const ProjectsPanel: React.FC<{
   }), [projects]);
 
   const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
-  const personById = useMemo(() => new Map(people.map((p) => [p.id, p])), [people]);
-
   if (selectedProject) {
     return (
       <ProjectDetailView
@@ -94,10 +102,10 @@ const ProjectsPanel: React.FC<{
         projectMeetings={projectMeetings}
         projectDocuments={projectDocuments}
         projectFinanceItems={projectFinanceItems}
-        onBack={() => setSelectedProject(null)}
+        onBack={() => setSelectedProjectId(null)}
         onEditProject={() => {
           onEdit(selectedProject);
-          setSelectedProject(null);
+          setSelectedProjectId(null);
         }}
         onUpdateProject={onUpdateProject}
         onAddTask={onAddTask}
@@ -161,7 +169,7 @@ const ProjectsPanel: React.FC<{
         <button
           type="button"
           onClick={onAddProject}
-          className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
+          className="text-xs px-3 py-1.5 rounded border border-transparent bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
         >
           Add Project
         </button>
@@ -208,27 +216,27 @@ const ProjectsPanel: React.FC<{
               </thead>
               <tbody>
                 {projects.map((p) => (
-                  <tr key={p.id} className="border-t border-[#e5e7eb] hover:bg-[#f9fafb] cursor-pointer" onClick={() => setSelectedProject(p)}>
+                  <tr key={p.id} className="border-t border-[#e5e7eb] hover:bg-[#f9fafb] cursor-pointer" onClick={() => setSelectedProjectId(p.id)}>
                     <td className="px-3 py-3">
                       <div className="font-semibold text-[#2563eb] hover:underline">{p.name}</div>
                       {p.notes && <div className="text-xs text-[#64748b] truncate max-w-[200px]">{p.notes}</div>}
                     </td>
                     <td className="px-3 py-3 text-sm text-[#0f172a]">{typeLabel(p.type)}</td>
                     <td className="px-3 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${stageColors[p.status || ''] || 'bg-[#f1f5f9] text-[#475569]'}`}>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${stageColors[p.status || ''] || 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]'}`}>
                         {p.status || '—'}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-sm text-[#0f172a]">{phaseLabel(p.phase)}</td>
                     <td className="px-3 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[p.priority || ''] || 'bg-[#f1f5f9] text-[#475569]'}`}>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[p.priority || ''] || 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]'}`}>
                         {p.priority || '—'}
                       </span>
                     </td>
                     <td className="px-3 py-3 min-w-[100px]">
                       <div className="flex items-center gap-2">
-                        <ProgressBar value={p.progress ?? 0} />
-                        <span className="text-xs text-[#64748b]">{p.progress ?? 0}%</span>
+                        <ProgressBar value={clampProgress(p.progress)} />
+                        <span className="text-xs text-[#64748b]">{clampProgress(p.progress)}%</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-sm text-[#0f172a]">{formatDate(p.deadline)}</td>
@@ -239,7 +247,7 @@ const ProjectsPanel: React.FC<{
                         <button
                           type="button"
                           onClick={() => onEdit(p)}
-                          className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff]"
+                          className="px-2 py-1 text-xs rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
                         >
                           Edit
                         </button>
@@ -248,7 +256,7 @@ const ProjectsPanel: React.FC<{
                           onClick={() => {
                             if (window.confirm(`Delete project "${p.name}"?`)) onDelete(p.id);
                           }}
-                          className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#dc2626] hover:bg-[#fef2f2]"
+                          className="px-2 py-1 text-xs rounded border border-[#fecaca] bg-white text-[#991b1b] hover:bg-[#fee2e2]"
                         >
                           Delete
                         </button>

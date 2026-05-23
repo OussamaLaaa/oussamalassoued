@@ -191,7 +191,7 @@ const OpportunitiesLayout: React.FC<{
     deleteMessage: (id: string) => void;
     updateDeal: (id: string, input: DealInput) => void;
     deleteDeal: (id: string) => void;
-    updateProject: (id: string, input: ProjectInput) => Promise<any>;
+    updateProject: (id: string, input: Partial<ProjectInput>) => Promise<any>;
     deleteProject: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
