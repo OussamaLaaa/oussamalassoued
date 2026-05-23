@@ -41,6 +41,16 @@ import type {
   MessageTemplate,
   StrategyItem,
   StrategyItemInput,
+  StrategyGoal,
+  StrategyGoalInput,
+  StrategyPlan,
+  StrategyPlanInput,
+  StrategyTactic,
+  StrategyTacticInput,
+  StrategyExperiment,
+  StrategyExperimentInput,
+  StrategyDecision,
+  StrategyDecisionInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -58,6 +68,11 @@ const cloneSeedData = (): OpportunitiesData => ({
   projectFinanceItems: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
+  strategyGoals: [],
+  strategyPlans: [],
+  strategyTactics: [],
+  strategyExperiments: [],
+  strategyDecisions: [],
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
 });
 
@@ -83,6 +98,11 @@ type OpportunitiesApiResponse = {
   project_finance_items?: any[];
   message_templates?: any[];
   strategy_items?: any[];
+  strategy_goals?: any[];
+  strategy_plans?: any[];
+  strategy_tactics?: any[];
+  strategy_experiments?: any[];
+  strategy_decisions?: any[];
   strategyNotes?: any[];
 };
 
@@ -166,6 +186,255 @@ const attachStrategyLinkNames = (
   }));
 };
 
+const toClampedProgress = (value: any) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  return Math.max(0, Math.min(100, parsed));
+};
+
+const strategyGoalFromDb = (row: any): StrategyGoal => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  description: row?.description ?? undefined,
+  category: row?.category,
+  priority: row?.priority ?? 'medium',
+  status: row?.status ?? 'active',
+  timeHorizon: row?.time_horizon ?? row?.timeHorizon ?? undefined,
+  progress: toClampedProgress(row?.progress),
+  targetDate: row?.target_date ?? row?.targetDate ?? undefined,
+  successMetric: row?.success_metric ?? row?.successMetric ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyPlanFromDb = (row: any): StrategyPlan => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  label: row?.label ?? 'A',
+  description: row?.description ?? undefined,
+  status: row?.status ?? 'planned',
+  priority: row?.priority ?? 'medium',
+  assumptions: row?.assumptions ?? undefined,
+  risks: row?.risks ?? undefined,
+  resourcesNeeded: row?.resources_needed ?? row?.resourcesNeeded ?? undefined,
+  triggerToSwitch: row?.trigger_to_switch ?? row?.triggerToSwitch ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  targetDate: row?.target_date ?? row?.targetDate ?? undefined,
+  progress: toClampedProgress(row?.progress),
+  linkedGoalId: row?.linked_goal_id ?? row?.linkedGoalId ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyTacticFromDb = (row: any): StrategyTactic => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  description: row?.description ?? undefined,
+  category: row?.category ?? undefined,
+  status: row?.status ?? 'active',
+  priority: row?.priority ?? 'medium',
+  frequency: row?.frequency ?? undefined,
+  metric: row?.metric ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  linkedGoalId: row?.linked_goal_id ?? row?.linkedGoalId ?? undefined,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyExperimentFromDb = (row: any): StrategyExperiment => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  hypothesis: row?.hypothesis ?? undefined,
+  method: row?.method ?? undefined,
+  metric: row?.metric ?? undefined,
+  result: row?.result ?? undefined,
+  learning: row?.learning ?? undefined,
+  status: row?.status ?? 'planned',
+  priority: row?.priority ?? 'medium',
+  startDate: row?.start_date ?? row?.startDate ?? undefined,
+  endDate: row?.end_date ?? row?.endDate ?? undefined,
+  linkedGoalId: row?.linked_goal_id ?? row?.linkedGoalId ?? undefined,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyDecisionFromDb = (row: any): StrategyDecision => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  context: row?.context ?? undefined,
+  decision: row?.decision ?? undefined,
+  reason: row?.reason ?? undefined,
+  expectedResult: row?.expected_result ?? row?.expectedResult ?? undefined,
+  reviewDate: row?.review_date ?? row?.reviewDate ?? undefined,
+  status: row?.status ?? 'planned',
+  priority: row?.priority ?? 'medium',
+  linkedGoalId: row?.linked_goal_id ?? row?.linkedGoalId ?? undefined,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyGoalToDb = (input: Partial<StrategyGoalInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.timeHorizon !== undefined) payload.time_horizon = toNullableString(input.timeHorizon);
+  if (input.progress !== undefined) payload.progress = toClampedProgress(input.progress);
+  if (input.targetDate !== undefined) payload.target_date = toNullableString(input.targetDate);
+  if (input.successMetric !== undefined) payload.success_metric = toNullableString(input.successMetric);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  return payload;
+};
+
+const strategyPlanToDb = (input: Partial<StrategyPlanInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.label !== undefined) payload.label = input.label;
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.assumptions !== undefined) payload.assumptions = toNullableString(input.assumptions);
+  if (input.risks !== undefined) payload.risks = toNullableString(input.risks);
+  if (input.resourcesNeeded !== undefined) payload.resources_needed = toNullableString(input.resourcesNeeded);
+  if (input.triggerToSwitch !== undefined) payload.trigger_to_switch = toNullableString(input.triggerToSwitch);
+  if (input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+  if (input.targetDate !== undefined) payload.target_date = toNullableString(input.targetDate);
+  if (input.progress !== undefined) payload.progress = toClampedProgress(input.progress);
+  if (input.linkedGoalId !== undefined) payload.linked_goal_id = toNullableString(input.linkedGoalId);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const strategyTacticToDb = (input: Partial<StrategyTacticInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.frequency !== undefined) payload.frequency = toNullableString(input.frequency);
+  if (input.metric !== undefined) payload.metric = toNullableString(input.metric);
+  if (input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+  if (input.linkedGoalId !== undefined) payload.linked_goal_id = toNullableString(input.linkedGoalId);
+  if (input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const strategyExperimentToDb = (input: Partial<StrategyExperimentInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.hypothesis !== undefined) payload.hypothesis = toNullableString(input.hypothesis);
+  if (input.method !== undefined) payload.method = toNullableString(input.method);
+  if (input.metric !== undefined) payload.metric = toNullableString(input.metric);
+  if (input.result !== undefined) payload.result = toNullableString(input.result);
+  if (input.learning !== undefined) payload.learning = toNullableString(input.learning);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.startDate !== undefined) payload.start_date = toNullableString(input.startDate);
+  if (input.endDate !== undefined) payload.end_date = toNullableString(input.endDate);
+  if (input.linkedGoalId !== undefined) payload.linked_goal_id = toNullableString(input.linkedGoalId);
+  if (input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const strategyDecisionToDb = (input: Partial<StrategyDecisionInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.context !== undefined) payload.context = toNullableString(input.context);
+  if (input.decision !== undefined) payload.decision = toNullableString(input.decision);
+  if (input.reason !== undefined) payload.reason = toNullableString(input.reason);
+  if (input.expectedResult !== undefined) payload.expected_result = toNullableString(input.expectedResult);
+  if (input.reviewDate !== undefined) payload.review_date = toNullableString(input.reviewDate);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.linkedGoalId !== undefined) payload.linked_goal_id = toNullableString(input.linkedGoalId);
+  if (input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const attachGoalLinkNames = (items: StrategyGoal[], projects: Project[], companies: Company[]) => {
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+  }));
+};
+
+const attachPlanLinkNames = (items: StrategyPlan[], goals: StrategyGoal[], projects: Project[]) => {
+  const goalById = new Map(goals.map((goal) => [goal.id, goal.title] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedGoalTitle: item.linkedGoalTitle || goalById.get(item.linkedGoalId || ''),
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const attachTacticLinkNames = (items: StrategyTactic[], goals: StrategyGoal[], plans: StrategyPlan[], projects: Project[]) => {
+  const goalById = new Map(goals.map((goal) => [goal.id, goal.title] as const));
+  const planById = new Map(plans.map((plan) => [plan.id, plan.name] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedGoalTitle: item.linkedGoalTitle || goalById.get(item.linkedGoalId || ''),
+    linkedPlanName: item.linkedPlanName || planById.get(item.linkedPlanId || ''),
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const attachExperimentLinkNames = (items: StrategyExperiment[], goals: StrategyGoal[], plans: StrategyPlan[], projects: Project[]) => {
+  const goalById = new Map(goals.map((goal) => [goal.id, goal.title] as const));
+  const planById = new Map(plans.map((plan) => [plan.id, plan.name] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedGoalTitle: item.linkedGoalTitle || goalById.get(item.linkedGoalId || ''),
+    linkedPlanName: item.linkedPlanName || planById.get(item.linkedPlanId || ''),
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const attachDecisionLinkNames = (items: StrategyDecision[], goals: StrategyGoal[], plans: StrategyPlan[], projects: Project[]) => {
+  const goalById = new Map(goals.map((goal) => [goal.id, goal.title] as const));
+  const planById = new Map(plans.map((plan) => [plan.id, plan.name] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedGoalTitle: item.linkedGoalTitle || goalById.get(item.linkedGoalId || ''),
+    linkedPlanName: item.linkedPlanName || planById.get(item.linkedPlanId || ''),
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const shouldReplaceCollection = (current: any[], next: any[], keys: string[]) => {
+  if (current.length !== next.length) return true;
+  for (let index = 0; index < current.length; index += 1) {
+    for (const key of keys) {
+      if (current[index]?.[key] !== next[index]?.[key]) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 const logDevError = (context: string, details: Record<string, unknown>) => {
   if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
     console.error(`[Opportunities] ${context}`, details);
@@ -217,6 +486,11 @@ export const useOpportunitiesData = (enabled = true) => {
   const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyItems, setStrategyItems] = useState<StrategyItem[]>([]);
+  const [strategyGoals, setStrategyGoals] = useState<StrategyGoal[]>([]);
+  const [strategyPlans, setStrategyPlans] = useState<StrategyPlan[]>([]);
+  const [strategyTactics, setStrategyTactics] = useState<StrategyTactic[]>([]);
+  const [strategyExperiments, setStrategyExperiments] = useState<StrategyExperiment[]>([]);
+  const [strategyDecisions, setStrategyDecisions] = useState<StrategyDecision[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -234,6 +508,11 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
+    const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
+    const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
+    const nextStrategyTacticsRaw = Array.isArray(payload?.strategy_tactics) ? payload.strategy_tactics : [];
+    const nextStrategyExperimentsRaw = Array.isArray(payload?.strategy_experiments) ? payload.strategy_experiments : [];
+    const nextStrategyDecisionsRaw = Array.isArray(payload?.strategy_decisions) ? payload.strategy_decisions : [];
 
     const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
     const personById = new Map<string, Person>();
@@ -274,6 +553,11 @@ export const useOpportunitiesData = (enabled = true) => {
 
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
+    const nextStrategyGoals = attachGoalLinkNames(nextStrategyGoalsRaw.map((row: any) => strategyGoalFromDb(row)), nextProjects, nextCompanies);
+    const nextStrategyPlans = attachPlanLinkNames(nextStrategyPlansRaw.map((row: any) => strategyPlanFromDb(row)), nextStrategyGoals, nextProjects);
+    const nextStrategyTactics = attachTacticLinkNames(nextStrategyTacticsRaw.map((row: any) => strategyTacticFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
+    const nextStrategyExperiments = attachExperimentLinkNames(nextStrategyExperimentsRaw.map((row: any) => strategyExperimentFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
+    const nextStrategyDecisions = attachDecisionLinkNames(nextStrategyDecisionsRaw.map((row: any) => strategyDecisionFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
     const nextStrategyItems = attachStrategyLinkNames(
       nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
       nextProjects,
@@ -299,6 +583,11 @@ export const useOpportunitiesData = (enabled = true) => {
     setProjectDocuments(nextProjectDocuments);
     setProjectFinanceItems(nextProjectFinanceItems);
     setTemplates(nextTemplates);
+    setStrategyGoals(nextStrategyGoals);
+    setStrategyPlans(nextStrategyPlans);
+    setStrategyTactics(nextStrategyTactics);
+    setStrategyExperiments(nextStrategyExperiments);
+    setStrategyDecisions(nextStrategyDecisions);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -329,6 +618,11 @@ export const useOpportunitiesData = (enabled = true) => {
           setMessages([]);
           setDeals([]);
           setTemplates([]);
+          setStrategyGoals([]);
+          setStrategyPlans([]);
+          setStrategyTactics([]);
+          setStrategyExperiments([]);
+          setStrategyDecisions([]);
           setStrategyItems([]);
           return;
         }
@@ -340,6 +634,11 @@ export const useOpportunitiesData = (enabled = true) => {
         setMessages(fallback.messages);
         setDeals(fallback.deals);
         setTemplates(fallback.templates);
+        setStrategyGoals(fallback.strategyGoals);
+        setStrategyPlans(fallback.strategyPlans);
+        setStrategyTactics(fallback.strategyTactics);
+        setStrategyExperiments(fallback.strategyExperiments);
+        setStrategyDecisions(fallback.strategyDecisions);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -515,7 +814,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -776,6 +1075,141 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyItems((current) => current.filter((item) => item.id !== id));
   };
 
+  const addStrategyGoal = async (input: StrategyGoalInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Goal title is required.');
+    }
+    const row = await syncInsert('strategy_goals', strategyGoalToDb(input));
+    const next = attachGoalLinkNames([strategyGoalFromDb(row)], projects, companies)[0];
+    setStrategyGoals((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyGoal = async (id: string, input: Partial<StrategyGoalInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Goal title is required.');
+    }
+    const row = await syncUpdate('strategy_goals', id, strategyGoalToDb(input));
+    const next = attachGoalLinkNames([strategyGoalFromDb(row)], projects, companies)[0];
+    setStrategyGoals((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyGoal = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy goal?');
+    if (!confirmed) return;
+    await syncDelete('strategy_goals', id);
+    setStrategyGoals((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addStrategyPlan = async (input: StrategyPlanInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Plan name is required.');
+    }
+    const row = await syncInsert('strategy_plans', strategyPlanToDb(input));
+    const next = attachPlanLinkNames([strategyPlanFromDb(row)], strategyGoals, projects)[0];
+    setStrategyPlans((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyPlan = async (id: string, input: Partial<StrategyPlanInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Plan name is required.');
+    }
+    const row = await syncUpdate('strategy_plans', id, strategyPlanToDb(input));
+    const next = attachPlanLinkNames([strategyPlanFromDb(row)], strategyGoals, projects)[0];
+    setStrategyPlans((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyPlan = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy plan?');
+    if (!confirmed) return;
+    await syncDelete('strategy_plans', id);
+    setStrategyPlans((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addStrategyTactic = async (input: StrategyTacticInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Tactic title is required.');
+    }
+    const row = await syncInsert('strategy_tactics', strategyTacticToDb(input));
+    const next = attachTacticLinkNames([strategyTacticFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyTactics((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyTactic = async (id: string, input: Partial<StrategyTacticInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Tactic title is required.');
+    }
+    const row = await syncUpdate('strategy_tactics', id, strategyTacticToDb(input));
+    const next = attachTacticLinkNames([strategyTacticFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyTactics((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyTactic = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy tactic?');
+    if (!confirmed) return;
+    await syncDelete('strategy_tactics', id);
+    setStrategyTactics((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addStrategyExperiment = async (input: StrategyExperimentInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Experiment title is required.');
+    }
+    const row = await syncInsert('strategy_experiments', strategyExperimentToDb(input));
+    const next = attachExperimentLinkNames([strategyExperimentFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyExperiments((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyExperiment = async (id: string, input: Partial<StrategyExperimentInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Experiment title is required.');
+    }
+    const row = await syncUpdate('strategy_experiments', id, strategyExperimentToDb(input));
+    const next = attachExperimentLinkNames([strategyExperimentFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyExperiments((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyExperiment = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy experiment?');
+    if (!confirmed) return;
+    await syncDelete('strategy_experiments', id);
+    setStrategyExperiments((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addStrategyDecision = async (input: StrategyDecisionInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Decision title is required.');
+    }
+    const row = await syncInsert('strategy_decisions', strategyDecisionToDb(input));
+    const next = attachDecisionLinkNames([strategyDecisionFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyDecisions((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyDecision = async (id: string, input: Partial<StrategyDecisionInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Decision title is required.');
+    }
+    const row = await syncUpdate('strategy_decisions', id, strategyDecisionToDb(input));
+    const next = attachDecisionLinkNames([strategyDecisionFromDb(row)], strategyGoals, strategyPlans, projects)[0];
+    setStrategyDecisions((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyDecision = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy decision?');
+    if (!confirmed) return;
+    await syncDelete('strategy_decisions', id);
+    setStrategyDecisions((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -825,8 +1259,42 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   useEffect(() => {
-    setStrategyItems((current) => attachStrategyLinkNames(current, projects, companies, people));
+    setStrategyItems((current) => {
+      const next = attachStrategyLinkNames(current, projects, companies, people);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName', 'linkedPersonName']) ? next : current;
+    });
   }, [projects, companies, people]);
+
+  useEffect(() => {
+    setStrategyGoals((current) => {
+      const next = attachGoalLinkNames(current, projects, companies);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName']) ? next : current;
+    });
+  }, [projects, companies]);
+
+  useEffect(() => {
+    setStrategyPlans((current) => {
+      const next = attachPlanLinkNames(current, strategyGoals, projects);
+      return shouldReplaceCollection(current, next, ['linkedGoalTitle', 'linkedProjectName']) ? next : current;
+    });
+  }, [projects, strategyGoals]);
+
+  useEffect(() => {
+    setStrategyTactics((current) => {
+      const next = attachTacticLinkNames(current, strategyGoals, strategyPlans, projects);
+      return shouldReplaceCollection(current, next, ['linkedGoalTitle', 'linkedPlanName', 'linkedProjectName']) ? next : current;
+    });
+
+    setStrategyExperiments((current) => {
+      const next = attachExperimentLinkNames(current, strategyGoals, strategyPlans, projects);
+      return shouldReplaceCollection(current, next, ['linkedGoalTitle', 'linkedPlanName', 'linkedProjectName']) ? next : current;
+    });
+
+    setStrategyDecisions((current) => {
+      const next = attachDecisionLinkNames(current, strategyGoals, strategyPlans, projects);
+      return shouldReplaceCollection(current, next, ['linkedGoalTitle', 'linkedPlanName', 'linkedProjectName']) ? next : current;
+    });
+  }, [projects, strategyGoals, strategyPlans]);
 
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
@@ -836,6 +1304,11 @@ export const useOpportunitiesData = (enabled = true) => {
     setMessages(fallback.messages);
     setDeals(fallback.deals);
     setTemplates(fallback.templates);
+    setStrategyGoals(fallback.strategyGoals);
+    setStrategyPlans(fallback.strategyPlans);
+    setStrategyTactics(fallback.strategyTactics);
+    setStrategyExperiments(fallback.strategyExperiments);
+    setStrategyDecisions(fallback.strategyDecisions);
     setStrategyItems(fallback.strategyItems);
   };
 
@@ -852,6 +1325,11 @@ export const useOpportunitiesData = (enabled = true) => {
     projectFinanceItems,
     templates,
     strategyItems,
+    strategyGoals,
+    strategyPlans,
+    strategyTactics,
+    strategyExperiments,
+    strategyDecisions,
     strategyNotes,
     importCompaniesBatch,
     addCompany,
@@ -860,6 +1338,11 @@ export const useOpportunitiesData = (enabled = true) => {
     addDeal,
     addProject,
     addStrategyItem,
+    addStrategyGoal,
+    addStrategyPlan,
+    addStrategyTactic,
+    addStrategyExperiment,
+    addStrategyDecision,
     addTemplate,
     importPeople,
     updateCompany,
@@ -874,6 +1357,16 @@ export const useOpportunitiesData = (enabled = true) => {
     deleteProject,
     updateStrategyItem,
     deleteStrategyItem,
+    updateStrategyGoal,
+    deleteStrategyGoal,
+    updateStrategyPlan,
+    deleteStrategyPlan,
+    updateStrategyTactic,
+    deleteStrategyTactic,
+    updateStrategyExperiment,
+    deleteStrategyExperiment,
+    updateStrategyDecision,
+    deleteStrategyDecision,
     addProjectTask,
     updateProjectTask,
     deleteProjectTask,

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -183,6 +183,11 @@ const OpportunitiesLayout: React.FC<{
     addDeal: (input: any) => void;
     addProject: (input: ProjectInput) => Promise<any>;
     addStrategyItem: (input: StrategyItemInput) => Promise<any>;
+    addStrategyGoal: (input: StrategyGoalInput) => Promise<any>;
+    addStrategyPlan: (input: StrategyPlanInput) => Promise<any>;
+    addStrategyTactic: (input: StrategyTacticInput) => Promise<any>;
+    addStrategyExperiment: (input: StrategyExperimentInput) => Promise<any>;
+    addStrategyDecision: (input: StrategyDecisionInput) => Promise<any>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -196,6 +201,16 @@ const OpportunitiesLayout: React.FC<{
     deleteProject: (id: string) => Promise<any>;
     updateStrategyItem: (id: string, input: Partial<StrategyItemInput>) => Promise<any>;
     deleteStrategyItem: (id: string) => Promise<any>;
+    updateStrategyGoal: (id: string, input: Partial<StrategyGoalInput>) => Promise<any>;
+    deleteStrategyGoal: (id: string) => Promise<any>;
+    updateStrategyPlan: (id: string, input: Partial<StrategyPlanInput>) => Promise<any>;
+    deleteStrategyPlan: (id: string) => Promise<any>;
+    updateStrategyTactic: (id: string, input: Partial<StrategyTacticInput>) => Promise<any>;
+    deleteStrategyTactic: (id: string) => Promise<any>;
+    updateStrategyExperiment: (id: string, input: Partial<StrategyExperimentInput>) => Promise<any>;
+    deleteStrategyExperiment: (id: string) => Promise<any>;
+    updateStrategyDecision: (id: string, input: Partial<StrategyDecisionInput>) => Promise<any>;
+    deleteStrategyDecision: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
     seedDefaultTemplates?: () => Promise<any>;
@@ -236,12 +251,22 @@ const OpportunitiesLayout: React.FC<{
 
   const {
     companies, people, messages, deals, projects, templates, strategyItems,
+    strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
-    addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem, addTemplate,
+    addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem,
+    addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
+    addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
     updateMessage, deleteMessage,
-    updateDeal, deleteDeal, updateProject, deleteProject, updateStrategyItem, deleteStrategyItem, updateTemplate, deleteTemplate, seedDefaultTemplates,
+    updateDeal, deleteDeal, updateProject, deleteProject,
+    updateStrategyItem, deleteStrategyItem,
+    updateStrategyGoal, deleteStrategyGoal,
+    updateStrategyPlan, deleteStrategyPlan,
+    updateStrategyTactic, deleteStrategyTactic,
+    updateStrategyExperiment, deleteStrategyExperiment,
+    updateStrategyDecision, deleteStrategyDecision,
+    updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
     importPeople,
@@ -635,12 +660,32 @@ const OpportunitiesLayout: React.FC<{
             {tab === 'strategy' && (
               <StrategyPanel
                 strategyItems={strategyItems}
+                strategyGoals={strategyGoals}
+                strategyPlans={strategyPlans}
+                strategyTactics={strategyTactics}
+                strategyExperiments={strategyExperiments}
+                strategyDecisions={strategyDecisions}
                 projects={projects}
                 companies={companies}
                 people={people}
                 onAddStrategyItem={addStrategyItem}
                 onUpdateStrategyItem={updateStrategyItem}
                 onDeleteStrategyItem={deleteStrategyItem}
+                onAddStrategyGoal={addStrategyGoal}
+                onUpdateStrategyGoal={updateStrategyGoal}
+                onDeleteStrategyGoal={deleteStrategyGoal}
+                onAddStrategyPlan={addStrategyPlan}
+                onUpdateStrategyPlan={updateStrategyPlan}
+                onDeleteStrategyPlan={deleteStrategyPlan}
+                onAddStrategyTactic={addStrategyTactic}
+                onUpdateStrategyTactic={updateStrategyTactic}
+                onDeleteStrategyTactic={deleteStrategyTactic}
+                onAddStrategyExperiment={addStrategyExperiment}
+                onUpdateStrategyExperiment={updateStrategyExperiment}
+                onDeleteStrategyExperiment={deleteStrategyExperiment}
+                onAddStrategyDecision={addStrategyDecision}
+                onUpdateStrategyDecision={updateStrategyDecision}
+                onDeleteStrategyDecision={deleteStrategyDecision}
               />
             )}
           </div>

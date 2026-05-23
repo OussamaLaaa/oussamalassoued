@@ -325,6 +325,11 @@ export interface OpportunitiesData {
   projectFinanceItems: ProjectFinanceItem[];
   templates: MessageTemplate[];
   strategyItems: StrategyItem[];
+  strategyGoals: StrategyGoal[];
+  strategyPlans: StrategyPlan[];
+  strategyTactics: StrategyTactic[];
+  strategyExperiments: StrategyExperiment[];
+  strategyDecisions: StrategyDecision[];
   strategyNotes: StrategyNote[];
 }
 
@@ -341,8 +346,9 @@ export type StrategySection =
   | 'operations';
 
 export type StrategyPriority = 'high' | 'medium' | 'low';
-export type StrategyStatus = 'active' | 'paused' | 'completed' | 'archived';
+export type StrategyStatus = 'active' | 'planned' | 'paused' | 'completed' | 'archived' | 'failed';
 export type StrategyTimeHorizon = 'yearly' | 'six_months' | 'quarterly' | 'monthly' | 'weekly' | 'daily';
+export type StrategyPlanLabel = 'A' | 'B' | 'C' | 'D';
 
 export interface StrategyItem {
   id: string;
@@ -374,6 +380,184 @@ export interface StrategyItemInput {
   linkedProjectId?: string;
   linkedCompanyId?: string;
   linkedPersonId?: string;
+}
+
+export interface StrategyGoal {
+  id: string;
+  title: string;
+  description?: string;
+  category: StrategySection;
+  priority: StrategyPriority;
+  status: StrategyStatus;
+  timeHorizon?: StrategyTimeHorizon;
+  progress?: number;
+  targetDate?: string;
+  successMetric?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyPlan {
+  id: string;
+  name: string;
+  label: StrategyPlanLabel;
+  description?: string;
+  status: StrategyStatus;
+  priority: StrategyPriority;
+  assumptions?: string;
+  risks?: string;
+  resourcesNeeded?: string;
+  triggerToSwitch?: string;
+  nextAction?: string;
+  targetDate?: string;
+  progress?: number;
+  linkedGoalId?: string;
+  linkedGoalTitle?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyTactic {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  status: StrategyStatus;
+  priority: StrategyPriority;
+  frequency?: string;
+  metric?: string;
+  nextAction?: string;
+  linkedGoalId?: string;
+  linkedGoalTitle?: string;
+  linkedPlanId?: string;
+  linkedPlanName?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyExperiment {
+  id: string;
+  title: string;
+  hypothesis?: string;
+  method?: string;
+  metric?: string;
+  result?: string;
+  learning?: string;
+  status: StrategyStatus;
+  priority: StrategyPriority;
+  startDate?: string;
+  endDate?: string;
+  linkedGoalId?: string;
+  linkedGoalTitle?: string;
+  linkedPlanId?: string;
+  linkedPlanName?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyDecision {
+  id: string;
+  title: string;
+  context?: string;
+  decision?: string;
+  reason?: string;
+  expectedResult?: string;
+  reviewDate?: string;
+  status: StrategyStatus;
+  priority: StrategyPriority;
+  linkedGoalId?: string;
+  linkedGoalTitle?: string;
+  linkedPlanId?: string;
+  linkedPlanName?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyGoalInput {
+  title: string;
+  description?: string;
+  category: StrategySection;
+  priority?: StrategyPriority;
+  status?: StrategyStatus;
+  timeHorizon?: StrategyTimeHorizon;
+  progress?: number;
+  targetDate?: string;
+  successMetric?: string;
+  linkedProjectId?: string;
+  linkedCompanyId?: string;
+}
+
+export interface StrategyPlanInput {
+  name: string;
+  label?: StrategyPlanLabel;
+  description?: string;
+  status?: StrategyStatus;
+  priority?: StrategyPriority;
+  assumptions?: string;
+  risks?: string;
+  resourcesNeeded?: string;
+  triggerToSwitch?: string;
+  nextAction?: string;
+  targetDate?: string;
+  progress?: number;
+  linkedGoalId?: string;
+  linkedProjectId?: string;
+}
+
+export interface StrategyTacticInput {
+  title: string;
+  description?: string;
+  category?: string;
+  status?: StrategyStatus;
+  priority?: StrategyPriority;
+  frequency?: string;
+  metric?: string;
+  nextAction?: string;
+  linkedGoalId?: string;
+  linkedPlanId?: string;
+  linkedProjectId?: string;
+}
+
+export interface StrategyExperimentInput {
+  title: string;
+  hypothesis?: string;
+  method?: string;
+  metric?: string;
+  result?: string;
+  learning?: string;
+  status?: StrategyStatus;
+  priority?: StrategyPriority;
+  startDate?: string;
+  endDate?: string;
+  linkedGoalId?: string;
+  linkedPlanId?: string;
+  linkedProjectId?: string;
+}
+
+export interface StrategyDecisionInput {
+  title: string;
+  context?: string;
+  decision?: string;
+  reason?: string;
+  expectedResult?: string;
+  reviewDate?: string;
+  status?: StrategyStatus;
+  priority?: StrategyPriority;
+  linkedGoalId?: string;
+  linkedPlanId?: string;
+  linkedProjectId?: string;
 }
 
 export interface StrategyNote {

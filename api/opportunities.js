@@ -1,8 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
-const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items', 'strategy_items']);
-const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items', 'strategy_items'];
+const allowedEntities = new Set([
+  'companies',
+  'people',
+  'messages',
+  'deals',
+  'projects',
+  'message_templates',
+  'project_tasks',
+  'project_time_logs',
+  'project_meetings',
+  'project_documents',
+  'project_finance_items',
+  'strategy_items',
+  'strategy_goals',
+  'strategy_plans',
+  'strategy_tactics',
+  'strategy_experiments',
+  'strategy_decisions',
+]);
+const tablesAttempted = [
+  'companies',
+  'people',
+  'messages',
+  'deals',
+  'projects',
+  'message_templates',
+  'project_tasks',
+  'project_time_logs',
+  'project_meetings',
+  'project_documents',
+  'project_finance_items',
+  'strategy_items',
+  'strategy_goals',
+  'strategy_plans',
+  'strategy_tactics',
+  'strategy_experiments',
+  'strategy_decisions',
+];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 
@@ -112,6 +148,97 @@ const normalizeStrategyRow = (row) => ({
   linked_person_id: toNullableString(row?.linked_person_id ?? row?.linkedPersonId),
 });
 
+const toNullableNumber = (value) => {
+  if (value == null || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeStrategyGoalRow = (row) => ({
+  title: toRequiredString(row?.title),
+  description: toNullableString(row?.description),
+  category: toRequiredString(row?.category),
+  priority: toNullableString(row?.priority) || 'medium',
+  status: toNullableString(row?.status) || 'active',
+  time_horizon: toNullableString(row?.time_horizon ?? row?.timeHorizon),
+  progress: toNullableNumber(row?.progress),
+  target_date: toNullableString(row?.target_date ?? row?.targetDate),
+  success_metric: toNullableString(row?.success_metric ?? row?.successMetric),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+});
+
+const normalizeStrategyPlanRow = (row) => ({
+  name: toRequiredString(row?.name),
+  label: toNullableString(row?.label) || 'A',
+  description: toNullableString(row?.description),
+  status: toNullableString(row?.status) || 'planned',
+  priority: toNullableString(row?.priority) || 'medium',
+  assumptions: toNullableString(row?.assumptions),
+  risks: toNullableString(row?.risks),
+  resources_needed: toNullableString(row?.resources_needed ?? row?.resourcesNeeded),
+  trigger_to_switch: toNullableString(row?.trigger_to_switch ?? row?.triggerToSwitch),
+  next_action: toNullableString(row?.next_action ?? row?.nextAction),
+  target_date: toNullableString(row?.target_date ?? row?.targetDate),
+  progress: toNullableNumber(row?.progress),
+  linked_goal_id: toNullableString(row?.linked_goal_id ?? row?.linkedGoalId),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeStrategyTacticRow = (row) => ({
+  title: toRequiredString(row?.title),
+  description: toNullableString(row?.description),
+  category: toNullableString(row?.category),
+  status: toNullableString(row?.status) || 'active',
+  priority: toNullableString(row?.priority) || 'medium',
+  frequency: toNullableString(row?.frequency),
+  metric: toNullableString(row?.metric),
+  next_action: toNullableString(row?.next_action ?? row?.nextAction),
+  linked_goal_id: toNullableString(row?.linked_goal_id ?? row?.linkedGoalId),
+  linked_plan_id: toNullableString(row?.linked_plan_id ?? row?.linkedPlanId),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeStrategyExperimentRow = (row) => ({
+  title: toRequiredString(row?.title),
+  hypothesis: toNullableString(row?.hypothesis),
+  method: toNullableString(row?.method),
+  metric: toNullableString(row?.metric),
+  result: toNullableString(row?.result),
+  learning: toNullableString(row?.learning),
+  status: toNullableString(row?.status) || 'planned',
+  priority: toNullableString(row?.priority) || 'medium',
+  start_date: toNullableString(row?.start_date ?? row?.startDate),
+  end_date: toNullableString(row?.end_date ?? row?.endDate),
+  linked_goal_id: toNullableString(row?.linked_goal_id ?? row?.linkedGoalId),
+  linked_plan_id: toNullableString(row?.linked_plan_id ?? row?.linkedPlanId),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeStrategyDecisionRow = (row) => ({
+  title: toRequiredString(row?.title),
+  context: toNullableString(row?.context),
+  decision: toNullableString(row?.decision),
+  reason: toNullableString(row?.reason),
+  expected_result: toNullableString(row?.expected_result ?? row?.expectedResult),
+  review_date: toNullableString(row?.review_date ?? row?.reviewDate),
+  status: toNullableString(row?.status) || 'planned',
+  priority: toNullableString(row?.priority) || 'medium',
+  linked_goal_id: toNullableString(row?.linked_goal_id ?? row?.linkedGoalId),
+  linked_plan_id: toNullableString(row?.linked_plan_id ?? row?.linkedPlanId),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeStrategyEntityRow = (entity, row) => {
+  if (entity === 'strategy_items') return normalizeStrategyRow(row);
+  if (entity === 'strategy_goals') return normalizeStrategyGoalRow(row);
+  if (entity === 'strategy_plans') return normalizeStrategyPlanRow(row);
+  if (entity === 'strategy_tactics') return normalizeStrategyTacticRow(row);
+  if (entity === 'strategy_experiments') return normalizeStrategyExperimentRow(row);
+  if (entity === 'strategy_decisions') return normalizeStrategyDecisionRow(row);
+  return row;
+};
+
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
   return cookieHeader.split(';').reduce((accumulator, part) => {
@@ -219,6 +346,11 @@ export default async function handler(req, res) {
         project_documents: results.project_documents || [],
         project_finance_items: results.project_finance_items || [],
         strategy_items: results.strategy_items || [],
+        strategy_goals: results.strategy_goals || [],
+        strategy_plans: results.strategy_plans || [],
+        strategy_tactics: results.strategy_tactics || [],
+        strategy_experiments: results.strategy_experiments || [],
+        strategy_decisions: results.strategy_decisions || [],
         templatesWarning,
         strategyNotes: [],
       });
@@ -266,10 +398,10 @@ export default async function handler(req, res) {
         ? (Array.isArray(data)
           ? data.map((row) => normalizeTemplateRow(row, { forUpdate: false }))
           : normalizeTemplateRow(data, { forUpdate: false }))
-        : entity === 'strategy_items'
-          ? (Array.isArray(data)
-            ? data.map((row) => normalizeStrategyRow(row))
-            : normalizeStrategyRow(data))
+          : entity.startsWith('strategy_')
+            ? (Array.isArray(data)
+              ? data.map((row) => normalizeStrategyEntityRow(entity, row))
+              : normalizeStrategyEntityRow(entity, data))
           : data;
 
       if (isBatch) {
@@ -332,8 +464,8 @@ export default async function handler(req, res) {
     try {
       const payload = entity === 'message_templates'
         ? normalizeTemplateRow(data, { forUpdate: true })
-        : entity === 'strategy_items'
-          ? normalizeStrategyRow(data)
+        : entity.startsWith('strategy_')
+          ? normalizeStrategyEntityRow(entity, data)
           : data;
 
       const { data: updatedRow, error } = await supabase
