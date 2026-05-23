@@ -176,9 +176,11 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-[#f8fafc] px-6 py-6 print:overflow-visible">
+        <div className="flex-1 overflow-auto bg-[#f8fafc] px-6 py-6 print:overflow-visible print:bg-white print:p-0">
           <div className="mx-auto w-fit print:w-full print:max-w-none">
-            <InvoicePreview ref={pageRef} invoice={invoice} items={items} brandSettings={brandSettings} />
+            <div className="print-scaler">
+              <InvoicePreview ref={pageRef} invoice={invoice} items={items} brandSettings={brandSettings} />
+            </div>
           </div>
         </div>
 

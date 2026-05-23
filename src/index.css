@@ -1041,8 +1041,15 @@ select:focus-visible {
     z-index: auto !important;
   }
 
-  .no-print {
+  .no-print,
+  .print-wrapper .no-print {
     display: none !important;
+  }
+
+  .print-scaler {
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.65%;
   }
 
   .ds-btn,
