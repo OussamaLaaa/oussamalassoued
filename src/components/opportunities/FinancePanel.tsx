@@ -549,7 +549,7 @@ export default function FinancePanel({
         <div style={s.empty}>No ethical concerns found.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={s.warn + `background: #fef2f2; border: 1px solid #fecaca; color: #991b1b`}>
+          <div style={{ ...s.warn, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
             {ethicalIssues.length} investment idea(s) flagged for ethical review.
           </div>
           {ethicalIssues.map((idea) => (
