@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, Project, Company } from '../../types/opportunities';
 
-type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'review';
+type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'review' | 'ai_assistant';
+
+type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'next_actions';
 type InvestTab = 'overview' | 'ideas' | 'allocation' | 'rules' | 'risk_review' | 'ethical_review';
 
 interface FinancePanelProps {
@@ -119,6 +121,10 @@ export default function FinancePanel({
   const [form, setForm] = useState<Record<string, any>>({});
   const [addSavedGoalId, setAddSavedGoalId] = useState<string | null>(null);
   const [addSavedAmount, setAddSavedAmount] = useState('');
+  const [aiMode, setAiMode] = useState<AiMode>('monthly_review');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const activeAlloc = useMemo(() => financeAllocationRules.filter((r) => r.isActive), [financeAllocationRules]);
   const totalAllocPct = useMemo(() => activeAlloc.reduce((s, r) => s + r.percentage, 0), [activeAlloc]);
@@ -696,6 +702,181 @@ export default function FinancePanel({
     </div>
   );
 
+  const callAiFinance = async (mode: AiMode) => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiResult(null);
+
+    try {
+      const financeSummary = {
+        expectedIncome,
+        receivedIncome,
+        pendingIncome,
+        delayedIncome,
+        paidExpenses,
+        plannedExpenses,
+        netReceived,
+        expectedNet,
+        availableToAllocate,
+        savingsRate,
+        allocationTotalPercentage: totalAllocPct,
+      };
+
+      const response = await fetch('/api/ai-finance', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          financeSummary,
+          allocationRules: financeAllocationRules,
+          purchaseGoals: financePurchaseGoals,
+          investmentIdeas: financeInvestmentIdeas,
+          incomeItems: financeIncome,
+          expenseItems: financeExpenses,
+          mode,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data?.success && data?.analysis) {
+        setAiResult(data.analysis);
+      } else {
+        setAiError(data?.error || 'AI analysis failed. Please try again.');
+        if (data?.code === 'AI_QUOTA_EXCEEDED') {
+          setAiError('AI quota exceeded. Try again later or change Gemini model.');
+        }
+      }
+    } catch (err: any) {
+      setAiError(err?.message || 'Network error. Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const renderAIAssistant = () => (
+    <div>
+      <div style={{ ...s.warn, background: '#f0f9ff', border: '1px solid #bae6fd', color: '#1e40af', marginBottom: '16px' }}>
+        AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice.
+      </div>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'center' }}>
+        <select
+          style={{ ...s.select, width: 'auto', minWidth: '200px' }}
+          value={aiMode}
+          onChange={(e) => setAiMode(e.target.value as AiMode)}
+        >
+          <option value="monthly_review">Monthly Review</option>
+          <option value="allocation_review">Allocation Review</option>
+          <option value="purchase_review">Purchase Goals Review</option>
+          <option value="investment_review">Investment Risk Review</option>
+          <option value="next_actions">Next Actions</option>
+        </select>
+        <button
+          style={{ ...s.btn('#2563eb'), opacity: aiLoading ? 0.6 : 1 }}
+          disabled={aiLoading}
+          onClick={() => callAiFinance(aiMode)}
+        >
+          {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
+        </button>
+      </div>
+
+      {aiLoading && (
+        <div style={{ ...s.card, textAlign: 'center', padding: '32px', color: '#64748b' }}>
+          Analyzing your financial data...
+        </div>
+      )}
+
+      {aiError && (
+        <div style={{ ...s.warn, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
+          {aiError}
+        </div>
+      )}
+
+      {aiResult && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {aiResult.summary && (
+            <div style={s.card}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Summary</div>
+              <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>{aiResult.summary}</div>
+            </div>
+          )}
+
+          {aiResult.incomeAnalysis?.length > 0 && (
+            <div style={s.card}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Income Analysis</div>
+              {aiResult.incomeAnalysis.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #2563eb' }}>{item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.expenseAnalysis?.length > 0 && (
+            <div style={s.card}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Expense Analysis</div>
+              {aiResult.expenseAnalysis.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #991b1b' }}>{item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.allocationReview?.length > 0 && (
+            <div style={s.card}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Allocation Review</div>
+              {aiResult.allocationReview.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #854d0e' }}>{item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.purchaseGoalReview?.length > 0 && (
+            <div style={s.card}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Purchase Goals</div>
+              {aiResult.purchaseGoalReview.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #7c3aed' }}>{item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.investmentRiskReview?.length > 0 && (
+            <div style={s.card}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Investment Risk Review</div>
+              {aiResult.investmentRiskReview.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #c2410c' }}>{item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.ethicalReviewQuestions?.length > 0 && (
+            <div style={{ ...s.card, borderLeft: '3px solid #059669' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Ethical Review Questions</div>
+              {aiResult.ethicalReviewQuestions.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>• {item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.warnings?.length > 0 && (
+            <div style={{ ...s.card, background: '#fef2f2', border: '1px solid #fecaca' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>Warnings</div>
+              {aiResult.warnings.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#991b1b', marginBottom: '4px' }}>⚠ {item}</div>
+              ))}
+            </div>
+          )}
+
+          {aiResult.nextActions?.length > 0 && (
+            <div style={{ ...s.card, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534', marginBottom: '8px' }}>Next Actions</div>
+              {aiResult.nextActions.map((item: string, i: number) => (
+                <div key={i} style={{ fontSize: '13px', color: '#166534', marginBottom: '4px' }}>→ {item}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   // ── Modal ──
 
   const renderForm = () => {
@@ -784,8 +965,8 @@ export default function FinancePanel({
     );
   };
 
-  const tabs: FinanceTab[] = ['dashboard', 'income', 'expenses', 'allocation', 'purchase_goals', 'investments', 'review'];
-  const tabLabels: Record<FinanceTab, string> = { dashboard: 'Dashboard', income: 'Income', expenses: 'Expenses', allocation: 'Allocation', purchase_goals: 'Purchase Goals', investments: 'Investments', review: 'Review' };
+  const tabs: FinanceTab[] = ['dashboard', 'income', 'expenses', 'allocation', 'purchase_goals', 'investments', 'review', 'ai_assistant'];
+  const tabLabels: Record<FinanceTab, string> = { dashboard: 'Dashboard', income: 'Income', expenses: 'Expenses', allocation: 'Allocation', purchase_goals: 'Purchase Goals', investments: 'Investments', review: 'Review', ai_assistant: 'AI Assistant' };
 
   return (
     <div style={s.page}>
@@ -810,6 +991,7 @@ export default function FinancePanel({
               </div>
             </div>
           )}
+          {activeTab === 'ai_assistant' && renderAIAssistant()}
           {modal && renderForm()}
         </div>
         {renderInsight()}
