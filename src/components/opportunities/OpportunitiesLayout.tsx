@@ -286,6 +286,9 @@ const OpportunitiesLayout: React.FC<{
     addFinanceAllocationRule, updateFinanceAllocationRule, deleteFinanceAllocationRule,
     addFinancePurchaseGoal, updateFinancePurchaseGoal, deleteFinancePurchaseGoal,
     addFinanceInvestmentIdea, updateFinanceInvestmentIdea, deleteFinanceInvestmentIdea,
+    financeInvestmentRules, financeInvestmentAllocations,
+    addFinanceInvestmentRule, updateFinanceInvestmentRule, deleteFinanceInvestmentRule,
+    addFinanceInvestmentAllocation, updateFinanceInvestmentAllocation, deleteFinanceInvestmentAllocation,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -722,6 +725,8 @@ const OpportunitiesLayout: React.FC<{
                 financeAllocationRules={financeAllocationRules}
                 financePurchaseGoals={financePurchaseGoals}
                 financeInvestmentIdeas={financeInvestmentIdeas}
+                financeInvestmentRules={financeInvestmentRules}
+                financeInvestmentAllocations={financeInvestmentAllocations}
                 projects={projects}
                 companies={companies}
                 onAddFinanceIncome={addFinanceIncome}
@@ -739,6 +744,12 @@ const OpportunitiesLayout: React.FC<{
                 onAddFinanceInvestmentIdea={addFinanceInvestmentIdea}
                 onUpdateFinanceInvestmentIdea={updateFinanceInvestmentIdea}
                 onDeleteFinanceInvestmentIdea={deleteFinanceInvestmentIdea}
+                onAddFinanceInvestmentRule={addFinanceInvestmentRule}
+                onUpdateFinanceInvestmentRule={updateFinanceInvestmentRule}
+                onDeleteFinanceInvestmentRule={deleteFinanceInvestmentRule}
+                onAddFinanceInvestmentAllocation={addFinanceInvestmentAllocation}
+                onUpdateFinanceInvestmentAllocation={updateFinanceInvestmentAllocation}
+                onDeleteFinanceInvestmentAllocation={deleteFinanceInvestmentAllocation}
               />
             )}
           </div>

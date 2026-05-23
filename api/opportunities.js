@@ -26,6 +26,8 @@ const allowedEntities = new Set([
   'finance_allocation_rules',
   'finance_purchase_goals',
   'finance_investment_ideas',
+  'finance_investment_rules',
+  'finance_investment_allocations',
 ]);
 const tablesAttempted = [
   'companies',
@@ -52,6 +54,8 @@ const tablesAttempted = [
   'finance_allocation_rules',
   'finance_purchase_goals',
   'finance_investment_ideas',
+  'finance_investment_rules',
+  'finance_investment_allocations',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -330,7 +334,40 @@ const normalizeFinanceInvestmentIdeaRow = (row) => ({
   risk_level: toNullableString(row?.risk_level ?? row?.riskLevel) || 'medium',
   ethical_status: toNullableString(row?.ethical_status ?? row?.ethicalStatus) || 'needs_review',
   status: toNullableString(row?.status) || 'researching',
+  decision_status: toNullableString(row?.decision_status ?? row?.decisionStatus) || 'researching',
+  expected_horizon: toNullableString(row?.expected_horizon ?? row?.expectedHorizon),
+  review_date: toNullableString(row?.review_date ?? row?.reviewDate),
+  max_allocation: toNullableNumber(row?.max_allocation ?? row?.maxAllocation),
   expected_reason: toNullableString(row?.expected_reason ?? row?.expectedReason),
+  pros: toNullableString(row?.pros),
+  cons: toNullableString(row?.cons),
+  risks: toNullableString(row?.risks),
+  red_flags: toNullableString(row?.red_flags ?? row?.redFlags),
+  research_links: toNullableString(row?.research_links ?? row?.researchLinks),
+  low_scenario: toNullableString(row?.low_scenario ?? row?.lowScenario),
+  base_scenario: toNullableString(row?.base_scenario ?? row?.baseScenario),
+  high_scenario: toNullableString(row?.high_scenario ?? row?.highScenario),
+  notes: toNullableString(row?.notes),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeFinanceInvestmentRuleRow = (row) => ({
+  title: toRequiredString(row?.title),
+  category: toRequiredString(row?.category),
+  description: toNullableString(row?.description),
+  priority: toNullableNumber(row?.priority) ?? 0,
+  is_active: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: toNullableString(row?.notes),
+});
+
+const normalizeFinanceInvestmentAllocationRow = (row) => ({
+  name: toRequiredString(row?.name),
+  category: toRequiredString(row?.category),
+  percentage: toNullableNumber(row?.percentage) ?? 0,
+  risk_level: toNullableString(row?.risk_level ?? row?.riskLevel) || 'medium',
+  ethical_status: toNullableString(row?.ethical_status ?? row?.ethicalStatus) || 'needs_review',
+  priority: toNullableNumber(row?.priority) ?? 0,
+  is_active: row?.is_active == null ? true : Boolean(row.is_active),
   notes: toNullableString(row?.notes),
 });
 
@@ -340,6 +377,8 @@ const normalizeFinanceEntityRow = (entity, row) => {
   if (entity === 'finance_allocation_rules') return normalizeFinanceAllocationRuleRow(row);
   if (entity === 'finance_purchase_goals') return normalizeFinancePurchaseGoalRow(row);
   if (entity === 'finance_investment_ideas') return normalizeFinanceInvestmentIdeaRow(row);
+  if (entity === 'finance_investment_rules') return normalizeFinanceInvestmentRuleRow(row);
+  if (entity === 'finance_investment_allocations') return normalizeFinanceInvestmentAllocationRow(row);
   return row;
 };
 
@@ -481,6 +520,8 @@ export default async function handler(req, res) {
         finance_allocation_rules: results.finance_allocation_rules || [],
         finance_purchase_goals: results.finance_purchase_goals || [],
         finance_investment_ideas: results.finance_investment_ideas || [],
+        finance_investment_rules: results.finance_investment_rules || [],
+        finance_investment_allocations: results.finance_investment_allocations || [],
         templatesWarning,
         strategyNotes: [],
       });

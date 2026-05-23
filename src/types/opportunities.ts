@@ -338,6 +338,8 @@ export interface OpportunitiesData {
   financeAllocationRules: FinanceAllocationRule[];
   financePurchaseGoals: FinancePurchaseGoal[];
   financeInvestmentIdeas: FinanceInvestmentIdea[];
+  financeInvestmentRules: FinanceInvestmentRule[];
+  financeInvestmentAllocations: FinanceInvestmentAllocation[];
 }
 
 export type StrategySection =
@@ -721,7 +723,47 @@ export interface FinanceInvestmentIdea {
   riskLevel: string;
   ethicalStatus: string;
   status: string;
+  decisionStatus: string;
+  expectedHorizon?: string;
+  reviewDate?: string;
+  maxAllocation?: number;
   expectedReason?: string;
+  pros?: string;
+  cons?: string;
+  risks?: string;
+  redFlags?: string;
+  researchLinks?: string;
+  lowScenario?: string;
+  baseScenario?: string;
+  highScenario?: string;
+  notes?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceInvestmentRule {
+  id: string;
+  title: string;
+  category: string;
+  description?: string;
+  priority: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceInvestmentAllocation {
+  id: string;
+  name: string;
+  category: string;
+  percentage: number;
+  riskLevel: string;
+  ethicalStatus: string;
+  priority: number;
+  isActive: boolean;
   notes?: string;
   createdAt?: string;
   updatedAt?: string;

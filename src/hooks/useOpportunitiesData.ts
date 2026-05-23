@@ -60,6 +60,8 @@ import type {
   FinanceAllocationRule,
   FinancePurchaseGoal,
   FinanceInvestmentIdea,
+  FinanceInvestmentRule,
+  FinanceInvestmentAllocation,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -90,6 +92,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   financeAllocationRules: [],
   financePurchaseGoals: [],
   financeInvestmentIdeas: [],
+  financeInvestmentRules: [],
+  financeInvestmentAllocations: [],
 });
 
 
@@ -126,6 +130,8 @@ type OpportunitiesApiResponse = {
   finance_allocation_rules?: any[];
   finance_purchase_goals?: any[];
   finance_investment_ideas?: any[];
+  finance_investment_rules?: any[];
+  finance_investment_allocations?: any[];
   strategyNotes?: any[];
 };
 
@@ -571,8 +577,21 @@ const financeInvestmentIdeaFromDb = (row: any): FinanceInvestmentIdea => ({
   riskLevel: row?.risk_level ?? row?.riskLevel ?? 'medium',
   ethicalStatus: row?.ethical_status ?? row?.ethicalStatus ?? 'needs_review',
   status: row?.status ?? 'researching',
+  decisionStatus: row?.decision_status ?? row?.decisionStatus ?? 'researching',
+  expectedHorizon: row?.expected_horizon ?? row?.expectedHorizon ?? undefined,
+  reviewDate: row?.review_date ?? row?.reviewDate ?? undefined,
+  maxAllocation: row?.max_allocation ?? row?.maxAllocation ?? undefined,
   expectedReason: row?.expected_reason ?? row?.expectedReason ?? undefined,
+  pros: row?.pros ?? undefined,
+  cons: row?.cons ?? undefined,
+  risks: row?.risks ?? undefined,
+  redFlags: row?.red_flags ?? row?.redFlags ?? undefined,
+  researchLinks: row?.research_links ?? row?.researchLinks ?? undefined,
+  lowScenario: row?.low_scenario ?? row?.lowScenario ?? undefined,
+  baseScenario: row?.base_scenario ?? row?.baseScenario ?? undefined,
+  highScenario: row?.high_scenario ?? row?.highScenario ?? undefined,
   notes: row?.notes ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -586,7 +605,70 @@ const financeInvestmentIdeaToDb = (input: Partial<FinanceInvestmentIdea>) => {
   if (input.riskLevel !== undefined) payload.risk_level = input.riskLevel;
   if (input.ethicalStatus !== undefined) payload.ethical_status = input.ethicalStatus;
   if (input.status !== undefined) payload.status = input.status;
+  if (input.decisionStatus !== undefined) payload.decision_status = input.decisionStatus;
+  if (input.expectedHorizon !== undefined) payload.expected_horizon = toNullableString(input.expectedHorizon);
+  if (input.reviewDate !== undefined) payload.review_date = toNullableString(input.reviewDate);
+  if (input.maxAllocation !== undefined) payload.max_allocation = toNullableNumber(input.maxAllocation);
   if (input.expectedReason !== undefined) payload.expected_reason = toNullableString(input.expectedReason);
+  if (input.pros !== undefined) payload.pros = toNullableString(input.pros);
+  if (input.cons !== undefined) payload.cons = toNullableString(input.cons);
+  if (input.risks !== undefined) payload.risks = toNullableString(input.risks);
+  if (input.redFlags !== undefined) payload.red_flags = toNullableString(input.redFlags);
+  if (input.researchLinks !== undefined) payload.research_links = toNullableString(input.researchLinks);
+  if (input.lowScenario !== undefined) payload.low_scenario = toNullableString(input.lowScenario);
+  if (input.baseScenario !== undefined) payload.base_scenario = toNullableString(input.baseScenario);
+  if (input.highScenario !== undefined) payload.high_scenario = toNullableString(input.highScenario);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const financeInvestmentRuleFromDb = (row: any): FinanceInvestmentRule => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  category: String(row?.category ?? ''),
+  description: row?.description ?? undefined,
+  priority: Number(row?.priority ?? 0),
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeInvestmentRuleToDb = (input: Partial<FinanceInvestmentRule>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.priority !== undefined) payload.priority = Number(input.priority);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const financeInvestmentAllocationFromDb = (row: any): FinanceInvestmentAllocation => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  category: String(row?.category ?? ''),
+  percentage: Number(row?.percentage ?? 0),
+  riskLevel: row?.risk_level ?? row?.riskLevel ?? 'medium',
+  ethicalStatus: row?.ethical_status ?? row?.ethicalStatus ?? 'needs_review',
+  priority: Number(row?.priority ?? 0),
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeInvestmentAllocationToDb = (input: Partial<FinanceInvestmentAllocation>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.percentage !== undefined) payload.percentage = Number(input.percentage);
+  if (input.riskLevel !== undefined) payload.risk_level = input.riskLevel;
+  if (input.ethicalStatus !== undefined) payload.ethical_status = input.ethicalStatus;
+  if (input.priority !== undefined) payload.priority = Number(input.priority);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   return payload;
 };
@@ -784,6 +866,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [financeAllocationRules, setFinanceAllocationRules] = useState<FinanceAllocationRule[]>([]);
   const [financePurchaseGoals, setFinancePurchaseGoals] = useState<FinancePurchaseGoal[]>([]);
   const [financeInvestmentIdeas, setFinanceInvestmentIdeas] = useState<FinanceInvestmentIdea[]>([]);
+  const [financeInvestmentRules, setFinanceInvestmentRules] = useState<FinanceInvestmentRule[]>([]);
+  const [financeInvestmentAllocations, setFinanceInvestmentAllocations] = useState<FinanceInvestmentAllocation[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -807,6 +891,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceAllocationRulesRaw = Array.isArray(payload?.finance_allocation_rules) ? payload.finance_allocation_rules : [];
     const nextFinancePurchaseGoalsRaw = Array.isArray(payload?.finance_purchase_goals) ? payload.finance_purchase_goals : [];
     const nextFinanceInvestmentIdeasRaw = Array.isArray(payload?.finance_investment_ideas) ? payload.finance_investment_ideas : [];
+    const nextFinanceInvestmentRulesRaw = Array.isArray(payload?.finance_investment_rules) ? payload.finance_investment_rules : [];
+    const nextFinanceInvestmentAllocationsRaw = Array.isArray(payload?.finance_investment_allocations) ? payload.finance_investment_allocations : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -865,6 +951,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceAllocationRules = nextFinanceAllocationRulesRaw.map((row: any) => financeAllocationRuleFromDb(row));
     const nextFinancePurchaseGoals = attachFinancePurchaseGoalLinkNames(nextFinancePurchaseGoalsRaw.map((row: any) => financePurchaseGoalFromDb(row)), nextProjects);
     const nextFinanceInvestmentIdeas = nextFinanceInvestmentIdeasRaw.map((row: any) => financeInvestmentIdeaFromDb(row));
+    const nextFinanceInvestmentRules = nextFinanceInvestmentRulesRaw.map((row: any) => financeInvestmentRuleFromDb(row));
+    const nextFinanceInvestmentAllocations = nextFinanceInvestmentAllocationsRaw.map((row: any) => financeInvestmentAllocationFromDb(row));
     const nextStrategyItems = attachStrategyLinkNames(
       nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
       nextProjects,
@@ -902,6 +990,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceAllocationRules(nextFinanceAllocationRules);
     setFinancePurchaseGoals(nextFinancePurchaseGoals);
     setFinanceInvestmentIdeas(nextFinanceInvestmentIdeas);
+    setFinanceInvestmentRules(nextFinanceInvestmentRules);
+    setFinanceInvestmentAllocations(nextFinanceInvestmentAllocations);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -944,6 +1034,8 @@ export const useOpportunitiesData = (enabled = true) => {
           setFinanceAllocationRules([]);
           setFinancePurchaseGoals([]);
           setFinanceInvestmentIdeas([]);
+          setFinanceInvestmentRules([]);
+          setFinanceInvestmentAllocations([]);
           setStrategyItems([]);
           return;
         }
@@ -967,6 +1059,8 @@ export const useOpportunitiesData = (enabled = true) => {
         setFinanceAllocationRules(fallback.financeAllocationRules);
         setFinancePurchaseGoals(fallback.financePurchaseGoals);
         setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
+        setFinanceInvestmentRules(fallback.financeInvestmentRules);
+        setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -1142,7 +1236,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1741,6 +1835,64 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentIdeas((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Finance Investment Rules CRUD ──
+
+  const addFinanceInvestmentRule = async (input: Partial<FinanceInvestmentRule>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Investment rule title is required.');
+    }
+    const row = await syncInsert('finance_investment_rules', financeInvestmentRuleToDb(input));
+    const next = financeInvestmentRuleFromDb(row);
+    setFinanceInvestmentRules((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceInvestmentRule = async (id: string, input: Partial<FinanceInvestmentRule>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Investment rule title is required.');
+    }
+    const row = await syncUpdate('finance_investment_rules', id, financeInvestmentRuleToDb(input));
+    const next = financeInvestmentRuleFromDb(row);
+    setFinanceInvestmentRules((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceInvestmentRule = async (id: string) => {
+    const confirmed = window.confirm('Delete this investment rule?');
+    if (!confirmed) return;
+    await syncDelete('finance_investment_rules', id);
+    setFinanceInvestmentRules((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Finance Investment Allocations CRUD ──
+
+  const addFinanceInvestmentAllocation = async (input: Partial<FinanceInvestmentAllocation>) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Investment allocation name is required.');
+    }
+    const row = await syncInsert('finance_investment_allocations', financeInvestmentAllocationToDb(input));
+    const next = financeInvestmentAllocationFromDb(row);
+    setFinanceInvestmentAllocations((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceInvestmentAllocation = async (id: string, input: Partial<FinanceInvestmentAllocation>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Investment allocation name is required.');
+    }
+    const row = await syncUpdate('finance_investment_allocations', id, financeInvestmentAllocationToDb(input));
+    const next = financeInvestmentAllocationFromDb(row);
+    setFinanceInvestmentAllocations((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceInvestmentAllocation = async (id: string) => {
+    const confirmed = window.confirm('Delete this investment allocation?');
+    if (!confirmed) return;
+    await syncDelete('finance_investment_allocations', id);
+    setFinanceInvestmentAllocations((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -1873,6 +2025,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceAllocationRules(fallback.financeAllocationRules);
     setFinancePurchaseGoals(fallback.financePurchaseGoals);
     setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
+    setFinanceInvestmentRules(fallback.financeInvestmentRules);
+    setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
     setStrategyItems(fallback.strategyItems);
   };
 
@@ -1917,6 +2071,14 @@ export const useOpportunitiesData = (enabled = true) => {
     addFinanceInvestmentIdea,
     updateFinanceInvestmentIdea,
     deleteFinanceInvestmentIdea,
+    financeInvestmentRules,
+    financeInvestmentAllocations,
+    addFinanceInvestmentRule,
+    updateFinanceInvestmentRule,
+    deleteFinanceInvestmentRule,
+    addFinanceInvestmentAllocation,
+    updateFinanceInvestmentAllocation,
+    deleteFinanceInvestmentAllocation,
     addPlan,
     updatePlan,
     deletePlan,
