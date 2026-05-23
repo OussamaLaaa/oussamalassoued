@@ -110,7 +110,13 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceId: invoice.id, fileName, pdfBase64 }),
+        body: JSON.stringify({
+          sourceType: 'invoice',
+          invoiceId: invoice.id,
+          fileName,
+          pdfBase64,
+          debug: import.meta.env.DEV,
+        }),
       });
 
       const result = await response.json().catch(() => ({}));
@@ -131,7 +137,7 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
 
   const handleOpenStoredPdf = async () => {
     try {
-      const response = await fetch(`/api/document-pdf-upload?invoiceId=${encodeURIComponent(invoice.id)}`, {
+      const response = await fetch(`/api/document-pdf-upload?sourceType=invoice&invoiceId=${encodeURIComponent(invoice.id)}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',

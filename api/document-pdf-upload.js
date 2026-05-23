@@ -6,6 +6,8 @@ const BUCKET_NAME = 'generated-documents';
 const MAX_BASE64_LENGTH = 15 * 1024 * 1024;
 const MAX_PDF_BYTES = 12 * 1024 * 1024;
 
+const VALID_SOURCE_TYPES = new Set(['generated_document', 'invoice']);
+
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -110,6 +112,34 @@ const decodePdfBytes = (pdfBase64) => {
   }
 };
 
+const resolveSourceType = (body) => {
+  const raw = String(body?.sourceType || '').trim().toLowerCase();
+  if (VALID_SOURCE_TYPES.has(raw)) return raw;
+  if (body?.documentId) return 'generated_document';
+  if (body?.invoiceId) return 'invoice';
+  return null;
+};
+
+const resolveGetParams = (query) => {
+  const sourceType = String(query?.sourceType || '').trim().toLowerCase();
+  const documentId = String(query?.documentId || '').trim();
+  const invoiceId = String(query?.invoiceId || '').trim();
+
+  if (sourceType === 'generated_document' && documentId) {
+    return { resourceId: documentId, table: 'generated_documents' };
+  }
+  if (sourceType === 'invoice' && invoiceId) {
+    return { resourceId: invoiceId, table: 'invoices' };
+  }
+  if (documentId) {
+    return { resourceId: documentId, table: 'generated_documents' };
+  }
+  if (invoiceId) {
+    return { resourceId: invoiceId, table: 'invoices' };
+  }
+  return null;
+};
+
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
@@ -129,14 +159,13 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const documentId = String(req.query?.documentId || '').trim();
-    const invoiceId = String(req.query?.invoiceId || '').trim();
-    const resourceId = documentId || invoiceId;
-    const table = documentId ? 'generated_documents' : invoiceId ? 'invoices' : '';
+    const params = resolveGetParams(req.query || {});
 
-    if (!resourceId || !table) {
+    if (!params) {
       return toSafeJson(res, 400, { success: false, error: 'Missing documentId or invoiceId.' });
     }
+
+    const { resourceId, table } = params;
 
     const { data: row, error: rowError } = await supabase
       .from(table)
@@ -169,15 +198,19 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = readBody(req);
+    const debug = body?.debug === true;
+
+    const sourceType = resolveSourceType(body);
     const documentId = String(body?.documentId || '').trim();
     const invoiceId = String(body?.invoiceId || '').trim();
     const fileName = String(body?.fileName || '').trim();
     const pdfBase64 = String(body?.pdfBase64 || '').trim();
-    const resourceId = documentId || invoiceId;
-    const table = documentId ? 'generated_documents' : invoiceId ? 'invoices' : '';
 
-    if (!resourceId || !table || !fileName || !pdfBase64) {
-      return toSafeJson(res, 400, { success: false, error: 'Missing documentId, invoiceId, fileName, or pdfBase64.' });
+    const resourceId = sourceType === 'invoice' ? invoiceId : documentId;
+    const table = sourceType === 'invoice' ? 'invoices' : 'generated_documents';
+
+    if (!sourceType || !resourceId || !fileName || !pdfBase64) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing sourceType, documentId/invoiceId, fileName, or pdfBase64.' });
     }
 
     if (!/\.pdf$/i.test(fileName)) {
@@ -195,7 +228,7 @@ export default async function handler(req, res) {
 
     const timestamp = Date.now();
     const safeName = safeFileName(fileName);
-    const storagePath = `${resourceId}/${timestamp}-${safeName}`;
+    const storagePath = `${sourceType}/${resourceId}/${timestamp}-${safeName}`;
 
     const pdfBlob = new Blob([decoded.buffer], { type: 'application/pdf' });
 
@@ -208,23 +241,48 @@ export default async function handler(req, res) {
       });
 
     if (uploadError) {
-      console.error('[Document PDF] Storage upload failed', { bucket: BUCKET_NAME, resourceId, storagePath, error: uploadError });
-      return toSafeJson(res, 500, { success: false, error: 'Unable to store PDF. Please ensure the "generated-documents" storage bucket exists in your Supabase project.' });
+      const errPayload = { success: false, error: 'Unable to store PDF. Please ensure the "generated-documents" storage bucket exists in your Supabase project.' };
+      if (debug) {
+        errPayload.debug = {
+          phase: 'storage_upload',
+          sourceType,
+          storagePath,
+          errorMessage: uploadError.message,
+          errorCode: uploadError.statusCode || undefined,
+        };
+      }
+      console.error('[Document PDF] Storage upload failed', { phase: 'storage_upload', sourceType, resourceId, storagePath, error: uploadError });
+      return toSafeJson(res, 500, errPayload);
     }
 
     const { error: updateError } = await supabase
       .from(table)
-      .update({ pdf_storage_path: storagePath, updated_at: new Date().toISOString() })
+      .update({ pdf_storage_path: storagePath })
       .eq('id', resourceId);
 
     if (updateError) {
-      console.error('[Document PDF] Database update failed', { resourceId, table, storagePath, error: updateError });
-      return toSafeJson(res, 500, { success: false, error: 'PDF stored, but document record could not be updated.' });
+      const errPayload = { success: false, error: 'PDF uploaded but database update failed.' };
+      if (debug) {
+        errPayload.debug = {
+          phase: 'db_update',
+          sourceType,
+          targetTable: table,
+          resourceId,
+          storagePath,
+          updatePayloadKeys: ['pdf_storage_path'],
+          dbUpdateErrorMessage: updateError.message,
+          dbUpdateErrorCode: updateError.code || undefined,
+          dbUpdateErrorDetails: updateError.details || undefined,
+        };
+      }
+      console.error('[Document PDF] Database update failed', { phase: 'db_update', sourceType, table, resourceId, storagePath, error: updateError });
+      return toSafeJson(res, 500, errPayload);
     }
 
     return toSafeJson(res, 200, {
       success: true,
       storagePath,
+      sourceType,
       message: 'PDF stored successfully.',
     });
   }

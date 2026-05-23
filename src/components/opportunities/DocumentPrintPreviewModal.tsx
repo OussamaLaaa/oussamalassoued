@@ -122,9 +122,11 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          sourceType: 'generated_document',
           documentId: previewDocument.id,
           fileName: safeFileName,
           pdfBase64,
+          debug: import.meta.env.DEV,
         }),
       });
 

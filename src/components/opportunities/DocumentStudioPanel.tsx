@@ -480,7 +480,7 @@ const DocumentStudioPanel: React.FC<{
   const openStoredPdf = async (generatedDocument: GeneratedDocument) => {
     const popup = window.open('about:blank', '_blank');
     try {
-      const response = await fetch(`/api/document-pdf-upload?documentId=${encodeURIComponent(generatedDocument.id)}`, {
+      const response = await fetch(`/api/document-pdf-upload?sourceType=generated_document&documentId=${encodeURIComponent(generatedDocument.id)}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
