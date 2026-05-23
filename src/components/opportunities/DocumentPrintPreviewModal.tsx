@@ -30,6 +30,16 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    if (!isOpen) return undefined;
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   const safeFileName = useMemo(() => {
     const raw = String(previewDocument?.title || 'document')
       .trim()
@@ -138,11 +148,7 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   };
 
   const handlePrint = () => {
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.print();
-      }, 100);
-    });
+    window.print();
   };
 
   if (!isOpen || !previewDocument) {
@@ -150,168 +156,55 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   }
 
   return (
-    <div className="doc-preview-overlay">
-      <div className="no-print doc-preview-toolbar">
-        <div className="doc-preview-toolbar-inner">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]">
+      <button type="button" aria-label="Close preview" className="absolute inset-0" onClick={onClose} />
+      <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#e5e7eb] px-6 py-4">
           <div>
-            <div className="doc-preview-toolbar-title">Print Preview</div>
-            <div className="doc-preview-toolbar-subtitle">
-              Use Print / Save as PDF to generate a local PDF from the browser dialog.
-            </div>
+            <h3 className="text-base font-semibold text-[#0f172a]">Print Preview</h3>
+            <p className="mt-0.5 text-sm text-[#64748b]">Print, export, or store as a private PDF.</p>
           </div>
-          <div className="doc-preview-toolbar-actions">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void generateAndStorePdf()}
               disabled={statusState === 'generating' || statusState === 'uploading'}
-              className="doc-preview-btn-secondary"
+              className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] transition-colors hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {statusState === 'generating' ? 'Generating PDF...' : statusState === 'uploading' ? 'Uploading PDF...' : 'Generate & Store PDF'}
             </button>
             <button
               type="button"
-              onClick={onClose}
-              className="doc-preview-btn-ghost"
-            >
-              Close
-            </button>
-            <button
-              type="button"
               onClick={handlePrint}
-              className="doc-preview-btn-primary"
+              className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]"
             >
               Print / Save as PDF
             </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="no-print flex-1 overflow-auto bg-[#f8fafc] px-6 py-6">
+          <div className="mx-auto w-fit">
+            <ProfessionalDocumentView ref={pageRef} document={previewDocument} brandSettings={brandSettings} />
+          </div>
+        </div>
+
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] px-6 py-3 text-sm text-[#64748b]">
+          <div>
+            {statusMessage || (statusState === 'idle' ? 'Ready' : '')}
+          </div>
+          <div>
+            {statusState === 'error' ? statusMessage : 'Stored PDFs are saved in private storage and opened through temporary signed links.'}
           </div>
         </div>
       </div>
-
-      <div className="doc-preview-content">
-        <ProfessionalDocumentView ref={pageRef} document={previewDocument} brandSettings={brandSettings} />
-      </div>
-
-      <div className="no-print doc-preview-status">
-        <div className={`doc-preview-status-inner ${statusState === 'error' ? 'doc-preview-status-error' : statusState === 'success' ? 'doc-preview-status-success' : ''}`}>
-          {statusMessage || 'Stored PDFs are saved in private storage and opened through temporary signed links.'}
-        </div>
-      </div>
-
-      <style>{`
-        .doc-preview-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 1200;
-          overflow-y: auto;
-          background: #f8fafc;
-        }
-        .doc-preview-toolbar {
-          position: sticky;
-          top: 0;
-          z-index: 2;
-          border-bottom: 1px solid #e5e7eb;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(8px);
-        }
-        .doc-preview-toolbar-inner {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          max-width: 210mm;
-          margin: 0 auto;
-          padding: 12px 16px;
-        }
-        .doc-preview-toolbar-title {
-          font-size: 14px;
-          font-weight: 600;
-          color: #0f172a;
-        }
-        .doc-preview-toolbar-subtitle {
-          font-size: 12px;
-          color: #64748b;
-        }
-        .doc-preview-toolbar-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-        .doc-preview-btn-primary {
-          border-radius: 8px;
-          background: #2563eb;
-          padding: 8px 16px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #fff;
-          border: none;
-          cursor: pointer;
-        }
-        .doc-preview-btn-primary:hover { background: #1d4ed8; }
-        .doc-preview-btn-secondary {
-          border-radius: 8px;
-          border: 1px solid #bfdbfe;
-          background: #eff6ff;
-          padding: 8px 16px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #1d4ed8;
-          cursor: pointer;
-        }
-        .doc-preview-btn-secondary:hover { background: #dbeafe; }
-        .doc-preview-btn-secondary:disabled { opacity: 0.7; cursor: not-allowed; }
-        .doc-preview-btn-ghost {
-          border-radius: 8px;
-          border: 1px solid #cbd5e1;
-          background: #fff;
-          padding: 8px 16px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #334155;
-          cursor: pointer;
-        }
-        .doc-preview-btn-ghost:hover { background: #f8fafc; }
-        .doc-preview-content {
-          max-width: 210mm;
-          margin: 0 auto;
-          padding: 24px 16px;
-        }
-        .doc-preview-status {
-          max-width: 210mm;
-          margin: 0 auto;
-          padding: 0 16px 24px;
-        }
-        .doc-preview-status-inner {
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-          background: #fff;
-          padding: 12px 16px;
-          font-size: 13px;
-          color: #475569;
-        }
-        .doc-preview-status-error {
-          border-color: #fecaca !important;
-          background: #fff1f2 !important;
-          color: #b91c1c !important;
-        }
-        .doc-preview-status-success {
-          border-color: #bbf7d0 !important;
-          background: #f0fdf4 !important;
-          color: #166534 !important;
-        }
-        @media print {
-          .doc-preview-overlay {
-            position: static !important;
-            background: #fff !important;
-            overflow: visible !important;
-          }
-          .doc-preview-content {
-            max-width: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 };
