@@ -51,6 +51,10 @@ import type {
   StrategyExperimentInput,
   StrategyDecision,
   StrategyDecisionInput,
+  Plan,
+  PlanInput,
+  PlanItem,
+  PlanItemInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -74,6 +78,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   strategyExperiments: [],
   strategyDecisions: [],
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
+  plans: [],
+  planItems: [],
 });
 
 
@@ -103,6 +109,8 @@ type OpportunitiesApiResponse = {
   strategy_tactics?: any[];
   strategy_experiments?: any[];
   strategy_decisions?: any[];
+  plans?: any[];
+  plan_items?: any[];
   strategyNotes?: any[];
 };
 
@@ -351,6 +359,90 @@ const strategyExperimentToDb = (input: Partial<StrategyExperimentInput>) => {
   return payload;
 };
 
+const planFromDb = (row: any): Plan => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  type: row?.type,
+  status: row?.status ?? 'planned',
+  priority: row?.priority ?? 'medium',
+  startDate: row?.start_date ?? row?.startDate ?? undefined,
+  endDate: row?.end_date ?? row?.endDate ?? undefined,
+  focus: row?.focus ?? undefined,
+  successCriteria: row?.success_criteria ?? row?.successCriteria ?? undefined,
+  reviewNotes: row?.review_notes ?? row?.reviewNotes ?? undefined,
+  linkedStrategyGoalId: row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const planToDb = (input: Partial<PlanInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.type !== undefined) payload.type = input.type;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.startDate !== undefined) payload.start_date = toNullableString(input.startDate);
+  if (input.endDate !== undefined) payload.end_date = toNullableString(input.endDate);
+  if (input.focus !== undefined) payload.focus = toNullableString(input.focus);
+  if (input.successCriteria !== undefined) payload.success_criteria = toNullableString(input.successCriteria);
+  if (input.reviewNotes !== undefined) payload.review_notes = toNullableString(input.reviewNotes);
+  if (input.linkedStrategyGoalId !== undefined) payload.linked_strategy_goal_id = toNullableString(input.linkedStrategyGoalId);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const planItemFromDb = (row: any): PlanItem => ({
+  id: String(row?.id ?? ''),
+  planId: String(row?.plan_id ?? row?.planId ?? ''),
+  title: String(row?.title ?? ''),
+  description: row?.description ?? undefined,
+  category: row?.category ?? undefined,
+  status: row?.status ?? 'todo',
+  priority: row?.priority ?? 'medium',
+  dueDate: row?.due_date ?? row?.dueDate ?? undefined,
+  completedAt: row?.completed_at ?? row?.completedAt ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedStrategyGoalId: row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const planItemToDb = (input: Partial<PlanItemInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.planId !== undefined) payload.plan_id = input.planId;
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.dueDate !== undefined) payload.due_date = toNullableString(input.dueDate);
+  if (input.completedAt !== undefined) payload.completed_at = toNullableString(input.completedAt);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedStrategyGoalId !== undefined) payload.linked_strategy_goal_id = toNullableString(input.linkedStrategyGoalId);
+  return payload;
+};
+
+const attachOsPlanLinkNames = (items: Plan[], projects: Project[], strategyGoals: StrategyGoal[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const goalById = new Map(strategyGoals.map((g) => [g.id, g.title] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedStrategyGoalTitle: item.linkedStrategyGoalTitle || goalById.get(item.linkedStrategyGoalId || ''),
+  }));
+};
+
+const attachPlanItemLinkNames = (items: PlanItem[], projects: Project[], strategyGoals: StrategyGoal[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const goalById = new Map(strategyGoals.map((g) => [g.id, g.title] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedStrategyGoalTitle: item.linkedStrategyGoalTitle || goalById.get(item.linkedStrategyGoalId || ''),
+  }));
+};
+
 const strategyDecisionToDb = (input: Partial<StrategyDecisionInput>) => {
   const payload: Record<string, unknown> = {};
   if (input.title !== undefined) payload.title = String(input.title || '').trim();
@@ -491,6 +583,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [strategyTactics, setStrategyTactics] = useState<StrategyTactic[]>([]);
   const [strategyExperiments, setStrategyExperiments] = useState<StrategyExperiment[]>([]);
   const [strategyDecisions, setStrategyDecisions] = useState<StrategyDecision[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [planItems, setPlanItems] = useState<PlanItem[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -507,6 +601,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
     const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
+    const nextPlansRaw = Array.isArray(payload?.plans) ? payload.plans : [];
+    const nextPlanItemsRaw = Array.isArray(payload?.plan_items) ? payload.plan_items : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -558,6 +654,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextStrategyTactics = attachTacticLinkNames(nextStrategyTacticsRaw.map((row: any) => strategyTacticFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
     const nextStrategyExperiments = attachExperimentLinkNames(nextStrategyExperimentsRaw.map((row: any) => strategyExperimentFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
     const nextStrategyDecisions = attachDecisionLinkNames(nextStrategyDecisionsRaw.map((row: any) => strategyDecisionFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
+    const nextPlans = attachOsPlanLinkNames(nextPlansRaw.map((row: any) => planFromDb(row)), nextProjects, nextStrategyGoals);
+    const nextPlanItems = attachPlanItemLinkNames(nextPlanItemsRaw.map((row: any) => planItemFromDb(row)), nextProjects, nextStrategyGoals);
     const nextStrategyItems = attachStrategyLinkNames(
       nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
       nextProjects,
@@ -588,6 +686,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyTactics(nextStrategyTactics);
     setStrategyExperiments(nextStrategyExperiments);
     setStrategyDecisions(nextStrategyDecisions);
+    setPlans(nextPlans);
+    setPlanItems(nextPlanItems);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -623,6 +723,8 @@ export const useOpportunitiesData = (enabled = true) => {
           setStrategyTactics([]);
           setStrategyExperiments([]);
           setStrategyDecisions([]);
+          setPlans([]);
+          setPlanItems([]);
           setStrategyItems([]);
           return;
         }
@@ -639,6 +741,8 @@ export const useOpportunitiesData = (enabled = true) => {
         setStrategyTactics(fallback.strategyTactics);
         setStrategyExperiments(fallback.strategyExperiments);
         setStrategyDecisions(fallback.strategyDecisions);
+        setPlans(fallback.plans);
+        setPlanItems(fallback.planItems);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -814,7 +918,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1210,6 +1314,64 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyDecisions((current) => current.filter((item) => item.id !== id));
   };
 
+  const addPlan = async (input: PlanInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Plan title is required.');
+    }
+    const row = await syncInsert('plans', planToDb(input));
+    const next = attachOsPlanLinkNames([planFromDb(row)], projects, strategyGoals)[0];
+    setPlans((current) => [next, ...current]);
+    return next;
+  };
+
+  const updatePlan = async (id: string, input: Partial<PlanInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Plan title is required.');
+    }
+    const row = await syncUpdate('plans', id, planToDb(input));
+    const next = attachOsPlanLinkNames([planFromDb(row)], projects, strategyGoals)[0];
+    setPlans((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deletePlan = async (id: string) => {
+    const confirmed = window.confirm('Delete this plan and all its items?');
+    if (!confirmed) return;
+    await syncDelete('plans', id);
+    setPlans((current) => current.filter((item) => item.id !== id));
+    setPlanItems((current) => current.filter((item) => item.planId !== id));
+  };
+
+  const addPlanItem = async (input: PlanItemInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Plan item title is required.');
+    }
+    if (!String(input.planId || '').trim()) {
+      throw new Error('Plan ID is required.');
+    }
+    const row = await syncInsert('plan_items', planItemToDb(input));
+    const next = attachPlanItemLinkNames([planItemFromDb(row)], projects, strategyGoals)[0];
+    setPlanItems((current) => [next, ...current]);
+    return next;
+  };
+
+  const updatePlanItem = async (id: string, input: Partial<PlanItemInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Plan item title is required.');
+    }
+    const row = await syncUpdate('plan_items', id, planItemToDb(input));
+    const next = attachPlanItemLinkNames([planItemFromDb(row)], projects, strategyGoals)[0];
+    setPlanItems((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deletePlanItem = async (id: string) => {
+    const confirmed = window.confirm('Delete this plan item?');
+    if (!confirmed) return;
+    await syncDelete('plan_items', id);
+    setPlanItems((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -1296,6 +1458,17 @@ export const useOpportunitiesData = (enabled = true) => {
     });
   }, [projects, strategyGoals, strategyPlans]);
 
+  useEffect(() => {
+    setPlans((current) => {
+      const next = attachOsPlanLinkNames(current, projects, strategyGoals);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedStrategyGoalTitle']) ? next : current;
+    });
+    setPlanItems((current) => {
+      const next = attachPlanItemLinkNames(current, projects, strategyGoals);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedStrategyGoalTitle']) ? next : current;
+    });
+  }, [projects, strategyGoals]);
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -1309,6 +1482,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyTactics(fallback.strategyTactics);
     setStrategyExperiments(fallback.strategyExperiments);
     setStrategyDecisions(fallback.strategyDecisions);
+    setPlans(fallback.plans);
+    setPlanItems(fallback.planItems);
     setStrategyItems(fallback.strategyItems);
   };
 
@@ -1331,6 +1506,14 @@ export const useOpportunitiesData = (enabled = true) => {
     strategyExperiments,
     strategyDecisions,
     strategyNotes,
+    plans,
+    planItems,
+    addPlan,
+    updatePlan,
+    deletePlan,
+    addPlanItem,
+    updatePlanItem,
+    deletePlanItem,
     importCompaniesBatch,
     addCompany,
     addPerson,

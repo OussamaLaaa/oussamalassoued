@@ -19,6 +19,8 @@ const allowedEntities = new Set([
   'strategy_tactics',
   'strategy_experiments',
   'strategy_decisions',
+  'plans',
+  'plan_items',
 ]);
 const tablesAttempted = [
   'companies',
@@ -38,6 +40,8 @@ const tablesAttempted = [
   'strategy_tactics',
   'strategy_experiments',
   'strategy_decisions',
+  'plans',
+  'plan_items',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -229,6 +233,33 @@ const normalizeStrategyDecisionRow = (row) => ({
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
 });
 
+const normalizePlanRow = (row) => ({
+  title: toRequiredString(row?.title),
+  type: toRequiredString(row?.type),
+  status: toNullableString(row?.status) || 'planned',
+  priority: toNullableString(row?.priority) || 'medium',
+  start_date: toNullableString(row?.start_date ?? row?.startDate),
+  end_date: toNullableString(row?.end_date ?? row?.endDate),
+  focus: toNullableString(row?.focus),
+  success_criteria: toNullableString(row?.success_criteria ?? row?.successCriteria),
+  review_notes: toNullableString(row?.review_notes ?? row?.reviewNotes),
+  linked_strategy_goal_id: toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizePlanItemRow = (row) => ({
+  plan_id: toRequiredString(row?.plan_id ?? row?.planId),
+  title: toRequiredString(row?.title),
+  description: toNullableString(row?.description),
+  category: toNullableString(row?.category),
+  status: toNullableString(row?.status) || 'todo',
+  priority: toNullableString(row?.priority) || 'medium',
+  due_date: toNullableString(row?.due_date ?? row?.dueDate),
+  completed_at: toNullableString(row?.completed_at ?? row?.completedAt),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_strategy_goal_id: toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId),
+});
+
 const normalizeStrategyEntityRow = (entity, row) => {
   if (entity === 'strategy_items') return normalizeStrategyRow(row);
   if (entity === 'strategy_goals') return normalizeStrategyGoalRow(row);
@@ -236,6 +267,14 @@ const normalizeStrategyEntityRow = (entity, row) => {
   if (entity === 'strategy_tactics') return normalizeStrategyTacticRow(row);
   if (entity === 'strategy_experiments') return normalizeStrategyExperimentRow(row);
   if (entity === 'strategy_decisions') return normalizeStrategyDecisionRow(row);
+  return row;
+};
+
+const normalizeEntityRow = (entity, row) => {
+  if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
+  if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
+  if (entity === 'plans') return normalizePlanRow(row);
+  if (entity === 'plan_items') return normalizePlanItemRow(row);
   return row;
 };
 
@@ -351,6 +390,8 @@ export default async function handler(req, res) {
         strategy_tactics: results.strategy_tactics || [],
         strategy_experiments: results.strategy_experiments || [],
         strategy_decisions: results.strategy_decisions || [],
+        plans: results.plans || [],
+        plan_items: results.plan_items || [],
         templatesWarning,
         strategyNotes: [],
       });
@@ -394,15 +435,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        const payload = entity === 'message_templates'
-        ? (Array.isArray(data)
-          ? data.map((row) => normalizeTemplateRow(row, { forUpdate: false }))
-          : normalizeTemplateRow(data, { forUpdate: false }))
-          : entity.startsWith('strategy_')
-            ? (Array.isArray(data)
-              ? data.map((row) => normalizeStrategyEntityRow(entity, row))
-              : normalizeStrategyEntityRow(entity, data))
-          : data;
+        const payload = Array.isArray(data)
+          ? data.map((row) => normalizeEntityRow(entity, row))
+          : normalizeEntityRow(entity, data);
 
       if (isBatch) {
         const { data: insertedRows, error } = await supabase
@@ -466,7 +501,11 @@ export default async function handler(req, res) {
         ? normalizeTemplateRow(data, { forUpdate: true })
         : entity.startsWith('strategy_')
           ? normalizeStrategyEntityRow(entity, data)
-          : data;
+          : entity === 'plans'
+            ? normalizePlanRow(data)
+            : entity === 'plan_items'
+              ? normalizePlanItemRow(data)
+              : data;
 
       const { data: updatedRow, error } = await supabase
         .from(entity)

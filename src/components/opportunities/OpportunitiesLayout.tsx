@@ -9,6 +9,7 @@ import DealsTable, { type DealFilters } from './DealsTable';
 import ProjectsPanel from './ProjectsPanel';
 import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
+import PlansPanel from './PlansPanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -34,6 +35,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'queue', label: 'Outreach Queue' },
   { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
+  { id: 'plans', label: 'Plans' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -275,6 +277,7 @@ const OpportunitiesLayout: React.FC<{
     addProjectMeeting, deleteProjectMeeting,
     addProjectDocument, deleteProjectDocument,
     addProjectFinanceItem, deleteProjectFinanceItem,
+    plans, planItems, addPlan, updatePlan, deletePlan, addPlanItem, updatePlanItem, deletePlanItem,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -686,6 +689,21 @@ const OpportunitiesLayout: React.FC<{
                 onAddStrategyDecision={addStrategyDecision}
                 onUpdateStrategyDecision={updateStrategyDecision}
                 onDeleteStrategyDecision={deleteStrategyDecision}
+              />
+            )}
+
+            {tab === 'plans' && (
+              <PlansPanel
+                plans={plans}
+                planItems={planItems}
+                projects={projects}
+                strategyGoals={strategyGoals}
+                onAddPlan={addPlan}
+                onUpdatePlan={updatePlan}
+                onDeletePlan={deletePlan}
+                onAddPlanItem={addPlanItem}
+                onUpdatePlanItem={updatePlanItem}
+                onDeletePlanItem={deletePlanItem}
               />
             )}
           </div>

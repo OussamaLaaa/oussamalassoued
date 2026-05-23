@@ -331,6 +331,8 @@ export interface OpportunitiesData {
   strategyExperiments: StrategyExperiment[];
   strategyDecisions: StrategyDecision[];
   strategyNotes: StrategyNote[];
+  plans: Plan[];
+  planItems: PlanItem[];
 }
 
 export type StrategySection =
@@ -568,6 +570,75 @@ export interface StrategyNote {
   priority?: 'low' | 'medium' | 'high';
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+export type PlanType = 'yearly' | 'six_months' | 'quarterly' | 'monthly' | 'weekly' | 'daily';
+export type PlanStatus = 'planned' | 'active' | 'completed' | 'archived';
+export type PlanItemStatus = 'todo' | 'doing' | 'done' | 'blocked' | 'cancelled';
+export type PlanItemCategory = 'work' | 'career' | 'freelance' | 'project' | 'money' | 'health' | 'learning' | 'family' | 'admin';
+
+export interface Plan {
+  id: string;
+  title: string;
+  type: PlanType;
+  status: PlanStatus;
+  priority: StrategyPriority;
+  startDate?: string;
+  endDate?: string;
+  focus?: string;
+  successCriteria?: string;
+  reviewNotes?: string;
+  linkedStrategyGoalId?: string;
+  linkedStrategyGoalTitle?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PlanInput {
+  title: string;
+  type: PlanType;
+  status?: PlanStatus;
+  priority?: StrategyPriority;
+  startDate?: string;
+  endDate?: string;
+  focus?: string;
+  successCriteria?: string;
+  reviewNotes?: string;
+  linkedStrategyGoalId?: string;
+  linkedProjectId?: string;
+}
+
+export interface PlanItem {
+  id: string;
+  planId: string;
+  title: string;
+  description?: string;
+  category?: PlanItemCategory;
+  status: PlanItemStatus;
+  priority: StrategyPriority;
+  dueDate?: string;
+  completedAt?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedStrategyGoalId?: string;
+  linkedStrategyGoalTitle?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PlanItemInput {
+  planId: string;
+  title: string;
+  description?: string;
+  category?: PlanItemCategory;
+  status?: PlanItemStatus;
+  priority?: StrategyPriority;
+  dueDate?: string;
+  completedAt?: string;
+  linkedProjectId?: string;
+  linkedStrategyGoalId?: string;
+}
+
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
