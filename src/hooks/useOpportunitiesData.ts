@@ -1863,6 +1863,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (input.dueDate !== undefined) payload.due_date = toNullableString(input.dueDate);
     if (input.signedDate !== undefined) payload.signed_date = toNullableString(input.signedDate);
     if (input.pdfUrl !== undefined) payload.pdf_url = toNullableString(input.pdfUrl);
+    if (input.pdfStoragePath !== undefined) payload.pdf_storage_path = toNullableString(input.pdfStoragePath);
     if (input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
     if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
