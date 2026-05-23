@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, Project, Company } from '../../types/opportunities';
+import React, { useState, useMemo, useCallback } from 'react';
+import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, Project, Company } from '../../types/opportunities';
 
 type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'review' | 'ai_assistant';
 
@@ -37,6 +37,10 @@ interface FinancePanelProps {
   onAddFinanceInvestmentAllocation: (input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
   onUpdateFinanceInvestmentAllocation: (id: string, input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
   onDeleteFinanceInvestmentAllocation: (id: string) => Promise<void>;
+  financePeriods: FinancePeriod[];
+  onAddFinancePeriod: (input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
+  onUpdateFinancePeriod: (id: string, input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
+  onDeleteFinancePeriod: (id: string) => Promise<void>;
 }
 
 const s = {
@@ -114,6 +118,8 @@ export default function FinancePanel({
   onAddFinanceInvestmentIdea, onUpdateFinanceInvestmentIdea, onDeleteFinanceInvestmentIdea,
   onAddFinanceInvestmentRule, onUpdateFinanceInvestmentRule, onDeleteFinanceInvestmentRule,
   onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
+  financePeriods,
+  onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
 }: FinancePanelProps) {
   const [activeTab, setActiveTab] = useState<FinanceTab>('dashboard');
   const [iTab, setITab] = useState<InvestTab>('overview');
@@ -125,42 +131,99 @@ export default function FinancePanel({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [periodTypeFilter, setPeriodTypeFilter] = useState<string>('monthly');
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+
+  const filteredPeriods = useMemo(() => financePeriods.filter((p) => p.type === periodTypeFilter), [financePeriods, periodTypeFilter]);
+  const selectedPeriod = useMemo(() => filteredPeriods.find((p) => p.id === selectedPeriodId) || null, [filteredPeriods, selectedPeriodId]);
+
+  const hasCurrentMonthPeriod = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return filteredPeriods.some((p) => {
+      if (p.type !== 'monthly') return false;
+      const sd = p.startDate ? new Date(p.startDate) : null;
+      return sd && sd.getMonth() === m && sd.getFullYear() === y;
+    });
+  }, [filteredPeriods]);
+
+  const isInPeriod = useCallback((d?: string) => {
+    if (!selectedPeriod) return false;
+    if (!d) return false;
+    const date = new Date(d);
+    const sd = selectedPeriod.startDate ? new Date(selectedPeriod.startDate) : null;
+    const ed = selectedPeriod.endDate ? new Date(selectedPeriod.endDate) : null;
+    if (sd && ed) return date >= sd && date <= ed;
+    if (sd) return date >= sd;
+    return false;
+  }, [selectedPeriod]);
+
+  const matchesPeriod = (fpId?: string) => {
+    if (!selectedPeriodId) return true;
+    return fpId === selectedPeriodId;
+  };
+
+  const periodLabel = selectedPeriod?.title || (periodTypeFilter === 'monthly' ? 'Current Month' : `${periodTypeFilter.replace('_', ' ')}`);
 
   const activeAlloc = useMemo(() => financeAllocationRules.filter((r) => r.isActive), [financeAllocationRules]);
   const totalAllocPct = useMemo(() => activeAlloc.reduce((s, r) => s + r.percentage, 0), [activeAlloc]);
 
+  const inPeriod = useCallback((d?: string) => selectedPeriodId ? isInPeriod(d) : isCM(d), [selectedPeriodId, isInPeriod]);
+
   const expectedIncome = useMemo(() => financeIncome.reduce((s, i) => {
-    if (i.expectedAmount != null && i.expectedDate && isCM(i.expectedDate)) return s + i.expectedAmount;
-    if (i.incomeDate && isCM(i.incomeDate)) return s + i.amount;
+    if (!matchesPeriod(i.financePeriodId)) return s;
+    if (i.expectedAmount != null && i.expectedDate && inPeriod(i.expectedDate)) return s + i.expectedAmount;
+    if (i.incomeDate && inPeriod(i.incomeDate)) return s + i.amount;
     return s;
-  }, 0), [financeIncome]);
+  }, 0), [financeIncome, selectedPeriodId]);
 
   const receivedIncome = useMemo(() => financeIncome.reduce((s, i) => {
-    if (i.receivedAmount != null && i.receivedDate && isCM(i.receivedDate)) return s + i.receivedAmount;
-    if (i.status === 'received' && i.incomeDate && isCM(i.incomeDate)) return s + i.amount;
+    if (!matchesPeriod(i.financePeriodId)) return s;
+    if (i.receivedAmount != null && i.receivedDate && inPeriod(i.receivedDate)) return s + i.receivedAmount;
+    if (i.status === 'received' && i.incomeDate && inPeriod(i.incomeDate)) return s + i.amount;
     return s;
-  }, 0), [financeIncome]);
+  }, 0), [financeIncome, selectedPeriodId]);
 
   const pendingIncome = useMemo(() => Math.max(expectedIncome - receivedIncome, 0), [expectedIncome, receivedIncome]);
 
   const delayedIncome = useMemo(() => financeIncome.reduce((s, i) => {
+    if (!matchesPeriod(i.financePeriodId)) return s;
     if (i.status === 'delayed') {
       return s + (i.expectedAmount != null ? i.expectedAmount : i.amount);
     }
     return s;
-  }, 0), [financeIncome]);
+  }, 0), [financeIncome, selectedPeriodId]);
 
-  const paidExpenses = useMemo(() => financeExpenses.filter((e) => e.status === 'paid' && isCM(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses]);
+  const paidExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && e.status === 'paid' && inPeriod(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses, selectedPeriodId]);
 
-  const plannedExpenses = useMemo(() => financeExpenses.filter((e) => (e.status === 'planned' || e.status === 'unpaid') && isCM(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses]);
+  const plannedExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && (e.status === 'planned' || e.status === 'unpaid') && inPeriod(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses, selectedPeriodId]);
 
   const netReceived = receivedIncome - paidExpenses;
   const expectedNet = expectedIncome - (paidExpenses + plannedExpenses);
   const availableToAllocate = Math.max(netReceived, 0);
   const sRate = receivedIncome > 0 ? (netReceived / receivedIncome) * 100 : 0;
 
-  const mIncome = useMemo(() => financeIncome.filter((i) => i.status === 'received' && isCM(i.incomeDate)), [financeIncome]);
-  const mExpenses = useMemo(() => financeExpenses.filter((e) => e.status === 'paid' && isCM(e.expenseDate)), [financeExpenses]);
+  const mIncome = useMemo(() => financeIncome.filter((i) => matchesPeriod(i.financePeriodId) && i.status === 'received' && inPeriod(i.incomeDate)), [financeIncome, selectedPeriodId]);
+  const mExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && e.status === 'paid' && inPeriod(e.expenseDate)), [financeExpenses, selectedPeriodId]);
+
+  const [periodDataFilter, setPeriodDataFilter] = useState<'all' | 'selected'>('selected');
+  const filteredFinanceIncome = useMemo(() => {
+    if (periodDataFilter === 'all' || !selectedPeriodId) return financeIncome;
+    return financeIncome.filter((i) => i.financePeriodId === selectedPeriodId);
+  }, [financeIncome, selectedPeriodId, periodDataFilter]);
+  const filteredFinanceExpenses = useMemo(() => {
+    if (periodDataFilter === 'all' || !selectedPeriodId) return financeExpenses;
+    return financeExpenses.filter((e) => e.financePeriodId === selectedPeriodId);
+  }, [financeExpenses, selectedPeriodId, periodDataFilter]);
+  const filteredPurchaseGoals = useMemo(() => {
+    if (periodDataFilter === 'all' || !selectedPeriodId) return financePurchaseGoals;
+    return financePurchaseGoals.filter((g) => g.financePeriodId === selectedPeriodId);
+  }, [financePurchaseGoals, selectedPeriodId, periodDataFilter]);
+  const filteredInvestmentIdeas = useMemo(() => {
+    if (periodDataFilter === 'all' || !selectedPeriodId) return financeInvestmentIdeas;
+    return financeInvestmentIdeas.filter((g) => g.financePeriodId === selectedPeriodId);
+  }, [financeInvestmentIdeas, selectedPeriodId, periodDataFilter]);
   const tIncome = useMemo(() => mIncome.reduce((s, i) => s + i.amount, 0), [mIncome]);
   const tExpenses = useMemo(() => mExpenses.reduce((s, e) => s + e.amount, 0), [mExpenses]);
   const net = tIncome - tExpenses;
@@ -184,7 +247,10 @@ export default function FinancePanel({
   const openModal = (type: string, editing?: any) => {
     setModal({ type, editing });
     if (editing) setForm({ ...editing });
-    else if (type === 'income') setForm({ currency: 'MYR', status: 'expected', isRecurring: false });
+    else if (type === 'income') setForm({ currency: 'MYR', status: 'expected', isRecurring: false, financePeriodId: selectedPeriodId || undefined });
+    else if (type === 'expenses') setForm({ currency: 'MYR', status: 'planned', financePeriodId: selectedPeriodId || undefined });
+    else if (type === 'purchase_goals') setForm({ currency: 'MYR', status: 'planned', decisionStatus: 'researching', priority: 'medium', financePeriodId: selectedPeriodId || undefined });
+    else if (type === 'invest_ideas') setForm({ currency: 'MYR', status: 'researching', decisionStatus: 'researching', riskLevel: 'medium', ethicalStatus: 'needs_review', financePeriodId: selectedPeriodId || undefined });
     else setForm({ currency: 'MYR', status: 'researching', decisionStatus: 'researching', riskLevel: 'medium', ethicalStatus: 'needs_review', isActive: true, priority: 0, percentage: 0 });
   };
   const closeModal = () => { setModal(null); setForm({}); };
@@ -297,11 +363,11 @@ export default function FinancePanel({
 
   const renderIncomeTab = () => (
     <div>
-      <div style={s.row}><h3 style={s.hdr}>Income</h3><button style={s.btn('#2563eb')} onClick={() => openModal('income')}>+ Add Income</button></div>
-      {financeIncome.length === 0 ? <div style={s.empty}>No income entries yet.</div> : (
+      <div style={s.row}><h3 style={s.hdr}>Income</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('income')}>+ Add Income</button></div></div>
+      {filteredFinanceIncome.length === 0 ? <div style={s.empty}>No income entries yet.</div> : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Title', 'Type', 'Expected', 'Received', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
-          <tbody>{financeIncome.map((i) => (
+          <tbody>{filteredFinanceIncome.map((i) => (
             <tr key={i.id}>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.title}</td>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.incomeType || i.source}</td>
@@ -319,11 +385,11 @@ export default function FinancePanel({
 
   const renderExpensesTab = () => (
     <div>
-      <div style={s.row}><h3 style={s.hdr}>Expenses</h3><button style={s.btn('#2563eb')} onClick={() => openModal('expenses')}>+ Add Expense</button></div>
-      {financeExpenses.length === 0 ? <div style={s.empty}>No expenses yet.</div> : (
+      <div style={s.row}><h3 style={s.hdr}>Expenses</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('expenses')}>+ Add Expense</button></div></div>
+      {filteredFinanceExpenses.length === 0 ? <div style={s.empty}>No expenses yet.</div> : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>{['Title', 'Category', 'Amount', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
-          <tbody>{financeExpenses.map((i) => (
+          <tbody>{filteredFinanceExpenses.map((i) => (
             <tr key={i.id}>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.title}</td>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}><span style={s.badge('gray')}>{i.category}</span></td>
@@ -377,10 +443,10 @@ export default function FinancePanel({
 
   const renderPurchaseGoalsTab = () => (
     <div>
-      <div style={s.row}><div><h3 style={s.hdr}>Purchase Goals Pro</h3><div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Product wishlist and acquisition planning</div></div><button style={s.btn('#2563eb')} onClick={() => openModal('purchase_goals')}>+ Add Goal</button></div>
-      {financePurchaseGoals.length === 0 ? <div style={s.empty}>No purchase goals yet.</div> : (
+      <div style={s.row}><div><h3 style={s.hdr}>Purchase Goals Pro</h3><div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Product wishlist and acquisition planning</div></div><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('purchase_goals')}>+ Add Goal</button></div></div>
+      {filteredPurchaseGoals.length === 0 ? <div style={s.empty}>No purchase goals yet.</div> : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '16px' }}>
-          {financePurchaseGoals.map((g) => {
+          {filteredPurchaseGoals.map((g) => {
             const pct = g.targetAmount > 0 ? (g.savedAmount / g.targetAmount) * 100 : 0;
             return (
               <div key={g.id} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden' }}>
@@ -456,10 +522,10 @@ export default function FinancePanel({
 
   const renderInvestmentIdeas = () => (
     <div>
-      <div style={s.row}><h3 style={s.hdr}>Investment Ideas</h3><button style={s.btn('#2563eb')} onClick={() => openModal('invest_ideas')}>+ Add Idea</button></div>
-      {financeInvestmentIdeas.length === 0 ? <div style={s.empty}>No investment ideas yet.</div> : (
+      <div style={s.row}><h3 style={s.hdr}>Investment Ideas</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('invest_ideas')}>+ Add Idea</button></div></div>
+      {filteredInvestmentIdeas.length === 0 ? <div style={s.empty}>No investment ideas yet.</div> : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-          {financeInvestmentIdeas.map((idea) => (
+          {filteredInvestmentIdeas.map((idea) => (
             <div key={idea.id} style={s.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                 <div style={{ flex: 1 }}>
@@ -718,7 +784,7 @@ export default function FinancePanel({
         netReceived,
         expectedNet,
         availableToAllocate,
-        savingsRate,
+        savingsRate: sRate,
         allocationTotalPercentage: totalAllocPct,
       };
 
@@ -972,6 +1038,34 @@ export default function FinancePanel({
     <div style={s.page}>
       <div style={s.layout}>
         <div style={s.main}>
+          <div style={{ ...s.row, gap: '8px', marginBottom: '16px' }}>
+            <select style={{ ...s.select, width: 'auto', minWidth: '140px' }} value={periodTypeFilter} onChange={(e) => { setPeriodTypeFilter(e.target.value); setSelectedPeriodId(null); }}>
+              <option value="monthly">Monthly</option>
+              <option value="six_months">6 Months</option>
+              <option value="yearly">Yearly</option>
+              <option value="five_years">5 Years</option>
+              <option value="ten_years">10 Years</option>
+            </select>
+            <select style={{ ...s.select, width: 'auto', minWidth: '180px' }} value={selectedPeriodId || ''} onChange={(e) => setSelectedPeriodId(e.target.value || null)}>
+              <option value="">{periodTypeFilter === 'monthly' ? 'Current Month' : `All ${periodTypeFilter.replace('_', ' ')}`}</option>
+              {filteredPeriods.map((p) => (
+                <option key={p.id} value={p.id}>{p.title}{p.startDate ? ` (${new Date(p.startDate).toLocaleDateString()})` : ''}</option>
+              ))}
+            </select>
+            {periodTypeFilter === 'monthly' && !hasCurrentMonthPeriod && (
+              <button style={s.btn('#2563eb')} onClick={async () => {
+                const now = new Date();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const title = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getFullYear()}`;
+                const sd = `${now.getFullYear()}-${m}-01`;
+                const ed = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+                try {
+                  await onAddFinancePeriod({ title, type: 'monthly', startDate: sd, endDate: ed, status: 'active' });
+                } catch (e: any) { alert(e.message); }
+              }}>+ Create Current Month Period</button>
+            )}
+            <span style={{ fontSize: '13px', color: '#64748b' }}>Viewing: <strong>{periodLabel}</strong></span>
+          </div>
           <div style={s.nav}>
             {tabs.map((tab) => <button key={tab} style={s.navBtn(activeTab === tab)} onClick={() => setActiveTab(tab)}>{tabLabels[tab]}</button>)}
           </div>

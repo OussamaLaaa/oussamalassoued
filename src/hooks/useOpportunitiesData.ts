@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import seedData from '../data/opportunitiesSeed';
 import { messageTemplates as staticMessageTemplates } from '../data/messageTemplates';
 import {
-  toNullableString, normalizeDatabaseType,
+  toNullableString, toNullableNumber, normalizeDatabaseType,
   companyFromDb as mapCompanyRow, companyToDb as toCompanyDb,
   personFromDb as mapPersonRow, personToDb as toPersonDb,
   messageFromDb as mapMessageRow, messageToDb as toMessageDb,
@@ -62,6 +62,7 @@ import type {
   FinanceInvestmentIdea,
   FinanceInvestmentRule,
   FinanceInvestmentAllocation,
+  FinancePeriod,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -94,6 +95,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   financeInvestmentIdeas: [],
   financeInvestmentRules: [],
   financeInvestmentAllocations: [],
+  financePeriods: [],
 });
 
 
@@ -132,6 +134,7 @@ type OpportunitiesApiResponse = {
   finance_investment_ideas?: any[];
   finance_investment_rules?: any[];
   finance_investment_allocations?: any[];
+  finance_periods?: any[];
   strategyNotes?: any[];
 };
 
@@ -463,6 +466,7 @@ const financeIncomeFromDb = (row: any): FinanceIncome => ({
   isRecurring: row?.is_recurring ?? row?.isRecurring ?? undefined,
   recurrence: row?.recurrence ?? undefined,
   confidence: row?.confidence ?? undefined,
+  financePeriodId: row?.finance_period_id ?? row?.financePeriodId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -486,6 +490,7 @@ const financeIncomeToDb = (input: Partial<FinanceIncome>) => {
   if (input.isRecurring !== undefined) payload.is_recurring = input.isRecurring;
   if (input.recurrence !== undefined) payload.recurrence = toNullableString(input.recurrence);
   if (input.confidence !== undefined) payload.confidence = toNullableString(input.confidence);
+  if (input.financePeriodId !== undefined) payload.finance_period_id = toNullableString(input.financePeriodId);
   return payload;
 };
 
@@ -499,6 +504,7 @@ const financeExpenseFromDb = (row: any): FinanceExpense => ({
   status: row?.status ?? 'planned',
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  financePeriodId: row?.finance_period_id ?? row?.financePeriodId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -513,6 +519,7 @@ const financeExpenseToDb = (input: Partial<FinanceExpense>) => {
   if (input.status !== undefined) payload.status = input.status;
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.financePeriodId !== undefined) payload.finance_period_id = toNullableString(input.financePeriodId);
   return payload;
 };
 
@@ -560,6 +567,7 @@ const financePurchaseGoalFromDb = (row: any): FinancePurchaseGoal => ({
   monthlyContribution: row?.monthly_contribution != null ? Number(row.monthly_contribution) : (row?.monthlyContribution != null ? Number(row.monthlyContribution) : undefined),
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  financePeriodId: row?.finance_period_id ?? row?.financePeriodId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -585,6 +593,7 @@ const financePurchaseGoalToDb = (input: Partial<FinancePurchaseGoal>) => {
   if (input.monthlyContribution !== undefined) payload.monthly_contribution = input.monthlyContribution != null ? Number(input.monthlyContribution) : null;
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.financePeriodId !== undefined) payload.finance_period_id = toNullableString(input.financePeriodId);
   return payload;
 };
 
@@ -615,6 +624,7 @@ const financeInvestmentIdeaFromDb = (row: any): FinanceInvestmentIdea => ({
   fundingStatus: row?.funding_status ?? row?.fundingStatus ?? undefined,
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  financePeriodId: row?.finance_period_id ?? row?.financePeriodId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -646,6 +656,7 @@ const financeInvestmentIdeaToDb = (input: Partial<FinanceInvestmentIdea>) => {
   if (input.fundingStatus !== undefined) payload.funding_status = toNullableString(input.fundingStatus);
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.financePeriodId !== undefined) payload.finance_period_id = toNullableString(input.financePeriodId);
   return payload;
 };
 
@@ -699,6 +710,23 @@ const financeInvestmentAllocationToDb = (input: Partial<FinanceInvestmentAllocat
   return payload;
 };
 
+const financePeriodFromDb = (row: any): FinancePeriod => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  type: String(row?.type ?? 'monthly'),
+  startDate: row?.start_date ?? row?.startDate ?? undefined,
+  endDate: row?.end_date ?? row?.endDate ?? undefined,
+  status: row?.status ?? 'active',
+  focus: row?.focus ?? undefined,
+  targetIncome: row?.target_income != null ? Number(row.target_income) : (row?.targetIncome != null ? Number(row.targetIncome) : undefined),
+  targetExpenses: row?.target_expenses != null ? Number(row.target_expenses) : (row?.targetExpenses != null ? Number(row.targetExpenses) : undefined),
+  targetSavings: row?.target_savings != null ? Number(row.target_savings) : (row?.targetSavings != null ? Number(row.targetSavings) : undefined),
+  targetInvestment: row?.target_investment != null ? Number(row.target_investment) : (row?.targetInvestment != null ? Number(row.targetInvestment) : undefined),
+  reviewNotes: row?.review_notes ?? row?.reviewNotes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
 const attachFinanceIncomeLinkNames = (items: FinanceIncome[], projects: Project[], companies: Company[]) => {
   const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
   const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
@@ -722,6 +750,16 @@ const attachFinancePurchaseGoalLinkNames = (items: FinancePurchaseGoal[], projec
   return items.map((item) => ({
     ...item,
     linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const attachFinancePeriodTitles = <T extends { financePeriodId?: string; financePeriodTitle?: string }>(
+  items: T[], periods: FinancePeriod[],
+): T[] => {
+  const periodById = new Map(periods.map((p) => [p.id, p.title] as const));
+  return items.map((item) => ({
+    ...item,
+    financePeriodTitle: item.financePeriodTitle || periodById.get(item.financePeriodId || '') || undefined,
   }));
 };
 
@@ -894,6 +932,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [financeInvestmentIdeas, setFinanceInvestmentIdeas] = useState<FinanceInvestmentIdea[]>([]);
   const [financeInvestmentRules, setFinanceInvestmentRules] = useState<FinanceInvestmentRule[]>([]);
   const [financeInvestmentAllocations, setFinanceInvestmentAllocations] = useState<FinanceInvestmentAllocation[]>([]);
+  const [financePeriods, setFinancePeriods] = useState<FinancePeriod[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -919,6 +958,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceInvestmentIdeasRaw = Array.isArray(payload?.finance_investment_ideas) ? payload.finance_investment_ideas : [];
     const nextFinanceInvestmentRulesRaw = Array.isArray(payload?.finance_investment_rules) ? payload.finance_investment_rules : [];
     const nextFinanceInvestmentAllocationsRaw = Array.isArray(payload?.finance_investment_allocations) ? payload.finance_investment_allocations : [];
+    const nextFinancePeriodsRaw = Array.isArray(payload?.finance_periods) ? payload.finance_periods : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -972,13 +1012,18 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextStrategyDecisions = attachDecisionLinkNames(nextStrategyDecisionsRaw.map((row: any) => strategyDecisionFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
     const nextPlans = attachOsPlanLinkNames(nextPlansRaw.map((row: any) => planFromDb(row)), nextProjects, nextStrategyGoals);
     const nextPlanItems = attachPlanItemLinkNames(nextPlanItemsRaw.map((row: any) => planItemFromDb(row)), nextProjects, nextStrategyGoals);
-    const nextFinanceIncome = attachFinanceIncomeLinkNames(nextFinanceIncomeRaw.map((row: any) => financeIncomeFromDb(row)), nextProjects, nextCompanies);
-    const nextFinanceExpenses = attachFinanceExpenseLinkNames(nextFinanceExpensesRaw.map((row: any) => financeExpenseFromDb(row)), nextProjects);
+    const nextFinancePeriods = nextFinancePeriodsRaw.map((row: any) => financePeriodFromDb(row));
+    let nextFinanceIncome = attachFinanceIncomeLinkNames(nextFinanceIncomeRaw.map((row: any) => financeIncomeFromDb(row)), nextProjects, nextCompanies);
+    let nextFinanceExpenses = attachFinanceExpenseLinkNames(nextFinanceExpensesRaw.map((row: any) => financeExpenseFromDb(row)), nextProjects);
     const nextFinanceAllocationRules = nextFinanceAllocationRulesRaw.map((row: any) => financeAllocationRuleFromDb(row));
-    const nextFinancePurchaseGoals = attachFinancePurchaseGoalLinkNames(nextFinancePurchaseGoalsRaw.map((row: any) => financePurchaseGoalFromDb(row)), nextProjects);
-    const nextFinanceInvestmentIdeas = nextFinanceInvestmentIdeasRaw.map((row: any) => financeInvestmentIdeaFromDb(row));
+    let nextFinancePurchaseGoals = attachFinancePurchaseGoalLinkNames(nextFinancePurchaseGoalsRaw.map((row: any) => financePurchaseGoalFromDb(row)), nextProjects);
+    let nextFinanceInvestmentIdeas = nextFinanceInvestmentIdeasRaw.map((row: any) => financeInvestmentIdeaFromDb(row));
     const nextFinanceInvestmentRules = nextFinanceInvestmentRulesRaw.map((row: any) => financeInvestmentRuleFromDb(row));
     const nextFinanceInvestmentAllocations = nextFinanceInvestmentAllocationsRaw.map((row: any) => financeInvestmentAllocationFromDb(row));
+    nextFinanceIncome = attachFinancePeriodTitles(nextFinanceIncome, nextFinancePeriods);
+    nextFinanceExpenses = attachFinancePeriodTitles(nextFinanceExpenses, nextFinancePeriods);
+    nextFinancePurchaseGoals = attachFinancePeriodTitles(nextFinancePurchaseGoals, nextFinancePeriods);
+    nextFinanceInvestmentIdeas = attachFinancePeriodTitles(nextFinanceInvestmentIdeas, nextFinancePeriods);
     const nextStrategyItems = attachStrategyLinkNames(
       nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
       nextProjects,
@@ -1018,6 +1063,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentIdeas(nextFinanceInvestmentIdeas);
     setFinanceInvestmentRules(nextFinanceInvestmentRules);
     setFinanceInvestmentAllocations(nextFinanceInvestmentAllocations);
+    setFinancePeriods(nextFinancePeriods);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -1062,6 +1108,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setFinanceInvestmentIdeas([]);
           setFinanceInvestmentRules([]);
           setFinanceInvestmentAllocations([]);
+          setFinancePeriods([]);
           setStrategyItems([]);
           return;
         }
@@ -1087,6 +1134,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
         setFinanceInvestmentRules(fallback.financeInvestmentRules);
         setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
+        setFinancePeriods([]);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -1262,7 +1310,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1919,6 +1967,89 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentAllocations((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Finance Periods CRUD ──
+
+  const addFinancePeriod = async (input: Partial<FinancePeriod>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Period title is required.');
+    }
+    const row = await syncInsert('finance_periods', {
+      title: String(input.title || '').trim(),
+      type: input.type || 'monthly',
+      start_date: toNullableString(input.startDate),
+      end_date: toNullableString(input.endDate),
+      status: input.status || 'active',
+      focus: toNullableString(input.focus),
+      target_income: toNullableNumber(input.targetIncome),
+      target_expenses: toNullableNumber(input.targetExpenses),
+      target_savings: toNullableNumber(input.targetSavings),
+      target_investment: toNullableNumber(input.targetInvestment),
+      review_notes: toNullableString(input.reviewNotes),
+    });
+    const next: FinancePeriod = {
+      id: String(row?.id ?? ''),
+      title: String(row?.title ?? ''),
+      type: String(row?.type ?? 'monthly'),
+      startDate: row?.start_date ?? row?.startDate ?? undefined,
+      endDate: row?.end_date ?? row?.endDate ?? undefined,
+      status: row?.status ?? 'active',
+      focus: row?.focus ?? undefined,
+      targetIncome: row?.target_income != null ? Number(row.target_income) : (row?.targetIncome != null ? Number(row.targetIncome) : undefined),
+      targetExpenses: row?.target_expenses != null ? Number(row.target_expenses) : (row?.targetExpenses != null ? Number(row.targetExpenses) : undefined),
+      targetSavings: row?.target_savings != null ? Number(row.target_savings) : (row?.targetSavings != null ? Number(row.targetSavings) : undefined),
+      targetInvestment: row?.target_investment != null ? Number(row.target_investment) : (row?.targetInvestment != null ? Number(row.targetInvestment) : undefined),
+      reviewNotes: row?.review_notes ?? row?.reviewNotes ?? undefined,
+      createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+      updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+    };
+    setFinancePeriods((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinancePeriod = async (id: string, input: Partial<FinancePeriod>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Period title is required.');
+    }
+    const payload: Record<string, unknown> = {};
+    if (input.title !== undefined) payload.title = String(input.title || '').trim();
+    if (input.type !== undefined) payload.type = input.type;
+    if (input.startDate !== undefined) payload.start_date = toNullableString(input.startDate);
+    if (input.endDate !== undefined) payload.end_date = toNullableString(input.endDate);
+    if (input.status !== undefined) payload.status = input.status;
+    if (input.focus !== undefined) payload.focus = toNullableString(input.focus);
+    if (input.targetIncome !== undefined) payload.target_income = toNullableNumber(input.targetIncome);
+    if (input.targetExpenses !== undefined) payload.target_expenses = toNullableNumber(input.targetExpenses);
+    if (input.targetSavings !== undefined) payload.target_savings = toNullableNumber(input.targetSavings);
+    if (input.targetInvestment !== undefined) payload.target_investment = toNullableNumber(input.targetInvestment);
+    if (input.reviewNotes !== undefined) payload.review_notes = toNullableString(input.reviewNotes);
+    const row = await syncUpdate('finance_periods', id, payload);
+    const next: FinancePeriod = {
+      id: String(row?.id ?? ''),
+      title: String(row?.title ?? ''),
+      type: String(row?.type ?? 'monthly'),
+      startDate: row?.start_date ?? row?.startDate ?? undefined,
+      endDate: row?.end_date ?? row?.endDate ?? undefined,
+      status: row?.status ?? 'active',
+      focus: row?.focus ?? undefined,
+      targetIncome: row?.target_income != null ? Number(row.target_income) : (row?.targetIncome != null ? Number(row.targetIncome) : undefined),
+      targetExpenses: row?.target_expenses != null ? Number(row.target_expenses) : (row?.targetExpenses != null ? Number(row.targetExpenses) : undefined),
+      targetSavings: row?.target_savings != null ? Number(row.target_savings) : (row?.targetSavings != null ? Number(row.targetSavings) : undefined),
+      targetInvestment: row?.target_investment != null ? Number(row.target_investment) : (row?.targetInvestment != null ? Number(row.targetInvestment) : undefined),
+      reviewNotes: row?.review_notes ?? row?.reviewNotes ?? undefined,
+      createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+      updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+    };
+    setFinancePeriods((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinancePeriod = async (id: string) => {
+    const confirmed = window.confirm('Delete this financial period?');
+    if (!confirmed) return;
+    await syncDelete('finance_periods', id);
+    setFinancePeriods((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -2105,6 +2236,10 @@ export const useOpportunitiesData = (enabled = true) => {
     addFinanceInvestmentAllocation,
     updateFinanceInvestmentAllocation,
     deleteFinanceInvestmentAllocation,
+    financePeriods,
+    addFinancePeriod,
+    updateFinancePeriod,
+    deleteFinancePeriod,
     addPlan,
     updatePlan,
     deletePlan,

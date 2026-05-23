@@ -340,6 +340,7 @@ export interface OpportunitiesData {
   financeInvestmentIdeas: FinanceInvestmentIdea[];
   financeInvestmentRules: FinanceInvestmentRule[];
   financeInvestmentAllocations: FinanceInvestmentAllocation[];
+  financePeriods: FinancePeriod[];
 }
 
 export type StrategySection =
@@ -646,6 +647,23 @@ export interface PlanItemInput {
   linkedStrategyGoalId?: string;
 }
 
+export interface FinancePeriod {
+  id: string;
+  title: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  focus?: string;
+  targetIncome?: number;
+  targetExpenses?: number;
+  targetSavings?: number;
+  targetInvestment?: number;
+  reviewNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface FinanceIncome {
   id: string;
   title: string;
@@ -667,6 +685,8 @@ export interface FinanceIncome {
   isRecurring?: boolean;
   recurrence?: string;
   confidence?: string;
+  financePeriodId?: string;
+  financePeriodTitle?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -682,6 +702,8 @@ export interface FinanceExpense {
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;
+  financePeriodId?: string;
+  financePeriodTitle?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -720,6 +742,8 @@ export interface FinancePurchaseGoal {
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;
+  financePeriodId?: string;
+  financePeriodTitle?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -752,6 +776,8 @@ export interface FinanceInvestmentIdea {
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;
+  financePeriodId?: string;
+  financePeriodTitle?: string;
   createdAt?: string;
   updatedAt?: string;
 }

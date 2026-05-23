@@ -28,6 +28,7 @@ const allowedEntities = new Set([
   'finance_investment_ideas',
   'finance_investment_rules',
   'finance_investment_allocations',
+  'finance_periods',
 ]);
 const tablesAttempted = [
   'companies',
@@ -56,6 +57,7 @@ const tablesAttempted = [
   'finance_investment_ideas',
   'finance_investment_rules',
   'finance_investment_allocations',
+  'finance_periods',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -292,6 +294,7 @@ const normalizeFinanceIncomeRow = (row) => ({
   is_recurring: row?.is_recurring ?? row?.isRecurring ?? null,
   recurrence: toNullableString(row?.recurrence),
   confidence: toNullableString(row?.confidence),
+  finance_period_id: toNullableString(row?.finance_period_id ?? row?.financePeriodId),
 });
 
 const normalizeFinanceExpenseRow = (row) => ({
@@ -303,6 +306,7 @@ const normalizeFinanceExpenseRow = (row) => ({
   status: toNullableString(row?.status) || 'planned',
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  finance_period_id: toNullableString(row?.finance_period_id ?? row?.financePeriodId),
 });
 
 const normalizeFinanceAllocationRuleRow = (row) => ({
@@ -334,6 +338,7 @@ const normalizeFinancePurchaseGoalRow = (row) => ({
   monthly_contribution: toNullableNumber(row?.monthly_contribution ?? row?.monthlyContribution),
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  finance_period_id: toNullableString(row?.finance_period_id ?? row?.financePeriodId),
 });
 
 const normalizeFinanceInvestmentIdeaRow = (row) => ({
@@ -362,6 +367,7 @@ const normalizeFinanceInvestmentIdeaRow = (row) => ({
   funding_status: toNullableString(row?.funding_status ?? row?.fundingStatus),
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  finance_period_id: toNullableString(row?.finance_period_id ?? row?.financePeriodId),
 });
 
 const normalizeFinanceInvestmentRuleRow = (row) => ({
@@ -384,6 +390,20 @@ const normalizeFinanceInvestmentAllocationRow = (row) => ({
   notes: toNullableString(row?.notes),
 });
 
+const normalizeFinancePeriodRow = (row) => ({
+  title: toRequiredString(row?.title),
+  type: toRequiredString(row?.type),
+  start_date: toRequiredString(row?.start_date ?? row?.startDate),
+  end_date: toRequiredString(row?.end_date ?? row?.endDate),
+  status: toNullableString(row?.status) || 'planned',
+  focus: toNullableString(row?.focus),
+  target_income: toNullableNumber(row?.target_income ?? row?.targetIncome),
+  target_expenses: toNullableNumber(row?.target_expenses ?? row?.targetExpenses),
+  target_savings: toNullableNumber(row?.target_savings ?? row?.targetSavings),
+  target_investment: toNullableNumber(row?.target_investment ?? row?.targetInvestment),
+  review_notes: toNullableString(row?.review_notes ?? row?.reviewNotes),
+});
+
 const normalizeFinanceEntityRow = (entity, row) => {
   if (entity === 'finance_income') return normalizeFinanceIncomeRow(row);
   if (entity === 'finance_expenses') return normalizeFinanceExpenseRow(row);
@@ -392,6 +412,7 @@ const normalizeFinanceEntityRow = (entity, row) => {
   if (entity === 'finance_investment_ideas') return normalizeFinanceInvestmentIdeaRow(row);
   if (entity === 'finance_investment_rules') return normalizeFinanceInvestmentRuleRow(row);
   if (entity === 'finance_investment_allocations') return normalizeFinanceInvestmentAllocationRow(row);
+  if (entity === 'finance_periods') return normalizeFinancePeriodRow(row);
   return row;
 };
 
@@ -535,6 +556,7 @@ export default async function handler(req, res) {
         finance_investment_ideas: results.finance_investment_ideas || [],
         finance_investment_rules: results.finance_investment_rules || [],
         finance_investment_allocations: results.finance_investment_allocations || [],
+        finance_periods: results.finance_periods || [],
         templatesWarning,
         strategyNotes: [],
       });
