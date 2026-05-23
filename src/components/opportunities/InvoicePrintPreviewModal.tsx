@@ -4,11 +4,6 @@ import jsPDF from 'jspdf';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 import InvoicePreview from './InvoicePreview';
 
-const modalStyles = {
-  overlay: 'fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]',
-  panel: 'flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]',
-};
-
 type InvoicePrintPreviewModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -60,6 +55,15 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (clonedDoc) => {
+        const elements = clonedDoc.querySelectorAll('.invoice-pdf-page');
+        elements.forEach((el) => {
+          (el as HTMLElement).style.boxShadow = 'none';
+          (el as HTMLElement).style.borderRadius = '0';
+          (el as HTMLElement).style.border = 'none';
+        });
+      },
     });
 
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -70,12 +74,14 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
     const imageData = canvas.toDataURL('image/png');
 
     let position = 0;
+    pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight, undefined, 'FAST');
+    let remainingHeight = imageHeight - pdfHeight;
 
-    pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight);
-    while (imageHeight > pdfHeight + position) {
+    while (remainingHeight > 0) {
       position -= pdfHeight;
       pdf.addPage();
-      pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight);
+      pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight, undefined, 'FAST');
+      remainingHeight -= pdfHeight;
     }
 
     return pdf;
@@ -140,39 +146,41 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   };
 
   return (
-    <div className={modalStyles.overlay}>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]">
       <button type="button" aria-label="Close invoice preview" className="absolute inset-0" onClick={onClose} />
-      <div className={modalStyles.panel}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e5e7eb] px-5 py-4">
+      <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#e5e7eb] px-6 py-4">
           <div>
-            <h3 className="text-lg font-semibold text-[#0f172a]">Invoice Preview</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Print, export, or store this invoice as a private PDF.</p>
+            <h3 className="text-base font-semibold text-[#0f172a]">Invoice Preview</h3>
+            <p className="mt-0.5 text-sm text-[#64748b]">Print, export, or store as a private PDF.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={handlePrint} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
-              Print
+            <button type="button" onClick={handlePrint} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
+              Print / Save as PDF
             </button>
-            <button type="button" onClick={handleGenerateAndStore} disabled={isGenerating} className="rounded-lg bg-[#2563eb] px-3 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8] disabled:opacity-60">
+            <button type="button" onClick={handleGenerateAndStore} disabled={isGenerating} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b] disabled:opacity-60">
               {isGenerating ? 'Working...' : 'Generate & Store PDF'}
             </button>
-            <button type="button" onClick={handleOpenStoredPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
-              Open Stored PDF
-            </button>
-            <button type="button" onClick={onClose} className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
+            {invoice.pdfStoragePath ? (
+              <button type="button" onClick={handleOpenStoredPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
+                Open Stored PDF
+              </button>
+            ) : null}
+            <button type="button" onClick={onClose} className="rounded-lg border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
               Close
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-[#f8fafc] px-4 py-5">
+        <div className="no-print flex-1 overflow-auto bg-[#f8fafc] px-6 py-6">
           <div className="mx-auto w-fit">
             <InvoicePreview ref={pageRef} invoice={invoice} items={items} brandSettings={brandSettings} />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] px-5 py-3 text-sm text-[#64748b]">
-          <div>{status || error || 'Preview ready.'}</div>
-          <div>{invoice.pdfStoragePath ? 'Stored PDF already available.' : 'Generate a PDF to store it privately in Supabase.'}</div>
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] px-6 py-3 text-sm text-[#64748b]">
+          <div>{status || error || 'Ready'}</div>
+          <div>{invoice.pdfStoragePath ? 'Stored PDF available.' : 'Generate & Store PDF to save privately.'}</div>
         </div>
       </div>
     </div>
