@@ -145,7 +145,7 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
           invoiceId: invoice.id,
           fileName,
           pdfBase64,
-          debug: import.meta.env.DEV,
+          debug: true,
         }),
       });
 

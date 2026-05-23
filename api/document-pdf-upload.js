@@ -255,10 +255,52 @@ export default async function handler(req, res) {
       return toSafeJson(res, 500, errPayload);
     }
 
-    const { error: updateError } = await supabase
+    const { data: existingRow, error: selectError } = await supabase
+      .from(table)
+      .select('id')
+      .eq('id', resourceId)
+      .maybeSingle();
+
+    if (selectError) {
+      const errPayload = { success: false, error: 'PDF uploaded but could not verify target record.' };
+      if (debug) {
+        errPayload.debug = {
+          phase: 'db_check',
+          sourceType,
+          targetTable: table,
+          targetId: resourceId,
+          storagePath,
+          dbCheckErrorMessage: selectError.message,
+          dbCheckErrorCode: selectError.code || undefined,
+          dbCheckErrorDetails: selectError.details || undefined,
+        };
+      }
+      console.error('[Document PDF] Row existence check failed', { phase: 'db_check', sourceType, table, resourceId, error: selectError });
+      return toSafeJson(res, 500, errPayload);
+    }
+
+    if (!existingRow) {
+      const errPayload = { success: false, error: 'PDF uploaded but target record was not found.' };
+      if (debug) {
+        errPayload.debug = {
+          phase: 'db_update',
+          sourceType,
+          targetTable: table,
+          targetId: resourceId,
+          storagePath,
+          rowFoundBeforeUpdate: false,
+        };
+      }
+      console.error('[Document PDF] Target record not found', { phase: 'db_check', sourceType, table, resourceId });
+      return toSafeJson(res, 404, errPayload);
+    }
+
+    const { data: updatedRow, error: updateError } = await supabase
       .from(table)
       .update({ pdf_storage_path: storagePath })
-      .eq('id', resourceId);
+      .eq('id', resourceId)
+      .select('id, pdf_storage_path')
+      .maybeSingle();
 
     if (updateError) {
       const errPayload = { success: false, error: 'PDF uploaded but database update failed.' };
@@ -267,15 +309,32 @@ export default async function handler(req, res) {
           phase: 'db_update',
           sourceType,
           targetTable: table,
-          resourceId,
+          targetId: resourceId,
           storagePath,
           updatePayloadKeys: ['pdf_storage_path'],
+          rowFoundBeforeUpdate: true,
           dbUpdateErrorMessage: updateError.message,
           dbUpdateErrorCode: updateError.code || undefined,
           dbUpdateErrorDetails: updateError.details || undefined,
         };
       }
-      console.error('[Document PDF] Database update failed', { phase: 'db_update', sourceType, table, resourceId, storagePath, error: updateError });
+      console.error('[Document PDF] Database update failed', { phase: 'db_update', sourceType, table, resourceId, error: updateError });
+      return toSafeJson(res, 500, errPayload);
+    }
+
+    if (!updatedRow) {
+      const errPayload = { success: false, error: 'PDF uploaded but update returned no row.' };
+      if (debug) {
+        errPayload.debug = {
+          phase: 'db_update',
+          sourceType,
+          targetTable: table,
+          targetId: resourceId,
+          storagePath,
+          rowFoundBeforeUpdate: true,
+        };
+      }
+      console.error('[Document PDF] Update returned no row', { phase: 'db_update', sourceType, table, resourceId });
       return toSafeJson(res, 500, errPayload);
     }
 

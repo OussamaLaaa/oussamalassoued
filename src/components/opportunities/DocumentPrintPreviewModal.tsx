@@ -158,7 +158,7 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
           documentId: previewDocument.id,
           fileName: safeFileName,
           pdfBase64,
-          debug: import.meta.env.DEV,
+          debug: true,
         }),
       });
 
