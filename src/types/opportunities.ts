@@ -324,7 +324,56 @@ export interface OpportunitiesData {
   projectDocuments: ProjectDocument[];
   projectFinanceItems: ProjectFinanceItem[];
   templates: MessageTemplate[];
+  strategyItems: StrategyItem[];
   strategyNotes: StrategyNote[];
+}
+
+export type StrategySection =
+  | 'career'
+  | 'freelance'
+  | 'portfolio'
+  | 'money'
+  | 'investment'
+  | 'learning'
+  | 'health'
+  | 'ethical_filter'
+  | 'positioning'
+  | 'operations';
+
+export type StrategyPriority = 'high' | 'medium' | 'low';
+export type StrategyStatus = 'active' | 'paused' | 'completed' | 'archived';
+export type StrategyTimeHorizon = 'yearly' | 'six_months' | 'quarterly' | 'monthly' | 'weekly' | 'daily';
+
+export interface StrategyItem {
+  id: string;
+  section: StrategySection;
+  title: string;
+  content?: string;
+  priority: StrategyPriority;
+  status: StrategyStatus;
+  timeHorizon?: StrategyTimeHorizon;
+  reviewDate?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  linkedPersonId?: string;
+  linkedPersonName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StrategyItemInput {
+  section: StrategySection;
+  title: string;
+  content?: string;
+  priority?: StrategyPriority;
+  status?: StrategyStatus;
+  timeHorizon?: StrategyTimeHorizon;
+  reviewDate?: string;
+  linkedProjectId?: string;
+  linkedCompanyId?: string;
+  linkedPersonId?: string;
 }
 
 export interface StrategyNote {

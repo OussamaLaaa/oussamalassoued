@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 
-const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items']);
-const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'];
+const allowedEntities = new Set(['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items', 'strategy_items']);
+const tablesAttempted = ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items', 'strategy_items'];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 
@@ -98,6 +98,19 @@ const normalizeTemplateRow = (row, { forUpdate = false } = {}) => {
     created_at: row?.created_at ?? new Date().toISOString(),
   };
 };
+
+const normalizeStrategyRow = (row) => ({
+  section: toRequiredString(row?.section),
+  title: toRequiredString(row?.title),
+  content: toNullableString(row?.content),
+  priority: toNullableString(row?.priority) || 'medium',
+  status: toNullableString(row?.status) || 'active',
+  time_horizon: toNullableString(row?.time_horizon ?? row?.timeHorizon),
+  review_date: toNullableString(row?.review_date ?? row?.reviewDate),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+  linked_person_id: toNullableString(row?.linked_person_id ?? row?.linkedPersonId),
+});
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -205,6 +218,7 @@ export default async function handler(req, res) {
         project_meetings: results.project_meetings || [],
         project_documents: results.project_documents || [],
         project_finance_items: results.project_finance_items || [],
+        strategy_items: results.strategy_items || [],
         templatesWarning,
         strategyNotes: [],
       });
@@ -248,11 +262,15 @@ export default async function handler(req, res) {
     }
 
     try {
-      const payload = entity === 'message_templates'
+        const payload = entity === 'message_templates'
         ? (Array.isArray(data)
-            ? data.map((row) => normalizeTemplateRow(row, { forUpdate: false }))
-            : normalizeTemplateRow(data, { forUpdate: false }))
-        : data;
+          ? data.map((row) => normalizeTemplateRow(row, { forUpdate: false }))
+          : normalizeTemplateRow(data, { forUpdate: false }))
+        : entity === 'strategy_items'
+          ? (Array.isArray(data)
+            ? data.map((row) => normalizeStrategyRow(row))
+            : normalizeStrategyRow(data))
+          : data;
 
       if (isBatch) {
         const { data: insertedRows, error } = await supabase
@@ -314,7 +332,9 @@ export default async function handler(req, res) {
     try {
       const payload = entity === 'message_templates'
         ? normalizeTemplateRow(data, { forUpdate: true })
-        : data;
+        : entity === 'strategy_items'
+          ? normalizeStrategyRow(data)
+          : data;
 
       const { data: updatedRow, error } = await supabase
         .from(entity)

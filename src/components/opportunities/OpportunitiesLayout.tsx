@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -182,6 +182,7 @@ const OpportunitiesLayout: React.FC<{
     addMessage: (input: any) => void;
     addDeal: (input: any) => void;
     addProject: (input: ProjectInput) => Promise<any>;
+    addStrategyItem: (input: StrategyItemInput) => Promise<any>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -193,6 +194,8 @@ const OpportunitiesLayout: React.FC<{
     deleteDeal: (id: string) => void;
     updateProject: (id: string, input: Partial<ProjectInput>) => Promise<any>;
     deleteProject: (id: string) => Promise<any>;
+    updateStrategyItem: (id: string, input: Partial<StrategyItemInput>) => Promise<any>;
+    deleteStrategyItem: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
     seedDefaultTemplates?: () => Promise<any>;
@@ -232,13 +235,13 @@ const OpportunitiesLayout: React.FC<{
   };
 
   const {
-    companies, people, messages, deals, projects, templates, strategyNotes,
+    companies, people, messages, deals, projects, templates, strategyItems,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
-    addCompany, addPerson, addMessage, addDeal, addProject, addTemplate,
+    addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem, addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
     updateMessage, deleteMessage,
-    updateDeal, deleteDeal, updateProject, deleteProject, updateTemplate, deleteTemplate, seedDefaultTemplates,
+    updateDeal, deleteDeal, updateProject, deleteProject, updateStrategyItem, deleteStrategyItem, updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
     importPeople,
@@ -629,7 +632,17 @@ const OpportunitiesLayout: React.FC<{
               />
             )}
 
-            {tab === 'strategy' && <StrategyPanel notes={strategyNotes} />}
+            {tab === 'strategy' && (
+              <StrategyPanel
+                strategyItems={strategyItems}
+                projects={projects}
+                companies={companies}
+                people={people}
+                onAddStrategyItem={addStrategyItem}
+                onUpdateStrategyItem={updateStrategyItem}
+                onDeleteStrategyItem={deleteStrategyItem}
+              />
+            )}
           </div>
         </main>
       </div>

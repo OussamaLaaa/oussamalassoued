@@ -39,6 +39,8 @@ import type {
   OutreachMessage,
   Deal,
   MessageTemplate,
+  StrategyItem,
+  StrategyItemInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -55,6 +57,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   projectDocuments: [],
   projectFinanceItems: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
+  strategyItems: [],
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
 });
 
@@ -79,6 +82,7 @@ type OpportunitiesApiResponse = {
   project_documents?: any[];
   project_finance_items?: any[];
   message_templates?: any[];
+  strategy_items?: any[];
   strategyNotes?: any[];
 };
 
@@ -111,6 +115,55 @@ const getDerivedCollections = (companies: Company[], people: Person[], messages:
       personName: deal.personName || personById.get(deal.personId || '')?.fullName,
     })),
   };
+};
+
+const strategyItemFromDb = (row: any): StrategyItem => ({
+  id: String(row?.id ?? ''),
+  section: row?.section,
+  title: String(row?.title ?? ''),
+  content: row?.content ?? undefined,
+  priority: row?.priority ?? 'medium',
+  status: row?.status ?? 'active',
+  timeHorizon: row?.time_horizon ?? row?.timeHorizon ?? undefined,
+  reviewDate: row?.review_date ?? row?.reviewDate ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  linkedPersonId: row?.linked_person_id ?? row?.linkedPersonId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const strategyItemToDb = (input: Partial<StrategyItemInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.section !== undefined) payload.section = input.section;
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.content !== undefined) payload.content = toNullableString(input.content);
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.timeHorizon !== undefined) payload.time_horizon = toNullableString(input.timeHorizon);
+  if (input.reviewDate !== undefined) payload.review_date = toNullableString(input.reviewDate);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (input.linkedPersonId !== undefined) payload.linked_person_id = toNullableString(input.linkedPersonId);
+  return payload;
+};
+
+const attachStrategyLinkNames = (
+  items: StrategyItem[],
+  projects: Project[],
+  companies: Company[],
+  people: Person[],
+) => {
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  const personById = new Map(people.map((person) => [person.id, person.fullName] as const));
+
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+    linkedPersonName: item.linkedPersonName || personById.get(item.linkedPersonId || ''),
+  }));
 };
 
 const logDevError = (context: string, details: Record<string, unknown>) => {
@@ -163,6 +216,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>([]);
   const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
+  const [strategyItems, setStrategyItems] = useState<StrategyItem[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +233,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
     const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
+    const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
 
     const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
     const personById = new Map<string, Person>();
@@ -219,6 +274,12 @@ export const useOpportunitiesData = (enabled = true) => {
 
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
+    const nextStrategyItems = attachStrategyLinkNames(
+      nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
+      nextProjects,
+      nextCompanies,
+      nextPeople,
+    );
 
     if (import.meta.env.DEV) {
       console.log('[Opportunities Debug] Loaded companies database types:', nextCompanies.map((c) => ({
@@ -238,6 +299,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setProjectDocuments(nextProjectDocuments);
     setProjectFinanceItems(nextProjectFinanceItems);
     setTemplates(nextTemplates);
+    setStrategyItems(nextStrategyItems);
   }, []);
 
   useEffect(() => {
@@ -267,6 +329,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setMessages([]);
           setDeals([]);
           setTemplates([]);
+          setStrategyItems([]);
           return;
         }
 
@@ -277,6 +340,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setMessages(fallback.messages);
         setDeals(fallback.deals);
         setTemplates(fallback.templates);
+        setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
         if (mounted) {
@@ -451,7 +515,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -675,6 +739,43 @@ export const useOpportunitiesData = (enabled = true) => {
     setProjectFinanceItems((current) => current.filter((f) => f.id !== id));
   };
 
+  const addStrategyItem = async (input: StrategyItemInput) => {
+    if (!String(input.section || '').trim()) {
+      throw new Error('Strategy section is required.');
+    }
+
+    if (!String(input.title || '').trim()) {
+      throw new Error('Strategy title is required.');
+    }
+
+    const row = await syncInsert('strategy_items', strategyItemToDb(input));
+    const next = attachStrategyLinkNames([strategyItemFromDb(row)], projects, companies, people)[0];
+    setStrategyItems((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateStrategyItem = async (id: string, input: Partial<StrategyItemInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Strategy title is required.');
+    }
+
+    if (input.section !== undefined && !String(input.section || '').trim()) {
+      throw new Error('Strategy section is required.');
+    }
+
+    const row = await syncUpdate('strategy_items', id, strategyItemToDb(input));
+    const next = attachStrategyLinkNames([strategyItemFromDb(row)], projects, companies, people)[0];
+    setStrategyItems((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteStrategyItem = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy item?');
+    if (!confirmed) return;
+    await syncDelete('strategy_items', id);
+    setStrategyItems((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -723,6 +824,10 @@ export const useOpportunitiesData = (enabled = true) => {
     return mapped;
   };
 
+  useEffect(() => {
+    setStrategyItems((current) => attachStrategyLinkNames(current, projects, companies, people));
+  }, [projects, companies, people]);
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -731,6 +836,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setMessages(fallback.messages);
     setDeals(fallback.deals);
     setTemplates(fallback.templates);
+    setStrategyItems(fallback.strategyItems);
   };
 
   return {
@@ -745,6 +851,7 @@ export const useOpportunitiesData = (enabled = true) => {
     projectDocuments,
     projectFinanceItems,
     templates,
+    strategyItems,
     strategyNotes,
     importCompaniesBatch,
     addCompany,
@@ -752,6 +859,7 @@ export const useOpportunitiesData = (enabled = true) => {
     addMessage,
     addDeal,
     addProject,
+    addStrategyItem,
     addTemplate,
     importPeople,
     updateCompany,
@@ -764,6 +872,8 @@ export const useOpportunitiesData = (enabled = true) => {
     deleteDeal,
     updateProject,
     deleteProject,
+    updateStrategyItem,
+    deleteStrategyItem,
     addProjectTask,
     updateProjectTask,
     deleteProjectTask,
