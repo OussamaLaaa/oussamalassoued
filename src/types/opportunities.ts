@@ -341,6 +341,7 @@ export interface OpportunitiesData {
   financeInvestmentRules: FinanceInvestmentRule[];
   financeInvestmentAllocations: FinanceInvestmentAllocation[];
   financePeriods: FinancePeriod[];
+  financeRecurringRules: FinanceRecurringRule[];
 }
 
 export type StrategySection =
@@ -804,6 +805,28 @@ export interface FinanceInvestmentAllocation {
   priority: number;
   isActive: boolean;
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceRecurringRule {
+  id: string;
+  title: string;
+  kind: 'income' | 'expense';
+  category?: string;
+  amount: number;
+  currency: string;
+  frequency: 'monthly' | 'weekly' | 'yearly' | 'irregular';
+  startDate?: string;
+  endDate?: string;
+  isActive: boolean;
+  confidence: 'high' | 'medium' | 'low';
+  source?: string;
+  notes?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
   createdAt?: string;
   updatedAt?: string;
 }

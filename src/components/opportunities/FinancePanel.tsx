@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, Project, Company } from '../../types/opportunities';
+import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, FinanceRecurringRule, Project, Company } from '../../types/opportunities';
 
-type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'review' | 'ai_assistant';
-
+type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'review' | 'ai_assistant';
 type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'next_actions';
 type InvestTab = 'overview' | 'ideas' | 'allocation' | 'rules' | 'risk_review' | 'ethical_review';
 
@@ -41,6 +40,10 @@ interface FinancePanelProps {
   onAddFinancePeriod: (input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
   onUpdateFinancePeriod: (id: string, input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
   onDeleteFinancePeriod: (id: string) => Promise<void>;
+  financeRecurringRules: FinanceRecurringRule[];
+  onAddFinanceRecurringRule: (input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
+  onUpdateFinanceRecurringRule: (id: string, input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
+  onDeleteFinanceRecurringRule: (id: string) => Promise<void>;
 }
 
 const s = {
@@ -86,6 +89,7 @@ const cYear = now.getFullYear();
 const toCur = (a: number, c = 'MYR') => `${c} ${Number(a).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const isCM = (d?: string) => d ? new Date(d).getMonth() === cMonth && new Date(d).getFullYear() === cYear : false;
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const INCOME_TYPES = ['salary', 'freelance', 'project', 'bonus', 'other'];
 const INCOME_SOURCES = ['salary', 'freelance', 'project', 'bonus', 'other'];
 const INCOME_STATUSES = ['expected', 'received', 'delayed', 'cancelled'];
@@ -106,8 +110,51 @@ const FUNDING_STATUSES = ['not_started', 'accumulating', 'ready', 'invested', 'p
 const INV_RULE_CATS = ['risk', 'ethics', 'strategy', 'process', 'other'];
 const INV_ALLOC_CATS = ['equity', 'sukuk', 'real_estate', 'gold', 'cash', 'crypto', 'other'];
 const INV_HORIZONS = ['short_term', 'medium_term', 'long_term'];
+const RECURRING_KINDS = ['income', 'expense'];
+const RECURRING_FREQUENCIES = ['monthly', 'weekly', 'yearly', 'irregular'];
 
-export default function FinancePanel({
+function getMonthsBetween(start: Date, end: Date): Date[] {
+  const months: Date[] = [];
+  const current = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (current <= end) {
+    months.push(new Date(current));
+    current.setMonth(current.getMonth() + 1);
+  }
+  return months;
+}
+
+function formatMonthKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function isDateBetween(date: string, start: string, end: string): boolean {
+  const d = new Date(date);
+  return d >= new Date(start) && d <= new Date(end);
+}
+
+function incomeInPeriod(inc: FinanceIncome, periodId: string, period?: FinancePeriod): boolean {
+  if (inc.financePeriodId === periodId) return true;
+  if (inc.financePeriodId && inc.financePeriodId !== periodId) return false;
+  if (period) {
+    const date = inc.receivedDate || inc.expectedDate || inc.incomeDate;
+    if (date) return isDateBetween(date, period.startDate, period.endDate);
+  }
+  return false;
+}
+
+function expenseInPeriod(exp: FinanceExpense, periodId: string, period?: FinancePeriod): boolean {
+  if (exp.financePeriodId === periodId) return true;
+  if (exp.financePeriodId && exp.financePeriodId !== periodId) return false;
+  if (period) {
+    const date = exp.expenseDate || exp.createdAt || '';
+    if (date) return isDateBetween(date, period.startDate, period.endDate);
+  }
+  return false;
+}
+
+type HorizonView = 'monthly' | 'six_months' | 'yearly' | 'five_years' | 'ten_years';
+
+function FinancePanel({
   financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
   financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
   projects, companies,
@@ -120,976 +167,888 @@ export default function FinancePanel({
   onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
   financePeriods,
   onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
+  financeRecurringRules,
+  onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
 }: FinancePanelProps) {
-  const [activeTab, setActiveTab] = useState<FinanceTab>('dashboard');
-  const [iTab, setITab] = useState<InvestTab>('overview');
-  const [modal, setModal] = useState<{ type: string; editing?: any } | null>(null);
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [addSavedGoalId, setAddSavedGoalId] = useState<string | null>(null);
-  const [addSavedAmount, setAddSavedAmount] = useState('');
+  const [tab, setTab] = useState<FinanceTab>('dashboard');
+  const [investTab, setInvestTab] = useState<InvestTab>('overview');
   const [aiMode, setAiMode] = useState<AiMode>('monthly_review');
+  const [modal, setModal] = useState<{type: FinanceTab; id?: string} | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<any>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [periodTypeFilter, setPeriodTypeFilter] = useState<string>('monthly');
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
+  const [horizonView, setHorizonView] = useState<HorizonView>('monthly');
+  const [generateResult, setGenerateResult] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
-  const filteredPeriods = useMemo(() => financePeriods.filter((p) => p.type === periodTypeFilter), [financePeriods, periodTypeFilter]);
-  const selectedPeriod = useMemo(() => filteredPeriods.find((p) => p.id === selectedPeriodId) || null, [filteredPeriods, selectedPeriodId]);
+  const allIncome = financeIncome || [];
+  const allExpenses = financeExpenses || [];
+  const allRules = financeAllocationRules || [];
+  const allGoals = financePurchaseGoals || [];
+  const allIdeas = financeInvestmentIdeas || [];
+  const allInvRules = financeInvestmentRules || [];
+  const allInvAllocs = financeInvestmentAllocations || [];
+  const allPeriods = financePeriods || [];
+  const allRecurring = financeRecurringRules || [];
 
-  const hasCurrentMonthPeriod = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    return filteredPeriods.some((p) => {
-      if (p.type !== 'monthly') return false;
-      const sd = p.startDate ? new Date(p.startDate) : null;
-      return sd && sd.getMonth() === m && sd.getFullYear() === y;
-    });
-  }, [filteredPeriods]);
+  const sortedPeriods = useMemo(() =>
+    [...allPeriods].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+    [allPeriods]
+  );
 
-  const isInPeriod = useCallback((d?: string) => {
-    if (!selectedPeriod) return false;
-    if (!d) return false;
-    const date = new Date(d);
-    const sd = selectedPeriod.startDate ? new Date(selectedPeriod.startDate) : null;
-    const ed = selectedPeriod.endDate ? new Date(selectedPeriod.endDate) : null;
-    if (sd && ed) return date >= sd && date <= ed;
-    if (sd) return date >= sd;
-    return false;
-  }, [selectedPeriod]);
+  const selectedPeriod = useMemo(() =>
+    allPeriods.find(p => p.id === selectedPeriodId),
+    [allPeriods, selectedPeriodId]
+  );
 
-  const matchesPeriod = (fpId?: string) => {
-    if (!selectedPeriodId) return true;
-    return fpId === selectedPeriodId;
-  };
+  const linkedPeriodId = selectedPeriodId;
 
-  const periodLabel = selectedPeriod?.title || (periodTypeFilter === 'monthly' ? 'Current Month' : `${periodTypeFilter.replace('_', ' ')}`);
+  const dashboardIncome = useMemo(() => {
+    if (!selectedPeriodId) return allIncome;
+    return allIncome.filter(i => incomeInPeriod(i, selectedPeriodId, selectedPeriod));
+  }, [allIncome, selectedPeriodId, selectedPeriod]);
 
-  const activeAlloc = useMemo(() => financeAllocationRules.filter((r) => r.isActive), [financeAllocationRules]);
-  const totalAllocPct = useMemo(() => activeAlloc.reduce((s, r) => s + r.percentage, 0), [activeAlloc]);
+  const dashboardExpenses = useMemo(() => {
+    if (!selectedPeriodId) return allExpenses;
+    return allExpenses.filter(e => expenseInPeriod(e, selectedPeriodId, selectedPeriod));
+  }, [allExpenses, selectedPeriodId, selectedPeriod]);
 
-  const inPeriod = useCallback((d?: string) => selectedPeriodId ? isInPeriod(d) : isCM(d), [selectedPeriodId, isInPeriod]);
+  const filteredFinanceIncome = dashboardIncome;
+  const filteredFinanceExpenses = dashboardExpenses;
 
-  const expectedIncome = useMemo(() => financeIncome.reduce((s, i) => {
-    if (!matchesPeriod(i.financePeriodId)) return s;
-    if (i.expectedAmount != null && i.expectedDate && inPeriod(i.expectedDate)) return s + i.expectedAmount;
-    if (i.incomeDate && inPeriod(i.incomeDate)) return s + i.amount;
-    return s;
-  }, 0), [financeIncome, selectedPeriodId]);
+  function matchesPeriod(periodId: string): boolean {
+    return selectedPeriodId === periodId;
+  }
 
-  const receivedIncome = useMemo(() => financeIncome.reduce((s, i) => {
-    if (!matchesPeriod(i.financePeriodId)) return s;
-    if (i.receivedAmount != null && i.receivedDate && inPeriod(i.receivedDate)) return s + i.receivedAmount;
-    if (i.status === 'received' && i.incomeDate && inPeriod(i.incomeDate)) return s + i.amount;
-    return s;
-  }, 0), [financeIncome, selectedPeriodId]);
+  const defaultIncome: Partial<FinanceIncome> = { incomeType: 'other', source: 'other', status: 'expected', currency: 'MYR', recurrence: 'once', amount: 0, isRecurring: false, financePeriodId: selectedPeriodId || undefined, incomeDate: selectedPeriod?.startDate || undefined, expectedDate: selectedPeriod?.startDate || undefined };
+  const defaultExpense: Partial<FinanceExpense> = { category: 'other', status: 'planned', currency: 'MYR', amount: 0, financePeriodId: selectedPeriodId || undefined, expenseDate: selectedPeriod?.startDate || undefined };
+  const defaultRule: Partial<FinanceAllocationRule> = { name: 'New Rule', category: 'needs', percentage: 0, priority: 0, isActive: true };
+  const defaultGoal: Partial<FinancePurchaseGoal> = { title: 'New Goal', category: 'other', status: 'planned', priority: 'medium', currency: 'MYR', targetAmount: 0, savedAmount: 0, decisionStatus: 'researching' };
+  const defaultIdea: Partial<FinanceInvestmentIdea> = { title: 'New Idea', type: 'stocks', riskLevel: 'medium', ethicalStatus: 'good', status: 'researching', decisionStatus: 'researching', currency: 'MYR', plannedAmount: 0 };
+  const defaultInvRule: Partial<FinanceInvestmentRule> = { title: 'New Rule', category: 'risk', priority: 0, isActive: true };
+  const defaultInvAlloc: Partial<FinanceInvestmentAllocation> = { name: 'New Allocation', category: 'crypto', percentage: 0, riskLevel: 'medium', ethicalStatus: 'good', priority: 0, isActive: true };
+  const defaultPeriod: Partial<FinancePeriod> = { title: '', type: 'manual', startDate: '', endDate: '', status: 'open' };
+  const defaultRecurring: Partial<FinanceRecurringRule> = { kind: 'income', frequency: 'monthly', title: '', amount: 0, currency: 'MYR', isActive: true, confidence: 'medium' };
 
-  const pendingIncome = useMemo(() => Math.max(expectedIncome - receivedIncome, 0), [expectedIncome, receivedIncome]);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
-  const delayedIncome = useMemo(() => financeIncome.reduce((s, i) => {
-    if (!matchesPeriod(i.financePeriodId)) return s;
-    if (i.status === 'delayed') {
-      return s + (i.expectedAmount != null ? i.expectedAmount : i.amount);
-    }
-    return s;
-  }, 0), [financeIncome, selectedPeriodId]);
+  function openModal(type: FinanceTab, id?: string) {
+    setFormData({});
+    setModal({ type, id });
+  }
 
-  const paidExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && e.status === 'paid' && inPeriod(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses, selectedPeriodId]);
+  function closeModal() {
+    setModal(null);
+    setFormData({});
+  }
 
-  const plannedExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && (e.status === 'planned' || e.status === 'unpaid') && inPeriod(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses, selectedPeriodId]);
-
-  const netReceived = receivedIncome - paidExpenses;
-  const expectedNet = expectedIncome - (paidExpenses + plannedExpenses);
-  const availableToAllocate = Math.max(netReceived, 0);
-  const sRate = receivedIncome > 0 ? (netReceived / receivedIncome) * 100 : 0;
-
-  const mIncome = useMemo(() => financeIncome.filter((i) => matchesPeriod(i.financePeriodId) && i.status === 'received' && inPeriod(i.incomeDate)), [financeIncome, selectedPeriodId]);
-  const mExpenses = useMemo(() => financeExpenses.filter((e) => matchesPeriod(e.financePeriodId) && e.status === 'paid' && inPeriod(e.expenseDate)), [financeExpenses, selectedPeriodId]);
-
-  const [periodDataFilter, setPeriodDataFilter] = useState<'all' | 'selected'>('selected');
-  const filteredFinanceIncome = useMemo(() => {
-    if (periodDataFilter === 'all' || !selectedPeriodId) return financeIncome;
-    return financeIncome.filter((i) => i.financePeriodId === selectedPeriodId);
-  }, [financeIncome, selectedPeriodId, periodDataFilter]);
-  const filteredFinanceExpenses = useMemo(() => {
-    if (periodDataFilter === 'all' || !selectedPeriodId) return financeExpenses;
-    return financeExpenses.filter((e) => e.financePeriodId === selectedPeriodId);
-  }, [financeExpenses, selectedPeriodId, periodDataFilter]);
-  const filteredPurchaseGoals = useMemo(() => {
-    if (periodDataFilter === 'all' || !selectedPeriodId) return financePurchaseGoals;
-    return financePurchaseGoals.filter((g) => g.financePeriodId === selectedPeriodId);
-  }, [financePurchaseGoals, selectedPeriodId, periodDataFilter]);
-  const filteredInvestmentIdeas = useMemo(() => {
-    if (periodDataFilter === 'all' || !selectedPeriodId) return financeInvestmentIdeas;
-    return financeInvestmentIdeas.filter((g) => g.financePeriodId === selectedPeriodId);
-  }, [financeInvestmentIdeas, selectedPeriodId, periodDataFilter]);
-  const tIncome = useMemo(() => mIncome.reduce((s, i) => s + i.amount, 0), [mIncome]);
-  const tExpenses = useMemo(() => mExpenses.reduce((s, e) => s + e.amount, 0), [mExpenses]);
-  const net = tIncome - tExpenses;
-  const aGoals = useMemo(() => financePurchaseGoals.filter((g) => g.status === 'saving' || g.status === 'planned'), [financePurchaseGoals]);
-  const tGT = useMemo(() => financePurchaseGoals.reduce((s, g) => s + g.targetAmount, 0), [financePurchaseGoals]);
-  const tGS = useMemo(() => financePurchaseGoals.reduce((s, g) => s + g.savedAmount, 0), [financePurchaseGoals]);
-  const iUR = useMemo(() => financeInvestmentIdeas.filter((i) => i.ethicalStatus === 'needs_review'), [financeInvestmentIdeas]);
-  const eWarn = useMemo(() => financeInvestmentIdeas.filter((i) => i.ethicalStatus === 'needs_review' || i.ethicalStatus === 'avoid'), [financeInvestmentIdeas]);
-  const iResearching = useMemo(() => financeInvestmentIdeas.filter((i) => i.status === 'researching'), [financeInvestmentIdeas]);
-  const iPlanned = useMemo(() => financeInvestmentIdeas.filter((i) => i.status === 'planned'), [financeInvestmentIdeas]);
-  const iInvested = useMemo(() => financeInvestmentIdeas.filter((i) => i.status === 'invested'), [financeInvestmentIdeas]);
-  const iHighRisk = useMemo(() => financeInvestmentIdeas.filter((i) => i.riskLevel === 'high'), [financeInvestmentIdeas]);
-  const tPlannedAmount = useMemo(() => financeInvestmentIdeas.reduce((s, i) => s + i.plannedAmount, 0), [financeInvestmentIdeas]);
-  const maxAllocSum = useMemo(() => financeInvestmentIdeas.reduce((s, i) => s + (i.maxAllocation || 0), 0), [financeInvestmentIdeas]);
-  const activeIAlloc = useMemo(() => financeInvestmentAllocations.filter((a) => a.isActive), [financeInvestmentAllocations]);
-  const totalIAllocPct = useMemo(() => activeIAlloc.reduce((s, a) => s + a.percentage, 0), [activeIAlloc]);
-  const ethicalIssues = useMemo(() => financeInvestmentIdeas.filter((i) => i.ethicalStatus === 'needs_review' || i.ethicalStatus === 'avoid'), [financeInvestmentIdeas]);
-  const redFlagIdeas = useMemo(() => financeInvestmentIdeas.filter((i) => i.redFlags), [financeInvestmentIdeas]);
-  const noResearch = useMemo(() => financeInvestmentIdeas.filter((i) => !i.researchLinks && i.status !== 'invested'), [financeInvestmentIdeas]);
-
-  const openModal = (type: string, editing?: any) => {
-    setModal({ type, editing });
-    if (editing) setForm({ ...editing });
-    else if (type === 'income') setForm({ currency: 'MYR', status: 'expected', isRecurring: false, financePeriodId: selectedPeriodId || undefined });
-    else if (type === 'expenses') setForm({ currency: 'MYR', status: 'planned', financePeriodId: selectedPeriodId || undefined });
-    else if (type === 'purchase_goals') setForm({ currency: 'MYR', status: 'planned', decisionStatus: 'researching', priority: 'medium', financePeriodId: selectedPeriodId || undefined });
-    else if (type === 'invest_ideas') setForm({ currency: 'MYR', status: 'researching', decisionStatus: 'researching', riskLevel: 'medium', ethicalStatus: 'needs_review', financePeriodId: selectedPeriodId || undefined });
-    else setForm({ currency: 'MYR', status: 'researching', decisionStatus: 'researching', riskLevel: 'medium', ethicalStatus: 'needs_review', isActive: true, priority: 0, percentage: 0 });
-  };
-  const closeModal = () => { setModal(null); setForm({}); };
-
-  const handleSave = async () => {
+  async function handleSave() {
     if (!modal) return;
+    const { type, id } = modal;
     try {
-      const { type, editing } = modal;
-      const h = editing ? type === 'income' ? onUpdateFinanceIncome(editing.id, form) : type === 'expenses' ? onUpdateFinanceExpense(editing.id, form) : type === 'allocation' ? onUpdateFinanceAllocationRule(editing.id, form) : type === 'purchase_goals' ? onUpdateFinancePurchaseGoal(editing.id, form) : type === 'invest_ideas' ? onUpdateFinanceInvestmentIdea(editing.id, form) : type === 'invest_rules' ? onUpdateFinanceInvestmentRule(editing.id, form) : onUpdateFinanceInvestmentAllocation(editing.id, form) : type === 'income' ? onAddFinanceIncome(form) : type === 'expenses' ? onAddFinanceExpense(form) : type === 'allocation' ? onAddFinanceAllocationRule(form) : type === 'purchase_goals' ? onAddFinancePurchaseGoal(form) : type === 'invest_ideas' ? onAddFinanceInvestmentIdea(form) : type === 'invest_rules' ? onAddFinanceInvestmentRule(form) : onAddFinanceInvestmentAllocation(form);
-      await h;
+      if (type === 'income') {
+        if (id) await onUpdateFinanceIncome(id, formData);
+        else await onAddFinanceIncome({ ...defaultIncome, ...formData });
+      } else if (type === 'expenses') {
+        if (id) await onUpdateFinanceExpense(id, formData);
+        else await onAddFinanceExpense({ ...defaultExpense, ...formData });
+      } else if (type === 'allocation') {
+        if (id) await onUpdateFinanceAllocationRule(id, formData);
+        else await onAddFinanceAllocationRule({ ...defaultRule, ...formData });
+      } else if (type === 'purchase_goals') {
+        if (id) await onUpdateFinancePurchaseGoal(id, formData);
+        else await onAddFinancePurchaseGoal({ ...defaultGoal, ...formData });
+      } else if (type === 'investments') {
+        if (id) await onUpdateFinanceInvestmentIdea(id, formData);
+        else await onAddFinanceInvestmentIdea({ ...defaultIdea, ...formData });
+      } else if (type === 'recurring') {
+        if (id) await onUpdateFinanceRecurringRule(id, formData);
+        else await onAddFinanceRecurringRule({ ...defaultRecurring, ...formData });
+      }
       closeModal();
-    } catch (err: any) { alert(err.message); }
-  };
+    } catch (e) {
+      console.error('Save failed', e);
+    }
+  }
 
-  const toggleActive = (item: any, onToggle: (id: string, d: any) => Promise<any>) => onToggle(item.id, { ...item, isActive: !item.isActive });
+  async function handleDelete(type: FinanceTab, id: string) {
+    try {
+      if (type === 'income') await onDeleteFinanceIncome(id);
+      else if (type === 'expenses') await onDeleteFinanceExpense(id);
+      else if (type === 'allocation') await onDeleteFinanceAllocationRule(id);
+      else if (type === 'purchase_goals') await onDeleteFinancePurchaseGoal(id);
+      else if (type === 'investments') await onDeleteFinanceInvestmentIdea(id);
+      else if (type === 'recurring') await onDeleteFinanceRecurringRule(id);
+    } catch (e) {
+      console.error('Delete failed', e);
+    }
+  }
 
-  const createStarterAllocation = async () => {
-    const d = [
-      { name: 'Needs', category: 'needs', percentage: 40, priority: 1, isActive: true, notes: 'Essential living expenses' },
-      { name: 'Family', category: 'family', percentage: 10, priority: 2, isActive: true, notes: 'Family support' },
-      { name: 'Savings', category: 'savings', percentage: 20, priority: 3, isActive: true, notes: 'Emergency fund' },
-      { name: 'Investment', category: 'investment', percentage: 15, priority: 4, isActive: true, notes: 'Long-term' },
-      { name: 'Learning/Tools', category: 'learning', percentage: 5, priority: 5, isActive: true, notes: 'Books, courses' },
-      { name: 'Health', category: 'health', percentage: 5, priority: 6, isActive: true, notes: 'Wellness' },
-      { name: 'Giving/Zakat', category: 'giving', percentage: 5, priority: 7, isActive: true, notes: 'Charity' },
-    ];
-    for (const r of d) await onAddFinanceAllocationRule(r);
-  };
+  function handleModalChange(field: string, value: any) {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }
 
-  const createStarterRules = async () => {
-    const d = [
-      { title: 'Avoid interest-based products', category: 'ethics', description: 'Do not invest in anything involving riba/interest.', priority: 1, isActive: true },
-      { title: 'Do not invest emergency fund', category: 'risk', description: 'Keep 3-6 months of expenses as cash, not invested.', priority: 2, isActive: true },
-      { title: 'Max allocation per idea', category: 'strategy', description: 'No single idea should exceed the defined max allocation.', priority: 3, isActive: true },
-      { title: 'Research before investing', category: 'process', description: 'Document pros, cons, risks, and scenarios before committing.', priority: 4, isActive: true },
-      { title: 'Avoid unclear high-risk schemes', category: 'risk', description: 'If the revenue model or risk is unclear, do not invest.', priority: 5, isActive: true },
-      { title: 'Review ethical status before action', category: 'ethics', description: 'Ensure Shariah compliance review before any investment.', priority: 6, isActive: true },
-    ];
-    for (const r of d) await onAddFinanceInvestmentRule(r);
-  };
+  function getEditItem(type: FinanceTab): any {
+    if (!modal?.id) return null;
+    const id = modal.id;
+    if (type === 'income') return allIncome.find(i => i.id === id);
+    if (type === 'expenses') return allExpenses.find(i => i.id === id);
+    if (type === 'allocation') return allRules.find(i => i.id === id);
+    if (type === 'purchase_goals') return allGoals.find(i => i.id === id);
+    if (type === 'investments') return allIdeas.find(i => i.id === id);
+    if (type === 'recurring') return allRecurring.find(i => i.id === id);
+    return null;
+  }
 
-  const handleAddSaved = async (goal: FinancePurchaseGoal) => {
-    const amt = parseFloat(addSavedAmount);
-    if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
-    await onUpdateFinancePurchaseGoal(goal.id, { ...goal, savedAmount: goal.savedAmount + amt });
-    setAddSavedGoalId(null);
-    setAddSavedAmount('');
-  };
+  async function generateRecurringItemsForPeriod() {
+    if (!selectedPeriod || !selectedPeriodId) return;
+    setGenerating(true);
+    setGenerateResult(null);
+    let created = 0;
+    let skipped = 0;
+    const activeRules = allRecurring.filter(r => r.isActive);
+    const periodStart = new Date(selectedPeriod.startDate);
+    const periodEnd = new Date(selectedPeriod.endDate);
 
-  const quickAction = async (item: FinanceInvestmentIdea, u: Partial<FinanceInvestmentIdea>) => onUpdateFinanceInvestmentIdea(item.id, { ...item, ...u });
+    for (const rule of activeRules) {
+      if (rule.startDate && new Date(rule.startDate) > periodEnd) { skipped++; continue; }
+      if (rule.endDate && new Date(rule.endDate) < periodStart) { skipped++; continue; }
+      if (rule.frequency === 'monthly') {
+      } else if (rule.frequency === 'weekly') {
+        if (periodEnd.getTime() - periodStart.getTime() > 45 * 86400000) { skipped++; continue; }
+      } else if (rule.frequency === 'yearly') {
+        const pStart = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+        const rStart = rule.startDate ? new Date(rule.startDate) : null;
+        if (!rStart) { skipped++; continue; }
+        if (pStart.getMonth() !== rStart.getMonth() || pStart.getFullYear() !== rStart.getFullYear()) { skipped++; continue; }
+      } else {
+        skipped++; continue;
+      }
 
-  const renderInsight = () => (
-    <div style={s.side}>
-      <div style={s.insCard}><div style={s.insT}>Expected vs Received</div><div style={s.insX}>{toCur(expectedIncome)} expected · {toCur(receivedIncome)} received ({receivedIncome > 0 ? ((receivedIncome / (expectedIncome || 1)) * 100).toFixed(0) : 0}%)</div></div>
-      <div style={s.insCard}><div style={s.insT}>Current Net</div><div style={s.insX}>{toCur(netReceived)} ({netReceived >= 0 ? 'positive' : 'negative'})</div></div>
-      <div style={s.insCard}><div style={s.insT}>Expected Net</div><div style={s.insX}>{toCur(expectedNet)}</div></div>
-      <div style={s.insCard}><div style={s.insT}>Available to Allocate</div><div style={s.insX}>{toCur(availableToAllocate)}</div></div>
-      <div style={s.insCard}><div style={s.insT}>Allocation Total</div><div style={s.insX}>{totalAllocPct}% {totalAllocPct === 100 ? '(balanced)' : totalAllocPct < 100 ? '(under-allocated)' : '(over-allocated)'}</div></div>
-      <div style={s.insCard}><div style={s.insT}>Goals Funding</div><div style={s.insX}>{aGoals.length} goal(s) need funding · {iUR.length} investment(s) under review</div></div>
-      <div style={s.insCard}><div style={s.insT}>Ethical Warnings</div><div style={s.insX}>{eWarn.length} flagged issue(s)</div></div>
-      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
-        <div style={s.insT}>Is this improving income or productivity?</div>
-        <div style={s.insX}>Before purchasing, ask if this accelerates earning.</div>
+      if (rule.kind === 'income') {
+        const dup = allIncome.some(i => i.title === rule.title && i.financePeriodId === selectedPeriodId && i.amount === rule.amount && i.isRecurring);
+        if (dup) { skipped++; continue; }
+        try {
+          await onAddFinanceIncome({
+            title: rule.title,
+            amount: rule.amount,
+            currency: rule.currency || 'MYR',
+            source: rule.source || 'other',
+            status: 'expected',
+            financePeriodId: selectedPeriodId,
+            isRecurring: true,
+            recurrence: rule.frequency,
+            incomeDate: selectedPeriod.startDate,
+            expectedDate: selectedPeriod.startDate,
+            notes: rule.notes ? `[Recurring] ${rule.notes}` : '[Recurring]',
+            linkedProjectId: rule.linkedProjectId || undefined,
+            linkedCompanyId: rule.linkedCompanyId || undefined,
+          });
+          created++;
+        } catch { skipped++; }
+      } else if (rule.kind === 'expense') {
+        const dup = allExpenses.some(e => e.title === rule.title && e.financePeriodId === selectedPeriodId && e.amount === rule.amount);
+        if (dup) { skipped++; continue; }
+        try {
+          await onAddFinanceExpense({
+            title: rule.title,
+            amount: rule.amount,
+            currency: rule.currency || 'MYR',
+            category: rule.category || 'other',
+            status: 'planned',
+            financePeriodId: selectedPeriodId,
+            expenseDate: selectedPeriod.startDate,
+            notes: rule.notes ? `[Recurring] ${rule.notes}` : '[Recurring]',
+            linkedProjectId: rule.linkedProjectId || undefined,
+          });
+          created++;
+        } catch { skipped++; }
+      }
+    }
+    setGenerateResult(`Created ${created} item(s), skipped ${skipped} (duplicates/inactive/mismatch)`);
+    setGenerating(false);
+  }
+
+  function renderIncomeForm(e?: FinanceIncome) {
+    const d = e || defaultIncome;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Income title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Type</label><select style={s.select} defaultValue={d.incomeType||'other'} onChange={e=>handleModalChange('incomeType',e.target.value)}>{INCOME_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Source</label><select style={s.select} defaultValue={d.source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'expected'} onChange={e=>handleModalChange('status',e.target.value)}>{INCOME_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label style={s.cardT}>Recurrence</label><select style={s.select} defaultValue={d.recurrence||'once'} onChange={e=>handleModalChange('recurrence',e.target.value)}>{RECURRENCE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Income Date</label><input style={s.input} type="date" defaultValue={d.incomeDate||''} onChange={e=>handleModalChange('incomeDate',e.target.value)} /></div>
+      <div><label style={s.cardT}>Expected Date</label><input style={s.input} type="date" defaultValue={d.expectedDate||''} onChange={e=>handleModalChange('expectedDate',e.target.value)} /></div>
+      <div><label style={s.cardT}>Received Date</label><input style={s.input} type="date" defaultValue={(d as any).receivedDate||''} onChange={e=>handleModalChange('receivedDate',e.target.value)} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Finance Period</label><select style={s.select} defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+    </div>;
+  }
+
+  function renderExpenseForm(e?: FinanceExpense) {
+    const d = e || defaultExpense;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Expense title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{EXPENSE_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label style={s.cardT}>Expense Date</label><input style={s.input} type="date" defaultValue={d.expenseDate||''} onChange={e=>handleModalChange('expenseDate',e.target.value)} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Finance Period</label><select style={s.select} defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+    </div>;
+  }
+
+  function renderAllocationForm(e?: FinanceAllocationRule) {
+    const d = e || defaultRule;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Name</label><input style={s.input} defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
+      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'needs'} onChange={e=>handleModalChange('category',e.target.value)}>{ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Percentage (%)</label><input style={s.input} type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Priority</label><input style={s.input} type="number" defaultValue={d.priority||0} onChange={e=>handleModalChange('priority',Number(e.target.value))} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    </div>;
+  }
+
+  function renderGoalForm(e?: FinancePurchaseGoal) {
+    const d = e || defaultGoal;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="What to buy" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{GOAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Priority</label><select style={s.select} defaultValue={d.priority||'medium'} onChange={e=>handleModalChange('priority',e.target.value)}>{GOAL_PRIORITIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Target Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.targetAmount||0} onChange={e=>handleModalChange('targetAmount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Saved Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.savedAmount||0} onChange={e=>handleModalChange('savedAmount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label style={s.cardT}>Target Date</label><input style={s.input} type="date" defaultValue={(d as any).targetDate||''} onChange={e=>handleModalChange('targetDate',e.target.value)} /></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    </div>;
+  }
+
+  function renderIdeaForm(e?: FinanceInvestmentIdea) {
+    const d = e || defaultIdea;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Investment idea" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Type</label><select style={s.select} defaultValue={d.type||'stocks'} onChange={e=>handleModalChange('type',e.target.value)}>{INVESTMENT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Risk Level</label><select style={s.select} defaultValue={d.riskLevel||'medium'} onChange={e=>handleModalChange('riskLevel',e.target.value)}>{RISK_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Ethical Status</label><select style={s.select} defaultValue={d.ethicalStatus||'good'} onChange={e=>handleModalChange('ethicalStatus',e.target.value)}>{ETHICAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'researching'} onChange={e=>handleModalChange('status',e.target.value)}>{INVESTMENT_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Planned Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.plannedAmount||0} onChange={e=>handleModalChange('plannedAmount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label style={s.cardT}>Decision</label><select style={s.select} defaultValue={(d as any).decision||'researching'} onChange={e=>handleModalChange('decision',e.target.value)}>{INVEST_DECISION_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    </div>;
+  }
+
+  function renderAllocForm(e?: FinanceInvestmentAllocation) {
+    const d = e || defaultInvAlloc;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Name</label><input style={s.input} defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
+      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'crypto'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Percentage (%)</label><input style={s.input} type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
+    </div>;
+  }
+
+  function renderInvRuleForm(e?: FinanceInvestmentRule) {
+    const d = e || defaultInvRule;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="e.g. No gambling stocks" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'risk'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_RULE_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+    </div>;
+  }
+
+  function renderRecurringForm(e?: FinanceRecurringRule) {
+    const d = e || defaultRecurring;
+    return <div style={s.formGrid as React.CSSProperties}>
+      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="e.g. Salary" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label style={s.cardT}>Kind</label><select style={s.select} defaultValue={d.kind||'income'} onChange={e=>handleModalChange('kind',e.target.value)}>{RECURRING_KINDS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label style={s.cardT}>Frequency</label><select style={s.select} defaultValue={d.frequency||'monthly'} onChange={e=>handleModalChange('frequency',e.target.value)}>{RECURRING_FREQUENCIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Confidence</label><select style={s.select} defaultValue={d.confidence||'medium'} onChange={e=>handleModalChange('confidence',e.target.value)}>{CONFIDENCE_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Start Date</label><input style={s.input} type="date" defaultValue={(d as any).startDate||''} onChange={e=>handleModalChange('startDate',e.target.value)} /></div>
+      <div><label style={s.cardT}>End Date</label><input style={s.input} type="date" defaultValue={(d as any).endDate||''} onChange={e=>handleModalChange('endDate',e.target.value)} /></div>
+      <div><label style={s.cardT}>Source</label><select style={s.select} defaultValue={(d as any).source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={(d as any).category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    </div>;
+  }
+
+  function renderModal() {
+    if (!modal) return null;
+    const item = getEditItem(modal.type);
+    const title = modal.id ? 'Edit' : 'New';
+    return <div style={s.overlay as React.CSSProperties} onClick={closeModal}>
+      <div style={s.modal as React.CSSProperties} onClick={e=>e.stopPropagation()}>
+        <h3 style={{...s.hdr, marginBottom:'16px'}}>{title} {modal.type.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</h3>
+        {modal.type === 'income' && renderIncomeForm(item)}
+        {modal.type === 'expenses' && renderExpenseForm(item)}
+        {modal.type === 'allocation' && renderAllocationForm(item)}
+        {modal.type === 'purchase_goals' && renderGoalForm(item)}
+        {modal.type === 'investments' && renderIdeaForm(item)}
+        {modal.type === 'recurring' && renderRecurringForm(item)}
+        <div style={s.act as React.CSSProperties}>
+          <button style={s.btnO} onClick={closeModal}>Cancel</button>
+          <button style={s.btn('#2563eb')} onClick={handleSave}>Save</button>
+        </div>
       </div>
-      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
-        <div style={s.insT}>Is this within risk limits?</div>
-        <div style={s.insX}>Check investment rules and allocation limits.</div>
-      </div>
-      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
-        <div style={s.insT}>Should this wait?</div>
-        <div style={s.insX}>Defer until income is received.</div>
-      </div>
-      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
-        <div style={s.insT}>Aligned with Islamic principles?</div>
-        <div style={s.insX}>Review halal income, ethical investments.</div>
-      </div>
-      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
-        <div style={s.insT}>Next financial action</div>
-        <div style={s.insX}>Define one concrete step this week.</div>
-      </div>
-    </div>
-  );
+    </div>;
+  }
 
-  const renderDash = () => (
-    <div>
-      <div style={{ ...s.warn, background: '#f0f9ff', border: '1px solid #bae6fd', color: '#1e40af', marginBottom: '16px' }}>
-        Income is variable. This dashboard separates expected, received, pending, and delayed income.
+  function renderPeriodSelector() {
+    return <div style={{display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap'}}>
+      <select style={{...s.select, width:'auto', minWidth:'180px'}} value={selectedPeriodId} onChange={e=>setSelectedPeriodId(e.target.value)}>
+        <option value="">-- Select Period --</option>
+        {sortedPeriods.map(p => <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>)}
+      </select>
+      <button style={s.btnO} onClick={() => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        onAddFinancePeriod({ title: `${MONTHS[now.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`, status: 'open' });
+      }}>+ Current Month</button>
+      <select style={{...s.select, width:'auto', minWidth:'110px'}} value={horizonView} onChange={e=>setHorizonView(e.target.value as HorizonView)}>
+        <option value="monthly">Monthly</option>
+        <option value="six_months">6 Months</option>
+        <option value="yearly">Yearly</option>
+        <option value="five_years">5 Years</option>
+        <option value="ten_years">10 Years</option>
+      </select>
+    </div>;
+  }
+
+  function renderDashboard() {
+    const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+    const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
+    const totalExpenses = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
+    const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
+    const unpaidExpenses = dashboardExpenses.filter(e => e.status === 'unpaid').reduce((s,e) => s + e.amount, 0);
+    const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned').reduce((s,e) => s + e.amount, 0);
+    const totalIncome = dashboardIncome.reduce((s,i) => s + i.amount, 0);
+    const netCash = receivedIncome - paidExpenses;
+    const netProjected = expectedIncome - totalExpenses;
+    const needsTotal = dashboardExpenses.filter(e => e.category === 'needs' || e.category === 'family').reduce((s,e) => s + e.amount, 0);
+
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Dashboard</h2>
+        <div style={{fontSize:'12px', color:'#64748b'}}>{selectedPeriod?.name || 'No period selected — showing all records'}</div>
       </div>
-      <div style={s.dashGrid}>
-        {[
-          ['Expected Income', toCur(expectedIncome), '#2563eb'],
-          ['Received Income', toCur(receivedIncome), receivedIncome > 0 ? '#166534' : '#64748b'],
-          ['Pending Income', toCur(pendingIncome), pendingIncome > 0 ? '#854d0e' : '#64748b'],
-          ['Delayed Income', toCur(delayedIncome), delayedIncome > 0 ? '#991b1b' : '#64748b'],
-          ['Paid Expenses', toCur(paidExpenses), paidExpenses > 0 ? '#991b1b' : '#64748b'],
-          ['Planned Expenses', toCur(plannedExpenses), plannedExpenses > 0 ? '#854d0e' : '#64748b'],
-          ['Net Received', toCur(netReceived), netReceived >= 0 ? '#166534' : '#991b1b'],
-          ['Expected Net', toCur(expectedNet), expectedNet >= 0 ? '#166534' : '#991b1b'],
-          ['Available to Allocate', toCur(availableToAllocate), availableToAllocate > 0 ? '#166534' : '#64748b'],
-          ['Savings Rate', `${sRate.toFixed(1)}%`, sRate >= 20 ? '#166534' : sRate > 0 ? '#854d0e' : '#64748b'],
-        ].map(([l, v, c]) => (
-          <div key={String(l)} style={s.card}>
-            <div style={s.cardT}>{l}</div>
-            <div style={{ ...s.cardV, color: c }}>{v}</div>
-          </div>
-        ))}
+      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+        Monthly view shows only records linked to this period or dated inside this month. Incomes/expenses from other months are hidden.
+      </div>}
+      {!selectedPeriodId && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', marginBottom:'16px', fontSize:'13px'}}>
+        Select a period above to focus on a specific month.
+      </div>}
+      <div style={s.dashGrid as React.CSSProperties}>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Expected Income</div><div style={s.cardV}>{toCur(expectedIncome)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Received Income</div><div style={s.cardV}>{toCur(receivedIncome)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(totalExpenses)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Paid</div><div style={{...s.cardV, color:'#16a34a'}}>{toCur(paidExpenses)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Unpaid / Planned</div><div style={{...s.cardV, color:'#ea580c'}}>{toCur(unpaidExpenses + plannedExpenses)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Net Cash (Received - Paid)</div><div style={{...s.cardV, color: netCash >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(netCash)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Net Projected (Expected - All)</div><div style={{...s.cardV, color: netProjected >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(netProjected)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Needs Ratio</div><div style={s.cardV}>{totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'}</div></div>
       </div>
-    </div>
-  );
+      <div style={{marginBottom:'16px', padding:'12px', background:'#fff7ed', borderRadius:'8px', border:'1px solid #fed7aa', fontSize:'13px', color:'#c2410c'}}>
+        Variable income (expected/delayed) is estimated; actual net cash may differ.
+      </div>
+    </div>;
+  }
 
-  const renderIncomeTab = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Income</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('income')}>+ Add Income</button></div></div>
-      {filteredFinanceIncome.length === 0 ? <div style={s.empty}>No income entries yet.</div> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['Title', 'Type', 'Expected', 'Received', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
-          <tbody>{filteredFinanceIncome.map((i) => (
-            <tr key={i.id}>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.title}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.incomeType || i.source}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.expectedAmount ?? i.amount, i.currency)}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.receivedAmount ?? (i.status === 'received' ? i.amount : 0), i.currency)}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.expectedDate || i.incomeDate ? new Date(i.expectedDate || i.incomeDate || '').toLocaleDateString() : '-'}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}><span style={s.badge(i.status === 'received' ? 'green' : i.status === 'delayed' ? 'yellow' : i.status === 'cancelled' ? 'red' : 'blue')}>{i.status}</span></td>
-              <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}><button style={s.iBtn} onClick={() => openModal('income', i)}>Edit</button><button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceIncome(i.id)}>Del</button></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      )}
-    </div>
-  );
-
-  const renderExpensesTab = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Expenses</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('expenses')}>+ Add Expense</button></div></div>
-      {filteredFinanceExpenses.length === 0 ? <div style={s.empty}>No expenses yet.</div> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['Title', 'Category', 'Amount', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
-          <tbody>{filteredFinanceExpenses.map((i) => (
-            <tr key={i.id}>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.title}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}><span style={s.badge('gray')}>{i.category}</span></td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.amount, i.currency)}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.expenseDate ? new Date(i.expenseDate).toLocaleDateString() : '-'}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}><span style={s.badge(i.status === 'paid' ? 'green' : i.status === 'unpaid' ? 'yellow' : i.status === 'cancelled' ? 'red' : 'blue')}>{i.status}</span></td>
-              <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}><button style={s.iBtn} onClick={() => openModal('expenses', i)}>Edit</button><button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceExpense(i.id)}>Del</button></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      )}
-    </div>
-  );
-
-  const renderAllocTab = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Allocation Rules</h3><button style={s.btn('#2563eb')} onClick={() => openModal('allocation')}>+ Add Rule</button></div>
-      {financeAllocationRules.length === 0 ? <div style={s.empty}><p style={{ marginBottom: '16px' }}>No allocation rules yet.</p><button style={s.btn('#2563eb')} onClick={createStarterAllocation}>Create Starter Allocation System</button></div> : (
-        <>
-          <div style={{ ...s.warn, background: totalAllocPct === 100 ? '#f0fdf4' : '#fef9c3', border: `1px solid ${totalAllocPct === 100 ? '#bbf7d0' : '#fde68a'}`, color: totalAllocPct === 100 ? '#166534' : '#854d0e' }}>
-            {totalAllocPct === 100 ? 'Allocation total is 100%. Rules are balanced.' : `Allocation total is ${totalAllocPct}%. Adjust rules to reach 100%.`}
-          </div>
-          <div style={{ ...s.sCard, marginBottom: '16px', background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e40af' }}>Available to Allocate: {toCur(availableToAllocate)}</div>
-            {availableToAllocate <= 0 && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>No available cash to allocate yet. Wait for income to be received or reduce paid expenses.</div>}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {financeAllocationRules.map((r) => {
-              const allocatedAmount = availableToAllocate * (r.percentage / 100);
-              return (
-                <div key={r.id} style={{ ...s.sCard, opacity: r.isActive ? 1 : 0.5 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div><div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{r.name}</div><div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{r.category} · Priority {r.priority}</div></div>
-                    <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{r.percentage}%</div>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#0f172a', marginTop: '6px' }}>Allocated: {toCur(allocatedAmount)}</div>
-                  {r.notes && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{r.notes}</div>}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer' }}><input type="checkbox" checked={r.isActive} onChange={() => toggleActive(r, onUpdateFinanceAllocationRule)} />Active</label>
-                    <button style={s.iBtn} onClick={() => openModal('allocation', r)}>Edit</button>
-                    <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceAllocationRule(r.id)}>Del</button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  const renderPurchaseGoalsTab = () => (
-    <div>
-      <div style={s.row}><div><h3 style={s.hdr}>Purchase Goals Pro</h3><div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Product wishlist and acquisition planning</div></div><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('purchase_goals')}>+ Add Goal</button></div></div>
-      {filteredPurchaseGoals.length === 0 ? <div style={s.empty}>No purchase goals yet.</div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '16px' }}>
-          {filteredPurchaseGoals.map((g) => {
-            const pct = g.targetAmount > 0 ? (g.savedAmount / g.targetAmount) * 100 : 0;
-            return (
-              <div key={g.id} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden' }}>
-                {g.imageUrl ? <img src={g.imageUrl} alt={g.title} style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block', background: '#f1f5f9' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} /> : <div style={{ width: '100%', height: '160px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>}
-                <div style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1 }}><div style={{ fontWeight: 700, color: '#0f172a', fontSize: '16px' }}>{g.title}</div>{g.vendor && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>{g.vendor}</div>}<div style={{ fontSize: '12px', color: '#64748b' }}>{g.category}</div></div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-end' }}>
-                      <span style={s.badge(g.priority === 'high' ? 'red' : g.priority === 'medium' ? 'yellow' : 'gray')}>{g.priority}</span>
-                      <span style={s.badge(g.status === 'bought' ? 'green' : g.status === 'saving' ? 'blue' : g.status === 'paused' ? 'yellow' : g.status === 'cancelled' ? 'red' : 'gray')}>{g.status}</span>
-                      <span style={s.badge(g.decisionStatus === 'bought' ? 'green' : g.decisionStatus === 'approved' ? 'blue' : g.decisionStatus === 'waiting' ? 'yellow' : g.decisionStatus === 'rejected' ? 'red' : 'purple')}>{g.decisionStatus}</span>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: '12px' }}><div style={s.bar(pct)}><div style={s.fill(pct, '#2563eb')} /></div><div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '12px', color: '#64748b' }}><span>Saved: {toCur(g.savedAmount, g.currency)}</span><span>Target: {toCur(g.targetAmount, g.currency)}</span></div></div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px', fontSize: '12px', color: '#64748b' }}>
-                    {g.targetDate && <span>Target: {new Date(g.targetDate).toLocaleDateString()}</span>}
-                    {g.productUrl && <a href={g.productUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', textDecoration: 'underline' }}>Open Product</a>}
-                    {g.linkedProjectName && <span>Project: {g.linkedProjectName}</span>}
-                  </div>
-                  {g.reason && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Why: {g.reason}</div>}
-                  {g.expectedUse && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Use: {g.expectedUse}</div>}
-                  {g.allocationCategory && <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '4px' }}>Funded from: {g.allocationCategory}</div>}
-                  {g.monthlyContribution != null && g.monthlyContribution > 0 ? (
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Monthly: {toCur(g.monthlyContribution)} · Est. {Math.ceil((g.targetAmount - g.savedAmount) / g.monthlyContribution)} months remaining</div>
-                  ) : (
-                    <div style={{ fontSize: '12px', color: '#c2410c', marginTop: '2px' }}>No monthly contribution set.</div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
-                  <button style={s.btnS('#2563eb')} onClick={() => { setAddSavedGoalId(g.id); setAddSavedAmount(''); }}>+ Saved</button>
-                  <button style={s.btnS('#166534')} onClick={() => onUpdateFinancePurchaseGoal(g.id, { ...g, status: 'bought', decisionStatus: 'bought' })}>Bought</button>
-                  <button style={s.btnS('#854d0e')} onClick={() => onUpdateFinancePurchaseGoal(g.id, { ...g, decisionStatus: 'waiting' })}>Waiting</button>
-                  <button style={s.btnS('#991b1b')} onClick={() => onUpdateFinancePurchaseGoal(g.id, { ...g, decisionStatus: 'rejected' })}>Reject</button>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', flex: 1 }}>
-                    <button style={s.iBtn} onClick={() => openModal('purchase_goals', g)}>Edit</button>
-                    <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinancePurchaseGoal(g.id)}>Del</button>
-                  </div>
-                </div>
-                {addSavedGoalId === g.id && (
-                  <div style={{ padding: '12px 16px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input style={{ ...s.input, width: 'auto', flex: 1 }} type="number" step="0.01" placeholder="Amount" value={addSavedAmount} onChange={(e) => setAddSavedAmount(e.target.value)} autoFocus />
-                    <button style={s.btnS('#2563eb')} onClick={() => handleAddSaved(g)}>Add</button>
-                    <button style={s.btnO} onClick={() => { setAddSavedGoalId(null); setAddSavedAmount(''); }}>Cancel</button>
-                  </div>
-                )}
+  function renderIncomeTab() {
+    const list = filteredFinanceIncome;
+    const received = list.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
+    const expected = list.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Income</h2>
+        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+          <span style={{fontSize:'13px', color:'#64748b'}}>Received: {toCur(received)} | Expected: {toCur(expected)}</span>
+          <button style={s.btn('#2563eb')} onClick={()=>openModal('income')}>+ Add</button>
+        </div>
+      </div>
+      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+        Showing income linked to this period or dated within this month.
+      </div>}
+      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No income records for this period.</div> :
+        list.map(i => <div key={i.id} style={s.insCard as React.CSSProperties}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+            <div>
+              <div style={s.insT}>{i.title || i.incomeType} {i.isRecurring && <span style={s.badge('purple')}>Recurring</span>}</div>
+              <div style={s.insX}>
+                <span style={s.badge(i.status === 'received' ? 'green' : i.status === 'delayed' ? 'yellow' : i.status === 'cancelled' ? 'red' : 'blue')}>{i.status}</span>
+                {' '}{i.source} — {i.recurrence}
+                {i.incomeDate && <> — Date: {new Date(i.incomeDate).toLocaleDateString()}</>}
+                {i.expectedDate && <> — Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
+                {i.receivedDate && <> — Received: {new Date(i.receivedDate).toLocaleDateString()}</>}
+                {i.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===i.financePeriodId)?.title || i.financePeriodId}</>}
               </div>
-            );
+            </div>
+            <div style={{textAlign:'right' as const}}>
+              <div style={{fontSize:'16px', fontWeight:700, color:'#16a34a'}}>{toCur(i.amount, i.currency)}</div>
+              <div>
+                <button style={s.iBtn} onClick={()=>openModal('income', i.id)}>Edit</button>
+                <button style={s.iBtn} onClick={()=>handleDelete('income', i.id)}>Del</button>
+              </div>
+            </div>
+          </div>
+          {(i as any).notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{(i as any).notes}</div>}
+        </div>)
+      }
+    </div>;
+  }
+
+  function renderExpensesTab() {
+    const list = filteredFinanceExpenses;
+    const total = list.reduce((s,e) => s + e.amount, 0);
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Expenses</h2>
+        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+          <span style={{fontSize:'13px', color:'#64748b'}}>Total: {toCur(total)}</span>
+          <button style={s.btn('#2563eb')} onClick={()=>openModal('expenses')}>+ Add</button>
+        </div>
+      </div>
+      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+        Showing expenses linked to this period or dated within this month.
+      </div>}
+      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No expenses for this period.</div> :
+        list.map(e => <div key={e.id} style={s.insCard as React.CSSProperties}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+            <div>
+              <div style={s.insT}>{e.title || e.category}</div>
+              <div style={s.insX}>
+                <span style={s.badge(e.status === 'paid' ? 'green' : e.status === 'unpaid' ? 'red' : e.status === 'cancelled' ? 'orange' : 'yellow')}>{e.status}</span>
+                {' '}{e.category}
+                {e.expenseDate && <> — Date: {new Date(e.expenseDate).toLocaleDateString()}</>}
+                {e.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
+              </div>
+            </div>
+            <div style={{textAlign:'right' as const}}>
+              <div style={{fontSize:'16px', fontWeight:700, color:'#dc2626'}}>{toCur(e.amount, e.currency)}</div>
+              <div>
+                <button style={s.iBtn} onClick={()=>openModal('expenses', e.id)}>Edit</button>
+                <button style={s.iBtn} onClick={()=>handleDelete('expenses', e.id)}>Del</button>
+              </div>
+            </div>
+          </div>
+          {(e as any).notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{(e as any).notes}</div>}
+        </div>)
+      }
+    </div>;
+  }
+
+  function renderAllocationTab() {
+    const list = allRules;
+    const totalPct = list.reduce((s,r) => s + r.percentage, 0);
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Allocation Rules</h2>
+        <button style={s.btn('#2563eb')} onClick={()=>openModal('allocation')}>+ Add</button>
+      </div>
+      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No allocation rules. Add rules to distribute income across categories.</div> :
+        <div style={{display:'grid', gap:'10px'}}>
+          {list.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+              <div>
+                <div style={s.insT}>{r.name || r.category} <span style={s.badge(r.isActive ? 'green' : 'orange')}>{r.isActive ? 'Active' : 'Inactive'}</span></div>
+                <div style={s.insX}>{r.category} — {r.percentage}% — Priority: {r.priority}</div>
+              </div>
+              <div>
+                <button style={s.iBtn} onClick={()=>openModal('allocation', r.id)}>Edit</button>
+                <button style={s.iBtn} onClick={()=>handleDelete('allocation', r.id)}>Del</button>
+              </div>
+            </div>
+          </div>)}
+        </div>
+      }
+      {totalPct > 0 && <div style={{marginTop:'12px', padding:'10px', background:'#f0f9ff', borderRadius:'8px', border:'1px solid #bae6fd', fontSize:'13px', color:'#0369a1'}}>
+        Total allocated: {totalPct}% {totalPct !== 100 && <>({100 - totalPct}% unallocated — will be treated as remainder)</>}
+      </div>}
+    </div>;
+  }
+
+  function renderPurchaseGoalsTab() {
+    const list = allGoals;
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Purchase Goals</h2>
+        <button style={s.btn('#2563eb')} onClick={()=>openModal('purchase_goals')}>+ Add</button>
+      </div>
+      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No purchase goals. Track big purchases here.</div> :
+        <div style={{display:'grid', gap:'10px'}}>
+          {list.map(g => {
+            const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+            const barColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 25 ? '#f59e0b' : '#ef4444';
+            return <div key={g.id} style={s.insCard as React.CSSProperties}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                <div>
+                  <div style={s.insT}>{g.title || 'Unnamed'} <span style={s.badge(g.status === 'bought' ? 'green' : g.status === 'saving' ? 'blue' : g.status === 'paused' ? 'yellow' : g.status === 'cancelled' ? 'red' : 'orange')}>{g.status}</span>
+                  <span style={s.badge(g.priority === 'high' ? 'red' : g.priority === 'medium' ? 'yellow' : 'blue')}>{g.priority}</span></div>
+                  <div style={s.insX}>Target: {toCur(g.targetAmount, g.currency)} — Saved: {toCur(g.savedAmount, g.currency)} — {pct}%</div>
+                </div>
+                <div>
+                  <button style={s.iBtn} onClick={()=>openModal('purchase_goals', g.id)}>Edit</button>
+                  <button style={s.iBtn} onClick={()=>handleDelete('purchase_goals', g.id)}>Del</button>
+                </div>
+              </div>
+              <div style={{...s.bar(0), marginTop:'8px'}}><div style={s.fill(pct, barColor)} /></div>
+            </div>;
           })}
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>;
+  }
 
-  // ── Investment Workspace ──
-
-  const renderInvestmentOverview = () => (
-    <div>
-      <div style={{ ...s.warn, background: '#f0f9ff', border: '1px solid #bae6fd', color: '#1e40af', marginBottom: '20px' }}>
-        This is tracking and scenario planning only, not financial advice.
+  function renderRecurringRulesTab() {
+    return <div>
+      <div style={s.row as React.CSSProperties}>
+        <h2 style={s.hdr}>Recurring Rules</h2>
+        <div style={{display:'flex', gap:'8px'}}>
+          {selectedPeriodId && <button style={s.btn('#059669')} disabled={generating || !selectedPeriodId} onClick={generateRecurringItemsForPeriod}>
+            {generating ? 'Generating...' : 'Generate recurring items for this month'}
+          </button>}
+          <button style={s.btn('#2563eb')} onClick={()=>openModal('recurring')}>+ Add Rule</button>
+        </div>
       </div>
-      <div style={s.dashGrid}>
-        <div style={s.card}><div style={s.cardT}>Total Ideas</div><div style={s.cardV}>{financeInvestmentIdeas.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>Researching</div><div style={s.cardV}>{iResearching.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>Planned</div><div style={s.cardV}>{iPlanned.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>Invested</div><div style={s.cardV}>{iInvested.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>High Risk</div><div style={{ ...s.cardV, color: iHighRisk.length > 0 ? '#991b1b' : '#0f172a' }}>{iHighRisk.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>Ethical Warnings</div><div style={{ ...s.cardV, color: eWarn.length > 0 ? '#991b1b' : '#166534' }}>{eWarn.length}</div></div>
-        <div style={s.card}><div style={s.cardT}>Total Planned Amount</div><div style={s.cardV}>{toCur(tPlannedAmount)}</div></div>
-        <div style={s.card}><div style={s.cardT}>Max Allocation Sum</div><div style={s.cardV}>{toCur(maxAllocSum)}</div></div>
+      {generateResult && <div style={{...s.warn, background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#166534', marginBottom:'12px'}}>{generateResult}</div>}
+      {!selectedPeriodId && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', fontSize:'13px'}}>
+        Select a Finance Period before generating recurring items.
+      </div>}
+      {allRecurring.length === 0 ? <div style={s.empty as React.CSSProperties}>No recurring rules. Add rules for regular income/expenses (salary, rent, subscriptions).</div> :
+        <div style={{display:'grid', gap:'10px'}}>
+          {allRecurring.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+              <div>
+                <div style={s.insT}>
+                  {r.title}
+                  <span style={s.badge(r.kind === 'income' ? 'green' : 'red')}>{r.kind}</span>
+                  <span style={s.badge(r.isActive ? 'blue' : 'orange')}>{r.isActive ? 'Active' : 'Inactive'}</span>
+                  <span style={s.badge('purple')}>{r.frequency}</span>
+                </div>
+                <div style={s.insX}>
+                  {toCur(r.amount, r.currency)} — Confidence: {r.confidence}
+                  {r.startDate && <> — Start: {new Date(r.startDate).toLocaleDateString()}</>}
+                  {r.endDate && <> — End: {new Date(r.endDate).toLocaleDateString()}</>}
+                  {r.source && <> — Source: {r.source}</>}
+                </div>
+              </div>
+              <div style={{textAlign:'right' as const}}>
+                <div style={{fontSize:'16px', fontWeight:700, color: r.kind === 'income' ? '#16a34a' : '#dc2626'}}>{toCur(r.amount, r.currency)}</div>
+                <button style={s.iBtn} onClick={()=>openModal('recurring', r.id)}>Edit</button>
+                <button style={s.iBtn} onClick={()=>handleDelete('recurring', r.id)}>Del</button>
+              </div>
+            </div>
+            {r.notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{r.notes}</div>}
+          </div>)}
+        </div>
+      }
+    </div>;
+  }
+
+  function renderInvestmentsTab() {
+    return <div>
+      <div style={s.iNav as React.CSSProperties}>
+        {(['overview','ideas','allocation','rules','risk_review','ethical_review'] as InvestTab[]).map(t => <button key={t} style={s.iNavBtn(investTab === t)} onClick={()=>setInvestTab(t)}>{t.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
       </div>
-    </div>
-  );
-
-  const renderInvestmentIdeas = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Investment Ideas</h3><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>{selectedPeriodId && <button style={s.btnO} onClick={() => setPeriodDataFilter(periodDataFilter === 'all' ? 'selected' : 'all')}>{periodDataFilter === 'all' ? 'Show Selected Month' : 'Show All Months'}</button>}<button style={s.btn('#2563eb')} onClick={() => openModal('invest_ideas')}>+ Add Idea</button></div></div>
-      {filteredInvestmentIdeas.length === 0 ? <div style={s.empty}>No investment ideas yet.</div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-          {filteredInvestmentIdeas.map((idea) => (
-            <div key={idea.id} style={s.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '16px' }}>{idea.title}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>{idea.type} · {idea.expectedHorizon ? idea.expectedHorizon.replace('_', ' ') : 'no horizon'}</div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-end' }}>
-                  <span style={s.badge(idea.riskLevel === 'high' ? 'red' : idea.riskLevel === 'medium' ? 'yellow' : 'green')}>{idea.riskLevel}</span>
-                  <span style={s.badge(idea.ethicalStatus === 'good' ? 'green' : idea.ethicalStatus === 'needs_review' ? 'yellow' : 'red')}>{idea.ethicalStatus}</span>
-                  <span style={s.badge(idea.status === 'invested' ? 'green' : idea.status === 'researching' ? 'blue' : idea.status === 'rejected' ? 'red' : 'gray')}>{idea.status}</span>
-                  <span style={s.badge(idea.decisionStatus === 'invested' ? 'green' : idea.decisionStatus === 'approved' ? 'blue' : idea.decisionStatus === 'waiting' ? 'yellow' : idea.decisionStatus === 'rejected' ? 'red' : 'purple')}>{idea.decisionStatus}</span>
-                </div>
-              </div>
-              <div style={{ marginTop: '8px', display: 'flex', gap: '16px', fontSize: '13px', color: '#0f172a' }}>
-                <span>Amount: {toCur(idea.plannedAmount, idea.currency)}</span>
-                {idea.maxAllocation != null && <span>Max: {toCur(idea.maxAllocation, idea.currency)}</span>}
-              </div>
-              {idea.allocationCategory && <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '4px' }}>Category: {idea.allocationCategory}</div>}
-              {idea.recommendedMonthlyContribution != null && idea.recommendedMonthlyContribution > 0 && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Monthly contribution: {toCur(idea.recommendedMonthlyContribution)}</div>}
-              {idea.fundingStatus && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Funding: <span style={s.badge(idea.fundingStatus === 'ready' ? 'green' : idea.fundingStatus === 'accumulating' ? 'blue' : idea.fundingStatus === 'paused' ? 'yellow' : idea.fundingStatus === 'invested' ? 'purple' : 'gray')}>{idea.fundingStatus}</span></div>}
-              {idea.reviewDate && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Review: {new Date(idea.reviewDate).toLocaleDateString()}</div>}
-              {idea.pros && <div style={{ fontSize: '12px', color: '#166534', marginTop: '6px' }}>Pros: {idea.pros}</div>}
-              {idea.cons && <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}>Cons: {idea.cons}</div>}
-              {idea.risks && <div style={{ fontSize: '12px', color: '#c2410c', marginTop: '2px' }}>Risks: {idea.risks}</div>}
-              {idea.redFlags && <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: 600, marginTop: '2px' }}>Red Flag: {idea.redFlags}</div>}
-              {idea.baseScenario && (
-                <div style={{ marginTop: '8px', padding: '8px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px', color: '#64748b' }}>
-                  <div>Low: {idea.lowScenario || '-'}</div>
-                  <div>Base: {idea.baseScenario}</div>
-                  <div>High: {idea.highScenario || '-'}</div>
-                </div>
-              )}
-              {idea.researchLinks && <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '4px' }}>Research: {idea.researchLinks}</div>}
-              {idea.expectedReason && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Why: {idea.expectedReason}</div>}
-              {idea.notes && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Notes: {idea.notes}</div>}
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #e5e7eb' }}>
-                <button style={s.btnS('#2563eb')} onClick={() => quickAction(idea, { status: 'researching' })}>Researching</button>
-                <button style={s.btnS('#854d0e')} onClick={() => quickAction(idea, { status: 'planned', decisionStatus: 'approved' })}>Plan</button>
-                <button style={s.btnS('#166534')} onClick={() => quickAction(idea, { status: 'invested', decisionStatus: 'invested' })}>Invested</button>
-                <button style={s.btnS('#991b1b')} onClick={() => quickAction(idea, { decisionStatus: 'rejected', status: 'rejected' })}>Reject</button>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', flex: 1 }}>
-                  <button style={s.iBtn} onClick={() => openModal('invest_ideas', idea)}>Edit</button>
-                  <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceInvestmentIdea(idea.id)}>Del</button>
-                </div>
-              </div>
-            </div>
-          ))}
+      {investTab === 'overview' && <div>
+        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Overview</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add Idea</button></div>
+        <div style={s.dashGrid as React.CSSProperties}>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Ideas</div><div style={s.cardV}>{allIdeas.length}</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Rules</div><div style={s.cardV}>{allInvRules.length}</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Allocations</div><div style={s.cardV}>{allInvAllocs.length}</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Invested</div><div style={s.cardV}>{allIdeas.filter(i=>i.status==='invested').length}</div></div>
         </div>
-      )}
-    </div>
-  );
-
-  const renderInvestmentAllocation = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Investment Allocations</h3><button style={s.btn('#2563eb')} onClick={() => openModal('invest_allocations')}>+ Add Allocation</button></div>
-      {financeInvestmentAllocations.length === 0 ? <div style={s.empty}>No investment allocations yet.</div> : (
-        <>
-          <div style={{ ...s.warn, background: totalIAllocPct === 100 ? '#f0fdf4' : '#fef9c3', border: `1px solid ${totalIAllocPct === 100 ? '#bbf7d0' : '#fde68a'}`, color: totalIAllocPct === 100 ? '#166534' : '#854d0e' }}>
-            {totalIAllocPct === 100 ? 'Allocation total is 100%.' : `Allocation total is ${totalIAllocPct}%. Adjust to reach 100%.`}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {financeInvestmentAllocations.map((a) => (
-              <div key={a.id} style={{ ...s.sCard, opacity: a.isActive ? 1 : 0.5 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div><div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{a.name}</div><div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{a.category} · Priority {a.priority}</div></div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{a.percentage}%</div>
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                  Risk: <span style={s.badge(a.riskLevel === 'high' ? 'red' : a.riskLevel === 'medium' ? 'yellow' : 'green')}>{a.riskLevel}</span>
-                  Ethical: <span style={s.badge(a.ethicalStatus === 'good' ? 'green' : a.ethicalStatus === 'needs_review' ? 'yellow' : 'red')}>{a.ethicalStatus}</span>
-                </div>
-                {a.notes && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>{a.notes}</div>}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer' }}><input type="checkbox" checked={a.isActive} onChange={() => toggleActive(a, onUpdateFinanceInvestmentAllocation)} />Active</label>
-                  <button style={s.iBtn} onClick={() => openModal('invest_allocations', a)}>Edit</button>
-                  <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceInvestmentAllocation(a.id)}>Del</button>
+      </div>}
+      {investTab === 'ideas' && <div>
+        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Ideas</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allIdeas.length === 0 ? <div style={s.empty as React.CSSProperties}>No investment ideas.</div> :
+          allIdeas.map(i => <div key={i.id} style={s.insCard as React.CSSProperties}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+              <div>
+                <div style={s.insT}>{i.title || 'Unnamed'} <span style={s.badge(i.type === 'sukuk' ? 'green' : i.type === 'gold' ? 'yellow' : i.type === 'real_estate' ? 'blue' : i.type === 'stocks' ? 'purple' : i.type === 'business' ? 'orange' : i.type === 'crypto' ? 'red' : 'slate')}>{i.type}</span></div>
+                <div style={s.insX}>
+                  Risk: <span style={s.badge(i.riskLevel === 'low' ? 'green' : i.riskLevel === 'medium' ? 'yellow' : 'red')}>{i.riskLevel}</span>
+                  Ethics: <span style={s.badge(i.ethicalStatus === 'good' ? 'green' : i.ethicalStatus === 'needs_review' ? 'yellow' : 'red')}>{i.ethicalStatus}</span>
+                  Status: <span style={s.badge(i.status === 'invested' ? 'green' : i.status === 'planned' ? 'blue' : i.status === 'waiting' ? 'yellow' : 'orange')}>{i.status}</span>
                 </div>
               </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  const renderInvestmentRules = () => (
-    <div>
-      <div style={s.row}><h3 style={s.hdr}>Investment Rules</h3><button style={s.btn('#2563eb')} onClick={() => openModal('invest_rules')}>+ Add Rule</button></div>
-      {financeInvestmentRules.length === 0 ? <div style={s.empty}><p style={{ marginBottom: '16px' }}>No investment rules yet.</p><button style={s.btn('#2563eb')} onClick={createStarterRules}>Create Starter Investment Rules</button></div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
-          {financeInvestmentRules.map((r) => (
-            <div key={r.id} style={{ ...s.sCard, opacity: r.isActive ? 1 : 0.5 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{r.title}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{r.category} · Priority {r.priority}</div>
-                </div>
-                <span style={r.isActive ? s.badge('green') : s.badge('gray')}>{r.isActive ? 'Active' : 'Inactive'}</span>
-              </div>
-              {r.description && <div style={{ fontSize: '13px', color: '#475569', marginTop: '8px' }}>{r.description}</div>}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer' }}><input type="checkbox" checked={r.isActive} onChange={() => toggleActive(r, onUpdateFinanceInvestmentRule)} />Active</label>
-                <button style={s.iBtn} onClick={() => openModal('invest_rules', r)}>Edit</button>
-                <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceInvestmentRule(r.id)}>Del</button>
+              <div style={{textAlign:'right' as const}}>
+                <div style={{fontSize:'16px', fontWeight:700}}>{toCur(i.plannedAmount, i.currency)}</div>
+                <button style={s.iBtn} onClick={()=>openModal('investments', i.id)}>Edit</button>
+                <button style={s.iBtn} onClick={()=>handleDelete('investments', i.id)}>Del</button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderRiskReview = () => (
-    <div>
-      <h3 style={{ ...s.hdr, marginBottom: '16px' }}>Risk Review</h3>
-      {iHighRisk.length === 0 && redFlagIdeas.length === 0 && noResearch.length === 0 ? (
-        <div style={s.empty}>No risks identified. All ideas look clean.</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {iHighRisk.length > 0 && (
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>High Risk Ideas ({iHighRisk.length})</div>
-              {iHighRisk.map((idea) => (
-                <div key={idea.id} style={{ ...s.sCard, marginBottom: '8px' }}>
-                  <div style={{ fontWeight: 600 }}>{idea.title}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Plan: {toCur(idea.plannedAmount, idea.currency)} · {idea.type}</div>
-                  {idea.risks && <div style={{ fontSize: '12px', color: '#c2410c', marginTop: '4px' }}>Risks: {idea.risks}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-          {redFlagIdeas.length > 0 && (
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>Ideas with Red Flags ({redFlagIdeas.length})</div>
-              {redFlagIdeas.map((idea) => (
-                <div key={idea.id} style={{ ...s.sCard, marginBottom: '8px' }}>
-                  <div style={{ fontWeight: 600 }}>{idea.title}</div>
-                  <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: 600, marginTop: '4px' }}>{idea.redFlags}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {noResearch.length > 0 && (
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#854d0e', marginBottom: '8px' }}>Needs More Research ({noResearch.length})</div>
-              {noResearch.map((idea) => (
-                <div key={idea.id} style={{ ...s.sCard, marginBottom: '8px' }}>
-                  <div style={{ fontWeight: 600 }}>{idea.title}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Status: {idea.status}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderEthicalReview = () => (
-    <div>
-      <h3 style={{ ...s.hdr, marginBottom: '16px' }}>Ethical Review</h3>
-      {ethicalIssues.length === 0 ? (
-        <div style={s.empty}>No ethical concerns found.</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ ...s.warn, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
-            {ethicalIssues.length} investment idea(s) flagged for ethical review.
-          </div>
-          {ethicalIssues.map((idea) => (
-            <div key={idea.id} style={s.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ fontWeight: 700, color: '#0f172a' }}>{idea.title}</div>
-                <span style={s.badge(idea.ethicalStatus === 'avoid' ? 'red' : 'yellow')}>{idea.ethicalStatus}</span>
-              </div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{idea.type} · {toCur(idea.plannedAmount, idea.currency)}</div>
-            </div>
-          ))}
-          <div style={{ marginTop: '16px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>Review Prompts</div>
-            {['Is the business model halal?', 'Is there interest/riba involvement?', 'Is there gambling/speculation?', 'Is the product harmful?', 'Is the revenue source clear?'].map((q) => (
-              <div key={q} style={s.card}>
-                <div style={{ fontWeight: 600, color: '#0f172a' }}>{q}</div>
-                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>Evaluate this question for all flagged ideas before proceeding.</div>
-              </div>
-            ))}
-          </div>
-          {financeInvestmentAllocations.filter((a) => a.ethicalStatus === 'needs_review' || a.ethicalStatus === 'avoid').length > 0 && (
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#991b1b', marginBottom: '8px', marginTop: '8px' }}>Flagged Allocations</div>
-              {financeInvestmentAllocations.filter((a) => a.ethicalStatus === 'needs_review' || a.ethicalStatus === 'avoid').map((a) => (
-                <div key={a.id} style={s.sCard}>
-                  <div style={{ fontWeight: 600 }}>{a.name}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>{a.percentage}% · Ethic: <span style={s.badge(a.ethicalStatus === 'avoid' ? 'red' : 'yellow')}>{a.ethicalStatus}</span></div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderInvestmentWorkspace = () => (
-    <div>
-      <div style={s.iNav}>
-        {(['overview', 'ideas', 'allocation', 'rules', 'risk_review', 'ethical_review'] as InvestTab[]).map((t) => (
-          <button key={t} style={s.iNavBtn(iTab === t)} onClick={() => setITab(t)}>
-            {t === 'overview' ? 'Overview' : t === 'ideas' ? 'Ideas' : t === 'allocation' ? 'Allocation' : t === 'rules' ? 'Rules' : t === 'risk_review' ? 'Risk Review' : 'Ethical Review'}
-          </button>
-        ))}
-      </div>
-      {iTab === 'overview' && renderInvestmentOverview()}
-      {iTab === 'ideas' && renderInvestmentIdeas()}
-      {iTab === 'allocation' && renderInvestmentAllocation()}
-      {iTab === 'rules' && renderInvestmentRules()}
-      {iTab === 'risk_review' && renderRiskReview()}
-      {iTab === 'ethical_review' && renderEthicalReview()}
-    </div>
-  );
-
-  // ── Investment Form ──
-
-  const renderInvestIdeaForm = () => (
-    <div style={s.formGrid}>
-      {[['Title *', 'title', 'text'], ['Planned Amount', 'plannedAmount', 'number'], ['Max Allocation', 'maxAllocation', 'number'], ['Type', 'type', 'select', INVESTMENT_TYPES], ['Risk Level', 'riskLevel', 'select', RISK_LEVELS], ['Ethical Status', 'ethicalStatus', 'select', ETHICAL_STATUSES], ['Status', 'status', 'select', INVESTMENT_STATUSES], ['Decision Status', 'decisionStatus', 'select', INVEST_DECISION_STATUSES], ['Allocation Category', 'allocationCategory', 'select', ALLOC_CATS], ['Recommended Monthly', 'recommendedMonthlyContribution', 'number'], ['Funding Status', 'fundingStatus', 'select', FUNDING_STATUSES], ['Expected Horizon', 'expectedHorizon', 'select', INV_HORIZONS], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Review Date', 'reviewDate', 'date'], ['Expected Reason', 'expectedReason', 'text']].map(([l, k, t, o]: any) => (
-        <div key={k}>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>
-          {t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}
-        </div>
-      ))}
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Pros</label><textarea style={s.input} rows={2} value={form.pros || ''} onChange={(e) => setForm({ ...form, pros: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Cons</label><textarea style={s.input} rows={2} value={form.cons || ''} onChange={(e) => setForm({ ...form, cons: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Risks</label><textarea style={s.input} rows={2} value={form.risks || ''} onChange={(e) => setForm({ ...form, risks: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Red Flags</label><textarea style={s.input} rows={2} value={form.redFlags || ''} onChange={(e) => setForm({ ...form, redFlags: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Research Links</label><textarea style={s.input} rows={2} value={form.researchLinks || ''} onChange={(e) => setForm({ ...form, researchLinks: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Low Scenario</label><textarea style={s.input} rows={1} value={form.lowScenario || ''} onChange={(e) => setForm({ ...form, lowScenario: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Base Scenario</label><textarea style={s.input} rows={1} value={form.baseScenario || ''} onChange={(e) => setForm({ ...form, baseScenario: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>High Scenario</label><textarea style={s.input} rows={1} value={form.highScenario || ''} onChange={(e) => setForm({ ...form, highScenario: e.target.value })} /></div>
-      <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-    </div>
-  );
-
-  const callAiFinance = async (mode: AiMode) => {
-    setAiLoading(true);
-    setAiError(null);
-    setAiResult(null);
-
-    try {
-      const financeSummary = {
-        expectedIncome,
-        receivedIncome,
-        pendingIncome,
-        delayedIncome,
-        paidExpenses,
-        plannedExpenses,
-        netReceived,
-        expectedNet,
-        availableToAllocate,
-        savingsRate: sRate,
-        allocationTotalPercentage: totalAllocPct,
-      };
-
-      const response = await fetch('/api/ai-finance', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          financeSummary,
-          allocationRules: financeAllocationRules,
-          purchaseGoals: financePurchaseGoals,
-          investmentIdeas: financeInvestmentIdeas,
-          incomeItems: financeIncome,
-          expenseItems: financeExpenses,
-          mode,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data?.success && data?.analysis) {
-        setAiResult(data.analysis);
-      } else {
-        setAiError(data?.error || 'AI analysis failed. Please try again.');
-        if (data?.code === 'AI_QUOTA_EXCEEDED') {
-          setAiError('AI quota exceeded. Try again later or change Gemini model.');
+          </div>)
         }
-      }
-    } catch (err: any) {
-      setAiError(err?.message || 'Network error. Please try again.');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const renderAIAssistant = () => (
-    <div>
-      <div style={{ ...s.warn, background: '#f0f9ff', border: '1px solid #bae6fd', color: '#1e40af', marginBottom: '16px' }}>
-        AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice.
-      </div>
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'center' }}>
-        <select
-          style={{ ...s.select, width: 'auto', minWidth: '200px' }}
-          value={aiMode}
-          onChange={(e) => setAiMode(e.target.value as AiMode)}
-        >
-          <option value="monthly_review">Monthly Review</option>
-          <option value="allocation_review">Allocation Review</option>
-          <option value="purchase_review">Purchase Goals Review</option>
-          <option value="investment_review">Investment Risk Review</option>
-          <option value="next_actions">Next Actions</option>
-        </select>
-        <button
-          style={{ ...s.btn('#2563eb'), opacity: aiLoading ? 0.6 : 1 }}
-          disabled={aiLoading}
-          onClick={() => callAiFinance(aiMode)}
-        >
-          {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
-        </button>
-      </div>
-
-      {aiLoading && (
-        <div style={{ ...s.card, textAlign: 'center', padding: '32px', color: '#64748b' }}>
-          Analyzing your financial data...
-        </div>
-      )}
-
-      {aiError && (
-        <div style={{ ...s.warn, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
-          {aiError}
-        </div>
-      )}
-
-      {aiResult && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {aiResult.summary && (
-            <div style={s.card}>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Summary</div>
-              <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>{aiResult.summary}</div>
-            </div>
-          )}
-
-          {aiResult.incomeAnalysis?.length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Income Analysis</div>
-              {aiResult.incomeAnalysis.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #2563eb' }}>{item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.expenseAnalysis?.length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Expense Analysis</div>
-              {aiResult.expenseAnalysis.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #991b1b' }}>{item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.allocationReview?.length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Allocation Review</div>
-              {aiResult.allocationReview.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #854d0e' }}>{item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.purchaseGoalReview?.length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Purchase Goals</div>
-              {aiResult.purchaseGoalReview.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #7c3aed' }}>{item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.investmentRiskReview?.length > 0 && (
-            <div style={s.card}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Investment Risk Review</div>
-              {aiResult.investmentRiskReview.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px', paddingLeft: '12px', borderLeft: '2px solid #c2410c' }}>{item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.ethicalReviewQuestions?.length > 0 && (
-            <div style={{ ...s.card, borderLeft: '3px solid #059669' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Ethical Review Questions</div>
-              {aiResult.ethicalReviewQuestions.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>• {item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.warnings?.length > 0 && (
-            <div style={{ ...s.card, background: '#fef2f2', border: '1px solid #fecaca' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#991b1b', marginBottom: '8px' }}>Warnings</div>
-              {aiResult.warnings.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#991b1b', marginBottom: '4px' }}>⚠ {item}</div>
-              ))}
-            </div>
-          )}
-
-          {aiResult.nextActions?.length > 0 && (
-            <div style={{ ...s.card, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#166534', marginBottom: '8px' }}>Next Actions</div>
-              {aiResult.nextActions.map((item: string, i: number) => (
-                <div key={i} style={{ fontSize: '13px', color: '#166534', marginBottom: '4px' }}>→ {item}</div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  // ── Modal ──
-
-  const renderForm = () => {
-    if (!modal) return null;
-    const isNew = !modal.editing;
-    const titles: Record<string, string> = { income: isNew ? 'Add Income' : 'Edit Income', expenses: isNew ? 'Add Expense' : 'Edit Expense', allocation: isNew ? 'Add Allocation Rule' : 'Edit Allocation Rule', purchase_goals: isNew ? 'Add Purchase Goal' : 'Edit Purchase Goal', invest_ideas: isNew ? 'Add Investment Idea' : 'Edit Investment Idea', invest_rules: isNew ? 'Add Investment Rule' : 'Edit Investment Rule', invest_allocations: isNew ? 'Add Investment Allocation' : 'Edit Investment Allocation' };
-
-    const body = () => {
-      switch (modal.type) {
-        case 'income': return (
-          <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Income Type', 'incomeType', 'select', INCOME_TYPES], ['Source', 'source', 'select', INCOME_SOURCES], ['Expected Amount', 'expectedAmount', 'number'], ['Received Amount', 'receivedAmount', 'number'], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Expected Date', 'expectedDate', 'date'], ['Received Date', 'receivedDate', 'date'], ['Status', 'status', 'select', INCOME_STATUSES], ['Recurrence', 'recurrence', 'select', RECURRENCE_OPTIONS], ['Confidence', 'confidence', 'select', CONFIDENCE_LEVELS]].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '24px' }}><input type="checkbox" checked={!!form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })} id="ir1" /><label htmlFor="ir1" style={{ fontSize: '13px', color: '#0f172a' }}>Recurring</label></div>
-            <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Project</label><select style={s.select} value={form.linkedProjectId || ''} onChange={(e) => setForm({ ...form, linkedProjectId: e.target.value || undefined })}><option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-            <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Company</label><select style={s.select} value={form.linkedCompanyId || ''} onChange={(e) => setForm({ ...form, linkedCompanyId: e.target.value || undefined })}><option value="">None</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        case 'expenses': return (
-          <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Amount *', 'amount', 'number'], ['Expense Date', 'expenseDate', 'date'], ['Category', 'category', 'select', EXPENSE_CATEGORIES], ['Status', 'status', 'select', EXPENSE_STATUSES], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']]].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
-            ))}
-            <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Project</label><select style={s.select} value={form.linkedProjectId || ''} onChange={(e) => setForm({ ...form, linkedProjectId: e.target.value || undefined })}><option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        case 'allocation': return (
-          <div style={s.formGrid}>
-            {[['Name *', 'name', 'text'], ['Category', 'category', 'select', ALLOC_CATS], ['Percentage (0-100)', 'percentage', 'number'], ['Priority', 'priority', 'number']].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} min="0" max="100" value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) : e.target.value })} />}</div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '24px' }}><input type="checkbox" checked={form.isActive !== false} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} id="a1" /><label htmlFor="a1" style={{ fontSize: '13px', color: '#0f172a' }}>Active</label></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        case 'purchase_goals': return (
-          <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Target Amount *', 'targetAmount', 'number'], ['Saved Amount', 'savedAmount', 'number'], ['Category', 'category', 'select', EXPENSE_CATEGORIES], ['Priority', 'priority', 'select', GOAL_PRIORITIES], ['Status', 'status', 'select', GOAL_STATUSES], ['Decision Status', 'decisionStatus', 'select', DECISION_STATUSES], ['Allocation Category', 'allocationCategory', 'select', ALLOC_CATS], ['Monthly Contribution', 'monthlyContribution', 'number'], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Target Date', 'targetDate', 'date'], ['Product URL', 'productUrl', 'url'], ['Image URL', 'imageUrl', 'url'], ['Vendor', 'vendor', 'text']].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} placeholder={t === 'url' ? 'https://...' : ''} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
-            ))}
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Reason</label><textarea style={s.input} rows={2} value={form.reason || ''} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Expected Use</label><textarea style={s.input} rows={2} value={form.expectedUse || ''} onChange={(e) => setForm({ ...form, expectedUse: e.target.value })} /></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Alternatives</label><textarea style={s.input} rows={2} value={form.alternatives || ''} onChange={(e) => setForm({ ...form, alternatives: e.target.value })} /></div>
-            <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Project</label><select style={s.select} value={form.linkedProjectId || ''} onChange={(e) => setForm({ ...form, linkedProjectId: e.target.value || undefined })}><option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        case 'invest_ideas': return renderInvestIdeaForm();
-        case 'invest_rules': return (
-          <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Category', 'category', 'select', INV_RULE_CATS], ['Priority', 'priority', 'number']].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? (parseInt(e.target.value) || 0) : e.target.value })} />}</div>
-            ))}
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Description</label><textarea style={s.input} rows={2} value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><input type="checkbox" checked={form.isActive !== false} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} id="ar1" /><label htmlFor="ar1" style={{ fontSize: '13px', color: '#0f172a' }}>Active</label></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        case 'invest_allocations': return (
-          <div style={s.formGrid}>
-            {[['Name *', 'name', 'text'], ['Category', 'category', 'select', INV_ALLOC_CATS], ['Percentage', 'percentage', 'number'], ['Risk Level', 'riskLevel', 'select', RISK_LEVELS], ['Ethical Status', 'ethicalStatus', 'select', ETHICAL_STATUSES], ['Priority', 'priority', 'number']].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} min="0" max="100" value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) : e.target.value })} />}</div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><input type="checkbox" checked={form.isActive !== false} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} id="aa1" /><label htmlFor="aa1" style={{ fontSize: '13px', color: '#0f172a' }}>Active</label></div>
-            <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          </div>
-        );
-        default: return null;
-      }
-    };
-
-    return (
-      <div style={s.overlay} onClick={closeModal}>
-        <div style={s.modal} onClick={(e) => e.stopPropagation()}>
-          <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '16px' }}>{titles[modal.type]}</h3>
-          {body()}
-          <div style={s.act}>
-            <button style={{ ...s.btn('#64748b') }} onClick={closeModal}>Cancel</button>
-            <button style={s.btn('#2563eb')} onClick={handleSave}>{isNew ? 'Create' : 'Save'}</button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const tabs: FinanceTab[] = ['dashboard', 'income', 'expenses', 'allocation', 'purchase_goals', 'investments', 'review', 'ai_assistant'];
-  const tabLabels: Record<FinanceTab, string> = { dashboard: 'Dashboard', income: 'Income', expenses: 'Expenses', allocation: 'Allocation', purchase_goals: 'Purchase Goals', investments: 'Investments', review: 'Review', ai_assistant: 'AI Assistant' };
-
-  return (
-    <div style={s.page}>
-      <div style={s.layout}>
-        <div style={s.main}>
-          <div style={{ ...s.row, gap: '8px', marginBottom: '16px' }}>
-            <select style={{ ...s.select, width: 'auto', minWidth: '140px' }} value={periodTypeFilter} onChange={(e) => { setPeriodTypeFilter(e.target.value); setSelectedPeriodId(null); }}>
-              <option value="monthly">Monthly</option>
-              <option value="six_months">6 Months</option>
-              <option value="yearly">Yearly</option>
-              <option value="five_years">5 Years</option>
-              <option value="ten_years">10 Years</option>
-            </select>
-            <select style={{ ...s.select, width: 'auto', minWidth: '180px' }} value={selectedPeriodId || ''} onChange={(e) => setSelectedPeriodId(e.target.value || null)}>
-              <option value="">{periodTypeFilter === 'monthly' ? 'Current Month' : `All ${periodTypeFilter.replace('_', ' ')}`}</option>
-              {filteredPeriods.map((p) => (
-                <option key={p.id} value={p.id}>{p.title}{p.startDate ? ` (${new Date(p.startDate).toLocaleDateString()})` : ''}</option>
-              ))}
-            </select>
-            {periodTypeFilter === 'monthly' && !hasCurrentMonthPeriod && (
-              <button style={s.btn('#2563eb')} onClick={async () => {
-                const now = new Date();
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const title = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]} ${now.getFullYear()}`;
-                const sd = `${now.getFullYear()}-${m}-01`;
-                const ed = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-                try {
-                  await onAddFinancePeriod({ title, type: 'monthly', startDate: sd, endDate: ed, status: 'active' });
-                } catch (e: any) { alert(e.message); }
-              }}>+ Create Current Month Period</button>
-            )}
-            <span style={{ fontSize: '13px', color: '#64748b' }}>Viewing: <strong>{periodLabel}</strong></span>
-          </div>
-          <div style={s.nav}>
-            {tabs.map((tab) => <button key={tab} style={s.navBtn(activeTab === tab)} onClick={() => setActiveTab(tab)}>{tabLabels[tab]}</button>)}
-          </div>
-          {activeTab === 'dashboard' && renderDash()}
-          {activeTab === 'income' && renderIncomeTab()}
-          {activeTab === 'expenses' && renderExpensesTab()}
-          {activeTab === 'allocation' && renderAllocTab()}
-          {activeTab === 'purchase_goals' && renderPurchaseGoalsTab()}
-          {activeTab === 'investments' && renderInvestmentWorkspace()}
-          {activeTab === 'review' && (
-            <div>
-              <h3 style={s.hdr}>Finance Review</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                {['What increased income this month?', 'What expenses were unnecessary?', 'What should be reduced next month?', 'What should be invested only after research?', 'What is not aligned with Islamic principles?', 'What is the next financial action?'].map((q, i) => (
-                  <div key={i} style={s.card}><div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>{q}</div><div style={{ fontSize: '13px', color: '#64748b' }}>Review and reflect on this question.</div></div>
-                ))}
+      </div>}
+      {investTab === 'allocation' && <div>
+        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Allocation</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allInvAllocs.length === 0 ? <div style={s.empty as React.CSSProperties}>No allocation targets.</div> :
+          <div style={{display:'grid', gap:'10px'}}>
+            {allInvAllocs.map(a => <div key={a.id} style={s.insCard as React.CSSProperties}>
+              <div style={{display:'flex', justifyContent:'space-between'}}>
+                <div><div style={s.insT}>{a.name || a.category}</div><div style={s.insX}>Target: {a.percentage}% | Category: {a.category}</div></div>
+                <button style={s.iBtn} onClick={()=>handleDelete('investments', a.id)}>Del</button>
               </div>
-            </div>
-          )}
-          {activeTab === 'ai_assistant' && renderAIAssistant()}
-          {modal && renderForm()}
+            </div>)}
+          </div>
+        }
+      </div>}
+      {investTab === 'rules' && <div>
+        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Rules</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allInvRules.length === 0 ? <div style={s.empty as React.CSSProperties}>No investment rules.</div> :
+          allInvRules.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
+            <div style={s.insT}>{r.title} <span style={s.badge(r.category === 'risk' ? 'red' : r.category === 'ethics' ? 'purple' : r.category === 'strategy' ? 'blue' : r.category === 'process' ? 'orange' : 'slate')}>{r.category}</span></div>
+            <button style={s.iBtn} onClick={()=>handleDelete('investments', r.id)}>Del</button>
+          </div>)
+        }
+      </div>}
+      {investTab === 'risk_review' && <div>
+        <h2 style={s.hdr}>Risk Review</h2>
+        <div style={s.empty as React.CSSProperties}>Review your investment risk profile here. Coming soon.</div>
+      </div>}
+      {investTab === 'ethical_review' && <div>
+        <h2 style={s.hdr}>Ethical Review</h2>
+        <div style={s.empty as React.CSSProperties}>Review your investments against ethical rules. Coming soon.</div>
+      </div>}
+    </div>;
+  }
+
+  function renderHorizonSummary() {
+    if (horizonView === 'monthly' && selectedPeriodId) {
+      const inc = filteredFinanceIncome.reduce((s,i) => s + i.amount, 0);
+      const exp = filteredFinanceExpenses.reduce((s,e) => s + e.amount, 0);
+      const net = inc - exp;
+      return <div style={{...s.sCard, marginBottom:'16px'}}>
+        <div style={s.cardT}>Current Period Summary</div>
+        <div style={{fontSize:'24px', fontWeight:700, color: net >= 0 ? '#16a34a' : '#dc2626', marginTop:'4px'}}>{toCur(net)}</div>
+        <div style={{fontSize:'12px', color:'#64748b', marginTop:'4px'}}>Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
+      </div>;
+    }
+
+    const allPeriodIncomeMap: Record<string, {income: number; expenses: number; count: number}> = {};
+
+    allPeriods.forEach(p => {
+      const key = p.id;
+      const inc = allIncome.filter(i => incomeInPeriod(i, p.id, p)).reduce((s,i) => s + i.amount, 0);
+      const exp = allExpenses.filter(e => expenseInPeriod(e, p.id, p)).reduce((s,e) => s + e.amount, 0);
+      allPeriodIncomeMap[key] = { income: inc, expenses: exp, count: allIncome.filter(i => incomeInPeriod(i, p.id, p)).length + allExpenses.filter(e => expenseInPeriod(e, p.id, p)).length };
+    });
+
+    const months: {key: string; income: number; expenses: number; count: number}[] = [];
+    [...allIncome, ...allExpenses].forEach((item: any) => {
+      const dateStr = 'incomeDate' in item ? (item as any).incomeDate || (item as any).expectedDate : (item as any).expenseDate;
+      if (!dateStr) return;
+      const key = formatMonthKey(new Date(dateStr));
+      let m = months.find(m => m.key === key);
+      if (!m) { m = {key, income: 0, expenses: 0, count: 0}; months.push(m); }
+      if ('incomeDate' in item || 'expectedDate' in item) m.income += (item as any).amount || 0;
+      else m.expenses += (item as any).amount || 0;
+      m.count++;
+    });
+    months.sort((a,b) => a.key.localeCompare(b.key));
+
+    const now = new Date();
+    let horizonMonths: number;
+    if (horizonView === 'six_months') horizonMonths = 6;
+    else if (horizonView === 'yearly') horizonMonths = 12;
+    else if (horizonView === 'five_years') horizonMonths = 60;
+    else if (horizonView === 'ten_years') horizonMonths = 120;
+    else horizonMonths = 1;
+
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - horizonMonths + 1, 1);
+    const filteredMonths = months.filter(m => {
+      const [y,mo] = m.key.split('-').map(Number);
+      const d = new Date(y, mo-1);
+      return d >= cutoff;
+    });
+
+    const totalInc = filteredMonths.reduce((s,m) => s + m.income, 0);
+    const totalExp = filteredMonths.reduce((s,m) => s + m.expenses, 0);
+    const avgMonthlyInc = filteredMonths.length > 0 ? totalInc / filteredMonths.length : 0;
+    const avgMonthlyExp = filteredMonths.length > 0 ? totalExp / filteredMonths.length : 0;
+
+    const yearGroups: Record<string, {income: number; expenses: number; months: number}> = {};
+    filteredMonths.forEach(m => {
+      const year = m.key.substring(0, 4);
+      if (!yearGroups[year]) yearGroups[year] = {income: 0, expenses: 0, months: 0};
+      yearGroups[year].income += m.income;
+      yearGroups[year].expenses += m.expenses;
+      yearGroups[year].months++;
+    });
+
+    return <div>
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:'12px', marginBottom:'20px'}}>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Income</div><div style={s.cardV}>{toCur(totalInc)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(totalExp)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Monthly Income</div><div style={s.cardV}>{toCur(avgMonthlyInc)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Monthly Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(avgMonthlyExp)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Net/Month</div><div style={{...s.cardV, color: avgMonthlyInc - avgMonthlyExp >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(avgMonthlyInc - avgMonthlyExp)}</div></div>
+        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Months</div><div style={s.cardV}>{filteredMonths.length}</div></div>
+      </div>
+
+      {filteredMonths.length > 0 && <div>
+        <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Monthly Breakdown</h3>
+        <div style={{display:'grid', gap:'6px'}}>
+          {filteredMonths.map(m => {
+            const net = m.income - m.expenses;
+            return <div key={m.key} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'#ffffff', border:'1px solid #e5e7eb', borderRadius:'8px'}}>
+              <div style={{fontSize:'13px', fontWeight:600, color:'#0f172a', minWidth:'70px'}}>{m.key}</div>
+              <div style={{display:'flex', gap:'20px', fontSize:'13px'}}>
+                <span style={{color:'#16a34a'}}>+{toCur(m.income)}</span>
+                <span style={{color:'#dc2626'}}>-{toCur(m.expenses)}</span>
+                <span style={{fontWeight:600, color: net >= 0 ? '#16a34a' : '#dc2626'}}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+              </div>
+              <div style={{fontSize:'11px', color:'#94a3b8'}}>{m.count} items</div>
+            </div>;
+          })}
         </div>
-        {renderInsight()}
+      </div>}
+
+      {(horizonView === 'five_years' || horizonView === 'ten_years') && <div style={{marginTop:'24px'}}>
+        <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Yearly Rollup</h3>
+        <div style={{display:'grid', gap:'6px'}}>
+          {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).map(([year, data]) => {
+            const net = data.income - data.expenses;
+            return <div key={year} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'#ffffff', border:'1px solid #e5e7eb', borderRadius:'8px'}}>
+              <div style={{fontSize:'13px', fontWeight:600, color:'#0f172a'}}>{year}</div>
+              <div style={{display:'flex', gap:'20px', fontSize:'13px'}}>
+                <span style={{color:'#16a34a'}}>+{toCur(data.income)}</span>
+                <span style={{color:'#dc2626'}}>-{toCur(data.expenses)}</span>
+                <span style={{fontWeight:600, color: net >= 0 ? '#16a34a' : '#dc2626'}}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+              </div>
+              <div style={{fontSize:'11px', color:'#94a3b8'}}>{data.months} months</div>
+            </div>;
+          })}
+        </div>
+      </div>}
+
+      {horizonView === 'ten_years' && filteredMonths.length === 0 && <div style={s.empty as React.CSSProperties}>
+        Not enough data for 10-year projection. Add more income/expense records.
+      </div>}
+    </div>;
+  }
+
+  function renderReviewTab() {
+    const needsTotal = allExpenses.filter(e => e.category === 'needs').reduce((s,e) => s + e.amount, 0);
+    const familyTotal = allExpenses.filter(e => e.category === 'family').reduce((s,e) => s + e.amount, 0);
+    const totalAllExp = allExpenses.reduce((s,e) => s + e.amount, 0);
+    const needsPct = totalAllExp > 0 ? Math.round((needsTotal + familyTotal) / totalAllExp * 100) : 0;
+    const highPriorityGoals = allGoals.filter(g => g.priority === 'high' && g.status !== 'bought' && g.status !== 'cancelled');
+    const gaps: string[] = [];
+    if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
+    if (highPriorityGoals.length > 0) gaps.push(`You have ${highPriorityGoals.length} high-priority purchase goals not yet completed.`);
+    if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
+    if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
+    const activeRecurring = allRecurring.filter(r => r.isActive);
+    if (activeRecurring.length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
+
+    return <div>
+      <h2 style={s.hdr}>Review & Gaps</h2>
+      <div style={{marginTop:'16px'}}>
+        <div style={s.dashGrid as React.CSSProperties}>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Needs Ratio</div><div style={s.cardV}>{needsPct}%</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Allocation Rules</div><div style={s.cardV}>{allRules.length}</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Active Recurring</div><div style={s.cardV}>{activeRecurring.length}</div></div>
+          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Open Goals</div><div style={s.cardV}>{allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length}</div></div>
+        </div>
+        {gaps.length > 0 && <div style={{marginTop:'16px'}}>
+          <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'8px'}}>Identified Gaps</h3>
+          {gaps.map((g,i) => <div key={i} style={{padding:'10px 14px', marginBottom:'6px', background:'#fef9c3', border:'1px solid #fde047', borderRadius:'8px', fontSize:'13px', color:'#854d0e'}}>{g}</div>)}
+        </div>}
+        {gaps.length === 0 && <div style={{padding:'24px', textAlign:'center', color:'#64748b', fontSize:'14px'}}>No major gaps detected.</div>}
+      </div>
+    </div>;
+  }
+
+  function renderAiAssistant() {
+    return <div>
+      <h2 style={s.hdr}>AI Assistant</h2>
+      <div style={{marginTop:'16px', display:'flex', gap:'8px', flexWrap:'wrap'}}>
+        {(['monthly_review','allocation_review','purchase_review','investment_review','next_actions'] as AiMode[]).map(m => <button key={m} style={s.iNavBtn(aiMode === m)} onClick={()=>setAiMode(m)}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
+      </div>
+      <div style={s.empty as React.CSSProperties}>
+        AI assistant integration coming soon. This will provide actionable insights based on your financial data.
+      </div>
+    </div>;
+  }
+
+  function renderSidebar() {
+    const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
+    const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
+    const netAll = totalInc - totalExp;
+    return <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+      <div style={s.sCard as React.CSSProperties}>
+        <div style={s.cardT}>All-time Totals</div>
+        <div style={{fontSize:'13px', marginTop:'4px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0'}}><span>Income</span><span style={{color:'#16a34a', fontWeight:600}}>{toCur(totalInc)}</span></div>
+          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0'}}><span>Expenses</span><span style={{color:'#dc2626', fontWeight:600}}>{toCur(totalExp)}</span></div>
+          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0', borderTop:'1px solid #e5e7eb', marginTop:'4px', paddingTop:'4px', fontWeight:700, color: netAll >= 0 ? '#16a34a' : '#dc2626'}}><span>Net</span><span>{toCur(netAll)}</span></div>
+        </div>
+      </div>
+      <div style={s.sCard as React.CSSProperties}>
+        <div style={s.cardT}>Quick Stats</div>
+        <div style={{fontSize:'12px', color:'#64748b', marginTop:'6px', display:'flex', flexDirection:'column', gap:'4px'}}>
+          <div>{allIncome.length} income records</div>
+          <div>{allExpenses.length} expense records</div>
+          <div>{allPeriods.length} periods</div>
+          <div>{allRecurring.length} recurring rules</div>
+          <div>{allGoals.length} purchase goals</div>
+          <div>{allIdeas.length} investment ideas</div>
+          <div>{allRules.length} allocation rules</div>
+        </div>
+      </div>
+    </div>;
+  }
+
+  const tabs: {key: FinanceTab; label: string}[] = [
+    {key:'dashboard', label:'Dashboard'},
+    {key:'income', label:'Income'},
+    {key:'expenses', label:'Expenses'},
+    {key:'allocation', label:'Allocation'},
+    {key:'purchase_goals', label:'Goals'},
+    {key:'investments', label:'Investments'},
+    {key:'recurring', label:'Recurring'},
+    {key:'review', label:'Review'},
+    {key:'ai_assistant', label:'AI'},
+  ];
+
+  return <div style={s.page as React.CSSProperties}>
+    <div style={s.layout as React.CSSProperties}>
+      <div style={s.main as React.CSSProperties}>
+        <div style={s.row as React.CSSProperties}>
+          <div style={{display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap'}}>
+            {tabs.map(t => <button key={t.key} style={s.navBtn(tab === t.key)} onClick={()=>setTab(t.key)}>{t.label}</button>)}
+            <button style={{...s.btnO, marginLeft:'8px'}} onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</button>
+          </div>
+        </div>
+        <div style={{marginBottom:'16px'}}>{renderPeriodSelector()}</div>
+        {tab !== 'monthly' && tab !== 'six_months' && tab !== 'yearly' && <div style={{marginBottom:'16px'}}>
+          {tab === 'dashboard' && renderDashboard()}
+          {tab === 'income' && renderIncomeTab()}
+          {tab === 'expenses' && renderExpensesTab()}
+          {tab === 'allocation' && renderAllocationTab()}
+          {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
+          {tab === 'investments' && renderInvestmentsTab()}
+          {tab === 'recurring' && renderRecurringRulesTab()}
+          {tab === 'review' && renderReviewTab()}
+          {tab === 'ai_assistant' && renderAiAssistant()}
+        </div>}
+        <div style={{marginTop:'24px'}}>
+          <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Horizon View —{' '}
+            {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
+          </h3>
+          {renderHorizonSummary()}
+        </div>
+      </div>
+      <div style={s.side as React.CSSProperties}>
+        {renderSidebar()}
       </div>
     </div>
-  );
+    {renderModal()}
+  </div>;
 }
+
+export default FinancePanel;

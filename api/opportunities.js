@@ -29,6 +29,7 @@ const allowedEntities = new Set([
   'finance_investment_rules',
   'finance_investment_allocations',
   'finance_periods',
+  'finance_recurring_rules',
 ]);
 const tablesAttempted = [
   'companies',
@@ -58,6 +59,7 @@ const tablesAttempted = [
   'finance_investment_rules',
   'finance_investment_allocations',
   'finance_periods',
+  'finance_recurring_rules',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -404,6 +406,23 @@ const normalizeFinancePeriodRow = (row) => ({
   review_notes: toNullableString(row?.review_notes ?? row?.reviewNotes),
 });
 
+const normalizeFinanceRecurringRuleRow = (row) => ({
+  title: toRequiredString(row?.title),
+  kind: toRequiredString(row?.kind),
+  category: toNullableString(row?.category),
+  amount: toNullableNumber(row?.amount) ?? 0,
+  currency: toRequiredString(row?.currency) || 'MYR',
+  frequency: toNullableString(row?.frequency) || 'monthly',
+  start_date: toNullableString(row?.start_date ?? row?.startDate),
+  end_date: toNullableString(row?.end_date ?? row?.endDate),
+  is_active: row?.is_active == null ? true : Boolean(row.is_active),
+  confidence: toNullableString(row?.confidence) || 'medium',
+  source: toNullableString(row?.source),
+  notes: toNullableString(row?.notes),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+});
+
 const normalizeFinanceEntityRow = (entity, row) => {
   if (entity === 'finance_income') return normalizeFinanceIncomeRow(row);
   if (entity === 'finance_expenses') return normalizeFinanceExpenseRow(row);
@@ -413,6 +432,7 @@ const normalizeFinanceEntityRow = (entity, row) => {
   if (entity === 'finance_investment_rules') return normalizeFinanceInvestmentRuleRow(row);
   if (entity === 'finance_investment_allocations') return normalizeFinanceInvestmentAllocationRow(row);
   if (entity === 'finance_periods') return normalizeFinancePeriodRow(row);
+  if (entity === 'finance_recurring_rules') return normalizeFinanceRecurringRuleRow(row);
   return row;
 };
 
@@ -557,6 +577,7 @@ export default async function handler(req, res) {
         finance_investment_rules: results.finance_investment_rules || [],
         finance_investment_allocations: results.finance_investment_allocations || [],
         finance_periods: results.finance_periods || [],
+        finance_recurring_rules: results.finance_recurring_rules || [],
         templatesWarning,
         strategyNotes: [],
       });

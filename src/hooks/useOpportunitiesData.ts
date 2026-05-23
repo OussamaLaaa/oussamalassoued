@@ -63,6 +63,7 @@ import type {
   FinanceInvestmentRule,
   FinanceInvestmentAllocation,
   FinancePeriod,
+  FinanceRecurringRule,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -96,6 +97,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   financeInvestmentRules: [],
   financeInvestmentAllocations: [],
   financePeriods: [],
+  financeRecurringRules: [],
 });
 
 
@@ -135,6 +137,7 @@ type OpportunitiesApiResponse = {
   finance_investment_rules?: any[];
   finance_investment_allocations?: any[];
   finance_periods?: any[];
+  finance_recurring_rules?: any[];
   strategyNotes?: any[];
 };
 
@@ -727,6 +730,55 @@ const financePeriodFromDb = (row: any): FinancePeriod => ({
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
 
+const financeRecurringRuleFromDb = (row: any): FinanceRecurringRule => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  kind: row?.kind ?? 'income',
+  category: row?.category ?? undefined,
+  amount: Number(row?.amount ?? 0),
+  currency: String(row?.currency ?? 'MYR'),
+  frequency: row?.frequency ?? 'monthly',
+  startDate: row?.start_date ?? row?.startDate ?? undefined,
+  endDate: row?.end_date ?? row?.endDate ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  confidence: row?.confidence ?? 'medium',
+  source: row?.source ?? undefined,
+  notes: row?.notes ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeRecurringRuleToDb = (input: Partial<FinanceRecurringRule>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.kind !== undefined) payload.kind = input.kind;
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.amount !== undefined) payload.amount = Number(input.amount);
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.frequency !== undefined) payload.frequency = input.frequency;
+  if (input.startDate !== undefined) payload.start_date = toNullableString(input.startDate);
+  if (input.endDate !== undefined) payload.end_date = toNullableString(input.endDate);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.confidence !== undefined) payload.confidence = input.confidence;
+  if (input.source !== undefined) payload.source = toNullableString(input.source);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  return payload;
+};
+
+const attachFinanceRecurringRuleLinkNames = (items: FinanceRecurringRule[], projects: Project[], companies: Company[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+  }));
+};
+
 const attachFinanceIncomeLinkNames = (items: FinanceIncome[], projects: Project[], companies: Company[]) => {
   const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
   const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
@@ -933,6 +985,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [financeInvestmentRules, setFinanceInvestmentRules] = useState<FinanceInvestmentRule[]>([]);
   const [financeInvestmentAllocations, setFinanceInvestmentAllocations] = useState<FinanceInvestmentAllocation[]>([]);
   const [financePeriods, setFinancePeriods] = useState<FinancePeriod[]>([]);
+  const [financeRecurringRules, setFinanceRecurringRules] = useState<FinanceRecurringRule[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -959,6 +1012,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceInvestmentRulesRaw = Array.isArray(payload?.finance_investment_rules) ? payload.finance_investment_rules : [];
     const nextFinanceInvestmentAllocationsRaw = Array.isArray(payload?.finance_investment_allocations) ? payload.finance_investment_allocations : [];
     const nextFinancePeriodsRaw = Array.isArray(payload?.finance_periods) ? payload.finance_periods : [];
+    const nextFinanceRecurringRulesRaw = Array.isArray(payload?.finance_recurring_rules) ? payload.finance_recurring_rules : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -1013,6 +1067,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextPlans = attachOsPlanLinkNames(nextPlansRaw.map((row: any) => planFromDb(row)), nextProjects, nextStrategyGoals);
     const nextPlanItems = attachPlanItemLinkNames(nextPlanItemsRaw.map((row: any) => planItemFromDb(row)), nextProjects, nextStrategyGoals);
     const nextFinancePeriods = nextFinancePeriodsRaw.map((row: any) => financePeriodFromDb(row));
+    const nextFinanceRecurringRules = attachFinanceRecurringRuleLinkNames(nextFinanceRecurringRulesRaw.map((row: any) => financeRecurringRuleFromDb(row)), nextProjects, nextCompanies);
     let nextFinanceIncome = attachFinanceIncomeLinkNames(nextFinanceIncomeRaw.map((row: any) => financeIncomeFromDb(row)), nextProjects, nextCompanies);
     let nextFinanceExpenses = attachFinanceExpenseLinkNames(nextFinanceExpensesRaw.map((row: any) => financeExpenseFromDb(row)), nextProjects);
     const nextFinanceAllocationRules = nextFinanceAllocationRulesRaw.map((row: any) => financeAllocationRuleFromDb(row));
@@ -1064,6 +1119,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentRules(nextFinanceInvestmentRules);
     setFinanceInvestmentAllocations(nextFinanceInvestmentAllocations);
     setFinancePeriods(nextFinancePeriods);
+    setFinanceRecurringRules(nextFinanceRecurringRules);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -1109,6 +1165,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setFinanceInvestmentRules([]);
           setFinanceInvestmentAllocations([]);
           setFinancePeriods([]);
+          setFinanceRecurringRules([]);
           setStrategyItems([]);
           return;
         }
@@ -1135,6 +1192,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setFinanceInvestmentRules(fallback.financeInvestmentRules);
         setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
         setFinancePeriods([]);
+        setFinanceRecurringRules([]);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -1310,7 +1368,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2050,6 +2108,35 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinancePeriods((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Finance Recurring Rules CRUD ──
+
+  const addFinanceRecurringRule = async (input: Partial<FinanceRecurringRule>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Recurring rule title is required.');
+    }
+    const row = await syncInsert('finance_recurring_rules', financeRecurringRuleToDb(input));
+    const next = attachFinanceRecurringRuleLinkNames([financeRecurringRuleFromDb(row)], projects, companies)[0];
+    setFinanceRecurringRules((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceRecurringRule = async (id: string, input: Partial<FinanceRecurringRule>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Recurring rule title is required.');
+    }
+    const row = await syncUpdate('finance_recurring_rules', id, financeRecurringRuleToDb(input));
+    const next = attachFinanceRecurringRuleLinkNames([financeRecurringRuleFromDb(row)], projects, companies)[0];
+    setFinanceRecurringRules((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceRecurringRule = async (id: string) => {
+    const confirmed = window.confirm('Delete this recurring rule?');
+    if (!confirmed) return;
+    await syncDelete('finance_recurring_rules', id);
+    setFinanceRecurringRules((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -2149,6 +2236,10 @@ export const useOpportunitiesData = (enabled = true) => {
       const next = attachFinancePurchaseGoalLinkNames(current, projects);
       return shouldReplaceCollection(current, next, ['linkedProjectName']) ? next : current;
     });
+    setFinanceRecurringRules((current) => {
+      const next = attachFinanceRecurringRuleLinkNames(current, projects, companies);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName']) ? next : current;
+    });
   }, [projects, companies]);
 
   useEffect(() => {
@@ -2184,6 +2275,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
     setFinanceInvestmentRules(fallback.financeInvestmentRules);
     setFinanceInvestmentAllocations(fallback.financeInvestmentAllocations);
+    setFinanceRecurringRules(fallback.financeRecurringRules);
     setStrategyItems(fallback.strategyItems);
   };
 
@@ -2237,6 +2329,10 @@ export const useOpportunitiesData = (enabled = true) => {
     updateFinanceInvestmentAllocation,
     deleteFinanceInvestmentAllocation,
     financePeriods,
+    financeRecurringRules,
+    addFinanceRecurringRule,
+    updateFinanceRecurringRule,
+    deleteFinanceRecurringRule,
     addFinancePeriod,
     updateFinancePeriod,
     deleteFinancePeriod,

@@ -291,6 +291,8 @@ const OpportunitiesLayout: React.FC<{
     addFinanceInvestmentAllocation, updateFinanceInvestmentAllocation, deleteFinanceInvestmentAllocation,
     financePeriods,
     addFinancePeriod, updateFinancePeriod, deleteFinancePeriod,
+    financeRecurringRules,
+    addFinanceRecurringRule, updateFinanceRecurringRule, deleteFinanceRecurringRule,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -756,6 +758,10 @@ const OpportunitiesLayout: React.FC<{
                 onAddFinancePeriod={addFinancePeriod}
                 onUpdateFinancePeriod={updateFinancePeriod}
                 onDeleteFinancePeriod={deleteFinancePeriod}
+                financeRecurringRules={financeRecurringRules}
+                onAddFinanceRecurringRule={addFinanceRecurringRule}
+                onUpdateFinanceRecurringRule={updateFinanceRecurringRule}
+                onDeleteFinanceRecurringRule={deleteFinanceRecurringRule}
               />
             )}
           </div>
