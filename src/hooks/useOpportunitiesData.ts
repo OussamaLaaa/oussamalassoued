@@ -151,7 +151,7 @@ const requestOpportunities = async (init: RequestInit): Promise<OpportunitiesApi
   return result;
 };
 
-export const useOpportunitiesData = () => {
+export const useOpportunitiesData = (enabled = true) => {
   const [companies, setCompanies] = useState<Company[]>(() => cloneSeedData().companies);
   const [people, setPeople] = useState<Person[]>(() => cloneSeedData().people);
   const [messages, setMessages] = useState<OutreachMessage[]>(() => cloneSeedData().messages);
@@ -164,7 +164,7 @@ export const useOpportunitiesData = () => {
   const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const applyPayload = useCallback((payload: any) => {
@@ -241,6 +241,12 @@ export const useOpportunitiesData = () => {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     let mounted = true;
 
     const run = async () => {
@@ -284,7 +290,7 @@ export const useOpportunitiesData = () => {
     return () => {
       mounted = false;
     };
-  }, [applyPayload]);
+  }, [applyPayload, enabled]);
 
   const syncInsert = async (entity: string, data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
