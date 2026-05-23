@@ -160,7 +160,7 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px] print:bg-transparent print:backdrop-blur-none">
+    <div className="print-wrapper fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px] print:bg-transparent print:backdrop-blur-none">
       <button type="button" aria-label="Close preview" className="no-print absolute inset-0" onClick={onClose} />
       <div className="relative z-10 flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)] print:h-auto print:overflow-visible print:rounded-none print:border-0 print:shadow-none print:max-w-none print:w-full">
         <div className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#e5e7eb] px-6 py-4">
