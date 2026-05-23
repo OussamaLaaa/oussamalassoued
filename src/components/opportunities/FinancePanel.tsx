@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, FinanceRecurringRule, Project, Company } from '../../types/opportunities';
 
 type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'review' | 'ai_assistant';
-type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'next_actions';
+type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'recurring_income_review' | 'next_actions';
 type InvestTab = 'overview' | 'ideas' | 'allocation' | 'rules' | 'risk_review' | 'ethical_review';
 
 interface FinancePanelProps {
@@ -175,6 +175,8 @@ function FinancePanel({
   const [aiMode, setAiMode] = useState<AiMode>('monthly_review');
   const [modal, setModal] = useState<{type: FinanceTab; id?: string} | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<any>(null);
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
   const [horizonView, setHorizonView] = useState<HorizonView>('monthly');
   const [generateResult, setGenerateResult] = useState<string | null>(null);
@@ -963,15 +965,209 @@ function FinancePanel({
     </div>;
   }
 
+  function buildFinanceSummary() {
+    const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+    const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
+    const pendingIncome = dashboardIncome.filter(i => i.status === 'expected').reduce((s,i) => s + i.amount, 0);
+    const delayedIncome = dashboardIncome.filter(i => i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+    const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
+    const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned').reduce((s,e) => s + e.amount, 0);
+    const totalExp = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
+    const netReceived = receivedIncome - paidExpenses;
+    const expectedNet = expectedIncome - totalExp;
+    const availableToAllocate = netReceived > 0 ? netReceived : 0;
+    const savingsRate = receivedIncome > 0 ? Math.round((netReceived / receivedIncome) * 100) : 0;
+    const allocationTotalPercentage = allRules.reduce((s,r) => s + r.percentage, 0);
+
+    return {
+      selectedPeriodTitle: selectedPeriod?.title || 'All Time',
+      selectedPeriodType: selectedPeriod?.type || 'all',
+      expectedIncome,
+      receivedIncome,
+      pendingIncome,
+      delayedIncome,
+      paidExpenses,
+      plannedExpenses,
+      netReceived,
+      expectedNet,
+      availableToAllocate,
+      savingsRate,
+      allocationTotalPercentage,
+    };
+  }
+
+  function buildSafeArrays() {
+    return {
+      incomeItems: dashboardIncome.map(i => ({
+        title: i.title,
+        incomeType: i.incomeType,
+        source: i.source,
+        expectedAmount: i.amount,
+        receivedAmount: i.receivedAmount || 0,
+        status: i.status,
+        confidence: i.confidence,
+        isRecurring: i.isRecurring,
+        recurrence: i.recurrence,
+        financePeriodTitle: i.financePeriodTitle,
+      })),
+      expenseItems: dashboardExpenses.map(e => ({
+        title: e.title,
+        category: e.category,
+        amount: e.amount,
+        status: e.status,
+        financePeriodTitle: e.financePeriodTitle,
+      })),
+      purchaseGoals: allGoals.map(g => ({
+        title: g.title,
+        category: g.category,
+        targetAmount: g.targetAmount,
+        savedAmount: g.savedAmount,
+        monthlyContribution: g.monthlyContribution,
+        allocationCategory: g.allocationCategory,
+        priority: g.priority,
+        status: g.status,
+        decisionStatus: g.decisionStatus,
+      })),
+      investmentIdeas: allIdeas.map(i => ({
+        title: i.title,
+        type: i.type,
+        plannedAmount: i.plannedAmount,
+        maxAllocation: i.maxAllocation,
+        riskLevel: i.riskLevel,
+        ethicalStatus: i.ethicalStatus,
+        fundingStatus: i.fundingStatus,
+        allocationCategory: i.allocationCategory,
+        recommendedMonthlyContribution: i.recommendedMonthlyContribution,
+        status: i.status,
+      })),
+      allocationRules: allRules.map(r => ({
+        name: r.name,
+        category: r.category,
+        percentage: r.percentage,
+        priority: r.priority,
+        isActive: r.isActive,
+      })),
+      recurringRules: allRecurring.map(r => ({
+        title: r.title,
+        kind: r.kind,
+        category: r.category,
+        amount: r.amount,
+        frequency: r.frequency,
+        isActive: r.isActive,
+        confidence: r.confidence,
+      })),
+    };
+  }
+
+  async function callAiAnalysis() {
+    setAiLoading(true);
+    setAiError(null);
+    setAiResult(null);
+
+    const financeSummary = buildFinanceSummary();
+    const safeData = buildSafeArrays();
+
+    const payload: Record<string, any> = {
+      mode: aiMode,
+      financeSummary,
+      ...safeData,
+    };
+
+    try {
+      const res = await fetch('/api/ai-finance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setAiError('Authentication required. Please log in again.');
+        } else if (json?.code === 'AI_QUOTA_EXCEEDED') {
+          setAiError('AI quota exceeded. Try again later or change Gemini model.');
+        } else {
+          setAiError(json?.error || 'AI Finance Assistant could not generate a review.');
+        }
+        return;
+      }
+
+      if (!json.success || !json.analysis) {
+        setAiError('AI Finance Assistant could not generate a review. Try again or review manually.');
+        return;
+      }
+
+      setAiResult(json.analysis);
+    } catch {
+      setAiError('AI Finance Assistant could not generate a review. Try again or review manually.');
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   function renderAiAssistant() {
+    const aiModes: AiMode[] = ['monthly_review', 'allocation_review', 'purchase_review', 'investment_review', 'recurring_income_review', 'next_actions'];
+    const hasData = dashboardIncome.length > 0 || dashboardExpenses.length > 0;
+
     return <div>
-      <h2 style={s.hdr}>AI Assistant</h2>
-      <div style={{marginTop:'16px', display:'flex', gap:'8px', flexWrap:'wrap'}}>
-        {(['monthly_review','allocation_review','purchase_review','investment_review','next_actions'] as AiMode[]).map(m => <button key={m} style={s.iNavBtn(aiMode === m)} onClick={()=>setAiMode(m)}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
+      <h2 style={s.hdr}>AI Finance Assistant</h2>
+      <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'12px'}}>
+        AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
       </div>
-      <div style={s.empty as React.CSSProperties}>
-        AI assistant integration coming soon. This will provide actionable insights based on your financial data.
+      <div style={{marginTop:'12px', display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'16px'}}>
+        {aiModes.map(m => <button key={m} style={s.iNavBtn(aiMode === m)} onClick={()=>{setAiMode(m); setAiResult(null); setAiError(null);}}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
       </div>
+      <button style={s.btn('#2563eb')} disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
+        {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
+      </button>
+      {!hasData && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', marginTop:'12px', fontSize:'13px'}}>
+        Add income or expenses before using the AI Assistant.
+      </div>}
+      {aiError && <div style={{...s.warn, background:'#fef2f2', border:'1px solid #fecaca', color:'#991b1b', marginTop:'16px'}}>{aiError}</div>}
+      {aiLoading && <div style={s.empty as React.CSSProperties}>Generating analysis...</div>}
+      {aiResult && <div style={{marginTop:'20px', display:'flex', flexDirection:'column', gap:'14px'}}>
+        {aiResult.summary && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Summary</div>
+          <div style={{fontSize:'14px', color:'#0f172a', marginTop:'4px', lineHeight:'1.5'}}>{aiResult.summary}</div>
+        </div>}
+        {aiResult.incomeAnalysis?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Income Analysis</div>
+          {aiResult.incomeAnalysis.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.incomeAnalysis.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.expenseAnalysis?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Expense Analysis</div>
+          {aiResult.expenseAnalysis.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.expenseAnalysis.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.allocationReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Allocation Review</div>
+          {aiResult.allocationReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.allocationReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.purchaseGoalReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Purchase Goals</div>
+          {aiResult.purchaseGoalReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.purchaseGoalReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.investmentRiskReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Investment Risks</div>
+          {aiResult.investmentRiskReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.investmentRiskReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.recurringIncomeReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Recurring Income Review</div>
+          {aiResult.recurringIncomeReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.recurringIncomeReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.ethicalReviewQuestions?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Ethical Review Questions</div>
+          {aiResult.ethicalReviewQuestions.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.ethicalReviewQuestions.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.warnings?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Warnings</div>
+          {aiResult.warnings.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#991b1b', borderBottom:i<aiResult.warnings.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+        {aiResult.nextActions?.length > 0 && <div style={s.sCard as React.CSSProperties}>
+          <div style={s.cardT}>Next Actions</div>
+          {aiResult.nextActions.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.nextActions.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        </div>}
+      </div>}
     </div>;
   }
 
