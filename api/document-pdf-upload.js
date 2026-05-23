@@ -197,16 +197,19 @@ export default async function handler(req, res) {
     const safeName = safeFileName(fileName);
     const storagePath = `${resourceId}/${timestamp}-${safeName}`;
 
+    const pdfBlob = new Blob([decoded.buffer], { type: 'application/pdf' });
+
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, decoded.buffer, {
+      .upload(storagePath, pdfBlob, {
         contentType: 'application/pdf',
-        upsert: false,
+        upsert: true,
+        duplex: 'half',
       });
 
     if (uploadError) {
-      console.error('[Document PDF] Storage upload failed', { documentId, storagePath, error: uploadError });
-      return toSafeJson(res, 500, { success: false, error: 'Unable to store PDF.' });
+      console.error('[Document PDF] Storage upload failed', { bucket: BUCKET_NAME, resourceId, storagePath, error: uploadError });
+      return toSafeJson(res, 500, { success: false, error: 'Unable to store PDF. Please ensure the "generated-documents" storage bucket exists in your Supabase project.' });
     }
 
     const { error: updateError } = await supabase
