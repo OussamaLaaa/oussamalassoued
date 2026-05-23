@@ -697,7 +697,14 @@ export interface FinancePurchaseGoal {
   currency: string;
   priority: string;
   status: string;
+  decisionStatus: string;
   targetDate?: string;
+  productUrl?: string;
+  imageUrl?: string;
+  vendor?: string;
+  reason?: string;
+  expectedUse?: string;
+  alternatives?: string;
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;

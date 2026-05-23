@@ -526,7 +526,14 @@ const financePurchaseGoalFromDb = (row: any): FinancePurchaseGoal => ({
   currency: String(row?.currency ?? 'MYR'),
   priority: row?.priority ?? 'medium',
   status: row?.status ?? 'planned',
+  decisionStatus: row?.decision_status ?? row?.decisionStatus ?? 'researching',
   targetDate: row?.target_date ?? row?.targetDate ?? undefined,
+  productUrl: row?.product_url ?? row?.productUrl ?? undefined,
+  imageUrl: row?.image_url ?? row?.imageUrl ?? undefined,
+  vendor: row?.vendor ?? undefined,
+  reason: row?.reason ?? undefined,
+  expectedUse: row?.expected_use ?? row?.expectedUse ?? undefined,
+  alternatives: row?.alternatives ?? undefined,
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
@@ -542,7 +549,14 @@ const financePurchaseGoalToDb = (input: Partial<FinancePurchaseGoal>) => {
   if (input.currency !== undefined) payload.currency = input.currency;
   if (input.priority !== undefined) payload.priority = input.priority;
   if (input.status !== undefined) payload.status = input.status;
+  if (input.decisionStatus !== undefined) payload.decision_status = input.decisionStatus;
   if (input.targetDate !== undefined) payload.target_date = toNullableString(input.targetDate);
+  if (input.productUrl !== undefined) payload.product_url = toNullableString(input.productUrl);
+  if (input.imageUrl !== undefined) payload.image_url = toNullableString(input.imageUrl);
+  if (input.vendor !== undefined) payload.vendor = toNullableString(input.vendor);
+  if (input.reason !== undefined) payload.reason = toNullableString(input.reason);
+  if (input.expectedUse !== undefined) payload.expected_use = toNullableString(input.expectedUse);
+  if (input.alternatives !== undefined) payload.alternatives = toNullableString(input.alternatives);
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
   return payload;
