@@ -27,6 +27,10 @@ import type {
   DocumentTemplateInput,
   DocumentBrandSettings,
   DocumentBrandSettingsInput,
+  Invoice,
+  InvoiceInput,
+  InvoiceItem,
+  InvoiceItemInput,
   GeneratedDocument,
   GeneratedDocumentInput,
 } from '../types/opportunities';
@@ -553,6 +557,120 @@ export const documentBrandSettingsToDb = (input: Partial<DocumentBrandSettingsIn
   payment_notes: toNullableString(input.paymentNotes),
   legal_notes: toNullableString(input.legalNotes),
 });
+
+export const invoiceFromDb = (row: any): Invoice => ({
+  id: safeString(row?.id),
+  invoiceNumber: safeString(row?.invoice_number ?? row?.invoiceNumber),
+  title: safeString(row?.title),
+  status: row?.status ?? 'draft',
+  language: row?.language ?? 'english',
+  issueDate: toIso(row?.issue_date ?? row?.issueDate),
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  currency: row?.currency ?? 'MYR',
+  sellerName: row?.seller_name ?? row?.sellerName ?? undefined,
+  sellerEmail: row?.seller_email ?? row?.sellerEmail ?? undefined,
+  sellerPhone: row?.seller_phone ?? row?.sellerPhone ?? undefined,
+  sellerAddress: row?.seller_address ?? row?.sellerAddress ?? undefined,
+  sellerCity: row?.seller_city ?? row?.sellerCity ?? undefined,
+  sellerState: row?.seller_state ?? row?.sellerState ?? undefined,
+  sellerZip: row?.seller_zip ?? row?.sellerZip ?? undefined,
+  sellerTaxId: row?.seller_tax_id ?? row?.sellerTaxId ?? undefined,
+  sellerLogoUrl: row?.seller_logo_url ?? row?.sellerLogoUrl ?? undefined,
+  clientName: row?.client_name ?? row?.clientName ?? undefined,
+  clientEmail: row?.client_email ?? row?.clientEmail ?? undefined,
+  clientPhone: row?.client_phone ?? row?.clientPhone ?? undefined,
+  clientAddress: row?.client_address ?? row?.clientAddress ?? undefined,
+  clientCity: row?.client_city ?? row?.clientCity ?? undefined,
+  clientState: row?.client_state ?? row?.clientState ?? undefined,
+  clientZip: row?.client_zip ?? row?.clientZip ?? undefined,
+  subtotal: safeNumber(row?.subtotal),
+  discountAmount: safeNumber(row?.discount_amount ?? row?.discountAmount),
+  taxRate: safeNumber(row?.tax_rate ?? row?.taxRate),
+  taxAmount: safeNumber(row?.tax_amount ?? row?.taxAmount),
+  total: safeNumber(row?.total),
+  terms: row?.terms ?? undefined,
+  notes: row?.notes ?? undefined,
+  relatedProjectId: row?.related_project_id ?? row?.relatedProjectId ?? undefined,
+  relatedCompanyId: row?.related_company_id ?? row?.relatedCompanyId ?? undefined,
+  relatedPersonId: row?.related_person_id ?? row?.relatedPersonId ?? undefined,
+  relatedDealId: row?.related_deal_id ?? row?.relatedDealId ?? undefined,
+  generatedDocumentId: row?.generated_document_id ?? row?.generatedDocumentId ?? undefined,
+  pdfStoragePath: row?.pdf_storage_path ?? row?.pdfStoragePath ?? undefined,
+  externalUrl: row?.external_url ?? row?.externalUrl ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const invoiceToDb = (input: Partial<InvoiceInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.invoiceNumber !== undefined) payload.invoice_number = String(input.invoiceNumber || '').trim();
+  if (!forUpdate || input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (!forUpdate || input.status !== undefined) payload.status = input.status || 'draft';
+  if (!forUpdate || input.language !== undefined) payload.language = input.language || 'english';
+  if (!forUpdate || input.issueDate !== undefined) payload.issue_date = toNullableDate(input.issueDate);
+  if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
+  if (!forUpdate || input.currency !== undefined) payload.currency = toNullableString(input.currency) || 'MYR';
+  if (!forUpdate || input.sellerName !== undefined) payload.seller_name = toNullableString(input.sellerName);
+  if (!forUpdate || input.sellerEmail !== undefined) payload.seller_email = toNullableString(input.sellerEmail);
+  if (!forUpdate || input.sellerPhone !== undefined) payload.seller_phone = toNullableString(input.sellerPhone);
+  if (!forUpdate || input.sellerAddress !== undefined) payload.seller_address = toNullableString(input.sellerAddress);
+  if (!forUpdate || input.sellerCity !== undefined) payload.seller_city = toNullableString(input.sellerCity);
+  if (!forUpdate || input.sellerState !== undefined) payload.seller_state = toNullableString(input.sellerState);
+  if (!forUpdate || input.sellerZip !== undefined) payload.seller_zip = toNullableString(input.sellerZip);
+  if (!forUpdate || input.sellerTaxId !== undefined) payload.seller_tax_id = toNullableString(input.sellerTaxId);
+  if (!forUpdate || input.sellerLogoUrl !== undefined) payload.seller_logo_url = toNullableString(input.sellerLogoUrl);
+  if (!forUpdate || input.clientName !== undefined) payload.client_name = toNullableString(input.clientName);
+  if (!forUpdate || input.clientEmail !== undefined) payload.client_email = toNullableString(input.clientEmail);
+  if (!forUpdate || input.clientPhone !== undefined) payload.client_phone = toNullableString(input.clientPhone);
+  if (!forUpdate || input.clientAddress !== undefined) payload.client_address = toNullableString(input.clientAddress);
+  if (!forUpdate || input.clientCity !== undefined) payload.client_city = toNullableString(input.clientCity);
+  if (!forUpdate || input.clientState !== undefined) payload.client_state = toNullableString(input.clientState);
+  if (!forUpdate || input.clientZip !== undefined) payload.client_zip = toNullableString(input.clientZip);
+  if (!forUpdate || input.subtotal !== undefined) payload.subtotal = toNullableNumber(input.subtotal);
+  if (!forUpdate || input.discountAmount !== undefined) payload.discount_amount = toNullableNumber(input.discountAmount);
+  if (!forUpdate || input.taxRate !== undefined) payload.tax_rate = toNullableNumber(input.taxRate);
+  if (!forUpdate || input.taxAmount !== undefined) payload.tax_amount = toNullableNumber(input.taxAmount);
+  if (!forUpdate || input.total !== undefined) payload.total = toNullableNumber(input.total);
+  if (!forUpdate || input.terms !== undefined) payload.terms = toNullableString(input.terms);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (!forUpdate || input.relatedProjectId !== undefined) payload.related_project_id = toNullableString(input.relatedProjectId);
+  if (!forUpdate || input.relatedCompanyId !== undefined) payload.related_company_id = toNullableString(input.relatedCompanyId);
+  if (!forUpdate || input.relatedPersonId !== undefined) payload.related_person_id = toNullableString(input.relatedPersonId);
+  if (!forUpdate || input.relatedDealId !== undefined) payload.related_deal_id = toNullableString(input.relatedDealId);
+  if (!forUpdate || input.generatedDocumentId !== undefined) payload.generated_document_id = toNullableString(input.generatedDocumentId);
+  if (!forUpdate || input.pdfStoragePath !== undefined) payload.pdf_storage_path = toNullableString(input.pdfStoragePath);
+  if (!forUpdate || input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
+
+  return payload;
+};
+
+export const invoiceItemFromDb = (row: any): InvoiceItem => ({
+  id: safeString(row?.id),
+  invoiceId: safeString(row?.invoice_id ?? row?.invoiceId),
+  description: safeString(row?.description),
+  quantity: safeNumber(row?.quantity) ?? 0,
+  rate: safeNumber(row?.rate) ?? 0,
+  amount: safeNumber(row?.amount) ?? 0,
+  sortOrder: safeNumber(row?.sort_order ?? row?.sortOrder),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const invoiceItemToDb = (input: Partial<InvoiceItemInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.invoiceId !== undefined) payload.invoice_id = toNullableString(input.invoiceId);
+  if (!forUpdate || input.description !== undefined) payload.description = String(input.description || '').trim();
+  if (!forUpdate || input.quantity !== undefined) payload.quantity = toNullableNumber(input.quantity);
+  if (!forUpdate || input.rate !== undefined) payload.rate = toNullableNumber(input.rate);
+  if (!forUpdate || input.amount !== undefined) payload.amount = toNullableNumber(input.amount);
+  if (!forUpdate || input.sortOrder !== undefined) payload.sort_order = toNullableNumber(input.sortOrder);
+
+  return payload;
+};
 
 export const generatedDocumentFromDb = (row: any): GeneratedDocument => ({
   id: safeString(row?.id),

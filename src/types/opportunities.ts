@@ -288,6 +288,9 @@ export type DocumentType = 'invoice' | 'contract' | 'cahier_de_charges' | 'propo
 export type DocumentStatus = 'draft' | 'ready' | 'sent' | 'signed' | 'paid' | 'unpaid' | 'archived' | 'cancelled' | 'overdue';
 export type DocumentLanguage = 'english' | 'french' | 'arabic';
 
+export type InvoiceStatus = 'draft' | 'ready' | 'sent' | 'paid' | 'unpaid' | 'overdue' | 'cancelled' | 'archived';
+export type InvoiceLanguage = 'english' | 'french' | 'arabic';
+
 export interface DocumentItem {
   id: string;
   name: string;
@@ -327,6 +330,114 @@ export interface DocumentInput {
   paidDate?: string;
   url?: string;
   notes?: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  title: string;
+  status: InvoiceStatus;
+  language: InvoiceLanguage;
+  issueDate?: string;
+  dueDate?: string;
+  currency: string;
+  sellerName?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerAddress?: string;
+  sellerCity?: string;
+  sellerState?: string;
+  sellerZip?: string;
+  sellerTaxId?: string;
+  sellerLogoUrl?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  clientCity?: string;
+  clientState?: string;
+  clientZip?: string;
+  subtotal?: number;
+  discountAmount?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  total?: number;
+  terms?: string;
+  notes?: string;
+  relatedProjectId?: string;
+  relatedProjectName?: string;
+  relatedCompanyId?: string;
+  relatedCompanyName?: string;
+  relatedPersonId?: string;
+  relatedPersonName?: string;
+  relatedDealId?: string;
+  relatedDealName?: string;
+  generatedDocumentId?: string;
+  pdfStoragePath?: string;
+  externalUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InvoiceInput {
+  invoiceNumber: string;
+  title: string;
+  status: InvoiceStatus;
+  language: InvoiceLanguage;
+  issueDate?: string;
+  dueDate?: string;
+  currency: string;
+  sellerName?: string;
+  sellerEmail?: string;
+  sellerPhone?: string;
+  sellerAddress?: string;
+  sellerCity?: string;
+  sellerState?: string;
+  sellerZip?: string;
+  sellerTaxId?: string;
+  sellerLogoUrl?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  clientCity?: string;
+  clientState?: string;
+  clientZip?: string;
+  subtotal?: number;
+  discountAmount?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  total?: number;
+  terms?: string;
+  notes?: string;
+  relatedProjectId?: string;
+  relatedCompanyId?: string;
+  relatedPersonId?: string;
+  relatedDealId?: string;
+  generatedDocumentId?: string;
+  pdfStoragePath?: string;
+  externalUrl?: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InvoiceItemInput {
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  sortOrder?: number;
 }
 
 export interface DocumentTemplate {
@@ -478,6 +589,8 @@ export interface OpportunitiesData {
   projectMeetings: ProjectMeeting[];
   projectDocuments: ProjectDocument[];
   projectFinanceItems: ProjectFinanceItem[];
+  invoices: Invoice[];
+  invoiceItems: InvoiceItem[];
   documents: DocumentItem[];
   documentTemplates: DocumentTemplate[];
   documentBrandSettings: DocumentBrandSettings[];

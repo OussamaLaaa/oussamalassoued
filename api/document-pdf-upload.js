@@ -130,18 +130,22 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     const documentId = String(req.query?.documentId || '').trim();
-    if (!documentId) {
-      return toSafeJson(res, 400, { success: false, error: 'Missing documentId.' });
+    const invoiceId = String(req.query?.invoiceId || '').trim();
+    const resourceId = documentId || invoiceId;
+    const table = documentId ? 'generated_documents' : invoiceId ? 'invoices' : '';
+
+    if (!resourceId || !table) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing documentId or invoiceId.' });
     }
 
     const { data: row, error: rowError } = await supabase
-      .from('generated_documents')
+      .from(table)
       .select('pdf_storage_path')
-      .eq('id', documentId)
+      .eq('id', resourceId)
       .maybeSingle();
 
     if (rowError) {
-      console.error('[Document PDF] Failed to fetch generated document', { documentId, error: rowError });
+      console.error('[Document PDF] Failed to fetch stored PDF record', { resourceId, table, error: rowError });
       return toSafeJson(res, 500, { success: false, error: 'Unable to load stored PDF.' });
     }
 
@@ -156,7 +160,7 @@ export default async function handler(req, res) {
       .createSignedUrl(storagePath, 60 * 60);
 
     if (signedUrlError || !signedUrlData?.signedUrl) {
-      console.error('[Document PDF] Failed to create signed URL', { documentId, storagePath, error: signedUrlError });
+      console.error('[Document PDF] Failed to create signed URL', { resourceId, table, storagePath, error: signedUrlError });
       return toSafeJson(res, 500, { success: false, error: 'Unable to create signed PDF link.' });
     }
 
@@ -166,11 +170,14 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const body = readBody(req);
     const documentId = String(body?.documentId || '').trim();
+    const invoiceId = String(body?.invoiceId || '').trim();
     const fileName = String(body?.fileName || '').trim();
     const pdfBase64 = String(body?.pdfBase64 || '').trim();
+    const resourceId = documentId || invoiceId;
+    const table = documentId ? 'generated_documents' : invoiceId ? 'invoices' : '';
 
-    if (!documentId || !fileName || !pdfBase64) {
-      return toSafeJson(res, 400, { success: false, error: 'Missing documentId, fileName, or pdfBase64.' });
+    if (!resourceId || !table || !fileName || !pdfBase64) {
+      return toSafeJson(res, 400, { success: false, error: 'Missing documentId, invoiceId, fileName, or pdfBase64.' });
     }
 
     if (!/\.pdf$/i.test(fileName)) {
@@ -188,7 +195,7 @@ export default async function handler(req, res) {
 
     const timestamp = Date.now();
     const safeName = safeFileName(fileName);
-    const storagePath = `${documentId}/${timestamp}-${safeName}`;
+    const storagePath = `${resourceId}/${timestamp}-${safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
@@ -203,12 +210,12 @@ export default async function handler(req, res) {
     }
 
     const { error: updateError } = await supabase
-      .from('generated_documents')
+      .from(table)
       .update({ pdf_storage_path: storagePath, updated_at: new Date().toISOString() })
-      .eq('id', documentId);
+      .eq('id', resourceId);
 
     if (updateError) {
-      console.error('[Document PDF] Database update failed', { documentId, storagePath, error: updateError });
+      console.error('[Document PDF] Database update failed', { resourceId, table, storagePath, error: updateError });
       return toSafeJson(res, 500, { success: false, error: 'PDF stored, but document record could not be updated.' });
     }
 

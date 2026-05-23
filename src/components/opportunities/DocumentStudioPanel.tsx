@@ -11,13 +11,20 @@ import type {
   DocumentType,
   GeneratedDocument,
   GeneratedDocumentInput,
+  Invoice,
+  InvoiceItem,
+  InvoiceInput,
+  InvoiceItemInput,
   Person,
   Project,
 } from '../../types/opportunities';
 import DocumentPrintPreviewModal from './DocumentPrintPreviewModal';
+import InvoiceArchivePanel from './InvoiceArchivePanel';
+import InvoicePrintPreviewModal from './InvoicePrintPreviewModal';
+import InvoiceStudioPanel from './InvoiceStudioPanel';
 
 
-type StudioTab = 'dashboard' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
+type StudioTab = 'dashboard' | 'invoice-studio' | 'invoice-archive' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
 
 type BuilderState = {
   templateId: string;
@@ -43,6 +50,8 @@ type TemplateEditorState = {
 
 const TABS: Array<{ id: StudioTab; label: string }> = [
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'invoice-studio', label: 'Invoice Studio' },
+  { id: 'invoice-archive', label: 'Invoice Archive' },
   { id: 'templates', label: 'Templates' },
   { id: 'brand', label: 'Brand Settings' },
   { id: 'builder', label: 'Builder' },
@@ -252,10 +261,14 @@ const DocumentStudioPanel: React.FC<{
   documentTemplates: DocumentTemplate[];
   documentBrandSettings: DocumentBrandSettings[];
   generatedDocuments: GeneratedDocument[];
+  invoices: Invoice[];
+  invoiceItems: InvoiceItem[];
   projects: Project[];
   companies: Company[];
   people: Person[];
   deals: Deal[];
+  selectedInvoiceId: string | null;
+  onSelectInvoice: (id: string | null) => void;
   onAddDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
   onUpdateDocumentTemplate: (id: string, input: Partial<DocumentTemplateInput>) => Promise<DocumentTemplate>;
   onDeleteDocumentTemplate: (id: string) => Promise<void>;
@@ -265,14 +278,24 @@ const DocumentStudioPanel: React.FC<{
   onAddGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
   onUpdateGeneratedDocument: (id: string, input: Partial<GeneratedDocumentInput>) => Promise<GeneratedDocument>;
   onDeleteGeneratedDocument: (id: string) => Promise<void>;
+  onAddInvoice: (input: InvoiceInput) => Promise<Invoice>;
+  onUpdateInvoice: (id: string, input: Partial<InvoiceInput>) => Promise<Invoice>;
+  onDeleteInvoice: (id: string) => Promise<void>;
+  onAddInvoiceItem: (input: InvoiceItemInput) => Promise<InvoiceItem>;
+  onUpdateInvoiceItem: (id: string, input: Partial<InvoiceItemInput>) => Promise<InvoiceItem>;
+  onDeleteInvoiceItem: (id: string, skipConfirm?: boolean) => Promise<void>;
 }> = ({
   documentTemplates,
   documentBrandSettings,
   generatedDocuments,
+  invoices,
+  invoiceItems,
   projects,
   companies,
   people,
   deals,
+  selectedInvoiceId,
+  onSelectInvoice,
   onAddDocumentTemplate,
   onUpdateDocumentTemplate,
   onDeleteDocumentTemplate,
@@ -282,6 +305,12 @@ const DocumentStudioPanel: React.FC<{
   onAddGeneratedDocument,
   onUpdateGeneratedDocument,
   onDeleteGeneratedDocument,
+  onAddInvoice,
+  onUpdateInvoice,
+  onDeleteInvoice,
+  onAddInvoiceItem,
+  onUpdateInvoiceItem,
+  onDeleteInvoiceItem,
 }) => {
   const [tab, setTab] = useState<StudioTab>('dashboard');
   const [templateEditor, setTemplateEditor] = useState<TemplateEditorState | null>(null);
@@ -477,6 +506,15 @@ const DocumentStudioPanel: React.FC<{
     }
   };
 
+  const openInvoiceStudio = (invoiceId: string | null) => {
+    onSelectInvoice(invoiceId);
+    setTab('invoice-studio');
+  };
+
+  const openInvoiceArchive = () => {
+    setTab('invoice-archive');
+  };
+
   const generatedSorted = useMemo(() => [...generatedDocuments].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()), [generatedDocuments]);
 
   return (
@@ -534,6 +572,42 @@ const DocumentStudioPanel: React.FC<{
             </div>
           </CardShell>
         </div>
+      ) : null}
+
+      {tab === 'invoice-studio' ? (
+        <InvoiceStudioPanel
+          invoices={invoices}
+          invoiceItems={invoiceItems}
+          documentBrandSettings={documentBrandSettings}
+          projects={projects}
+          companies={companies}
+          people={people}
+          deals={deals}
+          generatedDocuments={generatedDocuments}
+          selectedInvoiceId={selectedInvoiceId}
+          onSelectInvoice={onSelectInvoice}
+          onAddInvoice={onAddInvoice}
+          onUpdateInvoice={onUpdateInvoice}
+          onDeleteInvoice={onDeleteInvoice}
+          onAddInvoiceItem={onAddInvoiceItem}
+          onUpdateInvoiceItem={onUpdateInvoiceItem}
+          onDeleteInvoiceItem={onDeleteInvoiceItem}
+          onAddGeneratedDocument={onAddGeneratedDocument}
+          onUpdateGeneratedDocument={onUpdateGeneratedDocument}
+          onDeleteGeneratedDocument={onDeleteGeneratedDocument}
+        />
+      ) : null}
+
+      {tab === 'invoice-archive' ? (
+        <InvoiceArchivePanel
+          invoices={invoices}
+          invoiceItems={invoiceItems}
+          brandSettings={documentBrandSettings[0] ?? null}
+          onNewInvoice={() => openInvoiceStudio(null)}
+          onEditInvoice={openInvoiceStudio}
+          onPreviewInvoice={openInvoiceStudio}
+          onDeleteInvoice={onDeleteInvoice}
+        />
       ) : null}
 
       {tab === 'templates' ? (

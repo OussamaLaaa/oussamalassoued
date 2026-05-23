@@ -17,6 +17,8 @@ const allowedEntities = new Set([
   'document_templates',
   'document_brand_settings',
   'generated_documents',
+  'invoices',
+  'invoice_items',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -51,6 +53,8 @@ const tablesAttempted = [
   'document_templates',
   'document_brand_settings',
   'generated_documents',
+  'invoices',
+  'invoice_items',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -327,6 +331,63 @@ const normalizeDocumentBrandSettingsRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeInvoiceRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.invoiceNumber !== undefined || row?.invoice_number !== undefined) payload.invoice_number = toRequiredString(row?.invoice_number ?? row?.invoiceNumber);
+  if (!forUpdate || row?.title !== undefined) payload.title = toRequiredString(row?.title);
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'draft';
+  if (!forUpdate || row?.language !== undefined) payload.language = toNullableString(row?.language) || 'english';
+  if (!forUpdate || row?.issueDate !== undefined || row?.issue_date !== undefined) payload.issue_date = toNullableString(row?.issue_date ?? row?.issueDate);
+  if (!forUpdate || row?.dueDate !== undefined || row?.due_date !== undefined) payload.due_date = toNullableString(row?.due_date ?? row?.dueDate);
+  if (!forUpdate || row?.currency !== undefined) payload.currency = toNullableString(row?.currency) || 'MYR';
+  if (!forUpdate || row?.sellerName !== undefined || row?.seller_name !== undefined) payload.seller_name = toNullableString(row?.seller_name ?? row?.sellerName);
+  if (!forUpdate || row?.sellerEmail !== undefined || row?.seller_email !== undefined) payload.seller_email = toNullableString(row?.seller_email ?? row?.sellerEmail);
+  if (!forUpdate || row?.sellerPhone !== undefined || row?.seller_phone !== undefined) payload.seller_phone = toNullableString(row?.seller_phone ?? row?.sellerPhone);
+  if (!forUpdate || row?.sellerAddress !== undefined || row?.seller_address !== undefined) payload.seller_address = toNullableString(row?.seller_address ?? row?.sellerAddress);
+  if (!forUpdate || row?.sellerCity !== undefined || row?.seller_city !== undefined) payload.seller_city = toNullableString(row?.seller_city ?? row?.sellerCity);
+  if (!forUpdate || row?.sellerState !== undefined || row?.seller_state !== undefined) payload.seller_state = toNullableString(row?.seller_state ?? row?.sellerState);
+  if (!forUpdate || row?.sellerZip !== undefined || row?.seller_zip !== undefined) payload.seller_zip = toNullableString(row?.seller_zip ?? row?.sellerZip);
+  if (!forUpdate || row?.sellerTaxId !== undefined || row?.seller_tax_id !== undefined) payload.seller_tax_id = toNullableString(row?.seller_tax_id ?? row?.sellerTaxId);
+  if (!forUpdate || row?.sellerLogoUrl !== undefined || row?.seller_logo_url !== undefined) payload.seller_logo_url = toNullableString(row?.seller_logo_url ?? row?.sellerLogoUrl);
+  if (!forUpdate || row?.clientName !== undefined || row?.client_name !== undefined) payload.client_name = toNullableString(row?.client_name ?? row?.clientName);
+  if (!forUpdate || row?.clientEmail !== undefined || row?.client_email !== undefined) payload.client_email = toNullableString(row?.client_email ?? row?.clientEmail);
+  if (!forUpdate || row?.clientPhone !== undefined || row?.client_phone !== undefined) payload.client_phone = toNullableString(row?.client_phone ?? row?.clientPhone);
+  if (!forUpdate || row?.clientAddress !== undefined || row?.client_address !== undefined) payload.client_address = toNullableString(row?.client_address ?? row?.clientAddress);
+  if (!forUpdate || row?.clientCity !== undefined || row?.client_city !== undefined) payload.client_city = toNullableString(row?.client_city ?? row?.clientCity);
+  if (!forUpdate || row?.clientState !== undefined || row?.client_state !== undefined) payload.client_state = toNullableString(row?.client_state ?? row?.clientState);
+  if (!forUpdate || row?.clientZip !== undefined || row?.client_zip !== undefined) payload.client_zip = toNullableString(row?.client_zip ?? row?.clientZip);
+  if (!forUpdate || row?.subtotal !== undefined) payload.subtotal = toNullableNumber(row?.subtotal);
+  if (!forUpdate || row?.discountAmount !== undefined || row?.discount_amount !== undefined) payload.discount_amount = toNullableNumber(row?.discount_amount ?? row?.discountAmount);
+  if (!forUpdate || row?.taxRate !== undefined || row?.tax_rate !== undefined) payload.tax_rate = toNullableNumber(row?.tax_rate ?? row?.taxRate);
+  if (!forUpdate || row?.taxAmount !== undefined || row?.tax_amount !== undefined) payload.tax_amount = toNullableNumber(row?.tax_amount ?? row?.taxAmount);
+  if (!forUpdate || row?.total !== undefined) payload.total = toNullableNumber(row?.total);
+  if (!forUpdate || row?.terms !== undefined) payload.terms = toNullableString(row?.terms);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  if (!forUpdate || row?.relatedProjectId !== undefined || row?.related_project_id !== undefined) payload.related_project_id = toNullableString(row?.related_project_id ?? row?.relatedProjectId);
+  if (!forUpdate || row?.relatedCompanyId !== undefined || row?.related_company_id !== undefined) payload.related_company_id = toNullableString(row?.related_company_id ?? row?.relatedCompanyId);
+  if (!forUpdate || row?.relatedPersonId !== undefined || row?.related_person_id !== undefined) payload.related_person_id = toNullableString(row?.related_person_id ?? row?.relatedPersonId);
+  if (!forUpdate || row?.relatedDealId !== undefined || row?.related_deal_id !== undefined) payload.related_deal_id = toNullableString(row?.related_deal_id ?? row?.relatedDealId);
+  if (!forUpdate || row?.generatedDocumentId !== undefined || row?.generated_document_id !== undefined) payload.generated_document_id = toNullableString(row?.generated_document_id ?? row?.generatedDocumentId);
+  if (!forUpdate || row?.pdfStoragePath !== undefined || row?.pdf_storage_path !== undefined) payload.pdf_storage_path = toNullableString(row?.pdf_storage_path ?? row?.pdfStoragePath);
+  if (!forUpdate || row?.externalUrl !== undefined || row?.external_url !== undefined) payload.external_url = toNullableString(row?.external_url ?? row?.externalUrl);
+
+  return payload;
+};
+
+const normalizeInvoiceItemRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.invoiceId !== undefined || row?.invoice_id !== undefined) payload.invoice_id = toRequiredString(row?.invoice_id ?? row?.invoiceId);
+  if (!forUpdate || row?.description !== undefined) payload.description = toRequiredString(row?.description);
+  if (!forUpdate || row?.quantity !== undefined) payload.quantity = toNullableNumber(row?.quantity);
+  if (!forUpdate || row?.rate !== undefined) payload.rate = toNullableNumber(row?.rate);
+  if (!forUpdate || row?.amount !== undefined) payload.amount = toNullableNumber(row?.amount);
+  if (!forUpdate || row?.sortOrder !== undefined || row?.sort_order !== undefined) payload.sort_order = toNullableNumber(row?.sort_order ?? row?.sortOrder);
+
+  return payload;
+};
+
 const normalizeGeneratedDocumentRow = (row, { forUpdate = false } = {}) => {
   const payload = {};
 
@@ -541,6 +602,8 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'document_templates') return normalizeDocumentTemplateRow(row, { forUpdate: false });
   if (entity === 'document_brand_settings') return normalizeDocumentBrandSettingsRow(row, { forUpdate: false });
   if (entity === 'generated_documents') return normalizeGeneratedDocumentRow(row, { forUpdate: false });
+  if (entity === 'invoices') return normalizeInvoiceRow(row, { forUpdate: false });
+  if (entity === 'invoice_items') return normalizeInvoiceItemRow(row, { forUpdate: false });
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -658,6 +721,8 @@ export default async function handler(req, res) {
         document_templates: results.document_templates || [],
         document_brand_settings: results.document_brand_settings || [],
         generated_documents: results.generated_documents || [],
+        invoices: results.invoices || [],
+        invoice_items: results.invoice_items || [],
         strategy_items: results.strategy_items || [],
         strategy_goals: results.strategy_goals || [],
         strategy_plans: results.strategy_plans || [],

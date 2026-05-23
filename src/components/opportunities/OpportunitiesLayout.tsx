@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -198,6 +198,8 @@ const OpportunitiesLayout: React.FC<{
     addDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
     addDocumentBrandSettings: (input: DocumentBrandSettingsInput) => Promise<DocumentBrandSettings>;
     addGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
+    addInvoice: (input: InvoiceInput) => Promise<Invoice>;
+    addInvoiceItem: (input: InvoiceItemInput) => Promise<InvoiceItem>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -228,6 +230,10 @@ const OpportunitiesLayout: React.FC<{
     updateDocumentBrandSettings: (id: string, input: Partial<DocumentBrandSettingsInput>) => Promise<DocumentBrandSettings>;
     deleteDocumentBrandSettings: (id: string) => Promise<any>;
     updateGeneratedDocument: (id: string, input: Partial<GeneratedDocumentInput>) => Promise<GeneratedDocument>;
+      updateInvoice: (id: string, input: Partial<InvoiceInput>) => Promise<Invoice>;
+      deleteInvoice: (id: string) => Promise<void>;
+      updateInvoiceItem: (id: string, input: Partial<InvoiceItemInput>) => Promise<InvoiceItem>;
+      deleteInvoiceItem: (id: string) => Promise<void>;
     deleteGeneratedDocument: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
@@ -257,6 +263,7 @@ const OpportunitiesLayout: React.FC<{
   const [personFilters, setPersonFilters] = useState<PersonFilters>(defaultPersonFilters);
   const [messageFilters, setMessageFilters] = useState<MessageFilters>(defaultMessageFilters);
   const [dealFilters, setDealFilters] = useState<DealFilters>(defaultDealFilters);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   // Sync global search to all table filters
   const handleGlobalSearchChange = (value: string) => {
@@ -274,6 +281,8 @@ const OpportunitiesLayout: React.FC<{
     documentTemplates,
     documentBrandSettings,
     generatedDocuments,
+    invoices,
+    invoiceItems,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
     addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
@@ -281,6 +290,8 @@ const OpportunitiesLayout: React.FC<{
     addDocumentTemplate,
     addDocumentBrandSettings,
     addGeneratedDocument,
+    addInvoice,
+    addInvoiceItem,
     addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
@@ -296,6 +307,8 @@ const OpportunitiesLayout: React.FC<{
     updateDocumentTemplate, deleteDocumentTemplate,
     updateDocumentBrandSettings, deleteDocumentBrandSettings,
     updateGeneratedDocument, deleteGeneratedDocument,
+    updateInvoice, deleteInvoice,
+    updateInvoiceItem, deleteInvoiceItem,
     updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
@@ -798,6 +811,8 @@ const OpportunitiesLayout: React.FC<{
                 documentTemplates={documentTemplates}
                 documentBrandSettings={documentBrandSettings}
                 generatedDocuments={generatedDocuments}
+                invoices={invoices}
+                invoiceItems={invoiceItems}
                 projects={projects}
                 companies={companies}
                 people={people}
@@ -808,6 +823,17 @@ const OpportunitiesLayout: React.FC<{
                 onAddDocumentBrandSettings={addDocumentBrandSettings}
                 onUpdateDocumentBrandSettings={updateDocumentBrandSettings}
                 onDeleteDocumentBrandSettings={deleteDocumentBrandSettings}
+                onAddGeneratedDocument={addGeneratedDocument}
+                onUpdateGeneratedDocument={updateGeneratedDocument}
+                onDeleteGeneratedDocument={deleteGeneratedDocument}
+                selectedInvoiceId={selectedInvoiceId}
+                onSelectInvoice={setSelectedInvoiceId}
+                onAddInvoice={addInvoice}
+                onUpdateInvoice={updateInvoice}
+                onDeleteInvoice={deleteInvoice}
+                onAddInvoiceItem={addInvoiceItem}
+                onUpdateInvoiceItem={updateInvoiceItem}
+                onDeleteInvoiceItem={deleteInvoiceItem}
                 onAddGeneratedDocument={addGeneratedDocument}
                 onUpdateGeneratedDocument={updateGeneratedDocument}
                 onDeleteGeneratedDocument={deleteGeneratedDocument}
