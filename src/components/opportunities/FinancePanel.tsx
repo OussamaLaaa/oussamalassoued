@@ -80,8 +80,11 @@ const cYear = now.getFullYear();
 const toCur = (a: number, c = 'MYR') => `${c} ${Number(a).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const isCM = (d?: string) => d ? new Date(d).getMonth() === cMonth && new Date(d).getFullYear() === cYear : false;
 
+const INCOME_TYPES = ['salary', 'freelance', 'project', 'bonus', 'other'];
 const INCOME_SOURCES = ['salary', 'freelance', 'project', 'bonus', 'other'];
 const INCOME_STATUSES = ['expected', 'received', 'delayed', 'cancelled'];
+const RECURRENCE_OPTIONS = ['monthly', 'weekly', 'once', 'irregular'];
+const CONFIDENCE_LEVELS = ['high', 'medium', 'low'];
 const EXPENSE_CATEGORIES = ['needs', 'family', 'tools', 'learning', 'health', 'transport', 'food', 'admin', 'other'];
 const EXPENSE_STATUSES = ['planned', 'paid', 'unpaid', 'cancelled'];
 const GOAL_STATUSES = ['planned', 'saving', 'bought', 'paused', 'cancelled'];
@@ -93,6 +96,7 @@ const ETHICAL_STATUSES = ['good', 'needs_review', 'avoid'];
 const INVESTMENT_STATUSES = ['researching', 'waiting', 'planned', 'invested', 'rejected'];
 const INVEST_DECISION_STATUSES = ['researching', 'approved', 'waiting', 'invested', 'rejected'];
 const ALLOC_CATS = ['needs', 'savings', 'investment', 'family', 'learning', 'health', 'giving', 'other'];
+const FUNDING_STATUSES = ['not_started', 'accumulating', 'ready', 'invested', 'paused'];
 const INV_RULE_CATS = ['risk', 'ethics', 'strategy', 'process', 'other'];
 const INV_ALLOC_CATS = ['equity', 'sukuk', 'real_estate', 'gold', 'cash', 'crypto', 'other'];
 const INV_HORIZONS = ['short_term', 'medium_term', 'long_term'];
@@ -118,12 +122,42 @@ export default function FinancePanel({
 
   const activeAlloc = useMemo(() => financeAllocationRules.filter((r) => r.isActive), [financeAllocationRules]);
   const totalAllocPct = useMemo(() => activeAlloc.reduce((s, r) => s + r.percentage, 0), [activeAlloc]);
+
+  const expectedIncome = useMemo(() => financeIncome.reduce((s, i) => {
+    if (i.expectedAmount != null && i.expectedDate && isCM(i.expectedDate)) return s + i.expectedAmount;
+    if (i.incomeDate && isCM(i.incomeDate)) return s + i.amount;
+    return s;
+  }, 0), [financeIncome]);
+
+  const receivedIncome = useMemo(() => financeIncome.reduce((s, i) => {
+    if (i.receivedAmount != null && i.receivedDate && isCM(i.receivedDate)) return s + i.receivedAmount;
+    if (i.status === 'received' && i.incomeDate && isCM(i.incomeDate)) return s + i.amount;
+    return s;
+  }, 0), [financeIncome]);
+
+  const pendingIncome = useMemo(() => Math.max(expectedIncome - receivedIncome, 0), [expectedIncome, receivedIncome]);
+
+  const delayedIncome = useMemo(() => financeIncome.reduce((s, i) => {
+    if (i.status === 'delayed') {
+      return s + (i.expectedAmount != null ? i.expectedAmount : i.amount);
+    }
+    return s;
+  }, 0), [financeIncome]);
+
+  const paidExpenses = useMemo(() => financeExpenses.filter((e) => e.status === 'paid' && isCM(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses]);
+
+  const plannedExpenses = useMemo(() => financeExpenses.filter((e) => (e.status === 'planned' || e.status === 'unpaid') && isCM(e.expenseDate)).reduce((s, e) => s + e.amount, 0), [financeExpenses]);
+
+  const netReceived = receivedIncome - paidExpenses;
+  const expectedNet = expectedIncome - (paidExpenses + plannedExpenses);
+  const availableToAllocate = Math.max(netReceived, 0);
+  const sRate = receivedIncome > 0 ? (netReceived / receivedIncome) * 100 : 0;
+
   const mIncome = useMemo(() => financeIncome.filter((i) => i.status === 'received' && isCM(i.incomeDate)), [financeIncome]);
   const mExpenses = useMemo(() => financeExpenses.filter((e) => e.status === 'paid' && isCM(e.expenseDate)), [financeExpenses]);
   const tIncome = useMemo(() => mIncome.reduce((s, i) => s + i.amount, 0), [mIncome]);
   const tExpenses = useMemo(() => mExpenses.reduce((s, e) => s + e.amount, 0), [mExpenses]);
   const net = tIncome - tExpenses;
-  const sRate = tIncome > 0 ? (net / tIncome) * 100 : 0;
   const aGoals = useMemo(() => financePurchaseGoals.filter((g) => g.status === 'saving' || g.status === 'planned'), [financePurchaseGoals]);
   const tGT = useMemo(() => financePurchaseGoals.reduce((s, g) => s + g.targetAmount, 0), [financePurchaseGoals]);
   const tGS = useMemo(() => financePurchaseGoals.reduce((s, g) => s + g.savedAmount, 0), [financePurchaseGoals]);
@@ -144,6 +178,7 @@ export default function FinancePanel({
   const openModal = (type: string, editing?: any) => {
     setModal({ type, editing });
     if (editing) setForm({ ...editing });
+    else if (type === 'income') setForm({ currency: 'MYR', status: 'expected', isRecurring: false });
     else setForm({ currency: 'MYR', status: 'researching', decisionStatus: 'researching', riskLevel: 'medium', ethicalStatus: 'needs_review', isActive: true, priority: 0, percentage: 0 });
   };
   const closeModal = () => { setModal(null); setForm({}); };
@@ -197,42 +232,59 @@ export default function FinancePanel({
 
   const renderInsight = () => (
     <div style={s.side}>
-      {[
-        ['What increased income this month?', 'Reflect on new income sources, project payments, or freelance work.'],
-        ['What can be reduced?', 'Pick 1-2 expense categories to cut back next month.'],
-        ['What purchase improves income or productivity?', 'Focus on tools, learning, or assets that generate returns.'],
-        ['What should wait?', 'Defer discretionary purchases until savings rate stabilises.'],
-        ['Aligned with Islamic principles?', 'Review income, expenses, and investments for Shariah compliance.'],
-        ['Next financial action', 'Define one concrete action this week to improve your finances.'],
-      ].map(([t, x]) => (
-        <div key={String(t)} style={s.insCard}>
-          <div style={s.insT}>{t}</div>
-          <div style={s.insX}>{x}</div>
-        </div>
-      ))}
+      <div style={s.insCard}><div style={s.insT}>Expected vs Received</div><div style={s.insX}>{toCur(expectedIncome)} expected · {toCur(receivedIncome)} received ({receivedIncome > 0 ? ((receivedIncome / (expectedIncome || 1)) * 100).toFixed(0) : 0}%)</div></div>
+      <div style={s.insCard}><div style={s.insT}>Current Net</div><div style={s.insX}>{toCur(netReceived)} ({netReceived >= 0 ? 'positive' : 'negative'})</div></div>
+      <div style={s.insCard}><div style={s.insT}>Expected Net</div><div style={s.insX}>{toCur(expectedNet)}</div></div>
+      <div style={s.insCard}><div style={s.insT}>Available to Allocate</div><div style={s.insX}>{toCur(availableToAllocate)}</div></div>
+      <div style={s.insCard}><div style={s.insT}>Allocation Total</div><div style={s.insX}>{totalAllocPct}% {totalAllocPct === 100 ? '(balanced)' : totalAllocPct < 100 ? '(under-allocated)' : '(over-allocated)'}</div></div>
+      <div style={s.insCard}><div style={s.insT}>Goals Funding</div><div style={s.insX}>{aGoals.length} goal(s) need funding · {iUR.length} investment(s) under review</div></div>
+      <div style={s.insCard}><div style={s.insT}>Ethical Warnings</div><div style={s.insX}>{eWarn.length} flagged issue(s)</div></div>
+      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
+        <div style={s.insT}>Is this improving income or productivity?</div>
+        <div style={s.insX}>Before purchasing, ask if this accelerates earning.</div>
+      </div>
+      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
+        <div style={s.insT}>Is this within risk limits?</div>
+        <div style={s.insX}>Check investment rules and allocation limits.</div>
+      </div>
+      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
+        <div style={s.insT}>Should this wait?</div>
+        <div style={s.insX}>Defer until income is received.</div>
+      </div>
+      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
+        <div style={s.insT}>Aligned with Islamic principles?</div>
+        <div style={s.insX}>Review halal income, ethical investments.</div>
+      </div>
+      <div style={{ ...s.insCard, borderLeft: '3px solid #2563eb' }}>
+        <div style={s.insT}>Next financial action</div>
+        <div style={s.insX}>Define one concrete step this week.</div>
+      </div>
     </div>
   );
 
   const renderDash = () => (
-    <div style={s.dashGrid}>
-      {[
-        ['Monthly Income', toCur(tIncome), '#166534'],
-        ['Monthly Expenses', toCur(tExpenses), '#991b1b'],
-        ['Net This Month', toCur(net), net >= 0 ? '#166534' : '#991b1b'],
-        ['Savings Rate', `${sRate.toFixed(1)}%`, sRate >= 20 ? '#166534' : sRate > 0 ? '#854d0e' : '#991b1b'],
-        ['Active Purchase Goals', String(aGoals.length), '#0f172a'],
-        ['Investments Under Review', String(iUR.length), iUR.length > 0 ? '#c2410c' : '#64748b'],
-        ['Ethical Warnings', String(eWarn.length), eWarn.length > 0 ? '#991b1b' : '#166534'],
-      ].map(([l, v, c]) => (
-        <div key={String(l)} style={s.card}>
-          <div style={s.cardT}>{l}</div>
-          <div style={{ ...s.cardV, color: c }}>{v}</div>
-        </div>
-      ))}
-      <div style={s.card}>
-        <div style={s.cardT}>Purchase Saved / Target</div>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>{toCur(tGS)} / {toCur(tGT)}</div>
-        {tGT > 0 && <div style={{ marginTop: '8px' }}><div style={s.bar((tGS / tGT) * 100)}><div style={s.fill((tGS / tGT) * 100, '#2563eb')} /></div></div>}
+    <div>
+      <div style={{ ...s.warn, background: '#f0f9ff', border: '1px solid #bae6fd', color: '#1e40af', marginBottom: '16px' }}>
+        Income is variable. This dashboard separates expected, received, pending, and delayed income.
+      </div>
+      <div style={s.dashGrid}>
+        {[
+          ['Expected Income', toCur(expectedIncome), '#2563eb'],
+          ['Received Income', toCur(receivedIncome), receivedIncome > 0 ? '#166534' : '#64748b'],
+          ['Pending Income', toCur(pendingIncome), pendingIncome > 0 ? '#854d0e' : '#64748b'],
+          ['Delayed Income', toCur(delayedIncome), delayedIncome > 0 ? '#991b1b' : '#64748b'],
+          ['Paid Expenses', toCur(paidExpenses), paidExpenses > 0 ? '#991b1b' : '#64748b'],
+          ['Planned Expenses', toCur(plannedExpenses), plannedExpenses > 0 ? '#854d0e' : '#64748b'],
+          ['Net Received', toCur(netReceived), netReceived >= 0 ? '#166534' : '#991b1b'],
+          ['Expected Net', toCur(expectedNet), expectedNet >= 0 ? '#166534' : '#991b1b'],
+          ['Available to Allocate', toCur(availableToAllocate), availableToAllocate > 0 ? '#166534' : '#64748b'],
+          ['Savings Rate', `${sRate.toFixed(1)}%`, sRate >= 20 ? '#166534' : sRate > 0 ? '#854d0e' : '#64748b'],
+        ].map(([l, v, c]) => (
+          <div key={String(l)} style={s.card}>
+            <div style={s.cardT}>{l}</div>
+            <div style={{ ...s.cardV, color: c }}>{v}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -242,13 +294,14 @@ export default function FinancePanel({
       <div style={s.row}><h3 style={s.hdr}>Income</h3><button style={s.btn('#2563eb')} onClick={() => openModal('income')}>+ Add Income</button></div>
       {financeIncome.length === 0 ? <div style={s.empty}>No income entries yet.</div> : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>{['Title', 'Source', 'Amount', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Title', 'Type', 'Expected', 'Received', 'Date', 'Status', ''].map((h) => <th key={h} style={{ textAlign: 'left', fontSize: '12px', fontWeight: 600, color: '#64748b', padding: '8px 12px', borderBottom: '2px solid #e5e7eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>)}</tr></thead>
           <tbody>{financeIncome.map((i) => (
             <tr key={i.id}>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.title}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.source}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.amount, i.currency)}</td>
-              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.incomeDate ? new Date(i.incomeDate).toLocaleDateString() : '-'}</td>
+              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.incomeType || i.source}</td>
+              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.expectedAmount ?? i.amount, i.currency)}</td>
+              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{toCur(i.receivedAmount ?? (i.status === 'received' ? i.amount : 0), i.currency)}</td>
+              <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}>{i.expectedDate || i.incomeDate ? new Date(i.expectedDate || i.incomeDate || '').toLocaleDateString() : '-'}</td>
               <td style={{ padding: '10px 12px', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e5e7eb' }}><span style={s.badge(i.status === 'received' ? 'green' : i.status === 'delayed' ? 'yellow' : i.status === 'cancelled' ? 'red' : 'blue')}>{i.status}</span></td>
               <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e7eb' }}><button style={s.iBtn} onClick={() => openModal('income', i)}>Edit</button><button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceIncome(i.id)}>Del</button></td>
             </tr>
@@ -287,21 +340,29 @@ export default function FinancePanel({
           <div style={{ ...s.warn, background: totalAllocPct === 100 ? '#f0fdf4' : '#fef9c3', border: `1px solid ${totalAllocPct === 100 ? '#bbf7d0' : '#fde68a'}`, color: totalAllocPct === 100 ? '#166534' : '#854d0e' }}>
             {totalAllocPct === 100 ? 'Allocation total is 100%. Rules are balanced.' : `Allocation total is ${totalAllocPct}%. Adjust rules to reach 100%.`}
           </div>
+          <div style={{ ...s.sCard, marginBottom: '16px', background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e40af' }}>Available to Allocate: {toCur(availableToAllocate)}</div>
+            {availableToAllocate <= 0 && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>No available cash to allocate yet. Wait for income to be received or reduce paid expenses.</div>}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-            {financeAllocationRules.map((r) => (
-              <div key={r.id} style={{ ...s.sCard, opacity: r.isActive ? 1 : 0.5 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div><div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{r.name}</div><div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{r.category} · Priority {r.priority}</div></div>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{r.percentage}%</div>
+            {financeAllocationRules.map((r) => {
+              const allocatedAmount = availableToAllocate * (r.percentage / 100);
+              return (
+                <div key={r.id} style={{ ...s.sCard, opacity: r.isActive ? 1 : 0.5 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div><div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{r.name}</div><div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{r.category} · Priority {r.priority}</div></div>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: '#2563eb' }}>{r.percentage}%</div>
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#0f172a', marginTop: '6px' }}>Allocated: {toCur(allocatedAmount)}</div>
+                  {r.notes && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{r.notes}</div>}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer' }}><input type="checkbox" checked={r.isActive} onChange={() => toggleActive(r, onUpdateFinanceAllocationRule)} />Active</label>
+                    <button style={s.iBtn} onClick={() => openModal('allocation', r)}>Edit</button>
+                    <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceAllocationRule(r.id)}>Del</button>
+                  </div>
                 </div>
-                {r.notes && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>{r.notes}</div>}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer' }}><input type="checkbox" checked={r.isActive} onChange={() => toggleActive(r, onUpdateFinanceAllocationRule)} />Active</label>
-                  <button style={s.iBtn} onClick={() => openModal('allocation', r)}>Edit</button>
-                  <button style={{ ...s.iBtn, color: '#991b1b' }} onClick={() => onDeleteFinanceAllocationRule(r.id)}>Del</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -335,6 +396,12 @@ export default function FinancePanel({
                   </div>
                   {g.reason && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Why: {g.reason}</div>}
                   {g.expectedUse && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Use: {g.expectedUse}</div>}
+                  {g.allocationCategory && <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '4px' }}>Funded from: {g.allocationCategory}</div>}
+                  {g.monthlyContribution != null && g.monthlyContribution > 0 ? (
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Monthly: {toCur(g.monthlyContribution)} · Est. {Math.ceil((g.targetAmount - g.savedAmount) / g.monthlyContribution)} months remaining</div>
+                  ) : (
+                    <div style={{ fontSize: '12px', color: '#c2410c', marginTop: '2px' }}>No monthly contribution set.</div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
                   <button style={s.btnS('#2563eb')} onClick={() => { setAddSavedGoalId(g.id); setAddSavedAmount(''); }}>+ Saved</button>
@@ -404,6 +471,9 @@ export default function FinancePanel({
                 <span>Amount: {toCur(idea.plannedAmount, idea.currency)}</span>
                 {idea.maxAllocation != null && <span>Max: {toCur(idea.maxAllocation, idea.currency)}</span>}
               </div>
+              {idea.allocationCategory && <div style={{ fontSize: '12px', color: '#2563eb', marginTop: '4px' }}>Category: {idea.allocationCategory}</div>}
+              {idea.recommendedMonthlyContribution != null && idea.recommendedMonthlyContribution > 0 && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Monthly contribution: {toCur(idea.recommendedMonthlyContribution)}</div>}
+              {idea.fundingStatus && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Funding: <span style={s.badge(idea.fundingStatus === 'ready' ? 'green' : idea.fundingStatus === 'accumulating' ? 'blue' : idea.fundingStatus === 'paused' ? 'yellow' : idea.fundingStatus === 'invested' ? 'purple' : 'gray')}>{idea.fundingStatus}</span></div>}
               {idea.reviewDate && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Review: {new Date(idea.reviewDate).toLocaleDateString()}</div>}
               {idea.pros && <div style={{ fontSize: '12px', color: '#166534', marginTop: '6px' }}>Pros: {idea.pros}</div>}
               {idea.cons && <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}>Cons: {idea.cons}</div>}
@@ -608,7 +678,7 @@ export default function FinancePanel({
 
   const renderInvestIdeaForm = () => (
     <div style={s.formGrid}>
-      {[['Title *', 'title', 'text'], ['Planned Amount', 'plannedAmount', 'number'], ['Max Allocation', 'maxAllocation', 'number'], ['Type', 'type', 'select', INVESTMENT_TYPES], ['Risk Level', 'riskLevel', 'select', RISK_LEVELS], ['Ethical Status', 'ethicalStatus', 'select', ETHICAL_STATUSES], ['Status', 'status', 'select', INVESTMENT_STATUSES], ['Decision Status', 'decisionStatus', 'select', INVEST_DECISION_STATUSES], ['Expected Horizon', 'expectedHorizon', 'select', INV_HORIZONS], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Review Date', 'reviewDate', 'date'], ['Expected Reason', 'expectedReason', 'text']].map(([l, k, t, o]: any) => (
+      {[['Title *', 'title', 'text'], ['Planned Amount', 'plannedAmount', 'number'], ['Max Allocation', 'maxAllocation', 'number'], ['Type', 'type', 'select', INVESTMENT_TYPES], ['Risk Level', 'riskLevel', 'select', RISK_LEVELS], ['Ethical Status', 'ethicalStatus', 'select', ETHICAL_STATUSES], ['Status', 'status', 'select', INVESTMENT_STATUSES], ['Decision Status', 'decisionStatus', 'select', INVEST_DECISION_STATUSES], ['Allocation Category', 'allocationCategory', 'select', ALLOC_CATS], ['Recommended Monthly', 'recommendedMonthlyContribution', 'number'], ['Funding Status', 'fundingStatus', 'select', FUNDING_STATUSES], ['Expected Horizon', 'expectedHorizon', 'select', INV_HORIZONS], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Review Date', 'reviewDate', 'date'], ['Expected Reason', 'expectedReason', 'text']].map(([l, k, t, o]: any) => (
         <div key={k}>
           <label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>
           {t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}
@@ -637,9 +707,10 @@ export default function FinancePanel({
       switch (modal.type) {
         case 'income': return (
           <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Amount *', 'amount', 'number'], ['Income Date', 'incomeDate', 'date'], ['Source', 'source', 'select', INCOME_SOURCES], ['Status', 'status', 'select', INCOME_STATUSES], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']]].map(([l, k, t, o]: any) => (
-              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
+            {[['Title *', 'title', 'text'], ['Income Type', 'incomeType', 'select', INCOME_TYPES], ['Source', 'source', 'select', INCOME_SOURCES], ['Expected Amount', 'expectedAmount', 'number'], ['Received Amount', 'receivedAmount', 'number'], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Expected Date', 'expectedDate', 'date'], ['Received Date', 'receivedDate', 'date'], ['Status', 'status', 'select', INCOME_STATUSES], ['Recurrence', 'recurrence', 'select', RECURRENCE_OPTIONS], ['Confidence', 'confidence', 'select', CONFIDENCE_LEVELS]].map(([l, k, t, o]: any) => (
+              <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
             ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '24px' }}><input type="checkbox" checked={!!form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })} id="ir1" /><label htmlFor="ir1" style={{ fontSize: '13px', color: '#0f172a' }}>Recurring</label></div>
             <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Project</label><select style={s.select} value={form.linkedProjectId || ''} onChange={(e) => setForm({ ...form, linkedProjectId: e.target.value || undefined })}><option value="">None</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             <div><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Linked Company</label><select style={s.select} value={form.linkedCompanyId || ''} onChange={(e) => setForm({ ...form, linkedCompanyId: e.target.value || undefined })}><option value="">None</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Notes</label><textarea style={s.input} rows={2} value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
@@ -665,7 +736,7 @@ export default function FinancePanel({
         );
         case 'purchase_goals': return (
           <div style={s.formGrid}>
-            {[['Title *', 'title', 'text'], ['Target Amount *', 'targetAmount', 'number'], ['Saved Amount', 'savedAmount', 'number'], ['Category', 'category', 'select', EXPENSE_CATEGORIES], ['Priority', 'priority', 'select', GOAL_PRIORITIES], ['Status', 'status', 'select', GOAL_STATUSES], ['Decision Status', 'decisionStatus', 'select', DECISION_STATUSES], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Target Date', 'targetDate', 'date'], ['Product URL', 'productUrl', 'url'], ['Image URL', 'imageUrl', 'url'], ['Vendor', 'vendor', 'text']].map(([l, k, t, o]: any) => (
+            {[['Title *', 'title', 'text'], ['Target Amount *', 'targetAmount', 'number'], ['Saved Amount', 'savedAmount', 'number'], ['Category', 'category', 'select', EXPENSE_CATEGORIES], ['Priority', 'priority', 'select', GOAL_PRIORITIES], ['Status', 'status', 'select', GOAL_STATUSES], ['Decision Status', 'decisionStatus', 'select', DECISION_STATUSES], ['Allocation Category', 'allocationCategory', 'select', ALLOC_CATS], ['Monthly Contribution', 'monthlyContribution', 'number'], ['Currency', 'currency', 'select', ['MYR', 'USD', 'EUR', 'SGD']], ['Target Date', 'targetDate', 'date'], ['Product URL', 'productUrl', 'url'], ['Image URL', 'imageUrl', 'url'], ['Vendor', 'vendor', 'text']].map(([l, k, t, o]: any) => (
               <div key={k}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>{l}</label>{t === 'select' ? <select style={s.select} value={form[k] || ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })}><option value="">Select</option>{o.map((v: string) => <option key={v} value={v}>{v}</option>)}</select> : <input style={s.input} type={t} step={t === 'number' ? '0.01' : undefined} placeholder={t === 'url' ? 'https://...' : ''} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: t === 'number' ? Math.max(0, parseFloat(e.target.value) || 0) : e.target.value })} />}</div>
             ))}
             <div style={s.fullW}><label style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', display: 'block', marginBottom: '4px' }}>Reason</label><textarea style={s.input} rows={2} value={form.reason || ''} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>

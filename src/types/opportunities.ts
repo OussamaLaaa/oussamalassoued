@@ -659,6 +659,14 @@ export interface FinanceIncome {
   linkedProjectName?: string;
   linkedCompanyId?: string;
   linkedCompanyName?: string;
+  incomeType?: string;
+  expectedAmount?: number;
+  receivedAmount?: number;
+  expectedDate?: string;
+  receivedDate?: string;
+  isRecurring?: boolean;
+  recurrence?: string;
+  confidence?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -707,6 +715,8 @@ export interface FinancePurchaseGoal {
   reason?: string;
   expectedUse?: string;
   alternatives?: string;
+  allocationCategory?: string;
+  monthlyContribution?: number;
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;
@@ -736,6 +746,9 @@ export interface FinanceInvestmentIdea {
   lowScenario?: string;
   baseScenario?: string;
   highScenario?: string;
+  allocationCategory?: string;
+  recommendedMonthlyContribution?: number;
+  fundingStatus?: string;
   notes?: string;
   linkedProjectId?: string;
   linkedProjectName?: string;

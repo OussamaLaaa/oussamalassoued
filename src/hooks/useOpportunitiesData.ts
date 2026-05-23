@@ -455,6 +455,14 @@ const financeIncomeFromDb = (row: any): FinanceIncome => ({
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
   linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  incomeType: row?.income_type ?? row?.incomeType ?? undefined,
+  expectedAmount: row?.expected_amount != null ? Number(row.expected_amount) : (row?.expectedAmount != null ? Number(row.expectedAmount) : undefined),
+  receivedAmount: row?.received_amount != null ? Number(row.received_amount) : (row?.receivedAmount != null ? Number(row.receivedAmount) : undefined),
+  expectedDate: row?.expected_date ?? row?.expectedDate ?? undefined,
+  receivedDate: row?.received_date ?? row?.receivedDate ?? undefined,
+  isRecurring: row?.is_recurring ?? row?.isRecurring ?? undefined,
+  recurrence: row?.recurrence ?? undefined,
+  confidence: row?.confidence ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
@@ -470,6 +478,14 @@ const financeIncomeToDb = (input: Partial<FinanceIncome>) => {
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
   if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (input.incomeType !== undefined) payload.income_type = toNullableString(input.incomeType);
+  if (input.expectedAmount !== undefined) payload.expected_amount = input.expectedAmount != null ? Number(input.expectedAmount) : null;
+  if (input.receivedAmount !== undefined) payload.received_amount = input.receivedAmount != null ? Number(input.receivedAmount) : null;
+  if (input.expectedDate !== undefined) payload.expected_date = toNullableString(input.expectedDate);
+  if (input.receivedDate !== undefined) payload.received_date = toNullableString(input.receivedDate);
+  if (input.isRecurring !== undefined) payload.is_recurring = input.isRecurring;
+  if (input.recurrence !== undefined) payload.recurrence = toNullableString(input.recurrence);
+  if (input.confidence !== undefined) payload.confidence = toNullableString(input.confidence);
   return payload;
 };
 
@@ -540,6 +556,8 @@ const financePurchaseGoalFromDb = (row: any): FinancePurchaseGoal => ({
   reason: row?.reason ?? undefined,
   expectedUse: row?.expected_use ?? row?.expectedUse ?? undefined,
   alternatives: row?.alternatives ?? undefined,
+  allocationCategory: row?.allocation_category ?? row?.allocationCategory ?? undefined,
+  monthlyContribution: row?.monthly_contribution != null ? Number(row.monthly_contribution) : (row?.monthlyContribution != null ? Number(row.monthlyContribution) : undefined),
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
@@ -563,6 +581,8 @@ const financePurchaseGoalToDb = (input: Partial<FinancePurchaseGoal>) => {
   if (input.reason !== undefined) payload.reason = toNullableString(input.reason);
   if (input.expectedUse !== undefined) payload.expected_use = toNullableString(input.expectedUse);
   if (input.alternatives !== undefined) payload.alternatives = toNullableString(input.alternatives);
+  if (input.allocationCategory !== undefined) payload.allocation_category = toNullableString(input.allocationCategory);
+  if (input.monthlyContribution !== undefined) payload.monthly_contribution = input.monthlyContribution != null ? Number(input.monthlyContribution) : null;
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
   return payload;
@@ -590,6 +610,9 @@ const financeInvestmentIdeaFromDb = (row: any): FinanceInvestmentIdea => ({
   lowScenario: row?.low_scenario ?? row?.lowScenario ?? undefined,
   baseScenario: row?.base_scenario ?? row?.baseScenario ?? undefined,
   highScenario: row?.high_scenario ?? row?.highScenario ?? undefined,
+  allocationCategory: row?.allocation_category ?? row?.allocationCategory ?? undefined,
+  recommendedMonthlyContribution: row?.recommended_monthly_contribution != null ? Number(row.recommended_monthly_contribution) : (row?.recommendedMonthlyContribution != null ? Number(row.recommendedMonthlyContribution) : undefined),
+  fundingStatus: row?.funding_status ?? row?.fundingStatus ?? undefined,
   notes: row?.notes ?? undefined,
   linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
   createdAt: row?.created_at ?? row?.createdAt ?? undefined,
@@ -618,6 +641,9 @@ const financeInvestmentIdeaToDb = (input: Partial<FinanceInvestmentIdea>) => {
   if (input.lowScenario !== undefined) payload.low_scenario = toNullableString(input.lowScenario);
   if (input.baseScenario !== undefined) payload.base_scenario = toNullableString(input.baseScenario);
   if (input.highScenario !== undefined) payload.high_scenario = toNullableString(input.highScenario);
+  if (input.allocationCategory !== undefined) payload.allocation_category = toNullableString(input.allocationCategory);
+  if (input.recommendedMonthlyContribution !== undefined) payload.recommended_monthly_contribution = input.recommendedMonthlyContribution != null ? Number(input.recommendedMonthlyContribution) : null;
+  if (input.fundingStatus !== undefined) payload.funding_status = toNullableString(input.fundingStatus);
   if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
   if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
   return payload;

@@ -284,6 +284,14 @@ const normalizeFinanceIncomeRow = (row) => ({
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
   linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+  income_type: toNullableString(row?.income_type ?? row?.incomeType),
+  expected_amount: toNullableNumber(row?.expected_amount ?? row?.expectedAmount),
+  received_amount: toNullableNumber(row?.received_amount ?? row?.receivedAmount),
+  expected_date: toNullableString(row?.expected_date ?? row?.expectedDate),
+  received_date: toNullableString(row?.received_date ?? row?.receivedDate),
+  is_recurring: row?.is_recurring ?? row?.isRecurring ?? null,
+  recurrence: toNullableString(row?.recurrence),
+  confidence: toNullableString(row?.confidence),
 });
 
 const normalizeFinanceExpenseRow = (row) => ({
@@ -322,6 +330,8 @@ const normalizeFinancePurchaseGoalRow = (row) => ({
   reason: toNullableString(row?.reason),
   expected_use: toNullableString(row?.expected_use ?? row?.expectedUse),
   alternatives: toNullableString(row?.alternatives),
+  allocation_category: toNullableString(row?.allocation_category ?? row?.allocationCategory),
+  monthly_contribution: toNullableNumber(row?.monthly_contribution ?? row?.monthlyContribution),
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
 });
@@ -347,6 +357,9 @@ const normalizeFinanceInvestmentIdeaRow = (row) => ({
   low_scenario: toNullableString(row?.low_scenario ?? row?.lowScenario),
   base_scenario: toNullableString(row?.base_scenario ?? row?.baseScenario),
   high_scenario: toNullableString(row?.high_scenario ?? row?.highScenario),
+  allocation_category: toNullableString(row?.allocation_category ?? row?.allocationCategory),
+  recommended_monthly_contribution: toNullableNumber(row?.recommended_monthly_contribution ?? row?.recommendedMonthlyContribution),
+  funding_status: toNullableString(row?.funding_status ?? row?.fundingStatus),
   notes: toNullableString(row?.notes),
   linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
 });
