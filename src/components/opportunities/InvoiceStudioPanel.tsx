@@ -138,9 +138,7 @@ const emptyForm = (brand?: DocumentBrandSettings | null): InvoiceFormState => ({
 });
 
 const toFormState = (invoice: Invoice | null, brand?: DocumentBrandSettings | null): InvoiceFormState => {
-  if (!invoice) {
-    return emptyForm(brand);
-  }
+  if (!invoice) return emptyForm(brand);
 
   return {
     invoiceNumber: invoice.invoiceNumber || '',
@@ -303,7 +301,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
     const discountAmount = Number(form.discountAmount) || 0;
     const taxRate = Number(form.taxRate) || 0;
     const taxableAmount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = Number(form.taxAmount) || (taxableAmount * taxRate) / 100;
+    const taxAmount = Number(form.taxAmount) || Math.round(taxableAmount * taxRate) / 100;
     const total = Number(form.total) || Math.max(0, taxableAmount + taxAmount);
     return { subtotal, discountAmount, taxRate, taxAmount, total };
   }, [draftItems, form.discountAmount, form.taxAmount, form.taxRate, form.total]);
@@ -544,32 +542,42 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
     updatedAt: selectedInvoice?.updatedAt,
   }), [computedTotals, form, relatedCompany?.name, relatedDeal?.id, relatedDeal?.servicePackage, relatedPerson?.fullName, relatedProject?.name, selectedInvoice]);
 
+  const handlePrintPdf = () => {
+    setPreviewOpen(true);
+  };
+
   return (
     <div className="space-y-5">
       <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-base font-semibold text-[#0f172a]">Invoice Studio</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Build invoices with line items, preview the page, then export or store the PDF privately.</p>
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0f172a]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[#0f172a]">Invoice Studio</h3>
+              <p className="text-sm text-[#64748b]">
+                {selectedInvoice ? `${form.invoiceNumber || 'New'} — ${form.clientName || 'No client'}` : 'Create a new professional invoice'}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => onSelectInvoice(null)} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
+            <button type="button" onClick={() => onSelectInvoice(null)} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
               New Invoice
             </button>
-            <button type="button" onClick={() => void saveInvoice('draft')} disabled={saving} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc] disabled:opacity-60">
+            <button type="button" onClick={() => void saveInvoice('draft')} disabled={saving} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc] disabled:opacity-60">
               Save Draft
             </button>
-            <button type="button" onClick={() => void saveInvoice('ready')} disabled={saving} className="rounded-lg bg-[#2563eb] px-3 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8] disabled:opacity-60">
-              Save Ready
+            <button type="button" onClick={() => void saveInvoice('ready')} disabled={saving} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b] disabled:opacity-60">
+              Save Invoice
             </button>
           </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Invoices" value={invoices.length} />
-          <MetricCard title="Items" value={invoiceItems.length} accent="text-[#1d4ed8]" />
-          <MetricCard title="Linked PDF" value={selectedInvoice?.pdfStoragePath ? 'Yes' : 'No'} accent="text-[#166534]" />
-          <MetricCard title="Current Total" value={formatMoney(computedTotals.total, form.currency || brand?.defaultCurrency || 'MYR')} accent="text-[#0f172a]" />
         </div>
       </div>
 
@@ -579,7 +587,11 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${tab === item.id ? 'bg-[#eff6ff] text-[#1d4ed8]' : 'bg-white text-[#64748b] hover:bg-[#f8fafc]'}`}
+            className={`rounded-lg px-5 py-2.5 text-sm font-medium transition-all ${
+              tab === item.id
+                ? 'bg-[#0f172a] text-white shadow-sm'
+                : 'bg-white text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+            }`}
           >
             {item.label}
           </button>
@@ -589,101 +601,228 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
       {tab === 'details' ? (
         <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <div className="mb-5">
+              <h4 className="text-sm font-semibold text-[#0f172a]"> Invoice Details</h4>
+              <p className="mt-1 text-xs text-[#64748b]">Invoice number, dates, currency, status, and language</p>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Invoice Number"><input className="studio-input" value={form.invoiceNumber} onChange={(event) => updateField('invoiceNumber', event.target.value)} placeholder="INV-2026-001" /></Field>
               <Field label="Title"><input className="studio-input" value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Website redesign invoice" /></Field>
-              <Field label="Status"><select className="studio-input" value={form.status} onChange={(event) => updateField('status', event.target.value as InvoiceInput['status'])}><option value="draft">Draft</option><option value="ready">Ready</option><option value="sent">Sent</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option><option value="overdue">Overdue</option><option value="cancelled">Cancelled</option><option value="archived">Archived</option></select></Field>
-              <Field label="Language"><select className="studio-input" value={form.language} onChange={(event) => updateField('language', event.target.value as InvoiceInput['language'])}><option value="english">English</option><option value="french">French</option><option value="arabic">Arabic</option></select></Field>
               <Field label="Issue Date"><input type="date" className="studio-input" value={form.issueDate} onChange={(event) => updateField('issueDate', event.target.value)} /></Field>
               <Field label="Due Date"><input type="date" className="studio-input" value={form.dueDate} onChange={(event) => updateField('dueDate', event.target.value)} /></Field>
               <Field label="Currency"><input className="studio-input" value={form.currency} onChange={(event) => updateField('currency', event.target.value.toUpperCase())} placeholder="MYR" /></Field>
-              <Field label="Related Project"><select className="studio-input" value={form.relatedProjectId} onChange={(event) => updateField('relatedProjectId', event.target.value)}><option value="">None</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></Field>
-              <Field label="Related Company"><select className="studio-input" value={form.relatedCompanyId} onChange={(event) => updateField('relatedCompanyId', event.target.value)}><option value="">None</option>{companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}</select></Field>
-              <Field label="Related Person"><select className="studio-input" value={form.relatedPersonId} onChange={(event) => updateField('relatedPersonId', event.target.value)}><option value="">None</option>{people.map((person) => <option key={person.id} value={person.id}>{person.fullName}</option>)}</select></Field>
-              <Field label="Related Deal"><select className="studio-input" value={form.relatedDealId} onChange={(event) => updateField('relatedDealId', event.target.value)}><option value="">None</option>{deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.servicePackage || deal.id}</option>)}</select></Field>
+              <Field label="Status">
+                <select className="studio-input" value={form.status} onChange={(event) => updateField('status', event.target.value as InvoiceInput['status'])}>
+                  <option value="draft">Draft</option>
+                  <option value="ready">Ready</option>
+                  <option value="sent">Sent</option>
+                  <option value="paid">Paid</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </Field>
+              <Field label="Language">
+                <select className="studio-input" value={form.language} onChange={(event) => updateField('language', event.target.value as InvoiceInput['language'])}>
+                  <option value="english">English</option>
+                  <option value="french">French</option>
+                  <option value="arabic">Arabic</option>
+                </select>
+              </Field>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-                <div className="text-sm font-semibold text-[#0f172a]">Seller</div>
-                <div className="mt-4 grid gap-3">
-                  <Field label="Name"><input className="studio-input" value={form.sellerName} onChange={(event) => updateField('sellerName', event.target.value)} /></Field>
-                  <Field label="Email"><input className="studio-input" value={form.sellerEmail} onChange={(event) => updateField('sellerEmail', event.target.value)} /></Field>
-                  <Field label="Phone"><input className="studio-input" value={form.sellerPhone} onChange={(event) => updateField('sellerPhone', event.target.value)} /></Field>
-                  <Field label="Address"><textarea className="studio-textarea" rows={3} value={form.sellerAddress} onChange={(event) => updateField('sellerAddress', event.target.value)} /></Field>
-                </div>
+            <div className="mb-4 mt-8">
+              <h4 className="text-sm font-semibold text-[#0f172a]">Seller / Company Details</h4>
+              <p className="mt-1 text-xs text-[#64748b]">Pre-filled from brand settings</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Name"><input className="studio-input" value={form.sellerName} onChange={(event) => updateField('sellerName', event.target.value)} placeholder="Your company name" /></Field>
+              <Field label="Email"><input className="studio-input" value={form.sellerEmail} onChange={(event) => updateField('sellerEmail', event.target.value)} placeholder="billing@company.com" /></Field>
+              <Field label="Phone"><input className="studio-input" value={form.sellerPhone} onChange={(event) => updateField('sellerPhone', event.target.value)} placeholder="+60 12-345 6789" /></Field>
+              <Field label="Tax ID"><input className="studio-input" value={form.sellerTaxId} onChange={(event) => updateField('sellerTaxId', event.target.value)} placeholder="Tax registration number" /></Field>
+              <Field label="Address"><textarea className="studio-textarea" rows={2} value={form.sellerAddress} onChange={(event) => updateField('sellerAddress', event.target.value)} placeholder="Street address" /></Field>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="City"><input className="studio-input" value={form.sellerCity} onChange={(event) => updateField('sellerCity', event.target.value)} placeholder="City" /></Field>
+                <Field label="State"><input className="studio-input" value={form.sellerState} onChange={(event) => updateField('sellerState', event.target.value)} placeholder="State" /></Field>
+                <Field label="ZIP"><input className="studio-input" value={form.sellerZip} onChange={(event) => updateField('sellerZip', event.target.value)} placeholder="ZIP" /></Field>
               </div>
-              <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-                <div className="text-sm font-semibold text-[#0f172a]">Client</div>
-                <div className="mt-4 grid gap-3">
-                  <Field label="Name"><input className="studio-input" value={form.clientName} onChange={(event) => updateField('clientName', event.target.value)} placeholder="Client company or contact" /></Field>
-                  <Field label="Email"><input className="studio-input" value={form.clientEmail} onChange={(event) => updateField('clientEmail', event.target.value)} /></Field>
-                  <Field label="Phone"><input className="studio-input" value={form.clientPhone} onChange={(event) => updateField('clientPhone', event.target.value)} /></Field>
-                  <Field label="Address"><textarea className="studio-textarea" rows={3} value={form.clientAddress} onChange={(event) => updateField('clientAddress', event.target.value)} /></Field>
-                </div>
+              <Field label="Logo URL"><input className="studio-input" value={form.sellerLogoUrl} onChange={(event) => updateField('sellerLogoUrl', event.target.value)} placeholder="https://example.com/logo.png" /></Field>
+            </div>
+
+            <div className="mb-4 mt-8">
+              <h4 className="text-sm font-semibold text-[#0f172a]">Client Details</h4>
+              <p className="mt-1 text-xs text-[#64748b]">Who is being billed</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Name"><input className="studio-input" value={form.clientName} onChange={(event) => updateField('clientName', event.target.value)} placeholder="Client company or contact" /></Field>
+              <Field label="Email"><input className="studio-input" value={form.clientEmail} onChange={(event) => updateField('clientEmail', event.target.value)} placeholder="client@company.com" /></Field>
+              <Field label="Phone"><input className="studio-input" value={form.clientPhone} onChange={(event) => updateField('clientPhone', event.target.value)} placeholder="+60 12-345 6789" /></Field>
+              <Field label="Address"><textarea className="studio-textarea" rows={2} value={form.clientAddress} onChange={(event) => updateField('clientAddress', event.target.value)} placeholder="Street address" /></Field>
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="City"><input className="studio-input" value={form.clientCity} onChange={(event) => updateField('clientCity', event.target.value)} placeholder="City" /></Field>
+                <Field label="State"><input className="studio-input" value={form.clientState} onChange={(event) => updateField('clientState', event.target.value)} placeholder="State" /></Field>
+                <Field label="ZIP"><input className="studio-input" value={form.clientZip} onChange={(event) => updateField('clientZip', event.target.value)} placeholder="ZIP" /></Field>
               </div>
+            </div>
+
+            <div className="mb-4 mt-8">
+              <h4 className="text-sm font-semibold text-[#0f172a]">Links</h4>
+              <p className="mt-1 text-xs text-[#64748b]">Connect invoice to related records</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Related Project">
+                <select className="studio-input" value={form.relatedProjectId} onChange={(event) => updateField('relatedProjectId', event.target.value)}>
+                  <option value="">None</option>
+                  {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Related Company">
+                <select className="studio-input" value={form.relatedCompanyId} onChange={(event) => updateField('relatedCompanyId', event.target.value)}>
+                  <option value="">None</option>
+                  {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Related Person">
+                <select className="studio-input" value={form.relatedPersonId} onChange={(event) => updateField('relatedPersonId', event.target.value)}>
+                  <option value="">None</option>
+                  {people.map((person) => <option key={person.id} value={person.id}>{person.fullName}</option>)}
+                </select>
+              </Field>
+              <Field label="Related Deal">
+                <select className="studio-input" value={form.relatedDealId} onChange={(event) => updateField('relatedDealId', event.target.value)}>
+                  <option value="">None</option>
+                  {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.servicePackage || deal.id}</option>)}
+                </select>
+              </Field>
             </div>
           </div>
 
           <div className="space-y-4">
-            <CardShell title="Summary" subtitle="Invoice totals and notes">
+            <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+              <h4 className="text-sm font-semibold text-[#0f172a]">Totals</h4>
+              <p className="mt-1 mb-4 text-xs text-[#64748b]">Live calculation from items, discount, and tax</p>
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Subtotal"><input className="studio-input" value={form.subtotal || String(computedTotals.subtotal.toFixed(2))} onChange={(event) => updateField('subtotal', event.target.value)} /></Field>
-                <Field label="Discount"><input className="studio-input" value={form.discountAmount} onChange={(event) => updateField('discountAmount', event.target.value)} /></Field>
-                <Field label="Tax Rate"><input className="studio-input" value={form.taxRate} onChange={(event) => updateField('taxRate', event.target.value)} placeholder="0" /></Field>
-                <Field label="Tax Amount"><input className="studio-input" value={form.taxAmount} onChange={(event) => updateField('taxAmount', event.target.value)} /></Field>
-                <Field label="Total"><input className="studio-input" value={form.total || String(computedTotals.total.toFixed(2))} onChange={(event) => updateField('total', event.target.value)} /></Field>
-                <Field label="Seller Tax ID"><input className="studio-input" value={form.sellerTaxId} onChange={(event) => updateField('sellerTaxId', event.target.value)} /></Field>
+                <Field label="Discount Amount"><input className="studio-input" value={form.discountAmount} onChange={(event) => updateField('discountAmount', event.target.value)} placeholder="0.00" /></Field>
+                <Field label="Tax Rate (%)"><input className="studio-input" value={form.taxRate} onChange={(event) => updateField('taxRate', event.target.value)} placeholder="0" /></Field>
+              </div>
+              <div className="mt-4 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between"><span className="text-[#64748b]">Subtotal</span><span className="font-medium text-[#0f172a]">{formatMoney(computedTotals.subtotal, form.currency || 'MYR')}</span></div>
+                <div className="flex items-center justify-between"><span className="text-[#64748b]">Discount</span><span className="font-medium text-[#0f172a]">-{formatMoney(computedTotals.discountAmount, form.currency || 'MYR')}</span></div>
+                <div className="flex items-center justify-between"><span className="text-[#64748b]">Tax ({(computedTotals.taxRate).toFixed(1)}%)</span><span className="font-medium text-[#0f172a]">{formatMoney(computedTotals.taxAmount, form.currency || 'MYR')}</span></div>
+                <div className="border-t border-[#e5e7eb] pt-2 flex items-center justify-between text-base"><span className="font-semibold text-[#0f172a]">Total</span><span className="font-bold text-[#0f172a]">{formatMoney(computedTotals.total, form.currency || 'MYR')}</span></div>
               </div>
               <div className="mt-4 grid gap-4">
-                <Field label="Terms"><textarea className="studio-textarea" rows={5} value={form.terms} onChange={(event) => updateField('terms', event.target.value)} /></Field>
-                <Field label="Notes"><textarea className="studio-textarea" rows={5} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></Field>
+                <Field label="Terms / Payment Notes"><textarea className="studio-textarea" rows={3} value={form.terms} onChange={(event) => updateField('terms', event.target.value)} placeholder="Payment due within 30 days" /></Field>
+                <Field label="Notes"><textarea className="studio-textarea" rows={3} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} placeholder="Additional notes" /></Field>
               </div>
-            </CardShell>
+            </div>
 
-            <CardShell title="Context" subtitle="Related records">
-              <div className="space-y-2 text-sm text-[#475569]">
+            <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+              <div className="text-sm font-semibold text-[#0f172a]">Context</div>
+              <div className="mt-3 space-y-2 text-sm text-[#475569]">
                 <div><span className="font-medium text-[#0f172a]">Project:</span> {relatedProject?.name || 'None'}</div>
                 <div><span className="font-medium text-[#0f172a]">Company:</span> {relatedCompany?.name || 'None'}</div>
                 <div><span className="font-medium text-[#0f172a]">Person:</span> {relatedPerson?.fullName || 'None'}</div>
                 <div><span className="font-medium text-[#0f172a]">Deal:</span> {relatedDeal?.servicePackage || relatedDeal?.id || 'None'}</div>
-                <div><span className="font-medium text-[#0f172a]">Generated doc:</span> {selectedGeneratedDocument?.title || 'None'}</div>
               </div>
-            </CardShell>
+            </div>
           </div>
         </div>
       ) : null}
 
       {tab === 'items' ? (
-        <div className="space-y-4 rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-[#0f172a]">Line Items</h3>
-              <p className="mt-1 text-sm text-[#64748b]">Add services, quantities, rates, and optional manual amounts.</p>
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <div>
+                <h4 className="text-sm font-semibold text-[#0f172a]">Invoice Items</h4>
+                <p className="mt-1 text-xs text-[#64748b]">Add services or products with quantities and rates</p>
+              </div>
+              <button type="button" onClick={addLineItem} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b]">
+                + Add Item
+              </button>
             </div>
-            <button type="button" onClick={addLineItem} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]">
-              Add Line Item
-            </button>
+
+            <div className="hidden md:grid md:grid-cols-[2fr_0.6fr_0.6fr_0.6fr_80px] gap-3 mb-2 px-1">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-[#64748b]">Description</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-[#64748b] text-right">Qty</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-[#64748b] text-right">Rate</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-[#64748b] text-right">Amount</div>
+              <div />
+            </div>
+
+            <div className="space-y-2">
+              {draftItems.map((item, index) => (
+                <div key={item.id} className="grid gap-3 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 md:grid-cols-[2fr_0.6fr_0.6fr_0.6fr_80px] items-end">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[#64748b] md:hidden">Description</span>
+                    <input className="studio-input" value={item.description} onChange={(event) => updateLineItem(item.id, 'description', event.target.value)} placeholder={`Item ${index + 1} description`} />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[#64748b] md:hidden">Quantity</span>
+                    <input className="studio-input text-right" value={item.quantity} onChange={(event) => updateLineItem(item.id, 'quantity', event.target.value)} inputMode="decimal" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[#64748b] md:hidden">Rate</span>
+                    <input className="studio-input text-right" value={item.rate} onChange={(event) => updateLineItem(item.id, 'rate', event.target.value)} inputMode="decimal" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-[#64748b] md:hidden">Amount</span>
+                    <input className="studio-input text-right font-medium" value={item.amount || String(computeLineTotal(item).toFixed(2))} onChange={(event) => updateLineItem(item.id, 'amount', event.target.value)} inputMode="decimal" placeholder="Auto" />
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button type="button" onClick={() => removeLineItem(item.id)} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-xs font-medium text-[#b91c1c] hover:bg-[#fee2e6]">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {draftItems.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#dbe3ef] bg-[#fafcff] p-6 text-center text-sm text-[#64748b]">
+                No items yet. Click "Add Item" to add services or products.
+              </div>
+            ) : null}
           </div>
 
-          <div className="space-y-3">
-            {draftItems.map((item, index) => (
-              <div key={item.id} className="grid gap-3 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 lg:grid-cols-[1.8fr_0.5fr_0.5fr_0.5fr_0.35fr_auto]">
-                <Field label={`Description ${index + 1}`}><input className="studio-input" value={item.description} onChange={(event) => updateLineItem(item.id, 'description', event.target.value)} placeholder="Service description" /></Field>
-                <Field label="Qty"><input className="studio-input" value={item.quantity} onChange={(event) => updateLineItem(item.id, 'quantity', event.target.value)} inputMode="decimal" /></Field>
-                <Field label="Rate"><input className="studio-input" value={item.rate} onChange={(event) => updateLineItem(item.id, 'rate', event.target.value)} inputMode="decimal" /></Field>
-                <Field label="Amount"><input className="studio-input" value={item.amount} onChange={(event) => updateLineItem(item.id, 'amount', event.target.value)} inputMode="decimal" placeholder="Auto from qty x rate" /></Field>
-                <Field label="#"><input className="studio-input" value={item.sortOrder} onChange={(event) => updateLineItem(item.id, 'sortOrder', event.target.value)} inputMode="numeric" /></Field>
-                <div className="flex items-end">
-                  <button type="button" onClick={() => removeLineItem(item.id)} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-xs font-medium text-[#b91c1c] hover:bg-[#fee2e6]">
-                    Remove
-                  </button>
-                </div>
-                <div className="lg:col-span-6 text-right text-sm text-[#64748b]">
-                  Line total: {formatMoney(computeLineTotal(item), form.currency || brand?.defaultCurrency || 'MYR')}
-                </div>
+          <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <h4 className="text-sm font-semibold text-[#0f172a]">Invoice Totals</h4>
+            <div className="mt-4 max-w-sm ml-auto space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[#64748b]">Subtotal ({draftItems.filter((i) => i.description.trim()).length} items)</span>
+                <span className="font-medium text-[#0f172a]">{formatMoney(computedTotals.subtotal, form.currency || 'MYR')}</span>
               </div>
-            ))}
+              <div className="flex items-center justify-between">
+                <span className="text-[#64748b]">Discount</span>
+                <input
+                  className="w-28 rounded-lg border border-[#cbd5e1] px-3 py-1.5 text-right text-sm text-[#0f172a] outline-none focus:border-[#2563eb]"
+                  value={form.discountAmount}
+                  onChange={(event) => updateField('discountAmount', event.target.value)}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#64748b]">Tax Rate (%)</span>
+                <input
+                  className="w-28 rounded-lg border border-[#cbd5e1] px-3 py-1.5 text-right text-sm text-[#0f172a] outline-none focus:border-[#2563eb]"
+                  value={form.taxRate}
+                  onChange={(event) => updateField('taxRate', event.target.value)}
+                  placeholder="0"
+                  inputMode="decimal"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#64748b]">Tax Amount</span>
+                <span className="font-medium text-[#0f172a]">{formatMoney(computedTotals.taxAmount, form.currency || 'MYR')}</span>
+              </div>
+              <div className="border-t border-[#e5e7eb] pt-3 flex items-center justify-between text-base">
+                <span className="font-semibold text-[#0f172a]">Total</span>
+                <span className="text-lg font-bold text-[#0f172a]">{formatMoney(computedTotals.total, form.currency || 'MYR')}</span>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -693,10 +832,10 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
           <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-[#0f172a]">Preview</h3>
-                <p className="mt-1 text-sm text-[#64748b]">Live invoice page rendered from the current form and items.</p>
+                <h4 className="text-sm font-semibold text-[#0f172a]">Invoice Preview</h4>
+                <p className="mt-1 text-xs text-[#64748b]">Live preview of the invoice as it will appear when printed or exported</p>
               </div>
-              <button type="button" onClick={openPreview} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">
+              <button type="button" onClick={() => setPreviewOpen(true)} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b]">
                 Open Preview Modal
               </button>
             </div>
@@ -716,39 +855,68 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
       {tab === 'export' ? (
         <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <div className="text-base font-semibold text-[#0f172a]">Export Actions</div>
-            <p className="mt-1 text-sm text-[#64748b]">Save the invoice, mark it ready, then generate a private PDF for storage.</p>
+            <h4 className="text-sm font-semibold text-[#0f172a]">Export Invoice</h4>
+            <p className="mt-1 text-sm text-[#64748b]">Save, print, or generate a stored PDF for this invoice.</p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" onClick={() => void saveInvoice('draft')} disabled={saving} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc] disabled:opacity-60">
+            <div className="mt-6 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-2 text-sm">
+              <div className="flex items-center justify-between"><span className="text-[#64748b]">Invoice #</span><span className="font-medium text-[#0f172a]">{form.invoiceNumber || '—'}</span></div>
+              <div className="flex items-center justify-between"><span className="text-[#64748b]">Client</span><span className="font-medium text-[#0f172a]">{form.clientName || '—'}</span></div>
+              <div className="flex items-center justify-between"><span className="text-[#64748b]">Total</span><span className="font-bold text-[#0f172a]">{formatMoney(computedTotals.total, form.currency || 'MYR')}</span></div>
+              <div className="flex items-center justify-between"><span className="text-[#64748b]">Status</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                  form.status === 'paid' ? 'bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]' :
+                  form.status === 'overdue' ? 'bg-[#fff1f2] text-[#b91c1c] border border-[#fecaca]' :
+                  form.status === 'sent' ? 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]' :
+                  'bg-[#f8fafc] text-[#475569] border border-[#e5e7eb]'
+                }`}>{form.status}</span>
+              </div>
+              <div className="flex items-center justify-between"><span className="text-[#64748b]">Items</span><span className="font-medium text-[#0f172a]">{draftItems.filter((i) => i.description.trim()).length}</span></div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button type="button" onClick={() => void saveInvoice('draft')} disabled={saving} className="rounded-lg border border-[#cbd5e1] bg-white px-5 py-2.5 text-sm font-medium text-[#334155] hover:bg-[#f8fafc] disabled:opacity-60">
                 Save Draft
               </button>
-              <button type="button" onClick={() => void saveInvoice('ready')} disabled={saving} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8] disabled:opacity-60">
-                Save Ready
+              <button type="button" onClick={() => void saveInvoice('ready')} disabled={saving} className="rounded-lg bg-[#0f172a] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#1e293b] disabled:opacity-60">
+                Save Invoice
               </button>
-              <button type="button" onClick={() => setPreviewOpen(true)} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">
-                Open Print / PDF
+              <button type="button" onClick={handlePrintPdf} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-5 py-2.5 text-sm font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">
+                Print / Save as PDF
               </button>
-              <button type="button" onClick={() => void handleDeleteInvoice()} disabled={!selectedInvoice} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-4 py-2 text-sm font-medium text-[#b91c1c] hover:bg-[#fee2e6] disabled:opacity-60">
-                Delete Invoice
+              <button type="button" onClick={() => setPreviewOpen(true)} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-5 py-2.5 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
+                Generate & Store PDF
               </button>
+              {selectedInvoice?.pdfStoragePath ? (
+                <button type="button" onClick={() => setPreviewOpen(true)} className="rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-5 py-2.5 text-sm font-medium text-[#047857] hover:bg-[#d1fae5]">
+                  Open Stored PDF
+                </button>
+              ) : null}
             </div>
 
-            <div className="mt-5 space-y-2 text-sm text-[#475569]">
-              <div>Status: <span className="font-medium text-[#0f172a]">{form.status}</span></div>
-              <div>Stored PDF: <span className="font-medium text-[#0f172a]">{selectedInvoice?.pdfStoragePath ? 'Available' : 'Not stored yet'}</span></div>
-              <div>Generated doc: <span className="font-medium text-[#0f172a]">{selectedGeneratedDocument?.title || 'Will be created on save'}</span></div>
-              <div>Archive sync: <span className="font-medium text-[#0f172a]">Invoices and generated documents stay linked through Supabase.</span></div>
-            </div>
+            {selectedInvoice ? (
+              <div className="mt-6 border-t border-[#e5e7eb] pt-4">
+                <button type="button" onClick={() => void handleDeleteInvoice()} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-5 py-2.5 text-sm font-medium text-[#b91c1c] hover:bg-[#fee2e6]">
+                  Delete Invoice
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <div className="text-base font-semibold text-[#0f172a]">Status</div>
-            <div className="mt-3 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm text-[#475569]">
-              {message || error || 'Use the actions on this panel to persist and export the invoice.'}
-            </div>
-            <div className="mt-4 rounded-2xl border border-dashed border-[#dbe3ef] bg-[#fafcff] p-4 text-sm text-[#64748b]">
-              The PDF export uses the same private storage bucket and signed URL flow as document exports.
+            <h4 className="text-sm font-semibold text-[#0f172a]">Status & Sync</h4>
+            <div className="mt-4 space-y-3 text-sm">
+              {message ? (
+                <div className="rounded-2xl border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-[#166534]">{message}</div>
+              ) : null}
+              {error ? (
+                <div className="rounded-2xl border border-[#fecaca] bg-[#fff1f2] px-4 py-3 text-[#b91c1c]">{error}</div>
+              ) : null}
+              <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-2 text-[#475569]">
+                <div>Stored PDF: <span className="font-medium text-[#0f172a]">{selectedInvoice?.pdfStoragePath ? 'Available' : 'Not generated yet'}</span></div>
+                <div>Generated doc: <span className="font-medium text-[#0f172a]">{selectedGeneratedDocument?.title || 'Will be created on save'}</span></div>
+                <div>Archive: <span className="font-medium text-[#0f172a]">Invoices and documents stay linked</span></div>
+                <div className="text-xs text-[#64748b] mt-2">PDF export uses private Supabase Storage with signed URLs.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -774,7 +942,12 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
         }}
       />
 
-      <style>{`.studio-input{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#0f172a;outline:none}.studio-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}.studio-textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#0f172a;outline:none;min-height:132px}.studio-textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}`}</style>
+      <style>{`
+        .studio-input{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#0f172a;outline:none;font-size:14px;transition:border-color 0.15s,box-shadow 0.15s}
+        .studio-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+        .studio-textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#0f172a;outline:none;min-height:80px;font-size:14px;resize:vertical;transition:border-color 0.15s,box-shadow 0.15s}
+        .studio-textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+      `}</style>
     </div>
   );
 };
@@ -784,23 +957,6 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
     <span className="text-xs font-mono uppercase tracking-[0.14em] text-[#64748b]">{label}</span>
     {children}
   </label>
-);
-
-const MetricCard: React.FC<{ title: string; value: string | number; accent?: string }> = ({ title, value, accent = 'text-[#0f172a]' }) => (
-  <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-    <div className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#64748b]">{title}</div>
-    <div className={`mt-1 text-2xl font-semibold ${accent}`}>{value}</div>
-  </div>
-);
-
-const CardShell: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({ title, subtitle, children }) => (
-  <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-    <div>
-      <h3 className="text-base font-semibold text-[#0f172a]">{title}</h3>
-      {subtitle ? <p className="mt-1 text-sm text-[#64748b]">{subtitle}</p> : null}
-    </div>
-    <div className="mt-4">{children}</div>
-  </div>
 );
 
 export default InvoiceStudioPanel;

@@ -607,6 +607,7 @@ const DocumentStudioPanel: React.FC<{
           onEditInvoice={openInvoiceStudio}
           onPreviewInvoice={openInvoiceStudio}
           onDeleteInvoice={onDeleteInvoice}
+          onUpdateInvoice={onUpdateInvoice}
         />
       ) : null}
 
