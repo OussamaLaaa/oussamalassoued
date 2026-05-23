@@ -23,6 +23,12 @@ import type {
   ProjectFinanceItemInput,
   DocumentItem,
   DocumentInput,
+  DocumentTemplate,
+  DocumentTemplateInput,
+  DocumentBrandSettings,
+  DocumentBrandSettingsInput,
+  GeneratedDocument,
+  GeneratedDocumentInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -485,6 +491,116 @@ export const documentToDb = (input: Partial<DocumentInput>, options: { forUpdate
   if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
   if (!forUpdate || input.paidDate !== undefined) payload.paid_date = toNullableDate(input.paidDate);
   if (!forUpdate || input.url !== undefined) payload.url = toNullableString(input.url);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+// ── Document Studio mappers ──
+
+export const documentTemplateFromDb = (row: any): DocumentTemplate => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  type: row?.type ?? 'document',
+  language: row?.language ?? 'english',
+  description: row?.description ?? undefined,
+  content: safeString(row?.content),
+  variables: row?.variables ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row?.is_active),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const documentTemplateToDb = (input: Partial<DocumentTemplateInput>) => ({
+  name: String(input.name || '').trim(),
+  type: input.type || 'document',
+  language: input.language || 'english',
+  description: toNullableString(input.description),
+  content: String(input.content || '').trim(),
+  variables: toNullableString(input.variables),
+  is_active: input.isActive == null ? true : Boolean(input.isActive),
+});
+
+export const documentBrandSettingsFromDb = (row: any): DocumentBrandSettings => ({
+  id: safeString(row?.id),
+  brandName: row?.brand_name ?? row?.brandName ?? undefined,
+  ownerName: row?.owner_name ?? row?.ownerName ?? undefined,
+  email: row?.email ?? undefined,
+  phone: row?.phone ?? undefined,
+  website: row?.website ?? undefined,
+  address: row?.address ?? undefined,
+  logoUrl: row?.logo_url ?? row?.logoUrl ?? undefined,
+  signatureUrl: row?.signature_url ?? row?.signatureUrl ?? undefined,
+  signatureName: row?.signature_name ?? row?.signatureName ?? undefined,
+  defaultCurrency: row?.default_currency ?? row?.defaultCurrency ?? undefined,
+  paymentNotes: row?.payment_notes ?? row?.paymentNotes ?? undefined,
+  legalNotes: row?.legal_notes ?? row?.legalNotes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const documentBrandSettingsToDb = (input: Partial<DocumentBrandSettingsInput>) => ({
+  brand_name: toNullableString(input.brandName),
+  owner_name: toNullableString(input.ownerName),
+  email: toNullableString(input.email),
+  phone: toNullableString(input.phone),
+  website: toNullableString(input.website),
+  address: toNullableString(input.address),
+  logo_url: toNullableString(input.logoUrl),
+  signature_url: toNullableString(input.signatureUrl),
+  signature_name: toNullableString(input.signatureName),
+  default_currency: toNullableString(input.defaultCurrency),
+  payment_notes: toNullableString(input.paymentNotes),
+  legal_notes: toNullableString(input.legalNotes),
+});
+
+export const generatedDocumentFromDb = (row: any): GeneratedDocument => ({
+  id: safeString(row?.id),
+  title: safeString(row?.title),
+  type: row?.type ?? 'document',
+  status: row?.status ?? 'draft',
+  language: row?.language ?? 'english',
+  templateId: row?.template_id ?? row?.templateId ?? undefined,
+  relatedProjectId: row?.related_project_id ?? row?.relatedProjectId ?? undefined,
+  relatedCompanyId: row?.related_company_id ?? row?.relatedCompanyId ?? undefined,
+  relatedPersonId: row?.related_person_id ?? row?.relatedPersonId ?? undefined,
+  relatedDealId: row?.related_deal_id ?? row?.relatedDealId ?? undefined,
+  content: row?.content ?? undefined,
+  variablesJson: row?.variables_json ?? row?.variablesJson ?? undefined,
+  amount: safeNumber(row?.amount),
+  currency: row?.currency ?? undefined,
+  issueDate: toIso(row?.issue_date ?? row?.issueDate),
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  signedDate: toIso(row?.signed_date ?? row?.signedDate),
+  pdfUrl: row?.pdf_url ?? row?.pdfUrl ?? undefined,
+  externalUrl: row?.external_url ?? row?.externalUrl ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const generatedDocumentToDb = (input: Partial<GeneratedDocumentInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (!forUpdate || input.type !== undefined) payload.type = input.type || 'document';
+  if (!forUpdate || input.status !== undefined) payload.status = input.status || 'draft';
+  if (!forUpdate || input.language !== undefined) payload.language = input.language || 'english';
+  if (!forUpdate || input.templateId !== undefined) payload.template_id = toNullableString(input.templateId);
+  if (!forUpdate || input.relatedProjectId !== undefined) payload.related_project_id = toNullableString(input.relatedProjectId);
+  if (!forUpdate || input.relatedCompanyId !== undefined) payload.related_company_id = toNullableString(input.relatedCompanyId);
+  if (!forUpdate || input.relatedPersonId !== undefined) payload.related_person_id = toNullableString(input.relatedPersonId);
+  if (!forUpdate || input.relatedDealId !== undefined) payload.related_deal_id = toNullableString(input.relatedDealId);
+  if (!forUpdate || input.content !== undefined) payload.content = toNullableString(input.content);
+  if (!forUpdate || input.variablesJson !== undefined) payload.variables_json = toNullableString(input.variablesJson);
+  if (!forUpdate || input.amount !== undefined) payload.amount = toNullableNumber(input.amount);
+  if (!forUpdate || input.currency !== undefined) payload.currency = toNullableString(input.currency);
+  if (!forUpdate || input.issueDate !== undefined) payload.issue_date = toNullableDate(input.issueDate);
+  if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
+  if (!forUpdate || input.signedDate !== undefined) payload.signed_date = toNullableDate(input.signedDate);
+  if (!forUpdate || input.pdfUrl !== undefined) payload.pdf_url = toNullableString(input.pdfUrl);
+  if (!forUpdate || input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
   return payload;

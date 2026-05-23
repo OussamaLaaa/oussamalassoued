@@ -15,6 +15,9 @@ import {
   projectDocumentFromDb as mapProjectDocumentRow, projectDocumentToDb as toProjectDocumentDb,
   projectFinanceItemFromDb as mapProjectFinanceItemRow, projectFinanceItemToDb as toProjectFinanceItemDb,
   documentFromDb as mapDocumentRow, documentToDb as toDocumentDb,
+  documentTemplateFromDb as mapDocumentTemplateRow, documentTemplateToDb as toDocumentTemplateDb,
+  documentBrandSettingsFromDb as mapDocumentBrandSettingsRow, documentBrandSettingsToDb as toDocumentBrandSettingsDb,
+  generatedDocumentFromDb as mapGeneratedDocumentRow, generatedDocumentToDb as toGeneratedDocumentDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -36,6 +39,12 @@ import type {
   ProjectFinanceItemInput,
   DocumentItem,
   DocumentInput,
+  DocumentTemplate,
+  DocumentTemplateInput,
+  DocumentBrandSettings,
+  DocumentBrandSettingsInput,
+  GeneratedDocument,
+  GeneratedDocumentInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -83,6 +92,9 @@ const cloneSeedData = (): OpportunitiesData => ({
   projectDocuments: [],
   projectFinanceItems: [],
   documents: [],
+  documentTemplates: [],
+  documentBrandSettings: [],
+  generatedDocuments: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -126,6 +138,9 @@ type OpportunitiesApiResponse = {
   project_finance_items?: any[];
   message_templates?: any[];
   documents?: any[];
+  document_templates?: any[];
+  document_brand_settings?: any[];
+  generated_documents?: any[];
   strategy_items?: any[];
   strategy_goals?: any[];
   strategy_plans?: any[];
@@ -191,6 +206,30 @@ const attachDocumentLinkNames = (
 
   return items.map((item) => ({
     ...item,
+    relatedProjectName: item.relatedProjectName || projectById.get(item.relatedProjectId || ''),
+    relatedCompanyName: item.relatedCompanyName || companyById.get(item.relatedCompanyId || ''),
+    relatedPersonName: item.relatedPersonName || personById.get(item.relatedPersonId || ''),
+    relatedDealName: item.relatedDealName || dealById.get(item.relatedDealId || ''),
+  }));
+};
+
+const attachGeneratedDocumentLinkNames = (
+  items: GeneratedDocument[],
+  documentTemplates: DocumentTemplate[],
+  projects: Project[],
+  companies: Company[],
+  people: Person[],
+  deals: Deal[],
+) => {
+  const templateById = new Map(documentTemplates.map((template) => [template.id, template.name] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  const personById = new Map(people.map((person) => [person.id, person.fullName] as const));
+  const dealById = new Map(deals.map((deal) => [deal.id, deal.servicePackage || deal.id] as const));
+
+  return items.map((item) => ({
+    ...item,
+    templateName: item.templateName || templateById.get(item.templateId || ''),
     relatedProjectName: item.relatedProjectName || projectById.get(item.relatedProjectId || ''),
     relatedCompanyName: item.relatedCompanyName || companyById.get(item.relatedCompanyId || ''),
     relatedPersonName: item.relatedPersonName || personById.get(item.relatedPersonId || ''),
@@ -995,6 +1034,9 @@ export const useOpportunitiesData = (enabled = true) => {
   const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>([]);
   const [projectFinanceItems, setProjectFinanceItems] = useState<ProjectFinanceItem[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>([]);
+  const [documentBrandSettings, setDocumentBrandSettings] = useState<DocumentBrandSettings[]>([]);
+  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>(() => cloneSeedData().templates);
   const [strategyItems, setStrategyItems] = useState<StrategyItem[]>([]);
   const [strategyGoals, setStrategyGoals] = useState<StrategyGoal[]>([]);
@@ -1029,6 +1071,9 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
     const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
     const nextDocumentsRaw = Array.isArray(payload?.documents) ? payload.documents : [];
+    const nextDocumentTemplatesRaw = Array.isArray(payload?.document_templates) ? payload.document_templates : [];
+    const nextDocumentBrandSettingsRaw = Array.isArray(payload?.document_brand_settings) ? payload.document_brand_settings : [];
+    const nextGeneratedDocumentsRaw = Array.isArray(payload?.generated_documents) ? payload.generated_documents : [];
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
     const nextPlansRaw = Array.isArray(payload?.plans) ? payload.plans : [];
     const nextPlanItemsRaw = Array.isArray(payload?.plan_items) ? payload.plan_items : [];
@@ -1085,6 +1130,16 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextProjectDocuments = nextProjectDocumentsRaw.map((row: any) => mapProjectDocumentRow(row));
     const nextProjectFinanceItems = nextProjectFinanceItemsRaw.map((row: any) => mapProjectFinanceItemRow(row));
     const nextDocuments = attachDocumentLinkNames(nextDocumentsRaw.map((row: any) => mapDocumentRow(row)), nextProjects, nextCompanies, nextPeople, nextDeals);
+    const nextDocumentTemplates = nextDocumentTemplatesRaw.map((row: any) => mapDocumentTemplateRow(row));
+    const nextDocumentBrandSettings = nextDocumentBrandSettingsRaw.map((row: any) => mapDocumentBrandSettingsRow(row));
+    const nextGeneratedDocuments = attachGeneratedDocumentLinkNames(
+      nextGeneratedDocumentsRaw.map((row: any) => mapGeneratedDocumentRow(row)),
+      nextDocumentTemplates,
+      nextProjects,
+      nextCompanies,
+      nextPeople,
+      nextDeals,
+    );
 
     const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
     const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
@@ -1133,6 +1188,9 @@ export const useOpportunitiesData = (enabled = true) => {
     setProjectDocuments(nextProjectDocuments);
     setProjectFinanceItems(nextProjectFinanceItems);
     setDocuments(nextDocuments);
+    setDocumentTemplates(nextDocumentTemplates);
+    setDocumentBrandSettings(nextDocumentBrandSettings);
+    setGeneratedDocuments(nextGeneratedDocuments);
     setTemplates(nextTemplates);
     setStrategyGoals(nextStrategyGoals);
     setStrategyPlans(nextStrategyPlans);
@@ -1398,7 +1456,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1651,6 +1709,125 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('documents', id);
     setDocuments((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addDocumentTemplate = async (input: DocumentTemplateInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Template name is required.');
+    }
+
+    if (!String(input.content || '').trim()) {
+      throw new Error('Template content is required.');
+    }
+
+    const row = await syncInsert('document_templates', toDocumentTemplateDb(input));
+    const next = mapDocumentTemplateRow(row);
+    setDocumentTemplates((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateDocumentTemplate = async (id: string, input: Partial<DocumentTemplateInput>) => {
+    const payload: Record<string, unknown> = {};
+    if (input.name !== undefined) payload.name = String(input.name || '').trim();
+    if (input.type !== undefined) payload.type = input.type;
+    if (input.language !== undefined) payload.language = input.language;
+    if (input.description !== undefined) payload.description = toNullableString(input.description);
+    if (input.content !== undefined) payload.content = String(input.content || '').trim();
+    if (input.variables !== undefined) payload.variables = toNullableString(input.variables);
+    if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+
+    const row = await syncUpdate('document_templates', id, payload);
+    const next = mapDocumentTemplateRow(row);
+    setDocumentTemplates((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteDocumentTemplate = async (id: string) => {
+    const confirmed = window.confirm('Delete this template?');
+    if (!confirmed) return;
+    await syncDelete('document_templates', id);
+    setDocumentTemplates((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addDocumentBrandSettings = async (input: DocumentBrandSettingsInput) => {
+    const row = await syncInsert('document_brand_settings', toDocumentBrandSettingsDb(input));
+    const next = mapDocumentBrandSettingsRow(row);
+    setDocumentBrandSettings([next]);
+    return next;
+  };
+
+  const updateDocumentBrandSettings = async (id: string, input: Partial<DocumentBrandSettingsInput>) => {
+    const payload: Record<string, unknown> = {};
+    if (input.brandName !== undefined) payload.brand_name = toNullableString(input.brandName);
+    if (input.ownerName !== undefined) payload.owner_name = toNullableString(input.ownerName);
+    if (input.email !== undefined) payload.email = toNullableString(input.email);
+    if (input.phone !== undefined) payload.phone = toNullableString(input.phone);
+    if (input.website !== undefined) payload.website = toNullableString(input.website);
+    if (input.address !== undefined) payload.address = toNullableString(input.address);
+    if (input.logoUrl !== undefined) payload.logo_url = toNullableString(input.logoUrl);
+    if (input.signatureUrl !== undefined) payload.signature_url = toNullableString(input.signatureUrl);
+    if (input.signatureName !== undefined) payload.signature_name = toNullableString(input.signatureName);
+    if (input.defaultCurrency !== undefined) payload.default_currency = toNullableString(input.defaultCurrency);
+    if (input.paymentNotes !== undefined) payload.payment_notes = toNullableString(input.paymentNotes);
+    if (input.legalNotes !== undefined) payload.legal_notes = toNullableString(input.legalNotes);
+
+    const row = await syncUpdate('document_brand_settings', id, payload);
+    const next = mapDocumentBrandSettingsRow(row);
+    setDocumentBrandSettings([next]);
+    return next;
+  };
+
+  const deleteDocumentBrandSettings = async (id: string) => {
+    const confirmed = window.confirm('Delete this brand settings profile?');
+    if (!confirmed) return;
+    await syncDelete('document_brand_settings', id);
+    setDocumentBrandSettings((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addGeneratedDocument = async (input: GeneratedDocumentInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Document title is required.');
+    }
+
+    const row = await syncInsert('generated_documents', toGeneratedDocumentDb(input));
+    const next = attachGeneratedDocumentLinkNames([mapGeneratedDocumentRow(row)], documentTemplates, projects, companies, people, deals)[0];
+    setGeneratedDocuments((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateGeneratedDocument = async (id: string, input: Partial<GeneratedDocumentInput>) => {
+    const payload: Record<string, unknown> = {};
+    if (input.title !== undefined) payload.title = String(input.title || '').trim();
+    if (input.type !== undefined) payload.type = input.type;
+    if (input.status !== undefined) payload.status = input.status;
+    if (input.language !== undefined) payload.language = input.language;
+    if (input.templateId !== undefined) payload.template_id = toNullableString(input.templateId);
+    if (input.relatedProjectId !== undefined) payload.related_project_id = toNullableString(input.relatedProjectId);
+    if (input.relatedCompanyId !== undefined) payload.related_company_id = toNullableString(input.relatedCompanyId);
+    if (input.relatedPersonId !== undefined) payload.related_person_id = toNullableString(input.relatedPersonId);
+    if (input.relatedDealId !== undefined) payload.related_deal_id = toNullableString(input.relatedDealId);
+    if (input.content !== undefined) payload.content = toNullableString(input.content);
+    if (input.variablesJson !== undefined) payload.variables_json = toNullableString(input.variablesJson);
+    if (input.amount !== undefined) payload.amount = toNullableNumber(input.amount);
+    if (input.currency !== undefined) payload.currency = toNullableString(input.currency);
+    if (input.issueDate !== undefined) payload.issue_date = toNullableString(input.issueDate);
+    if (input.dueDate !== undefined) payload.due_date = toNullableString(input.dueDate);
+    if (input.signedDate !== undefined) payload.signed_date = toNullableString(input.signedDate);
+    if (input.pdfUrl !== undefined) payload.pdf_url = toNullableString(input.pdfUrl);
+    if (input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
+    if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+    const row = await syncUpdate('generated_documents', id, payload);
+    const next = attachGeneratedDocumentLinkNames([mapGeneratedDocumentRow(row)], documentTemplates, projects, companies, people, deals)[0];
+    setGeneratedDocuments((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteGeneratedDocument = async (id: string) => {
+    const confirmed = window.confirm('Delete this generated document?');
+    if (!confirmed) return;
+    await syncDelete('generated_documents', id);
+    setGeneratedDocuments((current) => current.filter((item) => item.id !== id));
   };
 
   const addStrategyItem = async (input: StrategyItemInput) => {
@@ -2311,6 +2488,13 @@ export const useOpportunitiesData = (enabled = true) => {
   }, [projects, companies, people, deals]);
 
   useEffect(() => {
+    setGeneratedDocuments((current) => {
+      const next = attachGeneratedDocumentLinkNames(current, documentTemplates, projects, companies, people, deals);
+      return shouldReplaceCollection(current, next, ['templateName', 'relatedProjectName', 'relatedCompanyName', 'relatedPersonName', 'relatedDealName']) ? next : current;
+    });
+  }, [documentTemplates, projects, companies, people, deals]);
+
+  useEffect(() => {
     setPlans((current) => {
       const next = attachOsPlanLinkNames(current, projects, strategyGoals);
       return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedStrategyGoalTitle']) ? next : current;
@@ -2346,6 +2530,9 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceRecurringRules(fallback.financeRecurringRules);
     setStrategyItems(fallback.strategyItems);
     setDocuments(fallback.documents);
+    setDocumentTemplates(fallback.documentTemplates);
+    setDocumentBrandSettings(fallback.documentBrandSettings);
+    setGeneratedDocuments(fallback.generatedDocuments);
   };
 
   return {
@@ -2360,6 +2547,9 @@ export const useOpportunitiesData = (enabled = true) => {
     projectDocuments,
     projectFinanceItems,
     documents,
+    documentTemplates,
+    documentBrandSettings,
+    generatedDocuments,
     templates,
     strategyItems,
     strategyGoals,
@@ -2462,6 +2652,15 @@ export const useOpportunitiesData = (enabled = true) => {
     addDocument,
     updateDocument,
     deleteDocument,
+    addDocumentTemplate,
+    updateDocumentTemplate,
+    deleteDocumentTemplate,
+    addDocumentBrandSettings,
+    updateDocumentBrandSettings,
+    deleteDocumentBrandSettings,
+    addGeneratedDocument,
+    updateGeneratedDocument,
+    deleteGeneratedDocument,
     updateTemplate,
     deleteTemplate,
     seedDefaultTemplates,

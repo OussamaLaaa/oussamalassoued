@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -11,7 +11,7 @@ import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
 import PlansPanel from './PlansPanel';
 import FinancePanel from './FinancePanel';
-import DocumentsPanel from './DocumentsPanel';
+import DocumentStudioPanel from './DocumentStudioPanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -195,6 +195,9 @@ const OpportunitiesLayout: React.FC<{
     addStrategyExperiment: (input: StrategyExperimentInput) => Promise<any>;
     addStrategyDecision: (input: StrategyDecisionInput) => Promise<any>;
     addDocument: (input: DocumentInput) => Promise<DocumentItem>;
+    addDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
+    addDocumentBrandSettings: (input: DocumentBrandSettingsInput) => Promise<DocumentBrandSettings>;
+    addGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
     updateCompany: (id: string, input: CompanyInput) => void;
     deleteCompany: (id: string) => void;
@@ -220,6 +223,12 @@ const OpportunitiesLayout: React.FC<{
     deleteStrategyDecision: (id: string) => Promise<any>;
     updateDocument: (id: string, input: Partial<DocumentInput>) => Promise<DocumentItem>;
     deleteDocument: (id: string) => Promise<any>;
+    updateDocumentTemplate: (id: string, input: Partial<DocumentTemplateInput>) => Promise<DocumentTemplate>;
+    deleteDocumentTemplate: (id: string) => Promise<any>;
+    updateDocumentBrandSettings: (id: string, input: Partial<DocumentBrandSettingsInput>) => Promise<DocumentBrandSettings>;
+    deleteDocumentBrandSettings: (id: string) => Promise<any>;
+    updateGeneratedDocument: (id: string, input: Partial<GeneratedDocumentInput>) => Promise<GeneratedDocument>;
+    deleteGeneratedDocument: (id: string) => Promise<any>;
     updateTemplate: (id: string, input: MessageTemplateInput) => Promise<any>;
     deleteTemplate: (id: string) => Promise<any>;
     seedDefaultTemplates?: () => Promise<any>;
@@ -262,10 +271,16 @@ const OpportunitiesLayout: React.FC<{
     companies, people, messages, deals, projects, templates, strategyItems,
     strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
     documents,
+    documentTemplates,
+    documentBrandSettings,
+    generatedDocuments,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
     addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
     addDocument,
+    addDocumentTemplate,
+    addDocumentBrandSettings,
+    addGeneratedDocument,
     addTemplate,
     updateCompany, deleteCompany,
     updatePerson, deletePerson,
@@ -278,6 +293,9 @@ const OpportunitiesLayout: React.FC<{
     updateStrategyExperiment, deleteStrategyExperiment,
     updateStrategyDecision, deleteStrategyDecision,
     updateDocument, deleteDocument,
+    updateDocumentTemplate, deleteDocumentTemplate,
+    updateDocumentBrandSettings, deleteDocumentBrandSettings,
+    updateGeneratedDocument, deleteGeneratedDocument,
     updateTemplate, deleteTemplate, seedDefaultTemplates,
     resetToSeedData,
     importCompaniesBatch,
@@ -395,7 +413,7 @@ const OpportunitiesLayout: React.FC<{
                   : t.id === 'templates'
                     ? templates.length
                   : t.id === 'documents'
-                    ? documents.length
+                    ? generatedDocuments.length
                     : 0;
                 const active = tab === t.id;
                 return (
@@ -776,15 +794,23 @@ const OpportunitiesLayout: React.FC<{
             )}
 
             {tab === 'documents' && (
-              <DocumentsPanel
-                documents={documents}
+              <DocumentStudioPanel
+                documentTemplates={documentTemplates}
+                documentBrandSettings={documentBrandSettings}
+                generatedDocuments={generatedDocuments}
                 projects={projects}
                 companies={companies}
                 people={people}
                 deals={deals}
-                onAddDocument={addDocument}
-                onUpdateDocument={updateDocument}
-                onDeleteDocument={deleteDocument}
+                onAddDocumentTemplate={addDocumentTemplate}
+                onUpdateDocumentTemplate={updateDocumentTemplate}
+                onDeleteDocumentTemplate={deleteDocumentTemplate}
+                onAddDocumentBrandSettings={addDocumentBrandSettings}
+                onUpdateDocumentBrandSettings={updateDocumentBrandSettings}
+                onDeleteDocumentBrandSettings={deleteDocumentBrandSettings}
+                onAddGeneratedDocument={addGeneratedDocument}
+                onUpdateGeneratedDocument={updateGeneratedDocument}
+                onDeleteGeneratedDocument={deleteGeneratedDocument}
               />
             )}
           </div>

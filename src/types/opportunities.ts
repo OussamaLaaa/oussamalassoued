@@ -284,8 +284,9 @@ export interface ProjectFinanceItemInput {
   notes?: string;
 }
 
-export type DocumentType = 'document' | 'invoice' | 'contract' | 'agreement' | 'receipt' | 'proposal' | 'legal' | 'admin' | 'other';
-export type DocumentStatus = 'draft' | 'sent' | 'signed' | 'paid' | 'unpaid' | 'overdue' | 'archived' | 'cancelled';
+export type DocumentType = 'invoice' | 'contract' | 'cahier_de_charges' | 'proposal' | 'agreement' | 'receipt' | 'ux_audit_report' | 'project_brief' | 'document' | 'other' | 'legal' | 'admin';
+export type DocumentStatus = 'draft' | 'ready' | 'sent' | 'signed' | 'paid' | 'unpaid' | 'archived' | 'cancelled' | 'overdue';
+export type DocumentLanguage = 'english' | 'french' | 'arabic';
 
 export interface DocumentItem {
   id: string;
@@ -325,6 +326,114 @@ export interface DocumentInput {
   dueDate?: string;
   paidDate?: string;
   url?: string;
+  notes?: string;
+}
+
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  type: DocumentType;
+  language: DocumentLanguage;
+  description?: string;
+  content: string;
+  variables?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DocumentTemplateInput {
+  name: string;
+  type: DocumentType;
+  language: DocumentLanguage;
+  description?: string;
+  content: string;
+  variables?: string;
+  isActive?: boolean;
+}
+
+export interface DocumentBrandSettings {
+  id: string;
+  brandName?: string;
+  ownerName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  logoUrl?: string;
+  signatureUrl?: string;
+  signatureName?: string;
+  defaultCurrency?: string;
+  paymentNotes?: string;
+  legalNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DocumentBrandSettingsInput {
+  brandName?: string;
+  ownerName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  logoUrl?: string;
+  signatureUrl?: string;
+  signatureName?: string;
+  defaultCurrency?: string;
+  paymentNotes?: string;
+  legalNotes?: string;
+}
+
+export interface GeneratedDocument {
+  id: string;
+  title: string;
+  type: DocumentType;
+  status: DocumentStatus;
+  language: DocumentLanguage;
+  templateId?: string;
+  templateName?: string;
+  relatedProjectId?: string;
+  relatedProjectName?: string;
+  relatedCompanyId?: string;
+  relatedCompanyName?: string;
+  relatedPersonId?: string;
+  relatedPersonName?: string;
+  relatedDealId?: string;
+  relatedDealName?: string;
+  content?: string;
+  variablesJson?: string;
+  amount?: number;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  signedDate?: string;
+  pdfUrl?: string;
+  externalUrl?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GeneratedDocumentInput {
+  title: string;
+  type: DocumentType;
+  status: DocumentStatus;
+  language: DocumentLanguage;
+  templateId?: string;
+  relatedProjectId?: string;
+  relatedCompanyId?: string;
+  relatedPersonId?: string;
+  relatedDealId?: string;
+  content?: string;
+  variablesJson?: string;
+  amount?: number;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  signedDate?: string;
+  pdfUrl?: string;
+  externalUrl?: string;
   notes?: string;
 }
 
@@ -368,6 +477,9 @@ export interface OpportunitiesData {
   projectDocuments: ProjectDocument[];
   projectFinanceItems: ProjectFinanceItem[];
   documents: DocumentItem[];
+  documentTemplates: DocumentTemplate[];
+  documentBrandSettings: DocumentBrandSettings[];
+  generatedDocuments: GeneratedDocument[];
   templates: MessageTemplate[];
   strategyItems: StrategyItem[];
   strategyGoals: StrategyGoal[];

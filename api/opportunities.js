@@ -14,6 +14,9 @@ const allowedEntities = new Set([
   'project_documents',
   'project_finance_items',
   'documents',
+  'document_templates',
+  'document_brand_settings',
+  'generated_documents',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -45,6 +48,9 @@ const tablesAttempted = [
   'project_documents',
   'project_finance_items',
   'documents',
+  'document_templates',
+  'document_brand_settings',
+  'generated_documents',
   'strategy_items',
   'strategy_goals',
   'strategy_plans',
@@ -288,6 +294,65 @@ const normalizeDocumentRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeDocumentTemplateRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'document';
+  if (!forUpdate || row?.language !== undefined) payload.language = toNullableString(row?.language) || 'english';
+  if (!forUpdate || row?.description !== undefined) payload.description = toNullableString(row?.description);
+  if (!forUpdate || row?.content !== undefined) payload.content = toRequiredString(row?.content);
+  if (!forUpdate || row?.variables !== undefined) payload.variables = toNullableString(row?.variables);
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+
+  return payload;
+};
+
+const normalizeDocumentBrandSettingsRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.brandName !== undefined || row?.brand_name !== undefined) payload.brand_name = toNullableString(row?.brand_name ?? row?.brandName);
+  if (!forUpdate || row?.ownerName !== undefined || row?.owner_name !== undefined) payload.owner_name = toNullableString(row?.owner_name ?? row?.ownerName);
+  if (!forUpdate || row?.email !== undefined) payload.email = toNullableString(row?.email);
+  if (!forUpdate || row?.phone !== undefined) payload.phone = toNullableString(row?.phone);
+  if (!forUpdate || row?.website !== undefined) payload.website = toNullableString(row?.website);
+  if (!forUpdate || row?.address !== undefined) payload.address = toNullableString(row?.address);
+  if (!forUpdate || row?.logoUrl !== undefined || row?.logo_url !== undefined) payload.logo_url = toNullableString(row?.logo_url ?? row?.logoUrl);
+  if (!forUpdate || row?.signatureUrl !== undefined || row?.signature_url !== undefined) payload.signature_url = toNullableString(row?.signature_url ?? row?.signatureUrl);
+  if (!forUpdate || row?.signatureName !== undefined || row?.signature_name !== undefined) payload.signature_name = toNullableString(row?.signature_name ?? row?.signatureName);
+  if (!forUpdate || row?.defaultCurrency !== undefined || row?.default_currency !== undefined) payload.default_currency = toNullableString(row?.default_currency ?? row?.defaultCurrency);
+  if (!forUpdate || row?.paymentNotes !== undefined || row?.payment_notes !== undefined) payload.payment_notes = toNullableString(row?.payment_notes ?? row?.paymentNotes);
+  if (!forUpdate || row?.legalNotes !== undefined || row?.legal_notes !== undefined) payload.legal_notes = toNullableString(row?.legal_notes ?? row?.legalNotes);
+
+  return payload;
+};
+
+const normalizeGeneratedDocumentRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.title !== undefined) payload.title = toRequiredString(row?.title);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'document';
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'draft';
+  if (!forUpdate || row?.language !== undefined) payload.language = toNullableString(row?.language) || 'english';
+  if (!forUpdate || row?.templateId !== undefined || row?.template_id !== undefined) payload.template_id = toNullableString(row?.template_id ?? row?.templateId);
+  if (!forUpdate || row?.relatedProjectId !== undefined || row?.related_project_id !== undefined) payload.related_project_id = toNullableString(row?.related_project_id ?? row?.relatedProjectId);
+  if (!forUpdate || row?.relatedCompanyId !== undefined || row?.related_company_id !== undefined) payload.related_company_id = toNullableString(row?.related_company_id ?? row?.relatedCompanyId);
+  if (!forUpdate || row?.relatedPersonId !== undefined || row?.related_person_id !== undefined) payload.related_person_id = toNullableString(row?.related_person_id ?? row?.relatedPersonId);
+  if (!forUpdate || row?.relatedDealId !== undefined || row?.related_deal_id !== undefined) payload.related_deal_id = toNullableString(row?.related_deal_id ?? row?.relatedDealId);
+  if (!forUpdate || row?.content !== undefined) payload.content = toNullableString(row?.content);
+  if (!forUpdate || row?.variablesJson !== undefined || row?.variables_json !== undefined) payload.variables_json = toNullableString(row?.variables_json ?? row?.variablesJson);
+  if (!forUpdate || row?.amount !== undefined) payload.amount = toNullableNumber(row?.amount);
+  if (!forUpdate || row?.currency !== undefined) payload.currency = toNullableString(row?.currency);
+  if (!forUpdate || row?.issueDate !== undefined || row?.issue_date !== undefined) payload.issue_date = toNullableString(row?.issue_date ?? row?.issueDate);
+  if (!forUpdate || row?.dueDate !== undefined || row?.due_date !== undefined) payload.due_date = toNullableString(row?.due_date ?? row?.dueDate);
+  if (!forUpdate || row?.signedDate !== undefined || row?.signed_date !== undefined) payload.signed_date = toNullableString(row?.signed_date ?? row?.signedDate);
+  if (!forUpdate || row?.pdfUrl !== undefined || row?.pdf_url !== undefined) payload.pdf_url = toNullableString(row?.pdf_url ?? row?.pdfUrl);
+  if (!forUpdate || row?.externalUrl !== undefined || row?.external_url !== undefined) payload.external_url = toNullableString(row?.external_url ?? row?.externalUrl);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+
+  return payload;
+};
+
 const normalizePlanItemRow = (row) => ({
   plan_id: toRequiredString(row?.plan_id ?? row?.planId),
   title: toRequiredString(row?.title),
@@ -472,6 +537,9 @@ const normalizeStrategyEntityRow = (entity, row) => {
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
+  if (entity === 'document_templates') return normalizeDocumentTemplateRow(row, { forUpdate: false });
+  if (entity === 'document_brand_settings') return normalizeDocumentBrandSettingsRow(row, { forUpdate: false });
+  if (entity === 'generated_documents') return normalizeGeneratedDocumentRow(row, { forUpdate: false });
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -586,6 +654,9 @@ export default async function handler(req, res) {
         project_documents: results.project_documents || [],
         project_finance_items: results.project_finance_items || [],
         documents: results.documents || [],
+        document_templates: results.document_templates || [],
+        document_brand_settings: results.document_brand_settings || [],
+        generated_documents: results.generated_documents || [],
         strategy_items: results.strategy_items || [],
         strategy_goals: results.strategy_goals || [],
         strategy_plans: results.strategy_plans || [],
@@ -712,6 +783,12 @@ export default async function handler(req, res) {
         ? normalizeTemplateRow(data, { forUpdate: true })
         : entity === 'documents'
           ? normalizeDocumentRow(data, { forUpdate: true })
+          : entity === 'document_templates'
+            ? normalizeDocumentTemplateRow(data, { forUpdate: true })
+            : entity === 'document_brand_settings'
+              ? normalizeDocumentBrandSettingsRow(data, { forUpdate: true })
+              : entity === 'generated_documents'
+                ? normalizeGeneratedDocumentRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       const { data: updatedRow, error } = await supabase
