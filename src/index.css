@@ -1020,14 +1020,11 @@ select:focus-visible {
     overflow: visible !important;
   }
 
-  /* Hide ALL page content, then show only the print wrapper & its descendants */
-  body * {
+  /* Hide only elements completely unrelated to .print-wrapper.
+     Excludes the wrapper itself, its descendants, and its ancestors
+     (so original display values are preserved, no layout collapse). */
+  body :where(:not(.print-wrapper, .print-wrapper *, :has(.print-wrapper))) {
     display: none !important;
-  }
-
-  .print-wrapper,
-  .print-wrapper * {
-    display: revert !important;
   }
 
   .print-wrapper {
@@ -1042,12 +1039,6 @@ select:focus-visible {
     padding: 0 !important;
     margin: 0 !important;
     z-index: auto !important;
-  }
-
-  .print-wrapper > .print-card,
-  .print-wrapper > [class*="flex-col"] {
-    display: flex !important;
-    flex-direction: column !important;
   }
 
   .no-print {
