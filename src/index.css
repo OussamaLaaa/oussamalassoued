@@ -259,6 +259,61 @@
   }
 }
 
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  body.document-print-active * {
+    visibility: hidden !important;
+  }
+
+  body.document-print-active .document-print-root,
+  body.document-print-active .document-print-root * {
+    visibility: visible !important;
+  }
+
+  body.document-print-active .document-print-root {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  body.document-print-active .document-print-page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+  }
+
+  body.document-print-active .no-print {
+    display: none !important;
+  }
+
+  body.document-print-active img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body.document-print-active .document-print-page,
+  body.document-print-active .document-print-page > * {
+    break-inside: avoid;
+  }
+}
+
 .site-shell {
   width: 100%;
   max-width: var(--ds-layout-max-width);

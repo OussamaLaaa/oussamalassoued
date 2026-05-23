@@ -14,6 +14,7 @@ import type {
   Person,
   Project,
 } from '../../types/opportunities';
+import DocumentPrintPreviewModal from './DocumentPrintPreviewModal';
 
 
 type StudioTab = 'dashboard' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
@@ -228,6 +229,8 @@ const buildDraftTitle = (templateName?: string, relatedProjectName?: string, rel
   return parts.length > 0 ? parts.join(' - ') : 'New Document';
 };
 
+const normalizeDateInput = (value?: string) => (value ? value.slice(0, 10) : '');
+
 const defaultBuilderState = (template?: DocumentTemplate | null, brand?: DocumentBrandSettings | null): BuilderState => ({
   templateId: template?.id || '',
   relatedProjectId: '',
@@ -285,6 +288,8 @@ const DocumentStudioPanel: React.FC<{
   const [brandEditorOpen, setBrandEditorOpen] = useState(false);
   const [builder, setBuilder] = useState<BuilderState>(() => defaultBuilderState(documentTemplates[0] ?? null, documentBrandSettings[0] ?? null));
   const [builderError, setBuilderError] = useState('');
+  const [editingGeneratedDocumentId, setEditingGeneratedDocumentId] = useState<string | null>(null);
+  const [printPreviewDocument, setPrintPreviewDocument] = useState<GeneratedDocument | null>(null);
   const builderInitializedRef = useRef(false);
 
   const activeTemplates = useMemo(() => documentTemplates.filter((template) => template.isActive), [documentTemplates]);
@@ -344,6 +349,28 @@ const DocumentStudioPanel: React.FC<{
     });
   };
 
+  const loadGeneratedDocumentIntoBuilder = (generatedDocument: GeneratedDocument) => {
+    const template = documentTemplates.find((item) => item.id === generatedDocument.templateId) ?? null;
+    setEditingGeneratedDocumentId(generatedDocument.id);
+    setBuilder({
+      templateId: generatedDocument.templateId || '',
+      relatedProjectId: generatedDocument.relatedProjectId || '',
+      relatedCompanyId: generatedDocument.relatedCompanyId || '',
+      relatedPersonId: generatedDocument.relatedPersonId || '',
+      relatedDealId: generatedDocument.relatedDealId || '',
+      title: generatedDocument.title || template?.name || 'New Document',
+      type: generatedDocument.type,
+      language: generatedDocument.language,
+      amount: generatedDocument.amount != null ? String(generatedDocument.amount) : '',
+      currency: generatedDocument.currency || brand?.defaultCurrency || 'MYR',
+      issueDate: normalizeDateInput(generatedDocument.issueDate),
+      dueDate: normalizeDateInput(generatedDocument.dueDate),
+      variablesText: generatedDocument.variablesJson || template?.variables || '{}',
+      templateContent: generatedDocument.content || template?.content || '',
+    });
+    setTab('builder');
+  };
+
   const handleCreateStarterTemplates = async () => {
     await Promise.all(STARTER_TEMPLATES.map((template) => onAddDocumentTemplate(template)));
   };
@@ -379,7 +406,12 @@ const DocumentStudioPanel: React.FC<{
       notes: '',
     };
 
-    await onAddGeneratedDocument(payload);
+    if (editingGeneratedDocumentId) {
+      await onUpdateGeneratedDocument(editingGeneratedDocumentId, payload);
+      setEditingGeneratedDocumentId(null);
+    } else {
+      await onAddGeneratedDocument(payload);
+    }
     setBuilder((current) => ({ ...current, title: buildDraftTitle(selectedTemplate?.name, selectedProject?.name, selectedCompany?.name) }));
   };
 
@@ -401,6 +433,14 @@ const DocumentStudioPanel: React.FC<{
   };
 
   const renderTemplatePreview = (template: DocumentTemplate) => renderTemplate(template.content, builderContext);
+
+  const openPrintPreview = (generatedDocument: GeneratedDocument) => {
+    setPrintPreviewDocument(generatedDocument);
+  };
+
+  const closePrintPreview = () => {
+    setPrintPreviewDocument(null);
+  };
 
   const generatedSorted = useMemo(() => [...generatedDocuments].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()), [generatedDocuments]);
 
@@ -575,6 +615,7 @@ const DocumentStudioPanel: React.FC<{
                 <p className="mt-1 text-sm text-[#64748b]">Select a template, connect related records, and preview rendered content before saving.</p>
               </div>
               <div className="flex flex-wrap gap-2">
+                {editingGeneratedDocumentId ? <span className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-2 text-sm font-medium text-[#1d4ed8]">Editing existing document</span> : null}
                 <button type="button" onClick={() => void handleSaveGenerated('draft')} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">Save as Draft</button>
                 <button type="button" onClick={() => void handleSaveGenerated('ready')} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]">Save as Ready</button>
               </div>
@@ -690,14 +731,19 @@ const DocumentStudioPanel: React.FC<{
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {document.externalUrl ? <a href={document.externalUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8]">Open External</a> : null}
-                  {document.pdfUrl ? <a href={document.pdfUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs font-medium text-[#334155]">Open PDF</a> : null}
-                  <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'ready' })} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs font-medium text-[#334155]">Mark Ready</button>
-                  <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'sent' })} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8]">Mark Sent</button>
-                  <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'signed', signedDate: new Date().toISOString().slice(0, 10) })} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534]">Mark Signed</button>
-                  <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'archived' })} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1.5 text-xs font-medium text-[#475569]">Archive</button>
-                  <button type="button" onClick={() => void onDeleteGeneratedDocument(document.id)} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-1.5 text-xs font-medium text-[#b91c1c]">Delete</button>
+                  <button type="button" onClick={() => openPrintPreview(document)} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">Preview</button>
+                  <button type="button" onClick={() => openPrintPreview(document)} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">Export PDF</button>
+                  {document.externalUrl ? <a href={document.externalUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-3 py-1.5 text-xs font-medium text-[#047857] hover:bg-[#d1fae5]">Open External URL</a> : null}
+                  <button type="button" onClick={() => loadGeneratedDocumentIntoBuilder(document)} className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">Edit</button>
+                  <button type="button" onClick={() => void onDeleteGeneratedDocument(document.id)} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-1.5 text-xs font-medium text-[#b91c1c] hover:bg-[#ffe4e6]">Delete</button>
                 </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'ready' })} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">Mark Ready</button>
+                <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'sent' })} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">Mark Sent</button>
+                <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'signed', signedDate: new Date().toISOString().slice(0, 10) })} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">Mark Signed</button>
+                <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'paid' })} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">Mark Paid</button>
+                <button type="button" onClick={() => void onUpdateGeneratedDocument(document.id, { status: 'archived' })} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1.5 text-xs font-medium text-[#475569] hover:bg-[#eef2f7]">Archive</button>
               </div>
               <div className="mt-3 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3 text-sm leading-6 whitespace-pre-wrap text-[#0f172a]">{document.content || 'No content saved.'}</div>
             </div>
@@ -738,6 +784,13 @@ const DocumentStudioPanel: React.FC<{
           onDelete={brand ? () => void onDeleteDocumentBrandSettings(brand.id) : undefined}
         />
       ) : null}
+
+      <DocumentPrintPreviewModal
+        isOpen={Boolean(printPreviewDocument)}
+        onClose={closePrintPreview}
+        document={printPreviewDocument}
+        brandSettings={brand}
+      />
 
       <style>{`.studio-input{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;background:#fff;color:#0f172a;outline:none}.studio-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}.studio-textarea{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;background:#fff;color:#0f172a;outline:none;min-height:140px}.studio-textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}`}</style>
     </div>
