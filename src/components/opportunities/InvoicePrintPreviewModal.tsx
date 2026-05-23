@@ -88,7 +88,11 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      window.print();
+    } catch (err) {
+      console.error('[Print] window.print() failed:', err);
+    }
   };
 
   const handleGenerateAndStore = async () => {

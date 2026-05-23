@@ -148,7 +148,11 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      window.print();
+    } catch (err) {
+      console.error('[Print] window.print() failed:', err);
+    }
   };
 
   if (!isOpen || !previewDocument) {
