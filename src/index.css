@@ -1013,6 +1013,10 @@ select:focus-visible {
     color: black;
   }
 
+  .no-print {
+    display: none !important;
+  }
+
   .ds-btn,
   .ds-card {
     box-shadow: none;
