@@ -55,6 +55,11 @@ import type {
   PlanInput,
   PlanItem,
   PlanItemInput,
+  FinanceIncome,
+  FinanceExpense,
+  FinanceAllocationRule,
+  FinancePurchaseGoal,
+  FinanceInvestmentIdea,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -80,6 +85,11 @@ const cloneSeedData = (): OpportunitiesData => ({
   strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
   plans: [],
   planItems: [],
+  financeIncome: [],
+  financeExpenses: [],
+  financeAllocationRules: [],
+  financePurchaseGoals: [],
+  financeInvestmentIdeas: [],
 });
 
 
@@ -111,6 +121,11 @@ type OpportunitiesApiResponse = {
   strategy_decisions?: any[];
   plans?: any[];
   plan_items?: any[];
+  finance_income?: any[];
+  finance_expenses?: any[];
+  finance_allocation_rules?: any[];
+  finance_purchase_goals?: any[];
+  finance_investment_ideas?: any[];
   strategyNotes?: any[];
 };
 
@@ -423,6 +438,171 @@ const planItemToDb = (input: Partial<PlanItemInput>) => {
   return payload;
 };
 
+const financeIncomeFromDb = (row: any): FinanceIncome => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  source: String(row?.source ?? ''),
+  amount: Number(row?.amount ?? 0),
+  currency: String(row?.currency ?? 'MYR'),
+  incomeDate: row?.income_date ?? row?.incomeDate ?? undefined,
+  status: row?.status ?? 'expected',
+  notes: row?.notes ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeIncomeToDb = (input: Partial<FinanceIncome>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.source !== undefined) payload.source = input.source;
+  if (input.amount !== undefined) payload.amount = Number(input.amount);
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.incomeDate !== undefined) payload.income_date = toNullableString(input.incomeDate);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  return payload;
+};
+
+const financeExpenseFromDb = (row: any): FinanceExpense => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  category: String(row?.category ?? ''),
+  amount: Number(row?.amount ?? 0),
+  currency: String(row?.currency ?? 'MYR'),
+  expenseDate: row?.expense_date ?? row?.expenseDate ?? undefined,
+  status: row?.status ?? 'planned',
+  notes: row?.notes ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeExpenseToDb = (input: Partial<FinanceExpense>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.amount !== undefined) payload.amount = Number(input.amount);
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.expenseDate !== undefined) payload.expense_date = toNullableString(input.expenseDate);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const financeAllocationRuleFromDb = (row: any): FinanceAllocationRule => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  category: String(row?.category ?? ''),
+  percentage: Number(row?.percentage ?? 0),
+  priority: Number(row?.priority ?? 0),
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeAllocationRuleToDb = (input: Partial<FinanceAllocationRule>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.percentage !== undefined) payload.percentage = Number(input.percentage);
+  if (input.priority !== undefined) payload.priority = Number(input.priority);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const financePurchaseGoalFromDb = (row: any): FinancePurchaseGoal => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  category: String(row?.category ?? ''),
+  targetAmount: Number(row?.target_amount ?? row?.targetAmount ?? 0),
+  savedAmount: Number(row?.saved_amount ?? row?.savedAmount ?? 0),
+  currency: String(row?.currency ?? 'MYR'),
+  priority: row?.priority ?? 'medium',
+  status: row?.status ?? 'planned',
+  targetDate: row?.target_date ?? row?.targetDate ?? undefined,
+  notes: row?.notes ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financePurchaseGoalToDb = (input: Partial<FinancePurchaseGoal>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.targetAmount !== undefined) payload.target_amount = Number(input.targetAmount);
+  if (input.savedAmount !== undefined) payload.saved_amount = Number(input.savedAmount);
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.targetDate !== undefined) payload.target_date = toNullableString(input.targetDate);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  return payload;
+};
+
+const financeInvestmentIdeaFromDb = (row: any): FinanceInvestmentIdea => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  type: String(row?.type ?? ''),
+  plannedAmount: Number(row?.planned_amount ?? row?.plannedAmount ?? 0),
+  currency: String(row?.currency ?? 'MYR'),
+  riskLevel: row?.risk_level ?? row?.riskLevel ?? 'medium',
+  ethicalStatus: row?.ethical_status ?? row?.ethicalStatus ?? 'needs_review',
+  status: row?.status ?? 'researching',
+  expectedReason: row?.expected_reason ?? row?.expectedReason ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const financeInvestmentIdeaToDb = (input: Partial<FinanceInvestmentIdea>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.type !== undefined) payload.type = input.type;
+  if (input.plannedAmount !== undefined) payload.planned_amount = Number(input.plannedAmount);
+  if (input.currency !== undefined) payload.currency = input.currency;
+  if (input.riskLevel !== undefined) payload.risk_level = input.riskLevel;
+  if (input.ethicalStatus !== undefined) payload.ethical_status = input.ethicalStatus;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.expectedReason !== undefined) payload.expected_reason = toNullableString(input.expectedReason);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const attachFinanceIncomeLinkNames = (items: FinanceIncome[], projects: Project[], companies: Company[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+  }));
+};
+
+const attachFinanceExpenseLinkNames = (items: FinanceExpense[], projects: Project[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
+const attachFinancePurchaseGoalLinkNames = (items: FinancePurchaseGoal[], projects: Project[]) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+  }));
+};
+
 const attachOsPlanLinkNames = (items: Plan[], projects: Project[], strategyGoals: StrategyGoal[]) => {
   const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
   const goalById = new Map(strategyGoals.map((g) => [g.id, g.title] as const));
@@ -585,6 +765,11 @@ export const useOpportunitiesData = (enabled = true) => {
   const [strategyDecisions, setStrategyDecisions] = useState<StrategyDecision[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planItems, setPlanItems] = useState<PlanItem[]>([]);
+  const [financeIncome, setFinanceIncome] = useState<FinanceIncome[]>([]);
+  const [financeExpenses, setFinanceExpenses] = useState<FinanceExpense[]>([]);
+  const [financeAllocationRules, setFinanceAllocationRules] = useState<FinanceAllocationRule[]>([]);
+  const [financePurchaseGoals, setFinancePurchaseGoals] = useState<FinancePurchaseGoal[]>([]);
+  const [financeInvestmentIdeas, setFinanceInvestmentIdeas] = useState<FinanceInvestmentIdea[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -603,6 +788,11 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
     const nextPlansRaw = Array.isArray(payload?.plans) ? payload.plans : [];
     const nextPlanItemsRaw = Array.isArray(payload?.plan_items) ? payload.plan_items : [];
+    const nextFinanceIncomeRaw = Array.isArray(payload?.finance_income) ? payload.finance_income : [];
+    const nextFinanceExpensesRaw = Array.isArray(payload?.finance_expenses) ? payload.finance_expenses : [];
+    const nextFinanceAllocationRulesRaw = Array.isArray(payload?.finance_allocation_rules) ? payload.finance_allocation_rules : [];
+    const nextFinancePurchaseGoalsRaw = Array.isArray(payload?.finance_purchase_goals) ? payload.finance_purchase_goals : [];
+    const nextFinanceInvestmentIdeasRaw = Array.isArray(payload?.finance_investment_ideas) ? payload.finance_investment_ideas : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -656,6 +846,11 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextStrategyDecisions = attachDecisionLinkNames(nextStrategyDecisionsRaw.map((row: any) => strategyDecisionFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
     const nextPlans = attachOsPlanLinkNames(nextPlansRaw.map((row: any) => planFromDb(row)), nextProjects, nextStrategyGoals);
     const nextPlanItems = attachPlanItemLinkNames(nextPlanItemsRaw.map((row: any) => planItemFromDb(row)), nextProjects, nextStrategyGoals);
+    const nextFinanceIncome = attachFinanceIncomeLinkNames(nextFinanceIncomeRaw.map((row: any) => financeIncomeFromDb(row)), nextProjects, nextCompanies);
+    const nextFinanceExpenses = attachFinanceExpenseLinkNames(nextFinanceExpensesRaw.map((row: any) => financeExpenseFromDb(row)), nextProjects);
+    const nextFinanceAllocationRules = nextFinanceAllocationRulesRaw.map((row: any) => financeAllocationRuleFromDb(row));
+    const nextFinancePurchaseGoals = attachFinancePurchaseGoalLinkNames(nextFinancePurchaseGoalsRaw.map((row: any) => financePurchaseGoalFromDb(row)), nextProjects);
+    const nextFinanceInvestmentIdeas = nextFinanceInvestmentIdeasRaw.map((row: any) => financeInvestmentIdeaFromDb(row));
     const nextStrategyItems = attachStrategyLinkNames(
       nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
       nextProjects,
@@ -688,6 +883,11 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyDecisions(nextStrategyDecisions);
     setPlans(nextPlans);
     setPlanItems(nextPlanItems);
+    setFinanceIncome(nextFinanceIncome);
+    setFinanceExpenses(nextFinanceExpenses);
+    setFinanceAllocationRules(nextFinanceAllocationRules);
+    setFinancePurchaseGoals(nextFinancePurchaseGoals);
+    setFinanceInvestmentIdeas(nextFinanceInvestmentIdeas);
     setStrategyItems(nextStrategyItems);
   }, []);
 
@@ -725,6 +925,11 @@ export const useOpportunitiesData = (enabled = true) => {
           setStrategyDecisions([]);
           setPlans([]);
           setPlanItems([]);
+          setFinanceIncome([]);
+          setFinanceExpenses([]);
+          setFinanceAllocationRules([]);
+          setFinancePurchaseGoals([]);
+          setFinanceInvestmentIdeas([]);
           setStrategyItems([]);
           return;
         }
@@ -743,6 +948,11 @@ export const useOpportunitiesData = (enabled = true) => {
         setStrategyDecisions(fallback.strategyDecisions);
         setPlans(fallback.plans);
         setPlanItems(fallback.planItems);
+        setFinanceIncome(fallback.financeIncome);
+        setFinanceExpenses(fallback.financeExpenses);
+        setFinanceAllocationRules(fallback.financeAllocationRules);
+        setFinancePurchaseGoals(fallback.financePurchaseGoals);
+        setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
         setStrategyItems(fallback.strategyItems);
         setError('Using seed data fallback.');
       } finally {
@@ -918,7 +1128,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1372,6 +1582,151 @@ export const useOpportunitiesData = (enabled = true) => {
     setPlanItems((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Finance Income CRUD ──
+
+  const addFinanceIncome = async (input: Partial<FinanceIncome>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Income title is required.');
+    }
+    const row = await syncInsert('finance_income', financeIncomeToDb(input));
+    const next = attachFinanceIncomeLinkNames([financeIncomeFromDb(row)], projects, companies)[0];
+    setFinanceIncome((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceIncome = async (id: string, input: Partial<FinanceIncome>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Income title is required.');
+    }
+    const row = await syncUpdate('finance_income', id, financeIncomeToDb(input));
+    const next = attachFinanceIncomeLinkNames([financeIncomeFromDb(row)], projects, companies)[0];
+    setFinanceIncome((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceIncome = async (id: string) => {
+    const confirmed = window.confirm('Delete this income entry?');
+    if (!confirmed) return;
+    await syncDelete('finance_income', id);
+    setFinanceIncome((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Finance Expenses CRUD ──
+
+  const addFinanceExpense = async (input: Partial<FinanceExpense>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Expense title is required.');
+    }
+    const row = await syncInsert('finance_expenses', financeExpenseToDb(input));
+    const next = attachFinanceExpenseLinkNames([financeExpenseFromDb(row)], projects)[0];
+    setFinanceExpenses((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceExpense = async (id: string, input: Partial<FinanceExpense>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Expense title is required.');
+    }
+    const row = await syncUpdate('finance_expenses', id, financeExpenseToDb(input));
+    const next = attachFinanceExpenseLinkNames([financeExpenseFromDb(row)], projects)[0];
+    setFinanceExpenses((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceExpense = async (id: string) => {
+    const confirmed = window.confirm('Delete this expense entry?');
+    if (!confirmed) return;
+    await syncDelete('finance_expenses', id);
+    setFinanceExpenses((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Finance Allocation Rules CRUD ──
+
+  const addFinanceAllocationRule = async (input: Partial<FinanceAllocationRule>) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Allocation rule name is required.');
+    }
+    const row = await syncInsert('finance_allocation_rules', financeAllocationRuleToDb(input));
+    const next = financeAllocationRuleFromDb(row);
+    setFinanceAllocationRules((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceAllocationRule = async (id: string, input: Partial<FinanceAllocationRule>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Allocation rule name is required.');
+    }
+    const row = await syncUpdate('finance_allocation_rules', id, financeAllocationRuleToDb(input));
+    const next = financeAllocationRuleFromDb(row);
+    setFinanceAllocationRules((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceAllocationRule = async (id: string) => {
+    const confirmed = window.confirm('Delete this allocation rule?');
+    if (!confirmed) return;
+    await syncDelete('finance_allocation_rules', id);
+    setFinanceAllocationRules((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Finance Purchase Goals CRUD ──
+
+  const addFinancePurchaseGoal = async (input: Partial<FinancePurchaseGoal>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Purchase goal title is required.');
+    }
+    const row = await syncInsert('finance_purchase_goals', financePurchaseGoalToDb(input));
+    const next = attachFinancePurchaseGoalLinkNames([financePurchaseGoalFromDb(row)], projects)[0];
+    setFinancePurchaseGoals((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinancePurchaseGoal = async (id: string, input: Partial<FinancePurchaseGoal>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Purchase goal title is required.');
+    }
+    const row = await syncUpdate('finance_purchase_goals', id, financePurchaseGoalToDb(input));
+    const next = attachFinancePurchaseGoalLinkNames([financePurchaseGoalFromDb(row)], projects)[0];
+    setFinancePurchaseGoals((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinancePurchaseGoal = async (id: string) => {
+    const confirmed = window.confirm('Delete this purchase goal?');
+    if (!confirmed) return;
+    await syncDelete('finance_purchase_goals', id);
+    setFinancePurchaseGoals((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Finance Investment Ideas CRUD ──
+
+  const addFinanceInvestmentIdea = async (input: Partial<FinanceInvestmentIdea>) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Investment idea title is required.');
+    }
+    const row = await syncInsert('finance_investment_ideas', financeInvestmentIdeaToDb(input));
+    const next = financeInvestmentIdeaFromDb(row);
+    setFinanceInvestmentIdeas((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateFinanceInvestmentIdea = async (id: string, input: Partial<FinanceInvestmentIdea>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Investment idea title is required.');
+    }
+    const row = await syncUpdate('finance_investment_ideas', id, financeInvestmentIdeaToDb(input));
+    const next = financeInvestmentIdeaFromDb(row);
+    setFinanceInvestmentIdeas((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteFinanceInvestmentIdea = async (id: string) => {
+    const confirmed = window.confirm('Delete this investment idea?');
+    if (!confirmed) return;
+    await syncDelete('finance_investment_ideas', id);
+    setFinanceInvestmentIdeas((current) => current.filter((item) => item.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -1459,6 +1814,21 @@ export const useOpportunitiesData = (enabled = true) => {
   }, [projects, strategyGoals, strategyPlans]);
 
   useEffect(() => {
+    setFinanceIncome((current) => {
+      const next = attachFinanceIncomeLinkNames(current, projects, companies);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName']) ? next : current;
+    });
+    setFinanceExpenses((current) => {
+      const next = attachFinanceExpenseLinkNames(current, projects);
+      return shouldReplaceCollection(current, next, ['linkedProjectName']) ? next : current;
+    });
+    setFinancePurchaseGoals((current) => {
+      const next = attachFinancePurchaseGoalLinkNames(current, projects);
+      return shouldReplaceCollection(current, next, ['linkedProjectName']) ? next : current;
+    });
+  }, [projects, companies]);
+
+  useEffect(() => {
     setPlans((current) => {
       const next = attachOsPlanLinkNames(current, projects, strategyGoals);
       return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedStrategyGoalTitle']) ? next : current;
@@ -1484,6 +1854,11 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyDecisions(fallback.strategyDecisions);
     setPlans(fallback.plans);
     setPlanItems(fallback.planItems);
+    setFinanceIncome(fallback.financeIncome);
+    setFinanceExpenses(fallback.financeExpenses);
+    setFinanceAllocationRules(fallback.financeAllocationRules);
+    setFinancePurchaseGoals(fallback.financePurchaseGoals);
+    setFinanceInvestmentIdeas(fallback.financeInvestmentIdeas);
     setStrategyItems(fallback.strategyItems);
   };
 
@@ -1508,6 +1883,26 @@ export const useOpportunitiesData = (enabled = true) => {
     strategyNotes,
     plans,
     planItems,
+    financeIncome,
+    financeExpenses,
+    financeAllocationRules,
+    financePurchaseGoals,
+    financeInvestmentIdeas,
+    addFinanceIncome,
+    updateFinanceIncome,
+    deleteFinanceIncome,
+    addFinanceExpense,
+    updateFinanceExpense,
+    deleteFinanceExpense,
+    addFinanceAllocationRule,
+    updateFinanceAllocationRule,
+    deleteFinanceAllocationRule,
+    addFinancePurchaseGoal,
+    updateFinancePurchaseGoal,
+    deleteFinancePurchaseGoal,
+    addFinanceInvestmentIdea,
+    updateFinanceInvestmentIdea,
+    deleteFinanceInvestmentIdea,
     addPlan,
     updatePlan,
     deletePlan,

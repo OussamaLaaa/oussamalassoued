@@ -21,6 +21,11 @@ const allowedEntities = new Set([
   'strategy_decisions',
   'plans',
   'plan_items',
+  'finance_income',
+  'finance_expenses',
+  'finance_allocation_rules',
+  'finance_purchase_goals',
+  'finance_investment_ideas',
 ]);
 const tablesAttempted = [
   'companies',
@@ -42,6 +47,11 @@ const tablesAttempted = [
   'strategy_decisions',
   'plans',
   'plan_items',
+  'finance_income',
+  'finance_expenses',
+  'finance_allocation_rules',
+  'finance_purchase_goals',
+  'finance_investment_ideas',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -260,6 +270,72 @@ const normalizePlanItemRow = (row) => ({
   linked_strategy_goal_id: toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId),
 });
 
+const normalizeFinanceIncomeRow = (row) => ({
+  title: toRequiredString(row?.title),
+  source: toRequiredString(row?.source),
+  amount: toNullableNumber(row?.amount) ?? 0,
+  currency: toRequiredString(row?.currency) || 'MYR',
+  income_date: toNullableString(row?.income_date ?? row?.incomeDate),
+  status: toNullableString(row?.status) || 'expected',
+  notes: toNullableString(row?.notes),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+});
+
+const normalizeFinanceExpenseRow = (row) => ({
+  title: toRequiredString(row?.title),
+  category: toRequiredString(row?.category),
+  amount: toNullableNumber(row?.amount) ?? 0,
+  currency: toRequiredString(row?.currency) || 'MYR',
+  expense_date: toNullableString(row?.expense_date ?? row?.expenseDate),
+  status: toNullableString(row?.status) || 'planned',
+  notes: toNullableString(row?.notes),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeFinanceAllocationRuleRow = (row) => ({
+  name: toRequiredString(row?.name),
+  category: toRequiredString(row?.category),
+  percentage: toNullableNumber(row?.percentage) ?? 0,
+  priority: toNullableNumber(row?.priority) ?? 0,
+  is_active: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: toNullableString(row?.notes),
+});
+
+const normalizeFinancePurchaseGoalRow = (row) => ({
+  title: toRequiredString(row?.title),
+  category: toRequiredString(row?.category),
+  target_amount: toNullableNumber(row?.target_amount ?? row?.targetAmount) ?? 0,
+  saved_amount: toNullableNumber(row?.saved_amount ?? row?.savedAmount) ?? 0,
+  currency: toRequiredString(row?.currency) || 'MYR',
+  priority: toNullableString(row?.priority) || 'medium',
+  status: toNullableString(row?.status) || 'planned',
+  target_date: toNullableString(row?.target_date ?? row?.targetDate),
+  notes: toNullableString(row?.notes),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+});
+
+const normalizeFinanceInvestmentIdeaRow = (row) => ({
+  title: toRequiredString(row?.title),
+  type: toRequiredString(row?.type),
+  planned_amount: toNullableNumber(row?.planned_amount ?? row?.plannedAmount) ?? 0,
+  currency: toRequiredString(row?.currency) || 'MYR',
+  risk_level: toNullableString(row?.risk_level ?? row?.riskLevel) || 'medium',
+  ethical_status: toNullableString(row?.ethical_status ?? row?.ethicalStatus) || 'needs_review',
+  status: toNullableString(row?.status) || 'researching',
+  expected_reason: toNullableString(row?.expected_reason ?? row?.expectedReason),
+  notes: toNullableString(row?.notes),
+});
+
+const normalizeFinanceEntityRow = (entity, row) => {
+  if (entity === 'finance_income') return normalizeFinanceIncomeRow(row);
+  if (entity === 'finance_expenses') return normalizeFinanceExpenseRow(row);
+  if (entity === 'finance_allocation_rules') return normalizeFinanceAllocationRuleRow(row);
+  if (entity === 'finance_purchase_goals') return normalizeFinancePurchaseGoalRow(row);
+  if (entity === 'finance_investment_ideas') return normalizeFinanceInvestmentIdeaRow(row);
+  return row;
+};
+
 const normalizeStrategyEntityRow = (entity, row) => {
   if (entity === 'strategy_items') return normalizeStrategyRow(row);
   if (entity === 'strategy_goals') return normalizeStrategyGoalRow(row);
@@ -275,6 +351,7 @@ const normalizeEntityRow = (entity, row) => {
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
+  if (entity.startsWith('finance_')) return normalizeFinanceEntityRow(entity, row);
   return row;
 };
 
@@ -392,6 +469,11 @@ export default async function handler(req, res) {
         strategy_decisions: results.strategy_decisions || [],
         plans: results.plans || [],
         plan_items: results.plan_items || [],
+        finance_income: results.finance_income || [],
+        finance_expenses: results.finance_expenses || [],
+        finance_allocation_rules: results.finance_allocation_rules || [],
+        finance_purchase_goals: results.finance_purchase_goals || [],
+        finance_investment_ideas: results.finance_investment_ideas || [],
         templatesWarning,
         strategyNotes: [],
       });
@@ -499,13 +581,7 @@ export default async function handler(req, res) {
     try {
       const payload = entity === 'message_templates'
         ? normalizeTemplateRow(data, { forUpdate: true })
-        : entity.startsWith('strategy_')
-          ? normalizeStrategyEntityRow(entity, data)
-          : entity === 'plans'
-            ? normalizePlanRow(data)
-            : entity === 'plan_items'
-              ? normalizePlanItemRow(data)
-              : data;
+        : normalizeEntityRow(entity, data);
 
       const { data: updatedRow, error } = await supabase
         .from(entity)

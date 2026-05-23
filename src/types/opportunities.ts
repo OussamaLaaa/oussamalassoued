@@ -333,6 +333,11 @@ export interface OpportunitiesData {
   strategyNotes: StrategyNote[];
   plans: Plan[];
   planItems: PlanItem[];
+  financeIncome: FinanceIncome[];
+  financeExpenses: FinanceExpense[];
+  financeAllocationRules: FinanceAllocationRule[];
+  financePurchaseGoals: FinancePurchaseGoal[];
+  financeInvestmentIdeas: FinanceInvestmentIdea[];
 }
 
 export type StrategySection =
@@ -639,6 +644,82 @@ export interface PlanItemInput {
   linkedStrategyGoalId?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+export interface FinanceIncome {
+  id: string;
+  title: string;
+  source: string;
+  amount: number;
+  currency: string;
+  incomeDate?: string;
+  status: string;
+  notes?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceExpense {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  currency: string;
+  expenseDate?: string;
+  status: string;
+  notes?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceAllocationRule {
+  id: string;
+  name: string;
+  category: string;
+  percentage: number;
+  priority: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinancePurchaseGoal {
+  id: string;
+  title: string;
+  category: string;
+  targetAmount: number;
+  savedAmount: number;
+  currency: string;
+  priority: string;
+  status: string;
+  targetDate?: string;
+  notes?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinanceInvestmentIdea {
+  id: string;
+  title: string;
+  type: string;
+  plannedAmount: number;
+  currency: string;
+  riskLevel: string;
+  ethicalStatus: string;
+  status: string;
+  expectedReason?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';

@@ -10,6 +10,7 @@ import ProjectsPanel from './ProjectsPanel';
 import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
 import PlansPanel from './PlansPanel';
+import FinancePanel from './FinancePanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -36,6 +37,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
   { id: 'plans', label: 'Plans' },
+  { id: 'finance', label: 'Finance' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -278,6 +280,12 @@ const OpportunitiesLayout: React.FC<{
     addProjectDocument, deleteProjectDocument,
     addProjectFinanceItem, deleteProjectFinanceItem,
     plans, planItems, addPlan, updatePlan, deletePlan, addPlanItem, updatePlanItem, deletePlanItem,
+    financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals, financeInvestmentIdeas,
+    addFinanceIncome, updateFinanceIncome, deleteFinanceIncome,
+    addFinanceExpense, updateFinanceExpense, deleteFinanceExpense,
+    addFinanceAllocationRule, updateFinanceAllocationRule, deleteFinanceAllocationRule,
+    addFinancePurchaseGoal, updateFinancePurchaseGoal, deleteFinancePurchaseGoal,
+    addFinanceInvestmentIdea, updateFinanceInvestmentIdea, deleteFinanceInvestmentIdea,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -704,6 +712,33 @@ const OpportunitiesLayout: React.FC<{
                 onAddPlanItem={addPlanItem}
                 onUpdatePlanItem={updatePlanItem}
                 onDeletePlanItem={deletePlanItem}
+              />
+            )}
+
+            {tab === 'finance' && (
+              <FinancePanel
+                financeIncome={financeIncome}
+                financeExpenses={financeExpenses}
+                financeAllocationRules={financeAllocationRules}
+                financePurchaseGoals={financePurchaseGoals}
+                financeInvestmentIdeas={financeInvestmentIdeas}
+                projects={projects}
+                companies={companies}
+                onAddFinanceIncome={addFinanceIncome}
+                onUpdateFinanceIncome={updateFinanceIncome}
+                onDeleteFinanceIncome={deleteFinanceIncome}
+                onAddFinanceExpense={addFinanceExpense}
+                onUpdateFinanceExpense={updateFinanceExpense}
+                onDeleteFinanceExpense={deleteFinanceExpense}
+                onAddFinanceAllocationRule={addFinanceAllocationRule}
+                onUpdateFinanceAllocationRule={updateFinanceAllocationRule}
+                onDeleteFinanceAllocationRule={deleteFinanceAllocationRule}
+                onAddFinancePurchaseGoal={addFinancePurchaseGoal}
+                onUpdateFinancePurchaseGoal={updateFinancePurchaseGoal}
+                onDeleteFinancePurchaseGoal={deleteFinancePurchaseGoal}
+                onAddFinanceInvestmentIdea={addFinanceInvestmentIdea}
+                onUpdateFinanceInvestmentIdea={updateFinanceInvestmentIdea}
+                onDeleteFinanceInvestmentIdea={deleteFinanceInvestmentIdea}
               />
             )}
           </div>
