@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
 type PrintableDocumentViewProps = {
@@ -90,7 +90,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   <h3 className="text-[15px] font-semibold tracking-tight text-[#0f172a]">{children}</h3>
 );
 
-const PrintableDocumentView: React.FC<PrintableDocumentViewProps> = ({ document, brandSettings, showActions }) => {
+const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewProps>(({ document, brandSettings, showActions }, ref) => {
   const brand = useMemo(() => resolveBrandSettings(brandSettings), [brandSettings]);
   const blocks = useMemo(() => parseContentBlocks(document.content), [document.content]);
   const paidDate = (document as GeneratedDocument & { paidDate?: string }).paidDate;
@@ -99,7 +99,7 @@ const PrintableDocumentView: React.FC<PrintableDocumentViewProps> = ({ document,
 
   return (
     <div className="document-print-root bg-[#f8fafc] text-[#0f172a]">
-      <div className="document-print-page mx-auto w-full max-w-[210mm] bg-white px-5 py-6 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.28)] sm:px-8 sm:py-8 lg:px-10">
+      <div ref={ref} className="document-print-page mx-auto w-full max-w-[210mm] bg-white px-5 py-6 shadow-[0_12px_30px_-18px_rgba(15,23,42,0.28)] sm:px-8 sm:py-8 lg:px-10">
         <header className="border-b border-[#e5e7eb] pb-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
@@ -107,6 +107,8 @@ const PrintableDocumentView: React.FC<PrintableDocumentViewProps> = ({ document,
                 <img
                   src={brand.logoUrl}
                   alt={brand.brandName || 'Brand logo'}
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
                   className="h-14 w-14 shrink-0 rounded-xl object-contain"
                 />
               ) : null}
@@ -228,6 +230,8 @@ const PrintableDocumentView: React.FC<PrintableDocumentViewProps> = ({ document,
                 <img
                   src={brand.signatureUrl}
                   alt={brand.signatureName || brand.ownerName || 'Signature'}
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
                   className="max-h-16 max-w-[180px] object-contain"
                 />
               ) : null}
@@ -255,6 +259,8 @@ const PrintableDocumentView: React.FC<PrintableDocumentViewProps> = ({ document,
       </div>
     </div>
   );
-};
+});
+
+PrintableDocumentView.displayName = 'PrintableDocumentView';
 
 export default PrintableDocumentView;

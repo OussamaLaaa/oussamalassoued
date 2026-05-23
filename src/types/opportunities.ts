@@ -409,6 +409,7 @@ export interface GeneratedDocument {
   dueDate?: string;
   signedDate?: string;
   pdfUrl?: string;
+  pdfStoragePath?: string;
   externalUrl?: string;
   notes?: string;
   createdAt?: string;
@@ -433,6 +434,7 @@ export interface GeneratedDocumentInput {
   dueDate?: string;
   signedDate?: string;
   pdfUrl?: string;
+  pdfStoragePath?: string;
   externalUrl?: string;
   notes?: string;
 }

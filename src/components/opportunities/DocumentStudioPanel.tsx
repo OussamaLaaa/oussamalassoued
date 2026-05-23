@@ -442,6 +442,41 @@ const DocumentStudioPanel: React.FC<{
     setPrintPreviewDocument(null);
   };
 
+  const handleStoredPdf = async (storagePath: string) => {
+    if (!printPreviewDocument) return;
+    await onUpdateGeneratedDocument(printPreviewDocument.id, { pdfStoragePath: storagePath });
+    setPrintPreviewDocument((current) => (current ? { ...current, pdfStoragePath: storagePath } : current));
+  };
+
+  const openStoredPdf = async (generatedDocument: GeneratedDocument) => {
+    const popup = window.open('about:blank', '_blank');
+    try {
+      const response = await fetch(`/api/document-pdf-upload?documentId=${encodeURIComponent(generatedDocument.id)}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success || !result?.signedUrl) {
+        throw new Error(result?.error || 'No stored PDF found.');
+      }
+
+      if (popup) {
+        popup.location.href = String(result.signedUrl);
+        popup.focus();
+        return;
+      }
+
+      window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      if (popup) {
+        popup.close();
+      }
+      console.error('[Document PDF] Failed to open stored PDF', error);
+    }
+  };
+
   const generatedSorted = useMemo(() => [...generatedDocuments].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()), [generatedDocuments]);
 
   return (
@@ -722,6 +757,7 @@ const DocumentStudioPanel: React.FC<{
                     <Badge label={document.type} tone="blue" />
                     <Badge label={document.status} tone={document.status === 'signed' || document.status === 'paid' ? 'green' : document.status === 'overdue' ? 'red' : document.status === 'sent' ? 'blue' : 'neutral'} />
                     <Badge label={document.language} tone="neutral" />
+                    {document.pdfStoragePath ? <Badge label="PDF Stored" tone="green" /> : null}
                   </div>
                   <div className="mt-2 text-sm text-[#64748b]">
                     {document.relatedProjectName || document.relatedCompanyName || document.relatedPersonName || document.relatedDealName || 'No relationship'}
@@ -733,6 +769,8 @@ const DocumentStudioPanel: React.FC<{
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => openPrintPreview(document)} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">Preview</button>
                   <button type="button" onClick={() => openPrintPreview(document)} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">Export PDF</button>
+                  {!document.pdfStoragePath ? <button type="button" onClick={() => openPrintPreview(document)} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">Generate PDF</button> : null}
+                  {document.pdfStoragePath ? <button type="button" onClick={() => void openStoredPdf(document)} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">Open Stored PDF</button> : null}
                   {document.externalUrl ? <a href={document.externalUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-3 py-1.5 text-xs font-medium text-[#047857] hover:bg-[#d1fae5]">Open External URL</a> : null}
                   <button type="button" onClick={() => loadGeneratedDocumentIntoBuilder(document)} className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">Edit</button>
                   <button type="button" onClick={() => void onDeleteGeneratedDocument(document.id)} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-1.5 text-xs font-medium text-[#b91c1c] hover:bg-[#ffe4e6]">Delete</button>
@@ -790,6 +828,7 @@ const DocumentStudioPanel: React.FC<{
         onClose={closePrintPreview}
         document={printPreviewDocument}
         brandSettings={brand}
+        onStoredPdf={handleStoredPdf}
       />
 
       <style>{`.studio-input{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;background:#fff;color:#0f172a;outline:none}.studio-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}.studio-textarea{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;background:#fff;color:#0f172a;outline:none;min-height:140px}.studio-textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}`}</style>

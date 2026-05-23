@@ -347,6 +347,7 @@ const normalizeGeneratedDocumentRow = (row, { forUpdate = false } = {}) => {
   if (!forUpdate || row?.dueDate !== undefined || row?.due_date !== undefined) payload.due_date = toNullableString(row?.due_date ?? row?.dueDate);
   if (!forUpdate || row?.signedDate !== undefined || row?.signed_date !== undefined) payload.signed_date = toNullableString(row?.signed_date ?? row?.signedDate);
   if (!forUpdate || row?.pdfUrl !== undefined || row?.pdf_url !== undefined) payload.pdf_url = toNullableString(row?.pdf_url ?? row?.pdfUrl);
+  if (!forUpdate || row?.pdfStoragePath !== undefined || row?.pdf_storage_path !== undefined) payload.pdf_storage_path = toNullableString(row?.pdf_storage_path ?? row?.pdfStoragePath);
   if (!forUpdate || row?.externalUrl !== undefined || row?.external_url !== undefined) payload.external_url = toNullableString(row?.external_url ?? row?.externalUrl);
   if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
 

@@ -573,6 +573,7 @@ export const generatedDocumentFromDb = (row: any): GeneratedDocument => ({
   dueDate: toIso(row?.due_date ?? row?.dueDate),
   signedDate: toIso(row?.signed_date ?? row?.signedDate),
   pdfUrl: row?.pdf_url ?? row?.pdfUrl ?? undefined,
+  pdfStoragePath: row?.pdf_storage_path ?? row?.pdfStoragePath ?? undefined,
   externalUrl: row?.external_url ?? row?.externalUrl ?? undefined,
   notes: row?.notes ?? undefined,
   createdAt: toIso(row?.created_at ?? row?.createdAt),
@@ -600,6 +601,7 @@ export const generatedDocumentToDb = (input: Partial<GeneratedDocumentInput>, op
   if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
   if (!forUpdate || input.signedDate !== undefined) payload.signed_date = toNullableDate(input.signedDate);
   if (!forUpdate || input.pdfUrl !== undefined) payload.pdf_url = toNullableString(input.pdfUrl);
+  if (!forUpdate || input.pdfStoragePath !== undefined) payload.pdf_storage_path = toNullableString(input.pdfStoragePath);
   if (!forUpdate || input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
