@@ -190,8 +190,8 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
           </div>
         </div>
 
-        <div className="no-print flex-1 overflow-auto bg-[#f8fafc] px-6 py-6">
-          <div className="mx-auto w-fit">
+        <div className="flex-1 overflow-auto bg-[#f8fafc] px-6 py-6 print:overflow-visible">
+          <div className="mx-auto w-fit print:w-full print:max-w-none">
             <ProfessionalDocumentView ref={pageRef} document={previewDocument} brandSettings={brandSettings} />
           </div>
         </div>
