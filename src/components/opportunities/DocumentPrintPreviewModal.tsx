@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
-import PrintableDocumentView from './PrintableDocumentView';
+import ProfessionalDocumentView from './ProfessionalDocumentView';
 
 type DocumentPrintPreviewModalProps = {
   isOpen: boolean;
@@ -22,14 +22,6 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   const pageRef = useRef<HTMLDivElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusState, setStatusState] = useState<'idle' | 'generating' | 'uploading' | 'success' | 'error'>('idle');
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    globalThis.document.body.classList.add('document-print-active');
-    return () => {
-      globalThis.document.body.classList.remove('document-print-active');
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -145,38 +137,48 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
     }
   };
 
+  const handlePrint = () => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    });
+  };
+
   if (!isOpen || !previewDocument) {
     return null;
   }
 
   return (
-    <div className="document-print-root fixed inset-0 z-[1200] overflow-y-auto bg-[#f8fafc]">
-      <div className="no-print sticky top-0 z-[2] border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[210mm] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+    <div className="doc-preview-overlay">
+      <div className="no-print doc-preview-toolbar">
+        <div className="doc-preview-toolbar-inner">
           <div>
-            <div className="text-sm font-semibold text-[#0f172a]">Print Preview</div>
-            <div className="text-xs text-[#64748b]">Use Print / Save as PDF to generate a local PDF from the browser dialog.</div>
+            <div className="doc-preview-toolbar-title">Print Preview</div>
+            <div className="doc-preview-toolbar-subtitle">
+              Use Print / Save as PDF to generate a local PDF from the browser dialog.
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="doc-preview-toolbar-actions">
             <button
               type="button"
               onClick={() => void generateAndStorePdf()}
               disabled={statusState === 'generating' || statusState === 'uploading'}
-              className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] transition-colors hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-70"
+              className="doc-preview-btn-secondary"
             >
               {statusState === 'generating' ? 'Generating PDF...' : statusState === 'uploading' ? 'Uploading PDF...' : 'Generate & Store PDF'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] transition-colors hover:bg-[#f8fafc]"
+              className="doc-preview-btn-ghost"
             >
               Close
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
-              className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8]"
+              onClick={handlePrint}
+              className="doc-preview-btn-primary"
             >
               Print / Save as PDF
             </button>
@@ -184,15 +186,132 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[210mm] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <PrintableDocumentView ref={pageRef} document={previewDocument} brandSettings={brandSettings} />
+      <div className="doc-preview-content">
+        <ProfessionalDocumentView ref={pageRef} document={previewDocument} brandSettings={brandSettings} />
       </div>
 
-      <div className="no-print mx-auto w-full max-w-[210mm] px-4 pb-6 sm:px-6 lg:px-8">
-        <div className={`rounded-xl border px-4 py-3 text-sm ${statusState === 'error' ? 'border-[#fecaca] bg-[#fff1f2] text-[#b91c1c]' : statusState === 'success' ? 'border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]' : 'border-[#e5e7eb] bg-white text-[#475569]'}`}>
+      <div className="no-print doc-preview-status">
+        <div className={`doc-preview-status-inner ${statusState === 'error' ? 'doc-preview-status-error' : statusState === 'success' ? 'doc-preview-status-success' : ''}`}>
           {statusMessage || 'Stored PDFs are saved in private storage and opened through temporary signed links.'}
         </div>
       </div>
+
+      <style>{`
+        .doc-preview-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1200;
+          overflow-y: auto;
+          background: #f8fafc;
+        }
+        .doc-preview-toolbar {
+          position: sticky;
+          top: 0;
+          z-index: 2;
+          border-bottom: 1px solid #e5e7eb;
+          background: rgba(255,255,255,0.95);
+          backdrop-filter: blur(8px);
+        }
+        .doc-preview-toolbar-inner {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          max-width: 210mm;
+          margin: 0 auto;
+          padding: 12px 16px;
+        }
+        .doc-preview-toolbar-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #0f172a;
+        }
+        .doc-preview-toolbar-subtitle {
+          font-size: 12px;
+          color: #64748b;
+        }
+        .doc-preview-toolbar-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .doc-preview-btn-primary {
+          border-radius: 8px;
+          background: #2563eb;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+        }
+        .doc-preview-btn-primary:hover { background: #1d4ed8; }
+        .doc-preview-btn-secondary {
+          border-radius: 8px;
+          border: 1px solid #bfdbfe;
+          background: #eff6ff;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #1d4ed8;
+          cursor: pointer;
+        }
+        .doc-preview-btn-secondary:hover { background: #dbeafe; }
+        .doc-preview-btn-secondary:disabled { opacity: 0.7; cursor: not-allowed; }
+        .doc-preview-btn-ghost {
+          border-radius: 8px;
+          border: 1px solid #cbd5e1;
+          background: #fff;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #334155;
+          cursor: pointer;
+        }
+        .doc-preview-btn-ghost:hover { background: #f8fafc; }
+        .doc-preview-content {
+          max-width: 210mm;
+          margin: 0 auto;
+          padding: 24px 16px;
+        }
+        .doc-preview-status {
+          max-width: 210mm;
+          margin: 0 auto;
+          padding: 0 16px 24px;
+        }
+        .doc-preview-status-inner {
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+          background: #fff;
+          padding: 12px 16px;
+          font-size: 13px;
+          color: #475569;
+        }
+        .doc-preview-status-error {
+          border-color: #fecaca !important;
+          background: #fff1f2 !important;
+          color: #b91c1c !important;
+        }
+        .doc-preview-status-success {
+          border-color: #bbf7d0 !important;
+          background: #f0fdf4 !important;
+          color: #166534 !important;
+        }
+        @media print {
+          .doc-preview-overlay {
+            position: static !important;
+            background: #fff !important;
+            overflow: visible !important;
+          }
+          .doc-preview-content {
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .no-print { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };
