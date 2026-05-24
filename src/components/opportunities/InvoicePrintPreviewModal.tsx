@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 import { isValidUuid } from '../../utils/securityUtils';
 import InvoicePreview from './InvoicePreview';
@@ -12,6 +10,7 @@ type InvoicePrintPreviewModalProps = {
   items: InvoiceItem[];
   brandSettings?: DocumentBrandSettings | null;
   onStoredPdf: (storagePath: string) => Promise<void>;
+  onEnsureSavedInvoice?: () => Promise<Invoice>;
 };
 
 const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
@@ -48,65 +47,6 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
 
   if (!isOpen || !invoice) return null;
 
-  const buildPdf = async () => {
-    console.log('[InvoicePDF] Step 2: buildPdf called');
-    console.log('[InvoicePDF] Step 2a: pageRef.current exists:', !!pageRef?.current);
-    console.log('[InvoicePDF] Step 2b: invoice exists:', !!invoice);
-
-    if (!pageRef.current) {
-      console.error('[InvoicePDF] ERROR: pageRef.current is null');
-      throw new Error('Invoice preview is not ready.');
-    }
-
-    console.log('[InvoicePDF] Step 2c: capture element className:', pageRef.current.className);
-    console.log('[InvoicePDF] Step 3: Running html2canvas...');
-
-    const canvas = await html2canvas(pageRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: true,
-      onclone: (clonedDoc) => {
-        const elements = clonedDoc.querySelectorAll('.invoice-pdf-page');
-        elements.forEach((el) => {
-          (el as HTMLElement).style.boxShadow = 'none';
-          (el as HTMLElement).style.borderRadius = '0';
-          (el as HTMLElement).style.border = 'none';
-        });
-      },
-    });
-
-    if (!canvas) {
-      throw new Error('html2canvas returned null canvas');
-    }
-
-    console.log('[InvoicePDF] Step 4: Canvas generated, size:', canvas.width, 'x', canvas.height);
-    console.log('[InvoicePDF] Step 5: Creating jsPDF...');
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    console.log('[InvoicePDF] Step 5a: jsPDF created');
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imageWidth = pdfWidth;
-    const imageHeight = (canvas.height * imageWidth) / canvas.width;
-    const imageData = canvas.toDataURL('image/png');
-
-    let position = 0;
-    pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight, undefined, 'FAST');
-    let remainingHeight = imageHeight - pdfHeight;
-
-    while (remainingHeight > 0) {
-      position -= pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imageData, 'PNG', 0, position, imageWidth, imageHeight, undefined, 'FAST');
-      remainingHeight -= pdfHeight;
-    }
-
-    console.log('[InvoicePDF] Step 6: PDF created, pages:', Math.ceil(imageHeight / pdfHeight));
-    return pdf;
-  };
-
   const handlePrint = () => {
     try {
       window.print();
@@ -129,57 +69,34 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   };
 
   const handleGenerateAndStore = async () => {
-    console.log('[InvoicePDF] Step 1: handleGenerateAndStore STARTED');
-    console.log('[InvoicePDF] Step 1a: invoice?.id:', invoice?.id);
-
     setIsGenerating(true);
     setError('');
     setStatus('');
 
     try {
       const invoiceId = await getInvoiceId();
-      console.log('[InvoicePDF] Using invoiceId:', invoiceId);
 
       setStatus('Generating PDF...');
-      console.log('[InvoicePDF] Calling buildPdf...');
-      const pdf = await buildPdf();
-      console.log('[InvoicePDF] buildPdf returned pdf object');
-
-      console.log('[InvoicePDF] Step 7: Converting to base64...');
-      const pdfBase64 = pdf.output('datauristring');
-      console.log('[InvoicePDF] Step 8: Base64 ready, length:', pdfBase64?.length);
-
-      const fileName = `${(invoice.invoiceNumber || invoice.title || 'invoice').replace(/[^a-zA-Z0-9.-]+/g, '-').toLowerCase()}.pdf`;
-
-      setStatus('Uploading PDF...');
-      console.log('[InvoicePDF] Step 9: Sending POST to /api/document-pdf-upload');
-      const response = await fetch('/api/document-pdf-upload', {
+      const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sourceType: 'invoice',
           invoiceId,
-          fileName,
-          pdfBase64,
-          debug: true,
         }),
       });
 
-      console.log('[InvoicePDF] Step 10: Response received, status:', response.status);
       const result = await response.json().catch(() => ({}));
-      console.log('[InvoicePDF] Step 10a: Response body:', result);
 
       if (!response.ok || !result?.success || !result?.storagePath) {
-        throw new Error(result?.error || 'Unable to store the invoice PDF.');
+        throw new Error(result?.error || 'Unable to generate and store the invoice PDF.');
       }
 
       await onStoredPdf(String(result.storagePath));
       setStatus('PDF stored successfully.');
     } catch (buildError) {
-      console.error('[InvoicePDF] FULL ERROR:', buildError);
-      console.error('[InvoicePDF] ERROR message:', buildError instanceof Error ? buildError.message : String(buildError));
-      setError(buildError instanceof Error ? buildError.message : 'PDF generation failed. Check console for details.');
+      setError(buildError instanceof Error ? buildError.message : 'PDF generation failed.');
       setStatus('');
     } finally {
       setIsGenerating(false);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   Company,
   Deal,
@@ -284,6 +284,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const invoiceIdRef = useRef<string | null>(null);
 
   const selectedInvoice = useMemo(() => invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null, [invoices, selectedInvoiceId]);
   const selectedItems = useMemo(() => invoiceItems.filter((item) => item.invoiceId === selectedInvoice?.id), [invoiceItems, selectedInvoice?.id]);
@@ -330,6 +331,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   }, [brand, selectedInvoice, selectedItems]);
 
   useEffect(() => {
+    invoiceIdRef.current = selectedInvoiceId;
     if (!selectedInvoiceId) {
       setMessage('');
       setError('');
@@ -948,8 +950,9 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
         brandSettings={brand}
         onEnsureSavedInvoice={ensureSavedInvoice}
         onStoredPdf={async (storagePath) => {
-          if (!selectedInvoice) return;
-          await onUpdateInvoice(selectedInvoice.id, { pdfStoragePath: storagePath });
+          const id = invoiceIdRef.current;
+          if (!id) return;
+          await onUpdateInvoice(id, { pdfStoragePath: storagePath });
         }}
       />
 

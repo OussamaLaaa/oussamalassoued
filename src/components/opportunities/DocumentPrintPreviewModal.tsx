@@ -1,6 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import React, { useEffect, useRef, useState } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 import ProfessionalDocumentView from './ProfessionalDocumentView';
 
@@ -21,7 +19,7 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
 }) => {
   const pageRef = useRef<HTMLDivElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
-  const [statusState, setStatusState] = useState<'idle' | 'generating' | 'uploading' | 'success' | 'error'>('idle');
+  const [statusState, setStatusState] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     if (!isOpen) {
@@ -40,147 +38,38 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  const safeFileName = useMemo(() => {
-    const raw = String(previewDocument?.title || 'document')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9.-]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    return `${raw || 'document'}.pdf`;
-  }, [previewDocument?.title]);
-
-  const blobToBase64 = async (blob: Blob) => {
-    const arrayBuffer = await blob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    const chunkSize = 0x8000;
-
-    for (let index = 0; index < bytes.length; index += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
-    }
-
-    return globalThis.btoa(binary);
-  };
-
-  const buildPdf = async () => {
-    console.log('[PDF] Step 2: buildPdf called');
-    console.log('[PDF] Step 2a: pageRef.current exists:', !!pageRef?.current);
-    console.log('[PDF] Step 2b: previewDocument exists:', !!previewDocument);
-
-    if (!pageRef.current || !previewDocument) {
-      console.error('[PDF] ERROR capture ref or document missing:', { hasRef: !!pageRef?.current, hasDoc: !!previewDocument });
-      throw new Error('Printable document is not ready.');
-    }
-
-    console.log('[PDF] Step 2c: capture element className:', pageRef.current.className);
-    console.log('[PDF] Step 3: Running html2canvas...');
-
-    const canvas = await html2canvas(pageRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: pageRef.current.scrollWidth,
-      windowHeight: pageRef.current.scrollHeight,
-    });
-
-    if (!canvas) {
-      throw new Error('html2canvas returned null canvas');
-    }
-
-    console.log('[PDF] Step 4: Canvas generated, size:', canvas.width, 'x', canvas.height);
-    console.log('[PDF] Step 5: Creating jsPDF...');
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    console.log('[PDF] Step 5a: jsPDF created');
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imageWidth = pageWidth;
-    const imageHeight = (canvas.height * imageWidth) / canvas.width;
-    const imageData = canvas.toDataURL('image/png');
-    let remainingHeight = imageHeight;
-    let offset = 0;
-
-    pdf.addImage(imageData, 'PNG', 0, offset, imageWidth, imageHeight, undefined, 'FAST');
-    remainingHeight -= pageHeight;
-
-    while (remainingHeight > 0) {
-      offset -= pageHeight;
-      pdf.addPage();
-      pdf.addImage(imageData, 'PNG', 0, offset, imageWidth, imageHeight, undefined, 'FAST');
-      remainingHeight -= pageHeight;
-    }
-
-    console.log('[PDF] Step 6: PDF created, pages:', Math.ceil(imageHeight / pageHeight));
-    return pdf.output('blob');
-  };
-
   const generateAndStorePdf = async () => {
-    console.log('[PDF] Step 1: generateAndStorePdf STARTED');
-    console.log('[PDF] Step 1a: previewDocument?.id:', previewDocument?.id);
-    console.log('[PDF] Step 1b: previewDocument?.type:', previewDocument?.type);
-    console.log('[PDF] Step 1c: pageRef?.current?.tagName:', pageRef?.current?.tagName);
-
-    if (!previewDocument) {
-      console.error('[PDF] ERROR: previewDocument is null, cannot generate');
-      return;
-    }
+    if (!previewDocument) return;
 
     setStatusState('generating');
     setStatusMessage('Generating PDF...');
 
     try {
-      console.log('[PDF] Calling buildPdf...');
-      const pdfBlob = await buildPdf();
-      console.log('[PDF] buildPdf returned blob, size:', pdfBlob?.size);
-
-      console.log('[PDF] Step 7: Converting blob to base64...');
-      const pdfBase64 = await blobToBase64(pdfBlob);
-      console.log('[PDF] Step 8: Base64 ready, length:', pdfBase64?.length);
-
-      setStatusState('uploading');
-      setStatusMessage('Uploading PDF...');
-
-      console.log('[PDF] Step 9: Sending POST to /api/document-pdf-upload');
-      const response = await fetch('/api/document-pdf-upload', {
+      const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sourceType: 'generated_document',
           documentId: previewDocument.id,
-          fileName: safeFileName,
-          pdfBase64,
-          debug: true,
         }),
       });
 
-      console.log('[PDF] Step 10: Response received, status:', response.status);
       const result = await response.json().catch(() => ({}));
-      console.log('[PDF] Step 10a: Response body:', result);
 
       if (!response.ok || !result?.success) {
-        throw new Error(result?.error || 'Could not store PDF.');
+        throw new Error(result?.error || 'Could not generate and store PDF.');
       }
 
       setStatusState('success');
-      setStatusMessage(result?.message || 'PDF stored successfully.');
+      setStatusMessage('PDF stored successfully.');
 
       if (result?.storagePath && onStoredPdf) {
         await onStoredPdf(String(result.storagePath));
       }
     } catch (error) {
-      console.error('[PDF] FULL ERROR:', error);
-      console.error('[PDF] ERROR message:', error instanceof Error ? error.message : String(error));
       setStatusState('error');
-      setStatusMessage('PDF generation failed. Check console for details.');
+      setStatusMessage('PDF generation failed.');
     }
   };
 
@@ -209,10 +98,10 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
             <button
               type="button"
               onClick={() => void generateAndStorePdf()}
-              disabled={statusState === 'generating' || statusState === 'uploading'}
+              disabled={statusState === 'generating'}
               className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] transition-colors hover:bg-[#dbeafe] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {statusState === 'generating' ? 'Generating PDF...' : statusState === 'uploading' ? 'Uploading PDF...' : 'Generate & Store PDF'}
+              {statusState === 'generating' ? 'Generating PDF...' : 'Generate & Store PDF'}
             </button>
             <button
               type="button"
