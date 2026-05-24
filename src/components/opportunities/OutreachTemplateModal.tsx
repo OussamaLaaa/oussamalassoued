@@ -139,11 +139,12 @@ const OutreachTemplateModal: React.FC<{
     setStatus('');
 
     try {
-      const response = await fetch('/api/ai-message', {
+      const response = await fetch('/api/ai?action=message', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'message',
           debug: import.meta.env.DEV,
           templateText: currentEditableMessageOrRenderedTemplate,
           person: {

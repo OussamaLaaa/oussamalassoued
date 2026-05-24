@@ -380,7 +380,7 @@ const CahierDeChargesBuilder: React.FC<CahierDeChargesBuilderProps> = ({
   const openStoredPdf = async (documentId: string) => {
     const popup = window.open('about:blank', '_blank');
     try {
-      const response = await fetch(`/api/document-pdf-upload?sourceType=${STORAGE_SOURCE}&documentId=${encodeURIComponent(documentId)}`, {
+      const response = await fetch(`/api/documents?action=signed-url&sourceType=${STORAGE_SOURCE}&documentId=${encodeURIComponent(documentId)}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -413,7 +413,7 @@ const CahierDeChargesBuilder: React.FC<CahierDeChargesBuilderProps> = ({
     setError('');
 
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/documents?action=generate-pdf', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -621,7 +621,7 @@ const CahierDeChargesBuilder: React.FC<CahierDeChargesBuilderProps> = ({
               <SummaryCard title="Document archive">
                 <SummaryLine label="Saved docs" value={`${cahierDocuments.length} cahier${cahierDocuments.length === 1 ? '' : 's'}`} />
                 <SummaryLine label="Storage" value="Private Supabase Storage" />
-                <SummaryLine label="Source" value="/api/generate-pdf" />
+                <SummaryLine label="Source" value="/api/documents?action=generate-pdf" />
                 <SummaryLine label="Related records" value={selectedDeal?.servicePackage || selectedPerson?.fullName || 'Optional'} />
               </SummaryCard>
             </div>

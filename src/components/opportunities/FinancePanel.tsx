@@ -1074,10 +1074,10 @@ function FinancePanel({
     };
 
     try {
-      const res = await fetch('/api/ai-finance', {
+      const res = await fetch('/api/ai?action=finance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ action: 'finance', ...payload }),
       });
 
       const json = await res.json();

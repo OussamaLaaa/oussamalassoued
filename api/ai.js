@@ -1,3 +1,6 @@
+import aiMessageHandler from './ai-message.js';
+import aiFinanceHandler from './ai-finance.js';
+import aiDocumentHandler from './ai-document.js';
 import { createClient } from '@supabase/supabase-js';
 import aiKeyCrypto from './lib/aiKeyCrypto.js';
 import aiProviderRouter from './lib/aiProviderRouter.js';
@@ -8,6 +11,14 @@ const { testProviderConnection } = aiProviderRouter;
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 const ALLOWED_PROVIDERS = new Set(['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama']);
+
+const toSafeJson = (res, status, body) => res.status(status).json(body);
+
+const cloneRequest = (req, overrides = {}) => ({
+  ...req,
+  query: { ...(req.query || {}), ...(overrides.query || {}) },
+  body: overrides.body !== undefined ? overrides.body : req.body,
+});
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -39,7 +50,6 @@ const readBody = (req) => {
   return {};
 };
 
-const toSafeJson = (res, status, body) => res.status(status).json(body);
 const toCleanString = (value) => (value == null ? '' : String(value).trim());
 
 const createSupabaseClient = () => {
@@ -97,7 +107,7 @@ const buildInsertPayload = (body, existingRow = null) => {
   };
 };
 
-export default async function handler(req, res) {
+const handleProviderKeyAction = async (req, res) => {
   if (!isAuthenticated(req)) {
     return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
@@ -245,4 +255,40 @@ export default async function handler(req, res) {
   } catch (error) {
     return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Internal server error.' });
   }
+};
+
+export default async function handler(req, res) {
+  const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();
+
+  if (req.method === 'GET' && action === 'health') {
+    const type = String(req.query?.type || '').trim().toLowerCase();
+    if (type === 'message') {
+      return aiMessageHandler(cloneRequest(req, { query: { health: '1' } }), res);
+    }
+    if (type === 'finance') {
+      return aiFinanceHandler(cloneRequest(req, { query: { health: '1' } }), res);
+    }
+    if (type === 'document') {
+      return aiDocumentHandler(cloneRequest(req, { query: { health: '1' } }), res);
+    }
+    return toSafeJson(res, 400, { success: false, error: 'Missing or invalid type.' });
+  }
+
+  if (req.method === 'POST' && action === 'message') {
+    return aiMessageHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'finance') {
+    return aiFinanceHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'document') {
+    return aiDocumentHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'provider-key') {
+    return handleProviderKeyAction(req, res);
+  }
+
+  return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
 }

@@ -564,7 +564,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
         ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
         : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
 
-    const response = await fetch(`/api/document-pdf-upload?${params}`, {
+    const response = await fetch(`/api/documents?action=signed-url&${params}`, {
       method: 'GET',
       credentials: 'include',
       cache: 'no-store',
@@ -593,7 +593,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
       const sourceType = 'invoice';
       const id = selectedInvoice.id;
       const params = `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`;
-      const response = await fetch(`/api/document-pdf-upload?${params}`, {
+      const response = await fetch(`/api/documents?action=signed-url&${params}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',

@@ -16,7 +16,7 @@ const openStoredPdf = async (sourceType: string, id: string) => {
       ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
       : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
 
-  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+  const response = await fetch(`/api/documents?action=signed-url&${params}`, {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
@@ -37,7 +37,7 @@ const downloadStoredPdf = async (sourceType: string, id: string, fileName: strin
       ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
       : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
 
-  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+  const response = await fetch(`/api/documents?action=signed-url&${params}`, {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
@@ -97,7 +97,7 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
     setStatusMessage('Generating PDF...');
 
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/documents?action=generate-pdf', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

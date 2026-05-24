@@ -250,11 +250,12 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
     setSuccessMessage('');
 
     try {
-      const response = await fetch('/api/ai-document', {
+      const response = await fetch('/api/ai?action=document', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'document',
           mode: normalizedMode,
           documentType: normalizedDocumentType,
           language: normalizedLanguage,

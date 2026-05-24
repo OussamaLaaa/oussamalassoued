@@ -106,7 +106,7 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
   const openStoredPdf = async (invoice: Invoice) => {
     const popup = window.open('about:blank', '_blank');
     try {
-      const response = await fetch(`/api/document-pdf-upload?invoiceId=${encodeURIComponent(invoice.id)}`, {
+      const response = await fetch(`/api/documents?action=signed-url&invoiceId=${encodeURIComponent(invoice.id)}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',

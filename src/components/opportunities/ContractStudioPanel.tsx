@@ -407,7 +407,7 @@ const ContractStudioPanel: React.FC<ContractStudioPanelProps> = ({
   const openStoredPdf = async (documentId: string) => {
     const popup = window.open('about:blank', '_blank');
     try {
-      const response = await fetch(`/api/document-pdf-upload?sourceType=${STORAGE_SOURCE}&documentId=${encodeURIComponent(documentId)}`, {
+      const response = await fetch(`/api/documents?action=signed-url&sourceType=${STORAGE_SOURCE}&documentId=${encodeURIComponent(documentId)}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -440,7 +440,7 @@ const ContractStudioPanel: React.FC<ContractStudioPanelProps> = ({
     setError('');
 
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/documents?action=generate-pdf', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -661,7 +661,7 @@ const ContractStudioPanel: React.FC<ContractStudioPanelProps> = ({
                 <SummaryLine label="Saved docs" value={`${contractDocuments.length} contract${contractDocuments.length === 1 ? '' : 's'}`} />
                 <SummaryLine label="Archive" value="Generated Documents" />
                 <SummaryLine label="Storage" value="Private Supabase Storage" />
-                <SummaryLine label="Source" value="/api/generate-pdf" />
+                <SummaryLine label="Source" value="/api/documents?action=generate-pdf" />
               </SummaryCard>
             </div>
           </div>

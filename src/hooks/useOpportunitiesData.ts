@@ -1062,7 +1062,7 @@ const requestOpportunities = async (init: RequestInit): Promise<OpportunitiesApi
 };
 
 const requestAIProviderKeys = async (init: RequestInit): Promise<any> => {
-  const response = await fetch('/api/ai-provider-keys', {
+  const response = await fetch('/api/ai?action=provider-key', {
     ...init,
     credentials: 'same-origin',
     headers: {
