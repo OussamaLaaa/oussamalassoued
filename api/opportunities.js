@@ -970,7 +970,7 @@ export default async function handler(req, res) {
         responseKeys = [];
       }
 
-      const response: Record<string, unknown> = {};
+      const response = {};
 
       for (const key of responseKeys) {
         response[key] = results[key] || [];
