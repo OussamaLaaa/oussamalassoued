@@ -284,7 +284,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const invoiceIdRef = useRef<string | null>(null);
+  const savedInvoiceIdRef = useRef<string | null>(null);
 
   const selectedInvoice = useMemo(() => invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null, [invoices, selectedInvoiceId]);
   const selectedItems = useMemo(() => invoiceItems.filter((item) => item.invoiceId === selectedInvoice?.id), [invoiceItems, selectedInvoice?.id]);
@@ -331,7 +331,6 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   }, [brand, selectedInvoice, selectedItems]);
 
   useEffect(() => {
-    invoiceIdRef.current = selectedInvoiceId;
     if (!selectedInvoiceId) {
       setMessage('');
       setError('');
@@ -400,21 +399,59 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
     return created.id;
   };
 
-  const persistItems = async (invoiceId: string, nextItems: InvoiceDraftItem[]) => {
-    const existingItems = invoiceItems.filter((item) => item.invoiceId === invoiceId);
-    for (const item of existingItems) {
+  const saveInvoiceItems = async (savedInvoiceId: string) => {
+    const existingItems = invoiceItems.filter((item) => item.invoiceId === savedInvoiceId);
+    const existingById = new Map(existingItems.map((item) => [item.id, item]));
+    const draftById = new Map<string, InvoiceDraftItem>();
+    const draftWithoutId: InvoiceDraftItem[] = [];
+
+    for (const item of draftItems) {
+      if (!item.description.trim()) continue;
       if (isValidUuid(item.id)) {
-        await onDeleteInvoiceItem(item.id, true);
+        draftById.set(item.id, item);
+      } else {
+        draftWithoutId.push(item);
       }
     }
 
-    for (let index = 0; index < nextItems.length; index += 1) {
-      const item = nextItems[index];
+    const deleted: string[] = [];
+    for (const existing of existingItems) {
+      if (!draftById.has(existing.id)) {
+        deleted.push(existing.id);
+      }
+    }
+
+    for (const itemId of deleted) {
+      if (isValidUuid(itemId)) {
+        await onDeleteInvoiceItem(itemId, true);
+      }
+    }
+
+    let nextSort = 1;
+    for (const item of draftItems) {
       if (!item.description.trim()) continue;
-      await onAddInvoiceItem({
-        ...toItemPayload(invoiceId, item),
-        sortOrder: item.sortOrder ? Number(item.sortOrder) : index + 1,
-      });
+      if (isValidUuid(item.id) && draftById.has(item.id)) {
+        const existing = existingById.get(item.id);
+        const sortOrder = item.sortOrder ? Number(item.sortOrder) : nextSort;
+        const payload = toItemPayload(savedInvoiceId, { ...item, id: item.id });
+        if (
+          existing &&
+          (existing.description !== payload.description ||
+            existing.quantity !== payload.quantity ||
+            existing.rate !== payload.rate ||
+            existing.amount !== payload.amount ||
+            (existing.sortOrder ?? 0) !== sortOrder)
+        ) {
+          await onUpdateInvoiceItem(item.id, { ...payload, sortOrder });
+        }
+        nextSort += 1;
+      } else {
+        await onAddInvoiceItem({
+          ...toItemPayload(savedInvoiceId, item),
+          sortOrder: item.sortOrder ? Number(item.sortOrder) : nextSort,
+        });
+        nextSort += 1;
+      }
     }
   };
 
@@ -431,6 +468,12 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
       const totals = computedTotals;
       const payload = toInvoicePayload({ ...form, status: nextStatus }, totals);
 
+      console.log('[Invoice Save]', {
+        beforeId: selectedInvoice?.id ?? null,
+        isExisting: !!(selectedInvoice && isValidUuid(selectedInvoice.id)),
+        action: selectedInvoice && isValidUuid(selectedInvoice.id) ? 'update' : 'insert',
+      });
+
       let savedInvoice: Invoice;
       if (selectedInvoice && isValidUuid(selectedInvoice.id)) {
         savedInvoice = await onUpdateInvoice(selectedInvoice.id, payload);
@@ -438,28 +481,37 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
         savedInvoice = await onAddInvoice(payload);
       }
 
-      if (!isValidUuid(savedInvoice.id)) {
-        throw new Error('Failed to obtain a valid invoice identifier.');
+      if (!savedInvoice || !isValidUuid(savedInvoice.id)) {
+        throw new Error('Invoice save did not return a valid identifier.');
       }
 
+      console.log('[Invoice Save] saved', { savedId: savedInvoice.id });
+
+      savedInvoiceIdRef.current = savedInvoice.id;
       onSelectInvoice(savedInvoice.id);
-      await persistItems(savedInvoice.id, draftItems);
+      await saveInvoiceItems(savedInvoice.id);
 
       const generatedDocumentId = await ensureGeneratedDocument(savedInvoice, nextStatus);
-      const updatedInvoice = await onUpdateInvoice(savedInvoice.id, { generatedDocumentId });
-      onSelectInvoice(updatedInvoice.id);
+      if (generatedDocumentId && isValidUuid(savedInvoice.id)) {
+        const updatedInvoice = await onUpdateInvoice(savedInvoice.id, { generatedDocumentId });
+        onSelectInvoice(updatedInvoice.id);
+
+        setMessage(nextStatus === 'draft' ? 'Invoice saved as draft.' : 'Invoice saved and synced to the archive.');
+        setForm(toFormState(updatedInvoice, brand));
+        setDraftItems(
+          invoiceItems.filter((item) => item.invoiceId === updatedInvoice.id).length > 0
+            ? invoiceItems
+                .filter((item) => item.invoiceId === updatedInvoice.id)
+                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                .map((item) => toDraftItem(item))
+            : draftItems,
+        );
+        return updatedInvoice;
+      }
 
       setMessage(nextStatus === 'draft' ? 'Invoice saved as draft.' : 'Invoice saved and synced to the archive.');
-      setForm(toFormState(updatedInvoice, brand));
-      setDraftItems(
-        invoiceItems.filter((item) => item.invoiceId === updatedInvoice.id).length > 0
-          ? invoiceItems
-              .filter((item) => item.invoiceId === updatedInvoice.id)
-              .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-              .map((item) => toDraftItem(item))
-          : draftItems,
-      );
-      return updatedInvoice;
+      setForm(toFormState(savedInvoice, brand));
+      return savedInvoice;
     } catch (saveError) {
       console.error('[Invoice Studio] Failed to save invoice', saveError);
       setError(saveError instanceof Error ? saveError.message : 'Unable to save the invoice.');
@@ -470,9 +522,15 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   };
 
   const ensureSavedInvoice = async (): Promise<Invoice> => {
-    if (selectedInvoice && isValidUuid(selectedInvoice.id)) return selectedInvoice;
+    if (selectedInvoice && isValidUuid(selectedInvoice.id)) {
+      savedInvoiceIdRef.current = selectedInvoice.id;
+      return selectedInvoice;
+    }
     const saved = await saveInvoice('draft');
-    if (!saved) throw new Error('Failed to save invoice.');
+    if (!saved || !isValidUuid(saved.id)) {
+      throw new Error('Failed to save invoice.');
+    }
+    savedInvoiceIdRef.current = saved.id;
     return saved;
   };
 
@@ -514,7 +572,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   };
 
   const invoiceForPreview: Invoice = useMemo(() => ({
-    id: selectedInvoice?.id || 'preview',
+    id: selectedInvoice?.id || 'not-saved',
     invoiceNumber: form.invoiceNumber,
     title: form.title,
     status: form.status,
@@ -1026,8 +1084,8 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
         brandSettings={brand}
         onEnsureSavedInvoice={ensureSavedInvoice}
         onStoredPdf={async (storagePath) => {
-          const id = invoiceIdRef.current;
-          if (!id) return;
+          const id = savedInvoiceIdRef.current;
+          if (!id || !isValidUuid(id)) return;
           await onUpdateInvoice(id, { pdfStoragePath: storagePath });
         }}
       />

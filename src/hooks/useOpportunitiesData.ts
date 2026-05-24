@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import seedData from '../data/opportunitiesSeed';
 import { messageTemplates as staticMessageTemplates } from '../data/messageTemplates';
+import { isValidUuid } from '../utils/securityUtils';
 import {
   toNullableString, toNullableNumber, normalizeDatabaseType,
   companyFromDb as mapCompanyRow, companyToDb as toCompanyDb,
@@ -1405,7 +1406,8 @@ export const useOpportunitiesData = (enabled = true) => {
       throw new Error(result?.error || 'Failed to save Opportunities data.');
     }
 
-    return Array.isArray(data) ? (result?.rows || []) : result?.row;
+    const row = result?.row || result?.data;
+    return Array.isArray(data) ? (result?.rows || []) : row;
   };
 
   const importCompaniesBatch = async (
@@ -1546,7 +1548,7 @@ export const useOpportunitiesData = (enabled = true) => {
       throw new Error(result?.error || 'Failed to update Opportunities data.');
     }
 
-    return result?.row;
+    return result?.row || result?.data;
   };
 
   const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings', id: string) => {
@@ -2052,6 +2054,9 @@ export const useOpportunitiesData = (enabled = true) => {
     }
 
     const row = await syncInsert('invoices', toInvoiceDb(input));
+    if (!row) {
+      throw new Error('Invoice save did not return saved row.');
+    }
     const next = attachInvoiceLinkNames([mapInvoiceRow(row)], projects, companies, people, deals)[0];
     setInvoices((current) => [next, ...current]);
     return next;
@@ -2066,10 +2071,13 @@ export const useOpportunitiesData = (enabled = true) => {
       throw new Error('Invoice title is required.');
     }
 
-    const row = await syncUpdate('invoices', id, toInvoiceDb(input, { forUpdate: true }));
-    const next = attachInvoiceLinkNames([mapInvoiceRow(row)], projects, companies, people, deals)[0];
-    setInvoices((current) => current.map((item) => (item.id === id ? next : item)));
-    return next;
+    if (isValidUuid(id)) {
+      const row = await syncUpdate('invoices', id, toInvoiceDb(input, { forUpdate: true }));
+      const next = attachInvoiceLinkNames([mapInvoiceRow(row)], projects, companies, people, deals)[0];
+      setInvoices((current) => current.map((item) => (item.id === id ? next : item)));
+      return next;
+    }
+    throw new Error('Cannot update invoice without a valid id.');
   };
 
   const deleteInvoice = async (id: string) => {
@@ -2108,15 +2116,19 @@ export const useOpportunitiesData = (enabled = true) => {
       throw new Error('Line item description is required.');
     }
 
-    const row = await syncUpdate('invoice_items', id, toInvoiceItemDb(input, { forUpdate: true }));
-    const next = mapInvoiceItemRow(row);
-    setInvoiceItems((current) => current.map((item) => (item.id === id ? next : item)));
-    return next;
+    if (isValidUuid(id)) {
+      const row = await syncUpdate('invoice_items', id, toInvoiceItemDb(input, { forUpdate: true }));
+      const next = mapInvoiceItemRow(row);
+      setInvoiceItems((current) => current.map((item) => (item.id === id ? next : item)));
+      return next;
+    }
+    throw new Error('Cannot update invoice item without a valid id.');
   };
 
   const deleteInvoiceItem = async (id: string, skipConfirm = false) => {
     const confirmed = skipConfirm || window.confirm('Delete this line item?');
     if (!confirmed) return;
+    if (!isValidUuid(id)) return;
     await syncDelete('invoice_items', id);
     setInvoiceItems((current) => current.filter((item) => item.id !== id));
   };
