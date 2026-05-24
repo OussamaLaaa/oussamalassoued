@@ -505,113 +505,19 @@ const TasksPanel: React.FC<{
     </div>
   );
 
-  // ── Render weekly review ──
-  const renderReview = () => {
-    const [summary, setSummary] = useState(weekReview?.summary || '');
-    const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
-    const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');
-    const [blockers, setBlockers] = useState(weekReview?.blockers || '');
-    const [lessons, setLessons] = useState(weekReview?.lessons || '');
-    const [nextFocus, setNextFocus] = useState(weekReview?.nextWeekFocus || '');
-    const [score, setScore] = useState(weekReview?.score != null ? String(weekReview.score) : '');
-    const [saving, setSaving] = useState(false);
-
-    const handleSave = async () => {
-      setSaving(true);
-      try {
-        await handleSaveReview({
-          weekStart: selectedWeekStart,
-          summary: summary || undefined,
-          whatWorked: whatWorked || undefined,
-          whatFailed: whatFailed || undefined,
-          blockers: blockers || undefined,
-          lessons: lessons || undefined,
-          nextWeekFocus: nextFocus || undefined,
-          score: score ? Math.min(10, Math.max(0, parseInt(score) || 0)) : undefined,
-        });
-      } finally {
-        setSaving(false);
-      }
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-medium text-[#0f172a]">Weekly Review</h3>
-            <p className="text-xs text-[#64748b]">Week of {formatDate(selectedWeekStart)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : weekReview ? 'Update Review' : 'Save Review'}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-md border border-[#e5e7eb] bg-white p-4 space-y-3">
-            <h4 className="text-xs font-medium text-[#0f172a]">Execution</h4>
-            <div className="grid grid-cols-2 gap-2 text-xs text-[#64748b]">
-              <div><span className="font-medium text-[#0f172a]">Done:</span> {weekStats.done}/{weekStats.total}</div>
-              <div><span className="font-medium text-[#0f172a]">Rate:</span> {weekStats.rate}%</div>
-              <div><span className="font-medium text-[#0f172a]">Est:</span> {formatHours(weekStats.estimated)}</div>
-              <div><span className="font-medium text-[#0f172a]">Logged:</span> {formatHours(weekStats.actual)}</div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Score (0-10)</label>
-            <input
-              type="number"
-              min={0}
-              max={10}
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Summary</label>
-          <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">What Worked</label>
-            <textarea value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">What Failed</label>
-            <textarea value={whatFailed} onChange={(e) => setWhatFailed(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Blockers</label>
-            <textarea value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Lessons</label>
-            <textarea value={lessons} onChange={(e) => setLessons(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Next Week Focus</label>
-          <textarea value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-        </div>
-      </div>
-    );
-  };
-
   const renderView = () => {
     switch (view) {
       case 'weekly': return renderWeekly();
       case 'daily': return renderDailyRecurring();
       case 'backlog': return renderBacklog();
-      case 'review': return renderReview();
+      case 'review': return (
+        <WeeklyReviewSection
+          weekReview={weekReview}
+          selectedWeekStart={selectedWeekStart}
+          weekStats={weekStats}
+          onSave={handleSaveReview}
+        />
+      );
     }
   };
 
@@ -747,6 +653,112 @@ const CompletionModalForm: React.FC<{
       <div className="flex items-center justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
         <button type="button" onClick={handleConfirm} className="px-4 py-2 rounded border border-[#16a34a] bg-[#16a34a] text-white hover:bg-[#15803d] text-sm">Mark Done</button>
+      </div>
+    </div>
+  );
+};
+
+// ── Weekly Review Section ──
+const WeeklyReviewSection: React.FC<{
+  weekReview: WeeklyTaskReview | undefined;
+  selectedWeekStart: string;
+  weekStats: { done: number; total: number; rate: number; estimated: number; actual: number };
+  onSave: (input: WeeklyTaskReviewInput) => Promise<void>;
+}> = ({ weekReview, selectedWeekStart, weekStats, onSave }) => {
+  const [summary, setSummary] = useState(weekReview?.summary || '');
+  const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
+  const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');
+  const [blockers, setBlockers] = useState(weekReview?.blockers || '');
+  const [lessons, setLessons] = useState(weekReview?.lessons || '');
+  const [nextFocus, setNextFocus] = useState(weekReview?.nextWeekFocus || '');
+  const [score, setScore] = useState(weekReview?.score != null ? String(weekReview.score) : '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave({
+        weekStart: selectedWeekStart,
+        summary: summary || undefined,
+        whatWorked: whatWorked || undefined,
+        whatFailed: whatFailed || undefined,
+        blockers: blockers || undefined,
+        lessons: lessons || undefined,
+        nextWeekFocus: nextFocus || undefined,
+        score: score ? Math.min(10, Math.max(0, parseInt(score) || 0)) : undefined,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-[#0f172a]">Weekly Review</h3>
+          <p className="text-xs text-[#64748b]">Week of {formatDate(selectedWeekStart)}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : weekReview ? 'Update Review' : 'Save Review'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-4 space-y-3">
+          <h4 className="text-xs font-medium text-[#0f172a]">Execution</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs text-[#64748b]">
+            <div><span className="font-medium text-[#0f172a]">Done:</span> {weekStats.done}/{weekStats.total}</div>
+            <div><span className="font-medium text-[#0f172a]">Rate:</span> {weekStats.rate}%</div>
+            <div><span className="font-medium text-[#0f172a]">Est:</span> {formatHours(weekStats.estimated)}</div>
+            <div><span className="font-medium text-[#0f172a]">Logged:</span> {formatHours(weekStats.actual)}</div>
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">Score (0-10)</label>
+          <input
+            type="number"
+            min={0}
+            max={10}
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+            className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-[#475569] mb-1">Summary</label>
+        <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">What Worked</label>
+          <textarea value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">What Failed</label>
+          <textarea value={whatFailed} onChange={(e) => setWhatFailed(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">Blockers</label>
+          <textarea value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">Lessons</label>
+          <textarea value={lessons} onChange={(e) => setLessons(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-[#475569] mb-1">Next Week Focus</label>
+        <textarea value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
       </div>
     </div>
   );
