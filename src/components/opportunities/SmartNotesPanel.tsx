@@ -23,7 +23,7 @@ import NoteEditorPage from './NoteEditorPage';
 const shellClass = 'rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
 const pillClass = 'rounded-full border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm text-[#0f172a] hover:bg-[#f8fafc]';
 const activePillClass = 'rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-sm text-[#1d4ed8]';
-const cardClass = 'rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
+const cardClass = 'rounded-2xl border border-[#e5e7eb] bg-white p-4 sm:p-6 overflow-hidden w-full shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
 
 const fixedCategories = [
   { slug: 'work', label: 'Work' },
@@ -309,13 +309,17 @@ const SmartNotesPanel: React.FC<{
   return (
     <div className="space-y-4">
       <div className={cardClass}>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl min-w-0 break-words">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#64748b]">Smart Notes OS</div>
-            <h2 className="mt-2 text-2xl font-semibold text-[#0f172a]">Notes that feel like a living workspace</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#64748b]">Capture ideas, link them to the rest of the OS, sort them fast, and open any note into a full-page editor when you need to write seriously.</p>
+            <h2 className="mt-2 text-xl font-semibold leading-tight text-[#0f172a] sm:text-2xl">Notes that feel like a living workspace</h2>
+            <p className="mt-2 max-w-2xl whitespace-normal break-words text-sm leading-relaxed text-[#64748b]">
+              Capture ideas, link them to the rest of the OS, and sort them fast.
+              <br />
+              Open any note into a full-page editor when you need to write seriously.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
             <button type="button" onClick={openCreateNote} className="rounded-full bg-[#2563eb] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#1d4ed8]">
               + New Note
             </button>
