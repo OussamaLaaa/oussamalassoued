@@ -220,6 +220,9 @@ const OpportunitiesLayout: React.FC<{
     addNoteAttachment: (input: NoteAttachmentInput) => Promise<any>;
     updateNoteAttachment: (id: string, input: Partial<NoteAttachmentInput>) => Promise<any>;
     deleteNoteAttachment: (id: string) => Promise<any>;
+    addNoteBlock: (input: NoteBlockInput) => Promise<any>;
+    updateNoteBlock: (id: string, input: Partial<NoteBlockInput>) => Promise<any>;
+    deleteNoteBlock: (id: string) => Promise<any>;
     addProject: (input: ProjectInput) => Promise<any>;
     addStrategyItem: (input: StrategyItemInput) => Promise<any>;
     addStrategyGoal: (input: StrategyGoalInput) => Promise<any>;
@@ -318,7 +321,7 @@ const OpportunitiesLayout: React.FC<{
   const {
     companies, people, messages, deals, projects, templates, strategyItems,
     relationships, relationshipInteractions, relationshipOpportunities,
-    noteCategories, smartNotes, noteAttachments,
+    noteCategories, smartNotes, noteAttachments, noteBlocks,
     strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
     documents,
     documentTemplates,
@@ -338,6 +341,7 @@ const OpportunitiesLayout: React.FC<{
     addNoteCategory, updateNoteCategory, deleteNoteCategory,
     addSmartNote, updateSmartNote, deleteSmartNote,
     addNoteAttachment, updateNoteAttachment, deleteNoteAttachment,
+    addNoteBlock, updateNoteBlock, deleteNoteBlock,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
     addDocument,
     addDocumentTemplate,
@@ -824,6 +828,7 @@ const OpportunitiesLayout: React.FC<{
                 noteCategories={noteCategories}
                 smartNotes={smartNotes}
                 noteAttachments={noteAttachments}
+                noteBlocks={noteBlocks}
                 projects={projects}
                 companies={companies}
                 people={people}
@@ -840,6 +845,9 @@ const OpportunitiesLayout: React.FC<{
                 onAddNoteAttachment={addNoteAttachment}
                 onUpdateNoteAttachment={updateNoteAttachment}
                 onDeleteNoteAttachment={deleteNoteAttachment}
+                onAddNoteBlock={addNoteBlock}
+                onUpdateNoteBlock={updateNoteBlock}
+                onDeleteNoteBlock={deleteNoteBlock}
               />
             )}
 
