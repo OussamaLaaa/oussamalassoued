@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import type { DocumentBrandSettings, Invoice, InvoiceInput, InvoiceItem } from '../../types/opportunities';
+import type {
+  Company, DocumentBrandSettings, FinanceIncome, FinancePeriod,
+  GeneratedDocument, Invoice, InvoiceInput, InvoiceItem, Project,
+} from '../../types/opportunities';
 
 const formatMoney = (amount?: number, currency = 'MYR') => {
   if (amount == null || Number.isNaN(Number(amount))) return '—';
@@ -40,32 +43,58 @@ type InvoiceArchivePanelProps = {
   invoices: Invoice[];
   invoiceItems: InvoiceItem[];
   brandSettings?: DocumentBrandSettings | null;
+  financeIncome: FinanceIncome[];
+  financePeriods: FinancePeriod[];
+  companies: Company[];
+  projects: Project[];
+  generatedDocuments: GeneratedDocument[];
   onNewInvoice: () => void;
   onEditInvoice: (id: string) => void;
   onPreviewInvoice: (id: string) => void;
   onDeleteInvoice: (id: string) => Promise<void>;
   onUpdateInvoice: (id: string, input: Partial<InvoiceInput>) => Promise<Invoice>;
+  onAddFinanceIncome: (input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
 };
 
 const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
   invoices,
   invoiceItems,
   brandSettings,
+  financeIncome,
+  financePeriods,
+  companies,
+  projects,
+  generatedDocuments,
   onNewInvoice,
   onEditInvoice,
   onPreviewInvoice,
   onDeleteInvoice,
   onUpdateInvoice,
+  onAddFinanceIncome,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
+  const [pdfFilter, setPdfFilter] = useState<'all' | 'has-pdf' | 'no-pdf'>('all');
   const [currencyFilter, setCurrencyFilter] = useState('');
   const [openInvoiceId, setOpenInvoiceId] = useState<string | null>(null);
+  const [financeMessage, setFinanceMessage] = useState<string | null>(null);
 
   const currencies = useMemo(() => {
     const set = new Set(invoices.map((inv) => inv.currency || 'MYR').filter(Boolean));
     return Array.from(set).sort();
   }, [invoices]);
+
+  const uniqueCompanies = useMemo(() => {
+    const ids = new Set(invoices.map((inv) => inv.relatedCompanyId).filter(Boolean));
+    return companies.filter((c) => ids.has(c.id));
+  }, [invoices, companies]);
+
+  const uniqueProjects = useMemo(() => {
+    const ids = new Set(invoices.map((inv) => inv.relatedProjectId).filter(Boolean));
+    return projects.filter((p) => ids.has(p.id));
+  }, [invoices, projects]);
 
   const itemsByInvoiceId = useMemo(() => {
     const result: Record<string, number> = {};
@@ -75,15 +104,55 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
     return result;
   }, [invoiceItems]);
 
+  const stats = useMemo(() => {
+    const total = invoices.length;
+    const paid = invoices.filter((inv) => inv.status === 'paid');
+    const unpaid = invoices.filter((inv) => inv.status === 'unpaid');
+    const overdue = invoices.filter((inv) => inv.status === 'overdue');
+    const sent = invoices.filter((inv) => inv.status === 'sent');
+    const totalPaid = paid.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const pendingInvoices = [...unpaid, ...sent, ...overdue];
+    const totalPending = pendingInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    return { total, paidCount: paid.length, unpaidCount: unpaid.length, overdueCount: overdue.length, totalPaid, totalPending };
+  }, [invoices]);
+
+  const hasFinanceIncome = useMemo(() => {
+    const invoiceNumbers = new Set(invoices.map((inv) => inv.invoiceNumber));
+    const linked: Record<string, boolean> = {};
+    for (const fi of financeIncome) {
+      for (const invNum of invoiceNumbers) {
+        if (
+          (fi.title && fi.title.includes(invNum)) ||
+          (fi.notes && fi.notes.includes(invNum))
+        ) {
+          linked[invNum] = true;
+        }
+      }
+    }
+    return linked;
+  }, [financeIncome, invoices]);
+
+  const checkDuplicateFinance = (invoice: Invoice): boolean => {
+    const num = invoice.invoiceNumber;
+    if (!num) return false;
+    return financeIncome.some(
+      (fi) =>
+        (fi.title && fi.title.includes(num)) ||
+        (fi.notes && fi.notes.includes(num)),
+    );
+  };
+
   const filteredInvoices = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-
     return [...invoices]
       .filter((invoice) => {
         if (statusFilter && invoice.status !== statusFilter) return false;
+        if (companyFilter && invoice.relatedCompanyId !== companyFilter) return false;
+        if (projectFilter && invoice.relatedProjectId !== projectFilter) return false;
+        if (pdfFilter === 'has-pdf' && !invoice.pdfStoragePath) return false;
+        if (pdfFilter === 'no-pdf' && invoice.pdfStoragePath) return false;
         if (currencyFilter && invoice.currency !== currencyFilter) return false;
         if (!query) return true;
-
         const haystack = [
           invoice.invoiceNumber,
           invoice.title,
@@ -97,11 +166,10 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
-
         return haystack.includes(query);
       })
       .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
-  }, [invoices, searchQuery, statusFilter, currencyFilter]);
+  }, [invoices, searchQuery, statusFilter, companyFilter, projectFilter, pdfFilter, currencyFilter]);
 
   const openStoredPdf = async (invoice: Invoice) => {
     const popup = window.open('about:blank', '_blank');
@@ -111,18 +179,15 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
         credentials: 'include',
         cache: 'no-store',
       });
-
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.success || !result?.signedUrl) {
         throw new Error(result?.error || 'No stored PDF found.');
       }
-
       if (popup) {
         popup.location.href = String(result.signedUrl);
         popup.focus();
         return;
       }
-
       window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
     } catch (error) {
       if (popup) popup.close();
@@ -138,6 +203,43 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
     }
   };
 
+  const handleCreateFinanceIncome = async (invoice: Invoice, isExpected: boolean) => {
+    try {
+      if (checkDuplicateFinance(invoice)) {
+        setFinanceMessage('Finance income already exists for this invoice.');
+        return;
+      }
+      const activePeriod = financePeriods.find((p) => p.status === 'active');
+      const payload: Partial<FinanceIncome> = {
+        title: isExpected
+          ? `Expected payment for ${invoice.invoiceNumber}`
+          : `Payment for ${invoice.invoiceNumber}`,
+        source: 'invoice',
+        incomeType: invoice.relatedProjectId ? 'project' : 'freelance',
+        expectedAmount: invoice.total ?? 0,
+        receivedAmount: isExpected ? 0 : (invoice.total ?? 0),
+        currency: invoice.currency || 'MYR',
+        expectedDate: invoice.dueDate || invoice.issueDate || undefined,
+        receivedDate: isExpected ? undefined : new Date().toISOString().split('T')[0],
+        status: isExpected
+          ? (invoice.status === 'overdue' ? 'delayed' : 'expected')
+          : 'received',
+        linkedProjectId: invoice.relatedProjectId || undefined,
+        linkedCompanyId: invoice.relatedCompanyId || undefined,
+        financePeriodId: activePeriod?.id || undefined,
+        notes: `Generated from invoice ${invoice.invoiceNumber}`,
+      };
+      await onAddFinanceIncome(payload);
+      setFinanceMessage(isExpected
+        ? `Expected income created for invoice ${invoice.invoiceNumber}.`
+        : `Finance income created for invoice ${invoice.invoiceNumber}.`);
+    } catch (err) {
+      console.error('[Invoice Archive] Finance income creation failed', err);
+      setFinanceMessage('Failed to create finance income.');
+    }
+    setTimeout(() => setFinanceMessage(null), 4000);
+  };
+
   const renderStatusActions = (invoice: Invoice) => {
     const status = invoice.status;
     return (
@@ -150,6 +252,16 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
         ) : null}
         {status === 'sent' || status === 'unpaid' ? (
           <button type="button" onClick={() => void handleStatusUpdate(invoice, 'overdue')} className="rounded-lg border border-[#fecaca] bg-[#fff1f2] px-3 py-1.5 text-xs font-medium text-[#b91c1c] hover:bg-[#fee2e6]">Mark Overdue</button>
+        ) : null}
+        {status === 'sent' || status === 'unpaid' || status === 'overdue' ? (
+          <button type="button" onClick={() => void handleCreateFinanceIncome(invoice, true)} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1.5 text-xs font-medium text-[#92400e] hover:bg-[#fef3c7]">
+            Create Expected Income
+          </button>
+        ) : null}
+        {status === 'paid' ? (
+          <button type="button" onClick={() => void handleCreateFinanceIncome(invoice, false)} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">
+            Create Finance Income
+          </button>
         ) : null}
         {status !== 'archived' && status !== 'cancelled' ? (
           <button type="button" onClick={() => void handleStatusUpdate(invoice, 'archived')} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1.5 text-xs font-medium text-[#475569] hover:bg-[#eef2f7]">Archive</button>
@@ -166,18 +278,53 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
 
   return (
     <div className="space-y-4">
+      {financeMessage ? (
+        <div className="rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-3 text-sm text-[#1d4ed8] shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          {financeMessage}
+        </div>
+      ) : null}
+
+      {/* Stats cards */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+        <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#64748b]">Total</div>
+          <div className="mt-1.5 text-2xl font-bold text-[#0f172a]">{stats.total}</div>
+        </div>
+        <div className="rounded-2xl border border-[#bbf7d0] bg-[#f0fdf4] p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#166534]">Paid</div>
+          <div className="mt-1.5 text-2xl font-bold text-[#166534]">{stats.paidCount}</div>
+        </div>
+        <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#92400e]">Unpaid</div>
+          <div className="mt-1.5 text-2xl font-bold text-[#92400e]">{stats.unpaidCount}</div>
+        </div>
+        <div className="rounded-2xl border border-[#fecaca] bg-[#fff1f2] p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b91c1c]">Overdue</div>
+          <div className="mt-1.5 text-2xl font-bold text-[#b91c1c]">{stats.overdueCount}</div>
+        </div>
+        <div className="rounded-2xl border border-[#bbf7d0] bg-[#f0fdf4] p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#166534]">Paid Amount</div>
+          <div className="mt-1.5 text-lg font-bold text-[#166534]">{formatMoney(stats.totalPaid)}</div>
+        </div>
+        <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#92400e]">Pending</div>
+          <div className="mt-1.5 text-lg font-bold text-[#92400e]">{formatMoney(stats.totalPending)}</div>
+        </div>
+      </div>
+
+      {/* Header + Filters */}
       <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-[#0f172a]">Invoice Archive</h3>
-            <p className="mt-1 text-sm text-[#64748b]">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''} — search, filter, and manage status</p>
+            <p className="mt-1 text-sm text-[#64748b]">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''} — search, filter, and manage</p>
           </div>
           <button type="button" onClick={onNewInvoice} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b]">
             + New Invoice
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_160px]">
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_140px_140px_140px_120px]">
           <input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -200,19 +347,52 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
             <option value="archived">Archived</option>
           </select>
           <select
-            value={currencyFilter}
-            onChange={(event) => setCurrencyFilter(event.target.value)}
+            value={companyFilter}
+            onChange={(event) => setCompanyFilter(event.target.value)}
             className="w-full rounded-xl border border-[#cbd5e1] bg-white px-4 py-3 text-sm text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#dbeafe]"
           >
-            <option value="">All currencies</option>
-            {currencies.map((cur) => <option key={cur} value={cur}>{cur}</option>)}
+            <option value="">All companies</option>
+            {uniqueCompanies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          <select
+            value={projectFilter}
+            onChange={(event) => setProjectFilter(event.target.value)}
+            className="w-full rounded-xl border border-[#cbd5e1] bg-white px-4 py-3 text-sm text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#dbeafe]"
+          >
+            <option value="">All projects</option>
+            {uniqueProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <select
+            value={pdfFilter}
+            onChange={(event) => setPdfFilter(event.target.value as 'all' | 'has-pdf' | 'no-pdf')}
+            className="w-full rounded-xl border border-[#cbd5e1] bg-white px-4 py-3 text-sm text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#dbeafe]"
+          >
+            <option value="all">All PDF</option>
+            <option value="has-pdf">Has PDF</option>
+            <option value="no-pdf">No PDF</option>
+          </select>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {currencyFilter ? (
+            <button type="button" onClick={() => setCurrencyFilter('')} className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1 text-xs font-medium text-[#64748b] hover:bg-[#eef2f7]">
+              Currency: {currencyFilter} ✕
+            </button>
+          ) : (
+            <select
+              value={currencyFilter}
+              onChange={(event) => setCurrencyFilter(event.target.value)}
+              className="rounded-xl border border-[#cbd5e1] bg-white px-3 py-1.5 text-xs text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-4 focus:ring-[#dbeafe]"
+            >
+              <option value="">All currencies</option>
+              {currencies.map((cur) => <option key={cur} value={cur}>{cur}</option>)}
+            </select>
+          )}
         </div>
       </div>
 
       {filteredInvoices.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-[#dbe3ef] bg-[#fafcff] p-10 text-center text-sm text-[#64748b]">
-          {searchQuery || statusFilter || currencyFilter
+          {searchQuery || statusFilter || companyFilter || projectFilter || pdfFilter !== 'all' || currencyFilter
             ? 'No invoices match the current filters.'
             : 'No invoices yet. Create your first invoice.'}
         </div>
@@ -221,6 +401,8 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
           {filteredInvoices.map((invoice) => {
             const itemCount = itemsByInvoiceId[invoice.id] || 0;
             const isExpanded = openInvoiceId === invoice.id;
+            const hasPdf = Boolean(invoice.pdfStoragePath);
+            const hasFin = hasFinanceIncome[invoice.invoiceNumber] || false;
 
             return (
               <div key={invoice.id} className="rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
@@ -234,9 +416,14 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
                         <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${statusBadge(invoice.status || 'draft')}`}>
                           {invoice.status || 'draft'}
                         </span>
-                        {invoice.pdfStoragePath ? (
+                        {hasPdf ? (
                           <span className="rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2.5 py-0.5 text-xs font-medium text-[#166534]">
                             PDF stored
+                          </span>
+                        ) : null}
+                        {hasFin ? (
+                          <span className="rounded-full border border-[#e5e7eb] bg-[#f0fdf4] px-2.5 py-0.5 text-xs font-medium text-[#166534]">
+                            Fin
                           </span>
                         ) : null}
                         {invoice.relatedProjectName ? (
@@ -270,7 +457,7 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
                       <button type="button" onClick={() => onEditInvoice(invoice.id)} className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-2 text-xs font-medium text-[#334155] hover:bg-[#f8fafc]">
                         Edit
                       </button>
-                      {invoice.pdfStoragePath ? (
+                      {hasPdf ? (
                         <button type="button" onClick={() => void openStoredPdf(invoice)} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">
                           Open PDF
                         </button>
@@ -297,6 +484,11 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
                         <InfoBlock label="Person" value={invoice.relatedPersonName || '—'} />
                         <InfoBlock label="Deal" value={invoice.relatedDealName || '—'} />
                         <InfoBlock label="Generated Doc" value={invoice.generatedDocumentId ? 'Linked' : '—'} />
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <InfoBlock label="Finance Income" value={hasFin ? 'Linked' : '—'} />
+                        <InfoBlock label="PDF" value={hasPdf ? 'Stored' : '—'} />
+                        <InfoBlock label="Invoice Total" value={formatMoney(invoice.total, invoice.currency || 'MYR')} />
                       </div>
                       {renderStatusActions(invoice)}
                       <div className="border-t border-[#e5e7eb] pt-3 flex justify-end">

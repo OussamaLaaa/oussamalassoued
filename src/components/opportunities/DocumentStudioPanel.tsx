@@ -9,6 +9,8 @@ import type {
   DocumentTemplate,
   DocumentTemplateInput,
   DocumentType,
+  FinanceIncome,
+  FinancePeriod,
   GeneratedDocument,
   GeneratedDocumentInput,
   Invoice,
@@ -290,6 +292,9 @@ const DocumentStudioPanel: React.FC<{
   onAddInvoiceItem: (input: InvoiceItemInput) => Promise<InvoiceItem>;
   onUpdateInvoiceItem: (id: string, input: Partial<InvoiceItemInput>) => Promise<InvoiceItem>;
   onDeleteInvoiceItem: (id: string, skipConfirm?: boolean) => Promise<void>;
+  financeIncome: FinanceIncome[];
+  financePeriods: FinancePeriod[];
+  onAddFinanceIncome: (input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
 }> = ({
   documentTemplates,
   documentBrandSettings,
@@ -317,6 +322,9 @@ const DocumentStudioPanel: React.FC<{
   onAddInvoiceItem,
   onUpdateInvoiceItem,
   onDeleteInvoiceItem,
+  financeIncome,
+  financePeriods,
+  onAddFinanceIncome,
 }) => {
   const [tab, setTab] = useState<StudioTab>('dashboard');
   const [templateEditor, setTemplateEditor] = useState<TemplateEditorState | null>(null);
@@ -614,11 +622,17 @@ const DocumentStudioPanel: React.FC<{
           invoices={invoices}
           invoiceItems={invoiceItems}
           brandSettings={documentBrandSettings[0] ?? null}
+          financeIncome={financeIncome}
+          financePeriods={financePeriods}
+          companies={companies}
+          projects={projects}
+          generatedDocuments={generatedDocuments}
           onNewInvoice={() => openInvoiceStudio(null)}
           onEditInvoice={openInvoiceStudio}
           onPreviewInvoice={openInvoiceStudio}
           onDeleteInvoice={onDeleteInvoice}
           onUpdateInvoice={onUpdateInvoice}
+          onAddFinanceIncome={onAddFinanceIncome}
         />
       ) : null}
 

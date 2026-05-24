@@ -69,6 +69,7 @@ const CompanySegmentView: React.FC<{
   onAddCompany?: () => void;
   onEdit: (company: Company) => void;
   onDelete: (id: string) => void;
+  onAIScore?: (company: Company) => void;
   onImportCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => Promise<any>;
 }> = ({
   segmentType,
@@ -81,6 +82,7 @@ const CompanySegmentView: React.FC<{
   onAddCompany,
   onEdit,
   onDelete,
+  onAIScore,
   onImportCompaniesBatch,
 }) => {
   const [showCsvImport, setShowCsvImport] = useState(false);
@@ -126,8 +128,15 @@ const CompanySegmentView: React.FC<{
     const highPriority = segmentCompanies.filter((c) => c.priority === 'high').length;
     const proposalsSent = segmentDeals.filter((d) => d.stage === 'proposal_sent' || d.stage === 'negotiation').length;
 
+    // AI Lead Scoring stats
+    const scoredCompanies = segmentCompanies.filter((c) => c.fitScore != null || c.ethicalFit != null);
+    const avgFitScore = scoredCompanies.length > 0
+      ? (scoredCompanies.reduce((sum, c) => sum + (c.fitScore || 0), 0) / scoredCompanies.length).toFixed(1)
+      : '—';
+    const needsReviewEthical = segmentCompanies.filter((c) => c.ethicalFit === 'needs_review' || c.ethicalFit === 'avoid').length;
+
     // Shared stats
-    const base = { totalCompanies, totalPeople, messagesSent, followUpsDue, openDeals, highPriority, proposalsSent };
+    const base = { totalCompanies, totalPeople, messagesSent, followUpsDue, openDeals, highPriority, proposalsSent, avgFitScore, needsReviewEthical };
 
     if (segmentType === 'big_company') {
       return {
@@ -191,6 +200,9 @@ const CompanySegmentView: React.FC<{
         <StatCard title="People Connected" value={stats.totalPeople} />
         <StatCard title="Messages Sent" value={stats.messagesSent} />
         <StatCard title="Follow-ups Due" value={stats.followUpsDue} />
+        <StatCard title="Avg Fit Score" value={stats.avgFitScore} />
+        <StatCard title="High Priority" value={stats.highPriority} />
+        <StatCard title="Needs Review" value={stats.needsReviewEthical} />
         {segmentType === 'big_company' && stats.extra.map((e, i) => (
           <StatCard key={i} title={e.title} value={e.value} />
         ))}
@@ -199,7 +211,6 @@ const CompanySegmentView: React.FC<{
         ))}
         {segmentType === 'freelance' && (
           <>
-            <StatCard title="High Priority" value={stats.highPriority} />
             <StatCard title="Open Deals" value={stats.openDeals} />
             <StatCard title="Proposals Sent" value={stats.proposalsSent} />
           </>
@@ -240,6 +251,7 @@ const CompanySegmentView: React.FC<{
             companies={segmentCompanies}
             onEdit={onEdit}
             onDelete={onDelete}
+            onAIScore={onAIScore}
             filters={segmentFilters}
             onFilterChange={setSegmentFilters}
           />

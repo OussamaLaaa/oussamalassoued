@@ -16,9 +16,10 @@ const CompaniesTable: React.FC<{
   companies: Company[];
   onEdit?: (company: Company) => void;
   onDelete?: (id: string) => void;
+  onAIScore?: (company: Company) => void;
   filters?: CompanyFilters;
   onFilterChange?: (filters: CompanyFilters) => void;
-}> = ({ companies, onEdit, onDelete, filters, onFilterChange }) => {
+}> = ({ companies, onEdit, onDelete, onAIScore, filters, onFilterChange }) => {
   const filtered = useMemo(() => {
     if (!filters) return companies;
     return companies.filter((c) => {
@@ -157,6 +158,15 @@ const CompaniesTable: React.FC<{
                         className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff]"
                       >
                         Edit
+                      </button>
+                    )}
+                    {onAIScore && (
+                      <button
+                        type="button"
+                        onClick={() => onAIScore(c)}
+                        className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#7c3aed] hover:bg-[#f5f3ff]"
+                      >
+                        AI Score
                       </button>
                     )}
                     {onDelete && (

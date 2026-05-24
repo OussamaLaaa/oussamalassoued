@@ -24,6 +24,7 @@ import ImportPeopleModal from './ImportPeopleModal';
 import OutreachTemplateModal from './OutreachTemplateModal';
 import TemplatesPanel from './TemplatesPanel';
 import CompanySegmentView from './CompanySegmentView';
+import AICompanyScoringModal from './AICompanyScoringModal';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -273,6 +274,7 @@ const OpportunitiesLayout: React.FC<{
   const [messageFilters, setMessageFilters] = useState<MessageFilters>(defaultMessageFilters);
   const [dealFilters, setDealFilters] = useState<DealFilters>(defaultDealFilters);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
 
   // Sync global search to all table filters
   const handleGlobalSearchChange = (value: string) => {
@@ -401,6 +403,43 @@ const OpportunitiesLayout: React.FC<{
 
   const handleDeleteDeal = (id: string) => {
     deleteDeal(id);
+  };
+
+  const handleAIScore = (company: Company) => {
+    setAiScoringCompany(company);
+  };
+
+  const handleApplyAIScore = async (result: any) => {
+    if (!aiScoringCompany) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const aiNotes = [
+      '',
+      `AI Lead Scoring Analysis — ${today}:`,
+      `UX Problem: ${result.uxProblem || 'N/A'}`,
+      `Service To Offer: ${result.serviceToOffer || 'N/A'}`,
+      `Reasoning: ${result.reasoningSummary || 'N/A'}`,
+      'Risks:',
+      ...(Array.isArray(result.risks) ? result.risks.map((r: string) => `- ${r}`) : ['- N/A']),
+      'Questions To Review:',
+      ...(Array.isArray(result.questionsToReview) ? result.questionsToReview.map((q: string) => `- ${q}`) : ['- N/A']),
+    ].join('\n');
+
+    const payload: any = {};
+    if (result.databaseType) payload.databaseType = result.databaseType;
+    if (result.industry) payload.industry = result.industry;
+    if (result.priority) payload.priority = result.priority;
+    if (typeof result.fitScore === 'number') payload.fitScore = result.fitScore;
+    if (result.ethicalFit) payload.ethicalFit = result.ethicalFit;
+    if (result.nextAction) payload.nextAction = result.nextAction;
+    payload.notes = (aiScoringCompany.notes || '') + aiNotes;
+
+    try {
+      await updateCompany(aiScoringCompany.id, payload as any);
+      setAiScoringCompany(null);
+    } catch (error) {
+      console.error('[Opportunities] Failed to apply AI scoring.', error);
+    }
   };
 
   const handleEditProject = (project: Project) => {
@@ -545,6 +584,7 @@ const OpportunitiesLayout: React.FC<{
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
                 onDelete={handleDeleteCompany}
+                onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
               />
             )}
@@ -561,6 +601,7 @@ const OpportunitiesLayout: React.FC<{
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
                 onDelete={handleDeleteCompany}
+                onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
               />
             )}
@@ -577,6 +618,7 @@ const OpportunitiesLayout: React.FC<{
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
                 onDelete={handleDeleteCompany}
+                onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
               />
             )}
@@ -646,6 +688,7 @@ const OpportunitiesLayout: React.FC<{
                   companies={companies}
                   onEdit={handleEditCompany}
                   onDelete={handleDeleteCompany}
+                  onAIScore={handleAIScore}
                   filters={companyFilters}
                   onFilterChange={setCompanyFilters}
                 />
@@ -855,6 +898,9 @@ const OpportunitiesLayout: React.FC<{
                 onAddGeneratedDocument={addGeneratedDocument}
                 onUpdateGeneratedDocument={updateGeneratedDocument}
                 onDeleteGeneratedDocument={deleteGeneratedDocument}
+                financeIncome={financeIncome}
+                financePeriods={financePeriods}
+                onAddFinanceIncome={addFinanceIncome}
               />
             )}
 
@@ -1119,6 +1165,18 @@ const OpportunitiesLayout: React.FC<{
           onUpdatePerson={async (id, input) => {
             await updatePerson(id, input);
           }}
+        />
+      ) : null}
+
+      {aiScoringCompany ? (
+        <AICompanyScoringModal
+          isOpen
+          company={aiScoringCompany}
+          people={people}
+          messages={messages}
+          deals={deals}
+          onClose={() => setAiScoringCompany(null)}
+          onApply={handleApplyAIScore}
         />
       ) : null}
     </div>

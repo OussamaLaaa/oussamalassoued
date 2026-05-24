@@ -1,6 +1,7 @@
 import aiMessageHandler from '../server/lib/aiMessageHandler.js';
 import aiFinanceHandler from '../server/lib/aiFinanceHandler.js';
 import aiDocumentHandler from '../server/lib/aiDocumentHandler.js';
+import aiLeadScoringHandler from '../server/lib/aiLeadScoringHandler.js';
 import { createClient } from '@supabase/supabase-js';
 import aiKeyCrypto from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
@@ -288,6 +289,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST' && action === 'provider-key') {
     return handleProviderKeyAction(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'lead-scoring') {
+    return aiLeadScoringHandler(req, res);
   }
 
   return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
