@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -30,30 +30,9 @@ import RelationshipsPanel from './RelationshipsPanel';
 import SmartNotesPanel from './SmartNotesPanel';
 import SocialMediaPanel from './SocialMediaPanel';
 import LifeManagementPanel from './LifeManagementPanel';
-
-const TABS: { id: OpportunitiesTab; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'big_companies', label: 'Big Companies' },
-  { id: 'sme_companies', label: 'SME Companies' },
-  { id: 'freelance_leads', label: 'Freelance Leads' },
-  { id: 'companies', label: 'All Companies' },
-  { id: 'people', label: 'People' },
-  { id: 'messages', label: 'Messages' },
-  { id: 'deals', label: 'Deals' },
-  { id: 'relationships', label: 'Relationships' },
-  { id: 'notes', label: 'Notes' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'queue', label: 'Outreach Queue' },
-  { id: 'templates', label: 'Templates' },
-  { id: 'strategy', label: 'Strategy' },
-  { id: 'plans', label: 'Plans' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'finance', label: 'Finance' },
-  { id: 'documents', label: 'Documents' },
-  { id: 'ai-control', label: 'AI Control' },
-  { id: 'social', label: 'Social Media' },
-  { id: 'life', label: 'Life' },
-];
+import DesktopLauncher from './DesktopLauncher';
+import type { AppId } from './DesktopLauncher';
+import FullPageAppShell from './FullPageAppShell';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
   name: c.name,
@@ -353,6 +332,92 @@ const OpportunitiesLayout: React.FC<{
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
 
+  const [activeApp, setActiveApp] = useState<AppId>('desktop');
+
+  const handleLaunchApp = (appId: AppId) => {
+    setActiveApp(appId);
+    if (appId === 'crm') setTab('dashboard');
+    else if (appId === 'messages') setTab('messages');
+    else if (appId === 'strategy') setTab('strategy');
+    else if (appId === 'plans') setTab('plans');
+    else if (appId === 'tasks') setTab('tasks');
+    else if (appId === 'projects') setTab('projects');
+    else if (appId === 'finance') setTab('finance');
+    else if (appId === 'documents') setTab('documents');
+    else if (appId === 'social') setTab('social');
+    else if (appId === 'relationships') setTab('relationships');
+    else if (appId === 'life') setTab('life');
+    else if (appId === 'notes') setTab('notes');
+    else if (appId === 'ai_control') setTab('ai-control');
+    setGlobalSearch('');
+  };
+
+  const handleBackToDesktop = () => {
+    setActiveApp('desktop');
+    setTab('dashboard');
+    setGlobalSearch('');
+  };
+
+  const CRM_TABS = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'big_companies', label: 'Big Companies' },
+    { id: 'sme_companies', label: 'SME Companies' },
+    { id: 'freelance_leads', label: 'Freelance Leads' },
+    { id: 'companies', label: 'All Companies' },
+    { id: 'people', label: 'People' },
+    { id: 'deals', label: 'Deals' },
+    { id: 'queue', label: 'Outreach Queue' },
+  ];
+
+  const MESSAGES_TABS = [
+    { id: 'messages', label: 'Messages' },
+    { id: 'templates', label: 'Templates' },
+  ];
+
+  const getShellTitle = () => {
+    switch (activeApp) {
+      case 'crm': return 'CRM';
+      case 'messages': return 'Messages';
+      case 'strategy': return 'Strategy';
+      case 'plans': return 'Plans';
+      case 'tasks': return 'Tasks';
+      case 'projects': return 'Projects';
+      case 'finance': return 'Finance';
+      case 'documents': return 'Documents';
+      case 'social': return 'Social Media';
+      case 'relationships': return 'Relationships';
+      case 'life': return 'Life';
+      case 'notes': return 'Notes';
+      case 'ai_control': return 'AI Control';
+      default: return '';
+    }
+  };
+
+  const getShellSubtitle = () => {
+    switch (activeApp) {
+      case 'crm': return 'Companies, people, deals, and outreach pipeline.';
+      case 'messages': return 'Messages, templates, and outreach communication.';
+      case 'strategy': return 'Goals, tactics, experiments, and strategic decisions.';
+      case 'plans': return 'Yearly, monthly, weekly planning and execution structure.';
+      case 'tasks': return 'Weekly tasks, daily recurring routines, and work logs.';
+      case 'projects': return 'Projects, workspaces, meetings, documents, and time logs.';
+      case 'finance': return 'Income, expenses, allocation, investments, and financial review.';
+      case 'documents': return 'Invoices, contracts, cahier de charges, PDFs, and archive.';
+      case 'social': return 'Content strategy, ideas, weekly plan, calendar, and performance.';
+      case 'relationships': return 'Relationship categories, people dashboards, contact methods, and follow-ups.';
+      case 'life': return 'Nutrition, fitness, deen, family, and life review.';
+      case 'notes': return 'Smart notes, categories, blocks, attachments, and linked memory.';
+      case 'ai_control': return 'Providers, encrypted keys, use-case routing, and AI tests.';
+      default: return '';
+    }
+  };
+
+  const getShellTabs = () => {
+    if (activeApp === 'crm') return CRM_TABS;
+    if (activeApp === 'messages') return MESSAGES_TABS;
+    return undefined;
+  };
+
   // Sync global search to all table filters
   const handleGlobalSearchChange = (value: string) => {
     setGlobalSearch(value);
@@ -558,118 +623,53 @@ const OpportunitiesLayout: React.FC<{
     await deleteProject(id);
   };
 
+  if (activeApp === 'desktop') {
+    return <DesktopLauncher onLaunchApp={handleLaunchApp} />;
+  }
+
+  const handleShellTabChange = (tabId: string) => {
+    setTab(tabId as OpportunitiesTab);
+    setGlobalSearch('');
+  };
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] dashboard-shell px-4 py-6">
-      <div className="max-w-[1400px] mx-auto grid grid-cols-12 gap-4">
-        <aside className="col-span-12 md:col-span-3">
-          <div className="sticky top-4 space-y-3">
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-              <h3 className="text-sm font-mono uppercase text-[#0f172a]">Opportunities OS</h3>
-              <p className="mt-2 text-xs text-[#64748b]">Private CRM & outreach dashboard</p>
-            </div>
-
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-2 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-              {TABS.map((t) => {
-                const count = t.id === 'companies'
-                  ? companies.length
-                  : t.id === 'big_companies'
-                    ? bigCompaniesCount
-                  : t.id === 'sme_companies'
-                    ? smeCompaniesCount
-                  : t.id === 'freelance_leads'
-                    ? freelanceLeadsCount
-                  : t.id === 'people'
-                    ? people.length
-                  : t.id === 'messages'
-                    ? messages.length
-                  : t.id === 'deals'
-                    ? deals.length
-                  : t.id === 'relationships'
-                    ? relationships.length
-                  : t.id === 'notes'
-                    ? smartNotes.length
-                  : t.id === 'projects'
-                    ? projects.length
-                  : t.id === 'queue'
-                    ? getQueueTabCount(people, messages)
-                  : t.id === 'templates'
-                    ? templates.length
-                  : t.id === 'tasks'
-                    ? tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length
-                  : t.id === 'documents'
-                    ? generatedDocuments.length
-                    : 0;
-                const active = tab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
-                    className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2 rounded-md transition-all ${
-                      active ? 'bg-[#eff6ff] border border-[#bfdbfe] text-[#1d4ed8] scale-100 shadow-[0_4px_12px_rgba(37,99,235,0.08)]' : 'text-[#475569] hover:bg-[#f8fafc]'
-                    }`}
-                  >
-                    <div className={`font-medium ${active ? 'text-[#1d4ed8]' : 'text-[#475569]'}`}>{t.label}</div>
-                    <div className="text-xs font-mono text-[#64748b]">{count}</div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Theme toggle */}
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-[#64748b]">Theme</div>
-                <div>
-                  <button
-                    onClick={() => setTheme && setTheme(theme === 'light' ? 'dark' : 'light')}
-                    className="text-sm px-3 py-1 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
-                  >
-                    {theme === 'light' ? 'Light' : 'Dark'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 text-sm text-[#64748b] shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-              <div className="font-mono text-[11px] uppercase text-[#0f172a]">Quick Tips</div>
-              <ul className="mt-2 list-disc list-inside text-xs text-[#64748b]">
-                <li>Use the cards to monitor pipeline health.</li>
-                <li>Click Edit or Delete to manage records.</li>
-                <li>Use the search bar to find companies, people, emails, and LinkedIn profiles.</li>
-                <li>Combine filters for precise results.</li>
-              </ul>
+    <FullPageAppShell
+      title={getShellTitle()}
+      subtitle={getShellSubtitle()}
+      onBackToDesktop={handleBackToDesktop}
+      tabs={getShellTabs()}
+      activeTab={tab}
+      onTabChange={handleShellTabChange}
+    >
+      <div className="space-y-4">
+        {/* Global Search Bar - CRM only */}
+        {activeApp === 'crm' && (
+          <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#64748b] shrink-0">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                value={globalSearch}
+                onChange={(e) => handleGlobalSearchChange(e.target.value)}
+                placeholder="Search across companies, people, emails, LinkedIn..."
+                className="w-full text-sm bg-transparent border-none outline-none text-[#0f172a] placeholder-[#94a3b8]"
+              />
+              {globalSearch && (
+                <button
+                  type="button"
+                  onClick={() => handleGlobalSearchChange('')}
+                  className="text-xs px-2 py-1 rounded text-[#64748b] hover:text-[#dc2626] hover:bg-[#fef2f2]"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </div>
-        </aside>
+        )}
 
-        <main className="col-span-12 md:col-span-9">
-          <div className="space-y-4">
-            {/* Global Search Bar */}
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-              <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#64748b] shrink-0">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-                <input
-                  type="text"
-                  value={globalSearch}
-                  onChange={(e) => handleGlobalSearchChange(e.target.value)}
-                  placeholder="Search across companies, people, emails, LinkedIn..."
-                  className="w-full text-sm bg-transparent border-none outline-none text-[#0f172a] placeholder-[#94a3b8]"
-                />
-                {globalSearch && (
-                  <button
-                    type="button"
-                    onClick={() => handleGlobalSearchChange('')}
-                    className="text-xs px-2 py-1 rounded text-[#64748b] hover:text-[#dc2626] hover:bg-[#fef2f2]"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {tab === 'dashboard' && (
+        {tab === 'dashboard' && (
               <OpportunitiesDashboard
                 companies={companies}
                 people={people}
@@ -1169,8 +1169,6 @@ const OpportunitiesLayout: React.FC<{
               />
             )}
           </div>
-        </main>
-      </div>
 
       {/* Add Company Modal */}
       {activeModal === 'company' ? (
@@ -1430,7 +1428,7 @@ const OpportunitiesLayout: React.FC<{
           onApply={handleApplyAIScore}
         />
       ) : null}
-    </div>
+    </FullPageAppShell>
   );
 };
 
