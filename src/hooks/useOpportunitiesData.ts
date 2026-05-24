@@ -1345,204 +1345,234 @@ export const useOpportunitiesData = (enabled = true) => {
   const [error, setError] = useState<string | null>(null);
 
   const applyPayload = useCallback((payload: any) => {
-    const nextCompanies = Array.isArray(payload?.companies) ? payload.companies.map(mapCompanyRow) : [];
-    const nextPeopleRaw = Array.isArray(payload?.people) ? payload.people : [];
-    const nextMessagesRaw = Array.isArray(payload?.messages) ? payload.messages : [];
-    const nextDealsRaw = Array.isArray(payload?.deals) ? payload.deals : [];
-    const nextProjectsRaw = Array.isArray(payload?.projects) ? payload.projects : [];
-    const nextProjectTasksRaw = Array.isArray(payload?.project_tasks) ? payload.project_tasks : [];
-    const nextProjectTimeLogsRaw = Array.isArray(payload?.project_time_logs) ? payload.project_time_logs : [];
-    const nextProjectMeetingsRaw = Array.isArray(payload?.project_meetings) ? payload.project_meetings : [];
-    const nextProjectDocumentsRaw = Array.isArray(payload?.project_documents) ? payload.project_documents : [];
-    const nextProjectFinanceItemsRaw = Array.isArray(payload?.project_finance_items) ? payload.project_finance_items : [];
-    const nextDocumentsRaw = Array.isArray(payload?.documents) ? payload.documents : [];
-    const nextDocumentTemplatesRaw = Array.isArray(payload?.document_templates) ? payload.document_templates : [];
-    const nextDocumentBrandSettingsRaw = Array.isArray(payload?.document_brand_settings) ? payload.document_brand_settings : [];
-    const nextAIProviderKeysRaw = Array.isArray(payload?.ai_provider_keys) ? payload.ai_provider_keys : [];
-    const nextAIUseCaseSettingsRaw = Array.isArray(payload?.ai_use_case_settings) ? payload.ai_use_case_settings : [];
-    const nextGeneratedDocumentsRaw = Array.isArray(payload?.generated_documents) ? payload.generated_documents : [];
-    const nextInvoicesRaw = Array.isArray(payload?.invoices) ? payload.invoices : [];
-    const nextInvoiceItemsRaw = Array.isArray(payload?.invoice_items) ? payload.invoice_items : [];
-    const nextTemplatesRaw = Array.isArray(payload?.message_templates) ? payload.message_templates : [];
-    const nextPlansRaw = Array.isArray(payload?.plans) ? payload.plans : [];
-    const nextPlanItemsRaw = Array.isArray(payload?.plan_items) ? payload.plan_items : [];
-    const nextFinanceIncomeRaw = Array.isArray(payload?.finance_income) ? payload.finance_income : [];
-    const nextFinanceExpensesRaw = Array.isArray(payload?.finance_expenses) ? payload.finance_expenses : [];
-    const nextFinanceAllocationRulesRaw = Array.isArray(payload?.finance_allocation_rules) ? payload.finance_allocation_rules : [];
-    const nextFinancePurchaseGoalsRaw = Array.isArray(payload?.finance_purchase_goals) ? payload.finance_purchase_goals : [];
-    const nextFinanceInvestmentIdeasRaw = Array.isArray(payload?.finance_investment_ideas) ? payload.finance_investment_ideas : [];
-    const nextFinanceInvestmentRulesRaw = Array.isArray(payload?.finance_investment_rules) ? payload.finance_investment_rules : [];
-    const nextFinanceInvestmentAllocationsRaw = Array.isArray(payload?.finance_investment_allocations) ? payload.finance_investment_allocations : [];
-    const nextFinancePeriodsRaw = Array.isArray(payload?.finance_periods) ? payload.finance_periods : [];
-    const nextFinanceRecurringRulesRaw = Array.isArray(payload?.finance_recurring_rules) ? payload.finance_recurring_rules : [];
-    const nextTasksRaw = Array.isArray(payload?.tasks) ? payload.tasks : [];
-    const nextRecurringTasksRaw = Array.isArray(payload?.recurring_tasks) ? payload.recurring_tasks : [];
-    const nextRecurringTaskLogsRaw = Array.isArray(payload?.recurring_task_logs) ? payload.recurring_task_logs : [];
-    const nextTaskWorkLogsRaw = Array.isArray(payload?.task_work_logs) ? payload.task_work_logs : [];
-    const nextWeeklyTaskReviewsRaw = Array.isArray(payload?.weekly_task_reviews) ? payload.weekly_task_reviews : [];
-    const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
-    const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
-    const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
-    const nextStrategyTacticsRaw = Array.isArray(payload?.strategy_tactics) ? payload.strategy_tactics : [];
-    const nextStrategyExperimentsRaw = Array.isArray(payload?.strategy_experiments) ? payload.strategy_experiments : [];
-    const nextStrategyDecisionsRaw = Array.isArray(payload?.strategy_decisions) ? payload.strategy_decisions : [];
+    if (!payload) return;
 
-    const companyById = new Map(nextCompanies.map((company) => [company.id, company] as const));
-    const personById = new Map<string, Person>();
+    // Helper: only extract if key is present in payload
+    const raw = (key: string) =>
+      key in payload && Array.isArray(payload[key]) ? payload[key] : null;
 
-    const nextPeople = nextPeopleRaw.map((row: any) => {
-      const mapped = mapPersonRow(row, undefined);
-      mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
-      personById.set(mapped.id, mapped);
-      return mapped;
-    });
+    const has = (key: string) => key in payload;
+    const companiesRaw = raw('companies');
+    const peopleRaw = raw('people');
+    const messagesRaw = raw('messages');
+    const dealsRaw = raw('deals');
+    const projectsRaw = raw('projects');
 
-    const nextMessages = nextMessagesRaw.map((row: any) => {
-      const mapped = mapMessageRow(row);
-      mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
-      mapped.personName = mapped.personName || personById.get(mapped.personId || '')?.fullName;
-      return mapped;
-    });
+    // Compute derived collections only when core data is present
+    let derived: { people: Person[]; messages: OutreachMessage[]; deals: Deal[] } | null = null;
+    let companyById: Map<string, Company> = new Map();
+    let personById = new Map<string, Person>();
+    let nextCompanies: Company[] = [];
 
-    const nextDeals = nextDealsRaw.map((row: any) => {
-      const mapped = mapDealRow(row);
-      mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
-      mapped.personName = mapped.personName || personById.get(mapped.personId || '')?.fullName;
-      return mapped;
-    });
+    if (companiesRaw) {
+      nextCompanies = companiesRaw.map(mapCompanyRow);
+      companyById = new Map(nextCompanies.map((c) => [c.id, c] as const));
 
-    const nextProjects = nextProjectsRaw.map((row: any) => {
-      const mapped = mapProjectRow(row);
-      mapped.relatedCompanyName = mapped.relatedCompanyName || companyById.get(mapped.relatedCompanyId || '')?.name;
-      mapped.relatedPersonName = mapped.relatedPersonName || personById.get(mapped.relatedPersonId || '')?.fullName;
-      return mapped;
-    });
+      if (peopleRaw) {
+        const nextPeople = peopleRaw.map((row: any) => {
+          const mapped = mapPersonRow(row, undefined);
+          mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
+          personById.set(mapped.id, mapped);
+          return mapped;
+        });
 
-    const nextProjectTasks = nextProjectTasksRaw.map((row: any) => mapProjectTaskRow(row));
-    const nextProjectTimeLogs = nextProjectTimeLogsRaw.map((row: any) => mapProjectTimeLogRow(row));
-    const nextProjectMeetings = nextProjectMeetingsRaw.map((row: any) => mapProjectMeetingRow(row));
-    const nextProjectDocuments = nextProjectDocumentsRaw.map((row: any) => mapProjectDocumentRow(row));
-    const nextProjectFinanceItems = nextProjectFinanceItemsRaw.map((row: any) => mapProjectFinanceItemRow(row));
-    const nextDocuments = attachDocumentLinkNames(nextDocumentsRaw.map((row: any) => mapDocumentRow(row)), nextProjects, nextCompanies, nextPeople, nextDeals);
-    const nextDocumentTemplates = nextDocumentTemplatesRaw.map((row: any) => mapDocumentTemplateRow(row));
-    const nextDocumentBrandSettings = nextDocumentBrandSettingsRaw.map((row: any) => mapDocumentBrandSettingsRow(row));
-    const nextAIProviderKeys = nextAIProviderKeysRaw.map((row: any) => mapAIProviderKeyRow(row));
-    const aiProviderKeyLabelById = new Map(nextAIProviderKeys.map((item) => [item.id, item.label] as const));
-    const nextAIUseCaseSettings = nextAIUseCaseSettingsRaw.map((row: any) => {
-      const mapped = mapAIUseCaseSettingRow(row);
-      if (!mapped.providerKeyLabel && mapped.providerKeyId) {
-        mapped.providerKeyLabel = aiProviderKeyLabelById.get(mapped.providerKeyId) || undefined;
+        const nextMessages = messagesRaw
+          ? messagesRaw.map((row: any) => {
+              const mapped = mapMessageRow(row);
+              mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
+              mapped.personName = mapped.personName || personById.get(mapped.personId || '')?.fullName;
+              return mapped;
+            })
+          : [];
+
+        const nextDeals = dealsRaw
+          ? dealsRaw.map((row: any) => {
+              const mapped = mapDealRow(row);
+              mapped.companyName = mapped.companyName || companyById.get(mapped.companyId || '')?.name;
+              mapped.personName = mapped.personName || personById.get(mapped.personId || '')?.fullName;
+              return mapped;
+            })
+          : [];
+
+        derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
+
+        // Only set derived state when core is complete
+        setPeople(derived.people);
+        setMessages(derived.messages);
+        setDeals(derived.deals);
       }
-      return mapped;
-    });
-    const nextGeneratedDocuments = attachGeneratedDocumentLinkNames(
-      nextGeneratedDocumentsRaw.map((row: any) => mapGeneratedDocumentRow(row)),
-      nextDocumentTemplates,
-      nextProjects,
-      nextCompanies,
-      nextPeople,
-      nextDeals,
-    );
-    const nextInvoices = attachInvoiceLinkNames(
-      nextInvoicesRaw.map((row: any) => mapInvoiceRow(row)),
-      nextProjects,
-      nextCompanies,
-      nextPeople,
-      nextDeals,
-    );
-    const nextInvoiceItems = nextInvoiceItemsRaw.map((row: any) => mapInvoiceItemRow(row));
 
-    const derived = getDerivedCollections(nextCompanies, nextPeople, nextMessages, nextDeals);
-    const nextTemplates = nextTemplatesRaw.map((row: any) => mapTemplateRow(row));
-    const nextStrategyGoals = attachGoalLinkNames(nextStrategyGoalsRaw.map((row: any) => strategyGoalFromDb(row)), nextProjects, nextCompanies);
-    const nextStrategyPlans = attachPlanLinkNames(nextStrategyPlansRaw.map((row: any) => strategyPlanFromDb(row)), nextStrategyGoals, nextProjects);
-    const nextStrategyTactics = attachTacticLinkNames(nextStrategyTacticsRaw.map((row: any) => strategyTacticFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
-    const nextStrategyExperiments = attachExperimentLinkNames(nextStrategyExperimentsRaw.map((row: any) => strategyExperimentFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
-    const nextStrategyDecisions = attachDecisionLinkNames(nextStrategyDecisionsRaw.map((row: any) => strategyDecisionFromDb(row)), nextStrategyGoals, nextStrategyPlans, nextProjects);
-    const nextPlans = attachOsPlanLinkNames(nextPlansRaw.map((row: any) => planFromDb(row)), nextProjects, nextStrategyGoals);
-    const nextPlanItems = attachPlanItemLinkNames(nextPlanItemsRaw.map((row: any) => planItemFromDb(row)), nextProjects, nextStrategyGoals);
-    const nextFinancePeriods = nextFinancePeriodsRaw.map((row: any) => financePeriodFromDb(row));
-    const nextFinanceRecurringRules = attachFinanceRecurringRuleLinkNames(nextFinanceRecurringRulesRaw.map((row: any) => financeRecurringRuleFromDb(row)), nextProjects, nextCompanies);
-    let nextFinanceIncome = attachFinanceIncomeLinkNames(nextFinanceIncomeRaw.map((row: any) => financeIncomeFromDb(row)), nextProjects, nextCompanies);
-    let nextFinanceExpenses = attachFinanceExpenseLinkNames(nextFinanceExpensesRaw.map((row: any) => financeExpenseFromDb(row)), nextProjects);
-    const nextFinanceAllocationRules = nextFinanceAllocationRulesRaw.map((row: any) => financeAllocationRuleFromDb(row));
-    let nextFinancePurchaseGoals = attachFinancePurchaseGoalLinkNames(nextFinancePurchaseGoalsRaw.map((row: any) => financePurchaseGoalFromDb(row)), nextProjects);
-    let nextFinanceInvestmentIdeas = nextFinanceInvestmentIdeasRaw.map((row: any) => financeInvestmentIdeaFromDb(row));
-    const nextFinanceInvestmentRules = nextFinanceInvestmentRulesRaw.map((row: any) => financeInvestmentRuleFromDb(row));
-    const nextFinanceInvestmentAllocations = nextFinanceInvestmentAllocationsRaw.map((row: any) => financeInvestmentAllocationFromDb(row));
-    nextFinanceIncome = attachFinancePeriodTitles(nextFinanceIncome, nextFinancePeriods);
-    nextFinanceExpenses = attachFinancePeriodTitles(nextFinanceExpenses, nextFinancePeriods);
-    nextFinancePurchaseGoals = attachFinancePeriodTitles(nextFinancePurchaseGoals, nextFinancePeriods);
-    nextFinanceInvestmentIdeas = attachFinancePeriodTitles(nextFinanceInvestmentIdeas, nextFinancePeriods);
-    const nextStrategyItems = attachStrategyLinkNames(
-      nextStrategyItemsRaw.map((row: any) => strategyItemFromDb(row)),
-      nextProjects,
-      nextCompanies,
-      nextPeople,
-    );
-
-    const nextTasks = attachTaskLinkNames(
-      nextTasksRaw.map((row: any) => taskFromDb(row)),
-      nextProjects, nextPlans, nextStrategyGoals, nextCompanies, nextPeople, nextGeneratedDocuments,
-    );
-
-    const nextRecurringTasks = attachRecurringTaskLinkNames(
-      nextRecurringTasksRaw.map((row: any) => recurringTaskFromDb(row)),
-      nextProjects, nextPlans, nextStrategyGoals, nextCompanies, nextPeople,
-    );
-
-    const nextRecurringTaskLogs = nextRecurringTaskLogsRaw.map((row: any) => recurringTaskLogFromDb(row));
-    const nextTaskWorkLogs = nextTaskWorkLogsRaw.map((row: any) => taskWorkLogFromDb(row));
-    const nextWeeklyTaskReviews = nextWeeklyTaskReviewsRaw.map((row: any) => weeklyTaskReviewFromDb(row));
-
-    if (import.meta.env.DEV) {
-      console.log('[Opportunities Debug] Loaded companies database types:', nextCompanies.map((c) => ({
-        name: c.name,
-        databaseType: c.databaseType,
-      })));
+      setCompanies(nextCompanies);
     }
 
-    setCompanies(nextCompanies);
-    setPeople(derived.people);
-    setMessages(derived.messages);
-    setDeals(derived.deals);
-    setProjects(nextProjects);
-    setProjectTasks(nextProjectTasks);
-    setProjectTimeLogs(nextProjectTimeLogs);
-    setProjectMeetings(nextProjectMeetings);
-    setProjectDocuments(nextProjectDocuments);
-    setProjectFinanceItems(nextProjectFinanceItems);
-    setDocuments(nextDocuments);
-    setDocumentTemplates(nextDocumentTemplates);
-    setDocumentBrandSettings(nextDocumentBrandSettings);
-    setAIProviderKeys(nextAIProviderKeys);
-    setAIUseCaseSettings(nextAIUseCaseSettings);
-    setGeneratedDocuments(nextGeneratedDocuments);
-    setInvoices(nextInvoices);
-    setInvoiceItems(nextInvoiceItems);
-    setTemplates(nextTemplates);
-    setStrategyGoals(nextStrategyGoals);
-    setStrategyPlans(nextStrategyPlans);
-    setStrategyTactics(nextStrategyTactics);
-    setStrategyExperiments(nextStrategyExperiments);
-    setStrategyDecisions(nextStrategyDecisions);
-    setPlans(nextPlans);
-    setPlanItems(nextPlanItems);
-    setFinanceIncome(nextFinanceIncome);
-    setFinanceExpenses(nextFinanceExpenses);
-    setFinanceAllocationRules(nextFinanceAllocationRules);
-    setFinancePurchaseGoals(nextFinancePurchaseGoals);
-    setFinanceInvestmentIdeas(nextFinanceInvestmentIdeas);
-    setFinanceInvestmentRules(nextFinanceInvestmentRules);
-    setFinanceInvestmentAllocations(nextFinanceInvestmentAllocations);
-    setFinancePeriods(nextFinancePeriods);
-    setFinanceRecurringRules(nextFinanceRecurringRules);
-    setStrategyItems(nextStrategyItems);
-    setTasks(nextTasks);
-    setRecurringTasks(nextRecurringTasks);
-    setRecurringTaskLogs(nextRecurringTaskLogs);
-    setTaskWorkLogs(nextTaskWorkLogs);
-    setWeeklyTaskReviews(nextWeeklyTaskReviews);
+    // ── Projects ──
+    if (projectsRaw) {
+      const nextProjects = projectsRaw.map((row: any) => {
+        const mapped = mapProjectRow(row);
+        mapped.relatedCompanyName = mapped.relatedCompanyName || companyById.get(mapped.relatedCompanyId || '')?.name;
+        mapped.relatedPersonName = mapped.relatedPersonName || personById.get(mapped.relatedPersonId || '')?.fullName;
+        return mapped;
+      });
+      setProjects(nextProjects);
+    }
+
+    // ── Project extensions ──
+    if (has('project_tasks')) setProjectTasks((raw('project_tasks') || []).map((row: any) => mapProjectTaskRow(row)));
+    if (has('project_time_logs')) setProjectTimeLogs((raw('project_time_logs') || []).map((row: any) => mapProjectTimeLogRow(row)));
+    if (has('project_meetings')) setProjectMeetings((raw('project_meetings') || []).map((row: any) => mapProjectMeetingRow(row)));
+    if (has('project_documents')) setProjectDocuments((raw('project_documents') || []).map((row: any) => mapProjectDocumentRow(row)));
+    if (has('project_finance_items')) setProjectFinanceItems((raw('project_finance_items') || []).map((row: any) => mapProjectFinanceItemRow(row)));
+
+    // ── Documents ──
+    if (has('documents')) {
+      const projects = projectsRaw ? projectsRaw.map(mapProjectRow) : [];
+      setDocuments(attachDocumentLinkNames(
+        (raw('documents') || []).map((row: any) => mapDocumentRow(row)),
+        projects, nextCompanies, derived?.people || [], derived?.deals || [],
+      ));
+    }
+    if (has('document_templates')) setDocumentTemplates((raw('document_templates') || []).map((row: any) => mapDocumentTemplateRow(row)));
+    if (has('document_brand_settings')) setDocumentBrandSettings((raw('document_brand_settings') || []).map((row: any) => mapDocumentBrandSettingsRow(row)));
+    if (has('generated_documents')) {
+      const projects = projectsRaw ? projectsRaw.map(mapProjectRow) : [];
+      setGeneratedDocuments(attachGeneratedDocumentLinkNames(
+        (raw('generated_documents') || []).map((row: any) => mapGeneratedDocumentRow(row)),
+        (raw('document_templates') || []).map((row: any) => mapDocumentTemplateRow(row)),
+        projects, nextCompanies, derived?.people || [], derived?.deals || [],
+      ));
+    }
+
+    // ── Invoices ──
+    if (has('invoices')) {
+      const projects = projectsRaw ? projectsRaw.map(mapProjectRow) : [];
+      setInvoices(attachInvoiceLinkNames(
+        (raw('invoices') || []).map((row: any) => mapInvoiceRow(row)),
+        projects, nextCompanies, derived?.people || [], derived?.deals || [],
+      ));
+    }
+    if (has('invoice_items')) setInvoiceItems((raw('invoice_items') || []).map((row: any) => mapInvoiceItemRow(row)));
+
+    // ── Templates ──
+    if (has('message_templates')) setTemplates((raw('message_templates') || []).map((row: any) => mapTemplateRow(row)));
+
+    // ── AI ──
+    if (has('ai_provider_keys')) {
+      const nextAIProviderKeys = (raw('ai_provider_keys') || []).map((row: any) => mapAIProviderKeyRow(row));
+      setAIProviderKeys(nextAIProviderKeys);
+      const labelById = new Map(nextAIProviderKeys.map((item) => [item.id, item.label] as const));
+      if (has('ai_use_case_settings')) {
+        setAIUseCaseSettings((raw('ai_use_case_settings') || []).map((row: any) => {
+          const mapped = mapAIUseCaseSettingRow(row);
+          if (!mapped.providerKeyLabel && mapped.providerKeyId) {
+            mapped.providerKeyLabel = labelById.get(mapped.providerKeyId) || undefined;
+          }
+          return mapped;
+        }));
+      }
+    }
+
+    // ── Strategy ──
+    const projects = projectsRaw ? projectsRaw.map(mapProjectRow) : [];
+    if (has('strategy_goals')) setStrategyGoals(attachGoalLinkNames(
+      (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row)), projects, nextCompanies,
+    ));
+    if (has('strategy_plans')) {
+      const goals = (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row));
+      setStrategyPlans(attachPlanLinkNames(
+        (raw('strategy_plans') || []).map((row: any) => strategyPlanFromDb(row)), goals, projects,
+      ));
+    }
+    if (has('strategy_tactics')) {
+      const goals = (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row));
+      const plans = (raw('strategy_plans') || []).map((row: any) => strategyPlanFromDb(row));
+      setStrategyTactics(attachTacticLinkNames(
+        (raw('strategy_tactics') || []).map((row: any) => strategyTacticFromDb(row)), goals, plans, projects,
+      ));
+    }
+    if (has('strategy_experiments')) {
+      const goals = (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row));
+      const plans = (raw('strategy_plans') || []).map((row: any) => strategyPlanFromDb(row));
+      setStrategyExperiments(attachExperimentLinkNames(
+        (raw('strategy_experiments') || []).map((row: any) => strategyExperimentFromDb(row)), goals, plans, projects,
+      ));
+    }
+    if (has('strategy_decisions')) {
+      const goals = (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row));
+      const plans = (raw('strategy_plans') || []).map((row: any) => strategyPlanFromDb(row));
+      setStrategyDecisions(attachDecisionLinkNames(
+        (raw('strategy_decisions') || []).map((row: any) => strategyDecisionFromDb(row)), goals, plans, projects,
+      ));
+    }
+
+    // ── Strategy items (shared across views) ──
+    if (has('strategy_items')) setStrategyItems(attachStrategyLinkNames(
+      (raw('strategy_items') || []).map((row: any) => strategyItemFromDb(row)),
+      projects, nextCompanies, derived?.people || [],
+    ));
+
+    // ── Plans ──
+    if (has('plans')) setPlans(attachOsPlanLinkNames(
+      (raw('plans') || []).map((row: any) => planFromDb(row)), projects, (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row)),
+    ));
+    if (has('plan_items')) setPlanItems(attachPlanItemLinkNames(
+      (raw('plan_items') || []).map((row: any) => planItemFromDb(row)), projects, (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row)),
+    ));
+
+    // ── Finance ──
+    if (has('finance_periods')) setFinancePeriods((raw('finance_periods') || []).map((row: any) => financePeriodFromDb(row)));
+    if (has('finance_recurring_rules')) setFinanceRecurringRules(attachFinanceRecurringRuleLinkNames(
+      (raw('finance_recurring_rules') || []).map((row: any) => financeRecurringRuleFromDb(row)), projects, nextCompanies,
+    ));
+    if (has('finance_income')) {
+      const periods = (raw('finance_periods') || []).map((row: any) => financePeriodFromDb(row));
+      setFinanceIncome(attachFinancePeriodTitles(
+        attachFinanceIncomeLinkNames(
+          (raw('finance_income') || []).map((row: any) => financeIncomeFromDb(row)), projects, nextCompanies,
+        ), periods,
+      ));
+    }
+    if (has('finance_expenses')) {
+      const periods = (raw('finance_periods') || []).map((row: any) => financePeriodFromDb(row));
+      setFinanceExpenses(attachFinancePeriodTitles(
+        attachFinanceExpenseLinkNames((raw('finance_expenses') || []).map((row: any) => financeExpenseFromDb(row)), projects), periods,
+      ));
+    }
+    if (has('finance_allocation_rules')) setFinanceAllocationRules((raw('finance_allocation_rules') || []).map((row: any) => financeAllocationRuleFromDb(row)));
+    if (has('finance_purchase_goals')) {
+      const periods = (raw('finance_periods') || []).map((row: any) => financePeriodFromDb(row));
+      setFinancePurchaseGoals(attachFinancePeriodTitles(
+        attachFinancePurchaseGoalLinkNames((raw('finance_purchase_goals') || []).map((row: any) => financePurchaseGoalFromDb(row)), projects), periods,
+      ));
+    }
+    if (has('finance_investment_ideas')) {
+      const periods = (raw('finance_periods') || []).map((row: any) => financePeriodFromDb(row));
+      setFinanceInvestmentIdeas(attachFinancePeriodTitles(
+        (raw('finance_investment_ideas') || []).map((row: any) => financeInvestmentIdeaFromDb(row)), periods,
+      ));
+    }
+    if (has('finance_investment_rules')) setFinanceInvestmentRules((raw('finance_investment_rules') || []).map((row: any) => financeInvestmentRuleFromDb(row)));
+    if (has('finance_investment_allocations')) setFinanceInvestmentAllocations((raw('finance_investment_allocations') || []).map((row: any) => financeInvestmentAllocationFromDb(row)));
+
+    // ── Tasks ──
+    const plans = (raw('plans') || []).map((row: any) => planFromDb(row));
+    const strategyGoals = (raw('strategy_goals') || []).map((row: any) => strategyGoalFromDb(row));
+    const generatedDocs = (raw('generated_documents') || []).map((row: any) => mapGeneratedDocumentRow(row));
+    if (has('tasks')) setTasks(attachTaskLinkNames(
+      (raw('tasks') || []).map((row: any) => taskFromDb(row)),
+      projects, plans, strategyGoals, nextCompanies, derived?.people || [], generatedDocs,
+    ));
+    if (has('recurring_tasks')) setRecurringTasks(attachRecurringTaskLinkNames(
+      (raw('recurring_tasks') || []).map((row: any) => recurringTaskFromDb(row)),
+      projects, plans, strategyGoals, nextCompanies, derived?.people || [],
+    ));
+    if (has('recurring_task_logs')) setRecurringTaskLogs((raw('recurring_task_logs') || []).map((row: any) => recurringTaskLogFromDb(row)));
+    if (has('task_work_logs')) setTaskWorkLogs((raw('task_work_logs') || []).map((row: any) => taskWorkLogFromDb(row)));
+    if (has('weekly_task_reviews')) setWeeklyTaskReviews((raw('weekly_task_reviews') || []).map((row: any) => weeklyTaskReviewFromDb(row)));
+
+    if (import.meta.env.DEV) {
+      const keys = Object.keys(payload).filter((k) => k !== '_debug');
+      console.log(`[Opportunities] applied payload: ${keys.length} keys`, { keys });
+    }
   }, []);
 
   // ── Scoped fetchers ──

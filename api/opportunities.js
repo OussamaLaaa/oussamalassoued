@@ -938,51 +938,54 @@ export default async function handler(req, res) {
       const providerKeyLabelsById = new Map(aiProviderKeys.map((row) => [row.id, row.label]));
       const aiUseCaseSettings = (results.ai_use_case_settings || []).map((row) => normalizeAIUseCaseSettingRow(row, providerKeyLabelsById.get(row?.provider_key_id ?? row?.providerKeyId)));
 
-      const response = {
-        companies: results.companies || [],
-        people: results.people || [],
-        messages: results.messages || [],
-        deals: results.deals || [],
-        projects: results.projects || [],
-        message_templates: results.message_templates || [],
-        project_tasks: results.project_tasks || [],
-        project_time_logs: results.project_time_logs || [],
-        project_meetings: results.project_meetings || [],
-        project_documents: results.project_documents || [],
-        project_finance_items: results.project_finance_items || [],
-        documents: results.documents || [],
-        document_templates: results.document_templates || [],
-        document_brand_settings: results.document_brand_settings || [],
-        generated_documents: results.generated_documents || [],
-        invoices: results.invoices || [],
-        invoice_items: results.invoice_items || [],
-        strategy_items: results.strategy_items || [],
-        strategy_goals: results.strategy_goals || [],
-        strategy_plans: results.strategy_plans || [],
-        strategy_tactics: results.strategy_tactics || [],
-        strategy_experiments: results.strategy_experiments || [],
-        strategy_decisions: results.strategy_decisions || [],
-        plans: results.plans || [],
-        plan_items: results.plan_items || [],
-        finance_income: results.finance_income || [],
-        finance_expenses: results.finance_expenses || [],
-        finance_allocation_rules: results.finance_allocation_rules || [],
-        finance_purchase_goals: results.finance_purchase_goals || [],
-        finance_investment_ideas: results.finance_investment_ideas || [],
-        finance_investment_rules: results.finance_investment_rules || [],
-        finance_investment_allocations: results.finance_investment_allocations || [],
-        finance_periods: results.finance_periods || [],
-        finance_recurring_rules: results.finance_recurring_rules || [],
-        tasks: results.tasks || [],
-        recurring_tasks: results.recurring_tasks || [],
-        recurring_task_logs: results.recurring_task_logs || [],
-        task_work_logs: results.task_work_logs || [],
-        weekly_task_reviews: results.weekly_task_reviews || [],
-        ai_provider_keys: aiProviderKeys,
-        ai_use_case_settings: aiUseCaseSettings,
-        templatesWarning,
-        strategyNotes: [],
+      // Build response with only the keys relevant to the current scope
+      const scopeKeys = {
+        core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
+        tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
+        finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
+        documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
+        strategy: ['strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions'],
+        plans: ['plans', 'plan_items'],
+        projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
+        ai: ['ai_provider_keys', 'ai_use_case_settings'],
       };
+
+      let responseKeys;
+      if (scope === 'all') {
+        responseKeys = [
+          'companies', 'people', 'messages', 'deals', 'projects', 'message_templates',
+          'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items',
+          'documents', 'document_templates', 'document_brand_settings', 'generated_documents',
+          'invoices', 'invoice_items',
+          'strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions',
+          'plans', 'plan_items',
+          'finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals',
+          'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations',
+          'finance_periods', 'finance_recurring_rules',
+          'tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews',
+        ];
+      } else if (scopeKeys[scope]) {
+        responseKeys = scopeKeys[scope];
+      } else {
+        responseKeys = [];
+      }
+
+      const response: Record<string, unknown> = {};
+
+      for (const key of responseKeys) {
+        response[key] = results[key] || [];
+      }
+
+      // Always include ai_provider_keys and ai_use_case_settings with their normalizations (only if scope=ai or scope=all)
+      if (scope === 'all' || scope === 'ai') {
+        response.ai_provider_keys = aiProviderKeys;
+        response.ai_use_case_settings = aiUseCaseSettings;
+      }
+
+      if (scope === 'all' || scope === 'core') {
+        response.templatesWarning = templatesWarning;
+        response.strategyNotes = [];
+      }
 
       if (debug) {
         response._debug = {
