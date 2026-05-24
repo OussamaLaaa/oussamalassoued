@@ -1162,6 +1162,111 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
+
+export type TaskStatus = 'todo' | 'doing' | 'done' | 'blocked' | 'cancelled';
+export type TaskPriority = 'high' | 'medium' | 'low';
+export type TaskCategory = 'work' | 'career' | 'freelance' | 'project' | 'money' | 'health' | 'learning' | 'family' | 'admin' | 'relationship' | 'home' | 'other';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  category?: TaskCategory;
+  taskDate?: string;
+  weekStart?: string;
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  completedAt?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedPlanId?: string;
+  linkedPlanTitle?: string;
+  linkedStrategyGoalId?: string;
+  linkedStrategyGoalTitle?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  linkedPersonId?: string;
+  linkedPersonName?: string;
+  linkedDocumentId?: string;
+  linkedDocumentTitle?: string;
+  isRecurringInstance?: boolean;
+  recurringRuleId?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TaskInput {
+  title: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  category?: TaskCategory;
+  taskDate?: string;
+  weekStart?: string;
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  completedAt?: string;
+  linkedProjectId?: string;
+  linkedPlanId?: string;
+  linkedStrategyGoalId?: string;
+  linkedCompanyId?: string;
+  linkedPersonId?: string;
+  linkedDocumentId?: string;
+  isRecurringInstance?: boolean;
+  recurringRuleId?: string;
+  notes?: string;
+}
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+export interface RecurringTask {
+  id: string;
+  title: string;
+  description?: string;
+  frequency: RecurringFrequency;
+  daysOfWeek?: string;
+  priority: TaskPriority;
+  category?: TaskCategory;
+  estimatedMinutes?: number;
+  startDate?: string;
+  endDate?: string;
+  isActive: boolean;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedPlanId?: string;
+  linkedPlanTitle?: string;
+  linkedStrategyGoalId?: string;
+  linkedStrategyGoalTitle?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  linkedPersonId?: string;
+  linkedPersonName?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RecurringTaskInput {
+  title: string;
+  description?: string;
+  frequency: RecurringFrequency;
+  daysOfWeek?: string;
+  priority?: TaskPriority;
+  category?: TaskCategory;
+  estimatedMinutes?: number;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  linkedProjectId?: string;
+  linkedPlanId?: string;
+  linkedStrategyGoalId?: string;
+  linkedCompanyId?: string;
+  linkedPersonId?: string;
+  notes?: string;
+}

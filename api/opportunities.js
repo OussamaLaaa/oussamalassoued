@@ -37,6 +37,8 @@ const allowedEntities = new Set([
   'finance_periods',
   'finance_recurring_rules',
   'ai_use_case_settings',
+  'tasks',
+  'recurring_tasks',
 ]);
 const tablesAttempted = [
   'companies',
@@ -75,6 +77,8 @@ const tablesAttempted = [
   'finance_recurring_rules',
   'ai_provider_keys',
   'ai_use_case_settings',
+  'tasks',
+  'recurring_tasks',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -629,6 +633,47 @@ const normalizeStrategyEntityRow = (entity, row) => {
   return row;
 };
 
+const normalizeTaskRow = (row) => ({
+  title: toRequiredString(row?.title),
+  description: toNullableString(row?.description),
+  status: toNullableString(row?.status) || 'todo',
+  priority: toNullableString(row?.priority) || 'medium',
+  category: toNullableString(row?.category),
+  task_date: toNullableString(row?.task_date ?? row?.taskDate),
+  week_start: toNullableString(row?.week_start ?? row?.weekStart),
+  estimated_minutes: toNullableNumber(row?.estimated_minutes ?? row?.estimatedMinutes),
+  actual_minutes: toNullableNumber(row?.actual_minutes ?? row?.actualMinutes),
+  completed_at: toNullableString(row?.completed_at ?? row?.completedAt),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_plan_id: toNullableString(row?.linked_plan_id ?? row?.linkedPlanId),
+  linked_strategy_goal_id: toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+  linked_person_id: toNullableString(row?.linked_person_id ?? row?.linkedPersonId),
+  linked_document_id: toNullableString(row?.linked_document_id ?? row?.linkedDocumentId),
+  is_recurring_instance: row?.is_recurring_instance ?? row?.isRecurringInstance ?? null,
+  recurring_rule_id: toNullableString(row?.recurring_rule_id ?? row?.recurringRuleId),
+  notes: toNullableString(row?.notes),
+});
+
+const normalizeRecurringTaskRow = (row) => ({
+  title: toRequiredString(row?.title),
+  description: toNullableString(row?.description),
+  frequency: toNullableString(row?.frequency) || 'weekly',
+  days_of_week: toNullableString(row?.days_of_week ?? row?.daysOfWeek),
+  priority: toNullableString(row?.priority) || 'medium',
+  category: toNullableString(row?.category),
+  estimated_minutes: toNullableNumber(row?.estimated_minutes ?? row?.estimatedMinutes),
+  start_date: toNullableString(row?.start_date ?? row?.startDate),
+  end_date: toNullableString(row?.end_date ?? row?.endDate),
+  is_active: row?.is_active == null ? true : Boolean(row.is_active),
+  linked_project_id: toNullableString(row?.linked_project_id ?? row?.linkedProjectId),
+  linked_plan_id: toNullableString(row?.linked_plan_id ?? row?.linkedPlanId),
+  linked_strategy_goal_id: toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId),
+  linked_company_id: toNullableString(row?.linked_company_id ?? row?.linkedCompanyId),
+  linked_person_id: toNullableString(row?.linked_person_id ?? row?.linkedPersonId),
+  notes: toNullableString(row?.notes),
+});
+
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
@@ -789,6 +834,8 @@ export default async function handler(req, res) {
         finance_investment_allocations: results.finance_investment_allocations || [],
         finance_periods: results.finance_periods || [],
         finance_recurring_rules: results.finance_recurring_rules || [],
+        tasks: results.tasks || [],
+        recurring_tasks: results.recurring_tasks || [],
         ai_provider_keys: aiProviderKeys,
         ai_use_case_settings: aiUseCaseSettings,
         templatesWarning,

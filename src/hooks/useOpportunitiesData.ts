@@ -89,6 +89,10 @@ import type {
   AIProviderKeyInput,
   AIUseCaseSetting,
   AIUseCaseSettingInput,
+  Task,
+  TaskInput,
+  RecurringTask,
+  RecurringTaskInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -131,6 +135,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   financeInvestmentAllocations: [],
   financePeriods: [],
   financeRecurringRules: [],
+  tasks: [],
+  recurringTasks: [],
 });
 
 
@@ -177,6 +183,8 @@ type OpportunitiesApiResponse = {
   finance_investment_allocations?: any[];
   finance_periods?: any[];
   finance_recurring_rules?: any[];
+  tasks?: any[];
+  recurring_tasks?: any[];
   strategyNotes?: any[];
 };
 
@@ -1012,6 +1020,147 @@ const attachDecisionLinkNames = (items: StrategyDecision[], goals: StrategyGoal[
   }));
 };
 
+const taskFromDb = (row: any): Task => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  description: row?.description ?? undefined,
+  status: row?.status ?? 'todo',
+  priority: row?.priority ?? 'medium',
+  category: row?.category ?? undefined,
+  taskDate: row?.task_date ?? row?.taskDate ?? undefined,
+  weekStart: row?.week_start ?? row?.weekStart ?? undefined,
+  estimatedMinutes: row?.estimated_minutes != null ? Number(row.estimated_minutes) : (row?.estimatedMinutes != null ? Number(row.estimatedMinutes) : undefined),
+  actualMinutes: row?.actual_minutes != null ? Number(row.actual_minutes) : (row?.actualMinutes != null ? Number(row.actualMinutes) : undefined),
+  completedAt: row?.completed_at ?? row?.completedAt ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedStrategyGoalId: row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  linkedPersonId: row?.linked_person_id ?? row?.linkedPersonId ?? undefined,
+  linkedDocumentId: row?.linked_document_id ?? row?.linkedDocumentId ?? undefined,
+  isRecurringInstance: row?.is_recurring_instance ?? row?.isRecurringInstance ?? undefined,
+  recurringRuleId: row?.recurring_rule_id ?? row?.recurringRuleId ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const taskToDb = (input: Partial<TaskInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.taskDate !== undefined) payload.task_date = toNullableString(input.taskDate);
+  if (input.weekStart !== undefined) payload.week_start = toNullableString(input.weekStart);
+  if (input.estimatedMinutes !== undefined) payload.estimated_minutes = toNullableNumber(input.estimatedMinutes);
+  if (input.actualMinutes !== undefined) payload.actual_minutes = toNullableNumber(input.actualMinutes);
+  if (input.completedAt !== undefined) payload.completed_at = toNullableString(input.completedAt);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (input.linkedStrategyGoalId !== undefined) payload.linked_strategy_goal_id = toNullableString(input.linkedStrategyGoalId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (input.linkedPersonId !== undefined) payload.linked_person_id = toNullableString(input.linkedPersonId);
+  if (input.linkedDocumentId !== undefined) payload.linked_document_id = toNullableString(input.linkedDocumentId);
+  if (input.isRecurringInstance !== undefined) payload.is_recurring_instance = Boolean(input.isRecurringInstance);
+  if (input.recurringRuleId !== undefined) payload.recurring_rule_id = toNullableString(input.recurringRuleId);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const recurringTaskFromDb = (row: any): RecurringTask => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  description: row?.description ?? undefined,
+  frequency: row?.frequency ?? 'weekly',
+  daysOfWeek: row?.days_of_week ?? row?.daysOfWeek ?? undefined,
+  priority: row?.priority ?? 'medium',
+  category: row?.category ?? undefined,
+  estimatedMinutes: row?.estimated_minutes != null ? Number(row.estimated_minutes) : (row?.estimatedMinutes != null ? Number(row.estimatedMinutes) : undefined),
+  startDate: row?.start_date ?? row?.startDate ?? undefined,
+  endDate: row?.end_date ?? row?.endDate ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedStrategyGoalId: row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  linkedPersonId: row?.linked_person_id ?? row?.linkedPersonId ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const recurringTaskToDb = (input: Partial<RecurringTaskInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.frequency !== undefined) payload.frequency = input.frequency;
+  if (input.daysOfWeek !== undefined) payload.days_of_week = toNullableString(input.daysOfWeek);
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.estimatedMinutes !== undefined) payload.estimated_minutes = toNullableNumber(input.estimatedMinutes);
+  if (input.startDate !== undefined) payload.start_date = toNullableString(input.startDate);
+  if (input.endDate !== undefined) payload.end_date = toNullableString(input.endDate);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (input.linkedStrategyGoalId !== undefined) payload.linked_strategy_goal_id = toNullableString(input.linkedStrategyGoalId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (input.linkedPersonId !== undefined) payload.linked_person_id = toNullableString(input.linkedPersonId);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const attachTaskLinkNames = (
+  items: Task[],
+  projects: Project[],
+  plans: Plan[],
+  strategyGoals: StrategyGoal[],
+  companies: Company[],
+  people: Person[],
+  generatedDocuments: GeneratedDocument[],
+) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const planById = new Map(plans.map((p) => [p.id, p.title] as const));
+  const goalById = new Map(strategyGoals.map((g) => [g.id, g.title] as const));
+  const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
+  const personById = new Map(people.map((p) => [p.id, p.fullName] as const));
+  const docById = new Map(generatedDocuments.map((d) => [d.id, d.title] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedPlanTitle: item.linkedPlanTitle || planById.get(item.linkedPlanId || ''),
+    linkedStrategyGoalTitle: item.linkedStrategyGoalTitle || goalById.get(item.linkedStrategyGoalId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+    linkedPersonName: item.linkedPersonName || personById.get(item.linkedPersonId || ''),
+    linkedDocumentTitle: item.linkedDocumentTitle || docById.get(item.linkedDocumentId || ''),
+  }));
+};
+
+const attachRecurringTaskLinkNames = (
+  items: RecurringTask[],
+  projects: Project[],
+  plans: Plan[],
+  strategyGoals: StrategyGoal[],
+  companies: Company[],
+  people: Person[],
+) => {
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const planById = new Map(plans.map((p) => [p.id, p.title] as const));
+  const goalById = new Map(strategyGoals.map((g) => [g.id, g.title] as const));
+  const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
+  const personById = new Map(people.map((p) => [p.id, p.fullName] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedPlanTitle: item.linkedPlanTitle || planById.get(item.linkedPlanId || ''),
+    linkedStrategyGoalTitle: item.linkedStrategyGoalTitle || goalById.get(item.linkedStrategyGoalId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+    linkedPersonName: item.linkedPersonName || personById.get(item.linkedPersonId || ''),
+  }));
+};
+
 const shouldReplaceCollection = (current: any[], next: any[], keys: string[]) => {
   if (current.length !== next.length) return true;
   for (let index = 0; index < current.length; index += 1) {
@@ -1120,6 +1269,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [financeInvestmentAllocations, setFinanceInvestmentAllocations] = useState<FinanceInvestmentAllocation[]>([]);
   const [financePeriods, setFinancePeriods] = useState<FinancePeriod[]>([]);
   const [financeRecurringRules, setFinanceRecurringRules] = useState<FinanceRecurringRule[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -1155,6 +1306,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceInvestmentAllocationsRaw = Array.isArray(payload?.finance_investment_allocations) ? payload.finance_investment_allocations : [];
     const nextFinancePeriodsRaw = Array.isArray(payload?.finance_periods) ? payload.finance_periods : [];
     const nextFinanceRecurringRulesRaw = Array.isArray(payload?.finance_recurring_rules) ? payload.finance_recurring_rules : [];
+    const nextTasksRaw = Array.isArray(payload?.tasks) ? payload.tasks : [];
+    const nextRecurringTasksRaw = Array.isArray(payload?.recurring_tasks) ? payload.recurring_tasks : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -1256,6 +1409,16 @@ export const useOpportunitiesData = (enabled = true) => {
       nextPeople,
     );
 
+    const nextTasks = attachTaskLinkNames(
+      nextTasksRaw.map((row: any) => taskFromDb(row)),
+      nextProjects, nextPlans, nextStrategyGoals, nextCompanies, nextPeople, nextGeneratedDocuments,
+    );
+
+    const nextRecurringTasks = attachRecurringTaskLinkNames(
+      nextRecurringTasksRaw.map((row: any) => recurringTaskFromDb(row)),
+      nextProjects, nextPlans, nextStrategyGoals, nextCompanies, nextPeople,
+    );
+
     if (import.meta.env.DEV) {
       console.log('[Opportunities Debug] Loaded companies database types:', nextCompanies.map((c) => ({
         name: c.name,
@@ -1299,6 +1462,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinancePeriods(nextFinancePeriods);
     setFinanceRecurringRules(nextFinanceRecurringRules);
     setStrategyItems(nextStrategyItems);
+    setTasks(nextTasks);
+    setRecurringTasks(nextRecurringTasks);
   }, []);
 
   useEffect(() => {
@@ -1551,7 +1716,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2678,6 +2843,64 @@ export const useOpportunitiesData = (enabled = true) => {
     setFinanceRecurringRules((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Tasks CRUD ──
+
+  const addTask = async (input: TaskInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Task title is required.');
+    }
+    const row = await syncInsert('tasks', taskToDb(input));
+    const next = attachTaskLinkNames([taskFromDb(row)], projects, plans, strategyGoals, companies, people, generatedDocuments)[0];
+    setTasks((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateTask = async (id: string, input: Partial<TaskInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Task title is required.');
+    }
+    const row = await syncUpdate('tasks', id, taskToDb(input));
+    const next = attachTaskLinkNames([taskFromDb(row)], projects, plans, strategyGoals, companies, people, generatedDocuments)[0];
+    setTasks((current) => current.map((t) => (t.id === id ? next : t)));
+    return next;
+  };
+
+  const deleteTask = async (id: string) => {
+    const confirmed = window.confirm('Delete this task?');
+    if (!confirmed) return;
+    await syncDelete('tasks' as any, id);
+    setTasks((current) => current.filter((t) => t.id !== id));
+  };
+
+  // ── Recurring Tasks CRUD ──
+
+  const addRecurringTask = async (input: RecurringTaskInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Recurring task title is required.');
+    }
+    const row = await syncInsert('recurring_tasks', recurringTaskToDb(input));
+    const next = attachRecurringTaskLinkNames([recurringTaskFromDb(row)], projects, plans, strategyGoals, companies, people)[0];
+    setRecurringTasks((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRecurringTask = async (id: string, input: Partial<RecurringTaskInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Recurring task title is required.');
+    }
+    const row = await syncUpdate('recurring_tasks', id, recurringTaskToDb(input));
+    const next = attachRecurringTaskLinkNames([recurringTaskFromDb(row)], projects, plans, strategyGoals, companies, people)[0];
+    setRecurringTasks((current) => current.map((t) => (t.id === id ? next : t)));
+    return next;
+  };
+
+  const deleteRecurringTask = async (id: string) => {
+    const confirmed = window.confirm('Delete this recurring task rule?');
+    if (!confirmed) return;
+    await syncDelete('recurring_tasks' as any, id);
+    setRecurringTasks((current) => current.filter((t) => t.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -2763,6 +2986,17 @@ export const useOpportunitiesData = (enabled = true) => {
       return shouldReplaceCollection(current, next, ['linkedGoalTitle', 'linkedPlanName', 'linkedProjectName']) ? next : current;
     });
   }, [projects, strategyGoals, strategyPlans]);
+
+  useEffect(() => {
+    setTasks((current) => {
+      const next = attachTaskLinkNames(current, projects, plans, strategyGoals, companies, people, generatedDocuments);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedPlanTitle', 'linkedStrategyGoalTitle', 'linkedCompanyName', 'linkedPersonName', 'linkedDocumentTitle']) ? next : current;
+    });
+    setRecurringTasks((current) => {
+      const next = attachRecurringTaskLinkNames(current, projects, plans, strategyGoals, companies, people);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedPlanTitle', 'linkedStrategyGoalTitle', 'linkedCompanyName', 'linkedPersonName']) ? next : current;
+    });
+  }, [projects, plans, strategyGoals, companies, people, generatedDocuments]);
 
   useEffect(() => {
     setFinanceIncome((current) => {
@@ -2906,6 +3140,14 @@ export const useOpportunitiesData = (enabled = true) => {
     deleteFinanceInvestmentAllocation,
     financePeriods,
     financeRecurringRules,
+    tasks,
+    recurringTasks,
+    addTask,
+    updateTask,
+    deleteTask,
+    addRecurringTask,
+    updateRecurringTask,
+    deleteRecurringTask,
     addFinanceRecurringRule,
     updateFinanceRecurringRule,
     deleteFinanceRecurringRule,

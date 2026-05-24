@@ -25,6 +25,7 @@ import OutreachTemplateModal from './OutreachTemplateModal';
 import TemplatesPanel from './TemplatesPanel';
 import CompanySegmentView from './CompanySegmentView';
 import AICompanyScoringModal from './AICompanyScoringModal';
+import TasksPanel from './TasksPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -40,6 +41,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'templates', label: 'Templates' },
   { id: 'strategy', label: 'Strategy' },
   { id: 'plans', label: 'Plans' },
+  { id: 'tasks', label: 'Tasks' },
   { id: 'finance', label: 'Finance' },
   { id: 'documents', label: 'Documents' },
   { id: 'ai-control', label: 'AI Control' },
@@ -352,6 +354,9 @@ const OpportunitiesLayout: React.FC<{
     addFinancePeriod, updateFinancePeriod, deleteFinancePeriod,
     financeRecurringRules,
     addFinanceRecurringRule, updateFinanceRecurringRule, deleteFinanceRecurringRule,
+    tasks, recurringTasks,
+    addTask, updateTask, deleteTask,
+    addRecurringTask, updateRecurringTask, deleteRecurringTask,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -482,6 +487,8 @@ const OpportunitiesLayout: React.FC<{
                     ? getQueueTabCount(people, messages)
                   : t.id === 'templates'
                     ? templates.length
+                  : t.id === 'tasks'
+                    ? tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length
                   : t.id === 'documents'
                     ? generatedDocuments.length
                     : 0;
@@ -821,6 +828,25 @@ const OpportunitiesLayout: React.FC<{
                 onAddPlanItem={addPlanItem}
                 onUpdatePlanItem={updatePlanItem}
                 onDeletePlanItem={deletePlanItem}
+              />
+            )}
+
+            {tab === 'tasks' && (
+              <TasksPanel
+                tasks={tasks}
+                recurringTasks={recurringTasks}
+                projects={projects}
+                plans={plans}
+                strategyGoals={strategyGoals}
+                companies={companies}
+                people={people}
+                generatedDocuments={generatedDocuments}
+                onAddTask={addTask}
+                onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
+                onAddRecurringTask={addRecurringTask}
+                onUpdateRecurringTask={updateRecurringTask}
+                onDeleteRecurringTask={deleteRecurringTask}
               />
             )}
 
