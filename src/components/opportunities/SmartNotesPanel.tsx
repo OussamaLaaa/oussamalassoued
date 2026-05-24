@@ -131,7 +131,6 @@ const SmartNotesPanel: React.FC<{
   const [selectedCategorySlug, setSelectedCategorySlug] = useState('all');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [isCreatingNote, setIsCreatingNote] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'created_desc' | 'created_asc' | 'updated_desc' | 'name_asc' | 'name_desc' | 'priority'>('created_desc');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -265,20 +264,6 @@ const SmartNotesPanel: React.FC<{
   };
 
   const selectedCategoryName = categoryMenu.find((category) => category.slug === selectedCategorySlug)?.name || 'All';
-  const blockCountByNote = new Map<string, number>();
-  for (const block of noteBlocks) blockCountByNote.set(block.noteId, (blockCountByNote.get(block.noteId) || 0) + 1);
-  const attachmentCountByNote = new Map<string, number>();
-  for (const attachment of noteAttachments) attachmentCountByNote.set(attachment.noteId, (attachmentCountByNote.get(attachment.noteId) || 0) + 1);
-
-  const linkedBadges = (note: SmartNote) => [
-    note.linkedProjectName ? `Project: ${note.linkedProjectName}` : null,
-    note.linkedCompanyName ? `Company: ${note.linkedCompanyName}` : null,
-    note.linkedPersonName ? `Person: ${note.linkedPersonName}` : null,
-    note.linkedRelationshipName ? `Relationship: ${note.linkedRelationshipName}` : null,
-    note.linkedTaskTitle ? `Task: ${note.linkedTaskTitle}` : null,
-    note.linkedStrategyGoalTitle ? `Goal: ${note.linkedStrategyGoalTitle}` : null,
-    note.linkedPlanTitle ? `Plan: ${note.linkedPlanTitle}` : null,
-  ].filter(Boolean) as string[];
 
   if (selectedNoteId || isCreatingNote) {
     return (
@@ -315,9 +300,11 @@ const SmartNotesPanel: React.FC<{
     );
   }
 
-  const noteView = viewMode === 'grid'
-    ? 'grid gap-4 sm:grid-cols-2 xl:grid-cols-3'
-    : 'space-y-3';
+  const formatNoteDate = (date?: string): string => {
+    if (!date) return 'Created: —';
+    try { return `Created: ${new Date(date).toLocaleDateString('en-CA')}`; }
+    catch { return 'Created: —'; }
+  };
 
   return (
     <div className="space-y-4">
@@ -359,14 +346,6 @@ const SmartNotesPanel: React.FC<{
               <option value="name_desc">Name Z-A</option>
               <option value="priority">Priority</option>
             </select>
-            <div className="flex rounded-full border border-[#e5e7eb] bg-white p-1">
-              <button type="button" onClick={() => setViewMode('grid')} className={viewMode === 'grid' ? activePillClass : 'rounded-full px-3 py-1.5 text-sm text-[#0f172a]'}>
-                Grid
-              </button>
-              <button type="button" onClick={() => setViewMode('list')} className={viewMode === 'list' ? activePillClass : 'rounded-full px-3 py-1.5 text-sm text-[#0f172a]'}>
-                List
-              </button>
-            </div>
           </div>
           <button type="button" onClick={openCreateNote} className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]">
             + New Note
@@ -374,17 +353,13 @@ const SmartNotesPanel: React.FC<{
         </div>
       </div>
 
-      <div className={noteView}>
+      <div className="space-y-2">
         {filteredNotes.map((note) => {
-          const blockCount = blockCountByNote.get(note.id) || 0;
-          const attachmentCount = attachmentCountByNote.get(note.id) || 0;
-          const badges = linkedBadges(note);
           const category = noteCategories.find((item) => item.id === note.categoryId) || categoryBySlug.get(note.categorySlug || '') || null;
-          const active = note.id === selectedNoteId;
 
-          const toggleStatus = async (event: React.MouseEvent) => {
+          const editNote = (event: React.MouseEvent) => {
             event.stopPropagation();
-            await onUpdateSmartNote(note.id, { status: note.status === 'pinned' ? 'active' : 'pinned' });
+            openNote(note);
           };
 
           const archiveNote = async (event: React.MouseEvent) => {
@@ -397,70 +372,60 @@ const SmartNotesPanel: React.FC<{
             await onDeleteSmartNote(note.id);
           };
 
-          if (viewMode === 'list') {
-            return (
-              <button key={note.id} type="button" onClick={() => openNote(note)} className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[#bfdbfe] bg-[#eff6ff]' : 'border-[#e5e7eb] bg-white hover:bg-[#f8fafc]'}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-semibold text-[#0f172a]">{note.title}</h3>
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1 text-xs text-[#475569]">{note.priority}</span>
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1 text-xs text-[#475569]">{note.status}</span>
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-[#64748b]">{excerpt(note) || 'No content yet.'}</p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-[#64748b]">
-                      {category ? <span className="rounded-full border border-[#dbeafe] bg-[#eff6ff] px-2 py-1 text-[#1d4ed8]">{category.name}</span> : null}
-                      {note.tags ? note.tags.split(',').slice(0, 3).map((tag) => <span key={tag.trim()} className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{tag.trim()}</span>) : null}
-                      {badges.slice(0, 3).map((badge) => <span key={badge} className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{badge}</span>)}
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{attachmentCount} attachment{attachmentCount === 1 ? '' : 's'}</span>
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{blockCount} block{blockCount === 1 ? '' : 's'}</span>
-                      <span>{note.updatedAt || note.createdAt ? new Date(note.updatedAt || note.createdAt || '').toLocaleDateString() : 'New'}</span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                    <button type="button" onClick={toggleStatus} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">{note.status === 'pinned' ? 'Unpin' : 'Pin'}</button>
-                    <button type="button" onClick={archiveNote} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">Archive</button>
-                    <button type="button" onClick={deleteNote} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-3 py-1.5 text-xs text-[#b91c1c] hover:bg-[#fee2e2]">Delete</button>
-                  </div>
-                </div>
-              </button>
-            );
-          }
-
           return (
-            <button key={note.id} type="button" onClick={() => openNote(note)} className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[#bfdbfe] bg-[#eff6ff]' : 'border-[#e5e7eb] bg-white hover:bg-[#f8fafc]'}`}>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-semibold text-[#0f172a]">{note.title}</h3>
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1 text-xs text-[#475569]">{note.priority}</span>
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1 text-xs text-[#475569]">{note.status}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-[#64748b]">{excerpt(note) || 'No content yet.'}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                    <button type="button" onClick={toggleStatus} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">{note.status === 'pinned' ? 'Unpin' : 'Pin'}</button>
-                    <button type="button" onClick={archiveNote} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">Archive</button>
-                    <button type="button" onClick={deleteNote} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-3 py-1.5 text-xs text-[#b91c1c] hover:bg-[#fee2e2]">Delete</button>
-                  </div>
+            <div
+              key={note.id}
+              onClick={() => openNote(note)}
+              className="group cursor-pointer rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-left transition hover:bg-[#f8fafc]"
+            >
+              <div className="flex flex-col gap-2 xl:flex-row xl:items-start">
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-sm font-semibold text-[#0f172a]">{note.title}</h3>
+                  <p className="mt-0.5 overflow-hidden break-words text-sm text-[#64748b]"
+                     style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    {excerpt(note) || 'No content yet.'}
+                  </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-[#64748b]">
-                  {category ? <span className="rounded-full border border-[#dbeafe] bg-[#eff6ff] px-2 py-1 text-[#1d4ed8]">{category.name}</span> : null}
-                  {note.tags ? note.tags.split(',').slice(0, 4).map((tag) => <span key={tag.trim()} className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{tag.trim()}</span>) : null}
-                  {badges.slice(0, 4).map((badge) => <span key={badge} className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{badge}</span>)}
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5 text-xs">
+                  {category ? (
+                    <span className="rounded-full border border-[#dbeafe] bg-[#eff6ff] px-2 py-0.5 text-[#1d4ed8]">
+                      {category.name}
+                    </span>
+                  ) : null}
+                  <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-0.5 capitalize text-[#475569]">
+                    {note.priority}
+                  </span>
+                  <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-0.5 capitalize text-[#475569]">
+                    {note.status}
+                  </span>
+                  {note.tags
+                    ? note.tags.split(',').slice(0, 2).map((tag) => (
+                        <span key={tag.trim()} className="rounded-full border border-[#e5e7eb] bg-white px-2 py-0.5">
+                          {tag.trim()}
+                        </span>
+                      ))
+                    : null}
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-[#64748b]">
-                  <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{attachmentCount} attachment{attachmentCount === 1 ? '' : 's'}</span>
-                  <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{blockCount} block{blockCount === 1 ? '' : 's'}</span>
-                  <span>{note.updatedAt || note.createdAt ? new Date(note.updatedAt || note.createdAt || '').toLocaleDateString() : 'New'}</span>
+                <div className="flex shrink-0 items-center gap-3 xl:flex-col xl:items-end xl:gap-1">
+                  <span className="whitespace-nowrap text-xs text-[#64748b]">{formatNoteDate(note.createdAt)}</span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={editNote} className="rounded-md px-2 py-1 text-xs text-[#2563eb] hover:bg-[#eff6ff]">
+                      Edit
+                    </button>
+                    <button type="button" onClick={archiveNote} className="rounded-md px-2 py-1 text-xs text-[#64748b] hover:bg-[#f1f5f9]">
+                      Archive
+                    </button>
+                    <button type="button" onClick={deleteNote} className="rounded-md px-2 py-1 text-xs text-[#b91c1c] hover:bg-[#fee2e2]">
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
         {filteredNotes.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#dbeafe] bg-[#f8fafc] p-8 text-sm text-[#64748b]">
+          <div className="rounded-xl border border-dashed border-[#dbeafe] bg-[#f8fafc] p-6 text-sm text-[#64748b]">
             No notes found in {selectedCategoryName.toLowerCase()}. Try a different category or create a new note.
           </div>
         ) : null}
