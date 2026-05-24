@@ -1266,6 +1266,25 @@ const attachRelationshipLinkNames = (
   }));
 };
 
+const attachRelationshipCategoryNames = (
+  items: Relationship[],
+  categories: RelationshipCategory[],
+) => {
+  const categoryById = new Map(categories.map((cat) => [cat.id, cat] as const));
+  const categoryBySlug = new Map(categories.map((cat) => [cat.slug, cat] as const));
+  return items.map((item) => {
+    const cat = item.categoryId ? categoryById.get(item.categoryId) : undefined;
+    const fallbackCat = !cat && item.domain ? categoryBySlug.get(item.domain) : undefined;
+    const resolved = cat || fallbackCat;
+    return {
+      ...item,
+      categoryName: item.categoryName || resolved?.name,
+      categorySlug: item.categorySlug || resolved?.slug,
+      categoryColor: item.categoryColor || resolved?.color,
+    };
+  });
+};
+
 const attachRelationshipOpportunityLinkNames = (
   items: RelationshipOpportunity[],
   projects: Project[],
@@ -1779,15 +1798,16 @@ export const useOpportunitiesData = (enabled = true) => {
 
   useEffect(() => {
     setRelationships((current) => {
-      const next = attachRelationshipLinkNames(current, people);
-      return shouldReplaceCollection(current, next, ['personName']) ? next : current;
+      const withPerson = attachRelationshipLinkNames(current, people);
+      const withCategory = attachRelationshipCategoryNames(withPerson, relationshipCategories);
+      return shouldReplaceCollection(current, withCategory, ['personName', 'categoryName', 'categorySlug', 'categoryColor']) ? withCategory : current;
     });
 
     setRelationshipOpportunities((current) => {
       const next = attachRelationshipOpportunityLinkNames(current, projects, companies);
       return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName']) ? next : current;
     });
-  }, [companies, people, projects]);
+  }, [companies, people, projects, relationshipCategories]);
 
   const syncInsert = async (entity: string, data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
@@ -2157,7 +2177,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const row = await syncInsert('relationships', toRelationshipDb(input));
     const personId = getRowRefId(row, 'person_id', 'personId');
     const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapRelationshipRow(row, personName);
+    let next = mapRelationshipRow(row, personName);
+    next = attachRelationshipCategoryNames([next], relationshipCategories)[0];
     setRelationships((current) => [next, ...current]);
     return next;
   };
@@ -2166,7 +2187,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const row = await syncUpdate('relationships', id, toRelationshipDb(input, { forUpdate: true }));
     const personId = getRowRefId(row, 'person_id', 'personId');
     const personName = people.find((person) => person.id === personId)?.fullName;
-    const next = mapRelationshipRow(row, personName);
+    let next = mapRelationshipRow(row, personName);
+    next = attachRelationshipCategoryNames([next], relationshipCategories)[0];
     setRelationships((current) => current.map((item) => (item.id === id ? next : item)));
     return next;
   };

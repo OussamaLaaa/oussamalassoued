@@ -173,7 +173,14 @@ const RelationshipForm: React.FC<{
           <div className={baseLabel}>Category</div>
           <select
             value={toInputValue(form.categoryId)}
-            onChange={(event) => setField('categoryId', event.target.value || null)}
+            onChange={(event) => {
+              const catId = event.target.value || null;
+              setField('categoryId', catId);
+              const cat = categories.find((c) => c.id === catId);
+              if (cat && cat.slug) {
+                setField('domain', cat.slug as RelationshipInput['domain']);
+              }
+            }}
             className={baseInput}
           >
             <option value="">Uncategorized</option>

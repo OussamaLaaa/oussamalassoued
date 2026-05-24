@@ -669,6 +669,8 @@ export interface Relationship {
   personName?: string;
   categoryId?: string;
   categoryName?: string;
+  categorySlug?: string;
+  categoryColor?: string;
   displayName: string;
   domain?: RelationshipDomain;
   relationshipType?: RelationshipType;

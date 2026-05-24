@@ -114,7 +114,10 @@ const RelationshipsPanel: React.FC<{
 
     return allCategories.map((category) => {
       const slug = categoryKey(category);
-      const count = relationships.filter((relationship) => (relationship.domain || 'other') === slug).length;
+      const count = relationships.filter((relationship) => {
+        if (relationship.categoryId) return relationship.categoryId === category.id;
+        return (relationship.domain || 'other') === slug;
+      }).length;
       return { ...category, slug, count };
     });
   }, [relationshipCategories, relationships]);
@@ -124,8 +127,10 @@ const RelationshipsPanel: React.FC<{
   const selectedCategoryRelationships = useMemo(() => {
     if (!selectedCategorySlug) return [];
     return relationships.filter((relationship) => {
-      const relationshipSlug = relationship.domain || 'other';
-      const categoryMatches = relationshipSlug === selectedCategorySlug || (!relationship.domain && selectedCategorySlug === 'other');
+      const categoryMatches = relationship.categoryId
+        ? selectedCategory ? relationship.categoryId === selectedCategory.id : false
+        : (relationship.domain || 'other') === selectedCategorySlug ||
+          (!relationship.domain && selectedCategorySlug === 'other');
       const searchMatches = !searchQuery || [relationship.displayName, relationship.personName || '', relationship.notes || '', relationship.nextAction || ''].join(' ').toLowerCase().includes(searchQuery.toLowerCase());
       const strengthMatches = !strengthFilter || relationship.relationshipStrength === strengthFilter;
       const trustMatches = !trustFilter || relationship.trustLevel === trustFilter;
@@ -133,7 +138,7 @@ const RelationshipsPanel: React.FC<{
       const followUpMatches = !followUpFilter || (followUpFilter === 'due' ? isFollowUpDue(relationship) : true);
       return categoryMatches && searchMatches && strengthMatches && trustMatches && statusMatches && followUpMatches;
     });
-  }, [relationships, selectedCategorySlug, searchQuery, strengthFilter, trustFilter, statusFilter, followUpFilter]);
+  }, [relationships, selectedCategorySlug, selectedCategory, searchQuery, strengthFilter, trustFilter, statusFilter, followUpFilter]);
 
   const selectedRelationship = useMemo(
     () => relationships.find((relationship) => relationship.id === selectedRelationshipId) || null,
@@ -401,11 +406,10 @@ const RelationshipsPanel: React.FC<{
           <RelationshipForm
             people={people}
             categories={relationshipCategories}
-            initialData={editingRelationship ? { ...editingRelationship, domain: selectedCategorySlug || editingRelationship.domain } : { domain: selectedCategorySlug || undefined }}
+            initialData={editingRelationship ? { ...editingRelationship, domain: selectedCategorySlug || editingRelationship.domain } : { categoryId: selectedCategory?.id ?? undefined, domain: (selectedCategorySlug || undefined) as RelationshipInput['domain'] }}
             submitLabel={editingRelationship ? 'Update Relationship' : 'Create Relationship'}
             onSubmit={async (input) => {
-              const nextInput = selectedCategorySlug && !editingRelationship ? { ...input, domain: selectedCategorySlug as RelationshipInput['domain'] } : input;
-              await handleSubmitRelationship(nextInput);
+              await handleSubmitRelationship(input);
               setIsAddingRelationship(false);
               setEditingRelationship(null);
             }}
