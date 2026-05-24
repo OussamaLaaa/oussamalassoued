@@ -40,6 +40,7 @@ const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }>
   { value: 'cleanup', label: 'Cleanup', hint: 'Normalization and content cleanup' },
   { value: 'strategy', label: 'Strategy', hint: 'Plans, goals, and decision support' },
   { value: 'notes', label: 'Notes assistant', hint: 'Organize, summarize, and improve notes' },
+  { value: 'social_media', label: 'Social Media assistant', hint: 'Content ideas, hooks, rewrites, and planning' },
 ];
 
 const defaultProviderForm = (): AIProviderKeyInput => ({
@@ -218,6 +219,7 @@ const AIControlPanel: React.FC<{
     { label: 'Relationship AI', key: 'relationship' },
     { label: 'Lead Scoring AI', key: 'lead_scoring' },
     { label: 'Notes AI', key: 'notes' },
+    { label: 'Social Media AI', key: 'social_media' },
   ];
 
   const tabs = [

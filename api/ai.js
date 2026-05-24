@@ -539,7 +539,7 @@ const handleUseCaseTest = async (req, res) => {
   const supabase = createSupabaseClient();
   const body = readBody(req);
   const useCase = toCleanString(body.useCase).toLowerCase();
-  const allowed = ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'notes'];
+  const allowed = ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'notes', 'social_media'];
 
   if (!allowed.includes(useCase)) {
     return toSafeJson(res, 400, { success: false, error: 'Invalid use case for testing.' });
@@ -552,6 +552,7 @@ const handleUseCaseTest = async (req, res) => {
     lead_scoring: '<DATABASE_TYPE>sme</DATABASE_TYPE>\n<INDUSTRY>tech</INDUSTRY>\n<PRIORITY>medium</PRIORITY>\n<FIT_SCORE>5</FIT_SCORE>\n<ETHICAL_FIT>good</ETHICAL_FIT>\n<UX_PROBLEM></UX_PROBLEM>\n<SERVICE_TO_OFFER></SERVICE_TO_OFFER>\n<NEXT_ACTION></NEXT_ACTION>\n<REASONING_SUMMARY>OK</REASONING_SUMMARY>\n<RISKS></RISKS>\n<QUESTIONS_TO_REVIEW></QUESTIONS_TO_REVIEW>',
     relationship: '<SUMMARY>OK</SUMMARY>\n<OBSERVATIONS>\n- Test observation\n</OBSERVATIONS>\n<STRENGTHS></STRENGTHS>\n<CONCERNS></CONCERNS>\n<NEXT_STEPS>\n- Test step\n</NEXT_STEPS>\n<FOLLOW_UP_DRAFT></FOLLOW_UP_DRAFT>\n<LOG_CHANNEL>other</LOG_CHANNEL>\n<LOG_TYPE>follow_up</LOG_TYPE>\n<LOG_SUMMARY></LOG_SUMMARY>\n<LOG_OUTCOME></LOG_OUTCOME>\n<LOG_NEXT_ACTION></LOG_NEXT_ACTION>\n<APPROVAL_NOTE></APPROVAL_NOTE>',
     notes: '<SUMMARY>OK</SUMMARY>\n<IMPROVED_CONTENT>Test note content</IMPROVED_CONTENT>\n<KEY_POINTS>\n- Test point\n</KEY_POINTS>\n<SUGGESTED_TASKS>\n- title: Follow up | priority: medium | category: notes | notes: Test task\n</SUGGESTED_TASKS>\n<SUGGESTED_CATEGORY>work</SUGGESTED_CATEGORY>\n<SUGGESTED_TAGS>\n- notes\n- review\n</SUGGESTED_TAGS>\n<NEXT_ACTIONS>\n- Review the note\n</NEXT_ACTIONS>',
+    social_media: '<SUMMARY>OK</SUMMARY>\n<IDEAS>\n- Test idea\n</IDEAS>\n<HOOKS>\n- Test hook\n</HOOKS>\n<CONTENT_DRAFT>Test draft</CONTENT_DRAFT>\n<WEEKLY_PLAN>Test plan</WEEKLY_PLAN>\n<REPURPOSED_CONTENT>Test repurposed</REPURPOSED_CONTENT>\n<PERFORMANCE_INSIGHTS>\n- Test insight\n</PERFORMANCE_INSIGHTS>\n<QUESTIONS_TO_REVIEW>\n- Test question\n</QUESTIONS_TO_REVIEW>\n<NEXT_ACTIONS>\n- Test action\n</NEXT_ACTIONS>',
   };
 
   try {
@@ -686,6 +687,245 @@ const handleNotesAction = async (req, res) => {
   }
 };
 
+const SOCIAL_MEDIA_AI_MODES = new Set([
+  'generate_ideas',
+  'improve_hook',
+  'rewrite_post',
+  'note_to_post',
+  'project_to_case_study',
+  'weekly_plan',
+  'repurpose_content',
+  'analyze_performance',
+  'next_week_focus',
+]);
+
+const toSocialMediaExecutionConfig = () => {
+  const apiKey = toCleanString(process.env.GEMINI_API_KEY);
+  if (!apiKey) return null;
+  return {
+    disabled: false,
+    provider: 'gemini',
+    apiKey,
+    model: toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.5-flash',
+    baseUrl: '',
+    endpoint: '',
+    deploymentName: '',
+    apiVersion: '',
+    temperature: 0.3,
+    maxOutputTokens: 2000,
+  };
+};
+
+const resolveSocialMediaExecutionConfig = async ({ supabase }) => {
+  if (supabase) {
+    const socialMediaConfig = await aiProviderRouter.resolveAIExecutionConfig({ supabase, useCase: 'social_media', fallbackEnvGemini: false });
+    if (socialMediaConfig?.disabled) return { disabled: true };
+    if (socialMediaConfig) return { executionConfig: socialMediaConfig, sourceUseCase: 'social_media' };
+
+    const strategyConfig = await aiProviderRouter.resolveAIExecutionConfig({ supabase, useCase: 'strategy', fallbackEnvGemini: false });
+    if (strategyConfig?.disabled) {
+      const envExecution = toSocialMediaExecutionConfig();
+      return envExecution ? { executionConfig: envExecution, sourceUseCase: 'env' } : { disabled: true };
+    }
+    if (strategyConfig) return { executionConfig: strategyConfig, sourceUseCase: 'strategy' };
+  }
+
+  const envExecution = toSocialMediaExecutionConfig();
+  return envExecution ? { executionConfig: envExecution, sourceUseCase: 'env' } : { disabled: true };
+};
+
+const buildSocialMediaPrompt = ({ mode, strategy, platforms, pillars, contentItem, note, project, weeklyPlan, recentContent, instructions, language }) => {
+  const modeRules = {
+    generate_ideas: 'Generate content ideas based on the strategy, pillars, and platforms. Include title, format, platform, pillar, hook, and short angle for each idea.',
+    improve_hook: 'Improve the hook of the content item. Provide multiple hook options that are compelling and authentic.',
+    rewrite_post: 'Rewrite the content for clarity, structure, and platform fit while preserving meaning and intent.',
+    note_to_post: 'Turn this note into a platform-ready social media post. Preserve the original meaning and intent.',
+    project_to_case_study: 'Turn this project into a case study style post. Do not invent metrics. If metrics are missing, use qualitative framing and questions.',
+    weekly_plan: 'Suggest a weekly content mix including posts, videos, carousels, and other formats. Align with strategy targets. Include content titles and formats.',
+    repurpose_content: 'Turn this content item into multiple formats: LinkedIn post, short video script, carousel outline, thread, and story.',
+    analyze_performance: 'Analyze the provided performance metrics. Identify what seems to work and suggest improvements. Do not overclaim.',
+    next_week_focus: 'Suggest focus for next week based on the strategy and recent content or performance data.',
+  };
+
+  const parts = [
+    'You are AI Social Media Assistant helping a professional content creator.',
+    'General rules:',
+    '- Do not invent fake results.',
+    '- Do not claim performance numbers not provided.',
+    '- Respect the user positioning and brand.',
+    '- Keep output practical and usable.',
+    '- If information is missing, ask review questions.',
+    '- Do not publish automatically.',
+    '- Do not guarantee leads or sales.',
+    '- Respect Islamic and ethical principles.',
+    '- Avoid manipulative or deceptive marketing.',
+    '- Output should help build trust, clarity, and authority.',
+    '',
+    'Output only these tags and no commentary outside them. No markdown fences around the tags:',
+    '<SUMMARY>...</SUMMARY>',
+    '<IDEAS>...</IDEAS>',
+    '<HOOKS>...</HOOKS>',
+    '<CONTENT_DRAFT>...</CONTENT_DRAFT>',
+    '<WEEKLY_PLAN>...</WEEKLY_PLAN>',
+    '<REPURPOSED_CONTENT>...</REPURPOSED_CONTENT>',
+    '<PERFORMANCE_INSIGHTS>...</PERFORMANCE_INSIGHTS>',
+    '<QUESTIONS_TO_REVIEW>...</QUESTIONS_TO_REVIEW>',
+    '<NEXT_ACTIONS>...</NEXT_ACTIONS>',
+    '',
+    `Mode: ${mode}`,
+    `Language: ${language || 'auto'}`,
+    `Mode guidance: ${modeRules[mode] || 'Follow the general rules and keep the response structured.'}`,
+    instructions ? `User instructions: ${instructions}` : 'User instructions: none',
+    '',
+  ];
+
+  if (strategy) parts.push(`Strategy: ${JSON.stringify(strategy, null, 2)}`);
+  if (platforms) parts.push(`Platforms: ${JSON.stringify(platforms, null, 2)}`);
+  if (pillars) parts.push(`Pillars: ${JSON.stringify(pillars, null, 2)}`);
+  if (contentItem) parts.push(`Content Item: ${JSON.stringify(contentItem, null, 2)}`);
+  if (note) parts.push(`Note: ${JSON.stringify(note, null, 2)}`);
+  if (project) parts.push(`Project: ${JSON.stringify(project, null, 2)}`);
+  if (weeklyPlan) parts.push(`Weekly Plan: ${JSON.stringify(weeklyPlan, null, 2)}`);
+  if (recentContent) parts.push(`Recent Content: ${JSON.stringify(recentContent, null, 2)}`);
+
+  return parts.join('\n');
+};
+
+const parseSocialMediaTaggedResponse = (rawText) => {
+  const text = toCleanString(rawText);
+  if (!text) {
+    throw new Error('AI returned an empty response.');
+  }
+
+  return {
+    summary: extractTaggedSection(text, 'SUMMARY'),
+    ideas: normalizeTaggedList(text, 'IDEAS'),
+    hooks: normalizeTaggedList(text, 'HOOKS'),
+    contentDraft: extractTaggedSection(text, 'CONTENT_DRAFT'),
+    weeklyPlan: extractTaggedSection(text, 'WEEKLY_PLAN'),
+    repurposedContent: extractTaggedSection(text, 'REPURPOSED_CONTENT'),
+    performanceInsights: normalizeTaggedList(text, 'PERFORMANCE_INSIGHTS'),
+    questionsToReview: normalizeTaggedList(text, 'QUESTIONS_TO_REVIEW'),
+    nextActions: normalizeTaggedList(text, 'NEXT_ACTIONS'),
+  };
+};
+
+const mapSocialMediaAiError = (error) => {
+  const message = toCleanString(error?.message || error?.providerErrorReason || error?.providerErrorStatus || '');
+  if (error?.providerStatus === 401 || /unauthori[sz]ed/i.test(message)) {
+    return 'Authentication required. Please log in again.';
+  }
+  if (error?.providerStatus === 429 || /quota|rate limit|too many requests/i.test(message)) {
+    return 'AI quota exceeded. Try again later or change AI model.';
+  }
+  if (/disabled/i.test(message) && /social_media/i.test(message)) {
+    return 'AI is disabled for social media.';
+  }
+  return 'AI could not generate social media help. Review manually.';
+};
+
+const handleSocialMediaAction = async (req, res) => {
+  if (!isAuthenticated(req)) {
+    return toSafeJson(res, 401, { success: false, error: 'Authentication required. Please log in again.' });
+  }
+
+  const body = readBody(req);
+  const mode = toCleanString(body.mode).toLowerCase();
+  const strategy = body?.strategy && typeof body.strategy === 'object' ? body.strategy : null;
+  const platforms = Array.isArray(body.platforms) ? body.platforms : null;
+  const pillars = Array.isArray(body.pillars) ? body.pillars : null;
+  const contentItem = body?.contentItem && typeof body.contentItem === 'object' ? body.contentItem : null;
+  const note = body?.note && typeof body.note === 'object' ? body.note : null;
+  const project = body?.project && typeof body.project === 'object' ? body.project : null;
+  const weeklyPlan = body?.weeklyPlan && typeof body.weeklyPlan === 'object' ? body.weeklyPlan : null;
+  const recentContent = Array.isArray(body.recentContent) ? body.recentContent : null;
+  const instructions = toCleanString(body.instructions);
+  const language = ['arabic', 'english', 'french', 'auto'].includes(toCleanString(body.language).toLowerCase()) ? toCleanString(body.language).toLowerCase() : 'auto';
+  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
+
+  if (!SOCIAL_MEDIA_AI_MODES.has(mode)) {
+    return toSafeJson(res, 400, { success: false, error: 'Invalid social media AI mode.' });
+  }
+
+  if (['improve_hook', 'rewrite_post', 'repurpose_content', 'analyze_performance'].includes(mode) && !contentItem) {
+    return toSafeJson(res, 400, { success: false, error: 'Content item is required for this mode.' });
+  }
+
+  if (mode === 'note_to_post' && !note) {
+    return toSafeJson(res, 400, { success: false, error: 'Note is required for note to post.' });
+  }
+
+  if (mode === 'project_to_case_study' && !project) {
+    return toSafeJson(res, 400, { success: false, error: 'Project is required for project to case study.' });
+  }
+
+  let supabase = null;
+  try {
+    supabase = createSupabaseClient();
+  } catch {
+    supabase = null;
+  }
+
+  const routing = await resolveSocialMediaExecutionConfig({ supabase });
+  if (routing?.disabled) {
+    return toSafeJson(res, 503, { success: false, error: 'AI is disabled for social media.' });
+  }
+
+  if (!routing?.executionConfig) {
+    return toSafeJson(res, 503, { success: false, error: 'AI is disabled for social media.' });
+  }
+
+  const prompt = buildSocialMediaPrompt({
+    mode,
+    strategy,
+    platforms,
+    pillars,
+    contentItem,
+    note,
+    project,
+    weeklyPlan,
+    recentContent,
+    instructions,
+    language,
+  });
+
+  try {
+    const rawResponse = await aiProviderRouter.requestProviderCompletion({
+      ...routing.executionConfig,
+      prompt,
+      temperature: 0.3,
+      maxOutputTokens: 2000,
+    });
+
+    const normalized = parseSocialMediaTaggedResponse(rawResponse);
+
+    return toSafeJson(res, 200, {
+      success: true,
+      mode,
+      result: normalized,
+      ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
+    });
+  } catch (error) {
+    const statusCode = error?.providerStatus === 401 ? 401 : 500;
+    const errorMessage = mapSocialMediaAiError(error);
+    const errorCode = error?.providerStatus === 429 || /quota|rate limit|too many requests/i.test(toCleanString(error?.message)) ? 'AI_QUOTA_EXCEEDED' : undefined;
+
+    return toSafeJson(res, statusCode, {
+      success: false,
+      ...(errorCode ? { code: errorCode } : {}),
+      error: errorMessage,
+      ...(debugRequested ? {
+        debug: {
+          sourceUseCase: routing.sourceUseCase,
+          providerStatus: error?.providerStatus ?? null,
+          providerErrorStatus: error?.providerErrorStatus ?? null,
+          providerErrorReason: error?.providerErrorReason ?? null,
+        },
+      } : {}),
+    });
+  }
+};
+
 export default async function handler(req, res) {
   const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();
 
@@ -709,7 +949,7 @@ export default async function handler(req, res) {
         try { return createSupabaseClient(); } catch { return null; }
       })();
       const useCaseStatuses = {};
-      for (const uc of ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes']) {
+      for (const uc of ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes', 'social_media']) {
         useCaseStatuses[uc] = supabase ? await checkAIUseCaseStatus({ supabase, useCase: uc }) : { configured: false, source: 'none' };
       }
       return toSafeJson(res, 200, {
@@ -718,7 +958,7 @@ export default async function handler(req, res) {
         aiControl: true,
         encryptionConfigured,
         supportedProviders: ['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama'],
-        supportedUseCases: ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes'],
+        supportedUseCases: ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes', 'social_media'],
         envGeminiConfigured: Boolean(process.env.GEMINI_API_KEY),
         useCaseStatuses,
       });
@@ -752,6 +992,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST' && action === 'notes') {
     return handleNotesAction(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'social-media') {
+    return handleSocialMediaAction(req, res);
   }
 
   if (req.method === 'POST' && action === 'use-case-test') {

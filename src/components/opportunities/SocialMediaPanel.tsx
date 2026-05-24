@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
+import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 
-const SOCIAL_SECTION_KEYS = ['dashboard', 'strategy', 'platforms', 'pillars', 'ideas', 'weekly', 'production', 'calendar', 'performance'] as const;
+const SOCIAL_SECTION_KEYS = ['dashboard', 'strategy', 'platforms', 'pillars', 'ideas', 'weekly', 'production', 'calendar', 'performance', 'ai-assistant'] as const;
 type SocialSection = typeof SOCIAL_SECTION_KEYS[number];
 
 const CONTENT_TYPES = ['text_post', 'video', 'short_video', 'carousel', 'thread', 'story', 'reel', 'case_study', 'newsletter', 'image_post', 'poll', 'live', 'other'] as const;
@@ -118,7 +119,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
           onClick={() => setSection(key)}
           className={`px-3 py-1.5 text-xs rounded-md font-medium transition-all ${section === key ? 'bg-[#0f172a] text-white' : 'bg-white text-[#475569] border border-[#e5e7eb] hover:bg-[#f8fafc]'}`}
         >
-          {key === 'weekly' ? 'Weekly Plan' : key.charAt(0).toUpperCase() + key.slice(1)}
+          {key === 'weekly' ? 'Weekly Plan' : key === 'ai-assistant' ? 'AI Assistant' : key.charAt(0).toUpperCase() + key.slice(1)}
         </button>
       ))}
     </div>
@@ -135,6 +136,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
   if (section === 'production') return <ProductionBoard {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
   if (section === 'calendar') return <CalendarSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
   if (section === 'performance') return <PerformanceSection {...props} sectionNav={sectionNav} />;
+  if (section === 'ai-assistant') return <AIAssistantSection {...props} sectionNav={sectionNav} />;
   return null;
 }
 
@@ -1056,6 +1058,26 @@ function ContentStrategyForm({ initial, onSave, onCancel }: { initial?: Partial<
         <button type="button" onClick={onCancel} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
       </div>
     </form>
+  );
+}
+
+function AIAssistantSection({ contentStrategies, socialPlatforms, contentPillars, contentItems, weeklyContentPlans, smartNotes, projects, onAddContentItem, onUpdateContentItem, onAddWeeklyContentPlan, sectionNav }: SectionProps) {
+  return (
+    <div>
+      {sectionNav}
+      <AISocialMediaAssistantPanel
+        strategies={contentStrategies}
+        platforms={socialPlatforms}
+        pillars={contentPillars}
+        contentItems={contentItems}
+        weeklyContentPlans={weeklyContentPlans}
+        smartNotes={smartNotes}
+        projects={projects}
+        onCreateContentItem={onAddContentItem}
+        onUpdateContentItem={onUpdateContentItem}
+        onCreateWeeklyPlan={onAddWeeklyContentPlan}
+      />
+    </div>
   );
 }
 
