@@ -94,7 +94,7 @@ const buildFailure = (res, status, error, debug, code) => toSafeJson(res, status
   ...(debug ? { debug } : {}),
 });
 
-const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
+const requestGemini = async ({ apiKey, model, prompt }) => {
   const body = {
     contents: [
       {
@@ -105,8 +105,7 @@ const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true
     generationConfig: {
       temperature: 0.2,
       topP: 0.8,
-      maxOutputTokens: 1400,
-      ...(useResponseMimeType ? { responseMimeType: 'application/json' } : {}),
+      maxOutputTokens: 2800,
     },
   };
 
@@ -209,6 +208,61 @@ const normalizeResult = (analysis) => ({
   nextActions: normalizeList(analysis?.nextActions),
 });
 
+const extractTag = (text, tagName) => {
+  const raw = toCleanString(text);
+  if (!raw) return '';
+  const match = raw.match(new RegExp(`<${tagName}>\\s*([\\s\\S]*?)\\s*<\\/${tagName}>`, 'i'));
+  return match ? match[1].trim() : '';
+};
+
+const parseBulletList = (sectionText) => toCleanString(sectionText)
+  .split('\n')
+  .map((line) => line.replace(/^\s*[-*•]\s*/, '').trim())
+  .filter(Boolean);
+
+const stripTaggedLabels = (text) => toCleanString(text)
+  .replace(/<\/?SUMMARY>/gi, '')
+  .replace(/<\/?IMPROVED_CONTENT>/gi, '')
+  .replace(/<\/?RISKS>/gi, '')
+  .replace(/<\/?MISSING_CLAUSES>/gi, '')
+  .replace(/<\/?SUGGESTED_SECTIONS>/gi, '')
+  .replace(/<\/?QUESTIONS_TO_REVIEW>/gi, '')
+  .replace(/<\/?NEXT_ACTIONS>/gi, '')
+  .replace(/^\s*[-*•]\s*/gm, '')
+  .trim();
+
+const parseAiDocumentTaggedResponse = (text) => {
+  const rawText = toCleanString(text);
+  const summary = extractTag(rawText, 'SUMMARY');
+  const improvedContent = extractTag(rawText, 'IMPROVED_CONTENT');
+  const risks = parseBulletList(extractTag(rawText, 'RISKS'));
+  const missingClauses = parseBulletList(extractTag(rawText, 'MISSING_CLAUSES'));
+  const suggestedSections = parseBulletList(extractTag(rawText, 'SUGGESTED_SECTIONS'));
+  const questionsToReview = parseBulletList(extractTag(rawText, 'QUESTIONS_TO_REVIEW'));
+  const nextActions = parseBulletList(extractTag(rawText, 'NEXT_ACTIONS'));
+
+  const tagsFound = {
+    summary: Boolean(summary),
+    improvedContent: Boolean(improvedContent),
+    risks: Boolean(extractTag(rawText, 'RISKS')),
+    missingClauses: Boolean(extractTag(rawText, 'MISSING_CLAUSES')),
+    suggestedSections: Boolean(extractTag(rawText, 'SUGGESTED_SECTIONS')),
+    questionsToReview: Boolean(extractTag(rawText, 'QUESTIONS_TO_REVIEW')),
+    nextActions: Boolean(extractTag(rawText, 'NEXT_ACTIONS')),
+  };
+
+  return {
+    summary,
+    improvedContent,
+    risks,
+    missingClauses,
+    suggestedSections,
+    questionsToReview,
+    nextActions,
+    tagsFound,
+  };
+};
+
 const truncateDocument = (document = {}) => ({
   title: truncate(document.title, 300),
   type: normalizeDocumentType(document.type),
@@ -244,127 +298,84 @@ const truncateBrand = (brand = {}) => ({
   signatureName: truncate(brand.signatureName, MAX_CONTEXT_LENGTH),
 });
 
-const validateAnalysis = (analysis) => {
-  if (!analysis || typeof analysis !== 'object') return null;
-  return normalizeResult(analysis);
-};
-
-const parseAnalysisText = (value) => {
-  const rawText = toCleanString(value);
-  const cleaned = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-  if (!cleaned) {
-    return {
-      analysis: null,
-      parseStep: 'empty_text',
-      parseErrorMessage: 'Empty Gemini response text.',
-      responseText: rawText,
-    };
-  }
-
-  try {
-    return {
-      analysis: JSON.parse(cleaned),
-      parseStep: 'json_parse',
-      parseErrorMessage: '',
-      responseText: rawText,
-    };
-  } catch (error) {
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start !== -1 && end !== -1 && end > start) {
-      try {
-        return {
-          analysis: JSON.parse(cleaned.slice(start, end + 1)),
-          parseStep: 'substring_json_parse',
-          parseErrorMessage: '',
-          responseText: rawText,
-        };
-      } catch (substringError) {
-        return {
-          analysis: null,
-          parseStep: 'substring_json_parse_failed',
-          parseErrorMessage: substringError instanceof Error ? substringError.message : 'Unable to parse JSON substring.',
-          responseText: rawText,
-        };
-      }
-    }
-
-    return {
-      analysis: null,
-      parseStep: 'json_parse_failed',
-      parseErrorMessage: error instanceof Error ? error.message : 'Unable to parse Gemini JSON response.',
-      responseText: rawText,
-    };
-  }
-};
-
 const getAnalysisErrorMessage = (errorResult, fallback = 'Unable to generate document response.') => {
   if (!errorResult) return fallback;
   const message = String(errorResult.message || errorResult.statusText || '').trim();
   return message || fallback;
 };
 
-const analyzeResponse = async ({ apiKey, model, prompt }) => {
-  const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
-  const firstText = readGeminiResponseText(firstAttempt.data);
-  const firstParsed = parseAnalysisText(firstText);
-  const firstValidated = validateAnalysis(firstParsed.analysis);
+const analyzeResponse = async ({ apiKey, model, prompt, mode }) => {
+  const attempt = await requestGemini({ apiKey, model, prompt });
+  const responseText = readGeminiResponseText(attempt.data);
 
-  if (firstAttempt.ok && firstValidated) {
-    return {
-      success: true,
-      status: firstAttempt.status,
-      text: firstText,
-      result: firstValidated,
-      parseStep: firstParsed.parseStep,
-      parseErrorMessage: '',
-      providerError: null,
-      retryWithoutJsonMimeUsed: false,
-    };
-  }
-
-  const firstParseFailure = firstAttempt.ok && !firstValidated;
-  const mimeRelated = !firstAttempt.ok && /responseMimeType|mime|JSON|application\/json/i.test(firstAttempt.error?.message || '');
-  if (!firstParseFailure && !firstAttempt.ok && !mimeRelated) {
+  if (!responseText) {
     return {
       success: false,
-      status: firstAttempt.status,
-      text: firstAttempt.rawText,
+      status: attempt.status,
+      text: responseText,
       result: null,
-      parseStep: 'provider_error',
-      parseErrorMessage: '',
-      providerError: firstAttempt.error,
-      retryWithoutJsonMimeUsed: false,
+      parseStep: 'empty_response',
+      providerError: attempt.ok ? null : attempt.error,
+      tagsFound: {
+        summary: false,
+        improvedContent: false,
+        risks: false,
+        missingClauses: false,
+        suggestedSections: false,
+        questionsToReview: false,
+        nextActions: false,
+      },
     };
   }
 
-  const retryAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: false });
-  const retryText = readGeminiResponseText(retryAttempt.data);
-  const retryParsed = parseAnalysisText(retryText);
-  const retryValidated = validateAnalysis(retryParsed.analysis);
+  const parsed = parseAiDocumentTaggedResponse(responseText);
+  const isContentMode = ['create_template', 'improve_document', 'rewrite_tone', 'translate_document', 'adapt_to_project'].includes(mode);
+  const result = {
+    summary: parsed.summary || 'AI generated a document response. Please review before using.',
+    improvedContent: parsed.improvedContent,
+    risks: parsed.risks,
+    missingClauses: parsed.missingClauses,
+    suggestedSections: parsed.suggestedSections,
+    questionsToReview: parsed.questionsToReview,
+    nextActions: parsed.nextActions,
+  };
 
-  if (retryAttempt.ok && retryValidated) {
+  if (!result.improvedContent && isContentMode) {
+    result.improvedContent = stripTaggedLabels(responseText);
+  }
+
+  const hasAnyParsedContent = Boolean(
+    result.summary ||
+    result.improvedContent ||
+    result.risks.length ||
+    result.missingClauses.length ||
+    result.suggestedSections.length ||
+    result.questionsToReview.length ||
+    result.nextActions.length,
+  );
+
+  if (!hasAnyParsedContent) {
     return {
-      success: true,
-      status: retryAttempt.status,
-      text: retryText,
-      result: retryValidated,
-      parseStep: retryParsed.parseStep,
-      parseErrorMessage: '',
-      providerError: null,
-      retryWithoutJsonMimeUsed: true,
+      success: false,
+      status: attempt.status,
+      text: responseText,
+      result: null,
+      parseStep: 'empty_response',
+      providerError: attempt.ok ? null : attempt.error,
+      tagsFound: parsed.tagsFound,
     };
   }
 
   return {
-    success: false,
-    status: retryAttempt.ok ? retryAttempt.status : firstAttempt.status,
-    text: retryText || firstText || retryAttempt.rawText || firstAttempt.rawText,
-    result: null,
-    parseStep: retryParsed.parseStep === 'empty_text' && firstParsed.parseStep !== 'empty_text' ? firstParsed.parseStep : retryParsed.parseStep,
-    parseErrorMessage: retryParsed.parseErrorMessage || firstParsed.parseErrorMessage || '',
-    providerError: retryAttempt.ok ? null : retryAttempt.error || firstAttempt.error,
-    retryWithoutJsonMimeUsed: true,
+    success: true,
+    status: attempt.status,
+    text: responseText,
+    result,
+    parseStep: parsed.tagsFound.summary || parsed.tagsFound.improvedContent || parsed.tagsFound.risks || parsed.tagsFound.missingClauses || parsed.tagsFound.suggestedSections || parsed.tagsFound.questionsToReview || parsed.tagsFound.nextActions
+      ? 'tagged_parse_success'
+      : 'tagged_parse_partial',
+    providerError: attempt.ok ? null : attempt.error,
+    tagsFound: parsed.tagsFound,
   };
 };
 
@@ -375,15 +386,24 @@ const languageInstruction = (language) => {
 };
 
 const outputShape = [
-  '{',
-  '  "summary": "short explanation of the AI result",',
-  '  "improvedContentLines": ["string"],',
-  '  "risks": ["possible ambiguity or risk, not legal advice"],',
-  '  "missingClauses": ["possibly missing clause or section"],',
-  '  "suggestedSections": ["section name or improvement"],',
-  '  "questionsToReview": ["question user should review before sending"],',
-  '  "nextActions": ["practical next step"]',
-  '}',
+  '<SUMMARY>Short summary here.</SUMMARY>',
+  '<IMPROVED_CONTENT>Full generated or improved document content here.</IMPROVED_CONTENT>',
+  '<RISKS>',
+  '- risk 1',
+  '- risk 2',
+  '</RISKS>',
+  '<MISSING_CLAUSES>',
+  '- missing clause 1',
+  '</MISSING_CLAUSES>',
+  '<SUGGESTED_SECTIONS>',
+  '- section 1',
+  '</SUGGESTED_SECTIONS>',
+  '<QUESTIONS_TO_REVIEW>',
+  '- question 1',
+  '</QUESTIONS_TO_REVIEW>',
+  '<NEXT_ACTIONS>',
+  '- action 1',
+  '</NEXT_ACTIONS>',
 ].join('\n');
 
 const placeholderList = [
@@ -403,23 +423,23 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     create_template: [
       'Generate a reusable template for the selected document type.',
       `Include placeholders such as: ${placeholderList.join(', ')}`,
-      'Put the full template in improvedContentLines.',
-      'Use one array item per heading, paragraph, or bullet.',
+      'Put the full reusable template in <IMPROVED_CONTENT>.',
+      'Include the included sections in <SUGGESTED_SECTIONS>.',
       'Include only sections relevant to the selected document type.',
     ],
     improve_document: [
       'Rewrite the document for clarity, structure, and professional tone.',
       'Keep the original meaning and do not invent facts.',
-      'Put the full revised document in improvedContentLines.',
+      'Put the full revised document in <IMPROVED_CONTENT>.',
     ],
     risk_review: [
       'Focus on ambiguity, missing information, unclear scope, unclear payment terms, unclear timelines, unclear responsibilities, unclear acceptance criteria, unclear cancellation terms, and unclear revision terms.',
       'Do not provide legal advice.',
-      'Keep improvedContentLines empty unless a short safer wording is genuinely helpful.',
+      'Keep <IMPROVED_CONTENT> empty unless a short safer wording is genuinely helpful.',
     ],
     missing_clauses: [
       'Identify possible missing sections without claiming legal necessity.',
-      'Fill missingClauses and suggestedSections.',
+      'Put the main output in <MISSING_CLAUSES>, <SUGGESTED_SECTIONS>, and <QUESTIONS_TO_REVIEW>.',
       'Do not provide legal advice.',
     ],
     adapt_to_project: [
@@ -429,15 +449,16 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     ],
     summarize_document: [
       'Summarize the document clearly and concisely.',
-      'Keep improvedContentLines empty unless a compact summary rewrite is helpful.',
+      'Put the main output in <SUMMARY>.',
+      'Keep <IMPROVED_CONTENT> empty unless a compact summary rewrite is helpful.',
     ],
     rewrite_tone: [
       'Rewrite the document using the selected tone while preserving meaning.',
-      'Put the full rewritten version in improvedContentLines.',
+      'Put the full rewritten version in <IMPROVED_CONTENT>.',
     ],
     translate_document: [
       'Translate the document content into the selected language while preserving structure.',
-      'Put the full translation in improvedContentLines.',
+      'Put the full translation in <IMPROVED_CONTENT>.',
     ],
   };
 
@@ -448,14 +469,11 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     'Do not claim legal validity or enforceability.',
     'Do not guarantee outcomes.',
     'Do not overwrite user content automatically.',
-    'Return JSON only. No markdown. No code fences. No explanations outside JSON.',
+    'Return only the tagged format. No JSON. No markdown fences. No commentary outside the tags.',
     'Use cautious, practical language.',
-    'Do not include newline characters inside individual JSON strings.',
-    'Do not include unescaped quotes inside strings.',
-    'If quotation marks are needed, prefer single quotes or avoid quotes.',
     languageInstruction(language),
     '',
-    'Output JSON must match this exact shape:',
+    'Output must use these tags exactly:',
     outputShape,
     '',
   ].join('\n');
@@ -528,16 +546,16 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
 };
 
 const buildTestPrompt = () => [
-  'Return only valid JSON exactly in this shape:',
+  'Return only tagged text exactly in this shape:',
   outputShape,
-  'Use the following values exactly:',
-  'summary: Hello from AI Document Assistant',
-  'improvedContentLines: empty array',
-  'risks: empty array',
-  'missingClauses: empty array',
-  'suggestedSections: empty array',
-  'questionsToReview: empty array',
-  'nextActions: empty array',
+  'Use the following values exactly inside the tags:',
+  '<SUMMARY>Hello from AI Document Assistant</SUMMARY>',
+  '<IMPROVED_CONTENT></IMPROVED_CONTENT>',
+  '<RISKS></RISKS>',
+  '<MISSING_CLAUSES></MISSING_CLAUSES>',
+  '<SUGGESTED_SECTIONS></SUGGESTED_SECTIONS>',
+  '<QUESTIONS_TO_REVIEW></QUESTIONS_TO_REVIEW>',
+  '<NEXT_ACTIONS></NEXT_ACTIONS>',
 ].join('\n');
 
 const isQuotaError = (errorResult) => {
@@ -593,7 +611,7 @@ export default async function handler(req, res) {
 
     if (body?.testProvider === true) {
       phase = 'build_prompt';
-      const testResult = await analyzeResponse({ apiKey, model, prompt: buildTestPrompt() });
+      const testResult = await analyzeResponse({ apiKey, model, prompt: buildTestPrompt(), mode: 'create_template' });
 
       if (testResult.success) {
         phase = 'success';
@@ -605,11 +623,12 @@ export default async function handler(req, res) {
             model,
             responseTextLength: testResult.text.length,
             parseStep: testResult.parseStep,
+            tagsFound: testResult.tagsFound,
           },
         });
       }
 
-      phase = testResult.parseStep === 'provider_error' ? 'provider_response' : 'parse_response';
+      phase = testResult.parseStep === 'empty_response' ? 'parse_response' : 'provider_response';
 
       if (isQuotaError(testResult.providerError)) {
         return buildFailure(res, 429, 'AI quota exceeded. Try again later or change Gemini model.', debugRequested ? buildDebug({
@@ -618,17 +637,12 @@ export default async function handler(req, res) {
           providerErrorMessage: getAnalysisErrorMessage(testResult.providerError),
           responseTextLength: testResult.text ? testResult.text.length : 0,
           parseStep: testResult.parseStep,
-          parseErrorMessage: testResult.parseErrorMessage || '',
-          retryWithoutJsonMimeUsed: Boolean(testResult.retryWithoutJsonMimeUsed),
+          tagsFound: testResult.tagsFound,
         }) : null, 'AI_QUOTA_EXCEEDED');
       }
 
       const providerStatus = Number(testResult.status || 0);
-      const errorMessage = providerStatus === 400
-        ? 'AI provider rejected the document request.'
-        : testResult.parseStep === 'json_parse_failed' || testResult.parseStep === 'substring_json_parse_failed' || testResult.parseStep === 'empty_text'
-          ? 'AI returned an invalid document response.'
-          : 'Unable to generate document response.';
+      const errorMessage = 'AI document assistant could not generate a usable response.';
 
       if (debugRequested) {
         return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, buildDebug({
@@ -637,12 +651,11 @@ export default async function handler(req, res) {
           providerErrorMessage: getAnalysisErrorMessage(testResult.providerError),
           responseTextLength: testResult.text ? testResult.text.length : 0,
           parseStep: testResult.parseStep,
-          parseErrorMessage: testResult.parseErrorMessage || (testResult.parseStep === 'provider_error' ? getAnalysisErrorMessage(testResult.providerError) : ''),
-          retryWithoutJsonMimeUsed: Boolean(testResult.retryWithoutJsonMimeUsed),
-        }), providerStatus === 400 ? undefined : undefined);
+          tagsFound: testResult.tagsFound,
+        }));
       }
 
-      return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, null, providerStatus === 400 ? undefined : undefined);
+      return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage);
     }
 
     phase = 'validate';
@@ -717,9 +730,9 @@ export default async function handler(req, res) {
     });
 
     phase = 'provider_request';
-    const analysis = await analyzeResponse({ apiKey, model, prompt });
+    const analysis = await analyzeResponse({ apiKey, model, prompt, mode });
 
-    phase = analysis.success ? 'normalize_result' : (analysis.parseStep === 'provider_error' ? 'provider_response' : 'parse_response');
+    phase = analysis.success ? 'normalize_result' : (analysis.parseStep === 'empty_response' ? 'parse_response' : 'provider_response');
 
     if (analysis.success) {
       phase = 'success';
@@ -738,8 +751,7 @@ export default async function handler(req, res) {
           providerErrorMessage: getAnalysisErrorMessage(analysis.providerError),
           responseTextLength: analysis.text ? analysis.text.length : 0,
           parseStep: analysis.parseStep,
-          parseErrorMessage: analysis.parseErrorMessage || '',
-          retryWithoutJsonMimeUsed: Boolean(analysis.retryWithoutJsonMimeUsed),
+          tagsFound: analysis.tagsFound,
         }), 'AI_QUOTA_EXCEEDED');
       }
 
@@ -748,28 +760,21 @@ export default async function handler(req, res) {
 
     const providerStatus = Number(analysis.status || 0);
     const providerErrorMessage = getAnalysisErrorMessage(analysis.providerError);
-    const parseFailed = analysis.parseStep === 'json_parse_failed' || analysis.parseStep === 'substring_json_parse_failed' || analysis.parseStep === 'empty_text';
-    const errorMessage = providerStatus === 400
-      ? 'AI provider rejected the document request.'
-      : parseFailed
-        ? 'AI returned an invalid document response.'
-        : 'Unable to generate document response.';
+    const errorMessage = 'AI document assistant could not generate a usable response.';
 
     if (debugRequested) {
       return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, buildDebug({
         ...debugBase,
-        phase: providerStatus === 400 ? 'provider_response' : parseFailed ? 'parse_response' : phase,
+        phase: providerStatus === 400 ? 'provider_response' : phase,
         providerStatus: analysis.status,
         providerErrorMessage,
         responseTextLength: analysis.text ? analysis.text.length : 0,
         parseStep: analysis.parseStep,
-        parseErrorMessage: analysis.parseErrorMessage || (parseFailed ? 'Gemini returned invalid JSON.' : ''),
-        validationError: analysis.success ? '' : (parseFailed ? 'Response could not be parsed as JSON.' : ''),
-        retryWithoutJsonMimeUsed: Boolean(analysis.retryWithoutJsonMimeUsed),
-      }), providerStatus === 400 ? undefined : undefined);
+        tagsFound: analysis.tagsFound,
+      }));
     }
 
-    return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, null, providerStatus === 400 ? undefined : undefined);
+    return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage);
   } catch (error) {
     return buildFailure(res, 500, 'AI document assistant failed.', buildDebug({
       phase,
