@@ -37,6 +37,12 @@ import type {
   AIProviderKeyInput,
   AIUseCaseSetting,
   AIUseCaseSettingInput,
+  Relationship,
+  RelationshipInput,
+  RelationshipInteraction,
+  RelationshipInteractionInput,
+  RelationshipOpportunity,
+  RelationshipOpportunityInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -234,6 +240,125 @@ export const dealToDb = (input: DealInput) => ({
   probability: toNullableNumber(input.probability) == null ? null : toNullableNumber(input.probability)! / 100,
   notes: input.notes,
 });
+
+// ── Relationship mappers ──
+
+export const relationshipFromDb = (row: any, personName?: string): Relationship => ({
+  id: safeString(row?.id),
+  personId: row?.person_id ?? row?.personId ?? undefined,
+  personName,
+  displayName: safeString(row?.display_name ?? row?.displayName),
+  domain: row?.domain ?? undefined,
+  relationshipType: row?.relationship_type ?? row?.relationshipType ?? undefined,
+  relationshipStrength: row?.relationship_strength ?? row?.relationshipStrength ?? undefined,
+  trustLevel: row?.trust_level ?? row?.trustLevel ?? undefined,
+  status: row?.status ?? undefined,
+  howWeMet: row?.how_we_met ?? row?.howWeMet ?? undefined,
+  whatTheyNeed: row?.what_they_need ?? row?.whatTheyNeed ?? undefined,
+  howICanHelp: row?.how_i_can_help ?? row?.howICanHelp ?? undefined,
+  howTheyCanHelpMe: row?.how_they_can_help_me ?? row?.howTheyCanHelpMe ?? undefined,
+  sharedInterests: row?.shared_interests ?? row?.sharedInterests ?? undefined,
+  lastContactDate: toIso(row?.last_contact_date ?? row?.lastContactDate),
+  nextContactDate: toIso(row?.next_contact_date ?? row?.nextContactDate),
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  problems: row?.problems ?? undefined,
+  riskNotes: row?.risk_notes ?? row?.riskNotes ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const relationshipToDb = (input: Partial<RelationshipInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.personId !== undefined) payload.person_id = toNullableString(input.personId);
+  if (!forUpdate || input.displayName !== undefined) payload.display_name = String(input.displayName || '').trim();
+  if (!forUpdate || input.domain !== undefined) payload.domain = toNullableString(input.domain);
+  if (!forUpdate || input.relationshipType !== undefined) payload.relationship_type = toNullableString(input.relationshipType);
+  if (!forUpdate || input.relationshipStrength !== undefined) payload.relationship_strength = toNullableString(input.relationshipStrength);
+  if (!forUpdate || input.trustLevel !== undefined) payload.trust_level = toNullableString(input.trustLevel);
+  if (!forUpdate || input.status !== undefined) payload.status = toNullableString(input.status);
+  if (!forUpdate || input.howWeMet !== undefined) payload.how_we_met = toNullableString(input.howWeMet);
+  if (!forUpdate || input.whatTheyNeed !== undefined) payload.what_they_need = toNullableString(input.whatTheyNeed);
+  if (!forUpdate || input.howICanHelp !== undefined) payload.how_i_can_help = toNullableString(input.howICanHelp);
+  if (!forUpdate || input.howTheyCanHelpMe !== undefined) payload.how_they_can_help_me = toNullableString(input.howTheyCanHelpMe);
+  if (!forUpdate || input.sharedInterests !== undefined) payload.shared_interests = toNullableString(input.sharedInterests);
+  if (!forUpdate || input.lastContactDate !== undefined) payload.last_contact_date = toNullableDate(input.lastContactDate);
+  if (!forUpdate || input.nextContactDate !== undefined) payload.next_contact_date = toNullableDate(input.nextContactDate);
+  if (!forUpdate || input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+  if (!forUpdate || input.problems !== undefined) payload.problems = toNullableString(input.problems);
+  if (!forUpdate || input.riskNotes !== undefined) payload.risk_notes = toNullableString(input.riskNotes);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const relationshipInteractionFromDb = (row: any): RelationshipInteraction => ({
+  id: safeString(row?.id),
+  relationshipId: safeString(row?.relationship_id ?? row?.relationshipId),
+  interactionDate: toIso(row?.interaction_date ?? row?.interactionDate) || new Date().toISOString(),
+  channel: row?.channel ?? undefined,
+  type: row?.type ?? undefined,
+  summary: row?.summary ?? undefined,
+  outcome: row?.outcome ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const relationshipInteractionToDb = (input: Partial<RelationshipInteractionInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.relationshipId !== undefined) payload.relationship_id = toNullableString(input.relationshipId);
+  if (!forUpdate || input.interactionDate !== undefined) payload.interaction_date = toNullableDate(input.interactionDate);
+  if (!forUpdate || input.channel !== undefined) payload.channel = toNullableString(input.channel);
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type);
+  if (!forUpdate || input.summary !== undefined) payload.summary = toNullableString(input.summary);
+  if (!forUpdate || input.outcome !== undefined) payload.outcome = toNullableString(input.outcome);
+  if (!forUpdate || input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+
+  return payload;
+};
+
+export const relationshipOpportunityFromDb = (row: any, linkedProjectName?: string, linkedCompanyName?: string): RelationshipOpportunity => ({
+  id: safeString(row?.id),
+  relationshipId: safeString(row?.relationship_id ?? row?.relationshipId),
+  title: safeString(row?.title),
+  type: row?.type ?? undefined,
+  status: row?.status ?? undefined,
+  priority: row?.priority ?? undefined,
+  valueDescription: row?.value_description ?? row?.valueDescription ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  dueDate: toIso(row?.due_date ?? row?.dueDate),
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedProjectName,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  linkedCompanyName,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const relationshipOpportunityToDb = (input: Partial<RelationshipOpportunityInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.relationshipId !== undefined) payload.relationship_id = toNullableString(input.relationshipId);
+  if (!forUpdate || input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type);
+  if (!forUpdate || input.status !== undefined) payload.status = toNullableString(input.status);
+  if (!forUpdate || input.priority !== undefined) payload.priority = toNullableString(input.priority);
+  if (!forUpdate || input.valueDescription !== undefined) payload.value_description = toNullableString(input.valueDescription);
+  if (!forUpdate || input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+  if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
+  if (!forUpdate || input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (!forUpdate || input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
 
 // ── MessageTemplate mappers ──
 

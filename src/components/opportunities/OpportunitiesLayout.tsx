@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -26,6 +26,7 @@ import TemplatesPanel from './TemplatesPanel';
 import CompanySegmentView from './CompanySegmentView';
 import AICompanyScoringModal from './AICompanyScoringModal';
 import TasksPanel from './TasksPanel';
+import RelationshipsPanel from './RelationshipsPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -36,6 +37,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'people', label: 'People' },
   { id: 'messages', label: 'Messages' },
   { id: 'deals', label: 'Deals' },
+  { id: 'relationships', label: 'Relationships' },
   { id: 'projects', label: 'Projects' },
   { id: 'queue', label: 'Outreach Queue' },
   { id: 'templates', label: 'Templates' },
@@ -192,6 +194,15 @@ const OpportunitiesLayout: React.FC<{
     addPerson: (input: any) => void;
     addMessage: (input: any) => void;
     addDeal: (input: any) => void;
+    addRelationship: (input: RelationshipInput) => Promise<any>;
+    updateRelationship: (id: string, input: Partial<RelationshipInput>) => Promise<any>;
+    deleteRelationship: (id: string) => Promise<any>;
+    addRelationshipInteraction: (input: RelationshipInteractionInput) => Promise<any>;
+    updateRelationshipInteraction: (id: string, input: Partial<RelationshipInteractionInput>) => Promise<any>;
+    deleteRelationshipInteraction: (id: string) => Promise<any>;
+    addRelationshipOpportunity: (input: RelationshipOpportunityInput) => Promise<any>;
+    updateRelationshipOpportunity: (id: string, input: Partial<RelationshipOpportunityInput>) => Promise<any>;
+    deleteRelationshipOpportunity: (id: string) => Promise<any>;
     addProject: (input: ProjectInput) => Promise<any>;
     addStrategyItem: (input: StrategyItemInput) => Promise<any>;
     addStrategyGoal: (input: StrategyGoalInput) => Promise<any>;
@@ -289,6 +300,7 @@ const OpportunitiesLayout: React.FC<{
 
   const {
     companies, people, messages, deals, projects, templates, strategyItems,
+    relationships, relationshipInteractions, relationshipOpportunities,
     strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
     documents,
     documentTemplates,
@@ -300,6 +312,9 @@ const OpportunitiesLayout: React.FC<{
     invoiceItems,
     projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems,
     addCompany, addPerson, addMessage, addDeal, addProject, addStrategyItem,
+    addRelationship, updateRelationship, deleteRelationship,
+    addRelationshipInteraction, updateRelationshipInteraction, deleteRelationshipInteraction,
+    addRelationshipOpportunity, updateRelationshipOpportunity, deleteRelationshipOpportunity,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
     addDocument,
     addDocumentTemplate,
@@ -486,6 +501,8 @@ const OpportunitiesLayout: React.FC<{
                     ? messages.length
                   : t.id === 'deals'
                     ? deals.length
+                  : t.id === 'relationships'
+                    ? relationships.length
                   : t.id === 'projects'
                     ? projects.length
                   : t.id === 'queue'
@@ -746,6 +763,26 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteDeal}
                 filters={dealFilters}
                 onFilterChange={setDealFilters}
+              />
+            )}
+
+            {tab === 'relationships' && (
+              <RelationshipsPanel
+                relationships={relationships}
+                relationshipInteractions={relationshipInteractions}
+                relationshipOpportunities={relationshipOpportunities}
+                people={people}
+                companies={companies}
+                projects={projects}
+                onAddRelationship={addRelationship}
+                onUpdateRelationship={updateRelationship}
+                onDeleteRelationship={deleteRelationship}
+                onAddRelationshipInteraction={addRelationshipInteraction}
+                onUpdateRelationshipInteraction={updateRelationshipInteraction}
+                onDeleteRelationshipInteraction={deleteRelationshipInteraction}
+                onAddRelationshipOpportunity={addRelationshipOpportunity}
+                onUpdateRelationshipOpportunity={updateRelationshipOpportunity}
+                onDeleteRelationshipOpportunity={deleteRelationshipOpportunity}
               />
             )}
 

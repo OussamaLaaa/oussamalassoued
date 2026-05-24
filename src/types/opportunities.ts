@@ -635,11 +635,124 @@ export interface MessageTemplateInput {
   isActive?: boolean;
 }
 
+export type RelationshipDomain = 'ux_ui' | 'founders' | 'recruiters' | 'designers' | 'developers' | 'clients' | 'mentors' | 'investors' | 'local_business' | 'family' | 'friends' | 'other';
+export type RelationshipType = 'professional' | 'client' | 'mentor' | 'peer' | 'recruiter' | 'founder' | 'family' | 'friend' | 'community' | 'other';
+export type RelationshipStrength = 'weak' | 'medium' | 'strong';
+export type TrustLevel = 'unknown' | 'low' | 'medium' | 'high';
+export type RelationshipStatus = 'active' | 'warm' | 'cold' | 'paused' | 'avoid' | 'archived';
+export type RelationshipInteractionChannel = 'linkedin' | 'email' | 'phone' | 'meeting' | 'whatsapp' | 'in_person' | 'other';
+export type RelationshipInteractionType = 'first_contact' | 'follow_up' | 'meeting' | 'help_given' | 'help_received' | 'problem' | 'opportunity' | 'note';
+
+export interface Relationship {
+  id: string;
+  personId?: string;
+  personName?: string;
+  displayName: string;
+  domain?: RelationshipDomain;
+  relationshipType?: RelationshipType;
+  relationshipStrength?: RelationshipStrength;
+  trustLevel?: TrustLevel;
+  status?: RelationshipStatus;
+  howWeMet?: string;
+  whatTheyNeed?: string;
+  howICanHelp?: string;
+  howTheyCanHelpMe?: string;
+  sharedInterests?: string;
+  lastContactDate?: string;
+  nextContactDate?: string;
+  nextAction?: string;
+  problems?: string;
+  riskNotes?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RelationshipInput {
+  personId?: string | null;
+  displayName: string;
+  domain?: RelationshipDomain;
+  relationshipType?: RelationshipType;
+  relationshipStrength?: RelationshipStrength;
+  trustLevel?: TrustLevel;
+  status?: RelationshipStatus;
+  howWeMet?: string;
+  whatTheyNeed?: string;
+  howICanHelp?: string;
+  howTheyCanHelpMe?: string;
+  sharedInterests?: string;
+  lastContactDate?: string | null;
+  nextContactDate?: string | null;
+  nextAction?: string;
+  problems?: string;
+  riskNotes?: string;
+  notes?: string;
+}
+
+export interface RelationshipInteraction {
+  id: string;
+  relationshipId: string;
+  interactionDate: string;
+  channel?: RelationshipInteractionChannel;
+  type?: RelationshipInteractionType;
+  summary?: string;
+  outcome?: string;
+  nextAction?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RelationshipInteractionInput {
+  relationshipId: string;
+  interactionDate: string;
+  channel?: RelationshipInteractionChannel;
+  type?: RelationshipInteractionType;
+  summary?: string;
+  outcome?: string;
+  nextAction?: string;
+}
+
+export interface RelationshipOpportunity {
+  id: string;
+  relationshipId: string;
+  title: string;
+  type?: string;
+  status?: string;
+  priority?: string;
+  valueDescription?: string;
+  nextAction?: string;
+  dueDate?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RelationshipOpportunityInput {
+  relationshipId: string;
+  title: string;
+  type?: string;
+  status?: string;
+  priority?: string;
+  valueDescription?: string;
+  nextAction?: string;
+  dueDate?: string | null;
+  linkedProjectId?: string | null;
+  linkedCompanyId?: string | null;
+  notes?: string;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
+  relationships: Relationship[];
+  relationshipInteractions: RelationshipInteraction[];
+  relationshipOpportunities: RelationshipOpportunity[];
   projects: Project[];
   projectTasks: ProjectTask[];
   projectTimeLogs: ProjectTimeLog[];
@@ -1167,7 +1280,7 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
 

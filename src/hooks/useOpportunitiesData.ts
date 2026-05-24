@@ -23,6 +23,12 @@ import {
   generatedDocumentFromDb as mapGeneratedDocumentRow, generatedDocumentToDb as toGeneratedDocumentDb,
   aiProviderKeyFromDb as mapAIProviderKeyRow,
   aiUseCaseSettingFromDb as mapAIUseCaseSettingRow,
+  relationshipFromDb as mapRelationshipRow,
+  relationshipToDb as toRelationshipDb,
+  relationshipInteractionFromDb as mapRelationshipInteractionRow,
+  relationshipInteractionToDb as toRelationshipInteractionDb,
+  relationshipOpportunityFromDb as mapRelationshipOpportunityRow,
+  relationshipOpportunityToDb as toRelationshipOpportunityDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -54,6 +60,12 @@ import type {
   InvoiceInput,
   InvoiceItem,
   InvoiceItemInput,
+  Relationship,
+  RelationshipInput,
+  RelationshipInteraction,
+  RelationshipInteractionInput,
+  RelationshipOpportunity,
+  RelationshipOpportunityInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -116,6 +128,9 @@ const cloneSeedData = (): OpportunitiesData => ({
   generatedDocuments: [],
   invoices: [],
   invoiceItems: [],
+  relationships: [],
+  relationshipInteractions: [],
+  relationshipOpportunities: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -166,6 +181,9 @@ type OpportunitiesApiResponse = {
   generated_documents?: any[];
   invoices?: any[];
   invoice_items?: any[];
+  relationships?: any[];
+  relationship_interactions?: any[];
+  relationship_opportunities?: any[];
   strategy_items?: any[];
   strategy_goals?: any[];
   strategy_plans?: any[];
@@ -1227,6 +1245,31 @@ const attachRecurringTaskLinkNames = (
   }));
 };
 
+const attachRelationshipLinkNames = (
+  items: Relationship[],
+  people: Person[],
+) => {
+  const personById = new Map(people.map((person) => [person.id, person.fullName] as const));
+  return items.map((item) => ({
+    ...item,
+    personName: item.personName || (item.personId ? personById.get(item.personId) : undefined),
+  }));
+};
+
+const attachRelationshipOpportunityLinkNames = (
+  items: RelationshipOpportunity[],
+  projects: Project[],
+  companies: Company[],
+) => {
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  return items.map((item) => ({
+    ...item,
+    linkedProjectName: item.linkedProjectName || (item.linkedProjectId ? projectById.get(item.linkedProjectId) : undefined),
+    linkedCompanyName: item.linkedCompanyName || (item.linkedCompanyId ? companyById.get(item.linkedCompanyId) : undefined),
+  }));
+};
+
 const shouldReplaceCollection = (current: any[], next: any[], keys: string[]) => {
   if (current.length !== next.length) return true;
   for (let index = 0; index < current.length; index += 1) {
@@ -1303,6 +1346,9 @@ export const useOpportunitiesData = (enabled = true) => {
   const [people, setPeople] = useState<Person[]>(() => cloneSeedData().people);
   const [messages, setMessages] = useState<OutreachMessage[]>(() => cloneSeedData().messages);
   const [deals, setDeals] = useState<Deal[]>(() => cloneSeedData().deals);
+  const [relationships, setRelationships] = useState<Relationship[]>(() => cloneSeedData().relationships);
+  const [relationshipInteractions, setRelationshipInteractions] = useState<RelationshipInteraction[]>(() => cloneSeedData().relationshipInteractions);
+  const [relationshipOpportunities, setRelationshipOpportunities] = useState<RelationshipOpportunity[]>(() => cloneSeedData().relationshipOpportunities);
   const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [projectTimeLogs, setProjectTimeLogs] = useState<ProjectTimeLog[]>([]);
@@ -1357,6 +1403,9 @@ export const useOpportunitiesData = (enabled = true) => {
     const messagesRaw = raw('messages');
     const dealsRaw = raw('deals');
     const projectsRaw = raw('projects');
+    const relationshipsRaw = raw('relationships');
+    const relationshipInteractionsRaw = raw('relationship_interactions');
+    const relationshipOpportunitiesRaw = raw('relationship_opportunities');
 
     // Compute derived collections only when core data is present
     let derived: { people: Person[]; messages: OutreachMessage[]; deals: Deal[] } | null = null;
@@ -1422,6 +1471,11 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('project_meetings')) setProjectMeetings((raw('project_meetings') || []).map((row: any) => mapProjectMeetingRow(row)));
     if (has('project_documents')) setProjectDocuments((raw('project_documents') || []).map((row: any) => mapProjectDocumentRow(row)));
     if (has('project_finance_items')) setProjectFinanceItems((raw('project_finance_items') || []).map((row: any) => mapProjectFinanceItemRow(row)));
+
+    // ── Relationships ──
+    if (has('relationships')) setRelationships((relationshipsRaw || []).map((row: any) => mapRelationshipRow(row)));
+    if (has('relationship_interactions')) setRelationshipInteractions((relationshipInteractionsRaw || []).map((row: any) => mapRelationshipInteractionRow(row)));
+    if (has('relationship_opportunities')) setRelationshipOpportunities((relationshipOpportunitiesRaw || []).map((row: any) => mapRelationshipOpportunityRow(row)));
 
     // ── Documents ──
     if (has('documents')) {
@@ -1608,7 +1662,7 @@ export const useOpportunitiesData = (enabled = true) => {
         applyPayload(corePayload);
 
         // Stage 2: Load secondary scopes in parallel
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'ai'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'ai'];
         const secondaryResults = await Promise.allSettled(
           secondaryScopes.map((s) => fetchScope(s))
         );
@@ -1637,6 +1691,9 @@ export const useOpportunitiesData = (enabled = true) => {
           setPeople([]);
           setMessages([]);
           setDeals([]);
+          setRelationships([]);
+          setRelationshipInteractions([]);
+          setRelationshipOpportunities([]);
           setTemplates([]);
           setInvoices([]);
           setInvoiceItems([]);
@@ -1666,6 +1723,9 @@ export const useOpportunitiesData = (enabled = true) => {
         setPeople(fallback.people);
         setMessages(fallback.messages);
         setDeals(fallback.deals);
+        setRelationships(fallback.relationships);
+        setRelationshipInteractions(fallback.relationshipInteractions);
+        setRelationshipOpportunities(fallback.relationshipOpportunities);
         setTemplates(fallback.templates);
         setInvoices(fallback.invoices);
         setInvoiceItems(fallback.invoiceItems);
@@ -1700,6 +1760,18 @@ export const useOpportunitiesData = (enabled = true) => {
       mounted = false;
     };
   }, [applyPayload, enabled]);
+
+  useEffect(() => {
+    setRelationships((current) => {
+      const next = attachRelationshipLinkNames(current, people);
+      return shouldReplaceCollection(current, next, ['personName']) ? next : current;
+    });
+
+    setRelationshipOpportunities((current) => {
+      const next = attachRelationshipOpportunityLinkNames(current, projects, companies);
+      return shouldReplaceCollection(current, next, ['linkedProjectName', 'linkedCompanyName']) ? next : current;
+    });
+  }, [companies, people, projects]);
 
   const syncInsert = async (entity: string, data: Record<string, unknown> | Record<string, unknown>[]) => {
     const result = await requestOpportunities({
@@ -1861,7 +1933,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2059,6 +2131,87 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('deals', id);
     setDeals((current) => current.filter((d) => d.id !== id));
+  };
+
+  const addRelationship = async (input: RelationshipInput) => {
+    if (!String(input.displayName || '').trim()) {
+      throw new Error('Display name is required.');
+    }
+
+    const row = await syncInsert('relationships', toRelationshipDb(input));
+    const personId = getRowRefId(row, 'person_id', 'personId');
+    const personName = people.find((person) => person.id === personId)?.fullName;
+    const next = mapRelationshipRow(row, personName);
+    setRelationships((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRelationship = async (id: string, input: Partial<RelationshipInput>) => {
+    const row = await syncUpdate('relationships', id, toRelationshipDb(input, { forUpdate: true }));
+    const personId = getRowRefId(row, 'person_id', 'personId');
+    const personName = people.find((person) => person.id === personId)?.fullName;
+    const next = mapRelationshipRow(row, personName);
+    setRelationships((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteRelationship = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this relationship?');
+    if (!confirmed) return;
+    await syncDelete('relationships', id);
+    setRelationships((current) => current.filter((item) => item.id !== id));
+    setRelationshipInteractions((current) => current.filter((item) => item.relationshipId !== id));
+    setRelationshipOpportunities((current) => current.filter((item) => item.relationshipId !== id));
+  };
+
+  const addRelationshipInteraction = async (input: RelationshipInteractionInput) => {
+    if (!String(input.relationshipId || '').trim()) {
+      throw new Error('Select a relationship before adding an interaction.');
+    }
+
+    const row = await syncInsert('relationship_interactions', toRelationshipInteractionDb(input));
+    const next = mapRelationshipInteractionRow(row);
+    setRelationshipInteractions((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRelationshipInteraction = async (id: string, input: Partial<RelationshipInteractionInput>) => {
+    const row = await syncUpdate('relationship_interactions', id, toRelationshipInteractionDb(input, { forUpdate: true }));
+    const next = mapRelationshipInteractionRow(row);
+    setRelationshipInteractions((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteRelationshipInteraction = async (id: string) => {
+    const confirmed = window.confirm('Delete this interaction?');
+    if (!confirmed) return;
+    await syncDelete('relationship_interactions', id);
+    setRelationshipInteractions((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addRelationshipOpportunity = async (input: RelationshipOpportunityInput) => {
+    if (!String(input.relationshipId || '').trim()) {
+      throw new Error('Select a relationship before adding an opportunity.');
+    }
+
+    const row = await syncInsert('relationship_opportunities', toRelationshipOpportunityDb(input));
+    const next = mapRelationshipOpportunityRow(row);
+    setRelationshipOpportunities((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRelationshipOpportunity = async (id: string, input: Partial<RelationshipOpportunityInput>) => {
+    const row = await syncUpdate('relationship_opportunities', id, toRelationshipOpportunityDb(input, { forUpdate: true }));
+    const next = mapRelationshipOpportunityRow(row);
+    setRelationshipOpportunities((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteRelationshipOpportunity = async (id: string) => {
+    const confirmed = window.confirm('Delete this opportunity?');
+    if (!confirmed) return;
+    await syncDelete('relationship_opportunities', id);
+    setRelationshipOpportunities((current) => current.filter((item) => item.id !== id));
   };
 
   const addProject = async (input: ProjectInput) => {
@@ -3264,6 +3417,9 @@ export const useOpportunitiesData = (enabled = true) => {
     setPeople(fallback.people);
     setMessages(fallback.messages);
     setDeals(fallback.deals);
+    setRelationships(fallback.relationships);
+    setRelationshipInteractions(fallback.relationshipInteractions);
+    setRelationshipOpportunities(fallback.relationshipOpportunities);
     setTemplates(fallback.templates);
     setStrategyGoals(fallback.strategyGoals);
     setStrategyPlans(fallback.strategyPlans);
@@ -3294,6 +3450,9 @@ export const useOpportunitiesData = (enabled = true) => {
     people,
     messages,
     deals,
+    relationships,
+    relationshipInteractions,
+    relationshipOpportunities,
     projects,
     projectTasks,
     projectTimeLogs,
@@ -3385,6 +3544,15 @@ export const useOpportunitiesData = (enabled = true) => {
     addPerson,
     addMessage,
     addDeal,
+    addRelationship,
+    updateRelationship,
+    deleteRelationship,
+    addRelationshipInteraction,
+    updateRelationshipInteraction,
+    deleteRelationshipInteraction,
+    addRelationshipOpportunity,
+    updateRelationshipOpportunity,
+    deleteRelationshipOpportunity,
     addProject,
     addStrategyItem,
     addStrategyGoal,
