@@ -414,5 +414,7 @@ export default async function handler(req, res) {
   return toSafeJson(res, 200, {
     success: true,
     storagePath,
+    sourceType,
+    message: 'PDF stored successfully.',
   });
 }

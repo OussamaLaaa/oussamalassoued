@@ -10,6 +10,53 @@ type DocumentPrintPreviewModalProps = {
   onStoredPdf?: (storagePath: string) => void | Promise<void>;
 };
 
+const openStoredPdf = async (sourceType: string, id: string) => {
+  const params =
+    sourceType === 'invoice'
+      ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
+      : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
+
+  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result?.success || !result?.signedUrl) {
+    throw new Error(result?.error || 'Unable to open stored PDF.');
+  }
+
+  window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
+  return result.signedUrl;
+};
+
+const downloadStoredPdf = async (sourceType: string, id: string, fileName: string) => {
+  const params =
+    sourceType === 'invoice'
+      ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
+      : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
+
+  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result?.success || !result?.signedUrl) {
+    throw new Error(result?.error || 'Unable to download stored PDF.');
+  }
+
+  const anchor = document.createElement('a');
+  anchor.href = String(result.signedUrl);
+  anchor.download = fileName;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+
 const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   isOpen,
   onClose,
@@ -20,11 +67,16 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
   const pageRef = useRef<HTMLDivElement | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusState, setStatusState] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
+  const [storedPdfPath, setStoredPdfPath] = useState<string | null>(null);
+  const pdfSourceType = 'generated_document';
+
+  const pdfStoragePath = storedPdfPath || previewDocument?.pdfStoragePath || null;
 
   useEffect(() => {
     if (!isOpen) {
       setStatusState('idle');
       setStatusMessage('');
+      setStoredPdfPath(null);
     }
   }, [isOpen]);
 
@@ -61,6 +113,10 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
         throw new Error(result?.error || 'Could not generate and store PDF.');
       }
 
+      if (result?.storagePath) {
+        setStoredPdfPath(String(result.storagePath));
+      }
+
       setStatusState('success');
       setStatusMessage('PDF stored successfully.');
 
@@ -70,6 +126,27 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
     } catch (error) {
       setStatusState('error');
       setStatusMessage('PDF generation failed.');
+    }
+  };
+
+  const handleOpenPdf = async () => {
+    if (!previewDocument) return;
+    try {
+      await openStoredPdf(pdfSourceType, previewDocument.id);
+    } catch (openError) {
+      setStatusState('error');
+      setStatusMessage(openError instanceof Error ? openError.message : 'Unable to open PDF.');
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!previewDocument) return;
+    try {
+      const fileName = `${(previewDocument.title || 'document').replace(/[^a-zA-Z0-9.-]+/g, '-').toLowerCase()}.pdf`;
+      await downloadStoredPdf(pdfSourceType, previewDocument.id, fileName);
+    } catch (dlError) {
+      setStatusState('error');
+      setStatusMessage(dlError instanceof Error ? dlError.message : 'Unable to download PDF.');
     }
   };
 
@@ -94,7 +171,12 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
             <h3 className="text-base font-semibold text-[#0f172a]">Print Preview</h3>
             <p className="mt-0.5 text-sm text-[#64748b]">Print, export, or store as a private PDF.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {pdfStoragePath ? (
+              <span className="rounded-full bg-[#f0fdf4] px-3 py-1 text-xs font-semibold text-[#166534] border border-[#bbf7d0]">
+                PDF Stored
+              </span>
+            ) : null}
             <button
               type="button"
               onClick={() => void generateAndStorePdf()}
@@ -103,6 +185,24 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
             >
               {statusState === 'generating' ? 'Generating PDF...' : 'Generate & Store PDF'}
             </button>
+            {pdfStoragePath ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleOpenPdf}
+                  className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]"
+                >
+                  Open PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] hover:bg-[#dbeafe]"
+                >
+                  Download PDF
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               onClick={handlePrint}
@@ -130,10 +230,10 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
 
         <div className="no-print flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] px-6 py-3 text-sm text-[#64748b]">
           <div>
-            {statusMessage || (statusState === 'idle' ? 'Ready' : '')}
+            {statusMessage || (statusState === 'idle' ? (pdfStoragePath ? 'PDF stored.' : 'Ready') : '')}
           </div>
           <div>
-            {statusState === 'error' ? statusMessage : 'Stored PDFs are saved in private storage and opened through temporary signed links.'}
+            {statusState === 'error' ? statusMessage : (pdfStoragePath ? 'Stored PDF available.' : 'Stored PDFs are saved in private storage and opened through temporary signed links.')}
           </div>
         </div>
       </div>

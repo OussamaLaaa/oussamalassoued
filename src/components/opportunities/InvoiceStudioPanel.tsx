@@ -558,6 +558,63 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
     setPreviewOpen(true);
   };
 
+  const openStoredPdf = async (sourceType: string, id: string) => {
+    const params =
+      sourceType === 'invoice'
+        ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
+        : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
+
+    const response = await fetch(`/api/document-pdf-upload?${params}`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.success || !result?.signedUrl) {
+      throw new Error(result?.error || 'Unable to open stored PDF.');
+    }
+
+    window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenStoredPdf = async () => {
+    if (!selectedInvoice?.pdfStoragePath || !selectedInvoice) return;
+    try {
+      await openStoredPdf('invoice', selectedInvoice.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to open PDF.');
+    }
+  };
+
+  const handleDownloadStoredPdf = async () => {
+    if (!selectedInvoice?.pdfStoragePath || !selectedInvoice) return;
+    try {
+      const sourceType = 'invoice';
+      const id = selectedInvoice.id;
+      const params = `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`;
+      const response = await fetch(`/api/document-pdf-upload?${params}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success || !result?.signedUrl) {
+        throw new Error(result?.error || 'Unable to download stored PDF.');
+      }
+      const fileName = `${(selectedInvoice.invoiceNumber || selectedInvoice.title || 'invoice').replace(/[^a-zA-Z0-9.-]+/g, '-').toLowerCase()}.pdf`;
+      const anchor = document.createElement('a');
+      anchor.href = String(result.signedUrl);
+      anchor.download = fileName;
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to download PDF.');
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="rounded-3xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
@@ -885,7 +942,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
               <div className="flex items-center justify-between"><span className="text-[#64748b]">Items</span><span className="font-medium text-[#0f172a]">{draftItems.filter((i) => i.description.trim()).length}</span></div>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <button type="button" onClick={() => void saveInvoice('draft')} disabled={saving} className="rounded-lg border border-[#cbd5e1] bg-white px-5 py-2.5 text-sm font-medium text-[#334155] hover:bg-[#f8fafc] disabled:opacity-60">
                 Save Draft
               </button>
@@ -899,9 +956,9 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
                 Generate & Store PDF
               </button>
               {selectedInvoice?.pdfStoragePath ? (
-                <button type="button" onClick={() => setPreviewOpen(true)} className="rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-5 py-2.5 text-sm font-medium text-[#047857] hover:bg-[#d1fae5]">
-                  Open Stored PDF
-                </button>
+                <span className="rounded-full bg-[#f0fdf4] px-3 py-1 text-xs font-semibold text-[#166534] border border-[#bbf7d0]">
+                  PDF Stored
+                </span>
               ) : null}
             </div>
 
@@ -923,8 +980,21 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
               {error ? (
                 <div className="rounded-2xl border border-[#fecaca] bg-[#fff1f2] px-4 py-3 text-[#b91c1c]">{error}</div>
               ) : null}
-              <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-2 text-[#475569]">
-                <div>Stored PDF: <span className="font-medium text-[#0f172a]">{selectedInvoice?.pdfStoragePath ? 'Available' : 'Not generated yet'}</span></div>
+              <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-3 text-[#475569]">
+                <div className="flex items-center justify-between">
+                  <span>Stored PDF:</span>
+                  <span className="font-medium text-[#0f172a]">{selectedInvoice?.pdfStoragePath ? 'Available' : 'Not generated yet'}</span>
+                </div>
+                {selectedInvoice?.pdfStoragePath ? (
+                  <div className="flex gap-2">
+                    <button type="button" onClick={handleOpenStoredPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534] hover:bg-[#dcfce7]">
+                      Open PDF
+                    </button>
+                    <button type="button" onClick={handleDownloadStoredPdf} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">
+                      Download PDF
+                    </button>
+                  </div>
+                ) : null}
                 <div>Generated doc: <span className="font-medium text-[#0f172a]">{selectedGeneratedDocument?.title || 'Will be created on save'}</span></div>
                 <div>Archive: <span className="font-medium text-[#0f172a]">Invoices and documents stay linked</span></div>
                 <div className="text-xs text-[#64748b] mt-2">PDF export uses private Supabase Storage with signed URLs.</div>

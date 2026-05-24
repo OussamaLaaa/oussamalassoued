@@ -13,6 +13,53 @@ type InvoicePrintPreviewModalProps = {
   onEnsureSavedInvoice?: () => Promise<Invoice>;
 };
 
+const openStoredPdf = async (sourceType: string, id: string) => {
+  const params =
+    sourceType === 'invoice'
+      ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
+      : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
+
+  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result?.success || !result?.signedUrl) {
+    throw new Error(result?.error || 'Unable to open stored PDF.');
+  }
+
+  window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
+  return result.signedUrl;
+};
+
+const downloadStoredPdf = async (sourceType: string, id: string, fileName: string) => {
+  const params =
+    sourceType === 'invoice'
+      ? `sourceType=invoice&invoiceId=${encodeURIComponent(id)}`
+      : `sourceType=generated_document&documentId=${encodeURIComponent(id)}`;
+
+  const response = await fetch(`/api/document-pdf-upload?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result?.success || !result?.signedUrl) {
+    throw new Error(result?.error || 'Unable to download stored PDF.');
+  }
+
+  const anchor = document.createElement('a');
+  anchor.href = String(result.signedUrl);
+  anchor.download = fileName;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+};
+
 const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   isOpen,
   onClose,
@@ -26,12 +73,17 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   const [status, setStatus] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [storedPdfPath, setStoredPdfPath] = useState<string | null>(null);
+  const pdfSourceType = 'invoice';
+
+  const pdfStoragePath = storedPdfPath || invoice?.pdfStoragePath || null;
 
   useEffect(() => {
     if (!isOpen) {
       setStatus('');
       setIsGenerating(false);
       setError('');
+      setStoredPdfPath(null);
     }
   }, [isOpen]);
 
@@ -93,6 +145,7 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
         throw new Error(result?.error || 'Unable to generate and store the invoice PDF.');
       }
 
+      setStoredPdfPath(String(result.storagePath));
       await onStoredPdf(String(result.storagePath));
       setStatus('PDF stored successfully.');
     } catch (buildError) {
@@ -103,23 +156,26 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
     }
   };
 
-  const handleOpenStoredPdf = async () => {
+  const handleOpenPdf = async () => {
+    if (!pdfStoragePath) return;
     try {
-      const response = await fetch(`/api/document-pdf-upload?sourceType=invoice&invoiceId=${encodeURIComponent(invoice.id)}`, {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-      });
-
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result?.success || !result?.signedUrl) {
-        throw new Error(result?.error || 'No stored invoice PDF found.');
-      }
-
-      window.open(String(result.signedUrl), '_blank', 'noopener,noreferrer');
+      const id = invoice?.id;
+      if (!id) throw new Error('Invoice ID not available.');
+      await openStoredPdf(pdfSourceType, id);
     } catch (openError) {
-      console.error('[Invoice PDF] Failed to open stored PDF', openError);
       setError(openError instanceof Error ? openError.message : 'Unable to open the stored PDF.');
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!pdfStoragePath) return;
+    try {
+      const id = invoice?.id;
+      if (!id) throw new Error('Invoice ID not available.');
+      const fileName = `${(invoice.invoiceNumber || invoice.title || 'invoice').replace(/[^a-zA-Z0-9.-]+/g, '-').toLowerCase()}.pdf`;
+      await downloadStoredPdf(pdfSourceType, id, fileName);
+    } catch (dlError) {
+      setError(dlError instanceof Error ? dlError.message : 'Unable to download the stored PDF.');
     }
   };
 
@@ -132,7 +188,12 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
             <h3 className="text-base font-semibold text-[#0f172a]">Invoice Preview</h3>
             <p className="mt-0.5 text-sm text-[#64748b]">Print, export, or store as a private PDF.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {pdfStoragePath ? (
+              <span className="rounded-full bg-[#f0fdf4] px-3 py-1 text-xs font-semibold text-[#166534] border border-[#bbf7d0]">
+                PDF Stored
+              </span>
+            ) : null}
             <button type="button" onClick={handlePrint} className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
               Print / Save as PDF
             </button>
@@ -142,10 +203,15 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
             {!isValidUuid(invoice.id) && onEnsureSavedInvoice ? (
               <span className="text-xs text-[#64748b]">Invoice will be saved first.</span>
             ) : null}
-            {invoice.pdfStoragePath ? (
-              <button type="button" onClick={handleOpenStoredPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
-                Open Stored PDF
-              </button>
+            {pdfStoragePath ? (
+              <>
+                <button type="button" onClick={handleOpenPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
+                  Open PDF
+                </button>
+                <button type="button" onClick={handleDownloadPdf} className="rounded-lg border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm font-medium text-[#1d4ed8] hover:bg-[#dbeafe]">
+                  Download PDF
+                </button>
+              </>
             ) : null}
             <button type="button" onClick={onClose} className="rounded-lg border border-[#e5e7eb] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#f8fafc]">
               Close
@@ -162,8 +228,8 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
         </div>
 
         <div className="no-print flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] px-6 py-3 text-sm text-[#64748b]">
-          <div>{status || error || 'Ready'}</div>
-          <div>{invoice.pdfStoragePath ? 'Stored PDF available.' : 'Generate & Store PDF to save privately.'}</div>
+          <div>{status || error || (pdfStoragePath ? 'PDF stored.' : 'Ready')}</div>
+          <div>{pdfStoragePath ? 'Stored PDF available.' : 'Generate & Store PDF to save privately.'}</div>
         </div>
       </div>
     </div>
