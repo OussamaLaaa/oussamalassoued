@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import aiProviderRouter from './aiProviderRouter.js';
-
-const { runAICompletion } = aiProviderRouter;
+import { runAICompletion, AI_USE_CASES } from './aiProviderRouter.js';
 
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -248,7 +246,7 @@ const buildFallbackPrompt = ({ templateText, language }) => [
   `Template: ${templateText}`,
 ].join('\n');
 
-const generateMessage = async ({ apiKey, model, prompt }) => {
+const generateMessage = async ({ apiKey, model, prompt, isRoutedOnly = false }) => {
   try {
     const routedText = await runAICompletion({
       supabase: createSupabaseClient(),
@@ -256,7 +254,19 @@ const generateMessage = async ({ apiKey, model, prompt }) => {
       prompt,
     });
 
-    if (routedText) {
+    if (routedText === null) {
+      if (isRoutedOnly || !apiKey) {
+        return {
+          success: false,
+          status: 500,
+          text: '',
+          message: '',
+          parseStep: 'no_config',
+          providerError: null,
+          routedDisabled: true,
+        };
+      }
+    } else {
       const parsed = extractMessage(routedText);
       if (parsed.message) {
         return {
@@ -271,6 +281,17 @@ const generateMessage = async ({ apiKey, model, prompt }) => {
     }
   } catch (error) {
     console.warn('[ai-message] routed provider request failed, falling back to Gemini.', error);
+  }
+
+  if (!apiKey) {
+    return {
+      success: false,
+      status: 500,
+      text: '',
+      message: '',
+      parseStep: 'no_fallback',
+      providerError: null,
+    };
   }
 
   const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
@@ -379,15 +400,12 @@ export default async function handler(req, res) {
     const debugRequested =
       body?.debug === true || body?.debug === 'true' || body?.debug === 1;
 
-    if (provider !== 'gemini' || !apiKey) {
-      return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
-    }
-
     if (body?.testProvider === true || body?.testProvider === 'true' || body?.testProvider === 1) {
       const testResult = await generateMessage({
         apiKey,
         model,
         prompt: 'Return only JSON:\n{"message":"Hello from Gemini"}',
+        isRoutedOnly: true,
       });
 
       if (testResult.success) {
@@ -451,6 +469,10 @@ export default async function handler(req, res) {
 
     if (primary.success) {
       return toSafeJson(res, 200, { success: true, message: primary.message });
+    }
+
+    if (primary.routedDisabled || (!apiKey && primary.parseStep === 'no_config')) {
+      return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
     }
 
     const fallbackPrompt = buildFallbackPrompt({ templateText, language });

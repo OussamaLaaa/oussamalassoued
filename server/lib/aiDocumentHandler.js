@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import aiProviderRouter from './aiProviderRouter.js';
-
-const { runAICompletion } = aiProviderRouter;
+import { runAICompletion, AI_USE_CASES } from './aiProviderRouter.js';
 
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -321,7 +319,7 @@ const getAnalysisErrorMessage = (errorResult, fallback = 'Unable to generate doc
   return message || fallback;
 };
 
-const analyzeResponse = async ({ apiKey, model, prompt, mode }) => {
+const analyzeResponse = async ({ apiKey, model, prompt, mode, isRoutedOnly = false }) => {
   try {
     const routedText = await runAICompletion({
       supabase: createSupabaseClient(),
@@ -364,6 +362,26 @@ const analyzeResponse = async ({ apiKey, model, prompt, mode }) => {
     }
   } catch (error) {
     console.warn('[ai-document] routed provider request failed, falling back to Gemini.', error);
+  }
+
+  if (!apiKey) {
+    return {
+      success: false,
+      status: 500,
+      text: '',
+      result: null,
+      parseStep: 'no_config',
+      providerError: null,
+      tagsFound: {
+        summary: false,
+        improvedContent: false,
+        risks: false,
+        missingClauses: false,
+        suggestedSections: false,
+        questionsToReview: false,
+        nextActions: false,
+      },
+    };
   }
 
   const attempt = await requestGemini({ apiKey, model, prompt });
@@ -763,21 +781,6 @@ export default async function handler(req, res) {
       instructionsLength: instructions.length,
     }) : null;
 
-    if (provider !== 'gemini' || !apiKey) {
-      return buildFailure(
-        res,
-        500,
-        'AI provider is not configured.',
-        debugRequested ? buildDebug({
-          ...(debugBase || {}),
-          phase,
-          providerStatus: null,
-          providerErrorMessage: 'AI provider is not configured.',
-          validationError: 'Missing AI provider configuration.',
-        }) : null,
-      );
-    }
-
     phase = 'build_prompt';
     const prompt = buildPrompt({
       mode,
@@ -801,6 +804,15 @@ export default async function handler(req, res) {
         success: true,
         result: analysis.result,
       });
+    }
+
+    if (analysis.parseStep === 'no_config') {
+      return buildFailure(res, 500, 'AI provider is not configured.', debugRequested ? buildDebug({
+        ...debugBase,
+        phase: 'no_config',
+        providerStatus: null,
+        providerErrorMessage: 'AI provider is not configured.',
+      }) : null);
     }
 
     if (isQuotaError(analysis.providerError)) {

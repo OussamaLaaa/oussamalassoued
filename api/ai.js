@@ -7,8 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import aiKeyCrypto from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
 
-const { encryptApiKey, decryptApiKey } = aiKeyCrypto;
-const { testProviderConnection } = aiProviderRouter;
+const { testProviderConnection, checkAIUseCaseStatus } = aiProviderRouter;
 
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -134,103 +133,105 @@ const handleProviderKeyAction = async (req, res) => {
 
     if (req.method === 'POST') {
       if (body.action === 'test') {
-        let provider = toCleanString(body.provider).toLowerCase();
-        let apiKey = toCleanString(body.apiKey);
-        let model = toCleanString(body.model);
-        let baseUrl = toCleanString(body.baseUrl);
-        let endpoint = toCleanString(body.endpoint);
-        let deploymentName = toCleanString(body.deploymentName);
-        let apiVersion = toCleanString(body.apiVersion);
+        try {
+          let provider = toCleanString(body.provider).toLowerCase();
+          let apiKey = toCleanString(body.apiKey);
+          let model = toCleanString(body.model);
+          let baseUrl = toCleanString(body.baseUrl);
+          let endpoint = toCleanString(body.endpoint);
+          let deploymentName = toCleanString(body.deploymentName);
+          let apiVersion = toCleanString(body.apiVersion);
 
-        if (body.id) {
-          const { data: existingRow, error: existingError } = await supabase
-            .from('ai_provider_keys')
-            .select('*')
-            .eq('id', toCleanString(body.id))
-            .maybeSingle();
+          if (body.id) {
+            const { data: existingRow, error: existingError } = await supabase
+              .from('ai_provider_keys')
+              .select('*')
+              .eq('id', toCleanString(body.id))
+              .maybeSingle();
 
-          if (existingError) {
-            return toSafeJson(res, 500, { success: false, error: existingError.message || 'Failed to load provider key.' });
+            if (existingError) {
+              return toSafeJson(res, 500, { success: false, error: existingError.message || 'Failed to load provider key.' });
+            }
+
+            if (!existingRow) {
+              return toSafeJson(res, 404, { success: false, error: 'Provider key not found.' });
+            }
+
+            provider = toCleanString(existingRow.provider).toLowerCase();
+            apiKey = existingRow.api_key_encrypted ? decryptApiKey(existingRow.api_key_encrypted) : '';
+            model = model || toCleanString(existingRow.model);
+            baseUrl = baseUrl || toCleanString(existingRow.base_url);
+            endpoint = endpoint || toCleanString(existingRow.endpoint);
+            deploymentName = deploymentName || toCleanString(existingRow.deployment_name);
+            apiVersion = apiVersion || toCleanString(existingRow.api_version);
           }
 
-          if (!existingRow) {
-            return toSafeJson(res, 404, { success: false, error: 'Provider key not found.' });
+          if (!ALLOWED_PROVIDERS.has(provider)) {
+            return toSafeJson(res, 400, { success: false, error: 'Unsupported provider.' });
           }
 
-          provider = toCleanString(existingRow.provider).toLowerCase();
-          apiKey = existingRow.api_key_encrypted ? decryptApiKey(existingRow.api_key_encrypted) : '';
-          model = model || toCleanString(existingRow.model);
-          baseUrl = baseUrl || toCleanString(existingRow.base_url);
-          endpoint = endpoint || toCleanString(existingRow.endpoint);
-          deploymentName = deploymentName || toCleanString(existingRow.deployment_name);
-          apiVersion = apiVersion || toCleanString(existingRow.api_version);
-        }
+          if (!apiKey && provider !== 'ollama') {
+            return toSafeJson(res, 400, { success: false, error: 'API key is required for testing.' });
+          }
 
-        if (!ALLOWED_PROVIDERS.has(provider)) {
-          return toSafeJson(res, 400, { success: false, error: 'Unsupported provider.' });
-        }
-
-        if (!apiKey && provider !== 'ollama') {
-          return toSafeJson(res, 400, { success: false, error: 'API key is required for testing.' });
-        }
-
-        const resultText = await testProviderConnection({
-          provider,
-          apiKey,
-          model,
-          baseUrl,
-          endpoint,
-          deploymentName,
-          apiVersion,
-        });
-
-        const responseBody = { success: true, message: resultText || 'Connection succeeded.' };
-        if (debugRequested) {
-          responseBody.debug = {
+          const resultText = await testProviderConnection({
             provider,
-            model: model || null,
-            authStyleUsed: provider === 'gemini' ? 'gemini_query_key' : (provider === 'anthropic' ? 'anthropic_x_api_key' : (provider === 'azure_openai' ? 'azure_api_key' : 'bearer')),
-            endpointHost: (() => {
-              try {
-                const targetUrl = provider === 'gemini'
-                  ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model || 'gemini-2.0-flash')}:generateContent?key=***`
-                  : (endpoint || baseUrl || '');
-                return targetUrl ? new URL(targetUrl).host : '';
-              } catch {
-                return '';
-              }
-            })(),
-          };
-        }
+            apiKey,
+            model,
+            baseUrl,
+            endpoint,
+            deploymentName,
+            apiVersion,
+          });
 
-        return toSafeJson(res, 200, responseBody);
-      } catch (error) {
-        if (debugRequested) {
-          return toSafeJson(res, 500, {
-            success: false,
-            error: 'AI provider request failed.',
-            debug: {
-              provider: toCleanString(body.provider).toLowerCase(),
-              model: toCleanString(body.model || body.deploymentName) || null,
-              providerStatus: error?.providerStatus ?? null,
-              providerErrorStatus: error?.providerErrorStatus ?? null,
-              providerErrorReason: error?.providerErrorReason ?? null,
-              authStyleUsed: error?.authStyleUsed || (toCleanString(body.provider).toLowerCase() === 'gemini' ? 'gemini_query_key' : (toCleanString(body.provider).toLowerCase() === 'anthropic' ? 'anthropic_x_api_key' : (toCleanString(body.provider).toLowerCase() === 'azure_openai' ? 'azure_api_key' : 'bearer'))),
-              endpointHost: error?.endpointHost || (() => {
+          const responseBody = { success: true, message: resultText || 'Connection succeeded.' };
+          if (debugRequested) {
+            responseBody.debug = {
+              provider,
+              model: model || null,
+              authStyleUsed: provider === 'gemini' ? 'gemini_query_key' : (provider === 'anthropic' ? 'anthropic_x_api_key' : (provider === 'azure_openai' ? 'azure_api_key' : 'bearer')),
+              endpointHost: (() => {
                 try {
-                  const targetUrl = toCleanString(body.provider).toLowerCase() === 'gemini'
-                    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(toCleanString(body.model || body.deploymentName) || 'gemini-2.0-flash')}:generateContent?key=***`
-                    : (body.endpoint || body.baseUrl || '');
+                  const targetUrl = provider === 'gemini'
+                    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model || 'gemini-2.0-flash')}:generateContent?key=***`
+                    : (endpoint || baseUrl || '');
                   return targetUrl ? new URL(targetUrl).host : '';
                 } catch {
                   return '';
                 }
               })(),
-            },
-          });
-        }
+            };
+          }
 
-        return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Failed to test provider key.' });
+          return toSafeJson(res, 200, responseBody);
+        } catch (error) {
+          if (debugRequested) {
+            return toSafeJson(res, 500, {
+              success: false,
+              error: 'AI provider request failed.',
+              debug: {
+                provider: toCleanString(body.provider).toLowerCase(),
+                model: toCleanString(body.model || body.deploymentName) || null,
+                providerStatus: error?.providerStatus ?? null,
+                providerErrorStatus: error?.providerErrorStatus ?? null,
+                providerErrorReason: error?.providerErrorReason ?? null,
+                authStyleUsed: error?.authStyleUsed || (toCleanString(body.provider).toLowerCase() === 'gemini' ? 'gemini_query_key' : (toCleanString(body.provider).toLowerCase() === 'anthropic' ? 'anthropic_x_api_key' : (toCleanString(body.provider).toLowerCase() === 'azure_openai' ? 'azure_api_key' : 'bearer'))),
+                endpointHost: error?.endpointHost || (() => {
+                  try {
+                    const targetUrl = toCleanString(body.provider).toLowerCase() === 'gemini'
+                      ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(toCleanString(body.model || body.deploymentName) || 'gemini-2.0-flash')}:generateContent?key=***`
+                      : (body.endpoint || body.baseUrl || '');
+                    return targetUrl ? new URL(targetUrl).host : '';
+                  } catch {
+                    return '';
+                  }
+                })(),
+              },
+            });
+          }
+
+          return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Failed to test provider key.' });
+        }
       }
 
       const payload = buildInsertPayload(body);
@@ -306,6 +307,51 @@ const handleProviderKeyAction = async (req, res) => {
   }
 };
 
+const handleUseCaseTest = async (req, res) => {
+  if (!isAuthenticated(req)) {
+    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
+  }
+
+  const supabase = createSupabaseClient();
+  const body = readBody(req);
+  const useCase = toCleanString(body.useCase).toLowerCase();
+  const allowed = ['message', 'finance', 'document', 'lead_scoring', 'relationship'];
+
+  if (!allowed.includes(useCase)) {
+    return toSafeJson(res, 400, { success: false, error: 'Invalid use case for testing.' });
+  }
+
+  const testPrompts = {
+    message: 'Return only JSON:\n{"message":"Hello from AI Control test"}',
+    finance: 'Return only JSON:\n{"summary":"OK","incomeAnalysis":[],"expenseAnalysis":[],"allocationReview":[],"purchaseGoalReview":[],"investmentRiskReview":[],"recurringIncomeReview":[],"ethicalReviewQuestions":[],"warnings":[],"nextActions":[]}',
+    document: '<SUMMARY>OK</SUMMARY>\n<IMPROVED_CONTENT></IMPROVED_CONTENT>\n<RISKS></RISKS>\n<MISSING_CLAUSES></MISSING_CLAUSES>\n<SUGGESTED_SECTIONS></SUGGESTED_SECTIONS>\n<QUESTIONS_TO_REVIEW></QUESTIONS_TO_REVIEW>\n<NEXT_ACTIONS></NEXT_ACTIONS>',
+    lead_scoring: '<DATABASE_TYPE>sme</DATABASE_TYPE>\n<INDUSTRY>tech</INDUSTRY>\n<PRIORITY>medium</PRIORITY>\n<FIT_SCORE>5</FIT_SCORE>\n<ETHICAL_FIT>good</ETHICAL_FIT>\n<UX_PROBLEM></UX_PROBLEM>\n<SERVICE_TO_OFFER></SERVICE_TO_OFFER>\n<NEXT_ACTION></NEXT_ACTION>\n<REASONING_SUMMARY>OK</REASONING_SUMMARY>\n<RISKS></RISKS>\n<QUESTIONS_TO_REVIEW></QUESTIONS_TO_REVIEW>',
+    relationship: '<SUMMARY>OK</SUMMARY>\n<OBSERVATIONS>\n- Test observation\n</OBSERVATIONS>\n<STRENGTHS></STRENGTHS>\n<CONCERNS></CONCERNS>\n<NEXT_STEPS>\n- Test step\n</NEXT_STEPS>\n<FOLLOW_UP_DRAFT></FOLLOW_UP_DRAFT>\n<LOG_CHANNEL>other</LOG_CHANNEL>\n<LOG_TYPE>follow_up</LOG_TYPE>\n<LOG_SUMMARY></LOG_SUMMARY>\n<LOG_OUTCOME></LOG_OUTCOME>\n<LOG_NEXT_ACTION></LOG_NEXT_ACTION>\n<APPROVAL_NOTE></APPROVAL_NOTE>',
+  };
+
+  try {
+    const routedText = await aiProviderRouter.runAICompletion({
+      supabase,
+      useCase,
+      prompt: testPrompts[useCase],
+      temperature: 0,
+      maxOutputTokens: 256,
+    });
+
+    if (!routedText) {
+      const status = await checkAIUseCaseStatus({ supabase, useCase });
+      const errorMsg = !status?.configured
+        ? 'AI is not configured for this use case.'
+        : 'AI is disabled for this use case.';
+      return toSafeJson(res, 500, { success: false, error: errorMsg });
+    }
+
+    return toSafeJson(res, 200, { success: true, message: `${useCase} AI responded.` });
+  } catch (error) {
+    return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Use case test failed.' });
+  }
+};
+
 export default async function handler(req, res) {
   const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();
 
@@ -322,6 +368,26 @@ export default async function handler(req, res) {
     }
     if (type === 'relationship') {
       return aiRelationshipHandler(cloneRequest(req, { query: { health: '1' } }), res);
+    }
+    if (type === 'control') {
+      const encryptionConfigured = Boolean(process.env.AI_KEYS_ENCRYPTION_SECRET);
+      const supabase = (() => {
+        try { return createSupabaseClient(); } catch { return null; }
+      })();
+      const useCaseStatuses = {};
+      for (const uc of ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy']) {
+        useCaseStatuses[uc] = supabase ? await checkAIUseCaseStatus({ supabase, useCase: uc }) : { configured: false, source: 'none' };
+      }
+      return toSafeJson(res, 200, {
+        success: true,
+        route: 'api/ai',
+        aiControl: true,
+        encryptionConfigured,
+        supportedProviders: ['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama'],
+        supportedUseCases: ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy'],
+        envGeminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+        useCaseStatuses,
+      });
     }
     return toSafeJson(res, 400, { success: false, error: 'Missing or invalid type.' });
   }
@@ -348,6 +414,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST' && action === 'relationship') {
     return aiRelationshipHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'use-case-test') {
+    return handleUseCaseTest(req, res);
   }
 
   return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });

@@ -61,10 +61,6 @@ const buildHeaders = ({ provider, apiKey, apiVersion }) => {
     headers['X-Title'] = 'Opportunities AI Control Center';
   }
 
-  if (provider === 'azure_openai' && apiVersion) {
-    headers['api-version'] = apiVersion;
-  }
-
   return headers;
 };
 
@@ -241,12 +237,15 @@ export const resolveAIExecutionConfig = async ({ supabase, useCase, fallbackEnvG
       .from('ai_use_case_settings')
       .select('*')
       .eq('use_case', normalizedUseCase)
-      .eq('is_enabled', true)
       .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (setting) {
+    if (setting && !setting.is_enabled) {
+      return { disabled: true };
+    }
+
+    if (setting && setting.is_enabled) {
       let providerKey = null;
 
       if (setting.provider_key_id) {
@@ -262,6 +261,7 @@ export const resolveAIExecutionConfig = async ({ supabase, useCase, fallbackEnvG
 
       if (setting.provider === 'ollama') {
         return {
+          disabled: false,
           provider: 'ollama',
           apiKey: '',
           model: setting.model || providerKey?.model || 'llama3.1',
@@ -276,6 +276,7 @@ export const resolveAIExecutionConfig = async ({ supabase, useCase, fallbackEnvG
 
       if (providerKey?.api_key_encrypted) {
         return {
+          disabled: false,
           provider: setting.provider || providerKey.provider,
           apiKey: decryptApiKey(providerKey.api_key_encrypted),
           model: setting.model || providerKey.model || '',
@@ -296,6 +297,7 @@ export const resolveAIExecutionConfig = async ({ supabase, useCase, fallbackEnvG
   if (!apiKey) return null;
 
   return {
+    disabled: false,
     provider: 'gemini',
     apiKey,
     model: toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash',
@@ -312,6 +314,10 @@ export const runAICompletion = async ({ supabase, useCase, prompt, temperature, 
   const executionConfig = await resolveAIExecutionConfig({ supabase, useCase, fallbackEnvGemini });
 
   if (!executionConfig) {
+    return null;
+  }
+
+  if (executionConfig.disabled) {
     return null;
   }
 
@@ -340,6 +346,33 @@ export const testProviderConnection = async ({ provider, apiKey, model, baseUrl,
   return responseText;
 };
 
+export const checkAIUseCaseStatus = async ({ supabase, useCase }) => {
+  const normalizedUseCase = toCleanString(useCase).toLowerCase();
+  if (!AI_USE_CASES.has(normalizedUseCase)) return null;
+
+  if (!supabase) {
+    const envKey = toCleanString(process.env.GEMINI_API_KEY);
+    return envKey ? { configured: true, source: 'env_fallback', provider: 'gemini' } : { configured: false, source: 'none' };
+  }
+
+  const { data: setting } = await supabase
+    .from('ai_use_case_settings')
+    .select('*')
+    .eq('use_case', normalizedUseCase)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (setting) {
+    if (!setting.is_enabled) return { configured: false, source: 'disabled' };
+    const hasKey = setting.provider_key_id || setting.provider === 'ollama';
+    return { configured: hasKey, source: hasKey ? 'byok' : 'partial', provider: setting.provider || null };
+  }
+
+  const envKey = toCleanString(process.env.GEMINI_API_KEY);
+  return envKey ? { configured: true, source: 'env_fallback', provider: 'gemini' } : { configured: false, source: 'none' };
+};
+
 export default {
   AI_PROVIDERS,
   AI_USE_CASES,
@@ -347,4 +380,5 @@ export default {
   resolveAIExecutionConfig,
   runAICompletion,
   testProviderConnection,
+  checkAIUseCaseStatus,
 };
