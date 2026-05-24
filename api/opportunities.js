@@ -33,6 +33,7 @@ const allowedEntities = new Set([
   'note_categories',
   'smart_notes',
   'note_attachments',
+  'note_blocks',
   'plans',
   'plan_items',
   'finance_income',
@@ -40,6 +41,7 @@ const allowedEntities = new Set([
   'finance_allocation_rules',
   'finance_purchase_goals',
   'finance_investment_ideas',
+  'note_blocks',
   'finance_investment_rules',
   'finance_investment_allocations',
   'finance_periods',
@@ -83,6 +85,7 @@ const tablesAttempted = [
   'note_categories',
   'smart_notes',
   'note_attachments',
+  'note_blocks',
   'plans',
   'plan_items',
   'finance_income',
@@ -439,6 +442,18 @@ const normalizeNoteAttachmentRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeNoteBlockRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.noteId !== undefined || row?.note_id !== undefined) payload.note_id = toRequiredString(row?.note_id ?? row?.noteId);
+  if (!forUpdate || row?.type !== undefined) payload.type = toRequiredString(row?.type) || 'paragraph';
+  if (!forUpdate || row?.content !== undefined) payload.content = toNullableString(row?.content);
+  if (!forUpdate || row?.dataJson !== undefined || row?.data_json !== undefined) payload.data_json = row?.data_json ?? row?.dataJson ?? null;
+  if (!forUpdate || row?.sortOrder !== undefined || row?.sort_order !== undefined) payload.sort_order = row?.sort_order != null ? Number(row?.sort_order) : (row?.sortOrder != null ? Number(row?.sortOrder) : null);
+
+  return payload;
+};
+
 const normalizePlanRow = (row) => ({
   title: toRequiredString(row?.title),
   type: toRequiredString(row?.type),
@@ -518,7 +533,8 @@ const normalizeAIProviderKeyRow = (row) => ({
   apiVersion: toNullableString(row?.api_version ?? row?.apiVersion),
   isActive: row?.is_active == null ? true : Boolean(row.is_active),
   notes: toNullableString(row?.notes),
-  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+    createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+    updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
 
@@ -533,7 +549,8 @@ const normalizeAIUseCaseSettingRow = (row, providerKeyLabel) => ({
   maxOutputTokens: row?.max_output_tokens != null ? Number(row.max_output_tokens) : undefined,
   isEnabled: row?.is_enabled == null ? true : Boolean(row.is_enabled),
   notes: toNullableString(row?.notes),
-  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+    createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+    updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
   updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
 });
 
@@ -878,6 +895,7 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'note_categories') return normalizeNoteCategoryRow(row);
   if (entity === 'smart_notes') return normalizeSmartNoteRow(row);
   if (entity === 'note_attachments') return normalizeNoteAttachmentRow(row);
+  if (entity === 'note_blocks') return normalizeNoteBlockRow(row);
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -949,6 +967,7 @@ const OPTIONAL_TABLES = new Set([
   'note_categories',
   'smart_notes',
   'note_attachments',
+  'note_blocks',
   'finance_income',
   'finance_expenses',
   'finance_allocation_rules',
@@ -970,7 +989,7 @@ const OPTIONAL_TABLES = new Set([
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
   relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
-  notes: ['note_categories', 'smart_notes', 'note_attachments'],
+  notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
   tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
   finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
   documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1115,7 +1134,7 @@ export default async function handler(req, res) {
       const scopeKeys = {
         core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
         relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
-        notes: ['note_categories', 'smart_notes', 'note_attachments'],
+        notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
         finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
         documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1134,7 +1153,7 @@ export default async function handler(req, res) {
           'invoices', 'invoice_items',
           'strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions',
           'relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods',
-          'note_categories', 'smart_notes', 'note_attachments',
+          'note_categories', 'smart_notes', 'note_attachments', 'note_blocks',
           'plans', 'plan_items',
           'finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals',
           'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations',

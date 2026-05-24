@@ -794,6 +794,7 @@ export interface RelationshipContactMethodInput {
 export type NoteStatus = 'active' | 'archived' | 'pinned' | 'draft';
 export type NotePriority = 'high' | 'medium' | 'low';
 export type NoteAttachmentType = 'link' | 'image' | 'video' | 'audio' | 'pdf' | 'file' | 'other';
+export type NoteBlockType = 'paragraph' | 'heading' | 'checklist' | 'table' | 'image' | 'video' | 'audio' | 'quote' | 'link' | 'divider';
 
 export interface NoteCategory {
   id: string;
@@ -883,6 +884,25 @@ export interface NoteAttachmentInput {
   notes?: string;
 }
 
+export interface NoteBlock {
+  id: string;
+  noteId: string;
+  type: NoteBlockType;
+  content?: string;
+  dataJson?: Record<string, unknown> | null;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NoteBlockInput {
+  noteId: string;
+  type: NoteBlockType;
+  content?: string;
+  dataJson?: Record<string, unknown> | null;
+  sortOrder?: number;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
@@ -896,6 +916,7 @@ export interface OpportunitiesData {
   noteCategories: NoteCategory[];
   smartNotes: SmartNote[];
   noteAttachments: NoteAttachment[];
+  noteBlocks: NoteBlock[];
   projects: Project[];
   projectTasks: ProjectTask[];
   projectTimeLogs: ProjectTimeLog[];

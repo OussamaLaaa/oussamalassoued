@@ -39,6 +39,8 @@ import {
   smartNoteToDb as toSmartNoteDb,
   noteAttachmentFromDb as mapNoteAttachmentRow,
   noteAttachmentToDb as toNoteAttachmentDb,
+  noteBlockFromDb as mapNoteBlockRow,
+  noteBlockToDb as toNoteBlockDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -86,6 +88,8 @@ import type {
   SmartNoteInput,
   NoteAttachment,
   NoteAttachmentInput,
+  NoteBlock,
+  NoteBlockInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -156,6 +160,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   noteCategories: [],
   smartNotes: [],
   noteAttachments: [],
+  noteBlocks: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -212,6 +217,7 @@ type OpportunitiesApiResponse = {
   note_categories?: any[];
   smart_notes?: any[];
   note_attachments?: any[];
+  note_blocks?: any[];
   strategy_items?: any[];
   strategy_goals?: any[];
   strategy_plans?: any[];
@@ -1441,6 +1447,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [noteCategories, setNoteCategories] = useState<NoteCategory[]>(() => cloneSeedData().noteCategories);
   const [smartNotes, setSmartNotes] = useState<SmartNote[]>(() => cloneSeedData().smartNotes);
   const [noteAttachments, setNoteAttachments] = useState<NoteAttachment[]>(() => cloneSeedData().noteAttachments);
+  const [noteBlocks, setNoteBlocks] = useState<NoteBlock[]>(() => cloneSeedData().noteBlocks);
   const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [projectTimeLogs, setProjectTimeLogs] = useState<ProjectTimeLog[]>([]);
@@ -1503,6 +1510,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const noteCategoriesRaw = raw('note_categories');
     const smartNotesRaw = raw('smart_notes');
     const noteAttachmentsRaw = raw('note_attachments');
+    const noteBlocksRaw = raw('note_blocks');
 
     // Compute derived collections only when core data is present
     let derived: { people: Person[]; messages: OutreachMessage[]; deals: Deal[] } | null = null;
@@ -1580,6 +1588,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('note_categories')) setNoteCategories((noteCategoriesRaw || []).map((row: any) => mapNoteCategoryRow(row)));
     if (has('smart_notes')) setSmartNotes((smartNotesRaw || []).map((row: any) => mapSmartNoteRow(row)));
     if (has('note_attachments')) setNoteAttachments((noteAttachmentsRaw || []).map((row: any) => mapNoteAttachmentRow(row)));
+    if (has('note_blocks')) setNoteBlocks((noteBlocksRaw || []).map((row: any) => mapNoteBlockRow(row)));
 
     // ── Documents ──
     if (has('documents')) {
@@ -1801,6 +1810,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setNoteCategories([]);
           setSmartNotes([]);
           setNoteAttachments([]);
+          setNoteBlocks([]);
           setTemplates([]);
           setInvoices([]);
           setInvoiceItems([]);
@@ -1836,6 +1846,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setNoteCategories(fallback.noteCategories);
         setSmartNotes(fallback.smartNotes);
         setNoteAttachments(fallback.noteAttachments);
+        setNoteBlocks(fallback.noteBlocks);
         setTemplates(fallback.templates);
         setInvoices(fallback.invoices);
         setInvoiceItems(fallback.invoiceItems);
@@ -2044,7 +2055,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2439,6 +2450,7 @@ export const useOpportunitiesData = (enabled = true) => {
     await syncDelete('smart_notes', id);
     setSmartNotes((current) => current.filter((item) => item.id !== id));
     setNoteAttachments((current) => current.filter((attachment) => attachment.noteId !== id));
+    setNoteBlocks((current) => current.filter((block) => block.noteId !== id));
   };
 
   const addNoteAttachment = async (input: NoteAttachmentInput) => {
@@ -2467,6 +2479,31 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('note_attachments', id);
     setNoteAttachments((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addNoteBlock = async (input: NoteBlockInput) => {
+    if (!String(input.noteId || '').trim()) {
+      throw new Error('Select a note before adding a block.');
+    }
+
+    const row = await syncInsert('note_blocks', toNoteBlockDb(input));
+    const next = mapNoteBlockRow(row);
+    setNoteBlocks((current) => [...current, next].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+    return next;
+  };
+
+  const updateNoteBlock = async (id: string, input: Partial<NoteBlockInput>) => {
+    const row = await syncUpdate('note_blocks', id, toNoteBlockDb(input, { forUpdate: true }));
+    const next = mapNoteBlockRow(row);
+    setNoteBlocks((current) => current.map((item) => (item.id === id ? next : item)).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+    return next;
+  };
+
+  const deleteNoteBlock = async (id: string) => {
+    const confirmed = window.confirm('Delete this block?');
+    if (!confirmed) return;
+    await syncDelete('note_blocks', id);
+    setNoteBlocks((current) => current.filter((item) => item.id !== id));
   };
 
   const addProject = async (input: ProjectInput) => {
@@ -3687,6 +3724,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setNoteCategories(fallback.noteCategories);
     setSmartNotes(fallback.smartNotes);
     setNoteAttachments(fallback.noteAttachments);
+    setNoteBlocks(fallback.noteBlocks);
     setTemplates(fallback.templates);
     setStrategyGoals(fallback.strategyGoals);
     setStrategyPlans(fallback.strategyPlans);
@@ -3725,6 +3763,7 @@ export const useOpportunitiesData = (enabled = true) => {
     noteCategories,
     smartNotes,
     noteAttachments,
+    noteBlocks,
     projects,
     projectTasks,
     projectTimeLogs,
@@ -3840,6 +3879,9 @@ export const useOpportunitiesData = (enabled = true) => {
     addNoteAttachment,
     updateNoteAttachment,
     deleteNoteAttachment,
+    addNoteBlock,
+    updateNoteBlock,
+    deleteNoteBlock,
     addProject,
     addStrategyItem,
     addStrategyGoal,

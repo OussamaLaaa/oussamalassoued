@@ -53,6 +53,8 @@ import type {
   SmartNoteInput,
   NoteAttachment,
   NoteAttachmentInput,
+  NoteBlock,
+  NoteBlockInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -536,6 +538,30 @@ export const noteAttachmentToDb = (input: Partial<NoteAttachmentInput>, options:
   if (!forUpdate || input.title !== undefined) payload.title = toNullableString(input.title);
   if (!forUpdate || input.url !== undefined) payload.url = String(input.url || '').trim();
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const noteBlockFromDb = (row: any): NoteBlock => ({
+  id: safeString(row?.id),
+  noteId: safeString(row?.note_id ?? row?.noteId),
+  type: row?.type ?? 'paragraph',
+  content: row?.content ?? undefined,
+  dataJson: row?.data_json ?? row?.dataJson ?? null,
+  sortOrder: row?.sort_order != null ? Number(row.sort_order) : (row?.sortOrder != null ? Number(row.sortOrder) : undefined),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const noteBlockToDb = (input: Partial<NoteBlockInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.noteId !== undefined) payload.note_id = toNullableString(input.noteId);
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type) || 'paragraph';
+  if (!forUpdate || input.content !== undefined) payload.content = toNullableString(input.content);
+  if (!forUpdate || input.dataJson !== undefined) payload.data_json = input.dataJson ?? null;
+  if (!forUpdate || input.sortOrder !== undefined) payload.sort_order = input.sortOrder != null ? Number(input.sortOrder) : null;
 
   return payload;
 };
