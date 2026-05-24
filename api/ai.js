@@ -4,7 +4,7 @@ import aiDocumentHandler from '../server/lib/aiDocumentHandler.js';
 import aiLeadScoringHandler from '../server/lib/aiLeadScoringHandler.js';
 import aiRelationshipHandler from '../server/lib/aiRelationshipHandler.js';
 import { createClient } from '@supabase/supabase-js';
-import aiKeyCrypto from '../server/lib/aiKeyCrypto.js';
+import { encryptApiKey, decryptApiKey } from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
 
 const { testProviderConnection, checkAIUseCaseStatus } = aiProviderRouter;
@@ -64,6 +64,13 @@ const createSupabaseClient = () => {
   return createClient(url, serviceKey, {
     auth: { persistSession: false },
   });
+};
+
+const ENCRYPTION_NOT_CONFIGURED_MSG = 'AI key encryption is not configured. Set AI_KEYS_ENCRYPTION_SECRET in Vercel and redeploy.';
+
+const toSafeEncryptionError = (error) => {
+  const msg = error instanceof Error ? error.message : '';
+  return msg.includes('AI_KEYS_ENCRYPTION_SECRET') ? ENCRYPTION_NOT_CONFIGURED_MSG : msg;
 };
 
 const safeKeyRow = (row) => ({
@@ -208,7 +215,7 @@ const handleProviderKeyAction = async (req, res) => {
           if (debugRequested) {
             return toSafeJson(res, 500, {
               success: false,
-              error: 'AI provider request failed.',
+              error: toSafeEncryptionError(error) || 'AI provider request failed.',
               debug: {
                 provider: toCleanString(body.provider).toLowerCase(),
                 model: toCleanString(body.model || body.deploymentName) || null,
@@ -230,7 +237,7 @@ const handleProviderKeyAction = async (req, res) => {
             });
           }
 
-          return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Failed to test provider key.' });
+          return toSafeJson(res, 500, { success: false, error: toSafeEncryptionError(error) || 'Failed to test provider key.' });
         }
       }
 
@@ -303,7 +310,7 @@ const handleProviderKeyAction = async (req, res) => {
 
     return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
   } catch (error) {
-    return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Internal server error.' });
+    return toSafeJson(res, 500, { success: false, error: toSafeEncryptionError(error) || 'Internal server error.' });
   }
 };
 
@@ -348,7 +355,7 @@ const handleUseCaseTest = async (req, res) => {
 
     return toSafeJson(res, 200, { success: true, message: `${useCase} AI responded.` });
   } catch (error) {
-    return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Use case test failed.' });
+    return toSafeJson(res, 500, { success: false, error: toSafeEncryptionError(error) || 'Use case test failed.' });
   }
 };
 
