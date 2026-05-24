@@ -116,6 +116,7 @@ const handleProviderKeyAction = async (req, res) => {
 
   const supabase = createSupabaseClient();
   const body = readBody(req);
+  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
 
   try {
     if (req.method === 'GET') {
@@ -183,7 +184,53 @@ const handleProviderKeyAction = async (req, res) => {
           apiVersion,
         });
 
-        return toSafeJson(res, 200, { success: true, message: resultText || 'Connection succeeded.' });
+        const responseBody = { success: true, message: resultText || 'Connection succeeded.' };
+        if (debugRequested) {
+          responseBody.debug = {
+            provider,
+            model: model || null,
+            authStyleUsed: provider === 'gemini' ? 'gemini_query_key' : (provider === 'anthropic' ? 'anthropic_x_api_key' : (provider === 'azure_openai' ? 'azure_api_key' : 'bearer')),
+            endpointHost: (() => {
+              try {
+                const targetUrl = provider === 'gemini'
+                  ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model || 'gemini-2.0-flash')}:generateContent?key=***`
+                  : (endpoint || baseUrl || '');
+                return targetUrl ? new URL(targetUrl).host : '';
+              } catch {
+                return '';
+              }
+            })(),
+          };
+        }
+
+        return toSafeJson(res, 200, responseBody);
+      } catch (error) {
+        if (debugRequested) {
+          return toSafeJson(res, 500, {
+            success: false,
+            error: 'AI provider request failed.',
+            debug: {
+              provider: toCleanString(body.provider).toLowerCase(),
+              model: toCleanString(body.model || body.deploymentName) || null,
+              providerStatus: error?.providerStatus ?? null,
+              providerErrorStatus: error?.providerErrorStatus ?? null,
+              providerErrorReason: error?.providerErrorReason ?? null,
+              authStyleUsed: error?.authStyleUsed || (toCleanString(body.provider).toLowerCase() === 'gemini' ? 'gemini_query_key' : (toCleanString(body.provider).toLowerCase() === 'anthropic' ? 'anthropic_x_api_key' : (toCleanString(body.provider).toLowerCase() === 'azure_openai' ? 'azure_api_key' : 'bearer'))),
+              endpointHost: error?.endpointHost || (() => {
+                try {
+                  const targetUrl = toCleanString(body.provider).toLowerCase() === 'gemini'
+                    ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(toCleanString(body.model || body.deploymentName) || 'gemini-2.0-flash')}:generateContent?key=***`
+                    : (body.endpoint || body.baseUrl || '');
+                  return targetUrl ? new URL(targetUrl).host : '';
+                } catch {
+                  return '';
+                }
+              })(),
+            },
+          });
+        }
+
+        return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Failed to test provider key.' });
       }
 
       const payload = buildInsertPayload(body);

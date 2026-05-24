@@ -199,6 +199,7 @@ const handleRelationshipAction = async (req, res) => {
   const supabase = createSupabaseClient();
   const body = readBody(req);
   const mode = normalizeMode(body.mode);
+  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
   const relationship = body.relationship || body.selectedRelationship || null;
 
   if (!relationship || typeof relationship !== 'object') {
@@ -251,6 +252,22 @@ const handleRelationshipAction = async (req, res) => {
 
     return toSafeJson(res, 200, responseBody);
   } catch (error) {
+    if (debugRequested) {
+      return toSafeJson(res, 500, {
+        success: false,
+        error: 'AI provider request failed.',
+        debug: {
+          provider: error?.provider || 'gemini',
+          model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+          providerStatus: error?.providerStatus ?? null,
+          providerErrorStatus: error?.providerErrorStatus ?? null,
+          providerErrorReason: error?.providerErrorReason ?? null,
+          authStyleUsed: error?.authStyleUsed || 'gemini_query_key',
+          endpointHost: error?.endpointHost || 'generativelanguage.googleapis.com',
+        },
+      });
+    }
+
     return toSafeJson(res, 500, { success: false, error: error instanceof Error ? error.message : 'Internal server error.' });
   }
 };

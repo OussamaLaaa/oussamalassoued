@@ -5,6 +5,40 @@ export const AI_USE_CASES = new Set(['message', 'finance', 'document', 'lead_sco
 
 const toCleanString = (value) => (value == null ? '' : String(value).trim());
 
+const getEndpointHost = (url) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '';
+  }
+};
+
+const getAuthStyle = (provider) => {
+  if (provider === 'gemini') return 'gemini_query_key';
+  if (provider === 'anthropic') return 'anthropic_x_api_key';
+  if (provider === 'azure_openai') return 'azure_api_key';
+  if (provider === 'openai' || provider === 'openrouter' || provider === 'nvidia') return 'bearer';
+  return 'none';
+};
+
+const createProviderRequestError = ({ provider, url, response, rawText }) => {
+  let parsed = null;
+  try {
+    parsed = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    parsed = null;
+  }
+
+  const error = new Error(parsed?.error?.message || rawText || `${provider} request failed with status ${response.status}.`);
+  error.provider = provider;
+  error.providerStatus = response.status;
+  error.providerErrorStatus = parsed?.error?.status || response.statusText || null;
+  error.providerErrorReason = parsed?.error?.details?.[0]?.reason || parsed?.error?.reason || parsed?.error?.message || null;
+  error.authStyleUsed = getAuthStyle(provider);
+  error.endpointHost = getEndpointHost(url);
+  return error;
+};
+
 const toNumber = (value, fallback) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
@@ -16,7 +50,9 @@ const buildHeaders = ({ provider, apiKey, apiVersion }) => {
   if (provider === 'anthropic') {
     headers['x-api-key'] = apiKey;
     headers['anthropic-version'] = '2023-06-01';
-  } else if (provider !== 'ollama') {
+  } else if (provider === 'azure_openai') {
+    headers['api-key'] = apiKey;
+  } else if (provider === 'openai' || provider === 'openrouter' || provider === 'nvidia') {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
@@ -117,7 +153,9 @@ export const requestProviderCompletion = async ({ provider, apiKey, model, promp
     throw new Error(`${provider} API key is missing.`);
   }
 
-  const url = buildUrl({ provider, baseUrl, endpoint, deploymentName, model, apiVersion });
+  const url = provider === 'gemini'
+    ? `${buildUrl({ provider, baseUrl, endpoint, deploymentName, model, apiVersion })}?key=${encodeURIComponent(apiKey)}`
+    : buildUrl({ provider, baseUrl, endpoint, deploymentName, model, apiVersion });
   const headers = buildHeaders({ provider, apiKey, apiVersion });
   let body;
 
@@ -166,7 +204,33 @@ export const requestProviderCompletion = async ({ provider, apiKey, model, promp
     body: JSON.stringify(body),
   });
 
-  return extractText(response, provider);
+  const rawText = await response.text();
+
+  if (!response.ok) {
+    throw createProviderRequestError({ provider, url, response, rawText });
+  }
+
+  if (!rawText) return '';
+
+  try {
+    const data = JSON.parse(rawText);
+
+    if (provider === 'gemini') {
+      return data?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('') || '';
+    }
+
+    if (provider === 'anthropic') {
+      return data?.content?.map((item) => item?.text || '').join('') || '';
+    }
+
+    if (provider === 'ollama') {
+      return data?.message?.content || data?.response || '';
+    }
+
+    return data?.choices?.[0]?.message?.content || data?.choices?.[0]?.text || data?.output_text || '';
+  } catch {
+    return rawText;
+  }
 };
 
 export const resolveAIExecutionConfig = async ({ supabase, useCase, fallbackEnvGemini = true }) => {
