@@ -403,7 +403,9 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
   const persistItems = async (invoiceId: string, nextItems: InvoiceDraftItem[]) => {
     const existingItems = invoiceItems.filter((item) => item.invoiceId === invoiceId);
     for (const item of existingItems) {
-      await onDeleteInvoiceItem(item.id, true);
+      if (isValidUuid(item.id)) {
+        await onDeleteInvoiceItem(item.id, true);
+      }
     }
 
     for (let index = 0; index < nextItems.length; index += 1) {
@@ -430,13 +432,17 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
       const payload = toInvoicePayload({ ...form, status: nextStatus }, totals);
 
       let savedInvoice: Invoice;
-      if (selectedInvoice) {
+      if (selectedInvoice && isValidUuid(selectedInvoice.id)) {
         savedInvoice = await onUpdateInvoice(selectedInvoice.id, payload);
       } else {
         savedInvoice = await onAddInvoice(payload);
-        onSelectInvoice(savedInvoice.id);
       }
 
+      if (!isValidUuid(savedInvoice.id)) {
+        throw new Error('Failed to obtain a valid invoice identifier.');
+      }
+
+      onSelectInvoice(savedInvoice.id);
       await persistItems(savedInvoice.id, draftItems);
 
       const generatedDocumentId = await ensureGeneratedDocument(savedInvoice, nextStatus);
