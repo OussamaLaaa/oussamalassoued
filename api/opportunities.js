@@ -39,6 +39,7 @@ const allowedEntities = new Set([
   'ai_use_case_settings',
   'tasks',
   'recurring_tasks',
+  'recurring_task_logs',
 ]);
 const tablesAttempted = [
   'companies',
@@ -79,6 +80,7 @@ const tablesAttempted = [
   'ai_use_case_settings',
   'tasks',
   'recurring_tasks',
+  'recurring_task_logs',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -836,6 +838,7 @@ export default async function handler(req, res) {
         finance_recurring_rules: results.finance_recurring_rules || [],
         tasks: results.tasks || [],
         recurring_tasks: results.recurring_tasks || [],
+        recurring_task_logs: results.recurring_task_logs || [],
         ai_provider_keys: aiProviderKeys,
         ai_use_case_settings: aiUseCaseSettings,
         templatesWarning,

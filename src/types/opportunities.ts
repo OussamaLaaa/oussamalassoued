@@ -673,6 +673,9 @@ export interface OpportunitiesData {
   financeInvestmentAllocations: FinanceInvestmentAllocation[];
   financePeriods: FinancePeriod[];
   financeRecurringRules: FinanceRecurringRule[];
+  tasks: Task[];
+  recurringTasks: RecurringTask[];
+  recurringTaskLogs: RecurringTaskLog[];
 }
 
 export type StrategySection =
@@ -1250,6 +1253,22 @@ export interface RecurringTask {
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface RecurringTaskLog {
+  id: string;
+  recurringTaskId: string;
+  logDate: string;
+  status: 'done' | 'skipped';
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface RecurringTaskLogInput {
+  recurringTaskId: string;
+  logDate: string;
+  status: 'done' | 'skipped';
+  notes?: string;
 }
 
 export interface RecurringTaskInput {

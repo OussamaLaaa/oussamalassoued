@@ -1,17 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import type { Task, TaskInput, TaskStatus, RecurringTask, RecurringTaskInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
+import type { Task, TaskInput, TaskStatus, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import RecurringTaskForm from './RecurringTaskForm';
 
-type TasksView = 'today' | 'week' | 'board' | 'recurring' | 'backlog' | 'review';
+type TasksView = 'weekly' | 'daily' | 'backlog';
 
 const VIEWS: { id: TasksView; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: 'week', label: 'This Week' },
-  { id: 'board', label: 'Board' },
-  { id: 'recurring', label: 'Recurring' },
+  { id: 'weekly', label: 'This Week Tasks' },
+  { id: 'daily', label: 'Daily Recurring' },
   { id: 'backlog', label: 'Backlog' },
-  { id: 'review', label: 'Review' },
 ];
 
 const STATUS_BADGE: Record<TaskStatus, string> = {
@@ -28,6 +25,13 @@ const PRIORITY_ICON: Record<string, string> = {
   low: '🟢',
 };
 
+const COLUMNS: { status: TaskStatus; label: string; color: string }[] = [
+  { status: 'todo', label: 'Todo', color: 'border-t-[#94a3b8]' },
+  { status: 'doing', label: 'Doing', color: 'border-t-[#2563eb]' },
+  { status: 'done', label: 'Done', color: 'border-t-[#16a34a]' },
+  { status: 'blocked', label: 'Blocked', color: 'border-t-[#dc2626]' },
+];
+
 // ── Date helpers ──
 const todayStr = () => {
   const d = new Date();
@@ -43,19 +47,22 @@ const getWeekStart = (date: Date = new Date()): Date => {
   return d;
 };
 
-const getWeekDates = (start: Date): string[] => {
-  const dates: string[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-  }
-  return dates;
+const weekStartStr = (date: Date = new Date()): string => {
+  const d = getWeekStart(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 const formatDate = (iso: string): string => {
   const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const formatWeekRange = (startStr: string): string => {
+  const start = new Date(startStr + 'T00:00:00');
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  return `${start.toLocaleDateString('en-US', opts)} – ${end.toLocaleDateString('en-US', opts)}`;
 };
 
 const dayName = (iso: string): string => {
@@ -63,46 +70,118 @@ const dayName = (iso: string): string => {
   return d.toLocaleDateString('en-US', { weekday: 'long' });
 };
 
-// ── Task card ──
-const TaskCard: React.FC<{
+// ── Hours formatting ──
+const formatHours = (minutes?: number | null): string => {
+  if (minutes == null) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+};
+
+// ── Status action labels ──
+const STATUS_ACTIONS: { from: TaskStatus[]; to: TaskStatus; label: string }[] = [
+  { from: ['todo', 'doing', 'done', 'blocked', 'cancelled'], to: 'todo', label: 'Todo' },
+  { from: ['todo', 'done', 'blocked', 'cancelled'], to: 'doing', label: 'Doing' },
+  { from: ['doing', 'blocked', 'cancelled'], to: 'done', label: 'Done' },
+  { from: ['todo', 'doing', 'done', 'cancelled'], to: 'blocked', label: 'Block' },
+];
+
+const getActionsForStatus = (current: TaskStatus) =>
+  STATUS_ACTIONS.filter((a) => a.from.includes(current) && a.to !== current);
+
+// ── Completion Modal ──
+const CompletionModal: React.FC<{
   task: Task;
-  onToggleStatus: (id: string, status: TaskStatus) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
-}> = ({ task, onToggleStatus, onEdit, onDelete }) => {
-  const nextStatus: Record<TaskStatus, TaskStatus | null> = {
-    todo: 'doing',
-    doing: 'done',
-    done: 'todo',
-    blocked: 'todo',
-    cancelled: 'todo',
+  onConfirm: (id: string, date: string, hours: number, notes: string) => void;
+  onCancel: () => void;
+}> = ({ task, onConfirm, onCancel }) => {
+  const [completionDate, setCompletionDate] = useState(todayStr());
+  const [actualHours, setActualHours] = useState(task.actualMinutes ? String(Math.round(task.actualMinutes / 60)) : '');
+  const [notes, setNotes] = useState('');
+
+  const handleConfirm = () => {
+    const hours = parseFloat(actualHours) || 0;
+    onConfirm(task.id, completionDate, hours, notes);
   };
 
   return (
-    <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm hover:shadow-sm transition-shadow">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div className="w-full max-w-sm rounded-lg border border-[#e5e7eb] bg-white p-5 shadow-lg">
+        <h3 className="text-sm font-medium text-[#0f172a] mb-3">Complete Task</h3>
+        <p className="text-xs text-[#64748b] mb-4">{task.title}</p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Completion Date</label>
+            <input
+              type="date"
+              value={completionDate}
+              onChange={(e) => setCompletionDate(e.target.value)}
+              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Actual Hours Spent</label>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={actualHours}
+              onChange={(e) => setActualHours(e.target.value)}
+              placeholder="e.g. 2.5"
+              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+              placeholder="Completion notes..."
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#e5e7eb]">
+          <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
+          <button type="button" onClick={handleConfirm} className="px-4 py-2 rounded border border-[#16a34a] bg-[#16a34a] text-white hover:bg-[#15803d] text-sm">Mark Done</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Task card ──
+const TaskCard: React.FC<{
+  task: Task;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+}> = ({ task, onStatusChange, onEdit, onDelete }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const actions = getActionsForStatus(task.status);
+
+  return (
+    <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm hover:shadow-sm transition-shadow relative">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                const next = nextStatus[task.status];
-                if (next) onToggleStatus(task.id, next);
-              }}
-              className="text-xs cursor-pointer shrink-0"
-              title={`Toggle to ${nextStatus[task.status] || ''}`}
-            >
-              {task.status === 'done' ? '✅' : task.status === 'doing' ? '🔄' : task.status === 'blocked' ? '🚫' : task.status === 'cancelled' ? '❌' : '⬜'}
-            </button>
             <span className={`text-xs px-1.5 py-0.5 rounded border ${STATUS_BADGE[task.status]}`}>{task.status}</span>
             {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
             {task.category && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f8fafc] text-[#64748b] border border-[#e5e7eb]">{task.category}</span>}
-            {task.estimatedMinutes != null && (
-              <span className="text-xs text-[#64748b]">{task.estimatedMinutes}m</span>
-            )}
           </div>
           <div className="mt-1 font-medium text-[#0f172a]">{task.title}</div>
           {task.description && <div className="mt-0.5 text-xs text-[#64748b] line-clamp-2">{task.description}</div>}
+
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#64748b]">
+            {task.estimatedMinutes != null && <span>Est: {formatHours(task.estimatedMinutes)}</span>}
+            {task.actualMinutes != null && <span>Actual: {formatHours(task.actualMinutes)}</span>}
+            {task.completedAt && <span>Completed: {dayName(task.completedAt.slice(0, 10))}</span>}
+          </div>
+
           {(task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedStrategyGoalTitle || task.linkedDocumentTitle) && (
             <div className="mt-1 flex flex-wrap gap-1">
               {task.linkedProjectName && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0]">📁 {task.linkedProjectName}</span>}
@@ -113,11 +192,37 @@ const TaskCard: React.FC<{
               {task.linkedDocumentTitle && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f1f5f9] text-[#475569] border border-[#e5e7eb]">📄 {task.linkedDocumentTitle}</span>}
             </div>
           )}
-          {task.notes && <div className="mt-1 text-xs text-[#94a3b8] italic line-clamp-1">{task.notes}</div>}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button type="button" onClick={() => onEdit(task)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
-          <button type="button" onClick={() => onDelete(task.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
+        <div className="relative shrink-0">
+          <button type="button" onClick={() => setMenuOpen(!menuOpen)} className="text-xs px-2 py-1 rounded text-[#64748b] hover:bg-[#f8fafc]">•••</button>
+          {menuOpen && (
+            <div className="absolute right-0 top-8 z-10 w-36 rounded-md border border-[#e5e7eb] bg-white shadow-lg">
+              {actions.map((a) => (
+                <button
+                  key={a.to}
+                  type="button"
+                  onClick={() => { setMenuOpen(false); onStatusChange(task.id, a.to); }}
+                  className="block w-full text-left px-3 py-2 text-xs text-[#0f172a] hover:bg-[#f8fafc]"
+                >
+                  {a.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); onEdit(task); }}
+                className="block w-full text-left px-3 py-2 text-xs text-[#2563eb] hover:bg-[#eff6ff]"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); onDelete(task.id); }}
+                className="block w-full text-left px-3 py-2 text-xs text-[#dc2626] hover:bg-[#fef2f2]"
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -128,6 +233,7 @@ const TaskCard: React.FC<{
 const TasksPanel: React.FC<{
   tasks: Task[];
   recurringTasks: RecurringTask[];
+  recurringTaskLogs: RecurringTaskLog[];
   projects: Project[];
   plans: Plan[];
   strategyGoals: StrategyGoal[];
@@ -140,259 +246,316 @@ const TasksPanel: React.FC<{
   onAddRecurringTask: (input: RecurringTaskInput) => Promise<any>;
   onUpdateRecurringTask: (id: string, input: Partial<RecurringTaskInput>) => Promise<any>;
   onDeleteRecurringTask: (id: string) => Promise<void>;
+  onAddRecurringTaskLog: (input: RecurringTaskLogInput) => Promise<RecurringTaskLog>;
+  onUpdateRecurringTaskLog: (id: string, input: Partial<RecurringTaskLogInput>) => Promise<RecurringTaskLog>;
+  onDeleteRecurringTaskLog: (id: string) => Promise<void>;
 }> = ({
-  tasks, recurringTasks, projects, plans, strategyGoals, companies, people, generatedDocuments,
+  tasks, recurringTasks, recurringTaskLogs, projects, plans, strategyGoals, companies, people, generatedDocuments,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddRecurringTask, onUpdateRecurringTask, onDeleteRecurringTask,
+  onAddRecurringTaskLog, onUpdateRecurringTaskLog, onDeleteRecurringTaskLog,
 }) => {
-  const [view, setView] = useState<TasksView>('today');
+  const [view, setView] = useState<TasksView>('weekly');
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() => weekStartStr());
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showRecurringForm, setShowRecurringForm] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringTask | null>(null);
-  const [generatingWeek, setGeneratingWeek] = useState(false);
+  const [completingTask, setCompletingTask] = useState<Task | null>(null);
 
   const today = todayStr();
-  const weekStart = getWeekStart();
-  const weekDates = getWeekDates(weekStart);
 
-  // ── Derived data ──
-  const tasksDueToday = useMemo(
-    () => tasks.filter((t) => t.taskDate === today && t.status !== 'done' && t.status !== 'cancelled'),
-    [tasks, today],
+  // ── Weekly data ──
+  const weeklyTasks = useMemo(
+    () => tasks.filter((t) => t.weekStart === selectedWeekStart && t.status !== 'cancelled'),
+    [tasks, selectedWeekStart],
   );
-  const overdue = useMemo(
-    () => tasks.filter((t) => t.taskDate && t.taskDate < today && t.status !== 'done' && t.status !== 'cancelled').sort((a, b) => (a.taskDate || '').localeCompare(b.taskDate || '')),
-    [tasks, today],
+
+  const tasksByStatus = useMemo(() => {
+    const map: Record<string, Task[]> = { todo: [], doing: [], done: [], blocked: [] };
+    for (const t of weeklyTasks) {
+      if (map[t.status]) map[t.status].push(t);
+    }
+    return map;
+  }, [weeklyTasks]);
+
+  const weekStats = useMemo(() => {
+    const total = weeklyTasks.length;
+    const todo = tasksByStatus.todo.length;
+    const doing = tasksByStatus.doing.length;
+    const done = tasksByStatus.done.length;
+    const blocked = tasksByStatus.blocked.length;
+    const estimated = weeklyTasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0);
+    const actual = weeklyTasks.reduce((s, t) => s + (t.actualMinutes || 0), 0);
+    return { total, todo, doing, done, blocked, estimated, actual };
+  }, [weeklyTasks, tasksByStatus]);
+
+  // ── Daily recurring data ──
+  const todayLogsByRuleId = useMemo(() => {
+    const map: Record<string, RecurringTaskLog> = {};
+    for (const log of recurringTaskLogs) {
+      if (log.logDate === today) {
+        map[log.recurringTaskId] = log;
+      }
+    }
+    return map;
+  }, [recurringTaskLogs, today]);
+
+  const activeRecurring = useMemo(
+    () => recurringTasks.filter((r) => r.isActive),
+    [recurringTasks],
   );
-  const noDate = useMemo(
-    () => tasks.filter((t) => !t.taskDate && t.status !== 'done' && t.status !== 'cancelled'),
-    [tasks],
-  );
-  const doneToday = useMemo(
-    () => tasks.filter((t) => t.completedAt?.startsWith(today)),
-    [tasks, today],
-  );
-  const thisWeekTasks = useMemo(
-    () => tasks.filter((t) => {
-      if (!t.taskDate || t.status === 'cancelled') return false;
-      return weekDates.includes(t.taskDate) || (t.taskDate >= weekDates[0] && t.taskDate <= weekDates[6]);
-    }),
-    [tasks, weekDates],
-  );
+
+  // ── Backlog ──
   const backlogTasks = useMemo(
-    () => tasks.filter((t) => !t.taskDate && t.status !== 'done' && t.status !== 'cancelled'),
+    () => tasks.filter((t) => !t.weekStart && t.status !== 'cancelled'),
     [tasks],
   );
-  const reviewTasks = useMemo(
-    () => tasks.filter((t) => t.status === 'done' || t.status === 'cancelled').sort((a, b) => ((b.completedAt || b.createdAt || '') > (a.completedAt || a.createdAt || '') ? 1 : -1)),
-    [tasks],
-  );
-
-  const stats = useMemo(() => ({
-    total: tasks.length,
-    doneToday: doneToday.length,
-    overdue: overdue.length,
-    totalEstimated: tasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0),
-    doing: tasks.filter((t) => t.status === 'doing').length,
-    blocked: tasks.filter((t) => t.status === 'blocked').length,
-  }), [tasks, doneToday, overdue]);
 
   // ── Handlers ──
-  const handleToggleStatus = async (id: string, status: TaskStatus) => {
+  const handleStatusChange = async (id: string, status: TaskStatus) => {
+    if (status === 'done') {
+      const task = tasks.find((t) => t.id === id);
+      if (task) {
+        setCompletingTask(task);
+        return;
+      }
+    }
     const payload: Partial<TaskInput> = { status };
-    if (status === 'done') payload.completedAt = new Date().toISOString();
-    else if (status !== 'done') payload.completedAt = undefined;
+    if (status !== 'done') payload.completedAt = undefined;
     await onUpdateTask(id, payload);
   };
 
-  const handleGenerateWeek = async () => {
-    setGeneratingWeek(true);
-    try {
-      const active = recurringTasks.filter((r) => r.isActive);
-      const existingKeys = new Set(tasks.filter((t) => t.recurringRuleId).map((t) => `${t.recurringRuleId}|${t.taskDate}`));
+  const handleComplete = async (id: string, date: string, hours: number, notes: string) => {
+    const completedAt = `${date}T00:00:00`;
+    const actualMinutes = Math.round(hours * 60);
+    const task = tasks.find((t) => t.id === id);
+    const updatedNotes = notes
+      ? (task?.notes ? `${task.notes}\n[Completed ${date}] ${notes}` : `[Completed ${date}] ${notes}`)
+      : task?.notes;
+    await onUpdateTask(id, {
+      status: 'done',
+      completedAt,
+      actualMinutes: actualMinutes || undefined,
+      notes: updatedNotes,
+    });
+    setCompletingTask(null);
+  };
 
-      for (const rule of active) {
-        const days = rule.daysOfWeek ? rule.daysOfWeek.split(',').map((d) => d.trim().toLowerCase()) : [];
-        for (const dateStr of weekDates) {
-          if (days.length > 0) {
-            const d = new Date(dateStr + 'T00:00:00');
-            const dayNameLower = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-            if (!days.includes(dayNameLower)) continue;
-          }
+  const handleMoveToWeek = async (id: string) => {
+    await onUpdateTask(id, { weekStart: selectedWeekStart });
+  };
 
-          const key = `${rule.id}|${dateStr}`;
-          if (existingKeys.has(key)) continue;
-
-          await onAddTask({
-            title: rule.title,
-            description: rule.description,
-            priority: rule.priority,
-            category: rule.category,
-            taskDate: dateStr,
-            estimatedMinutes: rule.estimatedMinutes,
-            linkedProjectId: rule.linkedProjectId,
-            linkedPlanId: rule.linkedPlanId,
-            linkedStrategyGoalId: rule.linkedStrategyGoalId,
-            linkedCompanyId: rule.linkedCompanyId,
-            linkedPersonId: rule.linkedPersonId,
-            notes: rule.notes,
-            isRecurringInstance: true,
-            recurringRuleId: rule.id,
-          });
-        }
-      }
-    } finally {
-      setGeneratingWeek(false);
+  const handleMarkRecurringDone = async (ruleId: string) => {
+    const existing = todayLogsByRuleId[ruleId];
+    if (existing) {
+      await onUpdateRecurringTaskLog(existing.id, { status: 'done' });
+    } else {
+      await onAddRecurringTaskLog({ recurringTaskId: ruleId, logDate: today, status: 'done' });
     }
   };
 
-  // ── Render sections ──
-  const renderTaskList = (items: Task[], emptyMsg: string) => {
-    if (items.length === 0) return <div className="text-xs text-[#94a3b8] py-4 text-center">{emptyMsg}</div>;
-    return (
-      <div className="space-y-2">
-        {items.map((task) => (
-          <TaskCard key={task.id} task={task} onToggleStatus={handleToggleStatus} onEdit={setEditingTask} onDelete={onDeleteTask} />
-        ))}
-      </div>
-    );
+  const handleMarkRecurringSkipped = async (ruleId: string) => {
+    const existing = todayLogsByRuleId[ruleId];
+    if (existing) {
+      await onUpdateRecurringTaskLog(existing.id, { status: 'skipped' });
+    } else {
+      await onAddRecurringTaskLog({ recurringTaskId: ruleId, logDate: today, status: 'skipped' });
+    }
   };
 
-  const renderToday = () => (
+  const handleWeekNav = (direction: 'prev' | 'next') => {
+    const current = new Date(selectedWeekStart + 'T00:00:00');
+    if (direction === 'prev') current.setDate(current.getDate() - 7);
+    else current.setDate(current.getDate() + 7);
+    setSelectedWeekStart(weekStartStr(current));
+  };
+
+  const handleThisWeek = () => setSelectedWeekStart(weekStartStr());
+
+  // ── Render weekly tasks ──
+  const renderWeekly = () => (
     <div className="space-y-4">
-      {overdue.length > 0 && (
-        <div>
-          <h4 className="text-xs font-medium text-[#dc2626] mb-2">Overdue ({overdue.length})</h4>
-          {renderTaskList(overdue, '')}
+      {/* Week navigation */}
+      <div className="flex items-center justify-between rounded-md border border-[#e5e7eb] bg-white p-3">
+        <button type="button" onClick={() => handleWeekNav('prev')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">
+          &lt; Prev
+        </button>
+        <div className="text-center">
+          <div className="text-sm font-medium text-[#0f172a]">Week of {formatDate(selectedWeekStart)}</div>
+          <div className="text-xs text-[#64748b]">{formatWeekRange(selectedWeekStart)}</div>
         </div>
-      )}
-      <div>
-        <h4 className="text-xs font-medium text-[#0f172a] mb-2">Today ({tasksDueToday.length})</h4>
-        {renderTaskList(tasksDueToday, 'No tasks for today.')}
-      </div>
-      <div>
-        <h4 className="text-xs font-medium text-[#64748b] mb-2">No Date ({noDate.length})</h4>
-        {renderTaskList(noDate, 'All tasks have dates.')}
-      </div>
-    </div>
-  );
-
-  const renderWeek = () => {
-    const grouped = weekDates.map((dateStr) => ({
-      dateStr,
-      label: formatDate(dateStr),
-      tasks: thisWeekTasks.filter((t) => t.taskDate === dateStr),
-    }));
-
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[#64748b]">{formatDate(weekDates[0])} – {formatDate(weekDates[6])}</span>
+        <div className="flex items-center gap-2">
+          {selectedWeekStart !== weekStartStr() && (
+            <button type="button" onClick={handleThisWeek} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]">
+              This Week
+            </button>
+          )}
+          <button type="button" onClick={() => handleWeekNav('next')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">
+            Next &gt;
+          </button>
         </div>
-        {grouped.map(({ dateStr, label, tasks: dayTasks }) => (
-          <div key={dateStr}>
-            <h4 className="text-xs font-medium text-[#0f172a] mb-1 flex items-center gap-2">
-              {label}
-              {dateStr === today && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#2563eb] text-white">Today</span>}
-              <span className="text-[10px] text-[#64748b] font-normal">{dayTasks.length}</span>
-            </h4>
-            {renderTaskList(dayTasks, 'No tasks.')}
-          </div>
-        ))}
       </div>
-    );
-  };
 
-  const renderBoard = () => {
-    const columns = weekDates.map((dateStr) => ({
-      dateStr,
-      label: dayName(dateStr).slice(0, 3),
-      tasks: thisWeekTasks.filter((t) => t.taskDate === dateStr),
-    }));
-
-    return (
+      {/* Stats cards */}
       <div className="grid grid-cols-7 gap-2">
-        {columns.map(({ dateStr, label, tasks: colTasks }) => (
-          <div key={dateStr} className={`rounded-md border ${dateStr === today ? 'border-[#2563eb]' : 'border-[#e5e7eb]'} bg-white p-2`}>
-            <div className={`text-xs font-medium text-center pb-2 border-b border-[#e5e7eb] ${dateStr === today ? 'text-[#2563eb]' : 'text-[#0f172a]'}`}>
-              {label}<br />
-              <span className="text-[10px] text-[#64748b]">{dateStr.slice(8)}</span>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Total</div>
+          <div className="text-lg font-bold text-[#0f172a]">{weekStats.total}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Todo</div>
+          <div className="text-lg font-bold text-[#475569]">{weekStats.todo}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Doing</div>
+          <div className="text-lg font-bold text-[#2563eb]">{weekStats.doing}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Done</div>
+          <div className="text-lg font-bold text-[#16a34a]">{weekStats.done}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Blocked</div>
+          <div className="text-lg font-bold text-[#dc2626]">{weekStats.blocked}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Est</div>
+          <div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.estimated)}</div>
+        </div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
+          <div className="text-xs text-[#64748b]">Actual</div>
+          <div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.actual)}</div>
+        </div>
+      </div>
+
+      {/* Status columns */}
+      <div className="grid grid-cols-4 gap-3">
+        {COLUMNS.map((col) => (
+          <div key={col.status} className={`rounded-md border border-[#e5e7eb] bg-white border-t-2 ${col.color}`}>
+            <div className="px-3 py-2 border-b border-[#e5e7eb]">
+              <div className="text-xs font-medium text-[#0f172a]">{col.label}</div>
+              <div className="text-xs text-[#64748b]">{tasksByStatus[col.status].length}</div>
             </div>
-            <div className="mt-2 space-y-1">
-              {colTasks.length === 0 ? (
-                <div className="text-[10px] text-[#94a3b8] text-center py-2">—</div>
+            <div className="p-2 space-y-2 min-h-[120px]">
+              {tasksByStatus[col.status].length === 0 ? (
+                <div className="text-xs text-[#94a3b8] text-center py-4">—</div>
               ) : (
-                colTasks.map((task) => (
-                  <div key={task.id} className="text-[10px] px-1.5 py-1 rounded bg-[#f8fafc] border border-[#e5e7eb]">
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => handleToggleStatus(task.id, task.status === 'done' ? 'todo' : 'done')} className="cursor-pointer">
-                        {task.status === 'done' ? '✅' : '⬜'}
-                      </button>
-                      <span className="truncate flex-1">{task.title}</span>
-                    </div>
-                    {task.priority && <span className="text-[10px]">{PRIORITY_ICON[task.priority]}</span>}
-                  </div>
+                tasksByStatus[col.status].map((task) => (
+                  <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={setEditingTask} onDelete={onDeleteTask} />
                 ))
               )}
             </div>
           </div>
         ))}
       </div>
-    );
-  };
+    </div>
+  );
 
-  const renderRecurring = () => (
+  // ── Render daily recurring ──
+  const renderDailyRecurring = () => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-medium text-[#0f172a]">Recurring Task Rules ({recurringTasks.length})</h4>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleGenerateWeek}
-            disabled={generatingWeek}
-            className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50"
-          >
-            {generatingWeek ? 'Generating...' : 'Generate This Week'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowRecurringForm(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
-          >
-            + Add Rule
-          </button>
+        <div>
+          <h3 className="text-sm font-medium text-[#0f172a]">Daily Recurring Tasks</h3>
+          <p className="text-xs text-[#64748b]">Track daily routines. These are separate from weekly tasks.</p>
         </div>
+        <button type="button" onClick={() => setShowRecurringForm(true)} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]">+ Add</button>
       </div>
-      {recurringTasks.length === 0 ? (
-        <div className="text-xs text-[#94a3b8] py-4 text-center">No recurring task rules yet.</div>
+
+      {activeRecurring.length === 0 ? (
+        <div className="text-xs text-[#94a3b8] py-4 text-center">No daily recurring tasks. Add one above.</div>
       ) : (
         <div className="space-y-2">
-          {recurringTasks.map((rule) => (
-            <div key={rule.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block w-2 h-2 rounded-full ${rule.isActive ? 'bg-[#16a34a]' : 'bg-[#94a3b8]'}`} />
-                    <span className="font-medium text-[#0f172a]">{rule.title}</span>
-                    <span className="text-xs text-[#64748b]">{rule.frequency}</span>
-                    {rule.daysOfWeek && <span className="text-xs text-[#64748b]">({rule.daysOfWeek})</span>}
-                    {rule.priority && <span className="text-xs">{PRIORITY_ICON[rule.priority]}</span>}
-                    {rule.estimatedMinutes != null && <span className="text-xs text-[#64748b]">{rule.estimatedMinutes}m</span>}
-                  </div>
-                  {rule.description && <div className="mt-0.5 text-xs text-[#64748b]">{rule.description}</div>}
-                  {rule.startDate && <div className="mt-0.5 text-xs text-[#94a3b8]">From: {rule.startDate}{rule.endDate ? ` to ${rule.endDate}` : ''}</div>}
-                  {(rule.linkedProjectName || rule.linkedCompanyName || rule.linkedPersonName) && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {rule.linkedProjectName && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0]">📁 {rule.linkedProjectName}</span>}
-                      {rule.linkedCompanyName && <span className="text-xs px-1.5 py-0.5 rounded bg-[#e0f2fe] text-[#0284c7] border border-[#bae6fd]">🏢 {rule.linkedCompanyName}</span>}
-                      {rule.linkedPersonName && <span className="text-xs px-1.5 py-0.5 rounded bg-[#fce7f3] text-[#db2777] border border-[#fbcfe8]">👤 {rule.linkedPersonName}</span>}
+          {activeRecurring.map((rule) => {
+            const log = todayLogsByRuleId[rule.id];
+            const doneToday = log?.status === 'done';
+            const skippedToday = log?.status === 'skipped';
+            return (
+              <div key={rule.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${doneToday ? 'bg-[#16a34a]' : skippedToday ? 'bg-[#f59e0b]' : 'bg-[#94a3b8]'}`} />
+                      <span className="font-medium text-[#0f172a]">{rule.title}</span>
+                      {rule.priority && <span className="text-xs">{PRIORITY_ICON[rule.priority]}</span>}
+                      {rule.estimatedMinutes != null && <span className="text-xs text-[#64748b]">{formatHours(rule.estimatedMinutes)}</span>}
                     </div>
-                  )}
+                    <div className="mt-0.5 text-xs text-[#64748b]">
+                      {rule.frequency}
+                      {rule.daysOfWeek ? ` (${rule.daysOfWeek})` : ''}
+                    </div>
+                    {doneToday && <div className="mt-0.5 text-xs text-[#16a34a]">✓ Done today</div>}
+                    {skippedToday && <div className="mt-0.5 text-xs text-[#f59e0b]">○ Skipped today</div>}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!doneToday && !skippedToday && (
+                      <>
+                        <button type="button" onClick={() => handleMarkRecurringDone(rule.id)} className="text-xs px-2 py-1 rounded border border-[#16a34a] text-[#16a34a] hover:bg-[#f0fdf4]">Done</button>
+                        <button type="button" onClick={() => handleMarkRecurringSkipped(rule.id)} className="text-xs px-2 py-1 rounded border border-[#f59e0b] text-[#f59e0b] hover:bg-[#fffbeb]">Skip</button>
+                      </>
+                    )}
+                    {doneToday && <button type="button" onClick={() => log && onDeleteRecurringTaskLog(log.id)} className="text-xs px-2 py-1 rounded text-[#64748b] hover:bg-[#f8fafc]">Undo</button>}
+                    {skippedToday && <button type="button" onClick={() => log && onDeleteRecurringTaskLog(log.id)} className="text-xs px-2 py-1 rounded text-[#64748b] hover:bg-[#f8fafc]">Undo</button>}
+                    <button type="button" onClick={() => setEditingRecurring(rule)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
+                    <button type="button" onClick={() => onDeleteRecurringTask(rule.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Inactive recurring tasks */}
+      {recurringTasks.filter((r) => !r.isActive).length > 0 && (
+        <div>
+          <h4 className="text-xs font-medium text-[#64748b] mb-2">Inactive</h4>
+          <div className="space-y-2">
+            {recurringTasks.filter((r) => !r.isActive).map((rule) => (
+              <div key={rule.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm opacity-60">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-[#0f172a]">{rule.title}</span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => setEditingRecurring(rule)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
+                    <button type="button" onClick={() => onDeleteRecurringTask(rule.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Render backlog ──
+  const renderBacklog = () => (
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-[#0f172a]">Backlog</h3>
+      <p className="text-xs text-[#64748b]">Tasks without a week assignment. Move them to the current week to plan them.</p>
+      {backlogTasks.length === 0 ? (
+        <div className="text-xs text-[#94a3b8] py-4 text-center">No backlog tasks.</div>
+      ) : (
+        <div className="space-y-2">
+          {backlogTasks.map((task) => (
+            <div key={task.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs px-1.5 py-0.5 rounded border ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+                    {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
+                    {task.category && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f8fafc] text-[#64748b] border border-[#e5e7eb]">{task.category}</span>}
+                  </div>
+                  <div className="mt-1 font-medium text-[#0f172a]">{task.title}</div>
+                  {task.description && <div className="mt-0.5 text-xs text-[#64748b]">{task.description}</div>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button type="button" onClick={() => setEditingRecurring(rule)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
-                  <button type="button" onClick={() => onDeleteRecurringTask(rule.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
+                  {task.status !== 'done' && (
+                    <button type="button" onClick={() => handleMoveToWeek(task.id)} className="text-xs px-2 py-1 rounded border border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]">Move to This Week</button>
+                  )}
+                  <button type="button" onClick={() => setEditingTask(task)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
+                  <button type="button" onClick={() => onDeleteTask(task.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
                 </div>
               </div>
             </div>
@@ -402,50 +565,22 @@ const TasksPanel: React.FC<{
     </div>
   );
 
-  const renderBacklog = () => (
-    <div>
-      <h4 className="text-xs font-medium text-[#0f172a] mb-2">Backlog ({backlogTasks.length})</h4>
-      {renderTaskList(backlogTasks, 'No backlog tasks.')}
-    </div>
-  );
-
-  const renderReview = () => (
-    <div>
-      <h4 className="text-xs font-medium text-[#0f172a] mb-2">Review ({reviewTasks.length})</h4>
-      {renderTaskList(reviewTasks, 'No completed or cancelled tasks.')}
-    </div>
-  );
-
+  // ── Render view ──
   const renderView = () => {
     switch (view) {
-      case 'today': return renderToday();
-      case 'week': return renderWeek();
-      case 'board': return renderBoard();
-      case 'recurring': return renderRecurring();
+      case 'weekly': return renderWeekly();
+      case 'daily': return renderDailyRecurring();
       case 'backlog': return renderBacklog();
-      case 'review': return renderReview();
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-3">
-          <div className="text-xs text-[#64748b]">Total Tasks</div>
-          <div className="mt-1 text-lg font-bold text-[#0f172a]">{stats.total}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-3">
-          <div className="text-xs text-[#64748b]">Done Today</div>
-          <div className="mt-1 text-lg font-bold text-[#16a34a]">{stats.doneToday}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-3">
-          <div className="text-xs text-[#64748b]">Overdue</div>
-          <div className="mt-1 text-lg font-bold text-[#dc2626]">{stats.overdue}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-3">
-          <div className="text-xs text-[#64748b]">Est. Time</div>
-          <div className="mt-1 text-lg font-bold text-[#0f172a]">{stats.totalEstimated}m</div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-[#0f172a]">This Week Tasks</h2>
+          <p className="text-xs text-[#64748b]">Plan tasks for the week. Record the day and time spent when you complete them.</p>
         </div>
       </div>
 
@@ -467,13 +602,15 @@ const TasksPanel: React.FC<{
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => setShowTaskForm(true)}
-          className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-        >
-          + Add Task
-        </button>
+        {view === 'weekly' && (
+          <button
+            type="button"
+            onClick={() => setShowTaskForm(true)}
+            className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
+          >
+            + Add Task
+          </button>
+        )}
       </div>
 
       {/* View content */}
@@ -484,17 +621,18 @@ const TasksPanel: React.FC<{
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-[#e5e7eb] bg-white p-6 shadow-lg">
             <TaskForm
-              initial={editingTask || undefined}
+              initial={editingTask ? { ...editingTask, weekStart: editingTask.weekStart || selectedWeekStart } : undefined}
               projects={projects}
               plans={plans}
               strategyGoals={strategyGoals}
               companies={companies}
               people={people}
+              defaultWeekStart={selectedWeekStart}
               onSubmit={async (input) => {
                 if (editingTask) {
                   await onUpdateTask(editingTask.id, input);
                 } else {
-                  await onAddTask(input);
+                  await onAddTask({ ...input, weekStart: selectedWeekStart });
                 }
                 setShowTaskForm(false);
                 setEditingTask(null);
@@ -535,6 +673,15 @@ const TasksPanel: React.FC<{
             />
           </div>
         </div>
+      )}
+
+      {/* Completion Modal */}
+      {completingTask && (
+        <CompletionModal
+          task={completingTask}
+          onConfirm={handleComplete}
+          onCancel={() => setCompletingTask(null)}
+        />
       )}
     </div>
   );

@@ -12,6 +12,7 @@ const TaskForm: React.FC<{
   strategyGoals: StrategyGoal[];
   companies: Company[];
   people: Person[];
+  defaultWeekStart?: string;
   onSubmit: (input: TaskInput) => Promise<void>;
   onCancel: () => void;
 }> = ({ initial, projects, plans, strategyGoals, companies, people, onSubmit, onCancel }) => {

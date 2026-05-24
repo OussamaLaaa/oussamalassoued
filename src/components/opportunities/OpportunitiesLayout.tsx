@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -357,6 +357,8 @@ const OpportunitiesLayout: React.FC<{
     tasks, recurringTasks,
     addTask, updateTask, deleteTask,
     addRecurringTask, updateRecurringTask, deleteRecurringTask,
+    recurringTaskLogs,
+    addRecurringTaskLog, updateRecurringTaskLog, deleteRecurringTaskLog,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -847,6 +849,10 @@ const OpportunitiesLayout: React.FC<{
                 onAddRecurringTask={addRecurringTask}
                 onUpdateRecurringTask={updateRecurringTask}
                 onDeleteRecurringTask={deleteRecurringTask}
+                recurringTaskLogs={recurringTaskLogs}
+                onAddRecurringTaskLog={addRecurringTaskLog}
+                onUpdateRecurringTaskLog={updateRecurringTaskLog}
+                onDeleteRecurringTaskLog={deleteRecurringTaskLog}
               />
             )}
 

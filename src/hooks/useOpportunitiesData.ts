@@ -1138,6 +1138,24 @@ const attachTaskLinkNames = (
   }));
 };
 
+const recurringTaskLogFromDb = (row: any): RecurringTaskLog => ({
+  id: String(row?.id ?? ''),
+  recurringTaskId: row?.recurring_task_id ?? row?.recurringTaskId ?? '',
+  logDate: row?.log_date ?? row?.logDate ?? '',
+  status: row?.status ?? 'done',
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+});
+
+const recurringTaskLogToDb = (input: Partial<RecurringTaskLogInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.recurringTaskId !== undefined) payload.recurring_task_id = input.recurringTaskId;
+  if (input.logDate !== undefined) payload.log_date = input.logDate;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
 const attachRecurringTaskLinkNames = (
   items: RecurringTask[],
   projects: Project[],
@@ -1271,6 +1289,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [financeRecurringRules, setFinanceRecurringRules] = useState<FinanceRecurringRule[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
+  const [recurringTaskLogs, setRecurringTaskLogs] = useState<RecurringTaskLog[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -1308,6 +1327,7 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextFinanceRecurringRulesRaw = Array.isArray(payload?.finance_recurring_rules) ? payload.finance_recurring_rules : [];
     const nextTasksRaw = Array.isArray(payload?.tasks) ? payload.tasks : [];
     const nextRecurringTasksRaw = Array.isArray(payload?.recurring_tasks) ? payload.recurring_tasks : [];
+    const nextRecurringTaskLogsRaw = Array.isArray(payload?.recurring_task_logs) ? payload.recurring_task_logs : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -1419,6 +1439,8 @@ export const useOpportunitiesData = (enabled = true) => {
       nextProjects, nextPlans, nextStrategyGoals, nextCompanies, nextPeople,
     );
 
+    const nextRecurringTaskLogs = nextRecurringTaskLogsRaw.map((row: any) => recurringTaskLogFromDb(row));
+
     if (import.meta.env.DEV) {
       console.log('[Opportunities Debug] Loaded companies database types:', nextCompanies.map((c) => ({
         name: c.name,
@@ -1464,6 +1486,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setStrategyItems(nextStrategyItems);
     setTasks(nextTasks);
     setRecurringTasks(nextRecurringTasks);
+    setRecurringTaskLogs(nextRecurringTaskLogs);
   }, []);
 
   useEffect(() => {
@@ -1716,7 +1739,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2901,6 +2924,27 @@ export const useOpportunitiesData = (enabled = true) => {
     setRecurringTasks((current) => current.filter((t) => t.id !== id));
   };
 
+  // ── Recurring Task Logs CRUD ──
+
+  const addRecurringTaskLog = async (input: RecurringTaskLogInput) => {
+    const row = await syncInsert('recurring_task_logs', recurringTaskLogToDb(input));
+    const next = recurringTaskLogFromDb(row);
+    setRecurringTaskLogs((current) => [...current, next]);
+    return next;
+  };
+
+  const updateRecurringTaskLog = async (id: string, input: Partial<RecurringTaskLogInput>) => {
+    const row = await syncUpdate('recurring_task_logs', id, recurringTaskLogToDb(input));
+    const next = recurringTaskLogFromDb(row);
+    setRecurringTaskLogs((current) => current.map((l) => (l.id === id ? next : l)));
+    return next;
+  };
+
+  const deleteRecurringTaskLog = async (id: string) => {
+    await syncDelete('recurring_task_logs' as any, id);
+    setRecurringTaskLogs((current) => current.filter((l) => l.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -3148,6 +3192,10 @@ export const useOpportunitiesData = (enabled = true) => {
     addRecurringTask,
     updateRecurringTask,
     deleteRecurringTask,
+    recurringTaskLogs,
+    addRecurringTaskLog,
+    updateRecurringTaskLog,
+    deleteRecurringTaskLog,
     addFinanceRecurringRule,
     updateFinanceRecurringRule,
     deleteFinanceRecurringRule,
