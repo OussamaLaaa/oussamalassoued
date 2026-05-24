@@ -1,9 +1,9 @@
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 const DEFAULT_MODEL = 'gemini-1.5-flash';
-const MAX_TEXT_LENGTH = 8000;
-const MAX_CONTEXT_LENGTH = 1200;
-const MAX_INSTRUCTIONS_LENGTH = 1200;
+const MAX_CONTENT_CHARS = 12000;
+const MAX_CONTEXT_LENGTH = 2000;
+const MAX_INSTRUCTIONS_LENGTH = 2000;
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -67,6 +67,32 @@ const getProviderConfig = () => {
   const model = toCleanString(process.env.GEMINI_MODEL) || DEFAULT_MODEL;
   return { provider, apiKey, model };
 };
+
+const buildDebug = (overrides = {}) => ({
+  phase: 'start',
+  mode: '',
+  documentType: '',
+  language: '',
+  tone: '',
+  hasDocumentContent: false,
+  documentContentLength: 0,
+  instructionsLength: 0,
+  providerStatus: null,
+  providerErrorMessage: '',
+  responseTextLength: 0,
+  parseStep: 'not_started',
+  parseErrorMessage: '',
+  validationError: '',
+  retryWithoutJsonMimeUsed: false,
+  ...overrides,
+});
+
+const buildFailure = (res, status, error, debug, code) => toSafeJson(res, status, {
+  success: false,
+  ...(code ? { code } : {}),
+  error,
+  ...(debug ? { debug } : {}),
+});
 
 const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
   const body = {
@@ -162,7 +188,7 @@ const normalizeList = (value) => {
 
 const normalizeResult = (analysis) => ({
   summary: truncate(analysis?.summary, 1000),
-  improvedContent: truncate(analysis?.improvedContent, MAX_TEXT_LENGTH),
+  improvedContent: truncate(analysis?.improvedContent, MAX_CONTENT_CHARS),
   risks: normalizeList(analysis?.risks),
   missingClauses: normalizeList(analysis?.missingClauses),
   suggestedSections: normalizeList(analysis?.suggestedSections),
@@ -170,20 +196,10 @@ const normalizeResult = (analysis) => ({
   nextActions: normalizeList(analysis?.nextActions),
 });
 
-const makeSafeDebug = (overrides = {}) => ({
-  phase: 'unknown',
-  provider: 'gemini',
-  model: DEFAULT_MODEL,
-  providerStatus: null,
-  responseTextLength: 0,
-  parseStep: 'not_started',
-  ...overrides,
-});
-
 const truncateDocument = (document = {}) => ({
   title: truncate(document.title, 300),
   type: normalizeDocumentType(document.type),
-  content: truncate(document.content, MAX_TEXT_LENGTH),
+  content: truncate(document.content, MAX_CONTENT_CHARS),
   status: truncate(document.status, 100),
   amount: Number.isFinite(Number(document.amount)) ? Number(document.amount) : undefined,
   currency: truncate(document.currency, 16),
@@ -214,6 +230,130 @@ const truncateBrand = (brand = {}) => ({
   paymentNotes: truncate(brand.paymentNotes, MAX_CONTEXT_LENGTH),
   signatureName: truncate(brand.signatureName, MAX_CONTEXT_LENGTH),
 });
+
+const validateAnalysis = (analysis) => {
+  if (!analysis || typeof analysis !== 'object') return null;
+  return normalizeResult(analysis);
+};
+
+const parseAnalysisText = (value) => {
+  const rawText = toCleanString(value);
+  const cleaned = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+  if (!cleaned) {
+    return {
+      analysis: null,
+      parseStep: 'empty_text',
+      parseErrorMessage: 'Empty Gemini response text.',
+      responseText: rawText,
+    };
+  }
+
+  try {
+    return {
+      analysis: JSON.parse(cleaned),
+      parseStep: 'json_parse',
+      parseErrorMessage: '',
+      responseText: rawText,
+    };
+  } catch (error) {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      try {
+        return {
+          analysis: JSON.parse(cleaned.slice(start, end + 1)),
+          parseStep: 'substring_json_parse',
+          parseErrorMessage: '',
+          responseText: rawText,
+        };
+      } catch (substringError) {
+        return {
+          analysis: null,
+          parseStep: 'substring_json_parse_failed',
+          parseErrorMessage: substringError instanceof Error ? substringError.message : 'Unable to parse JSON substring.',
+          responseText: rawText,
+        };
+      }
+    }
+
+    return {
+      analysis: null,
+      parseStep: 'json_parse_failed',
+      parseErrorMessage: error instanceof Error ? error.message : 'Unable to parse Gemini JSON response.',
+      responseText: rawText,
+    };
+  }
+};
+
+const getAnalysisErrorMessage = (errorResult, fallback = 'Unable to generate document response.') => {
+  if (!errorResult) return fallback;
+  const message = String(errorResult.message || errorResult.statusText || '').trim();
+  return message || fallback;
+};
+
+const analyzeResponse = async ({ apiKey, model, prompt }) => {
+  const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
+  const firstText = readGeminiResponseText(firstAttempt.data);
+  const firstParsed = parseAnalysisText(firstText);
+  const firstValidated = validateAnalysis(firstParsed.analysis);
+
+  if (firstAttempt.ok && firstValidated) {
+    return {
+      success: true,
+      status: firstAttempt.status,
+      text: firstText,
+      result: firstValidated,
+      parseStep: firstParsed.parseStep,
+      parseErrorMessage: '',
+      providerError: null,
+      retryWithoutJsonMimeUsed: false,
+    };
+  }
+
+  const firstParseFailure = firstAttempt.ok && !firstValidated;
+  const mimeRelated = !firstAttempt.ok && /responseMimeType|mime|JSON|application\/json/i.test(firstAttempt.error?.message || '');
+  if (!firstParseFailure && !firstAttempt.ok && !mimeRelated) {
+    return {
+      success: false,
+      status: firstAttempt.status,
+      text: firstAttempt.rawText,
+      result: null,
+      parseStep: 'provider_error',
+      parseErrorMessage: '',
+      providerError: firstAttempt.error,
+      retryWithoutJsonMimeUsed: false,
+    };
+  }
+
+  const retryAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: false });
+  const retryText = readGeminiResponseText(retryAttempt.data);
+  const retryParsed = parseAnalysisText(retryText);
+  const retryValidated = validateAnalysis(retryParsed.analysis);
+
+  if (retryAttempt.ok && retryValidated) {
+    return {
+      success: true,
+      status: retryAttempt.status,
+      text: retryText,
+      result: retryValidated,
+      parseStep: retryParsed.parseStep,
+      parseErrorMessage: '',
+      providerError: null,
+      retryWithoutJsonMimeUsed: true,
+    };
+  }
+
+  return {
+    success: false,
+    status: retryAttempt.ok ? retryAttempt.status : firstAttempt.status,
+    text: retryText || firstText || retryAttempt.rawText || firstAttempt.rawText,
+    result: null,
+    parseStep: retryParsed.parseStep === 'empty_text' && firstParsed.parseStep !== 'empty_text' ? firstParsed.parseStep : retryParsed.parseStep,
+    parseErrorMessage: retryParsed.parseErrorMessage || firstParsed.parseErrorMessage || '',
+    providerError: retryAttempt.ok ? null : retryAttempt.error || firstAttempt.error,
+    retryWithoutJsonMimeUsed: true,
+  };
+};
 
 const languageInstruction = (language) => {
   if (language === 'arabic') return 'All string values must be in Arabic only. Keep JSON keys exactly as specified.';
@@ -383,54 +523,6 @@ const buildTestPrompt = () => [
   'nextActions: empty array',
 ].join('\n');
 
-const analyzeResponse = async ({ apiKey, model, prompt }) => {
-  const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
-
-  const parseAttempt = (attempt, parseStep) => {
-    const text = readGeminiResponseText(attempt.data);
-    const parsed = extractFirstJsonObject(text);
-    const result = parsed ? normalizeResult(parsed) : normalizeResult({});
-    return {
-      success: Boolean(parsed),
-      status: attempt.status,
-      text,
-      result,
-      parseStep,
-      providerError: null,
-    };
-  };
-
-  if (firstAttempt.ok) {
-    return parseAttempt(firstAttempt, 'json_parse');
-  }
-
-  const mimeRelated = /responseMimeType|mime|JSON|application\/json/i.test(firstAttempt.error?.message || '');
-  if (!mimeRelated) {
-    return {
-      success: false,
-      status: firstAttempt.status,
-      text: firstAttempt.rawText,
-      result: null,
-      parseStep: 'provider_error',
-      providerError: firstAttempt.error,
-    };
-  }
-
-  const retryAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: false });
-  if (retryAttempt.ok) {
-    return parseAttempt(retryAttempt, 'retry_without_response_mime_type');
-  }
-
-  return {
-    success: false,
-    status: retryAttempt.status,
-    text: retryAttempt.rawText,
-    result: null,
-    parseStep: 'provider_error',
-    providerError: retryAttempt.error,
-  };
-};
-
 const isQuotaError = (errorResult) => {
   const status = Number(errorResult?.status || 0);
   const code = String(errorResult?.code || '');
@@ -444,14 +536,19 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  let phase = 'start';
+
   try {
+    phase = 'parse_body';
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
     }
 
+    phase = 'validate';
     const { provider, apiKey, model } = getProviderConfig();
 
     if (req.method === 'GET') {
+      phase = 'success';
       if (req?.query?.health === '1') {
         return toSafeJson(res, 200, {
           success: true,
@@ -468,20 +565,21 @@ export default async function handler(req, res) {
       return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
     }
 
+    phase = 'auth';
     if (!isAuthenticated(req)) {
       return toSafeJson(res, 401, { success: false, error: 'Unauthorized' });
     }
 
+    phase = 'parse_body';
     const body = readBody(req);
-
-    if (provider !== 'gemini' || !apiKey) {
-      return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
-    }
+    const debugRequested = Boolean(body?.debug);
 
     if (body?.testProvider === true) {
+      phase = 'build_prompt';
       const testResult = await analyzeResponse({ apiKey, model, prompt: buildTestPrompt() });
 
       if (testResult.success) {
+        phase = 'success';
         return toSafeJson(res, 200, {
           success: true,
           result: testResult.result,
@@ -494,46 +592,102 @@ export default async function handler(req, res) {
         });
       }
 
-      if (isQuotaError(testResult.providerError)) {
-        return toSafeJson(res, 429, {
-          success: false,
-          code: 'AI_QUOTA_EXCEEDED',
-          error: 'AI quota exceeded. Try again later or change Gemini model.',
-          debug: {
-            providerStatus: testResult.status,
-            model,
-            responseTextLength: testResult.text ? testResult.text.length : 0,
-            parseStep: testResult.parseStep,
-          },
-        });
-      }
+      phase = testResult.parseStep === 'provider_error' ? 'provider_response' : 'parse_response';
 
-      return toSafeJson(res, 500, {
-        success: false,
-        error: 'Unable to generate a clean response.',
-        debug: {
+      if (isQuotaError(testResult.providerError)) {
+        return buildFailure(res, 429, 'AI quota exceeded. Try again later or change Gemini model.', debugRequested ? buildDebug({
+          phase,
           providerStatus: testResult.status,
-          model,
+          providerErrorMessage: getAnalysisErrorMessage(testResult.providerError),
           responseTextLength: testResult.text ? testResult.text.length : 0,
           parseStep: testResult.parseStep,
-        },
-      });
+          parseErrorMessage: testResult.parseErrorMessage || '',
+          retryWithoutJsonMimeUsed: Boolean(testResult.retryWithoutJsonMimeUsed),
+        }) : null, 'AI_QUOTA_EXCEEDED');
+      }
+
+      const providerStatus = Number(testResult.status || 0);
+      const errorMessage = providerStatus === 400
+        ? 'AI provider rejected the document request.'
+        : testResult.parseStep === 'json_parse_failed' || testResult.parseStep === 'substring_json_parse_failed' || testResult.parseStep === 'empty_text'
+          ? 'AI returned an invalid document response.'
+          : 'Unable to generate document response.';
+
+      if (debugRequested) {
+        return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, buildDebug({
+          phase: providerStatus === 400 ? 'provider_response' : 'parse_response',
+          providerStatus: testResult.status,
+          providerErrorMessage: getAnalysisErrorMessage(testResult.providerError),
+          responseTextLength: testResult.text ? testResult.text.length : 0,
+          parseStep: testResult.parseStep,
+          parseErrorMessage: testResult.parseErrorMessage || (testResult.parseStep === 'provider_error' ? getAnalysisErrorMessage(testResult.providerError) : ''),
+          retryWithoutJsonMimeUsed: Boolean(testResult.retryWithoutJsonMimeUsed),
+        }), providerStatus === 400 ? undefined : undefined);
+      }
+
+      return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, null, providerStatus === 400 ? undefined : undefined);
     }
 
+    phase = 'validate';
     const mode = toCleanString(body?.mode);
     const documentType = normalizeDocumentType(body?.documentType);
     const language = normalizeLanguage(body?.language);
     const tone = normalizeTone(body?.tone);
 
     if (!mode || !documentType || !language) {
-      return toSafeJson(res, 400, { success: false, error: 'Invalid AI document request.' });
+      phase = 'validate';
+      return buildFailure(
+        res,
+        400,
+        'Invalid AI document request.',
+        debugRequested ? buildDebug({
+          phase,
+          mode,
+          documentType,
+          language,
+          tone,
+          hasDocumentContent: false,
+          documentContentLength: 0,
+          instructionsLength: 0,
+          validationError: 'mode, documentType, and language are required.',
+        }) : null,
+      );
     }
 
+    phase = 'sanitize_payload';
     const document = truncateDocument(body?.document);
     const context = truncateContext(body?.context);
     const brand = truncateBrand(body?.brand);
     const instructions = truncate(body?.instructions, MAX_INSTRUCTIONS_LENGTH);
 
+    const documentContent = toCleanString(body?.document?.content);
+    const debugBase = debugRequested ? buildDebug({
+      phase,
+      mode,
+      documentType,
+      language,
+      tone,
+      hasDocumentContent: Boolean(documentContent),
+      documentContentLength: documentContent.length,
+      instructionsLength: instructions.length,
+    }) : null;
+
+    if (provider !== 'gemini' || !apiKey) {
+      return buildFailure(
+        res,
+        500,
+        'AI provider is not configured.',
+        debugRequested ? buildDebug({
+          ...(debugBase || {}),
+          phase,
+          providerStatus: null,
+          providerErrorMessage: 'AI provider is not configured.',
+          validationError: 'Missing AI provider configuration.',
+        }) : null,
+      );
+    }
+
+    phase = 'build_prompt';
     const prompt = buildPrompt({
       mode,
       documentType,
@@ -545,9 +699,13 @@ export default async function handler(req, res) {
       instructions,
     });
 
+    phase = 'provider_request';
     const analysis = await analyzeResponse({ apiKey, model, prompt });
 
+    phase = analysis.success ? 'normalize_result' : (analysis.parseStep === 'provider_error' ? 'provider_response' : 'parse_response');
+
     if (analysis.success) {
+      phase = 'success';
       return toSafeJson(res, 200, {
         success: true,
         result: analysis.result,
@@ -555,34 +713,53 @@ export default async function handler(req, res) {
     }
 
     if (isQuotaError(analysis.providerError)) {
-      return toSafeJson(res, 429, {
-        success: false,
-        code: 'AI_QUOTA_EXCEEDED',
-        error: 'AI quota exceeded. Try again later or change Gemini model.',
-      });
+      if (debugRequested) {
+        return buildFailure(res, 429, 'AI quota exceeded. Try again later or change Gemini model.', buildDebug({
+          ...debugBase,
+          phase,
+          providerStatus: analysis.status,
+          providerErrorMessage: getAnalysisErrorMessage(analysis.providerError),
+          responseTextLength: analysis.text ? analysis.text.length : 0,
+          parseStep: analysis.parseStep,
+          parseErrorMessage: analysis.parseErrorMessage || '',
+          retryWithoutJsonMimeUsed: Boolean(analysis.retryWithoutJsonMimeUsed),
+        }), 'AI_QUOTA_EXCEEDED');
+      }
+
+      return buildFailure(res, 429, 'AI quota exceeded. Try again later or change Gemini model.', null, 'AI_QUOTA_EXCEEDED');
     }
 
-    console.error('[AI Document] Failed to generate output', {
-      route: 'ai-document',
-      phase: 'generate',
-      message: analysis.providerError?.message || 'Unknown error',
-      providerStatus: analysis.status,
-    });
+    const providerStatus = Number(analysis.status || 0);
+    const providerErrorMessage = getAnalysisErrorMessage(analysis.providerError);
+    const parseFailed = analysis.parseStep === 'json_parse_failed' || analysis.parseStep === 'substring_json_parse_failed' || analysis.parseStep === 'empty_text';
+    const errorMessage = providerStatus === 400
+      ? 'AI provider rejected the document request.'
+      : parseFailed
+        ? 'AI returned an invalid document response.'
+        : 'Unable to generate document response.';
 
-    return toSafeJson(res, 500, {
-      success: false,
-      error: 'AI document assistant could not generate a response.',
-    });
+    if (debugRequested) {
+      return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, buildDebug({
+        ...debugBase,
+        phase: providerStatus === 400 ? 'provider_response' : parseFailed ? 'parse_response' : phase,
+        providerStatus: analysis.status,
+        providerErrorMessage,
+        responseTextLength: analysis.text ? analysis.text.length : 0,
+        parseStep: analysis.parseStep,
+        parseErrorMessage: analysis.parseErrorMessage || (parseFailed ? 'Gemini returned invalid JSON.' : ''),
+        validationError: analysis.success ? '' : (parseFailed ? 'Response could not be parsed as JSON.' : ''),
+        retryWithoutJsonMimeUsed: Boolean(analysis.retryWithoutJsonMimeUsed),
+      }), providerStatus === 400 ? undefined : undefined);
+    }
+
+    return buildFailure(res, providerStatus === 400 ? 400 : 500, errorMessage, null, providerStatus === 400 ? undefined : undefined);
   } catch (error) {
-    console.error('[AI Document] Unhandled error', {
-      route: 'ai-document',
-      phase: 'unhandled',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    return toSafeJson(res, 500, {
-      success: false,
-      error: 'AI document assistant failed.',
-    });
+    return buildFailure(res, 500, 'AI document assistant failed.', buildDebug({
+      phase,
+      providerStatus: null,
+      providerErrorMessage: error instanceof Error ? error.message : 'Unknown error',
+      parseStep: 'unhandled_error',
+      parseErrorMessage: error instanceof Error ? error.message : 'Unknown error',
+    }));
   }
 }

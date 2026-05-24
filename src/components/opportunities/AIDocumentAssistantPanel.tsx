@@ -75,6 +75,13 @@ const EMPTY_RESULT: AIResult = {
   nextActions: [],
 };
 
+const AI_DOCUMENT_DEBUG = true;
+
+const MODE_VALUES: AiMode[] = ['create_template', 'improve_document', 'risk_review', 'missing_clauses', 'adapt_to_project', 'summarize_document', 'rewrite_tone', 'translate_document'];
+const DOCUMENT_TYPE_VALUES: DocumentType[] = ['invoice', 'contract', 'cahier_de_charges', 'proposal', 'agreement', 'receipt', 'ux_audit_report', 'project_brief', 'document', 'other'];
+const LANGUAGE_VALUES: DocumentLanguage[] = ['english', 'french', 'arabic'];
+const TONE_VALUES: AiTone[] = ['professional', 'simple', 'formal', 'friendly', 'concise'];
+
 const DEFAULT_TITLE = 'Untitled Document';
 
 const todayStamp = () => new Date().toISOString().slice(0, 10);
@@ -103,6 +110,11 @@ const buildGeneratedTitle = (documentTitle: string, documentType: DocumentType) 
 };
 
 const fieldValue = (value?: string) => (value ? value.trim() : '');
+
+const normalizeMode = (value: string): AiMode => (MODE_VALUES.includes(value as AiMode) ? (value as AiMode) : 'create_template');
+const normalizeDocumentType = (value: string): DocumentType => (DOCUMENT_TYPE_VALUES.includes(value as DocumentType) ? (value as DocumentType) : 'document');
+const normalizeLanguage = (value: string): DocumentLanguage => (LANGUAGE_VALUES.includes(value as DocumentLanguage) ? (value as DocumentLanguage) : 'english');
+const normalizeTone = (value: string): AiTone => (TONE_VALUES.includes(value as AiTone) ? (value as AiTone) : 'professional');
 
 const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   documentBrandSettings,
@@ -197,10 +209,31 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   };
 
   const handleAnalyze = async () => {
-    if (!hasEditableContent && mode !== 'create_template') {
-      setError('Select a document or paste content before analyzing.');
+    const normalizedMode = normalizeMode(mode);
+    const normalizedDocumentType = normalizeDocumentType(documentType);
+    const normalizedLanguage = normalizeLanguage(language);
+    const normalizedTone = normalizeTone(tone);
+    const trimmedDocumentContent = fieldValue(documentContent);
+    const trimmedInstructions = fieldValue(instructions);
+
+    if (normalizedMode !== 'create_template' && !trimmedDocumentContent) {
+      setError('Select a document or enter content before using this AI mode.');
       return;
     }
+
+    console.log('[AI Document] payload summary', {
+      mode: normalizedMode,
+      documentType: normalizedDocumentType,
+      language: normalizedLanguage,
+      tone: normalizedTone,
+      hasDocumentContent: Boolean(trimmedDocumentContent),
+      documentContentLength: trimmedDocumentContent.length,
+      hasSelectedDocument: Boolean(selectedDocumentId),
+      selectedDocumentId,
+      hasProject: Boolean(selectedProjectId),
+      hasCompany: Boolean(selectedCompanyId),
+      instructionsLength: trimmedInstructions.length,
+    });
 
     setLoading(true);
     setError('');
@@ -212,14 +245,14 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mode,
-          documentType,
-          language,
-          tone,
+          mode: normalizedMode,
+          documentType: normalizedDocumentType,
+          language: normalizedLanguage,
+          tone: normalizedTone,
           document: {
             title: documentTitle,
-            type: documentType,
-            content: documentContent,
+            type: normalizedDocumentType,
+            content: trimmedDocumentContent,
             status: selectedDocument?.status || 'draft',
             amount: selectedDocument?.amount,
             currency: selectedDocument?.currency,
@@ -228,8 +261,8 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
           },
           context,
           brand: selectedBrand,
-          instructions: fieldValue(instructions) || undefined,
-          debug: import.meta.env.DEV,
+          instructions: trimmedInstructions || undefined,
+          debug: AI_DOCUMENT_DEBUG,
         }),
       });
 
@@ -241,6 +274,10 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
       }
 
       if (!response.ok) {
+        console.error('[AI Document] failed', json);
+        if (json?.debug) {
+          console.error('[AI Document] debug', json.debug);
+        }
         if (json?.code === 'AI_QUOTA_EXCEEDED') {
           setError('AI quota exceeded. Try again later or change Gemini model.');
         } else {
