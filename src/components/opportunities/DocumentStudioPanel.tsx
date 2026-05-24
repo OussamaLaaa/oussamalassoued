@@ -19,6 +19,7 @@ import type {
   Project,
 } from '../../types/opportunities';
 import DocumentPrintPreviewModal from './DocumentPrintPreviewModal';
+import AIDocumentAssistantPanel from './AIDocumentAssistantPanel';
 import CahierDeChargesBuilder from './CahierDeChargesBuilder';
 import ContractStudioPanel from './ContractStudioPanel';
 import InvoiceArchivePanel from './InvoiceArchivePanel';
@@ -26,7 +27,7 @@ import InvoicePrintPreviewModal from './InvoicePrintPreviewModal';
 import InvoiceStudioPanel from './InvoiceStudioPanel';
 
 
-type StudioTab = 'dashboard' | 'invoice-studio' | 'invoice-archive' | 'contract-studio' | 'cahier-builder' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
+type StudioTab = 'dashboard' | 'invoice-studio' | 'invoice-archive' | 'contract-studio' | 'cahier-builder' | 'templates' | 'brand' | 'builder' | 'generated' | 'ai-assistant' | 'review';
 
 type BuilderState = {
   templateId: string;
@@ -60,6 +61,7 @@ const TABS: Array<{ id: StudioTab; label: string }> = [
   { id: 'brand', label: 'Brand Settings' },
   { id: 'builder', label: 'Builder' },
   { id: 'generated', label: 'Generated Documents' },
+  { id: 'ai-assistant', label: 'AI Assistant' },
   { id: 'review', label: 'Review' },
 ];
 
@@ -910,6 +912,21 @@ const DocumentStudioPanel: React.FC<{
             </div>
           ))}
         </div>
+      ) : null}
+
+      {tab === 'ai-assistant' ? (
+        <AIDocumentAssistantPanel
+          documentBrandSettings={documentBrandSettings}
+          documentTemplates={documentTemplates}
+          generatedDocuments={generatedDocuments}
+          projects={projects}
+          companies={companies}
+          people={people}
+          deals={deals}
+          onAddDocumentTemplate={onAddDocumentTemplate}
+          onAddGeneratedDocument={onAddGeneratedDocument}
+          onUpdateGeneratedDocument={onUpdateGeneratedDocument}
+        />
       ) : null}
 
       {tab === 'review' ? (
