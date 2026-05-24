@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import aiProviderRouter from './lib/aiProviderRouter.js';
+import aiProviderRouter from './aiProviderRouter.js';
 
 const { runAICompletion } = aiProviderRouter;
 
@@ -141,7 +141,6 @@ const requestGemini = async ({ apiKey, model, prompt }) => {
   try {
     json = JSON.parse(rawText);
   } catch {
-    // Keep raw text for fallback parsing.
   }
 
   return {
@@ -649,7 +648,7 @@ export default async function handler(req, res) {
       if (req?.query?.health === '1') {
         return toSafeJson(res, 200, {
           success: true,
-          route: 'api/ai-document.js',
+          route: 'api/ai.js',
           provider: provider || process.env.AI_PROVIDER || 'gemini',
           configured: provider === 'gemini' && Boolean(apiKey),
           model,

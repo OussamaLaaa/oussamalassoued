@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import generatePdfHandler from './generate-pdf.js';
+import generatePdfHandler from '../server/lib/generatePdfHandler.js';
 
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';

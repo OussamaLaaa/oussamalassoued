@@ -1,9 +1,9 @@
-import aiMessageHandler from './ai-message.js';
-import aiFinanceHandler from './ai-finance.js';
-import aiDocumentHandler from './ai-document.js';
+import aiMessageHandler from '../server/lib/aiMessageHandler.js';
+import aiFinanceHandler from '../server/lib/aiFinanceHandler.js';
+import aiDocumentHandler from '../server/lib/aiDocumentHandler.js';
 import { createClient } from '@supabase/supabase-js';
-import aiKeyCrypto from './lib/aiKeyCrypto.js';
-import aiProviderRouter from './lib/aiProviderRouter.js';
+import aiKeyCrypto from '../server/lib/aiKeyCrypto.js';
+import aiProviderRouter from '../server/lib/aiProviderRouter.js';
 
 const { encryptApiKey, decryptApiKey } = aiKeyCrypto;
 const { testProviderConnection } = aiProviderRouter;

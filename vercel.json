@@ -4,6 +4,12 @@
   "framework": "vite",
   "installCommand": "npm install",
   "outputDirectory": "dist",
+  "functions": {
+    "api/documents.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "routes": [
     {
       "src": "/api/opportunities",

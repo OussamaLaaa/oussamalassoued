@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import aiProviderRouter from './lib/aiProviderRouter.js';
+import aiProviderRouter from './aiProviderRouter.js';
 
 const { runAICompletion } = aiProviderRouter;
 
@@ -142,7 +142,6 @@ const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true
   try {
     json = JSON.parse(rawText);
   } catch {
-    // raw text will be used directly
   }
 
   return {
@@ -359,7 +358,7 @@ export default async function handler(req, res) {
       if (req?.query?.health === '1') {
         return toSafeJson(res, 200, {
           success: true,
-          route: 'api/ai-message.js',
+          route: 'api/ai.js',
           provider: process.env.AI_PROVIDER || null,
           configured: Boolean(process.env.GEMINI_API_KEY),
           model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
@@ -384,7 +383,6 @@ export default async function handler(req, res) {
       return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
     }
 
-    // --- testProvider mode ---
     if (body?.testProvider === true || body?.testProvider === 'true' || body?.testProvider === 1) {
       const testResult = await generateMessage({
         apiKey,
@@ -422,7 +420,6 @@ export default async function handler(req, res) {
       return toSafeJson(res, 500, responseBody);
     }
 
-    // --- Normal generation ---
     const templateText = truncate(toCleanString(body?.templateText), MAX_TEMPLATE_LENGTH);
     const language = normalizeLanguage(body?.language);
 

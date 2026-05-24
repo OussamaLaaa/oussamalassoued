@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import aiProviderRouter from './lib/aiProviderRouter.js';
+import aiProviderRouter from './aiProviderRouter.js';
 
 const { runAICompletion } = aiProviderRouter;
 
@@ -393,7 +393,7 @@ export default async function handler(req, res) {
       if (req?.query?.health === '1') {
         return toSafeJson(res, 200, {
           success: true,
-          route: 'api/ai-finance.js',
+          route: 'api/ai.js',
           provider: process.env.AI_PROVIDER || null,
           configured: Boolean(process.env.GEMINI_API_KEY),
           model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
@@ -418,7 +418,6 @@ export default async function handler(req, res) {
       return toSafeJson(res, 500, { success: false, error: 'AI provider is not configured.' });
     }
 
-    // --- testProvider mode ---
     if (body?.testProvider === true || body?.testProvider === 'true' || body?.testProvider === 1) {
       const testPrompt = [
         'Return only valid JSON:',
@@ -468,7 +467,6 @@ export default async function handler(req, res) {
       return toSafeJson(res, 500, responseBody);
     }
 
-    // --- Normal analysis ---
     const { financeSummary, mode, recurringRules, allocationRules, purchaseGoals, investmentIdeas, incomeItems, expenseItems, horizonSummary } = body;
 
     if (!financeSummary || typeof financeSummary !== 'object') {
