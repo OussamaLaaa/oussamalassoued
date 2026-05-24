@@ -1545,6 +1545,19 @@ export const useOpportunitiesData = (enabled = true) => {
     setWeeklyTaskReviews(nextWeeklyTaskReviews);
   }, []);
 
+  // ── Scoped fetchers ──
+  const fetchScope = async (scope: string) => {
+    const response = await fetch(`${API_ENDPOINT}?scope=${scope}`, {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw parseApiError(result, response.status);
+    }
+    return response.json();
+  };
+
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
@@ -1559,11 +1572,34 @@ export const useOpportunitiesData = (enabled = true) => {
       setError(null);
 
       try {
-        const payload = await requestOpportunities({ method: 'GET' });
+        // Stage 1: Load core data first
+        const corePayload = await fetchScope('core');
         if (!mounted) return;
-        applyPayload(payload);
+        applyPayload(corePayload);
+
+        // Stage 2: Load secondary scopes in parallel
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'ai'];
+        const secondaryResults = await Promise.allSettled(
+          secondaryScopes.map((s) => fetchScope(s))
+        );
+        if (!mounted) return;
+
+        for (const result of secondaryResults) {
+          if (result.status === 'fulfilled' && result.value) {
+            applyPayload(result.value);
+          } else if (result.status === 'rejected') {
+            if (import.meta.env.DEV) {
+              console.warn('[Opportunities] Scope load failed (non-critical, continuing):', result.reason);
+            }
+          }
+        }
       } catch (apiError) {
         if (!mounted) return;
+
+        if (import.meta.env.DEV) {
+          console.error('[Opportunities] API load failed. Response details:', apiError);
+        }
+
         if ((apiError as ApiError)?.status === 401) {
           console.error('[Opportunities] Authentication required to load data.', apiError);
           setError('Authentication required. Please log in again.');

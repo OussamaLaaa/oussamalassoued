@@ -117,7 +117,7 @@ const buildMutationFailurePayload = ({ entity, action, error }) => ({
   errorCode: error?.code ?? null,
 });
 
-const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
+const buildFailurePayload = ({ debug, failedTable, error, envPresent, entityErrors, phase }) => ({
   success: false,
   ...(debug
     ? {
@@ -125,7 +125,10 @@ const buildFailurePayload = ({ debug, failedTable, error, envPresent }) => ({
         tablesAttempted,
         failedTable,
         errorCode: error?.code ?? null,
-        errorMessage: 'Unable to query Opportunities data.',
+        errorMessage: error?.message ?? 'Unable to query Opportunities data.',
+        errorDetails: error?.details ?? null,
+        ...(phase ? { phase } : {}),
+        ...(entityErrors ? { entityErrors } : {}),
       }
     : {
         failedTable,
@@ -745,6 +748,64 @@ const isAuthenticated = (req) => {
   return cookies[COOKIE_NAME] === COOKIE_VALUE;
 };
 
+// ── Table classification ──
+const CRITICAL_TABLES = new Set([
+  'companies',
+  'people',
+  'messages',
+  'deals',
+  'projects',
+  'message_templates',
+]);
+
+const OPTIONAL_TABLES = new Set([
+  'project_tasks',
+  'project_time_logs',
+  'project_meetings',
+  'project_documents',
+  'project_finance_items',
+  'documents',
+  'document_templates',
+  'document_brand_settings',
+  'generated_documents',
+  'invoices',
+  'invoice_items',
+  'strategy_items',
+  'strategy_goals',
+  'strategy_plans',
+  'strategy_tactics',
+  'strategy_experiments',
+  'strategy_decisions',
+  'plans',
+  'plan_items',
+  'finance_income',
+  'finance_expenses',
+  'finance_allocation_rules',
+  'finance_purchase_goals',
+  'finance_investment_ideas',
+  'finance_investment_rules',
+  'finance_investment_allocations',
+  'finance_periods',
+  'finance_recurring_rules',
+  'ai_provider_keys',
+  'ai_use_case_settings',
+  'tasks',
+  'recurring_tasks',
+  'recurring_task_logs',
+  'task_work_logs',
+  'weekly_task_reviews',
+]);
+
+const SCOPES = {
+  core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
+  tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
+  finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
+  documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
+  strategy: ['strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions', 'plans', 'plan_items'],
+  projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
+  ai: ['ai_provider_keys', 'ai_use_case_settings'],
+};
+
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -790,43 +851,94 @@ export default async function handler(req, res) {
       return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
     }
 
+    const scope = req?.query?.scope || 'all';
+    const entityTimingsMs = {};
+
+    // Determine which tables to load based on scope
+    let tablesToLoad;
+    if (scope === 'all') {
+      tablesToLoad = tablesAttempted;
+    } else if (SCOPES[scope]) {
+      tablesToLoad = SCOPES[scope];
+    } else {
+      return toSafeJson(res, 400, { success: false, error: `Unknown scope: ${scope}` });
+    }
+
     try {
-      const results = {};
-      let templatesWarning = null;
+      // Load all tables in parallel with Promise.allSettled
+      const loadPromises = tablesToLoad.map(async (table) => {
+        const start = Date.now();
+        try {
+          const { data, error } = await supabase.from(table).select('*');
+          const elapsed = Date.now() - start;
+          entityTimingsMs[table] = elapsed;
 
-      for (const table of tablesAttempted) {
-        const { data, error } = await supabase.from(table).select('*');
-
-        if (error) {
-          // Keep main CRM data available even if templates table is unavailable/misconfigured.
-          if (table === 'message_templates') {
-            templatesWarning = 'Templates are temporarily unavailable.';
-            results[table] = [];
-            console.warn('[Opportunities] Optional table query failed for message_templates', error);
-            continue;
+          if (error) {
+            return { table, status: 'error', data: [], error: { message: error.message, code: error.code, details: error.details } };
           }
 
-          console.error(`[Opportunities] Supabase query failed for ${table}`, error);
-          return toSafeJson(
-            res,
-            500,
-            buildFailurePayload({
-              debug,
-              failedTable: table,
-              error,
-              envPresent,
-            })
-          );
+          return { table, status: 'fulfilled', data: data || [] };
+        } catch (err) {
+          const elapsed = Date.now() - start;
+          entityTimingsMs[table] = elapsed;
+          return { table, status: 'error', data: [], error: { message: err.message, code: err.code || 'UNKNOWN', details: err.details || null } };
+        }
+      });
+
+      const settled = await Promise.allSettled(loadPromises);
+
+      const results = {};
+      const entityErrors = [];
+      let templatesWarning = null;
+
+      for (const outcome of settled) {
+        // Promise.allSettled never rejects with individual .catch handlers, but handle the wrapper
+        const item = outcome.status === 'fulfilled' ? outcome.value : null;
+        if (!item) continue;
+
+        if (item.status === 'error') {
+          const isCritical = CRITICAL_TABLES.has(item.table);
+          entityErrors.push({
+            table: item.table,
+            critical: isCritical,
+            message: item.error?.message || 'Unknown error',
+            code: item.error?.code || null,
+            details: item.error?.details || null,
+          });
+
+          if (isCritical) {
+            console.error(`[Opportunities] Critical table query failed: ${item.table}`, item.error);
+            return toSafeJson(
+              res,
+              500,
+              buildFailurePayload({
+                debug,
+                failedTable: item.table,
+                error: item.error,
+                envPresent,
+                entityErrors,
+                phase: 'load_critical',
+              })
+            );
+          }
+
+          // Optional table failure — log and continue with empty array
+          if (item.table === 'message_templates') {
+            templatesWarning = 'Templates are temporarily unavailable.';
+          }
+          console.warn(`[Opportunities] Optional table query failed: ${item.table}`, item.error);
+          results[item.table] = [];
+          continue;
         }
 
-        results[table] = data || [];
+        results[item.table] = item.data;
       }
 
       const aiProviderKeys = (results.ai_provider_keys || []).map(normalizeAIProviderKeyRow);
       const providerKeyLabelsById = new Map(aiProviderKeys.map((row) => [row.id, row.label]));
       const aiUseCaseSettings = (results.ai_use_case_settings || []).map((row) => normalizeAIUseCaseSettingRow(row, providerKeyLabelsById.get(row?.provider_key_id ?? row?.providerKeyId)));
 
-      return toSafeJson(res, 200, {
+      const response = {
         companies: results.companies || [],
         people: results.people || [],
         messages: results.messages || [],
@@ -870,7 +982,19 @@ export default async function handler(req, res) {
         ai_use_case_settings: aiUseCaseSettings,
         templatesWarning,
         strategyNotes: [],
-      });
+      };
+
+      if (debug) {
+        response._debug = {
+          scope,
+          entityTimingsMs,
+          entityErrors: entityErrors.length > 0 ? entityErrors : undefined,
+          loadedTables: tablesToLoad.filter((t) => results[t] !== undefined),
+          totalTimeMs: Object.values(entityTimingsMs).reduce((a, b) => a + b, 0),
+        };
+      }
+
+      return toSafeJson(res, 200, response);
     } catch (error) {
       console.error('[Opportunities] Unexpected GET failure', error);
       return toSafeJson(res, 500, {
@@ -879,6 +1003,8 @@ export default async function handler(req, res) {
           failedTable: null,
           error,
           envPresent,
+          entityErrors: [],
+          phase: 'unexpected',
         }),
       });
     }
