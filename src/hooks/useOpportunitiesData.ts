@@ -129,6 +129,16 @@ import type {
   TaskInput,
   RecurringTask,
   RecurringTaskInput,
+  SocialPlatform,
+  SocialPlatformInput,
+  ContentPillar,
+  ContentPillarInput,
+  ContentStrategy,
+  ContentStrategyInput,
+  ContentItem,
+  ContentItemInput,
+  WeeklyContentPlan,
+  WeeklyContentPlanInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -182,6 +192,11 @@ const cloneSeedData = (): OpportunitiesData => ({
   financeRecurringRules: [],
   tasks: [],
   recurringTasks: [],
+  socialPlatforms: [],
+  contentPillars: [],
+  contentStrategies: [],
+  contentItems: [],
+  weeklyContentPlans: [],
 });
 
 
@@ -238,6 +253,11 @@ type OpportunitiesApiResponse = {
   tasks?: any[];
   recurring_tasks?: any[];
   strategyNotes?: any[];
+  social_platforms?: any[];
+  content_pillars?: any[];
+  content_strategy?: any[];
+  content_items?: any[];
+  weekly_content_plans?: any[];
 };
 
 type ApiError = Error & {
@@ -1296,6 +1316,188 @@ const weeklyTaskReviewToDb = (input: Partial<WeeklyTaskReviewInput>) => {
   return payload;
 };
 
+const socialPlatformFromDb = (row: any): SocialPlatform => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  slug: String(row?.slug ?? ''),
+  url: row?.url ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const socialPlatformToDb = (input: Partial<SocialPlatformInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.slug !== undefined) payload.slug = String(input.slug || '').trim();
+  if (input.url !== undefined) payload.url = toNullableString(input.url);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const contentPillarFromDb = (row: any): ContentPillar => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  slug: String(row?.slug ?? ''),
+  description: row?.description ?? undefined,
+  targetAudience: row?.target_audience ?? row?.targetAudience ?? undefined,
+  priority: row?.priority ?? 'medium',
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const contentPillarToDb = (input: Partial<ContentPillarInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.slug !== undefined) payload.slug = String(input.slug || '').trim();
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.targetAudience !== undefined) payload.target_audience = toNullableString(input.targetAudience);
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const contentStrategyFromDb = (row: any): ContentStrategy => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  targetAudience: row?.target_audience ?? row?.targetAudience ?? undefined,
+  positioning: row?.positioning ?? undefined,
+  mainPromise: row?.main_promise ?? row?.mainPromise ?? undefined,
+  tone: row?.tone ?? undefined,
+  languages: row?.languages ?? undefined,
+  weeklyPostTarget: row?.weekly_post_target != null ? Number(row.weekly_post_target) : (row?.weeklyPostTarget != null ? Number(row.weeklyPostTarget) : undefined),
+  weeklyVideoTarget: row?.weekly_video_target != null ? Number(row.weekly_video_target) : (row?.weeklyVideoTarget != null ? Number(row.weeklyVideoTarget) : undefined),
+  activePlatforms: row?.active_platforms ?? row?.activePlatforms ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const contentStrategyToDb = (input: Partial<ContentStrategyInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.targetAudience !== undefined) payload.target_audience = toNullableString(input.targetAudience);
+  if (input.positioning !== undefined) payload.positioning = toNullableString(input.positioning);
+  if (input.mainPromise !== undefined) payload.main_promise = toNullableString(input.mainPromise);
+  if (input.tone !== undefined) payload.tone = toNullableString(input.tone);
+  if (input.languages !== undefined) payload.languages = toNullableString(input.languages);
+  if (input.weeklyPostTarget !== undefined) payload.weekly_post_target = toNullableNumber(input.weeklyPostTarget);
+  if (input.weeklyVideoTarget !== undefined) payload.weekly_video_target = toNullableNumber(input.weeklyVideoTarget);
+  if (input.activePlatforms !== undefined) payload.active_platforms = toNullableString(input.activePlatforms);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const contentItemFromDb = (row: any): ContentItem => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  type: row?.type ?? 'text_post',
+  status: row?.status ?? 'idea',
+  priority: row?.priority ?? 'medium',
+  platformId: row?.platform_id ?? row?.platformId ?? undefined,
+  pillarId: row?.pillar_id ?? row?.pillarId ?? undefined,
+  hook: row?.hook ?? undefined,
+  content: row?.content ?? undefined,
+  caption: row?.caption ?? undefined,
+  assetUrl: row?.asset_url ?? row?.assetUrl ?? undefined,
+  publishDate: row?.publish_date ?? row?.publishDate ?? undefined,
+  weekStart: row?.week_start ?? row?.weekStart ?? undefined,
+  performanceViews: row?.performance_views != null ? Number(row.performance_views) : (row?.performanceViews != null ? Number(row.performanceViews) : undefined),
+  performanceLikes: row?.performance_likes != null ? Number(row.performance_likes) : (row?.performanceLikes != null ? Number(row.performanceLikes) : undefined),
+  performanceComments: row?.performance_comments != null ? Number(row.performance_comments) : (row?.performanceComments != null ? Number(row.performanceComments) : undefined),
+  performanceShares: row?.performance_shares != null ? Number(row.performance_shares) : (row?.performanceShares != null ? Number(row.performanceShares) : undefined),
+  performanceSaves: row?.performance_saves != null ? Number(row.performance_saves) : (row?.performanceSaves != null ? Number(row.performanceSaves) : undefined),
+  performanceClicks: row?.performance_clicks != null ? Number(row.performance_clicks) : (row?.performanceClicks != null ? Number(row.performanceClicks) : undefined),
+  leadsGenerated: row?.leads_generated != null ? Number(row.leads_generated) : (row?.leadsGenerated != null ? Number(row.leadsGenerated) : undefined),
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedNoteId: row?.linked_note_id ?? row?.linkedNoteId ?? undefined,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const contentItemToDb = (input: Partial<ContentItemInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.type !== undefined) payload.type = input.type;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.platformId !== undefined) payload.platform_id = toNullableString(input.platformId);
+  if (input.pillarId !== undefined) payload.pillar_id = toNullableString(input.pillarId);
+  if (input.hook !== undefined) payload.hook = toNullableString(input.hook);
+  if (input.content !== undefined) payload.content = toNullableString(input.content);
+  if (input.caption !== undefined) payload.caption = toNullableString(input.caption);
+  if (input.assetUrl !== undefined) payload.asset_url = toNullableString(input.assetUrl);
+  if (input.publishDate !== undefined) payload.publish_date = toNullableString(input.publishDate);
+  if (input.weekStart !== undefined) payload.week_start = toNullableString(input.weekStart);
+  if (input.performanceViews !== undefined) payload.performance_views = toNullableNumber(input.performanceViews);
+  if (input.performanceLikes !== undefined) payload.performance_likes = toNullableNumber(input.performanceLikes);
+  if (input.performanceComments !== undefined) payload.performance_comments = toNullableNumber(input.performanceComments);
+  if (input.performanceShares !== undefined) payload.performance_shares = toNullableNumber(input.performanceShares);
+  if (input.performanceSaves !== undefined) payload.performance_saves = toNullableNumber(input.performanceSaves);
+  if (input.performanceClicks !== undefined) payload.performance_clicks = toNullableNumber(input.performanceClicks);
+  if (input.leadsGenerated !== undefined) payload.leads_generated = toNullableNumber(input.leadsGenerated);
+  if (input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (input.linkedNoteId !== undefined) payload.linked_note_id = toNullableString(input.linkedNoteId);
+  if (input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const weeklyContentPlanFromDb = (row: any): WeeklyContentPlan => ({
+  id: String(row?.id ?? ''),
+  weekStart: row?.week_start ?? row?.weekStart ?? '',
+  focus: row?.focus ?? undefined,
+  targetPosts: row?.target_posts != null ? Number(row.target_posts) : (row?.targetPosts != null ? Number(row.targetPosts) : undefined),
+  targetVideos: row?.target_videos != null ? Number(row.target_videos) : (row?.targetVideos != null ? Number(row.targetVideos) : undefined),
+  targetCarousels: row?.target_carousels != null ? Number(row.target_carousels) : (row?.targetCarousels != null ? Number(row.targetCarousels) : undefined),
+  targetOther: row?.target_other != null ? Number(row.target_other) : (row?.targetOther != null ? Number(row.targetOther) : undefined),
+  reviewNotes: row?.review_notes ?? row?.reviewNotes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const weeklyContentPlanToDb = (input: Partial<WeeklyContentPlanInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.weekStart !== undefined) payload.week_start = input.weekStart;
+  if (input.focus !== undefined) payload.focus = toNullableString(input.focus);
+  if (input.targetPosts !== undefined) payload.target_posts = toNullableNumber(input.targetPosts);
+  if (input.targetVideos !== undefined) payload.target_videos = toNullableNumber(input.targetVideos);
+  if (input.targetCarousels !== undefined) payload.target_carousels = toNullableNumber(input.targetCarousels);
+  if (input.targetOther !== undefined) payload.target_other = toNullableNumber(input.targetOther);
+  if (input.reviewNotes !== undefined) payload.review_notes = toNullableString(input.reviewNotes);
+  return payload;
+};
+
+const attachContentItemLinkNames = (
+  items: ContentItem[],
+  socialPlatforms: SocialPlatform[],
+  contentPillars: ContentPillar[],
+  projects: Project[],
+  smartNotes: SmartNote[],
+  companies: Company[],
+) => {
+  const platformById = new Map(socialPlatforms.map((p) => [p.id, p.name] as const));
+  const pillarById = new Map(contentPillars.map((p) => [p.id, p.name] as const));
+  const projectById = new Map(projects.map((p) => [p.id, p.name] as const));
+  const noteById = new Map(smartNotes.map((n) => [n.id, n.title] as const));
+  const companyById = new Map(companies.map((c) => [c.id, c.name] as const));
+  return items.map((item) => ({
+    ...item,
+    platformName: item.platformName || platformById.get(item.platformId || ''),
+    pillarName: item.pillarName || pillarById.get(item.pillarId || ''),
+    linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+    linkedNoteTitle: item.linkedNoteTitle || noteById.get(item.linkedNoteId || ''),
+    linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+  }));
+};
+
 const attachRecurringTaskLinkNames = (
   items: RecurringTask[],
   projects: Project[],
@@ -1486,6 +1688,11 @@ export const useOpportunitiesData = (enabled = true) => {
   const [taskWorkLogs, setTaskWorkLogs] = useState<TaskWorkLog[]>([]);
   const [weeklyTaskReviews, setWeeklyTaskReviews] = useState<WeeklyTaskReview[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
+  const [socialPlatforms, setSocialPlatforms] = useState<SocialPlatform[]>([]);
+  const [contentPillars, setContentPillars] = useState<ContentPillar[]>([]);
+  const [contentStrategies, setContentStrategies] = useState<ContentStrategy[]>([]);
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [weeklyContentPlans, setWeeklyContentPlans] = useState<WeeklyContentPlan[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -1736,6 +1943,22 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('task_work_logs')) setTaskWorkLogs((raw('task_work_logs') || []).map((row: any) => taskWorkLogFromDb(row)));
     if (has('weekly_task_reviews')) setWeeklyTaskReviews((raw('weekly_task_reviews') || []).map((row: any) => weeklyTaskReviewFromDb(row)));
 
+    // ── Social ──
+    if (has('social_platforms')) setSocialPlatforms((raw('social_platforms') || []).map((row: any) => socialPlatformFromDb(row)));
+    if (has('content_pillars')) setContentPillars((raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)));
+    if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
+    if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
+    if (has('content_items')) {
+      setContentItems(attachContentItemLinkNames(
+        (raw('content_items') || []).map((row: any) => contentItemFromDb(row)),
+        (raw('social_platforms') || []).map((row: any) => socialPlatformFromDb(row)),
+        (raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)),
+        projectsRaw ? projectsRaw.map(mapProjectRow) : [],
+        smartNotesRaw ? smartNotesRaw.map(mapSmartNoteRow) : [],
+        nextCompanies,
+      ));
+    }
+
     if (import.meta.env.DEV) {
       const keys = Object.keys(payload).filter((k) => k !== '_debug');
       console.log(`[Opportunities] applied payload: ${keys.length} keys`, { keys });
@@ -1775,7 +1998,7 @@ export const useOpportunitiesData = (enabled = true) => {
         applyPayload(corePayload);
 
         // Stage 2: Load secondary scopes in parallel
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social'];
         const secondaryResults = await Promise.allSettled(
           secondaryScopes.map((s) => fetchScope(s))
         );
@@ -2055,7 +2278,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -3709,6 +3932,155 @@ export const useOpportunitiesData = (enabled = true) => {
     });
   }, [noteCategories, projects, companies, people, relationships, tasks, strategyGoals, plans]);
 
+  useEffect(() => {
+    setContentItems((current) => {
+      const next = attachContentItemLinkNames(current, socialPlatforms, contentPillars, projects, smartNotes, companies);
+      return shouldReplaceCollection(current, next, ['platformName', 'pillarName', 'linkedProjectName', 'linkedNoteTitle', 'linkedCompanyName']) ? next : current;
+    });
+  }, [socialPlatforms, contentPillars, projects, smartNotes, companies]);
+
+  // ── Social Media CRUD ──
+
+  const addSocialPlatform = async (input: SocialPlatformInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Platform name is required.');
+    }
+    if (!String(input.slug || '').trim()) {
+      throw new Error('Platform slug is required.');
+    }
+    const row = await syncInsert('social_platforms', socialPlatformToDb(input));
+    const next = socialPlatformFromDb(row);
+    setSocialPlatforms((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateSocialPlatform = async (id: string, input: Partial<SocialPlatformInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Platform name is required.');
+    }
+    const row = await syncUpdate('social_platforms', id, socialPlatformToDb(input));
+    const next = socialPlatformFromDb(row);
+    setSocialPlatforms((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteSocialPlatform = async (id: string) => {
+    const confirmed = window.confirm('Delete this platform?');
+    if (!confirmed) return;
+    await syncDelete('social_platforms' as any, id);
+    setSocialPlatforms((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addContentPillar = async (input: ContentPillarInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Pillar name is required.');
+    }
+    if (!String(input.slug || '').trim()) {
+      throw new Error('Pillar slug is required.');
+    }
+    const row = await syncInsert('content_pillars', contentPillarToDb(input));
+    const next = contentPillarFromDb(row);
+    setContentPillars((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateContentPillar = async (id: string, input: Partial<ContentPillarInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Pillar name is required.');
+    }
+    const row = await syncUpdate('content_pillars', id, contentPillarToDb(input));
+    const next = contentPillarFromDb(row);
+    setContentPillars((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteContentPillar = async (id: string) => {
+    const confirmed = window.confirm('Delete this pillar?');
+    if (!confirmed) return;
+    await syncDelete('content_pillars' as any, id);
+    setContentPillars((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addContentStrategy = async (input: ContentStrategyInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Strategy name is required.');
+    }
+    const row = await syncInsert('content_strategy', contentStrategyToDb(input));
+    const next = contentStrategyFromDb(row);
+    setContentStrategies((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateContentStrategy = async (id: string, input: Partial<ContentStrategyInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Strategy name is required.');
+    }
+    const row = await syncUpdate('content_strategy', id, contentStrategyToDb(input));
+    const next = contentStrategyFromDb(row);
+    setContentStrategies((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteContentStrategy = async (id: string) => {
+    const confirmed = window.confirm('Delete this strategy?');
+    if (!confirmed) return;
+    await syncDelete('content_strategy' as any, id);
+    setContentStrategies((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addContentItem = async (input: ContentItemInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Content title is required.');
+    }
+    const row = await syncInsert('content_items', contentItemToDb(input));
+    let next = contentItemFromDb(row);
+    next = attachContentItemLinkNames([next], socialPlatforms, contentPillars, projects, smartNotes, companies)[0];
+    setContentItems((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateContentItem = async (id: string, input: Partial<ContentItemInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Content title is required.');
+    }
+    const row = await syncUpdate('content_items', id, contentItemToDb(input));
+    let next = contentItemFromDb(row);
+    next = attachContentItemLinkNames([next], socialPlatforms, contentPillars, projects, smartNotes, companies)[0];
+    setContentItems((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteContentItem = async (id: string) => {
+    const confirmed = window.confirm('Delete this content item?');
+    if (!confirmed) return;
+    await syncDelete('content_items' as any, id);
+    setContentItems((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addWeeklyContentPlan = async (input: WeeklyContentPlanInput) => {
+    if (!String(input.weekStart || '').trim()) {
+      throw new Error('Week start is required.');
+    }
+    const row = await syncInsert('weekly_content_plans', weeklyContentPlanToDb(input));
+    const next = weeklyContentPlanFromDb(row);
+    setWeeklyContentPlans((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateWeeklyContentPlan = async (id: string, input: Partial<WeeklyContentPlanInput>) => {
+    const row = await syncUpdate('weekly_content_plans', id, weeklyContentPlanToDb(input));
+    const next = weeklyContentPlanFromDb(row);
+    setWeeklyContentPlans((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteWeeklyContentPlan = async (id: string) => {
+    const confirmed = window.confirm('Delete this weekly plan?');
+    if (!confirmed) return;
+    await syncDelete('weekly_content_plans' as any, id);
+    setWeeklyContentPlans((current) => current.filter((item) => item.id !== id));
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -3955,6 +4327,26 @@ export const useOpportunitiesData = (enabled = true) => {
     resetToSeedData,
     loading,
     error,
+    socialPlatforms,
+    contentPillars,
+    contentStrategies,
+    contentItems,
+    weeklyContentPlans,
+    addSocialPlatform,
+    updateSocialPlatform,
+    deleteSocialPlatform,
+    addContentPillar,
+    updateContentPillar,
+    deleteContentPillar,
+    addContentStrategy,
+    updateContentStrategy,
+    deleteContentStrategy,
+    addContentItem,
+    updateContentItem,
+    deleteContentItem,
+    addWeeklyContentPlan,
+    updateWeeklyContentPlan,
+    deleteWeeklyContentPlan,
   };
 };
 

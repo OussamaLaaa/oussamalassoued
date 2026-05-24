@@ -52,6 +52,11 @@ const allowedEntities = new Set([
   'recurring_task_logs',
   'task_work_logs',
   'weekly_task_reviews',
+  'social_platforms',
+  'content_pillars',
+  'content_strategy',
+  'content_items',
+  'weekly_content_plans',
 ]);
 const tablesAttempted = [
   'companies',
@@ -104,6 +109,11 @@ const tablesAttempted = [
   'recurring_task_logs',
   'task_work_logs',
   'weekly_task_reviews',
+  'social_platforms',
+  'content_pillars',
+  'content_strategy',
+  'content_items',
+  'weekly_content_plans',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -879,6 +889,83 @@ const normalizeRecurringTaskRow = (row) => ({
   notes: toNullableString(row?.notes),
 });
 
+const normalizeSocialPlatformRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.slug !== undefined) payload.slug = toRequiredString(row?.slug);
+  if (!forUpdate || row?.url !== undefined) payload.url = toNullableString(row?.url);
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeContentPillarRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.slug !== undefined) payload.slug = toRequiredString(row?.slug);
+  if (!forUpdate || row?.description !== undefined) payload.description = toNullableString(row?.description);
+  if (!forUpdate || row?.targetAudience !== undefined || row?.target_audience !== undefined) payload.target_audience = toNullableString(row?.target_audience ?? row?.targetAudience);
+  if (!forUpdate || row?.priority !== undefined) payload.priority = toNullableString(row?.priority) || 'medium';
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeContentStrategyRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.targetAudience !== undefined || row?.target_audience !== undefined) payload.target_audience = toNullableString(row?.target_audience ?? row?.targetAudience);
+  if (!forUpdate || row?.positioning !== undefined) payload.positioning = toNullableString(row?.positioning);
+  if (!forUpdate || row?.mainPromise !== undefined || row?.main_promise !== undefined) payload.main_promise = toNullableString(row?.main_promise ?? row?.mainPromise);
+  if (!forUpdate || row?.tone !== undefined) payload.tone = toNullableString(row?.tone);
+  if (!forUpdate || row?.languages !== undefined) payload.languages = toNullableString(row?.languages);
+  if (!forUpdate || row?.weeklyPostTarget !== undefined || row?.weekly_post_target !== undefined) payload.weekly_post_target = toNullableNumber(row?.weekly_post_target ?? row?.weeklyPostTarget);
+  if (!forUpdate || row?.weeklyVideoTarget !== undefined || row?.weekly_video_target !== undefined) payload.weekly_video_target = toNullableNumber(row?.weekly_video_target ?? row?.weeklyVideoTarget);
+  if (!forUpdate || row?.activePlatforms !== undefined || row?.active_platforms !== undefined) payload.active_platforms = toNullableString(row?.active_platforms ?? row?.activePlatforms);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeContentItemRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.title !== undefined) payload.title = toRequiredString(row?.title);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'text_post';
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'idea';
+  if (!forUpdate || row?.priority !== undefined) payload.priority = toNullableString(row?.priority) || 'medium';
+  if (!forUpdate || row?.platformId !== undefined || row?.platform_id !== undefined) payload.platform_id = toNullableString(row?.platform_id ?? row?.platformId);
+  if (!forUpdate || row?.pillarId !== undefined || row?.pillar_id !== undefined) payload.pillar_id = toNullableString(row?.pillar_id ?? row?.pillarId);
+  if (!forUpdate || row?.hook !== undefined) payload.hook = toNullableString(row?.hook);
+  if (!forUpdate || row?.content !== undefined) payload.content = toNullableString(row?.content);
+  if (!forUpdate || row?.caption !== undefined) payload.caption = toNullableString(row?.caption);
+  if (!forUpdate || row?.assetUrl !== undefined || row?.asset_url !== undefined) payload.asset_url = toNullableString(row?.asset_url ?? row?.assetUrl);
+  if (!forUpdate || row?.publishDate !== undefined || row?.publish_date !== undefined) payload.publish_date = toNullableString(row?.publish_date ?? row?.publishDate);
+  if (!forUpdate || row?.weekStart !== undefined || row?.week_start !== undefined) payload.week_start = toNullableString(row?.week_start ?? row?.weekStart);
+  if (!forUpdate || row?.performanceViews !== undefined || row?.performance_views !== undefined) payload.performance_views = toNullableNumber(row?.performance_views ?? row?.performanceViews);
+  if (!forUpdate || row?.performanceLikes !== undefined || row?.performance_likes !== undefined) payload.performance_likes = toNullableNumber(row?.performance_likes ?? row?.performanceLikes);
+  if (!forUpdate || row?.performanceComments !== undefined || row?.performance_comments !== undefined) payload.performance_comments = toNullableNumber(row?.performance_comments ?? row?.performanceComments);
+  if (!forUpdate || row?.performanceShares !== undefined || row?.performance_shares !== undefined) payload.performance_shares = toNullableNumber(row?.performance_shares ?? row?.performanceShares);
+  if (!forUpdate || row?.performanceSaves !== undefined || row?.performance_saves !== undefined) payload.performance_saves = toNullableNumber(row?.performance_saves ?? row?.performanceSaves);
+  if (!forUpdate || row?.performanceClicks !== undefined || row?.performance_clicks !== undefined) payload.performance_clicks = toNullableNumber(row?.performance_clicks ?? row?.performanceClicks);
+  if (!forUpdate || row?.leadsGenerated !== undefined || row?.leads_generated !== undefined) payload.leads_generated = toNullableNumber(row?.leads_generated ?? row?.leadsGenerated);
+  if (!forUpdate || row?.linkedProjectId !== undefined || row?.linked_project_id !== undefined) payload.linked_project_id = toNullableString(row?.linked_project_id ?? row?.linkedProjectId);
+  if (!forUpdate || row?.linkedNoteId !== undefined || row?.linked_note_id !== undefined) payload.linked_note_id = toNullableString(row?.linked_note_id ?? row?.linkedNoteId);
+  if (!forUpdate || row?.linkedCompanyId !== undefined || row?.linked_company_id !== undefined) payload.linked_company_id = toNullableString(row?.linked_company_id ?? row?.linkedCompanyId);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeWeeklyContentPlanRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.weekStart !== undefined || row?.week_start !== undefined) payload.week_start = toRequiredString(row?.week_start ?? row?.weekStart);
+  if (!forUpdate || row?.focus !== undefined) payload.focus = toNullableString(row?.focus);
+  if (!forUpdate || row?.targetPosts !== undefined || row?.target_posts !== undefined) payload.target_posts = toNullableNumber(row?.target_posts ?? row?.targetPosts);
+  if (!forUpdate || row?.targetVideos !== undefined || row?.target_videos !== undefined) payload.target_videos = toNullableNumber(row?.target_videos ?? row?.targetVideos);
+  if (!forUpdate || row?.targetCarousels !== undefined || row?.target_carousels !== undefined) payload.target_carousels = toNullableNumber(row?.target_carousels ?? row?.targetCarousels);
+  if (!forUpdate || row?.targetOther !== undefined || row?.target_other !== undefined) payload.target_other = toNullableNumber(row?.target_other ?? row?.targetOther);
+  if (!forUpdate || row?.reviewNotes !== undefined || row?.review_notes !== undefined) payload.review_notes = toNullableString(row?.review_notes ?? row?.reviewNotes);
+  return payload;
+};
+
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
@@ -914,6 +1001,11 @@ const normalizeEntityRow = (entity, row) => {
   }
   if (entity === 'task_work_logs') return normalizeTaskWorkLogRow(row);
   if (entity === 'weekly_task_reviews') return normalizeWeeklyTaskReviewRow(row);
+  if (entity === 'social_platforms') return normalizeSocialPlatformRow(row);
+  if (entity === 'content_pillars') return normalizeContentPillarRow(row);
+  if (entity === 'content_strategy') return normalizeContentStrategyRow(row);
+  if (entity === 'content_items') return normalizeContentItemRow(row);
+  if (entity === 'weekly_content_plans') return normalizeWeeklyContentPlanRow(row);
   return row;
 };
 
@@ -984,6 +1076,11 @@ const OPTIONAL_TABLES = new Set([
   'recurring_task_logs',
   'task_work_logs',
   'weekly_task_reviews',
+  'social_platforms',
+  'content_pillars',
+  'content_strategy',
+  'content_items',
+  'weekly_content_plans',
 ]);
 
 const SCOPES = {
@@ -996,6 +1093,7 @@ const SCOPES = {
   strategy: ['strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions', 'plans', 'plan_items'],
   projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
   ai: ['ai_provider_keys', 'ai_use_case_settings'],
+  social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
 };
 
 export default async function handler(req, res) {
@@ -1142,6 +1240,7 @@ export default async function handler(req, res) {
         plans: ['plans', 'plan_items'],
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
+        social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
       };
 
       let responseKeys;
@@ -1353,8 +1452,18 @@ export default async function handler(req, res) {
                       ? normalizeRelationshipOpportunityRow(data, { forUpdate: true })
                       : entity === 'relationship_categories'
                         ? normalizeRelationshipCategoryRow(data, { forUpdate: true })
-                        : entity === 'relationship_contact_methods'
-                          ? normalizeRelationshipContactMethodRow(data, { forUpdate: true })
+                      : entity === 'relationship_contact_methods'
+                        ? normalizeRelationshipContactMethodRow(data, { forUpdate: true })
+                      : entity === 'social_platforms'
+                        ? normalizeSocialPlatformRow(data, { forUpdate: true })
+                      : entity === 'content_pillars'
+                        ? normalizeContentPillarRow(data, { forUpdate: true })
+                      : entity === 'content_strategy'
+                        ? normalizeContentStrategyRow(data, { forUpdate: true })
+                      : entity === 'content_items'
+                        ? normalizeContentItemRow(data, { forUpdate: true })
+                      : entity === 'weekly_content_plans'
+                        ? normalizeWeeklyContentPlanRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       if (entity === 'relationships') {

@@ -955,6 +955,11 @@ export interface OpportunitiesData {
   recurringTaskLogs: RecurringTaskLog[];
   taskWorkLogs: TaskWorkLog[];
   weeklyTaskReviews: WeeklyTaskReview[];
+  socialPlatforms: SocialPlatform[];
+  contentPillars: ContentPillar[];
+  contentStrategies: ContentStrategy[];
+  contentItems: ContentItem[];
+  weeklyContentPlans: WeeklyContentPlan[];
 }
 
 export type StrategySection =
@@ -1444,7 +1449,165 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'notes' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
+export type SocialContentType = 'text_post' | 'video' | 'short_video' | 'carousel' | 'thread' | 'story' | 'reel' | 'case_study' | 'newsletter' | 'image_post' | 'poll' | 'live' | 'other';
+export type SocialContentStatus = 'idea' | 'drafted' | 'designing' | 'recording' | 'editing' | 'ready' | 'scheduled' | 'published' | 'repurpose' | 'archived';
+export type SocialPriority = 'high' | 'medium' | 'low';
+
+export interface SocialPlatform {
+  id: string;
+  name: string;
+  slug: string;
+  url?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialPlatformInput {
+  name: string;
+  slug: string;
+  url?: string;
+  isActive?: boolean;
+  notes?: string;
+}
+
+export interface ContentPillar {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  targetAudience?: string;
+  priority: SocialPriority;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ContentPillarInput {
+  name: string;
+  slug: string;
+  description?: string;
+  targetAudience?: string;
+  priority?: SocialPriority;
+  isActive?: boolean;
+  notes?: string;
+}
+
+export interface ContentStrategy {
+  id: string;
+  name: string;
+  targetAudience?: string;
+  positioning?: string;
+  mainPromise?: string;
+  tone?: string;
+  languages?: string;
+  weeklyPostTarget?: number;
+  weeklyVideoTarget?: number;
+  activePlatforms?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ContentStrategyInput {
+  name: string;
+  targetAudience?: string;
+  positioning?: string;
+  mainPromise?: string;
+  tone?: string;
+  languages?: string;
+  weeklyPostTarget?: number;
+  weeklyVideoTarget?: number;
+  activePlatforms?: string;
+  notes?: string;
+}
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  type: SocialContentType;
+  status: SocialContentStatus;
+  priority: SocialPriority;
+  platformId?: string;
+  platformName?: string;
+  pillarId?: string;
+  pillarName?: string;
+  hook?: string;
+  content?: string;
+  caption?: string;
+  assetUrl?: string;
+  publishDate?: string;
+  weekStart?: string;
+  performanceViews?: number;
+  performanceLikes?: number;
+  performanceComments?: number;
+  performanceShares?: number;
+  performanceSaves?: number;
+  performanceClicks?: number;
+  leadsGenerated?: number;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedNoteId?: string;
+  linkedNoteTitle?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ContentItemInput {
+  title: string;
+  type: SocialContentType;
+  status?: SocialContentStatus;
+  priority?: SocialPriority;
+  platformId?: string;
+  pillarId?: string;
+  hook?: string;
+  content?: string;
+  caption?: string;
+  assetUrl?: string;
+  publishDate?: string;
+  weekStart?: string;
+  performanceViews?: number;
+  performanceLikes?: number;
+  performanceComments?: number;
+  performanceShares?: number;
+  performanceSaves?: number;
+  performanceClicks?: number;
+  leadsGenerated?: number;
+  linkedProjectId?: string;
+  linkedNoteId?: string;
+  linkedCompanyId?: string;
+  notes?: string;
+}
+
+export interface WeeklyContentPlan {
+  id: string;
+  weekStart: string;
+  focus?: string;
+  targetPosts?: number;
+  targetVideos?: number;
+  targetCarousels?: number;
+  targetOther?: number;
+  reviewNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WeeklyContentPlanInput {
+  weekStart: string;
+  focus?: string;
+  targetPosts?: number;
+  targetVideos?: number;
+  targetCarousels?: number;
+  targetOther?: number;
+  reviewNotes?: string;
+}
+
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'notes' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control' | 'social';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
 

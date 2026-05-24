@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -28,6 +28,7 @@ import AICompanyScoringModal from './AICompanyScoringModal';
 import TasksPanel from './TasksPanel';
 import RelationshipsPanel from './RelationshipsPanel';
 import SmartNotesPanel from './SmartNotesPanel';
+import SocialMediaPanel from './SocialMediaPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -49,6 +50,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'finance', label: 'Finance' },
   { id: 'documents', label: 'Documents' },
   { id: 'ai-control', label: 'AI Control' },
+  { id: 'social', label: 'Social Media' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -284,6 +286,26 @@ const OpportunitiesLayout: React.FC<{
     resetToSeedData: () => void;
     importCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => Promise<any>;
     importPeople?: (rows: PersonInput[]) => Promise<any>;
+    socialPlatforms: SocialPlatform[];
+    contentPillars: ContentPillar[];
+    contentStrategies: ContentStrategy[];
+    contentItems: ContentItem[];
+    weeklyContentPlans: WeeklyContentPlan[];
+    addSocialPlatform: (input: SocialPlatformInput) => Promise<SocialPlatform>;
+    updateSocialPlatform: (id: string, input: Partial<SocialPlatformInput>) => Promise<SocialPlatform>;
+    deleteSocialPlatform: (id: string) => Promise<void>;
+    addContentPillar: (input: ContentPillarInput) => Promise<ContentPillar>;
+    updateContentPillar: (id: string, input: Partial<ContentPillarInput>) => Promise<ContentPillar>;
+    deleteContentPillar: (id: string) => Promise<void>;
+    addContentStrategy: (input: ContentStrategyInput) => Promise<ContentStrategy>;
+    updateContentStrategy: (id: string, input: Partial<ContentStrategyInput>) => Promise<ContentStrategy>;
+    deleteContentStrategy: (id: string) => Promise<void>;
+    addContentItem: (input: ContentItemInput) => Promise<ContentItem>;
+    updateContentItem: (id: string, input: Partial<ContentItemInput>) => Promise<ContentItem>;
+    deleteContentItem: (id: string) => Promise<void>;
+    addWeeklyContentPlan: (input: WeeklyContentPlanInput) => Promise<WeeklyContentPlan>;
+    updateWeeklyContentPlan: (id: string, input: Partial<WeeklyContentPlanInput>) => Promise<WeeklyContentPlan>;
+    deleteWeeklyContentPlan: (id: string) => Promise<void>;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
@@ -404,6 +426,12 @@ const OpportunitiesLayout: React.FC<{
     taskWorkLogs, weeklyTaskReviews,
     addTaskWorkLog, updateTaskWorkLog, deleteTaskWorkLog,
     addWeeklyTaskReview, updateWeeklyTaskReview, deleteWeeklyTaskReview,
+    socialPlatforms, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
+    addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
+    addContentPillar, updateContentPillar, deleteContentPillar,
+    addContentStrategy, updateContentStrategy, deleteContentStrategy,
+    addContentItem, updateContentItem, deleteContentItem,
+    addWeeklyContentPlan, updateWeeklyContentPlan, deleteWeeklyContentPlan,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -1057,6 +1085,34 @@ const OpportunitiesLayout: React.FC<{
                 onAddAIUseCaseSetting={addAIUseCaseSetting}
                 onUpdateAIUseCaseSetting={updateAIUseCaseSetting}
                 onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
+              />
+            )}
+
+            {tab === 'social' && (
+              <SocialMediaPanel
+                socialPlatforms={socialPlatforms}
+                contentPillars={contentPillars}
+                contentStrategies={contentStrategies}
+                contentItems={contentItems}
+                weeklyContentPlans={weeklyContentPlans}
+                projects={projects}
+                smartNotes={smartNotes}
+                companies={companies}
+                onAddSocialPlatform={addSocialPlatform}
+                onUpdateSocialPlatform={updateSocialPlatform}
+                onDeleteSocialPlatform={deleteSocialPlatform}
+                onAddContentPillar={addContentPillar}
+                onUpdateContentPillar={updateContentPillar}
+                onDeleteContentPillar={deleteContentPillar}
+                onAddContentStrategy={addContentStrategy}
+                onUpdateContentStrategy={updateContentStrategy}
+                onDeleteContentStrategy={deleteContentStrategy}
+                onAddContentItem={addContentItem}
+                onUpdateContentItem={updateContentItem}
+                onDeleteContentItem={deleteContentItem}
+                onAddWeeklyContentPlan={addWeeklyContentPlan}
+                onUpdateWeeklyContentPlan={updateWeeklyContentPlan}
+                onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
               />
             )}
           </div>
