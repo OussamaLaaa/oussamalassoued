@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -27,6 +27,7 @@ import CompanySegmentView from './CompanySegmentView';
 import AICompanyScoringModal from './AICompanyScoringModal';
 import TasksPanel from './TasksPanel';
 import RelationshipsPanel from './RelationshipsPanel';
+import SmartNotesPanel from './SmartNotesPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -38,6 +39,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'messages', label: 'Messages' },
   { id: 'deals', label: 'Deals' },
   { id: 'relationships', label: 'Relationships' },
+  { id: 'notes', label: 'Notes' },
   { id: 'projects', label: 'Projects' },
   { id: 'queue', label: 'Outreach Queue' },
   { id: 'templates', label: 'Templates' },
@@ -209,6 +211,15 @@ const OpportunitiesLayout: React.FC<{
     addRelationshipContactMethod: (input: RelationshipContactMethodInput) => Promise<any>;
     updateRelationshipContactMethod: (id: string, input: Partial<RelationshipContactMethodInput>) => Promise<any>;
     deleteRelationshipContactMethod: (id: string) => Promise<any>;
+    addNoteCategory: (input: NoteCategoryInput) => Promise<any>;
+    updateNoteCategory: (id: string, input: Partial<NoteCategoryInput>) => Promise<any>;
+    deleteNoteCategory: (id: string) => Promise<any>;
+    addSmartNote: (input: SmartNoteInput) => Promise<any>;
+    updateSmartNote: (id: string, input: Partial<SmartNoteInput>) => Promise<any>;
+    deleteSmartNote: (id: string) => Promise<any>;
+    addNoteAttachment: (input: NoteAttachmentInput) => Promise<any>;
+    updateNoteAttachment: (id: string, input: Partial<NoteAttachmentInput>) => Promise<any>;
+    deleteNoteAttachment: (id: string) => Promise<any>;
     addProject: (input: ProjectInput) => Promise<any>;
     addStrategyItem: (input: StrategyItemInput) => Promise<any>;
     addStrategyGoal: (input: StrategyGoalInput) => Promise<any>;
@@ -307,6 +318,7 @@ const OpportunitiesLayout: React.FC<{
   const {
     companies, people, messages, deals, projects, templates, strategyItems,
     relationships, relationshipInteractions, relationshipOpportunities,
+    noteCategories, smartNotes, noteAttachments,
     strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
     documents,
     documentTemplates,
@@ -323,6 +335,9 @@ const OpportunitiesLayout: React.FC<{
     addRelationshipOpportunity, updateRelationshipOpportunity, deleteRelationshipOpportunity,
     addRelationshipCategory, updateRelationshipCategory, deleteRelationshipCategory,
     addRelationshipContactMethod, updateRelationshipContactMethod, deleteRelationshipContactMethod,
+    addNoteCategory, updateNoteCategory, deleteNoteCategory,
+    addSmartNote, updateSmartNote, deleteSmartNote,
+    addNoteAttachment, updateNoteAttachment, deleteNoteAttachment,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
     addDocument,
     addDocumentTemplate,
@@ -511,6 +526,8 @@ const OpportunitiesLayout: React.FC<{
                     ? deals.length
                   : t.id === 'relationships'
                     ? relationships.length
+                  : t.id === 'notes'
+                    ? smartNotes.length
                   : t.id === 'projects'
                     ? projects.length
                   : t.id === 'queue'
@@ -799,6 +816,30 @@ const OpportunitiesLayout: React.FC<{
                 onAddRelationshipContactMethod={addRelationshipContactMethod}
                 onUpdateRelationshipContactMethod={updateRelationshipContactMethod}
                 onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
+              />
+            )}
+
+            {tab === 'notes' && (
+              <SmartNotesPanel
+                noteCategories={noteCategories}
+                smartNotes={smartNotes}
+                noteAttachments={noteAttachments}
+                projects={projects}
+                companies={companies}
+                people={people}
+                relationships={relationships}
+                tasks={tasks}
+                strategyGoals={strategyGoals}
+                plans={plans}
+                onAddNoteCategory={addNoteCategory}
+                onUpdateNoteCategory={updateNoteCategory}
+                onDeleteNoteCategory={deleteNoteCategory}
+                onAddSmartNote={addSmartNote}
+                onUpdateSmartNote={updateSmartNote}
+                onDeleteSmartNote={deleteSmartNote}
+                onAddNoteAttachment={addNoteAttachment}
+                onUpdateNoteAttachment={updateNoteAttachment}
+                onDeleteNoteAttachment={deleteNoteAttachment}
               />
             )}
 

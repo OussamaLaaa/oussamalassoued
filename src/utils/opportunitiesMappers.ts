@@ -47,6 +47,12 @@ import type {
   RelationshipContactMethodInput,
   RelationshipOpportunity,
   RelationshipOpportunityInput,
+  NoteCategory,
+  NoteCategoryInput,
+  SmartNote,
+  SmartNoteInput,
+  NoteAttachment,
+  NoteAttachmentInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -411,6 +417,124 @@ export const relationshipContactMethodToDb = (input: Partial<RelationshipContact
   if (!forUpdate || input.label !== undefined) payload.label = toNullableString(input.label);
   if (!forUpdate || input.value !== undefined) payload.value = toNullableString(input.value);
   if (!forUpdate || input.isPrimary !== undefined) payload.is_primary = input.isPrimary == null ? false : Boolean(input.isPrimary);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+// ── Smart Note mappers ──
+
+export const noteCategoryFromDb = (row: any): NoteCategory => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  slug: safeString(row?.slug),
+  description: row?.description ?? undefined,
+  color: row?.color ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const noteCategoryToDb = (input: Partial<NoteCategoryInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (!forUpdate || input.slug !== undefined) payload.slug = String(input.slug || '').trim();
+  if (!forUpdate || input.description !== undefined) payload.description = toNullableString(input.description);
+  if (!forUpdate || input.color !== undefined) payload.color = toNullableString(input.color);
+  if (!forUpdate || input.isActive !== undefined) payload.is_active = input.isActive == null ? true : Boolean(input.isActive);
+
+  return payload;
+};
+
+export const smartNoteFromDb = (
+  row: any,
+  context: {
+    categoryName?: string;
+    categoryColor?: string;
+    linkedProjectName?: string;
+    linkedCompanyName?: string;
+    linkedPersonName?: string;
+    linkedRelationshipName?: string;
+    linkedTaskTitle?: string;
+    linkedStrategyGoalTitle?: string;
+    linkedPlanTitle?: string;
+  } = {},
+): SmartNote => ({
+  id: safeString(row?.id),
+  title: safeString(row?.title),
+  content: row?.content ?? undefined,
+  categoryId: row?.category_id ?? row?.categoryId ?? undefined,
+  categoryName: context.categoryName,
+  categorySlug: row?.category_slug ?? row?.categorySlug ?? undefined,
+  categoryColor: context.categoryColor,
+  status: row?.status ?? 'active',
+  priority: row?.priority ?? 'medium',
+  tags: row?.tags ?? undefined,
+  linkedProjectId: row?.linked_project_id ?? row?.linkedProjectId ?? undefined,
+  linkedProjectName: context.linkedProjectName,
+  linkedCompanyId: row?.linked_company_id ?? row?.linkedCompanyId ?? undefined,
+  linkedCompanyName: context.linkedCompanyName,
+  linkedPersonId: row?.linked_person_id ?? row?.linkedPersonId ?? undefined,
+  linkedPersonName: context.linkedPersonName,
+  linkedRelationshipId: row?.linked_relationship_id ?? row?.linkedRelationshipId ?? undefined,
+  linkedRelationshipName: context.linkedRelationshipName,
+  linkedTaskId: row?.linked_task_id ?? row?.linkedTaskId ?? undefined,
+  linkedTaskTitle: context.linkedTaskTitle,
+  linkedStrategyGoalId: row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId ?? undefined,
+  linkedStrategyGoalTitle: context.linkedStrategyGoalTitle,
+  linkedPlanId: row?.linked_plan_id ?? row?.linkedPlanId ?? undefined,
+  linkedPlanTitle: context.linkedPlanTitle,
+  source: row?.source ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const smartNoteToDb = (input: Partial<SmartNoteInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (!forUpdate || input.content !== undefined) payload.content = toNullableString(input.content);
+  if (!forUpdate || input.categoryId !== undefined) payload.category_id = toNullableString(input.categoryId);
+  if (!forUpdate || input.categorySlug !== undefined) payload.category_slug = toNullableString(input.categorySlug);
+  if (!forUpdate || input.status !== undefined) payload.status = toNullableString(input.status) || 'active';
+  if (!forUpdate || input.priority !== undefined) payload.priority = toNullableString(input.priority) || 'medium';
+  if (!forUpdate || input.tags !== undefined) payload.tags = toNullableString(input.tags);
+  if (!forUpdate || input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
+  if (!forUpdate || input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (!forUpdate || input.linkedPersonId !== undefined) payload.linked_person_id = toNullableString(input.linkedPersonId);
+  if (!forUpdate || input.linkedRelationshipId !== undefined) payload.linked_relationship_id = toNullableString(input.linkedRelationshipId);
+  if (!forUpdate || input.linkedTaskId !== undefined) payload.linked_task_id = toNullableString(input.linkedTaskId);
+  if (!forUpdate || input.linkedStrategyGoalId !== undefined) payload.linked_strategy_goal_id = toNullableString(input.linkedStrategyGoalId);
+  if (!forUpdate || input.linkedPlanId !== undefined) payload.linked_plan_id = toNullableString(input.linkedPlanId);
+  if (!forUpdate || input.source !== undefined) payload.source = toNullableString(input.source);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const noteAttachmentFromDb = (row: any): NoteAttachment => ({
+  id: safeString(row?.id),
+  noteId: safeString(row?.note_id ?? row?.noteId),
+  type: row?.type ?? 'link',
+  title: row?.title ?? undefined,
+  url: safeString(row?.url),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const noteAttachmentToDb = (input: Partial<NoteAttachmentInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.noteId !== undefined) payload.note_id = toNullableString(input.noteId);
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type) || 'link';
+  if (!forUpdate || input.title !== undefined) payload.title = toNullableString(input.title);
+  if (!forUpdate || input.url !== undefined) payload.url = String(input.url || '').trim();
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
   return payload;

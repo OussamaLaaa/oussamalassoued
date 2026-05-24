@@ -791,6 +791,98 @@ export interface RelationshipContactMethodInput {
   notes?: string;
 }
 
+export type NoteStatus = 'active' | 'archived' | 'pinned' | 'draft';
+export type NotePriority = 'high' | 'medium' | 'low';
+export type NoteAttachmentType = 'link' | 'image' | 'video' | 'audio' | 'pdf' | 'file' | 'other';
+
+export interface NoteCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NoteCategoryInput {
+  name: string;
+  slug?: string;
+  description?: string;
+  color?: string;
+  isActive?: boolean;
+}
+
+export interface SmartNote {
+  id: string;
+  title: string;
+  content?: string;
+  categoryId?: string;
+  categoryName?: string;
+  categorySlug?: string;
+  categoryColor?: string;
+  status: NoteStatus;
+  priority: NotePriority;
+  tags?: string;
+  linkedProjectId?: string;
+  linkedProjectName?: string;
+  linkedCompanyId?: string;
+  linkedCompanyName?: string;
+  linkedPersonId?: string;
+  linkedPersonName?: string;
+  linkedRelationshipId?: string;
+  linkedRelationshipName?: string;
+  linkedTaskId?: string;
+  linkedTaskTitle?: string;
+  linkedStrategyGoalId?: string;
+  linkedStrategyGoalTitle?: string;
+  linkedPlanId?: string;
+  linkedPlanTitle?: string;
+  source?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SmartNoteInput {
+  title: string;
+  content?: string;
+  categoryId?: string;
+  categorySlug?: string;
+  status?: NoteStatus;
+  priority?: NotePriority;
+  tags?: string;
+  linkedProjectId?: string;
+  linkedCompanyId?: string;
+  linkedPersonId?: string;
+  linkedRelationshipId?: string;
+  linkedTaskId?: string;
+  linkedStrategyGoalId?: string;
+  linkedPlanId?: string;
+  source?: string;
+  notes?: string;
+}
+
+export interface NoteAttachment {
+  id: string;
+  noteId: string;
+  type: NoteAttachmentType;
+  title?: string;
+  url: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NoteAttachmentInput {
+  noteId: string;
+  type?: NoteAttachmentType;
+  title?: string;
+  url: string;
+  notes?: string;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
@@ -801,6 +893,9 @@ export interface OpportunitiesData {
   relationshipOpportunities: RelationshipOpportunity[];
   relationshipCategories: RelationshipCategory[];
   relationshipContactMethods: RelationshipContactMethod[];
+  noteCategories: NoteCategory[];
+  smartNotes: SmartNote[];
+  noteAttachments: NoteAttachment[];
   projects: Project[];
   projectTasks: ProjectTask[];
   projectTimeLogs: ProjectTimeLog[];
@@ -1328,7 +1423,7 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'notes' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
 

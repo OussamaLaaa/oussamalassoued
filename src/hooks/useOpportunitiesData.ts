@@ -33,6 +33,12 @@ import {
   relationshipContactMethodToDb as toRelationshipContactMethodDb,
   relationshipOpportunityFromDb as mapRelationshipOpportunityRow,
   relationshipOpportunityToDb as toRelationshipOpportunityDb,
+  noteCategoryFromDb as mapNoteCategoryRow,
+  noteCategoryToDb as toNoteCategoryDb,
+  smartNoteFromDb as mapSmartNoteRow,
+  smartNoteToDb as toSmartNoteDb,
+  noteAttachmentFromDb as mapNoteAttachmentRow,
+  noteAttachmentToDb as toNoteAttachmentDb,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -74,6 +80,12 @@ import type {
   RelationshipContactMethodInput,
   RelationshipOpportunity,
   RelationshipOpportunityInput,
+  NoteCategory,
+  NoteCategoryInput,
+  SmartNote,
+  SmartNoteInput,
+  NoteAttachment,
+  NoteAttachmentInput,
   MessageTemplateInput,
   Company,
   Person,
@@ -141,6 +153,9 @@ const cloneSeedData = (): OpportunitiesData => ({
   relationshipOpportunities: [],
   relationshipCategories: [],
   relationshipContactMethods: [],
+  noteCategories: [],
+  smartNotes: [],
+  noteAttachments: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -194,6 +209,9 @@ type OpportunitiesApiResponse = {
   relationships?: any[];
   relationship_interactions?: any[];
   relationship_opportunities?: any[];
+  note_categories?: any[];
+  smart_notes?: any[];
+  note_attachments?: any[];
   strategy_items?: any[];
   strategy_goals?: any[];
   strategy_plans?: any[];
@@ -360,6 +378,46 @@ const attachStrategyLinkNames = (
     linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
     linkedPersonName: item.linkedPersonName || personById.get(item.linkedPersonId || ''),
   }));
+};
+
+const attachSmartNoteLinkNames = (
+  items: SmartNote[],
+  noteCategories: NoteCategory[],
+  projects: Project[],
+  companies: Company[],
+  people: Person[],
+  relationships: Relationship[],
+  tasks: Task[],
+  strategyGoals: StrategyGoal[],
+  plans: Plan[],
+) => {
+  const categoryById = new Map(noteCategories.map((category) => [category.id, category] as const));
+  const categoryBySlug = new Map(noteCategories.map((category) => [category.slug, category] as const));
+  const projectById = new Map(projects.map((project) => [project.id, project.name] as const));
+  const companyById = new Map(companies.map((company) => [company.id, company.name] as const));
+  const personById = new Map(people.map((person) => [person.id, person.fullName] as const));
+  const relationshipById = new Map(relationships.map((relationship) => [relationship.id, relationship.displayName] as const));
+  const taskById = new Map(tasks.map((task) => [task.id, task.title] as const));
+  const strategyGoalById = new Map(strategyGoals.map((goal) => [goal.id, goal.title] as const));
+  const planById = new Map(plans.map((plan) => [plan.id, plan.title] as const));
+
+  return items.map((item) => {
+    const category = item.categoryId ? categoryById.get(item.categoryId) : item.categorySlug ? categoryBySlug.get(item.categorySlug) : undefined;
+
+    return {
+      ...item,
+      categoryName: item.categoryName || category?.name,
+      categorySlug: item.categorySlug || category?.slug,
+      categoryColor: item.categoryColor || category?.color,
+      linkedProjectName: item.linkedProjectName || projectById.get(item.linkedProjectId || ''),
+      linkedCompanyName: item.linkedCompanyName || companyById.get(item.linkedCompanyId || ''),
+      linkedPersonName: item.linkedPersonName || personById.get(item.linkedPersonId || ''),
+      linkedRelationshipName: item.linkedRelationshipName || relationshipById.get(item.linkedRelationshipId || ''),
+      linkedTaskTitle: item.linkedTaskTitle || taskById.get(item.linkedTaskId || ''),
+      linkedStrategyGoalTitle: item.linkedStrategyGoalTitle || strategyGoalById.get(item.linkedStrategyGoalId || ''),
+      linkedPlanTitle: item.linkedPlanTitle || planById.get(item.linkedPlanId || ''),
+    };
+  });
 };
 
 const toClampedProgress = (value: any) => {
@@ -1380,6 +1438,9 @@ export const useOpportunitiesData = (enabled = true) => {
   const [relationshipOpportunities, setRelationshipOpportunities] = useState<RelationshipOpportunity[]>(() => cloneSeedData().relationshipOpportunities);
   const [relationshipCategories, setRelationshipCategories] = useState<RelationshipCategory[]>(() => cloneSeedData().relationshipCategories);
   const [relationshipContactMethods, setRelationshipContactMethods] = useState<RelationshipContactMethod[]>(() => cloneSeedData().relationshipContactMethods);
+  const [noteCategories, setNoteCategories] = useState<NoteCategory[]>(() => cloneSeedData().noteCategories);
+  const [smartNotes, setSmartNotes] = useState<SmartNote[]>(() => cloneSeedData().smartNotes);
+  const [noteAttachments, setNoteAttachments] = useState<NoteAttachment[]>(() => cloneSeedData().noteAttachments);
   const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [projectTimeLogs, setProjectTimeLogs] = useState<ProjectTimeLog[]>([]);
@@ -1439,6 +1500,9 @@ export const useOpportunitiesData = (enabled = true) => {
     const relationshipOpportunitiesRaw = raw('relationship_opportunities');
     const relationshipCategoriesRaw = raw('relationship_categories');
     const relationshipContactMethodsRaw = raw('relationship_contact_methods');
+    const noteCategoriesRaw = raw('note_categories');
+    const smartNotesRaw = raw('smart_notes');
+    const noteAttachmentsRaw = raw('note_attachments');
 
     // Compute derived collections only when core data is present
     let derived: { people: Person[]; messages: OutreachMessage[]; deals: Deal[] } | null = null;
@@ -1511,6 +1575,11 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('relationship_opportunities')) setRelationshipOpportunities((relationshipOpportunitiesRaw || []).map((row: any) => mapRelationshipOpportunityRow(row)));
     if (has('relationship_categories')) setRelationshipCategories((relationshipCategoriesRaw || []).map((row: any) => mapRelationshipCategoryRow(row)));
     if (has('relationship_contact_methods')) setRelationshipContactMethods((relationshipContactMethodsRaw || []).map((row: any) => mapRelationshipContactMethodRow(row)));
+
+    // ── Notes ──
+    if (has('note_categories')) setNoteCategories((noteCategoriesRaw || []).map((row: any) => mapNoteCategoryRow(row)));
+    if (has('smart_notes')) setSmartNotes((smartNotesRaw || []).map((row: any) => mapSmartNoteRow(row)));
+    if (has('note_attachments')) setNoteAttachments((noteAttachmentsRaw || []).map((row: any) => mapNoteAttachmentRow(row)));
 
     // ── Documents ──
     if (has('documents')) {
@@ -1697,7 +1766,7 @@ export const useOpportunitiesData = (enabled = true) => {
         applyPayload(corePayload);
 
         // Stage 2: Load secondary scopes in parallel
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'ai'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai'];
         const secondaryResults = await Promise.allSettled(
           secondaryScopes.map((s) => fetchScope(s))
         );
@@ -1729,6 +1798,9 @@ export const useOpportunitiesData = (enabled = true) => {
           setRelationships([]);
           setRelationshipInteractions([]);
           setRelationshipOpportunities([]);
+          setNoteCategories([]);
+          setSmartNotes([]);
+          setNoteAttachments([]);
           setTemplates([]);
           setInvoices([]);
           setInvoiceItems([]);
@@ -1761,6 +1833,9 @@ export const useOpportunitiesData = (enabled = true) => {
         setRelationships(fallback.relationships);
         setRelationshipInteractions(fallback.relationshipInteractions);
         setRelationshipOpportunities(fallback.relationshipOpportunities);
+        setNoteCategories(fallback.noteCategories);
+        setSmartNotes(fallback.smartNotes);
+        setNoteAttachments(fallback.noteAttachments);
         setTemplates(fallback.templates);
         setInvoices(fallback.invoices);
         setInvoiceItems(fallback.invoiceItems);
@@ -2313,6 +2388,85 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('relationship_contact_methods', id);
     setRelationshipContactMethods((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addNoteCategory = async (input: NoteCategoryInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Category name is required.');
+    }
+
+    const row = await syncInsert('note_categories', toNoteCategoryDb(input));
+    const next = mapNoteCategoryRow(row);
+    setNoteCategories((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateNoteCategory = async (id: string, input: Partial<NoteCategoryInput>) => {
+    const row = await syncUpdate('note_categories', id, toNoteCategoryDb(input, { forUpdate: true }));
+    const next = mapNoteCategoryRow(row);
+    setNoteCategories((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteNoteCategory = async (id: string) => {
+    const confirmed = window.confirm('Delete this note category?');
+    if (!confirmed) return;
+    await syncDelete('note_categories', id);
+    setNoteCategories((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addSmartNote = async (input: SmartNoteInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Note title is required.');
+    }
+
+    const row = await syncInsert('smart_notes', toSmartNoteDb(input));
+    const next = attachSmartNoteLinkNames([mapSmartNoteRow(row)], noteCategories, projects, companies, people, relationships, tasks, strategyGoals, plans)[0];
+    setSmartNotes((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateSmartNote = async (id: string, input: Partial<SmartNoteInput>) => {
+    const row = await syncUpdate('smart_notes', id, toSmartNoteDb(input, { forUpdate: true }));
+    const next = attachSmartNoteLinkNames([mapSmartNoteRow(row)], noteCategories, projects, companies, people, relationships, tasks, strategyGoals, plans)[0];
+    setSmartNotes((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteSmartNote = async (id: string) => {
+    const confirmed = window.confirm('Delete this note?');
+    if (!confirmed) return;
+    await syncDelete('smart_notes', id);
+    setSmartNotes((current) => current.filter((item) => item.id !== id));
+    setNoteAttachments((current) => current.filter((attachment) => attachment.noteId !== id));
+  };
+
+  const addNoteAttachment = async (input: NoteAttachmentInput) => {
+    if (!String(input.noteId || '').trim()) {
+      throw new Error('Select a note before adding an attachment.');
+    }
+    if (!String(input.url || '').trim()) {
+      throw new Error('Attachment URL is required.');
+    }
+
+    const row = await syncInsert('note_attachments', toNoteAttachmentDb(input));
+    const next = mapNoteAttachmentRow(row);
+    setNoteAttachments((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateNoteAttachment = async (id: string, input: Partial<NoteAttachmentInput>) => {
+    const row = await syncUpdate('note_attachments', id, toNoteAttachmentDb(input, { forUpdate: true }));
+    const next = mapNoteAttachmentRow(row);
+    setNoteAttachments((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteNoteAttachment = async (id: string) => {
+    const confirmed = window.confirm('Delete this attachment?');
+    if (!confirmed) return;
+    await syncDelete('note_attachments', id);
+    setNoteAttachments((current) => current.filter((item) => item.id !== id));
   };
 
   const addProject = async (input: ProjectInput) => {
@@ -3511,6 +3665,13 @@ export const useOpportunitiesData = (enabled = true) => {
     });
   }, [projects, strategyGoals]);
 
+  useEffect(() => {
+    setSmartNotes((current) => {
+      const next = attachSmartNoteLinkNames(current, noteCategories, projects, companies, people, relationships, tasks, strategyGoals, plans);
+      return shouldReplaceCollection(current, next, ['categoryName', 'categorySlug', 'categoryColor', 'linkedProjectName', 'linkedCompanyName', 'linkedPersonName', 'linkedRelationshipName', 'linkedTaskTitle', 'linkedStrategyGoalTitle', 'linkedPlanTitle']) ? next : current;
+    });
+  }, [noteCategories, projects, companies, people, relationships, tasks, strategyGoals, plans]);
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -3523,6 +3684,9 @@ export const useOpportunitiesData = (enabled = true) => {
     setRelationshipOpportunities(fallback.relationshipOpportunities);
     setRelationshipCategories(fallback.relationshipCategories);
     setRelationshipContactMethods(fallback.relationshipContactMethods);
+    setNoteCategories(fallback.noteCategories);
+    setSmartNotes(fallback.smartNotes);
+    setNoteAttachments(fallback.noteAttachments);
     setTemplates(fallback.templates);
     setStrategyGoals(fallback.strategyGoals);
     setStrategyPlans(fallback.strategyPlans);
@@ -3558,6 +3722,9 @@ export const useOpportunitiesData = (enabled = true) => {
     relationshipOpportunities,
     relationshipCategories,
     relationshipContactMethods,
+    noteCategories,
+    smartNotes,
+    noteAttachments,
     projects,
     projectTasks,
     projectTimeLogs,
@@ -3664,6 +3831,15 @@ export const useOpportunitiesData = (enabled = true) => {
     addRelationshipContactMethod,
     updateRelationshipContactMethod,
     deleteRelationshipContactMethod,
+    addNoteCategory,
+    updateNoteCategory,
+    deleteNoteCategory,
+    addSmartNote,
+    updateSmartNote,
+    deleteSmartNote,
+    addNoteAttachment,
+    updateNoteAttachment,
+    deleteNoteAttachment,
     addProject,
     addStrategyItem,
     addStrategyGoal,

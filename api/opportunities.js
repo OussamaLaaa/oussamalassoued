@@ -30,6 +30,9 @@ const allowedEntities = new Set([
   'relationship_opportunities',
   'relationship_categories',
   'relationship_contact_methods',
+  'note_categories',
+  'smart_notes',
+  'note_attachments',
   'plans',
   'plan_items',
   'finance_income',
@@ -77,6 +80,9 @@ const tablesAttempted = [
   'relationship_opportunities',
   'relationship_categories',
   'relationship_contact_methods',
+  'note_categories',
+  'smart_notes',
+  'note_attachments',
   'plans',
   'plan_items',
   'finance_income',
@@ -381,6 +387,53 @@ const normalizeRelationshipContactMethodRow = (row, { forUpdate = false } = {}) 
   if (!forUpdate || row?.label !== undefined) payload.label = toNullableString(row?.label);
   if (!forUpdate || row?.value !== undefined) payload.value = toNullableString(row?.value);
   if (!forUpdate || row?.isPrimary !== undefined || row?.is_primary !== undefined) payload.is_primary = row?.is_primary == null ? Boolean(row?.isPrimary ?? false) : Boolean(row.is_primary);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+
+  return payload;
+};
+
+const normalizeNoteCategoryRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.slug !== undefined) payload.slug = toRequiredString(row?.slug);
+  if (!forUpdate || row?.description !== undefined) payload.description = toNullableString(row?.description);
+  if (!forUpdate || row?.color !== undefined) payload.color = toNullableString(row?.color);
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+
+  return payload;
+};
+
+const normalizeSmartNoteRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.title !== undefined) payload.title = toRequiredString(row?.title);
+  if (!forUpdate || row?.content !== undefined) payload.content = toNullableString(row?.content);
+  if (!forUpdate || row?.categoryId !== undefined || row?.category_id !== undefined) payload.category_id = toNullableString(row?.category_id ?? row?.categoryId);
+  if (!forUpdate || row?.categorySlug !== undefined || row?.category_slug !== undefined) payload.category_slug = toNullableString(row?.category_slug ?? row?.categorySlug);
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'active';
+  if (!forUpdate || row?.priority !== undefined) payload.priority = toNullableString(row?.priority) || 'medium';
+  if (!forUpdate || row?.tags !== undefined) payload.tags = toNullableString(row?.tags);
+  if (!forUpdate || row?.linkedProjectId !== undefined || row?.linked_project_id !== undefined) payload.linked_project_id = toNullableString(row?.linked_project_id ?? row?.linkedProjectId);
+  if (!forUpdate || row?.linkedCompanyId !== undefined || row?.linked_company_id !== undefined) payload.linked_company_id = toNullableString(row?.linked_company_id ?? row?.linkedCompanyId);
+  if (!forUpdate || row?.linkedPersonId !== undefined || row?.linked_person_id !== undefined) payload.linked_person_id = toNullableString(row?.linked_person_id ?? row?.linkedPersonId);
+  if (!forUpdate || row?.linkedRelationshipId !== undefined || row?.linked_relationship_id !== undefined) payload.linked_relationship_id = toNullableString(row?.linked_relationship_id ?? row?.linkedRelationshipId);
+  if (!forUpdate || row?.linkedTaskId !== undefined || row?.linked_task_id !== undefined) payload.linked_task_id = toNullableString(row?.linked_task_id ?? row?.linkedTaskId);
+  if (!forUpdate || row?.linkedStrategyGoalId !== undefined || row?.linked_strategy_goal_id !== undefined) payload.linked_strategy_goal_id = toNullableString(row?.linked_strategy_goal_id ?? row?.linkedStrategyGoalId);
+  if (!forUpdate || row?.linkedPlanId !== undefined || row?.linked_plan_id !== undefined) payload.linked_plan_id = toNullableString(row?.linked_plan_id ?? row?.linkedPlanId);
+  if (!forUpdate || row?.source !== undefined) payload.source = toNullableString(row?.source);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+
+  return payload;
+};
+
+const normalizeNoteAttachmentRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.noteId !== undefined || row?.note_id !== undefined) payload.note_id = toRequiredString(row?.note_id ?? row?.noteId);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'link';
+  if (!forUpdate || row?.title !== undefined) payload.title = toNullableString(row?.title);
+  if (!forUpdate || row?.url !== undefined) payload.url = toRequiredString(row?.url);
   if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
 
   return payload;
@@ -822,6 +875,9 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'relationship_opportunities') return normalizeRelationshipOpportunityRow(row);
   if (entity === 'relationship_categories') return normalizeRelationshipCategoryRow(row);
   if (entity === 'relationship_contact_methods') return normalizeRelationshipContactMethodRow(row);
+  if (entity === 'note_categories') return normalizeNoteCategoryRow(row);
+  if (entity === 'smart_notes') return normalizeSmartNoteRow(row);
+  if (entity === 'note_attachments') return normalizeNoteAttachmentRow(row);
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -890,6 +946,9 @@ const OPTIONAL_TABLES = new Set([
   'strategy_decisions',
   'plans',
   'plan_items',
+  'note_categories',
+  'smart_notes',
+  'note_attachments',
   'finance_income',
   'finance_expenses',
   'finance_allocation_rules',
@@ -911,6 +970,7 @@ const OPTIONAL_TABLES = new Set([
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
   relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
+  notes: ['note_categories', 'smart_notes', 'note_attachments'],
   tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
   finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
   documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1055,6 +1115,7 @@ export default async function handler(req, res) {
       const scopeKeys = {
         core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
         relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
+        notes: ['note_categories', 'smart_notes', 'note_attachments'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
         finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
         documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1073,6 +1134,7 @@ export default async function handler(req, res) {
           'invoices', 'invoice_items',
           'strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions',
           'relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods',
+          'note_categories', 'smart_notes', 'note_attachments',
           'plans', 'plan_items',
           'finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals',
           'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations',
