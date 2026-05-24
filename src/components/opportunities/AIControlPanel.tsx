@@ -23,6 +23,7 @@ const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }>
   { value: 'finance', label: 'Finance assistant', hint: 'Budgeting, allocation, and forecasting' },
   { value: 'document', label: 'Document assistant', hint: 'Drafting, rewrites, and reviews' },
   { value: 'lead_scoring', label: 'Lead scoring', hint: 'Rank people and companies' },
+  { value: 'relationship', label: 'Relationship assistant', hint: 'Respectful follow-ups and relationship analysis' },
   { value: 'research', label: 'Research', hint: 'Briefs, summaries, and analysis' },
   { value: 'cleanup', label: 'Cleanup', hint: 'Normalization and content cleanup' },
   { value: 'strategy', label: 'Strategy', hint: 'Plans, goals, and decision support' },

@@ -2,6 +2,7 @@ import aiMessageHandler from '../server/lib/aiMessageHandler.js';
 import aiFinanceHandler from '../server/lib/aiFinanceHandler.js';
 import aiDocumentHandler from '../server/lib/aiDocumentHandler.js';
 import aiLeadScoringHandler from '../server/lib/aiLeadScoringHandler.js';
+import aiRelationshipHandler from '../server/lib/aiRelationshipHandler.js';
 import { createClient } from '@supabase/supabase-js';
 import aiKeyCrypto from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
@@ -272,6 +273,9 @@ export default async function handler(req, res) {
     if (type === 'document') {
       return aiDocumentHandler(cloneRequest(req, { query: { health: '1' } }), res);
     }
+    if (type === 'relationship') {
+      return aiRelationshipHandler(cloneRequest(req, { query: { health: '1' } }), res);
+    }
     return toSafeJson(res, 400, { success: false, error: 'Missing or invalid type.' });
   }
 
@@ -293,6 +297,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST' && action === 'lead-scoring') {
     return aiLeadScoringHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'relationship') {
+    return aiRelationshipHandler(req, res);
   }
 
   return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });

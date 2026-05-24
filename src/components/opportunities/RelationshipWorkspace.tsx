@@ -18,6 +18,7 @@ import RelationshipForm from './RelationshipForm';
 import RelationshipInteractionForm from './RelationshipInteractionForm';
 import RelationshipContactMethodForm from './RelationshipContactMethodForm';
 import RelationshipOpportunityForm from './RelationshipOpportunityForm';
+import AIRelationshipAssistantPanel from './AIRelationshipAssistantPanel';
 
 const WORKSPACE_TABS = [
   { id: 'overview', label: 'Overview' },
@@ -27,6 +28,7 @@ const WORKSPACE_TABS = [
   { id: 'problems', label: 'Problems' },
   { id: 'opportunities', label: 'Opportunities' },
   { id: 'follow-ups', label: 'Follow-ups' },
+  { id: 'ai-assistant', label: 'AI Assistant' },
   { id: 'notes', label: 'Notes' },
 ] as const;
 
@@ -603,6 +605,18 @@ const RelationshipWorkspace: React.FC<{
       {activeTab === 'problems' && renderProblems()}
       {activeTab === 'opportunities' && renderOpportunities()}
       {activeTab === 'follow-ups' && renderFollowUps()}
+      {activeTab === 'ai-assistant' && (
+        <AIRelationshipAssistantPanel
+          relationship={selectedRelationship}
+          categoryName={selectedCategory?.name || undefined}
+          linkedPerson={linkedPerson}
+          contactMethods={contactMethodItems}
+          interactions={timelineItems}
+          opportunities={opportunityItems}
+          onAddRelationshipInteraction={onAddRelationshipInteraction}
+          onUpdateRelationship={onUpdateRelationship}
+        />
+      )}
       {activeTab === 'notes' && renderNotes()}
 
       {showRelationshipForm ? (
