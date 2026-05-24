@@ -676,6 +676,8 @@ export interface OpportunitiesData {
   tasks: Task[];
   recurringTasks: RecurringTask[];
   recurringTaskLogs: RecurringTaskLog[];
+  taskWorkLogs: TaskWorkLog[];
+  weeklyTaskReviews: WeeklyTaskReview[];
 }
 
 export type StrategySection =
@@ -1288,4 +1290,48 @@ export interface RecurringTaskInput {
   linkedCompanyId?: string;
   linkedPersonId?: string;
   notes?: string;
+}
+
+export interface TaskWorkLog {
+  id: string;
+  taskId: string;
+  workDate: string;
+  minutesSpent: number;
+  summary?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TaskWorkLogInput {
+  taskId: string;
+  workDate: string;
+  minutesSpent: number;
+  summary?: string;
+  notes?: string;
+}
+
+export interface WeeklyTaskReview {
+  id: string;
+  weekStart: string;
+  summary?: string;
+  whatWorked?: string;
+  whatFailed?: string;
+  blockers?: string;
+  lessons?: string;
+  nextWeekFocus?: string;
+  score?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WeeklyTaskReviewInput {
+  weekStart: string;
+  summary?: string;
+  whatWorked?: string;
+  whatFailed?: string;
+  blockers?: string;
+  lessons?: string;
+  nextWeekFocus?: string;
+  score?: number;
 }

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -359,6 +359,9 @@ const OpportunitiesLayout: React.FC<{
     addRecurringTask, updateRecurringTask, deleteRecurringTask,
     recurringTaskLogs,
     addRecurringTaskLog, updateRecurringTaskLog, deleteRecurringTaskLog,
+    taskWorkLogs, weeklyTaskReviews,
+    addTaskWorkLog, updateTaskWorkLog, deleteTaskWorkLog,
+    addWeeklyTaskReview, updateWeeklyTaskReview, deleteWeeklyTaskReview,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -853,6 +856,14 @@ const OpportunitiesLayout: React.FC<{
                 onAddRecurringTaskLog={addRecurringTaskLog}
                 onUpdateRecurringTaskLog={updateRecurringTaskLog}
                 onDeleteRecurringTaskLog={deleteRecurringTaskLog}
+                taskWorkLogs={taskWorkLogs}
+                weeklyTaskReviews={weeklyTaskReviews}
+                onAddTaskWorkLog={addTaskWorkLog}
+                onUpdateTaskWorkLog={updateTaskWorkLog}
+                onDeleteTaskWorkLog={deleteTaskWorkLog}
+                onAddWeeklyTaskReview={addWeeklyTaskReview}
+                onUpdateWeeklyTaskReview={updateWeeklyTaskReview}
+                onDeleteWeeklyTaskReview={deleteWeeklyTaskReview}
               />
             )}
 

@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import type { Task, TaskInput, TaskStatus, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
+import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import RecurringTaskForm from './RecurringTaskForm';
+import TaskDetailWorkspace from './TaskDetailWorkspace';
 
-type TasksView = 'weekly' | 'daily' | 'backlog';
+type TasksView = 'weekly' | 'daily' | 'backlog' | 'review';
 
 const VIEWS: { id: TasksView; label: string }[] = [
   { id: 'weekly', label: 'This Week Tasks' },
   { id: 'daily', label: 'Daily Recurring' },
   { id: 'backlog', label: 'Backlog' },
+  { id: 'review', label: 'Weekly Review' },
 ];
 
 const STATUS_BADGE: Record<TaskStatus, string> = {
@@ -32,7 +34,6 @@ const COLUMNS: { status: TaskStatus; label: string; color: string }[] = [
   { status: 'blocked', label: 'Blocked', color: 'border-t-[#dc2626]' },
 ];
 
-// ── Date helpers ──
 const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -70,7 +71,6 @@ const dayName = (iso: string): string => {
   return d.toLocaleDateString('en-US', { weekday: 'long' });
 };
 
-// ── Hours formatting ──
 const formatHours = (minutes?: number | null): string => {
   if (minutes == null) return '';
   const h = Math.floor(minutes / 60);
@@ -80,7 +80,6 @@ const formatHours = (minutes?: number | null): string => {
   return `${h}h ${m}m`;
 };
 
-// ── Status action labels ──
 const STATUS_ACTIONS: { from: TaskStatus[]; to: TaskStatus; label: string }[] = [
   { from: ['todo', 'doing', 'done', 'blocked', 'cancelled'], to: 'todo', label: 'Todo' },
   { from: ['todo', 'done', 'blocked', 'cancelled'], to: 'doing', label: 'Doing' },
@@ -91,81 +90,19 @@ const STATUS_ACTIONS: { from: TaskStatus[]; to: TaskStatus; label: string }[] = 
 const getActionsForStatus = (current: TaskStatus) =>
   STATUS_ACTIONS.filter((a) => a.from.includes(current) && a.to !== current);
 
-// ── Completion Modal ──
-const CompletionModal: React.FC<{
-  task: Task;
-  onConfirm: (id: string, date: string, hours: number, notes: string) => void;
-  onCancel: () => void;
-}> = ({ task, onConfirm, onCancel }) => {
-  const [completionDate, setCompletionDate] = useState(todayStr());
-  const [actualHours, setActualHours] = useState(task.actualMinutes ? String(Math.round(task.actualMinutes / 60)) : '');
-  const [notes, setNotes] = useState('');
-
-  const handleConfirm = () => {
-    const hours = parseFloat(actualHours) || 0;
-    onConfirm(task.id, completionDate, hours, notes);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="w-full max-w-sm rounded-lg border border-[#e5e7eb] bg-white p-5 shadow-lg">
-        <h3 className="text-sm font-medium text-[#0f172a] mb-3">Complete Task</h3>
-        <p className="text-xs text-[#64748b] mb-4">{task.title}</p>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Completion Date</label>
-            <input
-              type="date"
-              value={completionDate}
-              onChange={(e) => setCompletionDate(e.target.value)}
-              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Actual Hours Spent</label>
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              value={actualHours}
-              onChange={(e) => setActualHours(e.target.value)}
-              placeholder="e.g. 2.5"
-              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#475569] mb-1">Notes (optional)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-              placeholder="Completion notes..."
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#e5e7eb]">
-          <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
-          <button type="button" onClick={handleConfirm} className="px-4 py-2 rounded border border-[#16a34a] bg-[#16a34a] text-white hover:bg-[#15803d] text-sm">Mark Done</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── Task card ──
 const TaskCard: React.FC<{
   task: Task;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
-}> = ({ task, onStatusChange, onEdit, onDelete }) => {
+  onClick: (task: Task) => void;
+}> = ({ task, onStatusChange, onEdit, onDelete, onClick }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-
   const actions = getActionsForStatus(task.status);
 
   return (
-    <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm hover:shadow-sm transition-shadow relative">
+    <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm hover:shadow-sm transition-shadow relative cursor-pointer" onClick={() => onClick(task)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -175,13 +112,11 @@ const TaskCard: React.FC<{
           </div>
           <div className="mt-1 font-medium text-[#0f172a]">{task.title}</div>
           {task.description && <div className="mt-0.5 text-xs text-[#64748b] line-clamp-2">{task.description}</div>}
-
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#64748b]">
             {task.estimatedMinutes != null && <span>Est: {formatHours(task.estimatedMinutes)}</span>}
             {task.actualMinutes != null && <span>Actual: {formatHours(task.actualMinutes)}</span>}
             {task.completedAt && <span>Completed: {dayName(task.completedAt.slice(0, 10))}</span>}
           </div>
-
           {(task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedStrategyGoalTitle || task.linkedDocumentTitle) && (
             <div className="mt-1 flex flex-wrap gap-1">
               {task.linkedProjectName && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f0fdf4] text-[#16a34a] border border-[#bbf7d0]">📁 {task.linkedProjectName}</span>}
@@ -193,7 +128,7 @@ const TaskCard: React.FC<{
             </div>
           )}
         </div>
-        <div className="relative shrink-0">
+        <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
           <button type="button" onClick={() => setMenuOpen(!menuOpen)} className="text-xs px-2 py-1 rounded text-[#64748b] hover:bg-[#f8fafc]">•••</button>
           {menuOpen && (
             <div className="absolute right-0 top-8 z-10 w-36 rounded-md border border-[#e5e7eb] bg-white shadow-lg">
@@ -234,6 +169,8 @@ const TasksPanel: React.FC<{
   tasks: Task[];
   recurringTasks: RecurringTask[];
   recurringTaskLogs: RecurringTaskLog[];
+  taskWorkLogs: TaskWorkLog[];
+  weeklyTaskReviews: WeeklyTaskReview[];
   projects: Project[];
   plans: Plan[];
   strategyGoals: StrategyGoal[];
@@ -249,11 +186,20 @@ const TasksPanel: React.FC<{
   onAddRecurringTaskLog: (input: RecurringTaskLogInput) => Promise<RecurringTaskLog>;
   onUpdateRecurringTaskLog: (id: string, input: Partial<RecurringTaskLogInput>) => Promise<RecurringTaskLog>;
   onDeleteRecurringTaskLog: (id: string) => Promise<void>;
+  onAddTaskWorkLog: (input: TaskWorkLogInput) => Promise<TaskWorkLog>;
+  onUpdateTaskWorkLog: (id: string, input: Partial<TaskWorkLogInput>) => Promise<TaskWorkLog>;
+  onDeleteTaskWorkLog: (id: string) => Promise<void>;
+  onAddWeeklyTaskReview: (input: WeeklyTaskReviewInput) => Promise<WeeklyTaskReview>;
+  onUpdateWeeklyTaskReview: (id: string, input: Partial<WeeklyTaskReviewInput>) => Promise<WeeklyTaskReview>;
+  onDeleteWeeklyTaskReview: (id: string) => Promise<void>;
 }> = ({
-  tasks, recurringTasks, recurringTaskLogs, projects, plans, strategyGoals, companies, people, generatedDocuments,
+  tasks, recurringTasks, recurringTaskLogs, taskWorkLogs, weeklyTaskReviews,
+  projects, plans, strategyGoals, companies, people, generatedDocuments,
   onAddTask, onUpdateTask, onDeleteTask,
   onAddRecurringTask, onUpdateRecurringTask, onDeleteRecurringTask,
   onAddRecurringTaskLog, onUpdateRecurringTaskLog, onDeleteRecurringTaskLog,
+  onAddTaskWorkLog, onUpdateTaskWorkLog, onDeleteTaskWorkLog,
+  onAddWeeklyTaskReview, onUpdateWeeklyTaskReview, onDeleteWeeklyTaskReview,
 }) => {
   const [view, setView] = useState<TasksView>('weekly');
   const [selectedWeekStart, setSelectedWeekStart] = useState(() => weekStartStr());
@@ -261,6 +207,7 @@ const TasksPanel: React.FC<{
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showRecurringForm, setShowRecurringForm] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [completingTask, setCompletingTask] = useState<Task | null>(null);
 
   const today = todayStr();
@@ -279,6 +226,8 @@ const TasksPanel: React.FC<{
     return map;
   }, [weeklyTasks]);
 
+  const weeklyTaskIds = useMemo(() => new Set(weeklyTasks.map((t) => t.id)), [weeklyTasks]);
+
   const weekStats = useMemo(() => {
     const total = weeklyTasks.length;
     const todo = tasksByStatus.todo.length;
@@ -286,9 +235,12 @@ const TasksPanel: React.FC<{
     const done = tasksByStatus.done.length;
     const blocked = tasksByStatus.blocked.length;
     const estimated = weeklyTasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0);
-    const actual = weeklyTasks.reduce((s, t) => s + (t.actualMinutes || 0), 0);
-    return { total, todo, doing, done, blocked, estimated, actual };
-  }, [weeklyTasks, tasksByStatus]);
+    const actualFromLogs = taskWorkLogs
+      .filter((l) => weeklyTaskIds.has(l.taskId))
+      .reduce((s, l) => s + l.minutesSpent, 0);
+    const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+    return { total, todo, doing, done, blocked, estimated, actual: actualFromLogs, rate };
+  }, [weeklyTasks, tasksByStatus, taskWorkLogs, weeklyTaskIds]);
 
   // ── Daily recurring data ──
   const todayLogsByRuleId = useMemo(() => {
@@ -312,14 +264,17 @@ const TasksPanel: React.FC<{
     [tasks],
   );
 
+  // ── Weekly Review ──
+  const weekReview = useMemo(
+    () => weeklyTaskReviews.find((r) => r.weekStart === selectedWeekStart),
+    [weeklyTaskReviews, selectedWeekStart],
+  );
+
   // ── Handlers ──
   const handleStatusChange = async (id: string, status: TaskStatus) => {
     if (status === 'done') {
       const task = tasks.find((t) => t.id === id);
-      if (task) {
-        setCompletingTask(task);
-        return;
-      }
+      if (task) { setCompletingTask(task); return; }
     }
     const payload: Partial<TaskInput> = { status };
     if (status !== 'done') payload.completedAt = undefined;
@@ -339,7 +294,17 @@ const TasksPanel: React.FC<{
       actualMinutes: actualMinutes || undefined,
       notes: updatedNotes,
     });
+    if (actualMinutes > 0) {
+      await onAddTaskWorkLog({
+        taskId: id,
+        workDate: date,
+        minutesSpent: actualMinutes,
+        summary: `Completed task`,
+        notes: notes || undefined,
+      });
+    }
     setCompletingTask(null);
+    setSelectedTask(null);
   };
 
   const handleMoveToWeek = async (id: string) => {
@@ -373,60 +338,41 @@ const TasksPanel: React.FC<{
 
   const handleThisWeek = () => setSelectedWeekStart(weekStartStr());
 
+  const handleSaveReview = async (input: WeeklyTaskReviewInput) => {
+    if (weekReview) {
+      await onUpdateWeeklyTaskReview(weekReview.id, input);
+    } else {
+      await onAddWeeklyTaskReview(input);
+    }
+  };
+
   // ── Render weekly tasks ──
   const renderWeekly = () => (
     <div className="space-y-4">
-      {/* Week navigation */}
       <div className="flex items-center justify-between rounded-md border border-[#e5e7eb] bg-white p-3">
-        <button type="button" onClick={() => handleWeekNav('prev')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">
-          &lt; Prev
-        </button>
+        <button type="button" onClick={() => handleWeekNav('prev')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">&lt; Prev</button>
         <div className="text-center">
           <div className="text-sm font-medium text-[#0f172a]">Week of {formatDate(selectedWeekStart)}</div>
           <div className="text-xs text-[#64748b]">{formatWeekRange(selectedWeekStart)}</div>
         </div>
         <div className="flex items-center gap-2">
           {selectedWeekStart !== weekStartStr() && (
-            <button type="button" onClick={handleThisWeek} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]">
-              This Week
-            </button>
+            <button type="button" onClick={handleThisWeek} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]">This Week</button>
           )}
-          <button type="button" onClick={() => handleWeekNav('next')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">
-            Next &gt;
-          </button>
+          <button type="button" onClick={() => handleWeekNav('next')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">Next &gt;</button>
         </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-7 gap-2">
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Total</div>
-          <div className="text-lg font-bold text-[#0f172a]">{weekStats.total}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Todo</div>
-          <div className="text-lg font-bold text-[#475569]">{weekStats.todo}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Doing</div>
-          <div className="text-lg font-bold text-[#2563eb]">{weekStats.doing}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Done</div>
-          <div className="text-lg font-bold text-[#16a34a]">{weekStats.done}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Blocked</div>
-          <div className="text-lg font-bold text-[#dc2626]">{weekStats.blocked}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Est</div>
-          <div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.estimated)}</div>
-        </div>
-        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center">
-          <div className="text-xs text-[#64748b]">Actual</div>
-          <div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.actual)}</div>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-8 gap-2">
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Total</div><div className="text-lg font-bold text-[#0f172a]">{weekStats.total}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Todo</div><div className="text-lg font-bold text-[#475569]">{weekStats.todo}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Doing</div><div className="text-lg font-bold text-[#2563eb]">{weekStats.doing}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Done</div><div className="text-lg font-bold text-[#16a34a]">{weekStats.done}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Blocked</div><div className="text-lg font-bold text-[#dc2626]">{weekStats.blocked}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Est</div><div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.estimated)}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Logged</div><div className="text-lg font-bold text-[#0f172a]">{formatHours(weekStats.actual)}</div></div>
+        <div className="rounded-md border border-[#e5e7eb] bg-white p-2 text-center"><div className="text-xs text-[#64748b]">Rate</div><div className="text-lg font-bold text-[#0f172a]">{weekStats.rate}%</div></div>
       </div>
 
       {/* Status columns */}
@@ -442,7 +388,7 @@ const TasksPanel: React.FC<{
                 <div className="text-xs text-[#94a3b8] text-center py-4">—</div>
               ) : (
                 tasksByStatus[col.status].map((task) => (
-                  <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={setEditingTask} onDelete={onDeleteTask} />
+                  <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={setEditingTask} onDelete={onDeleteTask} onClick={setSelectedTask} />
                 ))
               )}
             </div>
@@ -462,9 +408,8 @@ const TasksPanel: React.FC<{
         </div>
         <button type="button" onClick={() => setShowRecurringForm(true)} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]">+ Add</button>
       </div>
-
       {activeRecurring.length === 0 ? (
-        <div className="text-xs text-[#94a3b8] py-4 text-center">No daily recurring tasks. Add one above.</div>
+        <div className="text-xs text-[#94a3b8] py-4 text-center">No daily recurring tasks.</div>
       ) : (
         <div className="space-y-2">
           {activeRecurring.map((rule) => {
@@ -481,10 +426,7 @@ const TasksPanel: React.FC<{
                       {rule.priority && <span className="text-xs">{PRIORITY_ICON[rule.priority]}</span>}
                       {rule.estimatedMinutes != null && <span className="text-xs text-[#64748b]">{formatHours(rule.estimatedMinutes)}</span>}
                     </div>
-                    <div className="mt-0.5 text-xs text-[#64748b]">
-                      {rule.frequency}
-                      {rule.daysOfWeek ? ` (${rule.daysOfWeek})` : ''}
-                    </div>
+                    <div className="mt-0.5 text-xs text-[#64748b]">{rule.frequency}{rule.daysOfWeek ? ` (${rule.daysOfWeek})` : ''}</div>
                     {doneToday && <div className="mt-0.5 text-xs text-[#16a34a]">✓ Done today</div>}
                     {skippedToday && <div className="mt-0.5 text-xs text-[#f59e0b]">○ Skipped today</div>}
                   </div>
@@ -506,8 +448,6 @@ const TasksPanel: React.FC<{
           })}
         </div>
       )}
-
-      {/* Inactive recurring tasks */}
       {recurringTasks.filter((r) => !r.isActive).length > 0 && (
         <div>
           <h4 className="text-xs font-medium text-[#64748b] mb-2">Inactive</h4>
@@ -539,7 +479,7 @@ const TasksPanel: React.FC<{
       ) : (
         <div className="space-y-2">
           {backlogTasks.map((task) => (
-            <div key={task.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm">
+            <div key={task.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm cursor-pointer" onClick={() => setSelectedTask(task)}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -550,7 +490,7 @@ const TasksPanel: React.FC<{
                   <div className="mt-1 font-medium text-[#0f172a]">{task.title}</div>
                   {task.description && <div className="mt-0.5 text-xs text-[#64748b]">{task.description}</div>}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   {task.status !== 'done' && (
                     <button type="button" onClick={() => handleMoveToWeek(task.id)} className="text-xs px-2 py-1 rounded border border-[#2563eb] text-[#2563eb] hover:bg-[#eff6ff]">Move to This Week</button>
                   )}
@@ -565,18 +505,118 @@ const TasksPanel: React.FC<{
     </div>
   );
 
-  // ── Render view ──
+  // ── Render weekly review ──
+  const renderReview = () => {
+    const [summary, setSummary] = useState(weekReview?.summary || '');
+    const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
+    const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');
+    const [blockers, setBlockers] = useState(weekReview?.blockers || '');
+    const [lessons, setLessons] = useState(weekReview?.lessons || '');
+    const [nextFocus, setNextFocus] = useState(weekReview?.nextWeekFocus || '');
+    const [score, setScore] = useState(weekReview?.score != null ? String(weekReview.score) : '');
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+      setSaving(true);
+      try {
+        await handleSaveReview({
+          weekStart: selectedWeekStart,
+          summary: summary || undefined,
+          whatWorked: whatWorked || undefined,
+          whatFailed: whatFailed || undefined,
+          blockers: blockers || undefined,
+          lessons: lessons || undefined,
+          nextWeekFocus: nextFocus || undefined,
+          score: score ? Math.min(10, Math.max(0, parseInt(score) || 0)) : undefined,
+        });
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-[#0f172a]">Weekly Review</h3>
+            <p className="text-xs text-[#64748b]">Week of {formatDate(selectedWeekStart)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : weekReview ? 'Update Review' : 'Save Review'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-md border border-[#e5e7eb] bg-white p-4 space-y-3">
+            <h4 className="text-xs font-medium text-[#0f172a]">Execution</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs text-[#64748b]">
+              <div><span className="font-medium text-[#0f172a]">Done:</span> {weekStats.done}/{weekStats.total}</div>
+              <div><span className="font-medium text-[#0f172a]">Rate:</span> {weekStats.rate}%</div>
+              <div><span className="font-medium text-[#0f172a]">Est:</span> {formatHours(weekStats.estimated)}</div>
+              <div><span className="font-medium text-[#0f172a]">Logged:</span> {formatHours(weekStats.actual)}</div>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Score (0-10)</label>
+            <input
+              type="number"
+              min={0}
+              max={10}
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">Summary</label>
+          <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">What Worked</label>
+            <textarea value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">What Failed</label>
+            <textarea value={whatFailed} onChange={(e) => setWhatFailed(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Blockers</label>
+            <textarea value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#475569] mb-1">Lessons</label>
+            <textarea value={lessons} onChange={(e) => setLessons(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#475569] mb-1">Next Week Focus</label>
+          <textarea value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={3} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+        </div>
+      </div>
+    );
+  };
+
   const renderView = () => {
     switch (view) {
       case 'weekly': return renderWeekly();
       case 'daily': return renderDailyRecurring();
       case 'backlog': return renderBacklog();
+      case 'review': return renderReview();
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-[#0f172a]">This Week Tasks</h2>
@@ -584,7 +624,6 @@ const TasksPanel: React.FC<{
         </div>
       </div>
 
-      {/* View tabs */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           {VIEWS.map((v) => (
@@ -603,17 +642,10 @@ const TasksPanel: React.FC<{
           ))}
         </div>
         {view === 'weekly' && (
-          <button
-            type="button"
-            onClick={() => setShowTaskForm(true)}
-            className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-          >
-            + Add Task
-          </button>
+          <button type="button" onClick={() => setShowTaskForm(true)} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]">+ Add Task</button>
         )}
       </div>
 
-      {/* View content */}
       {renderView()}
 
       {/* Task Form Modal */}
@@ -622,25 +654,14 @@ const TasksPanel: React.FC<{
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-[#e5e7eb] bg-white p-6 shadow-lg">
             <TaskForm
               initial={editingTask ? { ...editingTask, weekStart: editingTask.weekStart || selectedWeekStart } : undefined}
-              projects={projects}
-              plans={plans}
-              strategyGoals={strategyGoals}
-              companies={companies}
-              people={people}
+              projects={projects} plans={plans} strategyGoals={strategyGoals} companies={companies} people={people}
               defaultWeekStart={selectedWeekStart}
               onSubmit={async (input) => {
-                if (editingTask) {
-                  await onUpdateTask(editingTask.id, input);
-                } else {
-                  await onAddTask({ ...input, weekStart: selectedWeekStart });
-                }
-                setShowTaskForm(false);
-                setEditingTask(null);
+                if (editingTask) { await onUpdateTask(editingTask.id, input); }
+                else { await onAddTask({ ...input, weekStart: selectedWeekStart }); }
+                setShowTaskForm(false); setEditingTask(null);
               }}
-              onCancel={() => {
-                setShowTaskForm(false);
-                setEditingTask(null);
-              }}
+              onCancel={() => { setShowTaskForm(false); setEditingTask(null); }}
             />
           </div>
         </div>
@@ -652,24 +673,13 @@ const TasksPanel: React.FC<{
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-[#e5e7eb] bg-white p-6 shadow-lg">
             <RecurringTaskForm
               initial={editingRecurring || undefined}
-              projects={projects}
-              plans={plans}
-              strategyGoals={strategyGoals}
-              companies={companies}
-              people={people}
+              projects={projects} plans={plans} strategyGoals={strategyGoals} companies={companies} people={people}
               onSubmit={async (input) => {
-                if (editingRecurring) {
-                  await onUpdateRecurringTask(editingRecurring.id, input);
-                } else {
-                  await onAddRecurringTask(input);
-                }
-                setShowRecurringForm(false);
-                setEditingRecurring(null);
+                if (editingRecurring) { await onUpdateRecurringTask(editingRecurring.id, input); }
+                else { await onAddRecurringTask(input); }
+                setShowRecurringForm(false); setEditingRecurring(null);
               }}
-              onCancel={() => {
-                setShowRecurringForm(false);
-                setEditingRecurring(null);
-              }}
+              onCancel={() => { setShowRecurringForm(false); setEditingRecurring(null); }}
             />
           </div>
         </div>
@@ -677,12 +687,67 @@ const TasksPanel: React.FC<{
 
       {/* Completion Modal */}
       {completingTask && (
-        <CompletionModal
-          task={completingTask}
-          onConfirm={handleComplete}
-          onCancel={() => setCompletingTask(null)}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="w-full max-w-sm rounded-lg border border-[#e5e7eb] bg-white p-5 shadow-lg">
+            <h3 className="text-sm font-medium text-[#0f172a] mb-3">Complete Task</h3>
+            <p className="text-xs text-[#64748b] mb-4">{completingTask.title}</p>
+            <CompletionModalForm task={completingTask} onConfirm={handleComplete} onCancel={() => setCompletingTask(null)} />
+          </div>
+        </div>
+      )}
+
+      {/* Task Detail Workspace */}
+      {selectedTask && (
+        <TaskDetailWorkspace
+          task={selectedTask}
+          taskWorkLogs={taskWorkLogs}
+          projects={projects}
+          plans={plans}
+          strategyGoals={strategyGoals}
+          companies={companies}
+          people={people}
+          generatedDocuments={generatedDocuments}
+          onUpdateTask={onUpdateTask}
+          onDeleteTask={async (id) => { await onDeleteTask(id); setSelectedTask(null); }}
+          onAddWorkLog={onAddTaskWorkLog}
+          onUpdateWorkLog={onUpdateTaskWorkLog}
+          onDeleteWorkLog={onDeleteTaskWorkLog}
+          onComplete={handleComplete}
+          onClose={() => setSelectedTask(null)}
         />
       )}
+    </div>
+  );
+};
+
+// ── Completion Modal Form (to avoid mutating state while open) ──
+const CompletionModalForm: React.FC<{
+  task: Task;
+  onConfirm: (id: string, date: string, hours: number, notes: string) => void;
+  onCancel: () => void;
+}> = ({ task, onConfirm, onCancel }) => {
+  const [completionDate, setCompletionDate] = useState(task.completedAt?.slice(0, 10) || todayStr());
+  const [actualHours, setActualHours] = useState(task.actualMinutes ? String(Math.round(task.actualMinutes / 60)) : '');
+  const [notes, setNotes] = useState('');
+  const handleConfirm = () => { const hours = parseFloat(actualHours) || 0; onConfirm(task.id, completionDate, hours, notes); };
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-[#475569] mb-1">Completion Date</label>
+        <input type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-[#475569] mb-1">Hours Spent</label>
+        <input type="number" min={0} step={0.5} value={actualHours} onChange={(e) => setActualHours(e.target.value)} placeholder="e.g. 2.5" className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-[#475569] mb-1">Notes (optional)</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" placeholder="Completion notes..." />
+      </div>
+      <div className="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
+        <button type="button" onClick={handleConfirm} className="px-4 py-2 rounded border border-[#16a34a] bg-[#16a34a] text-white hover:bg-[#15803d] text-sm">Mark Done</button>
+      </div>
     </div>
   );
 };

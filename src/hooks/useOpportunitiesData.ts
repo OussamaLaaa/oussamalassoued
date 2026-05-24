@@ -1156,6 +1156,54 @@ const recurringTaskLogToDb = (input: Partial<RecurringTaskLogInput>) => {
   return payload;
 };
 
+const taskWorkLogFromDb = (row: any): TaskWorkLog => ({
+  id: String(row?.id ?? ''),
+  taskId: row?.task_id ?? row?.taskId ?? '',
+  workDate: row?.work_date ?? row?.workDate ?? '',
+  minutesSpent: Number(row?.minutes_spent ?? row?.minutesSpent ?? 0),
+  summary: row?.summary ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const taskWorkLogToDb = (input: Partial<TaskWorkLogInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.taskId !== undefined) payload.task_id = input.taskId;
+  if (input.workDate !== undefined) payload.work_date = input.workDate;
+  if (input.minutesSpent !== undefined) payload.minutes_spent = Number(input.minutesSpent);
+  if (input.summary !== undefined) payload.summary = toNullableString(input.summary);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const weeklyTaskReviewFromDb = (row: any): WeeklyTaskReview => ({
+  id: String(row?.id ?? ''),
+  weekStart: row?.week_start ?? row?.weekStart ?? '',
+  summary: row?.summary ?? undefined,
+  whatWorked: row?.what_worked ?? row?.whatWorked ?? undefined,
+  whatFailed: row?.what_failed ?? row?.whatFailed ?? undefined,
+  blockers: row?.blockers ?? undefined,
+  lessons: row?.lessons ?? undefined,
+  nextWeekFocus: row?.next_week_focus ?? row?.nextWeekFocus ?? undefined,
+  score: row?.score != null ? Number(row.score) : undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const weeklyTaskReviewToDb = (input: Partial<WeeklyTaskReviewInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.weekStart !== undefined) payload.week_start = input.weekStart;
+  if (input.summary !== undefined) payload.summary = toNullableString(input.summary);
+  if (input.whatWorked !== undefined) payload.what_worked = toNullableString(input.whatWorked);
+  if (input.whatFailed !== undefined) payload.what_failed = toNullableString(input.whatFailed);
+  if (input.blockers !== undefined) payload.blockers = toNullableString(input.blockers);
+  if (input.lessons !== undefined) payload.lessons = toNullableString(input.lessons);
+  if (input.nextWeekFocus !== undefined) payload.next_week_focus = toNullableString(input.nextWeekFocus);
+  if (input.score !== undefined) payload.score = Math.min(10, Math.max(0, Number(input.score)));
+  return payload;
+};
+
 const attachRecurringTaskLinkNames = (
   items: RecurringTask[],
   projects: Project[],
@@ -1290,6 +1338,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [recurringTaskLogs, setRecurringTaskLogs] = useState<RecurringTaskLog[]>([]);
+  const [taskWorkLogs, setTaskWorkLogs] = useState<TaskWorkLog[]>([]);
+  const [weeklyTaskReviews, setWeeklyTaskReviews] = useState<WeeklyTaskReview[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -1328,6 +1378,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextTasksRaw = Array.isArray(payload?.tasks) ? payload.tasks : [];
     const nextRecurringTasksRaw = Array.isArray(payload?.recurring_tasks) ? payload.recurring_tasks : [];
     const nextRecurringTaskLogsRaw = Array.isArray(payload?.recurring_task_logs) ? payload.recurring_task_logs : [];
+    const nextTaskWorkLogsRaw = Array.isArray(payload?.task_work_logs) ? payload.task_work_logs : [];
+    const nextWeeklyTaskReviewsRaw = Array.isArray(payload?.weekly_task_reviews) ? payload.weekly_task_reviews : [];
     const nextStrategyItemsRaw = Array.isArray(payload?.strategy_items) ? payload.strategy_items : [];
     const nextStrategyGoalsRaw = Array.isArray(payload?.strategy_goals) ? payload.strategy_goals : [];
     const nextStrategyPlansRaw = Array.isArray(payload?.strategy_plans) ? payload.strategy_plans : [];
@@ -1440,6 +1492,8 @@ export const useOpportunitiesData = (enabled = true) => {
     );
 
     const nextRecurringTaskLogs = nextRecurringTaskLogsRaw.map((row: any) => recurringTaskLogFromDb(row));
+    const nextTaskWorkLogs = nextTaskWorkLogsRaw.map((row: any) => taskWorkLogFromDb(row));
+    const nextWeeklyTaskReviews = nextWeeklyTaskReviewsRaw.map((row: any) => weeklyTaskReviewFromDb(row));
 
     if (import.meta.env.DEV) {
       console.log('[Opportunities Debug] Loaded companies database types:', nextCompanies.map((c) => ({
@@ -1487,6 +1541,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setTasks(nextTasks);
     setRecurringTasks(nextRecurringTasks);
     setRecurringTaskLogs(nextRecurringTaskLogs);
+    setTaskWorkLogs(nextTaskWorkLogs);
+    setWeeklyTaskReviews(nextWeeklyTaskReviews);
   }, []);
 
   useEffect(() => {
@@ -1739,7 +1795,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2945,6 +3001,48 @@ export const useOpportunitiesData = (enabled = true) => {
     setRecurringTaskLogs((current) => current.filter((l) => l.id !== id));
   };
 
+  // ── Task Work Logs CRUD ──
+
+  const addTaskWorkLog = async (input: TaskWorkLogInput) => {
+    const row = await syncInsert('task_work_logs', taskWorkLogToDb(input));
+    const next = taskWorkLogFromDb(row);
+    setTaskWorkLogs((current) => [...current, next]);
+    return next;
+  };
+
+  const updateTaskWorkLog = async (id: string, input: Partial<TaskWorkLogInput>) => {
+    const row = await syncUpdate('task_work_logs', id, taskWorkLogToDb(input));
+    const next = taskWorkLogFromDb(row);
+    setTaskWorkLogs((current) => current.map((l) => (l.id === id ? next : l)));
+    return next;
+  };
+
+  const deleteTaskWorkLog = async (id: string) => {
+    await syncDelete('task_work_logs' as any, id);
+    setTaskWorkLogs((current) => current.filter((l) => l.id !== id));
+  };
+
+  // ── Weekly Task Reviews CRUD ──
+
+  const addWeeklyTaskReview = async (input: WeeklyTaskReviewInput) => {
+    const row = await syncInsert('weekly_task_reviews', weeklyTaskReviewToDb(input));
+    const next = weeklyTaskReviewFromDb(row);
+    setWeeklyTaskReviews((current) => [...current, next]);
+    return next;
+  };
+
+  const updateWeeklyTaskReview = async (id: string, input: Partial<WeeklyTaskReviewInput>) => {
+    const row = await syncUpdate('weekly_task_reviews', id, weeklyTaskReviewToDb(input));
+    const next = weeklyTaskReviewFromDb(row);
+    setWeeklyTaskReviews((current) => current.map((r) => (r.id === id ? next : r)));
+    return next;
+  };
+
+  const deleteWeeklyTaskReview = async (id: string) => {
+    await syncDelete('weekly_task_reviews' as any, id);
+    setWeeklyTaskReviews((current) => current.filter((r) => r.id !== id));
+  };
+
   const addTemplate = async (input: MessageTemplateInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Template name is required.');
@@ -3196,6 +3294,14 @@ export const useOpportunitiesData = (enabled = true) => {
     addRecurringTaskLog,
     updateRecurringTaskLog,
     deleteRecurringTaskLog,
+    taskWorkLogs,
+    weeklyTaskReviews,
+    addTaskWorkLog,
+    updateTaskWorkLog,
+    deleteTaskWorkLog,
+    addWeeklyTaskReview,
+    updateWeeklyTaskReview,
+    deleteWeeklyTaskReview,
     addFinanceRecurringRule,
     updateFinanceRecurringRule,
     deleteFinanceRecurringRule,

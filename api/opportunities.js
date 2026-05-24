@@ -40,6 +40,8 @@ const allowedEntities = new Set([
   'tasks',
   'recurring_tasks',
   'recurring_task_logs',
+  'task_work_logs',
+  'weekly_task_reviews',
 ]);
 const tablesAttempted = [
   'companies',
@@ -81,6 +83,8 @@ const tablesAttempted = [
   'tasks',
   'recurring_tasks',
   'recurring_task_logs',
+  'task_work_logs',
+  'weekly_task_reviews',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -635,6 +639,25 @@ const normalizeStrategyEntityRow = (entity, row) => {
   return row;
 };
 
+const normalizeTaskWorkLogRow = (row) => ({
+  task_id: toRequiredString(row?.task_id ?? row?.taskId),
+  work_date: toNullableString(row?.work_date ?? row?.workDate),
+  minutes_spent: toNullableNumber(row?.minutes_spent ?? row?.minutesSpent) || 0,
+  summary: toNullableString(row?.summary),
+  notes: toNullableString(row?.notes),
+});
+
+const normalizeWeeklyTaskReviewRow = (row) => ({
+  week_start: toRequiredString(row?.week_start ?? row?.weekStart),
+  summary: toNullableString(row?.summary),
+  what_worked: toNullableString(row?.what_worked ?? row?.whatWorked),
+  what_failed: toNullableString(row?.what_failed ?? row?.whatFailed),
+  blockers: toNullableString(row?.blockers),
+  lessons: toNullableString(row?.lessons),
+  next_week_focus: toNullableString(row?.next_week_focus ?? row?.nextWeekFocus),
+  score: row?.score != null ? Math.min(10, Math.max(0, Number(row.score))) : null,
+});
+
 const normalizeTaskRow = (row) => ({
   title: toRequiredString(row?.title),
   description: toNullableString(row?.description),
@@ -700,6 +723,8 @@ const normalizeEntityRow = (entity, row) => {
       notes: toNullableString(row?.notes),
     };
   }
+  if (entity === 'task_work_logs') return normalizeTaskWorkLogRow(row);
+  if (entity === 'weekly_task_reviews') return normalizeWeeklyTaskReviewRow(row);
   return row;
 };
 
@@ -839,6 +864,8 @@ export default async function handler(req, res) {
         tasks: results.tasks || [],
         recurring_tasks: results.recurring_tasks || [],
         recurring_task_logs: results.recurring_task_logs || [],
+        task_work_logs: results.task_work_logs || [],
+        weekly_task_reviews: results.weekly_task_reviews || [],
         ai_provider_keys: aiProviderKeys,
         ai_use_case_settings: aiUseCaseSettings,
         templatesWarning,
