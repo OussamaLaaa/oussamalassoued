@@ -41,6 +41,10 @@ import type {
   RelationshipInput,
   RelationshipInteraction,
   RelationshipInteractionInput,
+  RelationshipCategory,
+  RelationshipCategoryInput,
+  RelationshipContactMethod,
+  RelationshipContactMethodInput,
   RelationshipOpportunity,
   RelationshipOpportunityInput,
 } from '../types/opportunities';
@@ -247,6 +251,7 @@ export const relationshipFromDb = (row: any, personName?: string): Relationship 
   id: safeString(row?.id),
   personId: row?.person_id ?? row?.personId ?? undefined,
   personName,
+  categoryId: row?.category_id ?? row?.categoryId ?? undefined,
   displayName: safeString(row?.display_name ?? row?.displayName),
   domain: row?.domain ?? undefined,
   relationshipType: row?.relationship_type ?? row?.relationshipType ?? undefined,
@@ -273,6 +278,7 @@ export const relationshipToDb = (input: Partial<RelationshipInput>, options: { f
   const payload: Record<string, unknown> = {};
 
   if (!forUpdate || input.personId !== undefined) payload.person_id = toNullableString(input.personId);
+  if (!forUpdate || input.categoryId !== undefined) payload.category_id = toNullableString(input.categoryId);
   if (!forUpdate || input.displayName !== undefined) payload.display_name = String(input.displayName || '').trim();
   if (!forUpdate || input.domain !== undefined) payload.domain = toNullableString(input.domain);
   if (!forUpdate || input.relationshipType !== undefined) payload.relationship_type = toNullableString(input.relationshipType);
@@ -355,6 +361,56 @@ export const relationshipOpportunityToDb = (input: Partial<RelationshipOpportuni
   if (!forUpdate || input.dueDate !== undefined) payload.due_date = toNullableDate(input.dueDate);
   if (!forUpdate || input.linkedProjectId !== undefined) payload.linked_project_id = toNullableString(input.linkedProjectId);
   if (!forUpdate || input.linkedCompanyId !== undefined) payload.linked_company_id = toNullableString(input.linkedCompanyId);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const relationshipCategoryFromDb = (row: any): RelationshipCategory => ({
+  id: safeString(row?.id),
+  name: safeString(row?.name),
+  slug: safeString(row?.slug),
+  description: row?.description ?? undefined,
+  color: row?.color ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const relationshipCategoryToDb = (input: Partial<RelationshipCategoryInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (!forUpdate || input.slug !== undefined) payload.slug = String(input.slug || '').trim();
+  if (!forUpdate || input.description !== undefined) payload.description = toNullableString(input.description);
+  if (!forUpdate || input.color !== undefined) payload.color = toNullableString(input.color);
+  if (!forUpdate || input.isActive !== undefined) payload.is_active = input.isActive == null ? true : Boolean(input.isActive);
+
+  return payload;
+};
+
+export const relationshipContactMethodFromDb = (row: any): RelationshipContactMethod => ({
+  id: safeString(row?.id),
+  relationshipId: safeString(row?.relationship_id ?? row?.relationshipId),
+  type: row?.type ?? undefined,
+  label: row?.label ?? undefined,
+  value: row?.value ?? undefined,
+  isPrimary: row?.is_primary == null ? false : Boolean(row.is_primary),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const relationshipContactMethodToDb = (input: Partial<RelationshipContactMethodInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.relationshipId !== undefined) payload.relationship_id = toNullableString(input.relationshipId);
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type);
+  if (!forUpdate || input.label !== undefined) payload.label = toNullableString(input.label);
+  if (!forUpdate || input.value !== undefined) payload.value = toNullableString(input.value);
+  if (!forUpdate || input.isPrimary !== undefined) payload.is_primary = input.isPrimary == null ? false : Boolean(input.isPrimary);
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
   return payload;

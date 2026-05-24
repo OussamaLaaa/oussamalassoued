@@ -4,6 +4,10 @@ import type {
   Person,
   Project,
   Relationship,
+  RelationshipCategory,
+  RelationshipCategoryInput,
+  RelationshipContactMethod,
+  RelationshipContactMethodInput,
   RelationshipInteraction,
   RelationshipInteractionInput,
   RelationshipOpportunity,
@@ -11,63 +15,15 @@ import type {
   RelationshipInput,
 } from '../../types/opportunities';
 import OpportunityModal from './OpportunityModal';
+import RelationshipCategoryForm from './RelationshipCategoryForm';
 import RelationshipForm from './RelationshipForm';
 import RelationshipWorkspace from './RelationshipWorkspace';
 
-const SECTION_TABS = [
+const VIEW_TABS = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'all', label: 'All Relationships' },
-  { id: 'domains', label: 'Domains' },
-  { id: 'follow-ups', label: 'Follow-ups' },
-  { id: 'opportunities', label: 'Opportunities' },
-  { id: 'review', label: 'Review' },
-] as const;
-
-const DOMAIN_OPTIONS = [
-  { value: '', label: 'All Domains' },
-  { value: 'ux_ui', label: 'UX / UI' },
-  { value: 'founders', label: 'Founders' },
-  { value: 'recruiters', label: 'Recruiters' },
-  { value: 'designers', label: 'Designers' },
-  { value: 'developers', label: 'Developers' },
-  { value: 'clients', label: 'Clients' },
-  { value: 'mentors', label: 'Mentors' },
-  { value: 'investors', label: 'Investors' },
-  { value: 'local_business', label: 'Local Business' },
-  { value: 'family', label: 'Family' },
-  { value: 'friends', label: 'Friends' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-const TYPE_OPTIONS = [
-  { value: '', label: 'All Types' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'client', label: 'Client' },
-  { value: 'mentor', label: 'Mentor' },
-  { value: 'peer', label: 'Peer' },
-  { value: 'recruiter', label: 'Recruiter' },
-  { value: 'founder', label: 'Founder' },
-  { value: 'family', label: 'Family' },
-  { value: 'friend', label: 'Friend' },
-  { value: 'community', label: 'Community' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-const STRENGTH_OPTIONS = [
-  { value: '', label: 'All Strengths' },
-  { value: 'weak', label: 'Weak' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'strong', label: 'Strong' },
-] as const;
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'warm', label: 'Warm' },
-  { value: 'cold', label: 'Cold' },
-  { value: 'paused', label: 'Paused' },
-  { value: 'avoid', label: 'Avoid' },
-  { value: 'archived', label: 'Archived' },
+  { id: 'categories', label: 'Categories' },
+  { id: 'relationships', label: 'Relationships' },
+  { id: 'workspace', label: 'Workspace' },
 ] as const;
 
 const badgeClass = (kind?: string) => {
@@ -79,20 +35,14 @@ const badgeClass = (kind?: string) => {
   return 'border-[#dbeafe] bg-[#eff6ff] text-[#1d4ed8]';
 };
 
-const formatDate = (value?: string) => {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
-
-const todayKey = () => new Date().toISOString().slice(0, 10);
-const toDateKey = (value?: string) => (value ? value.slice(0, 10) : '');
+const defaultCategoryId = 'all';
 
 const RelationshipsPanel: React.FC<{
   relationships: Relationship[];
   relationshipInteractions: RelationshipInteraction[];
   relationshipOpportunities: RelationshipOpportunity[];
+  relationshipCategories: RelationshipCategory[];
+  relationshipContactMethods: RelationshipContactMethod[];
   people: Person[];
   companies: Company[];
   projects: Project[];
@@ -105,10 +55,18 @@ const RelationshipsPanel: React.FC<{
   onAddRelationshipOpportunity: (input: RelationshipOpportunityInput) => Promise<any>;
   onUpdateRelationshipOpportunity: (id: string, input: Partial<RelationshipOpportunityInput>) => Promise<any>;
   onDeleteRelationshipOpportunity: (id: string) => Promise<any>;
+  onAddRelationshipCategory: (input: RelationshipCategoryInput) => Promise<any>;
+  onUpdateRelationshipCategory: (id: string, input: Partial<RelationshipCategoryInput>) => Promise<any>;
+  onDeleteRelationshipCategory: (id: string) => Promise<any>;
+  onAddRelationshipContactMethod: (input: RelationshipContactMethodInput) => Promise<any>;
+  onUpdateRelationshipContactMethod: (id: string, input: Partial<RelationshipContactMethodInput>) => Promise<any>;
+  onDeleteRelationshipContactMethod: (id: string) => Promise<any>;
 }> = ({
   relationships,
   relationshipInteractions,
   relationshipOpportunities,
+  relationshipCategories,
+  relationshipContactMethods,
   people,
   companies,
   projects,
@@ -121,93 +79,63 @@ const RelationshipsPanel: React.FC<{
   onAddRelationshipOpportunity,
   onUpdateRelationshipOpportunity,
   onDeleteRelationshipOpportunity,
+  onAddRelationshipCategory,
+  onUpdateRelationshipCategory,
+  onDeleteRelationshipCategory,
+  onAddRelationshipContactMethod,
+  onUpdateRelationshipContactMethod,
+  onDeleteRelationshipContactMethod,
 }) => {
-  const [activeSection, setActiveSection] = useState<typeof SECTION_TABS[number]['id']>('dashboard');
+  const [activeView, setActiveView] = useState<typeof VIEW_TABS[number]['id']>('dashboard');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(defaultCategoryId);
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string | null>(relationships[0]?.id || null);
   const [editingRelationship, setEditingRelationship] = useState<Relationship | null>(null);
+  const [editingCategory, setEditingCategory] = useState<RelationshipCategory | null>(null);
   const [isAddingRelationship, setIsAddingRelationship] = useState(false);
-  const [domainFilter, setDomainFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [strengthFilter, setStrengthFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [followUpFilter, setFollowUpFilter] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   const peopleById = useMemo(() => new Map(people.map((person) => [person.id, person] as const)), [people]);
-  const companyById = useMemo(() => new Map(companies.map((company) => [company.id, company] as const)), [companies]);
-  const projectById = useMemo(() => new Map(projects.map((project) => [project.id, project] as const)), [projects]);
-  const relationshipById = useMemo(() => new Map(relationships.map((relationship) => [relationship.id, relationship] as const)), [relationships]);
+  const categoryById = useMemo(() => new Map(relationshipCategories.map((category) => [category.id, category] as const)), [relationshipCategories]);
 
-  const filteredRelationships = useMemo(() => {
-    return relationships.filter((relationship) => {
-      if (domainFilter && relationship.domain !== domainFilter) return false;
-      if (typeFilter && relationship.relationshipType !== typeFilter) return false;
-      if (strengthFilter && relationship.relationshipStrength !== strengthFilter) return false;
-      if (statusFilter && relationship.status !== statusFilter) return false;
-      if (followUpFilter === 'due') {
-        const nextContact = toDateKey(relationship.nextContactDate);
-        if (!nextContact || nextContact > todayKey()) return false;
-        if (['avoid', 'archived'].includes(String(relationship.status || ''))) return false;
-      }
-      return true;
-    });
-  }, [relationships, domainFilter, typeFilter, strengthFilter, statusFilter, followUpFilter]);
+  const relationshipsByCategory = useMemo(() => {
+    const grouped = new Map<string, Relationship[]>();
+    grouped.set(defaultCategoryId, relationships.filter((relationship) => !relationship.categoryId));
+    relationshipCategories.forEach((category) => grouped.set(category.id, relationships.filter((relationship) => relationship.categoryId === category.id)));
+    return grouped;
+  }, [relationships, relationshipCategories]);
 
-  const dueRelationships = useMemo(() => relationships.filter((relationship) => {
-    const nextContact = toDateKey(relationship.nextContactDate);
-    return Boolean(nextContact && nextContact <= todayKey() && !['avoid', 'archived'].includes(String(relationship.status || '')));
-  }), [relationships]);
+  const selectedCategoryRelationships = selectedCategoryId === defaultCategoryId
+    ? relationships.filter((relationship) => !relationship.categoryId)
+    : relationships.filter((relationship) => relationship.categoryId === selectedCategoryId);
 
-  const openOpportunities = useMemo(() => relationshipOpportunities.filter((item) => !['archived', 'lost'].includes(String(item.status || '').toLowerCase())), [relationshipOpportunities]);
-  const frictionRelationships = useMemo(() => relationships.filter((relationship) => Boolean(String(relationship.problems || '').trim() || String(relationship.riskNotes || '').trim())), [relationships]);
+  const selectedRelationship = useMemo(
+    () => relationships.find((relationship) => relationship.id === selectedRelationshipId) || null,
+    [relationships, selectedRelationshipId],
+  );
 
-  const strongRelationships = relationships.filter((relationship) => relationship.relationshipStrength === 'strong').length;
-  const warmRelationships = relationships.filter((relationship) => relationship.status === 'warm').length;
-  const problemsCount = relationships.filter((relationship) => Boolean(String(relationship.problems || '').trim() || String(relationship.riskNotes || '').trim())).length;
+  const selectedRelationshipCategory = selectedRelationship?.categoryId ? categoryById.get(selectedRelationship.categoryId) || null : null;
+  const strongCount = relationships.filter((relationship) => relationship.relationshipStrength === 'strong').length;
+  const dueCount = relationships.filter((relationship) => {
+    if (!relationship.nextContactDate) return false;
+    return relationship.nextContactDate.slice(0, 10) <= new Date().toISOString().slice(0, 10);
+  }).length;
+  const contactMethodCount = relationshipContactMethods.length;
+  const openOpportunityCount = relationshipOpportunities.filter((item) => !['archived', 'lost'].includes(String(item.status || '').toLowerCase())).length;
 
-  const countsByDomain = useMemo(() => {
-    const counts = new Map<string, number>();
-    relationships.forEach((relationship) => {
-      const key = relationship.domain || 'other';
-      counts.set(key, (counts.get(key) || 0) + 1);
-    });
-    return counts;
-  }, [relationships]);
+  const dashboardCategories = useMemo(() => {
+    const withCounts = relationshipCategories.map((category) => ({
+      category,
+      count: relationshipsByCategory.get(category.id)?.length || 0,
+    }));
+    return [
+      { id: defaultCategoryId, name: 'Uncategorized', description: 'Relationships without a category', count: relationshipsByCategory.get(defaultCategoryId)?.length || 0, color: '#2563eb' },
+      ...withCounts.map(({ category, count }) => ({ id: category.id, name: category.name, description: category.description || 'Relationship category', count, color: category.color || '#2563eb' })),
+    ];
+  }, [relationshipCategories, relationshipsByCategory]);
 
-  const handleOpenWorkspace = (relationshipId: string) => {
+  const handleOpenRelationship = (relationshipId: string) => {
     setSelectedRelationshipId(relationshipId);
-    setActiveSection('dashboard');
-  };
-
-  const handleEditRelationship = (relationship: Relationship) => {
-    setEditingRelationship(relationship);
-    setIsAddingRelationship(false);
-  };
-
-  const handleDeleteRelationship = async (relationshipId: string) => {
-    const deleted = await onDeleteRelationship(relationshipId);
-    if (deleted) {
-      setSelectedRelationshipId((current) => (current === relationshipId ? null : current));
-    }
-  };
-
-  const handleQuickFollowUp = async (relationship: Relationship) => {
-    const defaultDate = relationship.nextContactDate ? toDateKey(relationship.nextContactDate) : '';
-    const nextDate = window.prompt('Next follow-up date (YYYY-MM-DD). Leave blank to clear.', defaultDate);
-    if (nextDate == null) return;
-
-    const today = todayKey();
-    await onAddRelationshipInteraction({
-      relationshipId: relationship.id,
-      interactionDate: today,
-      type: 'follow_up',
-      summary: relationship.nextAction || 'Followed up',
-      outcome: '',
-      nextAction: nextDate ? `Follow up on ${nextDate}` : '',
-    });
-    await onUpdateRelationship(relationship.id, {
-      lastContactDate: today,
-      nextContactDate: nextDate || null,
-    });
+    setActiveView('workspace');
   };
 
   const handleSubmitRelationship = async (input: RelationshipInput) => {
@@ -220,19 +148,21 @@ const RelationshipsPanel: React.FC<{
     setIsAddingRelationship(false);
   };
 
+  const handleSubmitCategory = async (input: RelationshipCategoryInput) => {
+    if (editingCategory) {
+      await onUpdateRelationshipCategory(editingCategory.id, input);
+    } else {
+      await onAddRelationshipCategory(input);
+    }
+    setEditingCategory(null);
+    setIsAddingCategory(false);
+  };
+
   const dashboardCard = 'rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]';
-  const pillButton = 'rounded-full border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm text-[#0f172a] hover:bg-[#f8fafc]';
   const primaryButton = 'rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]';
   const tableButton = 'rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]';
 
-  const sectionOpportunities = openOpportunities.map((opportunity) => ({
-    ...opportunity,
-    relationshipName: relationshipById.get(opportunity.relationshipId)?.displayName || 'Unlinked relationship',
-    companyName: opportunity.linkedCompanyName || (opportunity.linkedCompanyId ? companyById.get(opportunity.linkedCompanyId)?.name : undefined),
-    projectName: opportunity.linkedProjectName || (opportunity.linkedProjectId ? projectById.get(opportunity.linkedProjectId)?.name : undefined),
-  }));
-
-  const reviewRelationships = relationships.filter((relationship) => String(relationship.status || '').toLowerCase() !== 'archived' && (String(relationship.riskNotes || '').trim() || String(relationship.problems || '').trim() || relationship.trustLevel === 'low' || relationship.trustLevel === 'unknown'));
+  const relationshipsView = activeView === 'relationships' || activeView === 'workspace';
 
   return (
     <section className="space-y-4">
@@ -240,206 +170,162 @@ const RelationshipsPanel: React.FC<{
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold text-[#0f172a]">Relationships OS</h2>
-            <p className="mt-1 text-sm text-[#64748b]">Track people, trust, exchanges, friction, and follow-ups in one workspace.</p>
+            <p className="mt-1 text-sm text-[#64748b]">A personal CRM workspace for categories, contact methods, and follow-through.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={primaryButton} onClick={() => { setEditingRelationship(null); setIsAddingRelationship(true); }}>Add Relationship</button>
+            <button type="button" className={tableButton} onClick={() => { setEditingCategory(null); setIsAddingCategory(true); }}>Add Category</button>
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 border-t border-[#e5e7eb] pt-4">
-          {SECTION_TABS.map((section) => (
+          {VIEW_TABS.map((view) => (
             <button
-              key={section.id}
+              key={view.id}
               type="button"
-              onClick={() => setActiveSection(section.id)}
-              className={`rounded-full px-3 py-1.5 text-sm transition-colors ${activeSection === section.id ? 'bg-[#eff6ff] text-[#1d4ed8]' : 'bg-[#f8fafc] text-[#475569] hover:bg-[#eef2ff]'}`}
+              onClick={() => setActiveView(view.id)}
+              className={`rounded-full px-3 py-1.5 text-sm transition-colors ${activeView === view.id ? 'bg-[#eff6ff] text-[#1d4ed8]' : 'bg-[#f8fafc] text-[#475569] hover:bg-[#eef2ff]'}`}
             >
-              {section.label}
+              {view.label}
             </button>
           ))}
         </div>
       </div>
 
-      {activeSection === 'dashboard' ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Total Relationships</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{relationships.length}</div></div>
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Strong Relationships</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{strongRelationships}</div></div>
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Warm Relationships</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{warmRelationships}</div></div>
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Follow-ups Due</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{dueRelationships.length}</div></div>
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Open Opportunities</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{openOpportunities.length}</div></div>
-          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Problems / Friction</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{problemsCount}</div></div>
+      {activeView === 'dashboard' ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Relationships</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{relationships.length}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Strong</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{strongCount}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Follow-ups Due</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{dueCount}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Contact Methods</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{contactMethodCount}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Open Opportunities</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{openOpportunityCount}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Categories</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{relationshipCategories.length}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Uncategorized</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{relationshipsByCategory.get(defaultCategoryId)?.length || 0}</div></div>
+          <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">People linked</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{relationships.filter((relationship) => relationship.personId).length}</div></div>
         </div>
       ) : null}
 
-      {activeSection === 'all' ? (
-        <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-          <div className="grid gap-3 md:grid-cols-5">
-            <select value={domainFilter} onChange={(event) => setDomainFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
-              {DOMAIN_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
-              {TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select value={strengthFilter} onChange={(event) => setStrengthFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
-              {STRENGTH_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
-              {STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
-              <option value="">All follow-up states</option>
-              <option value="due">Follow-up due</option>
-            </select>
-          </div>
-
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.12em] text-[#64748b]">
-                <tr>
-                  <th className="py-3 pr-4">Name</th>
-                  <th className="py-3 pr-4">Domain</th>
-                  <th className="py-3 pr-4">Type</th>
-                  <th className="py-3 pr-4">Strength</th>
-                  <th className="py-3 pr-4">Trust</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 pr-4">Last Contact</th>
-                  <th className="py-3 pr-4">Next Contact</th>
-                  <th className="py-3 pr-4">Next Action</th>
-                  <th className="py-3 pr-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRelationships.map((relationship) => (
-                  <tr key={relationship.id} className="border-t border-[#e5e7eb] align-top">
-                    <td className="py-3 pr-4">
-                      <button type="button" className="font-medium text-[#0f172a] hover:text-[#2563eb]" onClick={() => handleOpenWorkspace(relationship.id)}>{relationship.displayName}</button>
-                      <div className="mt-1 text-xs text-[#64748b]">{relationship.personName || (relationship.personId ? peopleById.get(relationship.personId)?.fullName : null) || 'No linked person'}</div>
-                    </td>
-                    <td className="py-3 pr-4"><span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(relationship.domain)}`}>{relationship.domain || '—'}</span></td>
-                    <td className="py-3 pr-4"><span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(relationship.relationshipType)}`}>{relationship.relationshipType || '—'}</span></td>
-                    <td className="py-3 pr-4"><span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(relationship.relationshipStrength)}`}>{relationship.relationshipStrength || '—'}</span></td>
-                    <td className="py-3 pr-4"><span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(relationship.trustLevel)}`}>{relationship.trustLevel || '—'}</span></td>
-                    <td className="py-3 pr-4"><span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(relationship.status)}`}>{relationship.status || '—'}</span></td>
-                    <td className="py-3 pr-4 text-[#334155]">{formatDate(relationship.lastContactDate)}</td>
-                    <td className="py-3 pr-4 text-[#334155]">{formatDate(relationship.nextContactDate)}</td>
-                    <td className="py-3 pr-4 text-[#334155]">{relationship.nextAction || '—'}</td>
-                    <td className="py-3 pr-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button type="button" className={tableButton} onClick={() => handleOpenWorkspace(relationship.id)}>Open Workspace</button>
-                        <button type="button" className={tableButton} onClick={() => handleEditRelationship(relationship)}>Edit</button>
-                        <button type="button" className={tableButton} onClick={() => void handleDeleteRelationship(relationship.id)}>Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredRelationships.length === 0 ? (
-                  <tr><td colSpan={10} className="py-8 text-center text-sm text-[#64748b]">No relationships match the current filters.</td></tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : null}
-
-      {activeSection === 'domains' ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {DOMAIN_OPTIONS.filter((option) => option.value).map((option) => (
-            <div key={option.value} className={dashboardCard}>
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">{option.label}</div>
-              <div className="mt-2 text-3xl font-semibold text-[#0f172a]">{countsByDomain.get(option.value) || 0}</div>
-            </div>
+      {activeView === 'categories' ? (
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {dashboardCategories.map((category) => (
+            <button key={category.id} type="button" onClick={() => setSelectedCategoryId(category.id)} className={`${dashboardCard} text-left transition hover:border-[#93c5fd]`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-lg font-semibold text-[#0f172a]">{category.name}</div>
+                  <div className="mt-1 text-sm text-[#64748b]">{category.description}</div>
+                </div>
+                <span className="rounded-full border px-2 py-1 text-xs text-[#334155]" style={{ borderColor: category.color || '#dbeafe' }}>{category.count}</span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className={`rounded-full border px-2 py-1 text-xs ${badgeClass(category.id === defaultCategoryId ? 'medium' : 'active')}`}>{category.id === defaultCategoryId ? 'Default bucket' : 'Category'}</span>
+              </div>
+            </button>
           ))}
         </div>
       ) : null}
 
-      {activeSection === 'follow-ups' ? (
-        <div className="space-y-3">
-          {dueRelationships.length > 0 ? dueRelationships.map((relationship) => (
-            <div key={relationship.id} className={dashboardCard}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
+      {relationshipsView ? (
+        <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <div className="space-y-4">
+            <div className={dashboardCard}>
+              <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{relationship.displayName}</div>
-                  <div className="mt-1 text-xs text-[#64748b]">Due {formatDate(relationship.nextContactDate)} · {relationship.nextAction || 'No next action'}</div>
+                  <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Category Focus</div>
+                  <div className="mt-1 text-lg font-semibold text-[#0f172a]">{selectedCategoryId === defaultCategoryId ? 'Uncategorized' : categoryById.get(selectedCategoryId)?.name || 'Selected category'}</div>
                 </div>
-                <button type="button" className={primaryButton} onClick={() => void handleQuickFollowUp(relationship)}>Mark Followed Up Today</button>
+                <button type="button" className={tableButton} onClick={() => setActiveView('categories')}>Switch</button>
+              </div>
+              <div className="mt-3 text-sm text-[#64748b]">{selectedCategoryRelationships.length} relationships in this view. {selectedRelationshipCategory ? `Selected: ${selectedRelationshipCategory.name}.` : ''}</div>
+            </div>
+
+            <div className={dashboardCard}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-[#0f172a]">Relationships</h3>
+                  <p className="mt-1 text-sm text-[#64748b]">Pick a person to open the workspace.</p>
+                </div>
+                <button type="button" className={tableButton} onClick={() => { setEditingRelationship(null); setIsAddingRelationship(true); }}>New</button>
+              </div>
+              <div className="mt-4 space-y-2">
+                {(selectedCategoryRelationships.length > 0 ? selectedCategoryRelationships : relationships).map((relationship) => {
+                  const personName = relationship.personName || (relationship.personId ? peopleById.get(relationship.personId)?.fullName : null);
+                  const categoryName = relationship.categoryName || (relationship.categoryId ? categoryById.get(relationship.categoryId)?.name : 'Uncategorized');
+                  return (
+                    <button key={relationship.id} type="button" onClick={() => handleOpenRelationship(relationship.id)} className={`w-full rounded-lg border px-3 py-3 text-left transition hover:border-[#93c5fd] ${selectedRelationshipId === relationship.id ? 'border-[#93c5fd] bg-[#eff6ff]' : 'border-[#e5e7eb] bg-white'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium text-[#0f172a]">{relationship.displayName}</div>
+                          <div className="mt-1 text-xs text-[#64748b]">{personName || 'No linked person'}</div>
+                        </div>
+                        <span className={`rounded-full border px-2 py-1 text-[11px] ${badgeClass(relationship.status)}`}>{relationship.status || 'open'}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                        <span className={`rounded-full border px-2 py-1 ${badgeClass(relationship.relationshipStrength)}`}>{relationship.relationshipStrength || '—'}</span>
+                        <span className={`rounded-full border px-2 py-1 ${badgeClass(relationship.trustLevel)}`}>{relationship.trustLevel || '—'}</span>
+                        <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-2 py-1 text-[#334155]">{categoryName}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )) : <div className={dashboardCard}><div className="text-sm text-[#64748b]">No follow-ups are due right now.</div></div>}
-        </div>
-      ) : null}
+          </div>
 
-      {activeSection === 'opportunities' ? (
-        <div className="space-y-3">
-          {sectionOpportunities.length > 0 ? sectionOpportunities.map((opportunity) => (
-            <div key={opportunity.id} className={dashboardCard}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{opportunity.title}</div>
-                  <div className="mt-1 text-xs text-[#64748b]">{opportunity.relationshipName} · {opportunity.status || 'open'} · {opportunity.priority || 'medium'}</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" className={tableButton} onClick={() => setSelectedRelationshipId(opportunity.relationshipId)}>Open Relationship</button>
-                  <button type="button" className={tableButton} onClick={() => setSelectedRelationshipId(opportunity.relationshipId)}>Workspace</button>
-                </div>
+          <div>
+            {selectedRelationship ? (
+              <RelationshipWorkspace
+                relationships={relationships}
+                relationshipInteractions={relationshipInteractions}
+                relationshipOpportunities={relationshipOpportunities}
+                relationshipCategories={relationshipCategories}
+                relationshipContactMethods={relationshipContactMethods}
+                people={people}
+                projects={projects}
+                companies={companies}
+                selectedRelationshipId={selectedRelationship.id}
+                onBack={() => setActiveView('relationships')}
+                onEditRelationship={(relationship) => setEditingRelationship(relationship)}
+                onUpdateRelationship={onUpdateRelationship}
+                onDeleteRelationship={onDeleteRelationship}
+                onAddRelationshipInteraction={onAddRelationshipInteraction}
+                onUpdateRelationshipInteraction={onUpdateRelationshipInteraction}
+                onDeleteRelationshipInteraction={onDeleteRelationshipInteraction}
+                onAddRelationshipOpportunity={onAddRelationshipOpportunity}
+                onUpdateRelationshipOpportunity={onUpdateRelationshipOpportunity}
+                onDeleteRelationshipOpportunity={onDeleteRelationshipOpportunity}
+                onAddRelationshipContactMethod={onAddRelationshipContactMethod}
+                onUpdateRelationshipContactMethod={onUpdateRelationshipContactMethod}
+                onDeleteRelationshipContactMethod={onDeleteRelationshipContactMethod}
+              />
+            ) : (
+              <div className={dashboardCard}>
+                <div className="text-sm text-[#64748b]">Select a relationship to open its workspace.</div>
               </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                <div><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Value</div><div className="mt-1 text-sm text-[#334155]">{opportunity.valueDescription || '—'}</div></div>
-                <div><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Due</div><div className="mt-1 text-sm text-[#334155]">{formatDate(opportunity.dueDate)}</div></div>
-                <div><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Project</div><div className="mt-1 text-sm text-[#334155]">{opportunity.projectName || '—'}</div></div>
-                <div><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Company</div><div className="mt-1 text-sm text-[#334155]">{opportunity.companyName || '—'}</div></div>
-              </div>
-            </div>
-          )) : <div className={dashboardCard}><div className="text-sm text-[#64748b]">No open relationship opportunities yet.</div></div>}
+            )}
+          </div>
         </div>
-      ) : null}
-
-      {activeSection === 'review' ? (
-        <div className="space-y-3">
-          {reviewRelationships.length > 0 ? reviewRelationships.map((relationship) => (
-            <div key={relationship.id} className={dashboardCard}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{relationship.displayName}</div>
-                  <div className="mt-1 text-xs text-[#64748b]">{relationship.riskNotes || relationship.problems || 'Needs review'}</div>
-                </div>
-                <button type="button" className={tableButton} onClick={() => handleOpenWorkspace(relationship.id)}>Open Workspace</button>
-              </div>
-            </div>
-          )) : <div className={dashboardCard}><div className="text-sm text-[#64748b]">Nothing needs review.</div></div>}
-        </div>
-      ) : null}
-
-      {selectedRelationshipId ? (
-        <RelationshipWorkspace
-          relationships={relationships}
-          relationshipInteractions={relationshipInteractions}
-          relationshipOpportunities={relationshipOpportunities}
-          people={people}
-          projects={projects}
-          companies={companies}
-          selectedRelationshipId={selectedRelationshipId}
-          onBack={() => setSelectedRelationshipId(null)}
-          onEditRelationship={(relationship) => handleEditRelationship(relationship)}
-          onUpdateRelationship={onUpdateRelationship}
-          onDeleteRelationship={handleDeleteRelationship}
-          onAddRelationshipInteraction={onAddRelationshipInteraction}
-          onUpdateRelationshipInteraction={onUpdateRelationshipInteraction}
-          onDeleteRelationshipInteraction={onDeleteRelationshipInteraction}
-          onAddRelationshipOpportunity={onAddRelationshipOpportunity}
-          onUpdateRelationshipOpportunity={onUpdateRelationshipOpportunity}
-          onDeleteRelationshipOpportunity={onDeleteRelationshipOpportunity}
-        />
       ) : null}
 
       {isAddingRelationship || editingRelationship ? (
         <OpportunityModal title={editingRelationship ? 'Edit Relationship' : 'Add Relationship'} onClose={() => { setEditingRelationship(null); setIsAddingRelationship(false); }}>
           <RelationshipForm
             people={people}
+            categories={relationshipCategories}
             initialData={editingRelationship || undefined}
-            submitLabel={editingRelationship ? 'Update Relationship' : 'Save Relationship'}
+            submitLabel={editingRelationship ? 'Update Relationship' : 'Create Relationship'}
             onSubmit={handleSubmitRelationship}
             onCancel={() => { setEditingRelationship(null); setIsAddingRelationship(false); }}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {isAddingCategory || editingCategory ? (
+        <OpportunityModal title={editingCategory ? 'Edit Category' : 'Add Category'} onClose={() => { setEditingCategory(null); setIsAddingCategory(false); }}>
+          <RelationshipCategoryForm
+            initialData={editingCategory || undefined}
+            submitLabel={editingCategory ? 'Update Category' : 'Create Category'}
+            onSubmit={handleSubmitCategory}
+            onCancel={() => { setEditingCategory(null); setIsAddingCategory(false); }}
           />
         </OpportunityModal>
       ) : null}

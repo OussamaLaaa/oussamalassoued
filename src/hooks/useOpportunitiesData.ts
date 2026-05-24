@@ -27,6 +27,10 @@ import {
   relationshipToDb as toRelationshipDb,
   relationshipInteractionFromDb as mapRelationshipInteractionRow,
   relationshipInteractionToDb as toRelationshipInteractionDb,
+  relationshipCategoryFromDb as mapRelationshipCategoryRow,
+  relationshipCategoryToDb as toRelationshipCategoryDb,
+  relationshipContactMethodFromDb as mapRelationshipContactMethodRow,
+  relationshipContactMethodToDb as toRelationshipContactMethodDb,
   relationshipOpportunityFromDb as mapRelationshipOpportunityRow,
   relationshipOpportunityToDb as toRelationshipOpportunityDb,
 } from '../utils/opportunitiesMappers';
@@ -64,6 +68,10 @@ import type {
   RelationshipInput,
   RelationshipInteraction,
   RelationshipInteractionInput,
+  RelationshipCategory,
+  RelationshipCategoryInput,
+  RelationshipContactMethod,
+  RelationshipContactMethodInput,
   RelationshipOpportunity,
   RelationshipOpportunityInput,
   MessageTemplateInput,
@@ -131,6 +139,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   relationships: [],
   relationshipInteractions: [],
   relationshipOpportunities: [],
+  relationshipCategories: [],
+  relationshipContactMethods: [],
   templates: staticMessageTemplates.map((item) => ({ ...item, isActive: true })),
   strategyItems: [],
   strategyGoals: [],
@@ -1349,6 +1359,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [relationships, setRelationships] = useState<Relationship[]>(() => cloneSeedData().relationships);
   const [relationshipInteractions, setRelationshipInteractions] = useState<RelationshipInteraction[]>(() => cloneSeedData().relationshipInteractions);
   const [relationshipOpportunities, setRelationshipOpportunities] = useState<RelationshipOpportunity[]>(() => cloneSeedData().relationshipOpportunities);
+  const [relationshipCategories, setRelationshipCategories] = useState<RelationshipCategory[]>(() => cloneSeedData().relationshipCategories);
+  const [relationshipContactMethods, setRelationshipContactMethods] = useState<RelationshipContactMethod[]>(() => cloneSeedData().relationshipContactMethods);
   const [projects, setProjects] = useState<Project[]>(() => cloneSeedData().projects);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
   const [projectTimeLogs, setProjectTimeLogs] = useState<ProjectTimeLog[]>([]);
@@ -1406,6 +1418,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const relationshipsRaw = raw('relationships');
     const relationshipInteractionsRaw = raw('relationship_interactions');
     const relationshipOpportunitiesRaw = raw('relationship_opportunities');
+    const relationshipCategoriesRaw = raw('relationship_categories');
+    const relationshipContactMethodsRaw = raw('relationship_contact_methods');
 
     // Compute derived collections only when core data is present
     let derived: { people: Person[]; messages: OutreachMessage[]; deals: Deal[] } | null = null;
@@ -1476,6 +1490,8 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('relationships')) setRelationships((relationshipsRaw || []).map((row: any) => mapRelationshipRow(row)));
     if (has('relationship_interactions')) setRelationshipInteractions((relationshipInteractionsRaw || []).map((row: any) => mapRelationshipInteractionRow(row)));
     if (has('relationship_opportunities')) setRelationshipOpportunities((relationshipOpportunitiesRaw || []).map((row: any) => mapRelationshipOpportunityRow(row)));
+    if (has('relationship_categories')) setRelationshipCategories((relationshipCategoriesRaw || []).map((row: any) => mapRelationshipCategoryRow(row)));
+    if (has('relationship_contact_methods')) setRelationshipContactMethods((relationshipContactMethodsRaw || []).map((row: any) => mapRelationshipContactMethodRow(row)));
 
     // ── Documents ──
     if (has('documents')) {
@@ -2162,6 +2178,7 @@ export const useOpportunitiesData = (enabled = true) => {
     setRelationships((current) => current.filter((item) => item.id !== id));
     setRelationshipInteractions((current) => current.filter((item) => item.relationshipId !== id));
     setRelationshipOpportunities((current) => current.filter((item) => item.relationshipId !== id));
+    setRelationshipContactMethods((current) => current.filter((item) => item.relationshipId !== id));
   };
 
   const addRelationshipInteraction = async (input: RelationshipInteractionInput) => {
@@ -2212,6 +2229,56 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('relationship_opportunities', id);
     setRelationshipOpportunities((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addRelationshipCategory = async (input: RelationshipCategoryInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Category name is required.');
+    }
+
+    const row = await syncInsert('relationship_categories', toRelationshipCategoryDb(input));
+    const next = mapRelationshipCategoryRow(row);
+    setRelationshipCategories((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRelationshipCategory = async (id: string, input: Partial<RelationshipCategoryInput>) => {
+    const row = await syncUpdate('relationship_categories', id, toRelationshipCategoryDb(input, { forUpdate: true }));
+    const next = mapRelationshipCategoryRow(row);
+    setRelationshipCategories((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteRelationshipCategory = async (id: string) => {
+    const confirmed = window.confirm('Delete this category?');
+    if (!confirmed) return;
+    await syncDelete('relationship_categories', id);
+    setRelationshipCategories((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addRelationshipContactMethod = async (input: RelationshipContactMethodInput) => {
+    if (!String(input.relationshipId || '').trim()) {
+      throw new Error('Select a relationship before adding a contact method.');
+    }
+
+    const row = await syncInsert('relationship_contact_methods', toRelationshipContactMethodDb(input));
+    const next = mapRelationshipContactMethodRow(row);
+    setRelationshipContactMethods((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateRelationshipContactMethod = async (id: string, input: Partial<RelationshipContactMethodInput>) => {
+    const row = await syncUpdate('relationship_contact_methods', id, toRelationshipContactMethodDb(input, { forUpdate: true }));
+    const next = mapRelationshipContactMethodRow(row);
+    setRelationshipContactMethods((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteRelationshipContactMethod = async (id: string) => {
+    const confirmed = window.confirm('Delete this contact method?');
+    if (!confirmed) return;
+    await syncDelete('relationship_contact_methods', id);
+    setRelationshipContactMethods((current) => current.filter((item) => item.id !== id));
   };
 
   const addProject = async (input: ProjectInput) => {
@@ -3420,6 +3487,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setRelationships(fallback.relationships);
     setRelationshipInteractions(fallback.relationshipInteractions);
     setRelationshipOpportunities(fallback.relationshipOpportunities);
+    setRelationshipCategories(fallback.relationshipCategories);
+    setRelationshipContactMethods(fallback.relationshipContactMethods);
     setTemplates(fallback.templates);
     setStrategyGoals(fallback.strategyGoals);
     setStrategyPlans(fallback.strategyPlans);
@@ -3453,6 +3522,8 @@ export const useOpportunitiesData = (enabled = true) => {
     relationships,
     relationshipInteractions,
     relationshipOpportunities,
+    relationshipCategories,
+    relationshipContactMethods,
     projects,
     projectTasks,
     projectTimeLogs,
@@ -3553,6 +3624,12 @@ export const useOpportunitiesData = (enabled = true) => {
     addRelationshipOpportunity,
     updateRelationshipOpportunity,
     deleteRelationshipOpportunity,
+    addRelationshipCategory,
+    updateRelationshipCategory,
+    deleteRelationshipCategory,
+    addRelationshipContactMethod,
+    updateRelationshipContactMethod,
+    deleteRelationshipContactMethod,
     addProject,
     addStrategyItem,
     addStrategyGoal,

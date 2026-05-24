@@ -642,11 +642,33 @@ export type TrustLevel = 'unknown' | 'low' | 'medium' | 'high';
 export type RelationshipStatus = 'active' | 'warm' | 'cold' | 'paused' | 'avoid' | 'archived';
 export type RelationshipInteractionChannel = 'linkedin' | 'email' | 'phone' | 'meeting' | 'whatsapp' | 'in_person' | 'other';
 export type RelationshipInteractionType = 'first_contact' | 'follow_up' | 'meeting' | 'help_given' | 'help_received' | 'problem' | 'opportunity' | 'note';
+export type RelationshipContactMethodType = 'email' | 'phone' | 'linkedin' | 'whatsapp' | 'telegram' | 'instagram' | 'facebook' | 'website' | 'location' | 'other';
+
+export interface RelationshipCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RelationshipCategoryInput {
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  isActive?: boolean;
+}
 
 export interface Relationship {
   id: string;
   personId?: string;
   personName?: string;
+  categoryId?: string;
+  categoryName?: string;
   displayName: string;
   domain?: RelationshipDomain;
   relationshipType?: RelationshipType;
@@ -670,6 +692,7 @@ export interface Relationship {
 
 export interface RelationshipInput {
   personId?: string | null;
+  categoryId?: string | null;
   displayName: string;
   domain?: RelationshipDomain;
   relationshipType?: RelationshipType;
@@ -745,6 +768,27 @@ export interface RelationshipOpportunityInput {
   notes?: string;
 }
 
+export interface RelationshipContactMethod {
+  id: string;
+  relationshipId: string;
+  type?: RelationshipContactMethodType;
+  label?: string;
+  value?: string;
+  isPrimary?: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RelationshipContactMethodInput {
+  relationshipId: string;
+  type?: RelationshipContactMethodType;
+  label?: string;
+  value?: string;
+  isPrimary?: boolean;
+  notes?: string;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
@@ -753,6 +797,8 @@ export interface OpportunitiesData {
   relationships: Relationship[];
   relationshipInteractions: RelationshipInteraction[];
   relationshipOpportunities: RelationshipOpportunity[];
+  relationshipCategories: RelationshipCategory[];
+  relationshipContactMethods: RelationshipContactMethod[];
   projects: Project[];
   projectTasks: ProjectTask[];
   projectTimeLogs: ProjectTimeLog[];

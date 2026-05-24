@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -203,6 +203,12 @@ const OpportunitiesLayout: React.FC<{
     addRelationshipOpportunity: (input: RelationshipOpportunityInput) => Promise<any>;
     updateRelationshipOpportunity: (id: string, input: Partial<RelationshipOpportunityInput>) => Promise<any>;
     deleteRelationshipOpportunity: (id: string) => Promise<any>;
+    addRelationshipCategory: (input: RelationshipCategoryInput) => Promise<any>;
+    updateRelationshipCategory: (id: string, input: Partial<RelationshipCategoryInput>) => Promise<any>;
+    deleteRelationshipCategory: (id: string) => Promise<any>;
+    addRelationshipContactMethod: (input: RelationshipContactMethodInput) => Promise<any>;
+    updateRelationshipContactMethod: (id: string, input: Partial<RelationshipContactMethodInput>) => Promise<any>;
+    deleteRelationshipContactMethod: (id: string) => Promise<any>;
     addProject: (input: ProjectInput) => Promise<any>;
     addStrategyItem: (input: StrategyItemInput) => Promise<any>;
     addStrategyGoal: (input: StrategyGoalInput) => Promise<any>;
@@ -315,6 +321,8 @@ const OpportunitiesLayout: React.FC<{
     addRelationship, updateRelationship, deleteRelationship,
     addRelationshipInteraction, updateRelationshipInteraction, deleteRelationshipInteraction,
     addRelationshipOpportunity, updateRelationshipOpportunity, deleteRelationshipOpportunity,
+    addRelationshipCategory, updateRelationshipCategory, deleteRelationshipCategory,
+    addRelationshipContactMethod, updateRelationshipContactMethod, deleteRelationshipContactMethod,
     addStrategyGoal, addStrategyPlan, addStrategyTactic, addStrategyExperiment, addStrategyDecision,
     addDocument,
     addDocumentTemplate,
@@ -771,6 +779,8 @@ const OpportunitiesLayout: React.FC<{
                 relationships={relationships}
                 relationshipInteractions={relationshipInteractions}
                 relationshipOpportunities={relationshipOpportunities}
+                relationshipCategories={data.relationshipCategories}
+                relationshipContactMethods={data.relationshipContactMethods}
                 people={people}
                 companies={companies}
                 projects={projects}
@@ -783,6 +793,12 @@ const OpportunitiesLayout: React.FC<{
                 onAddRelationshipOpportunity={addRelationshipOpportunity}
                 onUpdateRelationshipOpportunity={updateRelationshipOpportunity}
                 onDeleteRelationshipOpportunity={deleteRelationshipOpportunity}
+                onAddRelationshipCategory={addRelationshipCategory}
+                onUpdateRelationshipCategory={updateRelationshipCategory}
+                onDeleteRelationshipCategory={deleteRelationshipCategory}
+                onAddRelationshipContactMethod={addRelationshipContactMethod}
+                onUpdateRelationshipContactMethod={updateRelationshipContactMethod}
+                onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
               />
             )}
 
@@ -975,9 +991,6 @@ const OpportunitiesLayout: React.FC<{
                 onAddInvoiceItem={addInvoiceItem}
                 onUpdateInvoiceItem={updateInvoiceItem}
                 onDeleteInvoiceItem={deleteInvoiceItem}
-                onAddGeneratedDocument={addGeneratedDocument}
-                onUpdateGeneratedDocument={updateGeneratedDocument}
-                onDeleteGeneratedDocument={deleteGeneratedDocument}
                 financeIncome={financeIncome}
                 financePeriods={financePeriods}
                 onAddFinanceIncome={addFinanceIncome}

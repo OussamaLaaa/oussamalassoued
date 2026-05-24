@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { Person, RelationshipInput } from '../../types/opportunities';
+import type { Person, RelationshipCategory, RelationshipInput } from '../../types/opportunities';
 
 const DOMAIN_OPTIONS = [
   { value: '', label: 'Unspecified' },
@@ -60,6 +60,7 @@ const toInputValue = (value?: string | null) => value ?? '';
 
 const createInitialState = (initialData?: Partial<RelationshipInput>): RelationshipInput => ({
   personId: initialData?.personId ?? null,
+  categoryId: initialData?.categoryId ?? null,
   displayName: initialData?.displayName ?? '',
   domain: initialData?.domain,
   relationshipType: initialData?.relationshipType,
@@ -84,11 +85,12 @@ const baseLabel = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#6474
 
 const RelationshipForm: React.FC<{
   people?: Person[];
+  categories?: RelationshipCategory[];
   initialData?: Partial<RelationshipInput>;
   onSubmit: (input: RelationshipInput) => Promise<void> | void;
   onCancel: () => void;
   submitLabel?: string;
-}> = ({ people = [], initialData, onSubmit, onCancel, submitLabel = 'Save Relationship' }) => {
+}> = ({ people = [], categories = [], initialData, onSubmit, onCancel, submitLabel = 'Save Relationship' }) => {
   const [form, setForm] = useState<RelationshipInput>(() => createInitialState(initialData));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -116,6 +118,7 @@ const RelationshipForm: React.FC<{
       ...form,
       displayName,
       personId: form.personId ? String(form.personId).trim() : null,
+      categoryId: form.categoryId ? String(form.categoryId).trim() : null,
       lastContactDate: form.lastContactDate ? String(form.lastContactDate).trim() : null,
       nextContactDate: form.nextContactDate ? String(form.nextContactDate).trim() : null,
       howWeMet: form.howWeMet?.trim() || undefined,
@@ -162,6 +165,20 @@ const RelationshipForm: React.FC<{
             <option value="">No linked person</option>
             {people.map((person) => (
               <option key={person.id} value={person.id}>{person.fullName}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="space-y-2">
+          <div className={baseLabel}>Category</div>
+          <select
+            value={toInputValue(form.categoryId)}
+            onChange={(event) => setField('categoryId', event.target.value || null)}
+            className={baseInput}
+          >
+            <option value="">Uncategorized</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
             ))}
           </select>
         </label>

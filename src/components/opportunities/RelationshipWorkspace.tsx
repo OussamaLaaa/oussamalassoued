@@ -3,6 +3,9 @@ import type {
   Company,
   Person,
   Project,
+  RelationshipCategory,
+  RelationshipContactMethod,
+  RelationshipContactMethodInput,
   Relationship,
   RelationshipInteraction,
   RelationshipOpportunity,
@@ -13,10 +16,12 @@ import type {
 import OpportunityModal from './OpportunityModal';
 import RelationshipForm from './RelationshipForm';
 import RelationshipInteractionForm from './RelationshipInteractionForm';
+import RelationshipContactMethodForm from './RelationshipContactMethodForm';
 import RelationshipOpportunityForm from './RelationshipOpportunityForm';
 
 const WORKSPACE_TABS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'contact', label: 'Contact' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'value', label: 'Value Exchange' },
   { id: 'problems', label: 'Problems' },
@@ -47,6 +52,8 @@ const RelationshipWorkspace: React.FC<{
   relationships: Relationship[];
   relationshipInteractions: RelationshipInteraction[];
   relationshipOpportunities: RelationshipOpportunity[];
+  relationshipCategories: RelationshipCategory[];
+  relationshipContactMethods: RelationshipContactMethod[];
   people: Person[];
   projects: Project[];
   companies: Company[];
@@ -61,10 +68,15 @@ const RelationshipWorkspace: React.FC<{
   onAddRelationshipOpportunity: (input: RelationshipOpportunityInput) => Promise<any>;
   onUpdateRelationshipOpportunity: (id: string, input: Partial<RelationshipOpportunityInput>) => Promise<any>;
   onDeleteRelationshipOpportunity: (id: string) => Promise<any>;
+  onAddRelationshipContactMethod: (input: RelationshipContactMethodInput) => Promise<any>;
+  onUpdateRelationshipContactMethod: (id: string, input: Partial<RelationshipContactMethodInput>) => Promise<any>;
+  onDeleteRelationshipContactMethod: (id: string) => Promise<any>;
 }> = ({
   relationships,
   relationshipInteractions,
   relationshipOpportunities,
+  relationshipCategories,
+  relationshipContactMethods,
   people,
   projects,
   companies,
@@ -79,12 +91,17 @@ const RelationshipWorkspace: React.FC<{
   onAddRelationshipOpportunity,
   onUpdateRelationshipOpportunity,
   onDeleteRelationshipOpportunity,
+  onAddRelationshipContactMethod,
+  onUpdateRelationshipContactMethod,
+  onDeleteRelationshipContactMethod,
 }) => {
   const [activeTab, setActiveTab] = useState<typeof WORKSPACE_TABS[number]['id']>('overview');
   const [editingInteraction, setEditingInteraction] = useState<RelationshipInteraction | null>(null);
   const [editingOpportunity, setEditingOpportunity] = useState<RelationshipOpportunity | null>(null);
+  const [editingContactMethod, setEditingContactMethod] = useState<RelationshipContactMethod | null>(null);
   const [showInteractionForm, setShowInteractionForm] = useState(false);
   const [showOpportunityForm, setShowOpportunityForm] = useState(false);
+  const [showContactMethodForm, setShowContactMethodForm] = useState(false);
 
   const selectedRelationship = useMemo(
     () => relationships.find((relationship) => relationship.id === selectedRelationshipId) || null,
@@ -93,6 +110,10 @@ const RelationshipWorkspace: React.FC<{
 
   const linkedPerson = selectedRelationship?.personId
     ? people.find((person) => person.id === selectedRelationship.personId) || null
+    : null;
+
+  const linkedCategory = selectedRelationship?.categoryId
+    ? relationshipCategories.find((category) => category.id === selectedRelationship.categoryId) || null
     : null;
 
   const timelineItems = useMemo(
@@ -107,6 +128,13 @@ const RelationshipWorkspace: React.FC<{
       .slice()
       .sort((left, right) => String(right.updatedAt || right.createdAt || '').localeCompare(String(left.updatedAt || left.createdAt || ''))),
     [relationshipOpportunities, selectedRelationshipId],
+  );
+
+  const contactMethodItems = useMemo(
+    () => relationshipContactMethods.filter((item) => item.relationshipId === selectedRelationshipId)
+      .slice()
+      .sort((left, right) => Number(Boolean(right.isPrimary)) - Number(Boolean(left.isPrimary)) || String(left.type || '').localeCompare(String(right.type || ''))),
+    [relationshipContactMethods, selectedRelationshipId],
   );
 
   if (!selectedRelationship) {
@@ -183,22 +211,83 @@ const RelationshipWorkspace: React.FC<{
       </div>
 
       {activeTab === 'overview' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className={sectionCard}>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Overview</h3>
-            <dl className="mt-3 grid gap-3 text-sm text-[#334155]">
-              <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">How We Met</dt><dd className="mt-1">{selectedRelationship.howWeMet || '—'}</dd></div>
-              <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Last Contact</dt><dd className="mt-1">{formatDate(selectedRelationship.lastContactDate)}</dd></div>
-              <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Contact</dt><dd className="mt-1">{formatDate(selectedRelationship.nextContactDate)}</dd></div>
-              <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</dt><dd className="mt-1">{selectedRelationship.nextAction || '—'}</dd></div>
-            </dl>
-          </div>
-          <div className={sectionCard}>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Linked People</h3>
-            <div className="mt-3 space-y-2 text-sm text-[#334155]">
-              <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-2">{linkedPerson ? linkedPerson.fullName : 'No linked person'}</div>
-              <button type="button" className={primaryButton} onClick={() => onEditRelationship(selectedRelationship)}>Edit Relationship</button>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_340px]">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className={sectionCard}>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Overview</h3>
+              <dl className="mt-3 grid gap-3 text-sm text-[#334155]">
+                <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">How We Met</dt><dd className="mt-1">{selectedRelationship.howWeMet || '—'}</dd></div>
+                <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Last Contact</dt><dd className="mt-1">{formatDate(selectedRelationship.lastContactDate)}</dd></div>
+                <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Contact</dt><dd className="mt-1">{formatDate(selectedRelationship.nextContactDate)}</dd></div>
+                <div className="rounded-lg bg-[#f8fafc] p-3"><dt className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</dt><dd className="mt-1">{selectedRelationship.nextAction || '—'}</dd></div>
+              </dl>
             </div>
+            <div className={sectionCard}>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Linked People</h3>
+              <div className="mt-3 space-y-2 text-sm text-[#334155]">
+                <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-2">{linkedPerson ? linkedPerson.fullName : 'No linked person'}</div>
+                <button type="button" className={primaryButton} onClick={() => onEditRelationship(selectedRelationship)}>Edit Relationship</button>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className={sectionCard}>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Workspace Sidebar</h3>
+              <div className="mt-3 space-y-3 text-sm text-[#334155]">
+                <div className="rounded-lg bg-[#f8fafc] p-3">
+                  <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Category</div>
+                  <div className="mt-1 font-medium text-[#0f172a]">{linkedCategory?.name || 'Uncategorized'}</div>
+                </div>
+                <div className="rounded-lg bg-[#f8fafc] p-3">
+                  <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Contact Methods</div>
+                  <div className="mt-1 text-[#0f172a]">{contactMethodItems.length} recorded</div>
+                </div>
+                <div className="rounded-lg bg-[#f8fafc] p-3">
+                  <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Health</div>
+                  <div className="mt-1 text-[#0f172a]">{selectedRelationship.trustLevel || 'Unknown'} trust, {selectedRelationship.relationshipStrength || 'no strength set'}</div>
+                </div>
+              </div>
+            </div>
+            <div className={sectionCard}>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Quick Actions</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className={primaryButton} onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
+                <button type="button" className={workspaceButton} onClick={() => void handleQuickFollowUp()}>Quick Follow-up</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === 'contact' ? (
+        <div className={sectionCard}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Contact Methods</h3>
+              <p className="mt-1 text-sm text-[#64748b]">Store every way to reach this person and mark the primary channel.</p>
+            </div>
+            <button type="button" className={primaryButton} onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
+          </div>
+          <div className="mt-4 space-y-3">
+            {contactMethodItems.length > 0 ? contactMethodItems.map((item) => (
+              <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-[#0f172a]">{item.label || item.type || 'Contact Method'}</div>
+                    <div className="mt-1 text-xs text-[#64748b]">{item.type || 'unspecified'}{item.isPrimary ? ' · primary' : ''}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" className={workspaceButton} onClick={() => setEditingContactMethod(item)}>Edit</button>
+                    <button type="button" className={workspaceButton} onClick={() => void onDeleteRelationshipContactMethod(item.id)}>Delete</button>
+                  </div>
+                </div>
+                <div className="mt-3 text-sm text-[#334155]">
+                  <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Value</div>
+                  <div className="mt-1">{item.value || '—'}</div>
+                </div>
+                {item.notes ? <div className="mt-3 text-sm text-[#334155]"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Notes</div><div className="mt-1">{item.notes}</div></div> : null}
+              </div>
+            )) : <div className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-4 text-sm text-[#64748b]">No contact methods recorded yet.</div>}
           </div>
         </div>
       ) : null}
@@ -376,6 +465,32 @@ const RelationshipWorkspace: React.FC<{
             submitLabel="Update Opportunity"
             onSubmit={async (input) => { await onUpdateRelationshipOpportunity(editingOpportunity.id, input); setEditingOpportunity(null); }}
             onCancel={() => setEditingOpportunity(null)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {showContactMethodForm ? (
+        <OpportunityModal title="Add Contact Method" onClose={() => setShowContactMethodForm(false)}>
+          <RelationshipContactMethodForm
+            relationships={relationships}
+            people={people}
+            relationshipId={selectedRelationship.id}
+            onSubmit={async (input) => { await onAddRelationshipContactMethod(input); setShowContactMethodForm(false); }}
+            onCancel={() => setShowContactMethodForm(false)}
+          />
+        </OpportunityModal>
+      ) : null}
+
+      {editingContactMethod ? (
+        <OpportunityModal title="Edit Contact Method" onClose={() => setEditingContactMethod(null)}>
+          <RelationshipContactMethodForm
+            relationships={relationships}
+            people={people}
+            relationshipId={selectedRelationship.id}
+            initialData={editingContactMethod}
+            submitLabel="Update Contact Method"
+            onSubmit={async (input) => { await onUpdateRelationshipContactMethod(editingContactMethod.id, input); setEditingContactMethod(null); }}
+            onCancel={() => setEditingContactMethod(null)}
           />
         </OpportunityModal>
       ) : null}

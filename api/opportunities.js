@@ -28,6 +28,8 @@ const allowedEntities = new Set([
   'relationships',
   'relationship_interactions',
   'relationship_opportunities',
+  'relationship_categories',
+  'relationship_contact_methods',
   'plans',
   'plan_items',
   'finance_income',
@@ -73,6 +75,8 @@ const tablesAttempted = [
   'relationships',
   'relationship_interactions',
   'relationship_opportunities',
+  'relationship_categories',
+  'relationship_contact_methods',
   'plans',
   'plan_items',
   'finance_income',
@@ -289,6 +293,7 @@ const normalizeRelationshipRow = (row, { forUpdate = false } = {}) => {
   const payload = {};
 
   if (!forUpdate || row?.personId !== undefined || row?.person_id !== undefined) payload.person_id = toNullableString(row?.person_id ?? row?.personId);
+  if (!forUpdate || row?.categoryId !== undefined || row?.category_id !== undefined) payload.category_id = toNullableString(row?.category_id ?? row?.categoryId);
   if (!forUpdate || row?.displayName !== undefined || row?.display_name !== undefined) payload.display_name = toRequiredString(row?.display_name ?? row?.displayName);
   if (!forUpdate || row?.domain !== undefined) payload.domain = toNullableString(row?.domain);
   if (!forUpdate || row?.relationshipType !== undefined || row?.relationship_type !== undefined) payload.relationship_type = toNullableString(row?.relationship_type ?? row?.relationshipType);
@@ -337,6 +342,31 @@ const normalizeRelationshipOpportunityRow = (row, { forUpdate = false } = {}) =>
   if (!forUpdate || row?.dueDate !== undefined || row?.due_date !== undefined) payload.due_date = toNullableString(row?.due_date ?? row?.dueDate);
   if (!forUpdate || row?.linkedProjectId !== undefined || row?.linked_project_id !== undefined) payload.linked_project_id = toNullableString(row?.linked_project_id ?? row?.linkedProjectId);
   if (!forUpdate || row?.linkedCompanyId !== undefined || row?.linked_company_id !== undefined) payload.linked_company_id = toNullableString(row?.linked_company_id ?? row?.linkedCompanyId);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+
+  return payload;
+};
+
+const normalizeRelationshipCategoryRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.slug !== undefined) payload.slug = toRequiredString(row?.slug);
+  if (!forUpdate || row?.description !== undefined) payload.description = toNullableString(row?.description);
+  if (!forUpdate || row?.color !== undefined) payload.color = toNullableString(row?.color);
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+
+  return payload;
+};
+
+const normalizeRelationshipContactMethodRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+
+  if (!forUpdate || row?.relationshipId !== undefined || row?.relationship_id !== undefined) payload.relationship_id = toRequiredString(row?.relationship_id ?? row?.relationshipId);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type);
+  if (!forUpdate || row?.label !== undefined) payload.label = toNullableString(row?.label);
+  if (!forUpdate || row?.value !== undefined) payload.value = toNullableString(row?.value);
+  if (!forUpdate || row?.isPrimary !== undefined || row?.is_primary !== undefined) payload.is_primary = row?.is_primary == null ? Boolean(row?.isPrimary ?? false) : Boolean(row.is_primary);
   if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
 
   return payload;
@@ -776,6 +806,8 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'relationships') return normalizeRelationshipRow(row);
   if (entity === 'relationship_interactions') return normalizeRelationshipInteractionRow(row);
   if (entity === 'relationship_opportunities') return normalizeRelationshipOpportunityRow(row);
+  if (entity === 'relationship_categories') return normalizeRelationshipCategoryRow(row);
+  if (entity === 'relationship_contact_methods') return normalizeRelationshipContactMethodRow(row);
   if (entity.startsWith('strategy_')) return normalizeStrategyEntityRow(entity, row);
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
@@ -864,7 +896,7 @@ const OPTIONAL_TABLES = new Set([
 
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
-  relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities'],
+  relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
   tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
   finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
   documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1008,7 +1040,7 @@ export default async function handler(req, res) {
       // Build response with only the keys relevant to the current scope
       const scopeKeys = {
         core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
-        relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities'],
+        relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
         finance: ['finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals', 'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations', 'finance_periods', 'finance_recurring_rules'],
         documents: ['documents', 'document_templates', 'document_brand_settings', 'generated_documents', 'invoices', 'invoice_items'],
@@ -1026,7 +1058,7 @@ export default async function handler(req, res) {
           'documents', 'document_templates', 'document_brand_settings', 'generated_documents',
           'invoices', 'invoice_items',
           'strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions',
-          'relationships', 'relationship_interactions', 'relationship_opportunities',
+          'relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods',
           'plans', 'plan_items',
           'finance_income', 'finance_expenses', 'finance_allocation_rules', 'finance_purchase_goals',
           'finance_investment_ideas', 'finance_investment_rules', 'finance_investment_allocations',
@@ -1187,6 +1219,10 @@ export default async function handler(req, res) {
                     ? normalizeRelationshipInteractionRow(data, { forUpdate: true })
                     : entity === 'relationship_opportunities'
                       ? normalizeRelationshipOpportunityRow(data, { forUpdate: true })
+                      : entity === 'relationship_categories'
+                        ? normalizeRelationshipCategoryRow(data, { forUpdate: true })
+                        : entity === 'relationship_contact_methods'
+                          ? normalizeRelationshipContactMethodRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       const { data: updatedRow, error } = await supabase
@@ -1209,7 +1245,7 @@ export default async function handler(req, res) {
         success: true,
         row: entity === 'ai_use_case_settings'
           ? normalizeAIUseCaseSettingRow(updatedRow)
-          : entity === 'relationships' || entity === 'relationship_interactions' || entity === 'relationship_opportunities'
+          : entity === 'relationships' || entity === 'relationship_interactions' || entity === 'relationship_opportunities' || entity === 'relationship_categories' || entity === 'relationship_contact_methods'
             ? updatedRow
           : normalizeEntityRow(entity, updatedRow),
       });
