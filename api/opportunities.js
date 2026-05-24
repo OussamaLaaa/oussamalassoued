@@ -57,6 +57,11 @@ const allowedEntities = new Set([
   'content_strategy',
   'content_items',
   'weekly_content_plans',
+  'life_nutrition_logs',
+  'life_fitness_logs',
+  'life_deen_logs',
+  'life_family_actions',
+  'life_weekly_reviews',
 ]);
 const tablesAttempted = [
   'companies',
@@ -114,6 +119,11 @@ const tablesAttempted = [
   'content_strategy',
   'content_items',
   'weekly_content_plans',
+  'life_nutrition_logs',
+  'life_fitness_logs',
+  'life_deen_logs',
+  'life_family_actions',
+  'life_weekly_reviews',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -966,6 +976,83 @@ const normalizeWeeklyContentPlanRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeLifeNutritionLogRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.logDate !== undefined || row?.log_date !== undefined) payload.log_date = toNullableString(row?.log_date ?? row?.logDate);
+  if (!forUpdate || row?.mealType !== undefined || row?.meal_type !== undefined) payload.meal_type = toNullableString(row?.meal_type ?? row?.mealType);
+  if (!forUpdate || row?.foodDescription !== undefined || row?.food_description !== undefined) payload.food_description = toNullableString(row?.food_description ?? row?.foodDescription);
+  if (!forUpdate || row?.qualityRating !== undefined || row?.quality_rating !== undefined) payload.quality_rating = toNullableString(row?.quality_rating ?? row?.qualityRating);
+  if (!forUpdate || row?.energyLevel !== undefined || row?.energy_level !== undefined) payload.energy_level = toNullableString(row?.energy_level ?? row?.energyLevel);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeLifeFitnessLogRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.workoutDate !== undefined || row?.workout_date !== undefined) payload.workout_date = toNullableString(row?.workout_date ?? row?.workoutDate);
+  if (!forUpdate || row?.workoutType !== undefined || row?.workout_type !== undefined) payload.workout_type = toNullableString(row?.workout_type ?? row?.workoutType);
+  if (!forUpdate || row?.durationMinutes !== undefined || row?.duration_minutes !== undefined) payload.duration_minutes = toNullableNumber(row?.duration_minutes ?? row?.durationMinutes);
+  if (!forUpdate || row?.intensity !== undefined) payload.intensity = toNullableString(row?.intensity);
+  if (!forUpdate || row?.exercises !== undefined) payload.exercises = toNullableString(row?.exercises);
+  if (!forUpdate || row?.bodyNotes !== undefined || row?.body_notes !== undefined) payload.body_notes = toNullableString(row?.body_notes ?? row?.bodyNotes);
+  if (!forUpdate || row?.recoveryNotes !== undefined || row?.recovery_notes !== undefined) payload.recovery_notes = toNullableString(row?.recovery_notes ?? row?.recoveryNotes);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeLifeDeenLogRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.logDate !== undefined || row?.log_date !== undefined) payload.log_date = toNullableString(row?.log_date ?? row?.logDate);
+  if (!forUpdate || row?.fajr !== undefined) payload.fajr = toNullableString(row?.fajr);
+  if (!forUpdate || row?.dhuhr !== undefined) payload.dhuhr = toNullableString(row?.dhuhr);
+  if (!forUpdate || row?.asr !== undefined) payload.asr = toNullableString(row?.asr);
+  if (!forUpdate || row?.maghrib !== undefined) payload.maghrib = toNullableString(row?.maghrib);
+  if (!forUpdate || row?.isha !== undefined) payload.isha = toNullableString(row?.isha);
+  if (!forUpdate || row?.quranMinutes !== undefined || row?.quran_minutes !== undefined) payload.quran_minutes = toNullableNumber(row?.quran_minutes ?? row?.quranMinutes);
+  if (!forUpdate || row?.dhikrDone !== undefined || row?.dhikr_done !== undefined) payload.dhikr_done = row?.dhikr_done ?? row?.dhikrDone ?? null;
+  if (!forUpdate || row?.learningMinutes !== undefined || row?.learning_minutes !== undefined) payload.learning_minutes = toNullableNumber(row?.learning_minutes ?? row?.learningMinutes);
+  if (!forUpdate || row?.charityNotes !== undefined || row?.charity_notes !== undefined) payload.charity_notes = toNullableString(row?.charity_notes ?? row?.charityNotes);
+  if (!forUpdate || row?.reflection !== undefined) payload.reflection = toNullableString(row?.reflection);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeLifeFamilyActionRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.actionDate !== undefined || row?.action_date !== undefined) payload.action_date = toNullableString(row?.action_date ?? row?.actionDate);
+  if (!forUpdate || row?.title !== undefined) payload.title = toRequiredString(row?.title);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type);
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status);
+  if (!forUpdate || row?.priority !== undefined) payload.priority = toNullableString(row?.priority);
+  if (!forUpdate || row?.personName !== undefined || row?.person_name !== undefined) payload.person_name = toNullableString(row?.person_name ?? row?.personName);
+  if (!forUpdate || row?.description !== undefined) payload.description = toNullableString(row?.description);
+  if (!forUpdate || row?.outcome !== undefined) payload.outcome = toNullableString(row?.outcome);
+  if (!forUpdate || row?.nextAction !== undefined || row?.next_action !== undefined) payload.next_action = toNullableString(row?.next_action ?? row?.nextAction);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeLifeWeeklyReviewRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.weekStart !== undefined || row?.week_start !== undefined) payload.week_start = toNullableString(row?.week_start ?? row?.weekStart);
+  if (!forUpdate || row?.summary !== undefined) payload.summary = toNullableString(row?.summary);
+  if (!forUpdate || row?.healthReview !== undefined || row?.health_review !== undefined) payload.health_review = toNullableString(row?.health_review ?? row?.healthReview);
+  if (!forUpdate || row?.nutritionReview !== undefined || row?.nutrition_review !== undefined) payload.nutrition_review = toNullableString(row?.nutrition_review ?? row?.nutritionReview);
+  if (!forUpdate || row?.fitnessReview !== undefined || row?.fitness_review !== undefined) payload.fitness_review = toNullableString(row?.fitness_review ?? row?.fitnessReview);
+  if (!forUpdate || row?.deenReview !== undefined || row?.deen_review !== undefined) payload.deen_review = toNullableString(row?.deen_review ?? row?.deenReview);
+  if (!forUpdate || row?.familyReview !== undefined || row?.family_review !== undefined) payload.family_review = toNullableString(row?.family_review ?? row?.familyReview);
+  if (!forUpdate || row?.whatWorked !== undefined || row?.what_worked !== undefined) payload.what_worked = toNullableString(row?.what_worked ?? row?.whatWorked);
+  if (!forUpdate || row?.whatFailed !== undefined || row?.what_failed !== undefined) payload.what_failed = toNullableString(row?.what_failed ?? row?.whatFailed);
+  if (!forUpdate || row?.neglectedArea !== undefined || row?.neglected_area !== undefined) payload.neglected_area = toNullableString(row?.neglected_area ?? row?.neglectedArea);
+  if (!forUpdate || row?.nextWeekFocus !== undefined || row?.next_week_focus !== undefined) payload.next_week_focus = toNullableString(row?.next_week_focus ?? row?.nextWeekFocus);
+  if (!forUpdate || row?.lifeScore !== undefined || row?.life_score !== undefined) payload.life_score = toNullableNumber(row?.life_score ?? row?.lifeScore);
+  if (!forUpdate || row?.healthScore !== undefined || row?.health_score !== undefined) payload.health_score = toNullableNumber(row?.health_score ?? row?.healthScore);
+  if (!forUpdate || row?.deenScore !== undefined || row?.deen_score !== undefined) payload.deen_score = toNullableNumber(row?.deen_score ?? row?.deenScore);
+  if (!forUpdate || row?.familyScore !== undefined || row?.family_score !== undefined) payload.family_score = toNullableNumber(row?.family_score ?? row?.familyScore);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
@@ -1006,6 +1093,11 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'content_strategy') return normalizeContentStrategyRow(row);
   if (entity === 'content_items') return normalizeContentItemRow(row);
   if (entity === 'weekly_content_plans') return normalizeWeeklyContentPlanRow(row);
+  if (entity === 'life_nutrition_logs') return normalizeLifeNutritionLogRow(row);
+  if (entity === 'life_fitness_logs') return normalizeLifeFitnessLogRow(row);
+  if (entity === 'life_deen_logs') return normalizeLifeDeenLogRow(row);
+  if (entity === 'life_family_actions') return normalizeLifeFamilyActionRow(row);
+  if (entity === 'life_weekly_reviews') return normalizeLifeWeeklyReviewRow(row);
   return row;
 };
 
@@ -1037,6 +1129,11 @@ const CRITICAL_TABLES = new Set([
 ]);
 
 const OPTIONAL_TABLES = new Set([
+  'life_nutrition_logs',
+  'life_fitness_logs',
+  'life_deen_logs',
+  'life_family_actions',
+  'life_weekly_reviews',
   'project_tasks',
   'project_time_logs',
   'project_meetings',
@@ -1085,6 +1182,7 @@ const OPTIONAL_TABLES = new Set([
 
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
+  life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
   relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
   notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
   tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
@@ -1241,6 +1339,7 @@ export default async function handler(req, res) {
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
         social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
+        life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
       };
 
       let responseKeys;
@@ -1464,6 +1563,16 @@ export default async function handler(req, res) {
                         ? normalizeContentItemRow(data, { forUpdate: true })
                       : entity === 'weekly_content_plans'
                         ? normalizeWeeklyContentPlanRow(data, { forUpdate: true })
+                      : entity === 'life_nutrition_logs'
+                        ? normalizeLifeNutritionLogRow(data, { forUpdate: true })
+                      : entity === 'life_fitness_logs'
+                        ? normalizeLifeFitnessLogRow(data, { forUpdate: true })
+                      : entity === 'life_deen_logs'
+                        ? normalizeLifeDeenLogRow(data, { forUpdate: true })
+                      : entity === 'life_family_actions'
+                        ? normalizeLifeFamilyActionRow(data, { forUpdate: true })
+                      : entity === 'life_weekly_reviews'
+                        ? normalizeLifeWeeklyReviewRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       if (entity === 'relationships') {

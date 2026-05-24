@@ -1607,7 +1607,166 @@ export interface WeeklyContentPlanInput {
   reviewNotes?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'notes' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control' | 'social';
+export type LifeMealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'drink' | 'meal' | 'other';
+export type LifeQualityRating = 'good' | 'medium' | 'poor';
+export type LifeEnergyLevel = 'high' | 'medium' | 'low';
+export type LifeWorkoutType = 'walking' | 'strength' | 'cardio' | 'mobility' | 'sport' | 'recovery' | 'general' | 'other';
+export type LifeIntensity = 'low' | 'medium' | 'high';
+export type LifePrayerStatus = 'done' | 'late' | 'missed' | 'not_tracked';
+export type LifeFamilyActionType = 'call' | 'visit' | 'support' | 'task' | 'important_date' | 'gift' | 'help' | 'other';
+export type LifeFamilyActionStatus = 'planned' | 'done' | 'postponed' | 'cancelled';
+export type LifePriority = 'high' | 'medium' | 'low';
+
+export interface LifeNutritionLog {
+  id: string;
+  logDate: string;
+  mealType: LifeMealType;
+  foodDescription?: string;
+  qualityRating?: LifeQualityRating;
+  energyLevel?: LifeEnergyLevel;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LifeNutritionLogInput {
+  logDate: string;
+  mealType: LifeMealType;
+  foodDescription?: string;
+  qualityRating?: LifeQualityRating;
+  energyLevel?: LifeEnergyLevel;
+  notes?: string;
+}
+
+export interface LifeFitnessLog {
+  id: string;
+  workoutDate: string;
+  workoutType: LifeWorkoutType;
+  durationMinutes?: number;
+  intensity?: LifeIntensity;
+  exercises?: string;
+  bodyNotes?: string;
+  recoveryNotes?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LifeFitnessLogInput {
+  workoutDate: string;
+  workoutType: LifeWorkoutType;
+  durationMinutes?: number;
+  intensity?: LifeIntensity;
+  exercises?: string;
+  bodyNotes?: string;
+  recoveryNotes?: string;
+  notes?: string;
+}
+
+export interface LifeDeenLog {
+  id: string;
+  logDate: string;
+  fajr?: LifePrayerStatus;
+  dhuhr?: LifePrayerStatus;
+  asr?: LifePrayerStatus;
+  maghrib?: LifePrayerStatus;
+  isha?: LifePrayerStatus;
+  quranMinutes?: number;
+  dhikrDone?: boolean;
+  learningMinutes?: number;
+  charityNotes?: string;
+  reflection?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LifeDeenLogInput {
+  logDate: string;
+  fajr?: LifePrayerStatus;
+  dhuhr?: LifePrayerStatus;
+  asr?: LifePrayerStatus;
+  maghrib?: LifePrayerStatus;
+  isha?: LifePrayerStatus;
+  quranMinutes?: number;
+  dhikrDone?: boolean;
+  learningMinutes?: number;
+  charityNotes?: string;
+  reflection?: string;
+  notes?: string;
+}
+
+export interface LifeFamilyAction {
+  id: string;
+  actionDate: string;
+  title: string;
+  type: LifeFamilyActionType;
+  status: LifeFamilyActionStatus;
+  priority: LifePriority;
+  personName?: string;
+  description?: string;
+  outcome?: string;
+  nextAction?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LifeFamilyActionInput {
+  actionDate: string;
+  title: string;
+  type: LifeFamilyActionType;
+  status?: LifeFamilyActionStatus;
+  priority?: LifePriority;
+  personName?: string;
+  description?: string;
+  outcome?: string;
+  nextAction?: string;
+  notes?: string;
+}
+
+export interface LifeWeeklyReview {
+  id: string;
+  weekStart: string;
+  summary?: string;
+  healthReview?: string;
+  nutritionReview?: string;
+  fitnessReview?: string;
+  deenReview?: string;
+  familyReview?: string;
+  whatWorked?: string;
+  whatFailed?: string;
+  neglectedArea?: string;
+  nextWeekFocus?: string;
+  lifeScore?: number;
+  healthScore?: number;
+  deenScore?: number;
+  familyScore?: number;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LifeWeeklyReviewInput {
+  weekStart: string;
+  summary?: string;
+  healthReview?: string;
+  nutritionReview?: string;
+  fitnessReview?: string;
+  deenReview?: string;
+  familyReview?: string;
+  whatWorked?: string;
+  whatFailed?: string;
+  neglectedArea?: string;
+  nextWeekFocus?: string;
+  lifeScore?: number;
+  healthScore?: number;
+  deenScore?: number;
+  familyScore?: number;
+  notes?: string;
+}
+
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'notes' | 'projects' | 'templates' | 'strategy' | 'plans' | 'tasks' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control' | 'social' | 'life';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';
 

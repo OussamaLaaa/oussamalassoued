@@ -139,6 +139,16 @@ import type {
   ContentItemInput,
   WeeklyContentPlan,
   WeeklyContentPlanInput,
+  LifeNutritionLog,
+  LifeNutritionLogInput,
+  LifeFitnessLog,
+  LifeFitnessLogInput,
+  LifeDeenLog,
+  LifeDeenLogInput,
+  LifeFamilyAction,
+  LifeFamilyActionInput,
+  LifeWeeklyReview,
+  LifeWeeklyReviewInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -197,6 +207,11 @@ const cloneSeedData = (): OpportunitiesData => ({
   contentStrategies: [],
   contentItems: [],
   weeklyContentPlans: [],
+  lifeNutritionLogs: [],
+  lifeFitnessLogs: [],
+  lifeDeenLogs: [],
+  lifeFamilyActions: [],
+  lifeWeeklyReviews: [],
 });
 
 
@@ -1316,6 +1331,165 @@ const weeklyTaskReviewToDb = (input: Partial<WeeklyTaskReviewInput>) => {
   return payload;
 };
 
+const lifeNutritionLogFromDb = (row: any): LifeNutritionLog => ({
+  id: String(row?.id ?? ''),
+  logDate: row?.log_date ?? row?.logDate ?? '',
+  mealType: row?.meal_type ?? row?.mealType ?? 'meal',
+  foodDescription: row?.food_description ?? row?.foodDescription ?? undefined,
+  qualityRating: row?.quality_rating ?? row?.qualityRating ?? undefined,
+  energyLevel: row?.energy_level ?? row?.energyLevel ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const lifeNutritionLogToDb = (input: Partial<LifeNutritionLogInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.logDate !== undefined) payload.log_date = input.logDate;
+  if (input.mealType !== undefined) payload.meal_type = input.mealType;
+  if (input.foodDescription !== undefined) payload.food_description = toNullableString(input.foodDescription);
+  if (input.qualityRating !== undefined) payload.quality_rating = input.qualityRating;
+  if (input.energyLevel !== undefined) payload.energy_level = input.energyLevel;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const lifeFitnessLogFromDb = (row: any): LifeFitnessLog => ({
+  id: String(row?.id ?? ''),
+  workoutDate: row?.workout_date ?? row?.workoutDate ?? '',
+  workoutType: row?.workout_type ?? row?.workoutType ?? 'general',
+  durationMinutes: row?.duration_minutes ?? row?.durationMinutes ?? undefined,
+  intensity: row?.intensity ?? undefined,
+  exercises: row?.exercises ?? undefined,
+  bodyNotes: row?.body_notes ?? row?.bodyNotes ?? undefined,
+  recoveryNotes: row?.recovery_notes ?? row?.recoveryNotes ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const lifeFitnessLogToDb = (input: Partial<LifeFitnessLogInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.workoutDate !== undefined) payload.workout_date = input.workoutDate;
+  if (input.workoutType !== undefined) payload.workout_type = input.workoutType;
+  if (input.durationMinutes !== undefined) payload.duration_minutes = Number(input.durationMinutes) || null;
+  if (input.intensity !== undefined) payload.intensity = input.intensity;
+  if (input.exercises !== undefined) payload.exercises = toNullableString(input.exercises);
+  if (input.bodyNotes !== undefined) payload.body_notes = toNullableString(input.bodyNotes);
+  if (input.recoveryNotes !== undefined) payload.recovery_notes = toNullableString(input.recoveryNotes);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const lifeDeenLogFromDb = (row: any): LifeDeenLog => ({
+  id: String(row?.id ?? ''),
+  logDate: row?.log_date ?? row?.logDate ?? '',
+  fajr: row?.fajr ?? undefined,
+  dhuhr: row?.dhuhr ?? undefined,
+  asr: row?.asr ?? undefined,
+  maghrib: row?.maghrib ?? undefined,
+  isha: row?.isha ?? undefined,
+  quranMinutes: row?.quran_minutes ?? row?.quranMinutes ?? undefined,
+  dhikrDone: row?.dhikr_done ?? row?.dhikrDone ?? undefined,
+  learningMinutes: row?.learning_minutes ?? row?.learningMinutes ?? undefined,
+  charityNotes: row?.charity_notes ?? row?.charityNotes ?? undefined,
+  reflection: row?.reflection ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const lifeDeenLogToDb = (input: Partial<LifeDeenLogInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.logDate !== undefined) payload.log_date = input.logDate;
+  if (input.fajr !== undefined) payload.fajr = input.fajr;
+  if (input.dhuhr !== undefined) payload.dhuhr = input.dhuhr;
+  if (input.asr !== undefined) payload.asr = input.asr;
+  if (input.maghrib !== undefined) payload.maghrib = input.maghrib;
+  if (input.isha !== undefined) payload.isha = input.isha;
+  if (input.quranMinutes !== undefined) payload.quran_minutes = Number(input.quranMinutes) || null;
+  if (input.dhikrDone !== undefined) payload.dhikr_done = Boolean(input.dhikrDone);
+  if (input.learningMinutes !== undefined) payload.learning_minutes = Number(input.learningMinutes) || null;
+  if (input.charityNotes !== undefined) payload.charity_notes = toNullableString(input.charityNotes);
+  if (input.reflection !== undefined) payload.reflection = toNullableString(input.reflection);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const lifeFamilyActionFromDb = (row: any): LifeFamilyAction => ({
+  id: String(row?.id ?? ''),
+  actionDate: row?.action_date ?? row?.actionDate ?? '',
+  title: String(row?.title ?? ''),
+  type: row?.type ?? 'other',
+  status: row?.status ?? 'planned',
+  priority: row?.priority ?? 'medium',
+  personName: row?.person_name ?? row?.personName ?? undefined,
+  description: row?.description ?? undefined,
+  outcome: row?.outcome ?? undefined,
+  nextAction: row?.next_action ?? row?.nextAction ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const lifeFamilyActionToDb = (input: Partial<LifeFamilyActionInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.actionDate !== undefined) payload.action_date = input.actionDate;
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.type !== undefined) payload.type = input.type;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.personName !== undefined) payload.person_name = toNullableString(input.personName);
+  if (input.description !== undefined) payload.description = toNullableString(input.description);
+  if (input.outcome !== undefined) payload.outcome = toNullableString(input.outcome);
+  if (input.nextAction !== undefined) payload.next_action = toNullableString(input.nextAction);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+const lifeWeeklyReviewFromDb = (row: any): LifeWeeklyReview => ({
+  id: String(row?.id ?? ''),
+  weekStart: row?.week_start ?? row?.weekStart ?? '',
+  summary: row?.summary ?? undefined,
+  healthReview: row?.health_review ?? row?.healthReview ?? undefined,
+  nutritionReview: row?.nutrition_review ?? row?.nutritionReview ?? undefined,
+  fitnessReview: row?.fitness_review ?? row?.fitnessReview ?? undefined,
+  deenReview: row?.deen_review ?? row?.deenReview ?? undefined,
+  familyReview: row?.family_review ?? row?.familyReview ?? undefined,
+  whatWorked: row?.what_worked ?? row?.whatWorked ?? undefined,
+  whatFailed: row?.what_failed ?? row?.whatFailed ?? undefined,
+  neglectedArea: row?.neglected_area ?? row?.neglectedArea ?? undefined,
+  nextWeekFocus: row?.next_week_focus ?? row?.nextWeekFocus ?? undefined,
+  lifeScore: row?.life_score ?? row?.lifeScore ?? undefined,
+  healthScore: row?.health_score ?? row?.healthScore ?? undefined,
+  deenScore: row?.deen_score ?? row?.deenScore ?? undefined,
+  familyScore: row?.family_score ?? row?.familyScore ?? undefined,
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const lifeWeeklyReviewToDb = (input: Partial<LifeWeeklyReviewInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.weekStart !== undefined) payload.week_start = input.weekStart;
+  if (input.summary !== undefined) payload.summary = toNullableString(input.summary);
+  if (input.healthReview !== undefined) payload.health_review = toNullableString(input.healthReview);
+  if (input.nutritionReview !== undefined) payload.nutrition_review = toNullableString(input.nutritionReview);
+  if (input.fitnessReview !== undefined) payload.fitness_review = toNullableString(input.fitnessReview);
+  if (input.deenReview !== undefined) payload.deen_review = toNullableString(input.deenReview);
+  if (input.familyReview !== undefined) payload.family_review = toNullableString(input.familyReview);
+  if (input.whatWorked !== undefined) payload.what_worked = toNullableString(input.whatWorked);
+  if (input.whatFailed !== undefined) payload.what_failed = toNullableString(input.whatFailed);
+  if (input.neglectedArea !== undefined) payload.neglected_area = toNullableString(input.neglectedArea);
+  if (input.nextWeekFocus !== undefined) payload.next_week_focus = toNullableString(input.nextWeekFocus);
+  if (input.lifeScore !== undefined) payload.life_score = Math.min(10, Math.max(0, Number(input.lifeScore)));
+  if (input.healthScore !== undefined) payload.health_score = Math.min(10, Math.max(0, Number(input.healthScore)));
+  if (input.deenScore !== undefined) payload.deen_score = Math.min(10, Math.max(0, Number(input.deenScore)));
+  if (input.familyScore !== undefined) payload.family_score = Math.min(10, Math.max(0, Number(input.familyScore)));
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
 const socialPlatformFromDb = (row: any): SocialPlatform => ({
   id: String(row?.id ?? ''),
   name: String(row?.name ?? ''),
@@ -1693,6 +1867,11 @@ export const useOpportunitiesData = (enabled = true) => {
   const [contentStrategies, setContentStrategies] = useState<ContentStrategy[]>([]);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [weeklyContentPlans, setWeeklyContentPlans] = useState<WeeklyContentPlan[]>([]);
+  const [lifeNutritionLogs, setLifeNutritionLogs] = useState<LifeNutritionLog[]>([]);
+  const [lifeFitnessLogs, setLifeFitnessLogs] = useState<LifeFitnessLog[]>([]);
+  const [lifeDeenLogs, setLifeDeenLogs] = useState<LifeDeenLog[]>([]);
+  const [lifeFamilyActions, setLifeFamilyActions] = useState<LifeFamilyAction[]>([]);
+  const [lifeWeeklyReviews, setLifeWeeklyReviews] = useState<LifeWeeklyReview[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -1948,6 +2127,13 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('content_pillars')) setContentPillars((raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)));
     if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
     if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
+    // ── Life ──
+    if (has('life_nutrition_logs')) setLifeNutritionLogs((raw('life_nutrition_logs') || []).map((row: any) => lifeNutritionLogFromDb(row)));
+    if (has('life_fitness_logs')) setLifeFitnessLogs((raw('life_fitness_logs') || []).map((row: any) => lifeFitnessLogFromDb(row)));
+    if (has('life_deen_logs')) setLifeDeenLogs((raw('life_deen_logs') || []).map((row: any) => lifeDeenLogFromDb(row)));
+    if (has('life_family_actions')) setLifeFamilyActions((raw('life_family_actions') || []).map((row: any) => lifeFamilyActionFromDb(row)));
+    if (has('life_weekly_reviews')) setLifeWeeklyReviews((raw('life_weekly_reviews') || []).map((row: any) => lifeWeeklyReviewFromDb(row)));
+
     if (has('content_items')) {
       setContentItems(attachContentItemLinkNames(
         (raw('content_items') || []).map((row: any) => contentItemFromDb(row)),
@@ -1998,7 +2184,7 @@ export const useOpportunitiesData = (enabled = true) => {
         applyPayload(corePayload);
 
         // Stage 2: Load secondary scopes in parallel
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social', 'life'];
         const secondaryResults = await Promise.allSettled(
           secondaryScopes.map((s) => fetchScope(s))
         );
@@ -2278,7 +2464,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans' | 'life_nutrition_logs' | 'life_fitness_logs' | 'life_deen_logs' | 'life_family_actions' | 'life_weekly_reviews', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -4081,6 +4267,120 @@ export const useOpportunitiesData = (enabled = true) => {
     setWeeklyContentPlans((current) => current.filter((item) => item.id !== id));
   };
 
+  const addLifeNutritionLog = async (input: LifeNutritionLogInput) => {
+    if (!String(input.logDate || '').trim()) throw new Error('Log date is required.');
+    if (!String(input.mealType || '').trim()) throw new Error('Meal type is required.');
+    const row = await syncInsert('life_nutrition_logs', lifeNutritionLogToDb(input));
+    const next = lifeNutritionLogFromDb(row);
+    setLifeNutritionLogs((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateLifeNutritionLog = async (id: string, input: Partial<LifeNutritionLogInput>) => {
+    const row = await syncUpdate('life_nutrition_logs', id, lifeNutritionLogToDb(input));
+    const next = lifeNutritionLogFromDb(row);
+    setLifeNutritionLogs((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteLifeNutritionLog = async (id: string) => {
+    const confirmed = window.confirm('Delete this nutrition log?');
+    if (!confirmed) return;
+    await syncDelete('life_nutrition_logs' as any, id);
+    setLifeNutritionLogs((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addLifeFitnessLog = async (input: LifeFitnessLogInput) => {
+    if (!String(input.workoutDate || '').trim()) throw new Error('Workout date is required.');
+    if (!String(input.workoutType || '').trim()) throw new Error('Workout type is required.');
+    const row = await syncInsert('life_fitness_logs', lifeFitnessLogToDb(input));
+    const next = lifeFitnessLogFromDb(row);
+    setLifeFitnessLogs((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateLifeFitnessLog = async (id: string, input: Partial<LifeFitnessLogInput>) => {
+    const row = await syncUpdate('life_fitness_logs', id, lifeFitnessLogToDb(input));
+    const next = lifeFitnessLogFromDb(row);
+    setLifeFitnessLogs((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteLifeFitnessLog = async (id: string) => {
+    const confirmed = window.confirm('Delete this fitness log?');
+    if (!confirmed) return;
+    await syncDelete('life_fitness_logs' as any, id);
+    setLifeFitnessLogs((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addLifeDeenLog = async (input: LifeDeenLogInput) => {
+    if (!String(input.logDate || '').trim()) throw new Error('Log date is required.');
+    const row = await syncInsert('life_deen_logs', lifeDeenLogToDb(input));
+    const next = lifeDeenLogFromDb(row);
+    setLifeDeenLogs((current) => [...current, next]);
+    return next;
+  };
+
+  const updateLifeDeenLog = async (id: string, input: Partial<LifeDeenLogInput>) => {
+    const row = await syncUpdate('life_deen_logs', id, lifeDeenLogToDb(input));
+    const next = lifeDeenLogFromDb(row);
+    setLifeDeenLogs((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteLifeDeenLog = async (id: string) => {
+    const confirmed = window.confirm('Delete this deen log?');
+    if (!confirmed) return;
+    await syncDelete('life_deen_logs' as any, id);
+    setLifeDeenLogs((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addLifeFamilyAction = async (input: LifeFamilyActionInput) => {
+    if (!String(input.actionDate || '').trim()) throw new Error('Action date is required.');
+    if (!String(input.title || '').trim()) throw new Error('Title is required.');
+    if (!String(input.type || '').trim()) throw new Error('Type is required.');
+    const row = await syncInsert('life_family_actions', lifeFamilyActionToDb(input));
+    const next = lifeFamilyActionFromDb(row);
+    setLifeFamilyActions((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateLifeFamilyAction = async (id: string, input: Partial<LifeFamilyActionInput>) => {
+    const row = await syncUpdate('life_family_actions', id, lifeFamilyActionToDb(input));
+    const next = lifeFamilyActionFromDb(row);
+    setLifeFamilyActions((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteLifeFamilyAction = async (id: string) => {
+    const confirmed = window.confirm('Delete this family action?');
+    if (!confirmed) return;
+    await syncDelete('life_family_actions' as any, id);
+    setLifeFamilyActions((current) => current.filter((item) => item.id !== id));
+  };
+
+  const addLifeWeeklyReview = async (input: LifeWeeklyReviewInput) => {
+    if (!String(input.weekStart || '').trim()) throw new Error('Week start is required.');
+    const row = await syncInsert('life_weekly_reviews', lifeWeeklyReviewToDb(input));
+    const next = lifeWeeklyReviewFromDb(row);
+    setLifeWeeklyReviews((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateLifeWeeklyReview = async (id: string, input: Partial<LifeWeeklyReviewInput>) => {
+    const row = await syncUpdate('life_weekly_reviews', id, lifeWeeklyReviewToDb(input));
+    const next = lifeWeeklyReviewFromDb(row);
+    setLifeWeeklyReviews((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteLifeWeeklyReview = async (id: string) => {
+    const confirmed = window.confirm('Delete this weekly review?');
+    if (!confirmed) return;
+    await syncDelete('life_weekly_reviews' as any, id);
+    setLifeWeeklyReviews((current) => current.filter((item) => item.id !== id));
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -4120,6 +4420,11 @@ export const useOpportunitiesData = (enabled = true) => {
     setGeneratedDocuments(fallback.generatedDocuments);
     setInvoices(fallback.invoices);
     setInvoiceItems(fallback.invoiceItems);
+    setLifeNutritionLogs(fallback.lifeNutritionLogs);
+    setLifeFitnessLogs(fallback.lifeFitnessLogs);
+    setLifeDeenLogs(fallback.lifeDeenLogs);
+    setLifeFamilyActions(fallback.lifeFamilyActions);
+    setLifeWeeklyReviews(fallback.lifeWeeklyReviews);
   };
 
   return {
@@ -4347,6 +4652,26 @@ export const useOpportunitiesData = (enabled = true) => {
     addWeeklyContentPlan,
     updateWeeklyContentPlan,
     deleteWeeklyContentPlan,
+    lifeNutritionLogs,
+    lifeFitnessLogs,
+    lifeDeenLogs,
+    lifeFamilyActions,
+    lifeWeeklyReviews,
+    addLifeNutritionLog,
+    updateLifeNutritionLog,
+    deleteLifeNutritionLog,
+    addLifeFitnessLog,
+    updateLifeFitnessLog,
+    deleteLifeFitnessLog,
+    addLifeDeenLog,
+    updateLifeDeenLog,
+    deleteLifeDeenLog,
+    addLifeFamilyAction,
+    updateLifeFamilyAction,
+    deleteLifeFamilyAction,
+    addLifeWeeklyReview,
+    updateLifeWeeklyReview,
+    deleteLifeWeeklyReview,
   };
 };
 

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -29,6 +29,7 @@ import TasksPanel from './TasksPanel';
 import RelationshipsPanel from './RelationshipsPanel';
 import SmartNotesPanel from './SmartNotesPanel';
 import SocialMediaPanel from './SocialMediaPanel';
+import LifeManagementPanel from './LifeManagementPanel';
 
 const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -51,6 +52,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'documents', label: 'Documents' },
   { id: 'ai-control', label: 'AI Control' },
   { id: 'social', label: 'Social Media' },
+  { id: 'life', label: 'Life' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -306,6 +308,26 @@ const OpportunitiesLayout: React.FC<{
     addWeeklyContentPlan: (input: WeeklyContentPlanInput) => Promise<WeeklyContentPlan>;
     updateWeeklyContentPlan: (id: string, input: Partial<WeeklyContentPlanInput>) => Promise<WeeklyContentPlan>;
     deleteWeeklyContentPlan: (id: string) => Promise<void>;
+    lifeNutritionLogs: LifeNutritionLog[];
+    lifeFitnessLogs: LifeFitnessLog[];
+    lifeDeenLogs: LifeDeenLog[];
+    lifeFamilyActions: LifeFamilyAction[];
+    lifeWeeklyReviews: LifeWeeklyReview[];
+    addLifeNutritionLog: (input: LifeNutritionLogInput) => Promise<LifeNutritionLog>;
+    updateLifeNutritionLog: (id: string, input: Partial<LifeNutritionLogInput>) => Promise<LifeNutritionLog>;
+    deleteLifeNutritionLog: (id: string) => Promise<void>;
+    addLifeFitnessLog: (input: LifeFitnessLogInput) => Promise<LifeFitnessLog>;
+    updateLifeFitnessLog: (id: string, input: Partial<LifeFitnessLogInput>) => Promise<LifeFitnessLog>;
+    deleteLifeFitnessLog: (id: string) => Promise<void>;
+    addLifeDeenLog: (input: LifeDeenLogInput) => Promise<LifeDeenLog>;
+    updateLifeDeenLog: (id: string, input: Partial<LifeDeenLogInput>) => Promise<LifeDeenLog>;
+    deleteLifeDeenLog: (id: string) => Promise<void>;
+    addLifeFamilyAction: (input: LifeFamilyActionInput) => Promise<LifeFamilyAction>;
+    updateLifeFamilyAction: (id: string, input: Partial<LifeFamilyActionInput>) => Promise<LifeFamilyAction>;
+    deleteLifeFamilyAction: (id: string) => Promise<void>;
+    addLifeWeeklyReview: (input: LifeWeeklyReviewInput) => Promise<LifeWeeklyReview>;
+    updateLifeWeeklyReview: (id: string, input: Partial<LifeWeeklyReviewInput>) => Promise<LifeWeeklyReview>;
+    deleteLifeWeeklyReview: (id: string) => Promise<void>;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
@@ -432,6 +454,12 @@ const OpportunitiesLayout: React.FC<{
     addContentStrategy, updateContentStrategy, deleteContentStrategy,
     addContentItem, updateContentItem, deleteContentItem,
     addWeeklyContentPlan, updateWeeklyContentPlan, deleteWeeklyContentPlan,
+    lifeNutritionLogs, lifeFitnessLogs, lifeDeenLogs, lifeFamilyActions, lifeWeeklyReviews,
+    addLifeNutritionLog, updateLifeNutritionLog, deleteLifeNutritionLog,
+    addLifeFitnessLog, updateLifeFitnessLog, deleteLifeFitnessLog,
+    addLifeDeenLog, updateLifeDeenLog, deleteLifeDeenLog,
+    addLifeFamilyAction, updateLifeFamilyAction, deleteLifeFamilyAction,
+    addLifeWeeklyReview, updateLifeWeeklyReview, deleteLifeWeeklyReview,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -1113,6 +1141,31 @@ const OpportunitiesLayout: React.FC<{
                 onAddWeeklyContentPlan={addWeeklyContentPlan}
                 onUpdateWeeklyContentPlan={updateWeeklyContentPlan}
                 onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
+              />
+            )}
+
+            {tab === 'life' && (
+              <LifeManagementPanel
+                lifeNutritionLogs={lifeNutritionLogs}
+                lifeFitnessLogs={lifeFitnessLogs}
+                lifeDeenLogs={lifeDeenLogs}
+                lifeFamilyActions={lifeFamilyActions}
+                lifeWeeklyReviews={lifeWeeklyReviews}
+                onAddLifeNutritionLog={addLifeNutritionLog}
+                onUpdateLifeNutritionLog={updateLifeNutritionLog}
+                onDeleteLifeNutritionLog={deleteLifeNutritionLog}
+                onAddLifeFitnessLog={addLifeFitnessLog}
+                onUpdateLifeFitnessLog={updateLifeFitnessLog}
+                onDeleteLifeFitnessLog={deleteLifeFitnessLog}
+                onAddLifeDeenLog={addLifeDeenLog}
+                onUpdateLifeDeenLog={updateLifeDeenLog}
+                onDeleteLifeDeenLog={deleteLifeDeenLog}
+                onAddLifeFamilyAction={addLifeFamilyAction}
+                onUpdateLifeFamilyAction={updateLifeFamilyAction}
+                onDeleteLifeFamilyAction={deleteLifeFamilyAction}
+                onAddLifeWeeklyReview={addLifeWeeklyReview}
+                onUpdateLifeWeeklyReview={updateLifeWeeklyReview}
+                onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
               />
             )}
           </div>
