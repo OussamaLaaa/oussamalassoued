@@ -33,6 +33,10 @@ import type {
   InvoiceItemInput,
   GeneratedDocument,
   GeneratedDocumentInput,
+  AIProviderKey,
+  AIProviderKeyInput,
+  AIUseCaseSetting,
+  AIUseCaseSettingInput,
 } from '../types/opportunities';
 
 // ── Helpers ──
@@ -721,6 +725,68 @@ export const generatedDocumentToDb = (input: Partial<GeneratedDocumentInput>, op
   if (!forUpdate || input.pdfUrl !== undefined) payload.pdf_url = toNullableString(input.pdfUrl);
   if (!forUpdate || input.pdfStoragePath !== undefined) payload.pdf_storage_path = toNullableString(input.pdfStoragePath);
   if (!forUpdate || input.externalUrl !== undefined) payload.external_url = toNullableString(input.externalUrl);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const aiProviderKeyFromDb = (row: any): AIProviderKey => ({
+  id: safeString(row?.id),
+  label: safeString(row?.label),
+  provider: row?.provider ?? 'gemini',
+  apiKeyLast4: row?.api_key_last4 ?? row?.apiKeyLast4 ?? undefined,
+  baseUrl: row?.base_url ?? row?.baseUrl ?? undefined,
+  endpoint: row?.endpoint ?? undefined,
+  deploymentName: row?.deployment_name ?? row?.deploymentName ?? undefined,
+  apiVersion: row?.api_version ?? row?.apiVersion ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const aiProviderKeyToDb = (input: Partial<AIProviderKeyInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.label !== undefined) payload.label = String(input.label || '').trim();
+  if (!forUpdate || input.provider !== undefined) payload.provider = input.provider || 'gemini';
+  if (!forUpdate || input.baseUrl !== undefined) payload.base_url = toNullableString(input.baseUrl);
+  if (!forUpdate || input.endpoint !== undefined) payload.endpoint = toNullableString(input.endpoint);
+  if (!forUpdate || input.deploymentName !== undefined) payload.deployment_name = toNullableString(input.deploymentName);
+  if (!forUpdate || input.apiVersion !== undefined) payload.api_version = toNullableString(input.apiVersion);
+  if (!forUpdate || input.isActive !== undefined) payload.is_active = input.isActive == null ? true : Boolean(input.isActive);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
+
+export const aiUseCaseSettingFromDb = (row: any): AIUseCaseSetting => ({
+  id: safeString(row?.id),
+  useCase: row?.use_case ?? row?.useCase ?? 'message',
+  providerKeyId: row?.provider_key_id ?? row?.providerKeyId ?? undefined,
+  providerKeyLabel: row?.provider_key_label ?? row?.providerKeyLabel ?? undefined,
+  provider: row?.provider ?? undefined,
+  model: row?.model ?? undefined,
+  temperature: row?.temperature == null ? undefined : Number(row.temperature),
+  maxOutputTokens: row?.max_output_tokens == null ? undefined : Number(row.max_output_tokens),
+  isEnabled: row?.is_enabled == null ? true : Boolean(row.is_enabled),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const aiUseCaseSettingToDb = (input: Partial<AIUseCaseSettingInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.useCase !== undefined) payload.use_case = input.useCase || 'message';
+  if (!forUpdate || input.providerKeyId !== undefined) payload.provider_key_id = toNullableString(input.providerKeyId);
+  if (!forUpdate || input.provider !== undefined) payload.provider = toNullableString(input.provider);
+  if (!forUpdate || input.model !== undefined) payload.model = toNullableString(input.model);
+  if (!forUpdate || input.temperature !== undefined) payload.temperature = toNullableNumber(input.temperature);
+  if (!forUpdate || input.maxOutputTokens !== undefined) payload.max_output_tokens = toNullableNumber(input.maxOutputTokens);
+  if (!forUpdate || input.isEnabled !== undefined) payload.is_enabled = input.isEnabled == null ? true : Boolean(input.isEnabled);
   if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
 
   return payload;

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
@@ -12,6 +12,7 @@ import StrategyPanel from './StrategyPanel';
 import PlansPanel from './PlansPanel';
 import FinancePanel from './FinancePanel';
 import DocumentStudioPanel from './DocumentStudioPanel';
+import AIControlPanel from './AIControlPanel';
 import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
@@ -40,6 +41,7 @@ const TABS: { id: OpportunitiesTab; label: string }[] = [
   { id: 'plans', label: 'Plans' },
   { id: 'finance', label: 'Finance' },
   { id: 'documents', label: 'Documents' },
+  { id: 'ai-control', label: 'AI Control' },
 ];
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -198,6 +200,13 @@ const OpportunitiesLayout: React.FC<{
     addDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
     addDocumentBrandSettings: (input: DocumentBrandSettingsInput) => Promise<DocumentBrandSettings>;
     addGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
+    addAIProviderKey: (input: AIProviderKeyInput) => Promise<AIProviderKey>;
+    updateAIProviderKey: (id: string, input: Partial<AIProviderKeyInput>) => Promise<AIProviderKey>;
+    deleteAIProviderKey: (id: string) => Promise<void>;
+    testAIProviderKey: (input: { id?: string; provider: string; apiKey?: string; model?: string; baseUrl?: string; endpoint?: string; deploymentName?: string; apiVersion?: string }) => Promise<string>;
+    addAIUseCaseSetting: (input: AIUseCaseSettingInput) => Promise<AIUseCaseSetting>;
+    updateAIUseCaseSetting: (id: string, input: Partial<AIUseCaseSettingInput>) => Promise<AIUseCaseSetting>;
+    deleteAIUseCaseSetting: (id: string) => Promise<void>;
     addInvoice: (input: InvoiceInput) => Promise<Invoice>;
     addInvoiceItem: (input: InvoiceItemInput) => Promise<InvoiceItem>;
     addTemplate: (input: MessageTemplateInput) => Promise<any>;
@@ -280,6 +289,8 @@ const OpportunitiesLayout: React.FC<{
     documents,
     documentTemplates,
     documentBrandSettings,
+    aiProviderKeys,
+    aiUseCaseSettings,
     generatedDocuments,
     invoices,
     invoiceItems,
@@ -290,6 +301,13 @@ const OpportunitiesLayout: React.FC<{
     addDocumentTemplate,
     addDocumentBrandSettings,
     addGeneratedDocument,
+    addAIProviderKey,
+    updateAIProviderKey,
+    deleteAIProviderKey,
+    testAIProviderKey,
+    addAIUseCaseSetting,
+    updateAIUseCaseSetting,
+    deleteAIUseCaseSetting,
     addInvoice,
     addInvoiceItem,
     addTemplate,
@@ -837,6 +855,20 @@ const OpportunitiesLayout: React.FC<{
                 onAddGeneratedDocument={addGeneratedDocument}
                 onUpdateGeneratedDocument={updateGeneratedDocument}
                 onDeleteGeneratedDocument={deleteGeneratedDocument}
+              />
+            )}
+
+            {tab === 'ai-control' && (
+              <AIControlPanel
+                aiProviderKeys={aiProviderKeys}
+                aiUseCaseSettings={aiUseCaseSettings}
+                onAddAIProviderKey={addAIProviderKey}
+                onUpdateAIProviderKey={updateAIProviderKey}
+                onDeleteAIProviderKey={deleteAIProviderKey}
+                onTestAIProviderKey={testAIProviderKey}
+                onAddAIUseCaseSetting={addAIUseCaseSetting}
+                onUpdateAIUseCaseSetting={updateAIUseCaseSetting}
+                onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
               />
             )}
           </div>

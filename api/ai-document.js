@@ -1,3 +1,8 @@
+import { createClient } from '@supabase/supabase-js';
+import aiProviderRouter from './lib/aiProviderRouter.js';
+
+const { runAICompletion } = aiProviderRouter;
+
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 const DEFAULT_MODEL = 'gemini-1.5-flash';
@@ -66,6 +71,19 @@ const getProviderConfig = () => {
   const apiKey = toCleanString(process.env.GEMINI_API_KEY);
   const model = toCleanString(process.env.GEMINI_MODEL) || DEFAULT_MODEL;
   return { provider, apiKey, model };
+};
+
+const createSupabaseClient = () => {
+  const url = toCleanString(process.env.SUPABASE_URL);
+  const serviceKey = toCleanString(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY);
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
 };
 
 const buildDebug = (overrides = {}) => ({
@@ -305,6 +323,50 @@ const getAnalysisErrorMessage = (errorResult, fallback = 'Unable to generate doc
 };
 
 const analyzeResponse = async ({ apiKey, model, prompt, mode }) => {
+  try {
+    const routedText = await runAICompletion({
+      supabase: createSupabaseClient(),
+      useCase: 'document',
+      prompt,
+      fallbackEnvGemini: true,
+    });
+
+    if (routedText) {
+      const parsed = parseAiDocumentTaggedResponse(routedText);
+      const routedResult = {
+        summary: parsed.summary || 'AI generated a document response. Please review before using.',
+        improvedContent: parsed.improvedContent,
+        risks: parsed.risks,
+        missingClauses: parsed.missingClauses,
+        suggestedSections: parsed.suggestedSections,
+        questionsToReview: parsed.questionsToReview,
+        nextActions: parsed.nextActions,
+      };
+
+      if (parsed.summary || parsed.improvedContent || parsed.risks.length > 0 || parsed.missingClauses.length > 0 || parsed.suggestedSections.length > 0 || parsed.questionsToReview.length > 0 || parsed.nextActions.length > 0) {
+        return {
+          success: true,
+          status: 200,
+          text: routedText,
+          result: routedResult,
+          parseStep: 'routed_provider',
+          providerError: null,
+          tagsFound: {
+            summary: Boolean(parsed.summary),
+            improvedContent: Boolean(parsed.improvedContent),
+            risks: Boolean(parsed.risks.length),
+            missingClauses: Boolean(parsed.missingClauses.length),
+            suggestedSections: Boolean(parsed.suggestedSections.length),
+            questionsToReview: Boolean(parsed.questionsToReview.length),
+            nextActions: Boolean(parsed.nextActions.length),
+          },
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('[ai-document] routed provider request failed, falling back to Gemini.', error);
+  }
+
   const attempt = await requestGemini({ apiKey, model, prompt });
   const responseText = readGeminiResponseText(attempt.data);
 

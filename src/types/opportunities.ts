@@ -496,6 +496,63 @@ export interface DocumentBrandSettingsInput {
   legalNotes?: string;
 }
 
+export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'nvidia' | 'azure_openai' | 'ollama';
+export type AIUseCase = 'message' | 'finance' | 'document' | 'lead_scoring' | 'research' | 'cleanup' | 'strategy';
+
+export interface AIProviderKey {
+  id: string;
+  label: string;
+  provider: AIProvider;
+  apiKeyLast4?: string;
+  baseUrl?: string;
+  endpoint?: string;
+  deploymentName?: string;
+  apiVersion?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AIProviderKeyInput {
+  label: string;
+  provider: AIProvider;
+  apiKey?: string;
+  baseUrl?: string;
+  endpoint?: string;
+  deploymentName?: string;
+  apiVersion?: string;
+  isActive?: boolean;
+  notes?: string;
+}
+
+export interface AIUseCaseSetting {
+  id: string;
+  useCase: AIUseCase;
+  providerKeyId?: string;
+  providerKeyLabel?: string;
+  provider?: AIProvider;
+  model?: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  isEnabled: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AIUseCaseSettingInput {
+  useCase: AIUseCase;
+  providerKeyId?: string;
+  providerKeyLabel?: string;
+  provider?: AIProvider;
+  model?: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+  isEnabled?: boolean;
+  notes?: string;
+}
+
 export interface GeneratedDocument {
   id: string;
   title: string;
@@ -594,6 +651,8 @@ export interface OpportunitiesData {
   documents: DocumentItem[];
   documentTemplates: DocumentTemplate[];
   documentBrandSettings: DocumentBrandSettings[];
+  aiProviderKeys: AIProviderKey[];
+  aiUseCaseSettings: AIUseCaseSetting[];
   generatedDocuments: GeneratedDocument[];
   templates: MessageTemplate[];
   strategyItems: StrategyItem[];
@@ -1103,6 +1162,6 @@ export interface FinanceRecurringRule {
   updatedAt?: string;
 }
 
-export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads';
+export type OpportunitiesTab = 'dashboard' | 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'templates' | 'strategy' | 'plans' | 'finance' | 'documents' | 'queue' | 'big_companies' | 'sme_companies' | 'freelance_leads' | 'ai-control';
 
 export type SegmentType = 'big_company' | 'sme' | 'freelance';

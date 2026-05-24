@@ -1,3 +1,8 @@
+import { createClient } from '@supabase/supabase-js';
+import aiProviderRouter from './lib/aiProviderRouter.js';
+
+const { runAICompletion } = aiProviderRouter;
+
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 const ALLOWED_LANGUAGES = new Set(['english', 'french', 'arabic']);
@@ -92,6 +97,19 @@ const getProviderConfig = () => {
   const apiKey = toCleanString(process.env.GEMINI_API_KEY);
   const model = toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash';
   return { provider, apiKey, model };
+};
+
+const createSupabaseClient = () => {
+  const url = toCleanString(process.env.SUPABASE_URL);
+  const serviceKey = toCleanString(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY);
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
 };
 
 const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
@@ -232,6 +250,30 @@ const buildFallbackPrompt = ({ templateText, language }) => [
 ].join('\n');
 
 const generateMessage = async ({ apiKey, model, prompt }) => {
+  try {
+    const routedText = await runAICompletion({
+      supabase: createSupabaseClient(),
+      useCase: 'message',
+      prompt,
+    });
+
+    if (routedText) {
+      const parsed = extractMessage(routedText);
+      if (parsed.message) {
+        return {
+          success: true,
+          status: 200,
+          text: routedText,
+          message: parsed.message,
+          parseStep: parsed.parseStep,
+          providerError: null,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('[ai-message] routed provider request failed, falling back to Gemini.', error);
+  }
+
   const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
 
   if (firstAttempt.ok) {

@@ -36,6 +36,7 @@ const allowedEntities = new Set([
   'finance_investment_allocations',
   'finance_periods',
   'finance_recurring_rules',
+  'ai_use_case_settings',
 ]);
 const tablesAttempted = [
   'companies',
@@ -72,6 +73,8 @@ const tablesAttempted = [
   'finance_investment_allocations',
   'finance_periods',
   'finance_recurring_rules',
+  'ai_provider_keys',
+  'ai_use_case_settings',
 ];
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -330,6 +333,36 @@ const normalizeDocumentBrandSettingsRow = (row, { forUpdate = false } = {}) => {
 
   return payload;
 };
+
+const normalizeAIProviderKeyRow = (row) => ({
+  id: row?.id ?? randomUUID(),
+  label: toRequiredString(row?.label),
+  provider: toRequiredString(row?.provider),
+  apiKeyLast4: toNullableString(row?.api_key_last4 ?? row?.apiKeyLast4) || undefined,
+  baseUrl: toNullableString(row?.base_url ?? row?.baseUrl),
+  endpoint: toNullableString(row?.endpoint),
+  deploymentName: toNullableString(row?.deployment_name ?? row?.deploymentName),
+  apiVersion: toNullableString(row?.api_version ?? row?.apiVersion),
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: toNullableString(row?.notes),
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const normalizeAIUseCaseSettingRow = (row, providerKeyLabel) => ({
+  id: row?.id ?? randomUUID(),
+  useCase: toRequiredString(row?.use_case ?? row?.useCase),
+  providerKeyId: toNullableString(row?.provider_key_id ?? row?.providerKeyId),
+  providerKeyLabel: providerKeyLabel || toNullableString(row?.provider_key_label ?? row?.providerKeyLabel),
+  provider: toNullableString(row?.provider ?? row?.providerName),
+  model: toNullableString(row?.model),
+  temperature: row?.temperature != null ? Number(row.temperature) : undefined,
+  maxOutputTokens: row?.max_output_tokens != null ? Number(row.max_output_tokens) : undefined,
+  isEnabled: row?.is_enabled == null ? true : Boolean(row.is_enabled),
+  notes: toNullableString(row?.notes),
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
 
 const normalizeInvoiceRow = (row, { forUpdate = false } = {}) => {
   const payload = {};
@@ -608,6 +641,18 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'plans') return normalizePlanRow(row);
   if (entity === 'plan_items') return normalizePlanItemRow(row);
   if (entity.startsWith('finance_')) return normalizeFinanceEntityRow(entity, row);
+  if (entity === 'ai_use_case_settings') {
+    return {
+      use_case: toRequiredString(row?.use_case ?? row?.useCase),
+      provider_key_id: toNullableString(row?.provider_key_id ?? row?.providerKeyId),
+      provider: toNullableString(row?.provider),
+      model: toNullableString(row?.model),
+      temperature: row?.temperature != null ? Number(row.temperature) : null,
+      max_output_tokens: row?.max_output_tokens != null ? Number(row.max_output_tokens) : null,
+      is_enabled: row?.is_enabled == null ? true : Boolean(row.is_enabled),
+      notes: toNullableString(row?.notes),
+    };
+  }
   return row;
 };
 
@@ -705,6 +750,10 @@ export default async function handler(req, res) {
         results[table] = data || [];
       }
 
+      const aiProviderKeys = (results.ai_provider_keys || []).map(normalizeAIProviderKeyRow);
+      const providerKeyLabelsById = new Map(aiProviderKeys.map((row) => [row.id, row.label]));
+      const aiUseCaseSettings = (results.ai_use_case_settings || []).map((row) => normalizeAIUseCaseSettingRow(row, providerKeyLabelsById.get(row?.provider_key_id ?? row?.providerKeyId)));
+
       return toSafeJson(res, 200, {
         companies: results.companies || [],
         people: results.people || [],
@@ -740,6 +789,8 @@ export default async function handler(req, res) {
         finance_investment_allocations: results.finance_investment_allocations || [],
         finance_periods: results.finance_periods || [],
         finance_recurring_rules: results.finance_recurring_rules || [],
+        ai_provider_keys: aiProviderKeys,
+        ai_use_case_settings: aiUseCaseSettings,
         templatesWarning,
         strategyNotes: [],
       });
@@ -873,7 +924,12 @@ export default async function handler(req, res) {
         return toSafeJson(res, 404, { success: false, error: 'Record not found.' });
       }
 
-      return toSafeJson(res, 200, { success: true, row: updatedRow });
+      return toSafeJson(res, 200, {
+        success: true,
+        row: entity === 'ai_use_case_settings'
+          ? normalizeAIUseCaseSettingRow(updatedRow)
+          : normalizeEntityRow(entity, updatedRow),
+      });
     } catch (error) {
       console.error('[Opportunities] Unexpected update failure', { entity, action, id, error });
       return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));

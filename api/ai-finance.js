@@ -1,3 +1,8 @@
+import { createClient } from '@supabase/supabase-js';
+import aiProviderRouter from './lib/aiProviderRouter.js';
+
+const { runAICompletion } = aiProviderRouter;
+
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
 
@@ -40,6 +45,19 @@ const getProviderConfig = () => {
   const apiKey = toCleanString(process.env.GEMINI_API_KEY);
   const model = toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.0-flash';
   return { provider, apiKey, model };
+};
+
+const createSupabaseClient = () => {
+  const url = toCleanString(process.env.SUPABASE_URL);
+  const serviceKey = toCleanString(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY);
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
 };
 
 const requestGemini = async ({ apiKey, model, prompt, useResponseMimeType = true }) => {
@@ -138,6 +156,30 @@ const validateAnalysis = (analysis) => {
 };
 
 const generateAnalysis = async ({ apiKey, model, prompt }) => {
+  try {
+    const routedText = await runAICompletion({
+      supabase: createSupabaseClient(),
+      useCase: 'finance',
+      prompt,
+    });
+
+    if (routedText) {
+      const parsed = extractAnalysis(routedText);
+      if (parsed.analysis) {
+        return {
+          success: true,
+          status: 200,
+          text: routedText,
+          analysis: parsed.analysis,
+          parseStep: parsed.parseStep,
+          providerError: null,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('[ai-finance] routed provider request failed, falling back to Gemini.', error);
+  }
+
   const firstAttempt = await requestGemini({ apiKey, model, prompt, useResponseMimeType: true });
 
   if (firstAttempt.ok) {

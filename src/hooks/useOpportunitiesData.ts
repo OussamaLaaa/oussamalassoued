@@ -20,6 +20,8 @@ import {
   invoiceFromDb as mapInvoiceRow, invoiceToDb as toInvoiceDb,
   invoiceItemFromDb as mapInvoiceItemRow, invoiceItemToDb as toInvoiceItemDb,
   generatedDocumentFromDb as mapGeneratedDocumentRow, generatedDocumentToDb as toGeneratedDocumentDb,
+  aiProviderKeyFromDb as mapAIProviderKeyRow,
+  aiUseCaseSettingFromDb as mapAIUseCaseSettingRow,
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
@@ -82,6 +84,10 @@ import type {
   FinanceInvestmentAllocation,
   FinancePeriod,
   FinanceRecurringRule,
+  AIProviderKey,
+  AIProviderKeyInput,
+  AIUseCaseSetting,
+  AIUseCaseSettingInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -100,6 +106,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   documents: [],
   documentTemplates: [],
   documentBrandSettings: [],
+  aiProviderKeys: [],
+  aiUseCaseSettings: [],
   generatedDocuments: [],
   invoices: [],
   invoiceItems: [],
@@ -1053,6 +1061,27 @@ const requestOpportunities = async (init: RequestInit): Promise<OpportunitiesApi
   return result;
 };
 
+const requestAIProviderKeys = async (init: RequestInit): Promise<any> => {
+  const response = await fetch('/api/ai-provider-keys', {
+    ...init,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init.headers || {}),
+    },
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(result?.error || 'Failed to save AI provider key.') as ApiError;
+    error.status = response.status;
+    throw error;
+  }
+
+  return result;
+};
+
 export const useOpportunitiesData = (enabled = true) => {
   const [companies, setCompanies] = useState<Company[]>(() => cloneSeedData().companies);
   const [people, setPeople] = useState<Person[]>(() => cloneSeedData().people);
@@ -1067,6 +1096,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>([]);
   const [documentBrandSettings, setDocumentBrandSettings] = useState<DocumentBrandSettings[]>([]);
+  const [aiProviderKeys, setAIProviderKeys] = useState<AIProviderKey[]>([]);
+  const [aiUseCaseSettings, setAIUseCaseSettings] = useState<AIUseCaseSetting[]>([]);
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
@@ -1106,6 +1137,8 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextDocumentsRaw = Array.isArray(payload?.documents) ? payload.documents : [];
     const nextDocumentTemplatesRaw = Array.isArray(payload?.document_templates) ? payload.document_templates : [];
     const nextDocumentBrandSettingsRaw = Array.isArray(payload?.document_brand_settings) ? payload.document_brand_settings : [];
+    const nextAIProviderKeysRaw = Array.isArray(payload?.ai_provider_keys) ? payload.ai_provider_keys : [];
+    const nextAIUseCaseSettingsRaw = Array.isArray(payload?.ai_use_case_settings) ? payload.ai_use_case_settings : [];
     const nextGeneratedDocumentsRaw = Array.isArray(payload?.generated_documents) ? payload.generated_documents : [];
     const nextInvoicesRaw = Array.isArray(payload?.invoices) ? payload.invoices : [];
     const nextInvoiceItemsRaw = Array.isArray(payload?.invoice_items) ? payload.invoice_items : [];
@@ -1167,6 +1200,15 @@ export const useOpportunitiesData = (enabled = true) => {
     const nextDocuments = attachDocumentLinkNames(nextDocumentsRaw.map((row: any) => mapDocumentRow(row)), nextProjects, nextCompanies, nextPeople, nextDeals);
     const nextDocumentTemplates = nextDocumentTemplatesRaw.map((row: any) => mapDocumentTemplateRow(row));
     const nextDocumentBrandSettings = nextDocumentBrandSettingsRaw.map((row: any) => mapDocumentBrandSettingsRow(row));
+    const nextAIProviderKeys = nextAIProviderKeysRaw.map((row: any) => mapAIProviderKeyRow(row));
+    const aiProviderKeyLabelById = new Map(nextAIProviderKeys.map((item) => [item.id, item.label] as const));
+    const nextAIUseCaseSettings = nextAIUseCaseSettingsRaw.map((row: any) => {
+      const mapped = mapAIUseCaseSettingRow(row);
+      if (!mapped.providerKeyLabel && mapped.providerKeyId) {
+        mapped.providerKeyLabel = aiProviderKeyLabelById.get(mapped.providerKeyId) || undefined;
+      }
+      return mapped;
+    });
     const nextGeneratedDocuments = attachGeneratedDocumentLinkNames(
       nextGeneratedDocumentsRaw.map((row: any) => mapGeneratedDocumentRow(row)),
       nextDocumentTemplates,
@@ -1233,6 +1275,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setDocuments(nextDocuments);
     setDocumentTemplates(nextDocumentTemplates);
     setDocumentBrandSettings(nextDocumentBrandSettings);
+    setAIProviderKeys(nextAIProviderKeys);
+    setAIUseCaseSettings(nextAIUseCaseSettings);
     setGeneratedDocuments(nextGeneratedDocuments);
     setInvoices(nextInvoices);
     setInvoiceItems(nextInvoiceItems);
@@ -1505,7 +1549,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -1519,6 +1563,124 @@ export const useOpportunitiesData = (enabled = true) => {
     }
 
     return result?.success;
+  };
+
+  const addAIProviderKey = async (input: AIProviderKeyInput) => {
+    const result = await requestAIProviderKeys({
+      method: 'POST',
+      body: JSON.stringify({ ...input }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
+    });
+
+    if (result?.success === false) {
+      throw new Error(result?.error || 'Failed to create AI provider key.');
+    }
+
+    const next = mapAIProviderKeyRow(result?.row);
+    setAIProviderKeys((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateAIProviderKey = async (id: string, input: Partial<AIProviderKeyInput>) => {
+    const result = await requestAIProviderKeys({
+      method: 'PUT',
+      body: JSON.stringify({ id, ...input }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
+    });
+
+    if (result?.success === false) {
+      throw new Error(result?.error || 'Failed to update AI provider key.');
+    }
+
+    const next = mapAIProviderKeyRow(result?.row);
+    setAIProviderKeys((current) => current.map((item) => (item.id === id ? next : item)));
+    setAIUseCaseSettings((current) => current.map((item) => (item.providerKeyId === id ? { ...item, providerKeyLabel: next.label, provider: next.provider } : item)));
+    return next;
+  };
+
+  const deleteAIProviderKey = async (id: string) => {
+    const confirmed = window.confirm('Delete this provider key? Use-case routing that references it will need to be reconfigured.');
+    if (!confirmed) return;
+
+    const result = await requestAIProviderKeys({
+      method: 'DELETE',
+      body: JSON.stringify({ id }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
+    });
+
+    if (result?.success === false) {
+      throw new Error(result?.error || 'Failed to delete AI provider key.');
+    }
+
+    setAIProviderKeys((current) => current.filter((item) => item.id !== id));
+    setAIUseCaseSettings((current) => current.map((item) => (item.providerKeyId === id ? { ...item, providerKeyId: undefined, providerKeyLabel: undefined } : item)));
+  };
+
+  const testAIProviderKey = async (input: { id?: string; provider: string; apiKey?: string; model?: string; baseUrl?: string; endpoint?: string; deploymentName?: string; apiVersion?: string }) => {
+    const result = await requestAIProviderKeys({
+      method: 'POST',
+      body: JSON.stringify({ action: 'test', ...input }),
+    }).catch((error: ApiError) => {
+      if (error.status === 401) setError('Authentication required. Please log in again.');
+      throw error;
+    });
+
+    if (result?.success === false) {
+      throw new Error(result?.error || 'Provider test failed.');
+    }
+
+    return result?.message || 'Connection succeeded.';
+  };
+
+  const addAIUseCaseSetting = async (input: AIUseCaseSettingInput) => {
+    const row = await syncInsert('ai_use_case_settings', {
+      use_case: input.useCase,
+      provider_key_id: input.providerKeyId || null,
+      provider: input.provider || null,
+      model: input.model || null,
+      temperature: input.temperature ?? null,
+      max_output_tokens: input.maxOutputTokens ?? null,
+      is_enabled: input.isEnabled ?? true,
+      notes: input.notes || null,
+    });
+
+    const next = mapAIUseCaseSettingRow(row);
+    if (next.providerKeyId) {
+      next.providerKeyLabel = aiProviderKeys.find((item) => item.id === next.providerKeyId)?.label;
+    }
+    setAIUseCaseSettings((current) => [next, ...current.filter((item) => item.useCase !== next.useCase)]);
+    return next;
+  };
+
+  const updateAIUseCaseSetting = async (id: string, input: Partial<AIUseCaseSettingInput>) => {
+    const row = await syncUpdate('ai_use_case_settings', id, {
+      ...(input.useCase !== undefined ? { use_case: input.useCase } : {}),
+      ...(input.providerKeyId !== undefined ? { provider_key_id: input.providerKeyId } : {}),
+      ...(input.provider !== undefined ? { provider: input.provider } : {}),
+      ...(input.model !== undefined ? { model: input.model } : {}),
+      ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
+      ...(input.maxOutputTokens !== undefined ? { max_output_tokens: input.maxOutputTokens } : {}),
+      ...(input.isEnabled !== undefined ? { is_enabled: input.isEnabled } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
+    });
+
+    const next = mapAIUseCaseSettingRow(row);
+    if (next.providerKeyId) {
+      next.providerKeyLabel = aiProviderKeys.find((item) => item.id === next.providerKeyId)?.label;
+    }
+    setAIUseCaseSettings((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteAIUseCaseSetting = async (id: string) => {
+    await syncDelete('ai_use_case_settings', id);
+    setAIUseCaseSettings((current) => current.filter((item) => item.id !== id));
   };
 
   const updateCompany = async (id: string, input: CompanyInput) => {
@@ -2687,6 +2849,8 @@ export const useOpportunitiesData = (enabled = true) => {
     documents,
     documentTemplates,
     documentBrandSettings,
+    aiProviderKeys,
+    aiUseCaseSettings,
     generatedDocuments,
     invoices,
     invoiceItems,
@@ -2798,6 +2962,13 @@ export const useOpportunitiesData = (enabled = true) => {
     addDocumentBrandSettings,
     updateDocumentBrandSettings,
     deleteDocumentBrandSettings,
+    addAIProviderKey,
+    updateAIProviderKey,
+    deleteAIProviderKey,
+    testAIProviderKey,
+    addAIUseCaseSetting,
+    updateAIUseCaseSetting,
+    deleteAIUseCaseSetting,
     addGeneratedDocument,
     updateGeneratedDocument,
     deleteGeneratedDocument,
