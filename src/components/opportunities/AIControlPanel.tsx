@@ -18,6 +18,18 @@ const PROVIDER_OPTIONS: Array<{ value: AIProvider; label: string; hint: string }
   { value: 'ollama', label: 'Ollama', hint: 'Local or self-hosted endpoint' },
 ];
 
+const DEFAULT_MODELS: Record<string, string> = {
+  gemini: 'gemini-2.5-flash',
+  openai: 'gpt-4o-mini',
+  anthropic: 'claude-3-5-haiku-latest',
+  openrouter: 'google/gemini-2.0-flash-001',
+  nvidia: 'meta/llama-3.1-70b-instruct',
+  azure_openai: 'default-deployment',
+  ollama: 'llama3.1',
+};
+
+const getDefaultModelForProvider = (provider: string): string => DEFAULT_MODELS[provider] || 'default';
+
 const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }> = [
   { value: 'message', label: 'Message generation', hint: 'Outreach and reply drafting' },
   { value: 'finance', label: 'Finance assistant', hint: 'Budgeting, allocation, and forecasting' },
@@ -121,12 +133,20 @@ const AIControlPanel: React.FC<{
   };
 
   const submitUseCaseForm = async () => {
+    const resolvedProvider = useCaseForm.provider || 'gemini';
+    const modelRaw = useCaseForm.model?.trim() || '';
+    const resolvedModel = modelRaw || getDefaultModelForProvider(resolvedProvider);
+
+    if (!resolvedModel) {
+      throw new Error('Model is required. Choose or enter a model before saving.');
+    }
+
     const payload: AIUseCaseSettingInput = {
       ...useCaseForm,
       useCase: useCaseForm.useCase,
       providerKeyId: useCaseForm.providerKeyId?.trim() || undefined,
-      provider: useCaseForm.provider || undefined,
-      model: useCaseForm.model?.trim() || undefined,
+      provider: resolvedProvider,
+      model: resolvedModel,
       temperature: useCaseForm.temperature == null ? undefined : Number(useCaseForm.temperature),
       maxOutputTokens: useCaseForm.maxOutputTokens == null ? undefined : Number(useCaseForm.maxOutputTokens),
       notes: useCaseForm.notes?.trim() || undefined,
@@ -543,16 +563,24 @@ const AIControlPanel: React.FC<{
 
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-slate-700">Provider key</span>
-                <select
-                  value={useCaseForm.providerKeyId || ''}
-                  onChange={(event) => setUseCaseForm((current) => ({ ...current, providerKeyId: event.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-                >
-                  <option value="">Use the provider's defaults</option>
-                  {aiProviderKeys.map((key) => (
-                    <option key={key.id} value={key.id}>{key.label} ({key.provider})</option>
-                  ))}
-                </select>
+                  <select
+                    value={useCaseForm.providerKeyId || ''}
+                    onChange={(event) => {
+                      const keyId = event.target.value;
+                      const selectedKey = keyId ? aiProviderKeys.find((k) => k.id === keyId) : undefined;
+                      setUseCaseForm((current) => {
+                        const nextProvider = (selectedKey?.provider || current.provider || 'gemini') as AIProvider;
+                        const nextModel = current.model?.trim() || getDefaultModelForProvider(nextProvider);
+                        return { ...current, providerKeyId: keyId, provider: nextProvider, model: nextModel };
+                      });
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                  >
+                    <option value="">Use the provider's defaults</option>
+                    {aiProviderKeys.map((key) => (
+                      <option key={key.id} value={key.id}>{key.label} ({key.provider})</option>
+                    ))}
+                  </select>
               </label>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -560,7 +588,13 @@ const AIControlPanel: React.FC<{
                   <span className="font-medium text-slate-700">Provider override</span>
                   <select
                     value={useCaseForm.provider || 'gemini'}
-                    onChange={(event) => setUseCaseForm((current) => ({ ...current, provider: event.target.value as AIProvider }))}
+                    onChange={(event) => {
+                      const nextProvider = event.target.value as AIProvider;
+                      setUseCaseForm((current) => {
+                        const nextModel = current.model?.trim() || getDefaultModelForProvider(nextProvider);
+                        return { ...current, provider: nextProvider, model: nextModel };
+                      });
+                    }}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                   >
                     {PROVIDER_OPTIONS.map((option) => (
@@ -575,7 +609,7 @@ const AIControlPanel: React.FC<{
                     value={useCaseForm.model || ''}
                     onChange={(event) => setUseCaseForm((current) => ({ ...current, model: event.target.value }))}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none ring-0 transition focus:border-slate-400"
-                    placeholder="Optional model override"
+                    placeholder={`Model (e.g. ${getDefaultModelForProvider(useCaseForm.provider || 'gemini')})`}
                   />
                 </label>
               </div>

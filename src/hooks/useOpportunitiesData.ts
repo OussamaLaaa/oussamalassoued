@@ -2059,11 +2059,16 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const addAIUseCaseSetting = async (input: AIUseCaseSettingInput) => {
+    const model = String(input.model || '').trim();
+    if (!model) {
+      throw new Error('AI use case model is required.');
+    }
+
     const row = await syncInsert('ai_use_case_settings', {
       use_case: input.useCase,
       provider_key_id: input.providerKeyId || null,
       provider: input.provider || null,
-      model: input.model || null,
+      model,
       temperature: input.temperature ?? null,
       max_output_tokens: input.maxOutputTokens ?? null,
       is_enabled: input.isEnabled ?? true,
@@ -2079,11 +2084,18 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const updateAIUseCaseSetting = async (id: string, input: Partial<AIUseCaseSettingInput>) => {
+    if (input.model !== undefined) {
+      const model = String(input.model || '').trim();
+      if (!model) {
+        throw new Error('AI use case model is required.');
+      }
+    }
+
     const row = await syncUpdate('ai_use_case_settings', id, {
       ...(input.useCase !== undefined ? { use_case: input.useCase } : {}),
       ...(input.providerKeyId !== undefined ? { provider_key_id: input.providerKeyId } : {}),
       ...(input.provider !== undefined ? { provider: input.provider } : {}),
-      ...(input.model !== undefined ? { model: input.model } : {}),
+      ...(input.model !== undefined ? { model: String(input.model).trim() } : {}),
       ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       ...(input.maxOutputTokens !== undefined ? { max_output_tokens: input.maxOutputTokens } : {}),
       ...(input.isEnabled !== undefined ? { is_enabled: input.isEnabled } : {}),
