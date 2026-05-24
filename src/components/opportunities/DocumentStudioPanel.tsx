@@ -19,12 +19,14 @@ import type {
   Project,
 } from '../../types/opportunities';
 import DocumentPrintPreviewModal from './DocumentPrintPreviewModal';
+import CahierDeChargesBuilder from './CahierDeChargesBuilder';
+import ContractStudioPanel from './ContractStudioPanel';
 import InvoiceArchivePanel from './InvoiceArchivePanel';
 import InvoicePrintPreviewModal from './InvoicePrintPreviewModal';
 import InvoiceStudioPanel from './InvoiceStudioPanel';
 
 
-type StudioTab = 'dashboard' | 'invoice-studio' | 'invoice-archive' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
+type StudioTab = 'dashboard' | 'invoice-studio' | 'invoice-archive' | 'contract-studio' | 'cahier-builder' | 'templates' | 'brand' | 'builder' | 'generated' | 'review';
 
 type BuilderState = {
   templateId: string;
@@ -52,6 +54,8 @@ const TABS: Array<{ id: StudioTab; label: string }> = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'invoice-studio', label: 'Invoice Studio' },
   { id: 'invoice-archive', label: 'Invoice Archive' },
+  { id: 'contract-studio', label: 'Contract Studio' },
+  { id: 'cahier-builder', label: 'Cahier de Charges' },
   { id: 'templates', label: 'Templates' },
   { id: 'brand', label: 'Brand Settings' },
   { id: 'builder', label: 'Builder' },
@@ -319,6 +323,7 @@ const DocumentStudioPanel: React.FC<{
   const [builderError, setBuilderError] = useState('');
   const [editingGeneratedDocumentId, setEditingGeneratedDocumentId] = useState<string | null>(null);
   const [printPreviewDocument, setPrintPreviewDocument] = useState<GeneratedDocument | null>(null);
+  const [generatedTypeFilter, setGeneratedTypeFilter] = useState<'all' | 'contract' | 'cahier_de_charges'>('all');
   const builderInitializedRef = useRef(false);
 
   const activeTemplates = useMemo(() => documentTemplates.filter((template) => template.isActive), [documentTemplates]);
@@ -516,6 +521,10 @@ const DocumentStudioPanel: React.FC<{
   };
 
   const generatedSorted = useMemo(() => [...generatedDocuments].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()), [generatedDocuments]);
+  const generatedArchiveDocuments = useMemo(
+    () => generatedSorted.filter((document) => generatedTypeFilter === 'all' || document.type === generatedTypeFilter),
+    [generatedSorted, generatedTypeFilter],
+  );
 
   return (
     <div className="space-y-5">
@@ -608,6 +617,34 @@ const DocumentStudioPanel: React.FC<{
           onPreviewInvoice={openInvoiceStudio}
           onDeleteInvoice={onDeleteInvoice}
           onUpdateInvoice={onUpdateInvoice}
+        />
+      ) : null}
+
+      {tab === 'contract-studio' ? (
+        <ContractStudioPanel
+          documentBrandSettings={documentBrandSettings}
+          generatedDocuments={generatedDocuments}
+          projects={projects}
+          companies={companies}
+          people={people}
+          deals={deals}
+          onAddGeneratedDocument={onAddGeneratedDocument}
+          onUpdateGeneratedDocument={onUpdateGeneratedDocument}
+          onDeleteGeneratedDocument={onDeleteGeneratedDocument}
+        />
+      ) : null}
+
+      {tab === 'cahier-builder' ? (
+        <CahierDeChargesBuilder
+          documentBrandSettings={documentBrandSettings}
+          generatedDocuments={generatedDocuments}
+          projects={projects}
+          companies={companies}
+          people={people}
+          deals={deals}
+          onAddGeneratedDocument={onAddGeneratedDocument}
+          onUpdateGeneratedDocument={onUpdateGeneratedDocument}
+          onDeleteGeneratedDocument={onDeleteGeneratedDocument}
         />
       ) : null}
 
@@ -823,7 +860,18 @@ const DocumentStudioPanel: React.FC<{
 
       {tab === 'generated' ? (
         <div className="space-y-4">
-          {generatedSorted.length === 0 ? <EmptyState text="No generated documents yet. Use the builder to create one." /> : generatedSorted.map((document) => (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setGeneratedTypeFilter('all')} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${generatedTypeFilter === 'all' ? 'bg-[#0f172a] text-white' : 'bg-white text-[#64748b] hover:bg-[#f8fafc]'}`}>
+              All
+            </button>
+            <button type="button" onClick={() => setGeneratedTypeFilter('contract')} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${generatedTypeFilter === 'contract' ? 'bg-[#0f172a] text-white' : 'bg-white text-[#64748b] hover:bg-[#f8fafc]'}`}>
+              Contracts
+            </button>
+            <button type="button" onClick={() => setGeneratedTypeFilter('cahier_de_charges')} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${generatedTypeFilter === 'cahier_de_charges' ? 'bg-[#0f172a] text-white' : 'bg-white text-[#64748b] hover:bg-[#f8fafc]'}`}>
+              Cahier de Charges
+            </button>
+          </div>
+          {generatedArchiveDocuments.length === 0 ? <EmptyState text="No generated documents match the current filter." /> : generatedArchiveDocuments.map((document) => (
             <div key={document.id} className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
