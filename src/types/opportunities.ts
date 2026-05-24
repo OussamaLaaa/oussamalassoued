@@ -497,7 +497,7 @@ export interface DocumentBrandSettingsInput {
 }
 
 export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'nvidia' | 'azure_openai' | 'ollama';
-export type AIUseCase = 'message' | 'finance' | 'document' | 'lead_scoring' | 'relationship' | 'research' | 'cleanup' | 'strategy';
+export type AIUseCase = 'message' | 'finance' | 'document' | 'lead_scoring' | 'relationship' | 'research' | 'cleanup' | 'strategy' | 'notes';
 
 export interface AIProviderKey {
   id: string;

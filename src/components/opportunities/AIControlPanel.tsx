@@ -39,6 +39,7 @@ const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }>
   { value: 'research', label: 'Research', hint: 'Briefs, summaries, and analysis' },
   { value: 'cleanup', label: 'Cleanup', hint: 'Normalization and content cleanup' },
   { value: 'strategy', label: 'Strategy', hint: 'Plans, goals, and decision support' },
+  { value: 'notes', label: 'Notes assistant', hint: 'Organize, summarize, and improve notes' },
 ];
 
 const defaultProviderForm = (): AIProviderKeyInput => ({
@@ -216,6 +217,7 @@ const AIControlPanel: React.FC<{
     { label: 'Finance AI', key: 'finance' },
     { label: 'Relationship AI', key: 'relationship' },
     { label: 'Lead Scoring AI', key: 'lead_scoring' },
+    { label: 'Notes AI', key: 'notes' },
   ];
 
   const tabs = [
@@ -846,7 +848,7 @@ const AIControlPanel: React.FC<{
           <h3 className="mt-8 text-lg font-semibold text-slate-900">Use case tests</h3>
           <p className="mt-1 text-sm text-slate-600">Test each use case routing end-to-end.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {USE_CASE_OPTIONS.slice(0, 5).map((option) => (
+            {USE_CASE_OPTIONS.map((option) => (
               <div key={option.value} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between">
                   <div>

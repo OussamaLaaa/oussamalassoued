@@ -1,7 +1,7 @@
 import { decryptApiKey } from './aiKeyCrypto.js';
 
 export const AI_PROVIDERS = new Set(['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama']);
-export const AI_USE_CASES = new Set(['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy']);
+export const AI_USE_CASES = new Set(['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes']);
 
 const toCleanString = (value) => (value == null ? '' : String(value).trim());
 

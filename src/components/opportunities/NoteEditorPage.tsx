@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import AINotesAssistantPanel from './AINotesAssistantPanel';
 import type {
   Company,
   NoteAttachment,
@@ -121,7 +122,7 @@ const NoteEditorPage: React.FC<{
   onDeleteAttachment,
 }) => {
   const [form, setForm] = useState<SmartNoteInput>(() => createFormState(note || undefined, draft));
-  const [activeTab, setActiveTab] = useState<'write' | 'blocks' | 'attachments' | 'links' | 'metadata'>('write');
+  const [activeTab, setActiveTab] = useState<'write' | 'ai' | 'blocks' | 'attachments' | 'links' | 'metadata'>('write');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [attachmentDraft, setAttachmentDraft] = useState<NoteAttachmentInput>({ noteId: note?.id || '', type: 'link', title: '', url: '', notes: '' });
@@ -268,6 +269,75 @@ const NoteEditorPage: React.FC<{
     form.linkedPlanId ? { label: 'Plan', value: plans.find((item) => item.id === form.linkedPlanId)?.title || form.linkedPlanId } : null,
   ].filter(Boolean) as Array<{ label: string; value: string }>;
 
+  const assistantContext = {
+    linkedProjectName: linkedItems.find((item) => item.label === 'Project')?.value,
+    linkedCompanyName: linkedItems.find((item) => item.label === 'Company')?.value,
+    linkedPersonName: linkedItems.find((item) => item.label === 'Person')?.value,
+    linkedRelationshipName: linkedItems.find((item) => item.label === 'Relationship')?.value,
+    linkedTaskTitle: linkedItems.find((item) => item.label === 'Task')?.value,
+    linkedStrategyGoalTitle: linkedItems.find((item) => item.label === 'Goal')?.value,
+    linkedPlanTitle: linkedItems.find((item) => item.label === 'Plan')?.value,
+  };
+
+  const assistantNote = note || ({
+    id: '',
+    title: form.title || '',
+    content: form.content || '',
+    categoryId: form.categoryId || '',
+    categorySlug: form.categorySlug || '',
+    status: form.status || 'draft',
+    priority: form.priority || 'medium',
+    tags: form.tags || '',
+    source: form.source || '',
+    notes: form.notes || '',
+  } as SmartNote);
+
+  const appendToCurrentNote = async (appendText: string) => {
+    const nextContent = `${form.content || ''}${appendText}`;
+    setForm((current) => ({ ...current, content: nextContent }));
+    if (note?.id) {
+      await onUpdateNote(note.id, { content: nextContent });
+    }
+  };
+
+  const replaceCurrentNote = async (content: string) => {
+    setForm((current) => ({ ...current, content }));
+    if (note?.id) {
+      await onUpdateNote(note.id, { content });
+    }
+  };
+
+  const applyCategoryAndTags = async (input: { categorySlug?: string; categoryName?: string; tags: string[]; priority?: SmartNote['priority']; status?: SmartNote['status'] }) => {
+    const existingTags = String(form.tags || '')
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    const mergedTags = Array.from(new Set([...existingTags, ...(input.tags || []).map((tag) => tag.trim()).filter(Boolean)]));
+
+    const matchingCategory = noteCategories.find((category) => {
+      const slugMatches = input.categorySlug ? category.slug.toLowerCase() === input.categorySlug.trim().toLowerCase() : false;
+      const nameMatches = input.categoryName ? category.name.trim().toLowerCase() === input.categoryName.trim().toLowerCase() : false;
+      return slugMatches || nameMatches;
+    });
+
+    const nextPatch: Partial<SmartNoteInput> = {
+      tags: mergedTags.join(', '),
+      categoryId: matchingCategory?.id || form.categoryId || undefined,
+      categorySlug: matchingCategory?.slug || form.categorySlug || undefined,
+    };
+
+    setForm((current) => ({
+      ...current,
+      tags: mergedTags.join(', '),
+      categoryId: matchingCategory?.id || current.categoryId,
+      categorySlug: matchingCategory?.slug || current.categorySlug,
+    }));
+
+    if (note?.id) {
+      await onUpdateNote(note.id, nextPatch);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className={`${shellClass} p-4 lg:p-5`}>
@@ -307,11 +377,27 @@ const NoteEditorPage: React.FC<{
       <div className={`${shellClass} p-4 lg:p-5`}>
         <div className="flex flex-wrap gap-2 border-b border-[#e5e7eb] pb-4">
           <button type="button" onClick={() => setActiveTab('write')} className={tabClass(activeTab === 'write')}>Write</button>
+          <button type="button" onClick={() => setActiveTab('ai')} className={tabClass(activeTab === 'ai')}>AI Assistant</button>
           <button type="button" onClick={() => setActiveTab('blocks')} className={tabClass(activeTab === 'blocks')}>Blocks</button>
           <button type="button" onClick={() => setActiveTab('attachments')} className={tabClass(activeTab === 'attachments')}>Attachments</button>
           <button type="button" onClick={() => setActiveTab('links')} className={tabClass(activeTab === 'links')}>Links</button>
           <button type="button" onClick={() => setActiveTab('metadata')} className={tabClass(activeTab === 'metadata')}>Metadata</button>
         </div>
+
+        {activeTab === 'ai' ? (
+          <div className="mt-4">
+            <AINotesAssistantPanel
+              note={assistantNote}
+              blocks={blocks}
+              attachments={attachments}
+              context={assistantContext}
+              noteCategories={noteCategories}
+              onReplaceContent={replaceCurrentNote}
+              onAppendToNote={appendToCurrentNote}
+              onApplyCategoryTags={applyCategoryAndTags}
+            />
+          </div>
+        ) : null}
 
         {activeTab === 'write' ? (
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)]">
