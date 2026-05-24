@@ -119,13 +119,27 @@ const getEnvPresence = () => ({
 
 const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
 
-const buildMutationFailurePayload = ({ entity, action, error }) => ({
-  success: false,
-  error: action === 'update' ? 'Unable to update Opportunities data.' : action === 'delete' ? 'Unable to delete Opportunities data.' : 'Unable to save Opportunities data.',
-  entity,
-  action,
-  errorCode: error?.code ?? null,
-});
+const buildMutationFailurePayload = ({ entity, action, error, payloadKeys }) => {
+  const result = {
+    success: false,
+    error: action === 'update' ? 'Unable to update Opportunities data.' : action === 'delete' ? 'Unable to delete Opportunities data.' : 'Unable to save Opportunities data.',
+    entity,
+    action,
+    errorCode: error?.code ?? null,
+  };
+
+  if (error?.code) {
+    result.debug = {
+      table: entity,
+      payloadKeys: payloadKeys || [],
+      supabaseErrorMessage: error?.message,
+      supabaseErrorDetails: error?.details,
+      supabaseErrorHint: error?.hint,
+    };
+  }
+
+  return result;
+};
 
 const buildFailurePayload = ({ debug, failedTable, error, envPresent, entityErrors, phase }) => ({
   success: false,
@@ -1141,9 +1155,32 @@ export default async function handler(req, res) {
     }
 
     try {
-        const payload = Array.isArray(data)
+        let payload = Array.isArray(data)
           ? data.map((row) => normalizeEntityRow(entity, row))
           : normalizeEntityRow(entity, data);
+
+      if (entity === 'relationships') {
+        const keys = Array.isArray(payload) ? Object.keys(payload[0] || {}) : Object.keys(payload);
+        console.error("[relationships insert payload keys]", keys);
+      }
+
+      if (entity === 'relationships') {
+        const cleanPayload = (row) => {
+          const cleaned = {};
+          for (const [key, value] of Object.entries(row)) {
+            if (value === undefined) continue;
+            if (['id', 'createdAt', 'updatedAt', 'created_at', 'updated_at'].includes(key)) continue;
+            if (['personName', 'categoryName', 'linkedProjectName', 'linkedCompanyName', 'relationshipCategoryName', 'contactMethods', 'interactions', 'opportunities'].includes(key)) continue;
+            if (key === 'person_id' && value === '') { cleaned[key] = null; continue; }
+            if (key === 'category_id' && value === '') { cleaned[key] = null; continue; }
+            if ((key.endsWith('_date') || key === 'last_contact_date' || key === 'next_contact_date') && value === '') { cleaned[key] = null; continue; }
+            cleaned[key] = value;
+          }
+          return cleaned;
+        };
+
+        payload = Array.isArray(payload) ? payload.map(cleanPayload) : cleanPayload(payload);
+      }
 
       if (isBatch) {
         const { data: insertedRows, error } = await supabase
@@ -1153,7 +1190,7 @@ export default async function handler(req, res) {
 
         if (error) {
           console.error('[Opportunities] Supabase batch insert failed', { entity, action, error });
-          return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
+          return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error, payloadKeys: Array.isArray(payload) ? Object.keys(payload[0] || {}) : Object.keys(payload) }));
         }
 
         return toSafeJson(res, 200, { success: true, rows: insertedRows || [] });
@@ -1168,7 +1205,7 @@ export default async function handler(req, res) {
 
       if (error) {
         console.error('[Opportunities] Supabase insert failed', { entity, action, error });
-        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
+        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error, payloadKeys: Object.keys(payload) }));
       }
 
       return toSafeJson(res, 200, { success: true, row: insertedRow });
@@ -1203,7 +1240,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      const payload = entity === 'message_templates'
+      let payload = entity === 'message_templates'
         ? normalizeTemplateRow(data, { forUpdate: true })
         : entity === 'documents'
           ? normalizeDocumentRow(data, { forUpdate: true })
@@ -1225,6 +1262,21 @@ export default async function handler(req, res) {
                           ? normalizeRelationshipContactMethodRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
+      if (entity === 'relationships') {
+        const cleaned = {};
+        for (const [key, value] of Object.entries(payload)) {
+          if (value === undefined) continue;
+          if (['id', 'createdAt', 'updatedAt', 'created_at', 'updated_at'].includes(key)) continue;
+          if (['personName', 'categoryName', 'linkedProjectName', 'linkedCompanyName', 'relationshipCategoryName', 'contactMethods', 'interactions', 'opportunities'].includes(key)) continue;
+          if (key === 'person_id' && value === '') { cleaned[key] = null; continue; }
+          if (key === 'category_id' && value === '') { cleaned[key] = null; continue; }
+          if ((key.endsWith('_date') || key === 'last_contact_date' || key === 'next_contact_date') && value === '') { cleaned[key] = null; continue; }
+          cleaned[key] = value;
+        }
+        payload = cleaned;
+        console.error("[relationships update payload keys]", Object.keys(payload));
+      }
+
       const { data: updatedRow, error } = await supabase
         .from(entity)
         .update(payload)
@@ -1234,7 +1286,7 @@ export default async function handler(req, res) {
 
       if (error) {
         console.error('[Opportunities] Supabase update failed', { entity, action, id, error });
-        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error }));
+        return toSafeJson(res, 500, buildMutationFailurePayload({ entity, action, error, payloadKeys: Object.keys(payload) }));
       }
 
       if (!updatedRow) {
