@@ -415,7 +415,7 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
           </div>
 
           <div className="space-y-4">
-            <SummaryCard title="Context" description="Selected project, company, person, and deal context are used to guide the AI." />
+            <SectionHeader title="Context" subtitle="Selected project, company, person, and deal context are used to guide the AI." />
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
               <Field label="Related Project">
                 <select className="studio-input" value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
