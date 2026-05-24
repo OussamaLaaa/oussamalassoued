@@ -7,6 +7,12 @@ const MAX_BASE64_LENGTH = 15 * 1024 * 1024;
 const MAX_PDF_BYTES = 12 * 1024 * 1024;
 
 const VALID_SOURCE_TYPES = new Set(['generated_document', 'invoice']);
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isValidUuid = (value) => {
+  if (!value || typeof value !== 'string') return false;
+  return UUID_REGEX.test(value);
+};
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -167,6 +173,10 @@ export default async function handler(req, res) {
 
     const { resourceId, table } = params;
 
+    if (table === 'invoices' && !isValidUuid(resourceId)) {
+      return toSafeJson(res, 400, { success: false, error: 'Invalid invoiceId.' });
+    }
+
     const { data: row, error: rowError } = await supabase
       .from(table)
       .select('pdf_storage_path')
@@ -215,6 +225,14 @@ export default async function handler(req, res) {
 
     if (!/\.pdf$/i.test(fileName)) {
       return toSafeJson(res, 400, { success: false, error: 'fileName must end with .pdf.' });
+    }
+
+    if (sourceType === 'invoice' && !isValidUuid(invoiceId)) {
+      const errPayload = { success: false, error: 'Save the invoice before storing PDF.' };
+      if (debug) {
+        errPayload.debug = { phase: 'validate', sourceType, targetId: invoiceId };
+      }
+      return toSafeJson(res, 400, errPayload);
     }
 
     const decoded = decodePdfBytes(pdfBase64);

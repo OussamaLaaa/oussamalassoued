@@ -12,6 +12,7 @@ import type {
   Person,
   Project,
 } from '../../types/opportunities';
+import { isValidUuid } from '../../utils/securityUtils';
 import InvoicePreview from './InvoicePreview';
 import InvoicePrintPreviewModal from './InvoicePrintPreviewModal';
 
@@ -450,12 +451,21 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
               .map((item) => toDraftItem(item))
           : draftItems,
       );
+      return updatedInvoice;
     } catch (saveError) {
       console.error('[Invoice Studio] Failed to save invoice', saveError);
       setError(saveError instanceof Error ? saveError.message : 'Unable to save the invoice.');
+      return null;
     } finally {
       setSaving(false);
     }
+  };
+
+  const ensureSavedInvoice = async (): Promise<Invoice> => {
+    if (selectedInvoice && isValidUuid(selectedInvoice.id)) return selectedInvoice;
+    const saved = await saveInvoice('draft');
+    if (!saved) throw new Error('Failed to save invoice.');
+    return saved;
   };
 
   const handleDeleteInvoice = async () => {
@@ -936,6 +946,7 @@ const InvoiceStudioPanel: React.FC<InvoiceStudioPanelProps> = ({
           sortOrder: item.sortOrder ? Number(item.sortOrder) : undefined,
         }))}
         brandSettings={brand}
+        onEnsureSavedInvoice={ensureSavedInvoice}
         onStoredPdf={async (storagePath) => {
           if (!selectedInvoice) return;
           await onUpdateInvoice(selectedInvoice.id, { pdfStoragePath: storagePath });

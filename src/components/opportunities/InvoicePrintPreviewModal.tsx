@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
+import { isValidUuid } from '../../utils/securityUtils';
 import InvoicePreview from './InvoicePreview';
 
 type InvoicePrintPreviewModalProps = {
@@ -20,6 +21,7 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
   items,
   brandSettings,
   onStoredPdf,
+  onEnsureSavedInvoice,
 }) => {
   const pageRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState('');
@@ -113,17 +115,32 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
     }
   };
 
+  const getInvoiceId = async (): Promise<string> => {
+    if (invoice && isValidUuid(invoice.id)) return invoice.id;
+    if (!onEnsureSavedInvoice) {
+      throw new Error('Save the invoice before storing PDF.');
+    }
+    setStatus('Saving invoice before storing PDF...');
+    const saved = await onEnsureSavedInvoice();
+    if (!saved || !isValidUuid(saved.id)) {
+      throw new Error('Failed to save invoice. Please save manually first.');
+    }
+    return saved.id;
+  };
+
   const handleGenerateAndStore = async () => {
     console.log('[InvoicePDF] Step 1: handleGenerateAndStore STARTED');
     console.log('[InvoicePDF] Step 1a: invoice?.id:', invoice?.id);
-    console.log('[InvoicePDF] Step 1b: invoice?.invoiceNumber:', invoice?.invoiceNumber);
-    console.log('[InvoicePDF] Step 1c: pageRef?.current?.tagName:', pageRef?.current?.tagName);
 
     setIsGenerating(true);
     setError('');
-    setStatus('Generating PDF...');
+    setStatus('');
 
     try {
+      const invoiceId = await getInvoiceId();
+      console.log('[InvoicePDF] Using invoiceId:', invoiceId);
+
+      setStatus('Generating PDF...');
       console.log('[InvoicePDF] Calling buildPdf...');
       const pdf = await buildPdf();
       console.log('[InvoicePDF] buildPdf returned pdf object');
@@ -142,7 +159,7 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sourceType: 'invoice',
-          invoiceId: invoice.id,
+          invoiceId,
           fileName,
           pdfBase64,
           debug: true,
@@ -205,6 +222,9 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
             <button type="button" onClick={handleGenerateAndStore} disabled={isGenerating} className="rounded-lg bg-[#0f172a] px-4 py-2 text-sm font-medium text-white hover:bg-[#1e293b] disabled:opacity-60">
               {isGenerating ? 'Working...' : 'Generate & Store PDF'}
             </button>
+            {!isValidUuid(invoice.id) && onEnsureSavedInvoice ? (
+              <span className="text-xs text-[#64748b]">Invoice will be saved first.</span>
+            ) : null}
             {invoice.pdfStoragePath ? (
               <button type="button" onClick={handleOpenStoredPdf} className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-2 text-sm font-medium text-[#166534] hover:bg-[#dcfce7]">
                 Open Stored PDF
