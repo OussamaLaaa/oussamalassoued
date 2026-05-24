@@ -186,9 +186,22 @@ const normalizeList = (value) => {
     .filter(Boolean);
 };
 
+const normalizeContentLines = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => truncate(item, 1000))
+    .map((item) => item.replace(/\r/g, '').trim())
+    .filter(Boolean);
+};
+
 const normalizeResult = (analysis) => ({
   summary: truncate(analysis?.summary, 1000),
-  improvedContent: truncate(analysis?.improvedContent, MAX_CONTENT_CHARS),
+  improvedContentLines: normalizeContentLines(analysis?.improvedContentLines),
+  improvedContent: (() => {
+    const directContent = toCleanString(analysis?.improvedContent);
+    if (directContent) return truncate(directContent, MAX_CONTENT_CHARS);
+    return normalizeContentLines(analysis?.improvedContentLines).join('\n');
+  })(),
   risks: normalizeList(analysis?.risks),
   missingClauses: normalizeList(analysis?.missingClauses),
   suggestedSections: normalizeList(analysis?.suggestedSections),
@@ -364,7 +377,7 @@ const languageInstruction = (language) => {
 const outputShape = [
   '{',
   '  "summary": "short explanation of the AI result",',
-  '  "improvedContent": "full improved or generated document content if applicable",',
+  '  "improvedContentLines": ["string"],',
   '  "risks": ["possible ambiguity or risk, not legal advice"],',
   '  "missingClauses": ["possibly missing clause or section"],',
   '  "suggestedSections": ["section name or improvement"],',
@@ -390,18 +403,19 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     create_template: [
       'Generate a reusable template for the selected document type.',
       `Include placeholders such as: ${placeholderList.join(', ')}`,
-      'Put the full template in improvedContent.',
+      'Put the full template in improvedContentLines.',
+      'Use one array item per heading, paragraph, or bullet.',
       'Include only sections relevant to the selected document type.',
     ],
     improve_document: [
       'Rewrite the document for clarity, structure, and professional tone.',
       'Keep the original meaning and do not invent facts.',
-      'Use improvedContent for the revised full document.',
+      'Put the full revised document in improvedContentLines.',
     ],
     risk_review: [
       'Focus on ambiguity, missing information, unclear scope, unclear payment terms, unclear timelines, unclear responsibilities, unclear acceptance criteria, unclear cancellation terms, and unclear revision terms.',
       'Do not provide legal advice.',
-      'Keep improvedContent empty unless a short safer wording is genuinely helpful.',
+      'Keep improvedContentLines empty unless a short safer wording is genuinely helpful.',
     ],
     missing_clauses: [
       'Identify possible missing sections without claiming legal necessity.',
@@ -415,15 +429,15 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     ],
     summarize_document: [
       'Summarize the document clearly and concisely.',
-      'Keep improvedContent empty unless a compact summary rewrite is helpful.',
+      'Keep improvedContentLines empty unless a compact summary rewrite is helpful.',
     ],
     rewrite_tone: [
       'Rewrite the document using the selected tone while preserving meaning.',
-      'Put the full rewritten version in improvedContent.',
+      'Put the full rewritten version in improvedContentLines.',
     ],
     translate_document: [
       'Translate the document content into the selected language while preserving structure.',
-      'Put the full translation in improvedContent.',
+      'Put the full translation in improvedContentLines.',
     ],
   };
 
@@ -436,6 +450,9 @@ const buildPrompt = ({ mode, documentType, language, tone, document, context, br
     'Do not overwrite user content automatically.',
     'Return JSON only. No markdown. No code fences. No explanations outside JSON.',
     'Use cautious, practical language.',
+    'Do not include newline characters inside individual JSON strings.',
+    'Do not include unescaped quotes inside strings.',
+    'If quotation marks are needed, prefer single quotes or avoid quotes.',
     languageInstruction(language),
     '',
     'Output JSON must match this exact shape:',
@@ -515,7 +532,7 @@ const buildTestPrompt = () => [
   outputShape,
   'Use the following values exactly:',
   'summary: Hello from AI Document Assistant',
-  'improvedContent: empty string',
+  'improvedContentLines: empty array',
   'risks: empty array',
   'missingClauses: empty array',
   'suggestedSections: empty array',

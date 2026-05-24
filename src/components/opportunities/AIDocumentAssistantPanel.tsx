@@ -4,6 +4,7 @@ import type { Company, Deal, DocumentBrandSettings, DocumentLanguage, DocumentTe
 type AIResult = {
   summary: string;
   improvedContent: string;
+  improvedContentLines: string[];
   risks: string[];
   missingClauses: string[];
   suggestedSections: string[];
@@ -68,6 +69,7 @@ const TONE_OPTIONS: Array<{ value: AiTone; label: string }> = [
 const EMPTY_RESULT: AIResult = {
   summary: '',
   improvedContent: '',
+  improvedContentLines: [],
   risks: [],
   missingClauses: [],
   suggestedSections: [],
@@ -110,6 +112,14 @@ const buildGeneratedTitle = (documentTitle: string, documentType: DocumentType) 
 };
 
 const fieldValue = (value?: string) => (value ? value.trim() : '');
+
+const normalizeResultText = (result: Partial<AIResult>) => {
+  const directContent = fieldValue(result.improvedContent);
+  const lineContent = Array.isArray(result.improvedContentLines)
+    ? result.improvedContentLines.map((line) => fieldValue(line)).filter(Boolean).join('\n')
+    : '';
+  return directContent || lineContent;
+};
 
 const normalizeMode = (value: string): AiMode => (MODE_VALUES.includes(value as AiMode) ? (value as AiMode) : 'create_template');
 const normalizeDocumentType = (value: string): DocumentType => (DOCUMENT_TYPE_VALUES.includes(value as DocumentType) ? (value as DocumentType) : 'document');
@@ -157,7 +167,7 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   const selectedDeal = useMemo(() => deals.find((deal) => deal.id === selectedDealId) ?? null, [deals, selectedDealId]);
 
   const hasEditableContent = mode === 'create_template' || fieldValue(documentContent).length > 0;
-  const hasResultContent = fieldValue(result.improvedContent).length > 0;
+  const hasResultContent = fieldValue(normalizeResultText(result)).length > 0;
 
   useEffect(() => {
     if (!selectedDocument) return;
@@ -293,7 +303,8 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
 
       const nextResult: AIResult = {
         summary: json.result.summary || '',
-        improvedContent: json.result.improvedContent || '',
+        improvedContent: fieldValue(json.result.improvedContent) || normalizeResultText({ improvedContentLines: Array.isArray(json.result.improvedContentLines) ? json.result.improvedContentLines : [] }),
+        improvedContentLines: Array.isArray(json.result.improvedContentLines) ? json.result.improvedContentLines.filter((line: unknown) => typeof line === 'string') : [],
         risks: Array.isArray(json.result.risks) ? json.result.risks : [],
         missingClauses: Array.isArray(json.result.missingClauses) ? json.result.missingClauses : [],
         suggestedSections: Array.isArray(json.result.suggestedSections) ? json.result.suggestedSections : [],
@@ -313,7 +324,7 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   const handleCopyImprovedContent = async () => {
     if (!hasResultContent) return;
     try {
-      await navigator.clipboard.writeText(result.improvedContent);
+      await navigator.clipboard.writeText(normalizeResultText(result));
       setSuccessMessage('Improved content copied to clipboard.');
     } catch {
       setError('Unable to copy content.');
@@ -321,15 +332,16 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   };
 
   const handleSaveAsNewTemplate = async () => {
-    if (!hasResultContent) return;
+    const content = normalizeResultText(result);
+    if (!content) return;
 
     const payload: DocumentTemplateInput = {
       name: buildTemplateName(documentType, mode),
       type: documentType,
       language,
       description: fieldValue(result.summary) || undefined,
-      content: result.improvedContent,
-      variables: uniquePlaceholders(result.improvedContent) || undefined,
+      content,
+      variables: uniquePlaceholders(content) || undefined,
       isActive: true,
     };
 
@@ -342,14 +354,15 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   };
 
   const handleSaveAsNewGeneratedDocument = async () => {
-    if (!hasResultContent) return;
+    const content = normalizeResultText(result);
+    if (!content) return;
 
     const payload: GeneratedDocumentInput = {
       title: buildGeneratedTitle(documentTitle, documentType),
       type: documentType,
       status: 'draft',
       language,
-      content: result.improvedContent,
+      content,
       relatedProjectId: selectedProjectId || undefined,
       relatedCompanyId: selectedCompanyId || undefined,
       relatedPersonId: selectedPersonId || undefined,
@@ -366,7 +379,8 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
   };
 
   const handleReplaceCurrentDocumentContent = async () => {
-    if (!hasResultContent) return;
+    const content = normalizeResultText(result);
+    if (!content) return;
     if (!selectedDocumentId) {
       setError('Select a generated document to replace.');
       return;
@@ -376,7 +390,7 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
     if (!confirmed) return;
 
     try {
-      await onUpdateGeneratedDocument(selectedDocumentId, { content: result.improvedContent });
+      await onUpdateGeneratedDocument(selectedDocumentId, { content });
       setSuccessMessage('Document content updated. Regenerate the PDF manually if needed.');
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Unable to update document.');
@@ -519,7 +533,7 @@ const AIDocumentAssistantPanel: React.FC<AIDocumentAssistantPanelProps> = ({
           <textarea
             className="studio-textarea mt-4"
             rows={18}
-            value={result.improvedContent}
+            value={normalizeResultText(result)}
             onChange={(event) => setResult((current) => ({ ...current, improvedContent: event.target.value }))}
             placeholder="AI output appears here for review"
           />
