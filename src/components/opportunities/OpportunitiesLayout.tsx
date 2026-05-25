@@ -147,6 +147,7 @@ const defaultDealFilters: DealFilters = {
 };
 
 type LifeQuickTab = 'dashboard' | 'nutrition' | 'fitness' | 'deen' | 'family' | 'weekly-review';
+type AIControlQuickAction = 'add-provider-key' | 'test-provider' | 'save-routing';
 
 const toDayKey = (value?: string) => {
   if (!value) return null;
@@ -339,6 +340,7 @@ const OpportunitiesLayout: React.FC<{
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
   const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
+  const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
   const [activeApp, setActiveApp] = useState<AppId>('desktop');
 
@@ -680,6 +682,12 @@ const OpportunitiesLayout: React.FC<{
           }}><Sparkles className="h-4 w-4" />AI Personalize</Button>
           <Button variant="secondary" size="md" onClick={() => setTab('templates')}><FileText className="h-4 w-4" />New Template</Button>
           <Button variant="primary" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+        </>
+      ) : activeApp === 'ai_control' ? (
+        <>
+          <Button variant="primary" size="md" onClick={() => setAiControlQuickAction('add-provider-key')}>Add Provider Key</Button>
+          <Button variant="secondary" size="md" onClick={() => setAiControlQuickAction('test-provider')}>Test Provider</Button>
+          <Button variant="secondary" size="md" onClick={() => setAiControlQuickAction('save-routing')}>Save Routing</Button>
         </>
       ) : undefined}
       searchValue={activeApp === 'crm' ? globalSearch : undefined}
@@ -1127,6 +1135,8 @@ const OpportunitiesLayout: React.FC<{
               <AIControlPanel
                 aiProviderKeys={aiProviderKeys}
                 aiUseCaseSettings={aiUseCaseSettings}
+                quickAction={aiControlQuickAction}
+                onQuickActionHandled={() => setAiControlQuickAction(null)}
                 onAddAIProviderKey={addAIProviderKey}
                 onUpdateAIProviderKey={updateAIProviderKey}
                 onDeleteAIProviderKey={deleteAIProviderKey}
