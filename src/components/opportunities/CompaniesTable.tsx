@@ -4,6 +4,8 @@ import type { Company } from '../../types/opportunities';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import Button from '../ui/Button';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 
@@ -14,6 +16,29 @@ export interface CompanyFilters {
   databaseType: string;
   country: string;
 }
+
+const priorityOptions = [
+  { value: '', label: 'Priority' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+];
+
+const statusOptions = [
+  { value: '', label: 'Status' },
+  { value: 'prospect', label: 'Prospect' },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'qualified', label: 'Qualified' },
+  { value: 'lost', label: 'Lost' },
+  { value: 'customer', label: 'Customer' },
+];
+
+const databaseTypeOptions = [
+  { value: '', label: 'Database Type' },
+  { value: 'big_company', label: 'Big Company' },
+  { value: 'sme', label: 'SME' },
+  { value: 'freelance', label: 'Freelance' },
+];
 
 const CompaniesTable: React.FC<{
   companies: Company[];
@@ -67,120 +92,79 @@ const CompaniesTable: React.FC<{
   return (
     <Card>
       <CardHeader>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <CardTitle style={{ fontSize: '14px' }}>Companies</CardTitle>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{filtered.length} / {companies.length}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Companies</CardTitle>
+          <span className="text-xs text-neutral-500">{filtered.length} / {companies.length}</span>
         </div>
       </CardHeader>
       <CardContent>
         {/* Filters */}
         {filters && (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px',
-            marginBottom: '12px', paddingBottom: '12px',
-            borderBottom: '1px solid #e5e7eb',
-          }}>
-            <select
+          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+            <Select
               value={filters.priority}
               onChange={(e) => setFilter('priority', e.target.value)}
-              style={{
-                fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
-                border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a',
-                outline: 'none',
-              }}
-            >
-              <option value="">Priority</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-            <select
+              options={priorityOptions}
+            />
+            <Select
               value={filters.status}
               onChange={(e) => setFilter('status', e.target.value)}
-              style={{
-                fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
-                border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a',
-                outline: 'none',
-              }}
-            >
-              <option value="">Status</option>
-              <option value="prospect">Prospect</option>
-              <option value="contacted">Contacted</option>
-              <option value="qualified">Qualified</option>
-              <option value="lost">Lost</option>
-              <option value="customer">Customer</option>
-            </select>
-            <select
+              options={statusOptions}
+            />
+            <Select
               value={filters.databaseType}
               onChange={(e) => setFilter('databaseType', e.target.value)}
-              style={{
-                fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
-                border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a',
-                outline: 'none',
-              }}
-            >
-              <option value="">Database Type</option>
-              <option value="big_company">Big Company</option>
-              <option value="sme">SME</option>
-              <option value="freelance">Freelance</option>
-            </select>
-            <input
+              options={databaseTypeOptions}
+            />
+            <Input
               type="text"
               value={filters.country}
               onChange={(e) => setFilter('country', e.target.value)}
               placeholder="Country..."
-              style={{
-                fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
-                border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a',
-                width: '100px', outline: 'none',
-              }}
             />
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} style={{ color: '#dc2626' }}>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">
                 Clear filters
               </Button>
             )}
           </div>
         )}
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr style={{ fontSize: '12px', color: '#475569', background: '#f8fafc' }}>
-                <th style={{ padding: '8px 12px' }}>Name</th>
-                <th style={{ padding: '8px 12px' }}>Industry</th>
-                <th style={{ padding: '8px 12px' }}>Location</th>
-                <th style={{ padding: '8px 12px' }}>Priority</th>
-                <th style={{ padding: '8px 12px' }}>Fit</th>
-                <th style={{ padding: '8px 12px' }}>Status</th>
-                <th style={{ padding: '8px 12px' }}>Actions</th>
+              <tr className="text-xs text-neutral-500 bg-neutral-50">
+                <th className="px-3 py-2">Name</th>
+                <th className="px-3 py-2">Industry</th>
+                <th className="px-3 py-2">Location</th>
+                <th className="px-3 py-2">Priority</th>
+                <th className="px-3 py-2">Fit</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((c) => (
-                <tr key={c.id} style={{ borderTop: '1px solid #e5e7eb' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600, color: '#0f172a' }}>{c.name}</div>
-                    <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-word' }}>{c.website || c.linkedin}</div>
+                <tr key={c.id} className="border-t border-neutral-200 hover:bg-neutral-50">
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-neutral-900">{c.name}</div>
+                    <div className="text-xs text-neutral-500 break-words">{c.website || c.linkedin}</div>
                   </td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{c.industry}</td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{c.city}, {c.country}</td>
-                  <td style={{ padding: '12px' }}><PriorityBadge priority={c.priority} /></td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{c.fitScore ?? '—'}</td>
-                  <td style={{ padding: '12px' }}><StatusBadge status={c.status} /></td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{c.industry}</td>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{c.city}, {c.country}</td>
+                  <td className="px-3 py-3"><PriorityBadge priority={c.priority} /></td>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{c.fitScore ?? '—'}</td>
+                  <td className="px-3 py-3"><StatusBadge status={c.status} /></td>
+                  <td className="px-3 py-3">
+                    <div className="flex gap-1">
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(c)} style={{ color: '#2563eb' }}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(c)} className="text-blue-600 hover:text-blue-700">Edit</Button>
                       )}
                       {onAIScore && (
-                        <Button variant="ghost" size="sm" onClick={() => onAIScore(c)} style={{ color: '#7c3aed' }}>AI Score</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onAIScore(c)} className="text-purple-600 hover:text-purple-700">AI Score</Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(c.id)} style={{ color: '#dc2626' }}>Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(c.id)} className="text-red-600 hover:text-red-700">Delete</Button>
                       )}
                     </div>
                   </td>
@@ -188,7 +172,7 @@ const CompaniesTable: React.FC<{
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '32px 12px', textAlign: 'center' }}>
+                  <td colSpan={7} className="px-3 py-8 text-center">
                     <EmptyState title="No companies match the current filters."
                       action={onEdit && <Button variant="secondary" size="sm">Clear filters</Button>}
                     />

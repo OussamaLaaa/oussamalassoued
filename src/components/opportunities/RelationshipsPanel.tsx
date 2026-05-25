@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Button } from '../ui';
 import type {
   Company,
   Person,
@@ -21,11 +22,11 @@ import RelationshipWorkspace from './RelationshipWorkspace';
 
 const badgeClass = (kind?: string) => {
   const value = String(kind || '').toLowerCase();
-  if (['strong', 'high', 'active', 'warm'].includes(value)) return 'border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]';
-  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-[#e2e8f0] bg-[#f8fafc] text-[#475569]';
-  if (['weak', 'low', 'cold'].includes(value)) return 'border-[#fde68a] bg-[#fffbeb] text-[#a16207]';
-  if (['avoid', 'archived'].includes(value)) return 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]';
-  return 'border-[#dbeafe] bg-[#eff6ff] text-[#1d4ed8]';
+  if (['strong', 'high', 'active', 'warm'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';
+  if (['weak', 'low', 'cold'].includes(value)) return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (['avoid', 'archived'].includes(value)) return 'border-red-200 bg-red-50 text-red-700';
+  return 'border-blue-200 bg-blue-50 text-blue-700';
 };
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -33,6 +34,8 @@ const isFollowUpDue = (relationship: Relationship) => Boolean(relationship.nextC
 
 const categoryKey = (category: RelationshipCategory) => category.slug || category.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
 const categoryNameFromSlug = (categories: RelationshipCategory[], slug: string) => categories.find((category) => categoryKey(category) === slug)?.name || slug;
+
+const dashboardCard = 'rounded-xl border border-neutral-200 bg-white p-4 shadow-sm';
 
 const RelationshipsPanel: React.FC<{
   relationships: Relationship[];
@@ -200,11 +203,6 @@ const RelationshipsPanel: React.FC<{
     setIsAddingRelationship(true);
   };
 
-  const dashboardCard = 'rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]';
-  const primaryButton = 'rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]';
-  const secondaryButton = 'rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]';
-  const chipButton = 'rounded-full border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm text-[#0f172a] hover:bg-[#f8fafc]';
-
   const selectedCategoryCounts = {
     total: selectedCategoryRelationships.length,
     strong: selectedCategoryRelationships.filter((relationship) => relationship.relationshipStrength === 'strong').length,
@@ -214,13 +212,13 @@ const RelationshipsPanel: React.FC<{
 
   const renderCategoryDashboard = () => (
     <div className="space-y-4">
-      <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+      <div className={dashboardCard}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-[#0f172a]">Relationships</h2>
-            <p className="mt-1 text-sm text-[#64748b]">A personal CRM workspace for people, categories, follow-ups, and exchange.</p>
+            <h2 className="text-2xl font-semibold text-black">Relationships</h2>
+            <p className="mt-1 text-sm text-neutral-500">A personal CRM workspace for people, categories, follow-ups, and exchange.</p>
           </div>
-          <button type="button" className={primaryButton} onClick={() => { setEditingCategory(null); setIsAddingCategory(true); }}>Add Category</button>
+          <Button type="button" variant="primary" size="md" onClick={() => { setEditingCategory(null); setIsAddingCategory(true); }}>Add Category</Button>
         </div>
       </div>
 
@@ -229,19 +227,19 @@ const RelationshipsPanel: React.FC<{
           <button
             key={category.slug}
             type="button"
-            className={`${dashboardCard} cursor-pointer text-left transition hover:-translate-y-0.5 hover:border-[#93c5fd] hover:shadow-[0_12px_28px_rgba(37,99,235,0.08)]`}
+            className={`${dashboardCard} cursor-pointer text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm`}
             onClick={() => openCategory(category.slug)}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-semibold text-[#0f172a]">{category.name}</div>
-                <div className="mt-1 text-sm text-[#64748b]">{category.description || 'Relationship category'}</div>
+                <div className="text-lg font-semibold text-black">{category.name}</div>
+                <div className="mt-1 text-sm text-neutral-500">{category.description || 'Relationship category'}</div>
               </div>
-              <span className="rounded-full border px-2 py-1 text-xs text-[#0f172a]" style={{ borderColor: category.color || '#dbeafe' }}>{category.count}</span>
+              <span className="rounded-full border px-2 py-1 text-xs text-black" style={{ borderColor: category.color || '#dbeafe' }}>{category.count}</span>
             </div>
             <div className="mt-4 flex items-center justify-between gap-3">
               <span className={`rounded-full border px-2 py-1 text-xs ${badgeClass('active')}`}>Open category</span>
-              <button type="button" className={chipButton} onClick={(event) => { event.stopPropagation(); openCategory(category.slug); }}>Open Category</button>
+              <Button type="button" variant="outline" size="sm" onClick={(event) => { event.stopPropagation(); openCategory(category.slug); }}>Open Category</Button>
             </div>
           </button>
         ))}
@@ -254,31 +252,31 @@ const RelationshipsPanel: React.FC<{
       <div className={dashboardCard}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <button type="button" className={secondaryButton} onClick={closeToDashboard}>Back to Categories</button>
-            <h2 className="mt-3 text-2xl font-semibold text-[#0f172a]">{selectedCategory?.name || categoryNameFromSlug(relationshipCategories, selectedCategorySlug || 'other')}</h2>
-            <p className="mt-1 text-sm text-[#64748b]">{selectedCategoryRelationships.length} relationships in this category.</p>
+            <Button type="button" variant="outline" size="sm" onClick={closeToDashboard}>Back to Categories</Button>
+            <h2 className="mt-3 text-2xl font-semibold text-black">{selectedCategory?.name || categoryNameFromSlug(relationshipCategories, selectedCategorySlug || 'other')}</h2>
+            <p className="mt-1 text-sm text-neutral-500">{selectedCategoryRelationships.length} relationships in this category.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={primaryButton} onClick={handleAddRelationshipFromCategory}>Add Relationship</button>
-            <button type="button" className={secondaryButton} onClick={() => setIsAddingCategory(true)}>Edit Categories</button>
+            <Button type="button" variant="primary" size="md" onClick={handleAddRelationshipFromCategory}>Add Relationship</Button>
+            <Button type="button" variant="outline" size="md" onClick={() => setIsAddingCategory(true)}>Edit Categories</Button>
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]" placeholder="Search relationships" />
-          <select value={strengthFilter} onChange={(event) => setStrengthFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black" placeholder="Search relationships" />
+          <select value={strengthFilter} onChange={(event) => setStrengthFilter(event.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black">
             <option value="">All strengths</option>
             <option value="weak">Weak</option>
             <option value="medium">Medium</option>
             <option value="strong">Strong</option>
           </select>
-          <select value={trustFilter} onChange={(event) => setTrustFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
+          <select value={trustFilter} onChange={(event) => setTrustFilter(event.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black">
             <option value="">All trust levels</option>
             <option value="unknown">Unknown</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black">
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="warm">Warm</option>
@@ -287,7 +285,7 @@ const RelationshipsPanel: React.FC<{
             <option value="avoid">Avoid</option>
             <option value="archived">Archived</option>
           </select>
-          <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} className="rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a]">
+          <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-black">
             <option value="">All follow-up states</option>
             <option value="due">Follow-up due</option>
           </select>
@@ -295,10 +293,10 @@ const RelationshipsPanel: React.FC<{
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Relationships</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{selectedCategoryCounts.total}</div></div>
-        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Strong</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{selectedCategoryCounts.strong}</div></div>
-        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Follow-ups Due</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{selectedCategoryCounts.due}</div></div>
-        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Friction</div><div className="mt-2 text-3xl font-semibold text-[#0f172a]">{selectedCategoryCounts.friction}</div></div>
+        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-neutral-500">Relationships</div><div className="mt-2 text-3xl font-semibold text-black">{selectedCategoryCounts.total}</div></div>
+        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-neutral-500">Strong</div><div className="mt-2 text-3xl font-semibold text-black">{selectedCategoryCounts.strong}</div></div>
+        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-neutral-500">Follow-ups Due</div><div className="mt-2 text-3xl font-semibold text-black">{selectedCategoryCounts.due}</div></div>
+        <div className={dashboardCard}><div className="text-xs uppercase tracking-[0.14em] text-neutral-500">Friction</div><div className="mt-2 text-3xl font-semibold text-black">{selectedCategoryCounts.friction}</div></div>
       </div>
 
       <div className="space-y-3">
@@ -308,7 +306,7 @@ const RelationshipsPanel: React.FC<{
           return (
             <div
               key={relationship.id}
-              className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition hover:border-[#93c5fd]"
+              className={dashboardCard + ' transition hover:border-blue-200 cursor-pointer'}
               role="button"
               tabIndex={0}
               onClick={() => setSelectedRelationshipId(relationship.id)}
@@ -316,8 +314,8 @@ const RelationshipsPanel: React.FC<{
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-lg font-semibold text-[#0f172a]">{relationship.displayName}</div>
-                  <div className="mt-1 text-sm text-[#64748b]">{personName || 'No linked person'}{companyName ? ` · ${companyName}` : ''}</div>
+                  <div className="text-lg font-semibold text-black">{relationship.displayName}</div>
+                  <div className="mt-1 text-sm text-neutral-500">{personName || 'No linked person'}{companyName ? ` · ${companyName}` : ''}</div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs font-medium">
                   <span className={`rounded-full border px-2.5 py-1 ${badgeClass(relationship.relationshipStrength)}`}>{relationship.relationshipStrength || '—'}</span>
@@ -326,16 +324,16 @@ const RelationshipsPanel: React.FC<{
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-2 text-xs text-[#334155]">
-                  <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-2 py-1">Last {relationship.lastContactDate ? relationship.lastContactDate.slice(0, 10) : '—'}</span>
-                  <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-2 py-1">Next {relationship.nextContactDate ? relationship.nextContactDate.slice(0, 10) : '—'}</span>
-                  {relationship.nextAction ? <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-2 py-1">{relationship.nextAction}</span> : null}
+                <div className="flex flex-wrap gap-2 text-xs text-neutral-700">
+                  <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-1">Last {relationship.lastContactDate ? relationship.lastContactDate.slice(0, 10) : '—'}</span>
+                  <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-1">Next {relationship.nextContactDate ? relationship.nextContactDate.slice(0, 10) : '—'}</span>
+                  {relationship.nextAction ? <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-1">{relationship.nextAction}</span> : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className={secondaryButton} onClick={(event) => { event.stopPropagation(); setSelectedRelationshipId(relationship.id); }}>Open Dashboard</button>
-                  <button type="button" className={secondaryButton} onClick={(event) => { event.stopPropagation(); handleEditRelationship(relationship); }}>Edit</button>
-                  <button type="button" className={secondaryButton} onClick={async (event) => { event.stopPropagation(); await onDeleteRelationship(relationship.id); }}>Delete</button>
-                  <button type="button" className={secondaryButton} onClick={async (event) => {
+                  <Button type="button" variant="outline" size="sm" onClick={(event) => { event.stopPropagation(); setSelectedRelationshipId(relationship.id); }}>Open Dashboard</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={(event) => { event.stopPropagation(); handleEditRelationship(relationship); }}>Edit</Button>
+                  <Button type="button" variant="danger" size="sm" onClick={async (event) => { event.stopPropagation(); await onDeleteRelationship(relationship.id); }}>Delete</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={async (event) => {
                     event.stopPropagation();
                     await onAddRelationshipInteraction({
                       relationshipId: relationship.id,
@@ -345,17 +343,17 @@ const RelationshipsPanel: React.FC<{
                       summary: relationship.nextAction || 'Followed up',
                       nextAction: relationship.nextAction,
                     });
-                  }}>Add Interaction</button>
-                  <button type="button" className={secondaryButton} onClick={async (event) => {
+                  }}>Add Interaction</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={async (event) => {
                     event.stopPropagation();
                     await onUpdateRelationship(relationship.id, { lastContactDate: todayKey() });
-                  }}>Mark Followed Up</button>
+                  }}>Mark Followed Up</Button>
                 </div>
               </div>
             </div>
           );
         }) : (
-          <div className="rounded-xl border border-dashed border-[#cbd5e1] bg-white p-6 text-sm text-[#64748b]">No relationships found in this category.</div>
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500">No relationships found in this category.</div>
         )}
       </div>
     </div>

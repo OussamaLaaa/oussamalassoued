@@ -5,40 +5,24 @@ interface PageHeaderProps {
   description?: string;
   actions?: React.ReactNode;
   backButton?: React.ReactNode;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
-const PageHeader: React.FC<PageHeaderProps> = ({ title, description, actions, backButton, style }) => (
-  <div style={{
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-    gap: '16px', flexWrap: 'wrap', minWidth: 0,
-    ...style,
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+const PageHeader: React.FC<PageHeaderProps> = ({ title, description, actions, backButton, className = '' }) => (
+  <div className={`flex items-start justify-between gap-4 flex-wrap min-w-0 ${className}`}>
+    <div className="flex items-center gap-3 min-w-0">
       {backButton}
-      <div style={{ minWidth: 0 }}>
-        <h1 style={{
-          margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          lineHeight: 1.3,
-        }}>
-          {title}
-        </h1>
+      <div className="min-w-0">
+        <h1 className="m-0 text-lg font-semibold text-black leading-tight">{title}</h1>
         {description && (
-          <p style={{
-            margin: '2px 0 0', fontSize: '12px', color: '#64748b',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            lineHeight: 1.4, wordBreak: 'break-word',
-          }}>
+          <p className="m-0 mt-0.5 text-xs text-neutral-500 leading-relaxed break-words">
             {description}
           </p>
         )}
       </div>
     </div>
     {actions && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-        {actions}
-      </div>
+      <div className="flex items-center gap-2 shrink-0">{actions}</div>
     )}
   </div>
 );

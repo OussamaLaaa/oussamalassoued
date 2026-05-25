@@ -170,54 +170,49 @@ const CompanySegmentView: React.FC<{
     <section className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold text-[#0f172a]">{title}</h2>
-        {subtitle && <p className="mt-1 text-sm text-[#64748b]">{subtitle}</p>}
+        <h2 className="text-2xl font-semibold text-black">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
       </div>
 
       {/* Strategy Card */}
-      <div style={{
-        background: 'linear-gradient(to right, #f0f9ff, #ffffff)',
-        border: '1px solid #e5e7eb', borderRadius: '12px',
-        padding: '16px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
-        display: 'flex', gap: '12px', alignItems: 'flex-start',
-      }}>
-        <div style={{ flexShrink: 0, marginTop: '2px' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-gradient-to-r from-blue-50 to-white p-4 shadow-sm">
+        <div className="mt-0.5 shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
             <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
           </svg>
         </div>
         <div>
-          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{strategy.goal}</div>
-          <div style={{ marginTop: '4px', fontSize: '12px', color: '#64748b' }}>{strategy.hint}</div>
+          <div className="text-sm font-semibold text-black">{strategy.goal}</div>
+          <div className="mt-1 text-xs text-neutral-500">{strategy.hint}</div>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        <StatCard title="Total" value={stats.totalCompanies} />
-        <StatCard title="People Connected" value={stats.totalPeople} />
-        <StatCard title="Messages Sent" value={stats.messagesSent} />
-        <StatCard title="Follow-ups Due" value={stats.followUpsDue} />
-        <StatCard title="Avg Fit Score" value={stats.avgFitScore} />
-        <StatCard title="High Priority" value={stats.highPriority} />
-        <StatCard title="Needs Review" value={stats.needsReviewEthical} />
+        <StatCard label="Total" value={stats.totalCompanies} />
+        <StatCard label="People Connected" value={stats.totalPeople} />
+        <StatCard label="Messages Sent" value={stats.messagesSent} />
+        <StatCard label="Follow-ups Due" value={stats.followUpsDue} />
+        <StatCard label="Avg Fit Score" value={stats.avgFitScore} />
+        <StatCard label="High Priority" value={stats.highPriority} />
+        <StatCard label="Needs Review" value={stats.needsReviewEthical} />
         {segmentType === 'big_company' && stats.extra.map((e, i) => (
-          <StatCard key={i} title={e.title} value={e.value} />
+          <StatCard key={i} label={e.title} value={e.value} />
         ))}
         {segmentType === 'sme' && stats.extra.map((e, i) => (
-          <StatCard key={i} title={e.title} value={e.value} />
+          <StatCard key={i} label={e.title} value={e.value} />
         ))}
         {segmentType === 'freelance' && (
           <>
-            <StatCard title="Open Deals" value={stats.openDeals} />
-            <StatCard title="Proposals Sent" value={stats.proposalsSent} />
+            <StatCard label="Open Deals" value={stats.openDeals} />
+            <StatCard label="Proposals Sent" value={stats.proposalsSent} />
           </>
         )}
       </div>
 
       {/* Companies Table */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '8px' }}>
+        <div className="mb-2 flex justify-end gap-2">
           {onAddCompany && (
             <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>
           )}

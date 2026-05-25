@@ -136,34 +136,30 @@ const AICompanyScoringModal: React.FC<{
 
   return (
     <Modal open={isOpen} onClose={onClose} title={`AI Lead Scoring — ${company.name}`} width="640px">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="flex flex-col gap-4">
         {error && (
-          <div style={{
-            borderRadius: '8px', border: '1px solid #fecaca',
-            background: '#fef2f2', padding: '12px 16px',
-            fontSize: '13px', color: '#dc2626',
-          }}>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
             {error}
           </div>
         )}
 
         {!result && !loading && (
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+          <p className="m-0 text-xs text-neutral-500">
             Click "Analyze Company" to get AI-powered lead scoring suggestions. The AI will analyze the company profile and suggest improvements.
           </p>
         )}
 
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: '#64748b' }}>
-            <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="4" opacity="0.25" />
-              <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#2563eb" opacity="0.75" />
+          <div className="flex items-center gap-3 text-xs text-neutral-500">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+              <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" className="opacity-75" />
             </svg>
             Analyzing company...
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid grid-cols-2 gap-4">
           <Select
             label="Database Type"
             value={databaseType}
@@ -254,11 +250,7 @@ const AICompanyScoringModal: React.FC<{
         />
       </div>
 
-      <div style={{
-        display: 'flex', justifyContent: 'flex-end', gap: '8px',
-        marginTop: '16px', paddingTop: '16px',
-        borderTop: '1px solid #e5e7eb',
-      }}>
+      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-neutral-200">
         <Button variant="secondary" size="md" onClick={onClose}>Cancel</Button>
         {!result ? (
           <Button variant="primary" size="md" onClick={handleAnalyze} disabled={loading}>

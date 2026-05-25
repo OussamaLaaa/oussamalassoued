@@ -5,37 +5,18 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, style, ...props }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => (
+  <div className="flex flex-col gap-1 min-w-0">
     {label && (
-      <label style={{
-        fontSize: '12px', fontWeight: 600, color: '#0f172a',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        {label}
-      </label>
+      <label className="text-xs font-semibold text-black">{label}</label>
     )}
     <input
-      style={{
-        padding: '8px 12px',
-        fontSize: '13px',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        borderRadius: '8px',
-        border: error ? '1px solid #dc2626' : '1px solid #e5e7eb',
-        background: '#ffffff',
-        color: '#0f172a',
-        outline: 'none',
-        transition: 'border-color 0.15s ease',
-        minWidth: 0,
-        width: '100%',
-        boxSizing: 'border-box',
-        ...style,
-      }}
+      className={`px-3 py-2 text-sm rounded-lg border bg-white text-black placeholder-neutral-400 outline-none transition-colors duration-150 min-w-0 w-full box-border
+        ${error ? 'border-red-400' : 'border-neutral-300 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200'}
+        ${className}`}
       {...props}
     />
-    {error && (
-      <span style={{ fontSize: '11px', color: '#dc2626' }}>{error}</span>
-    )}
+    {error && <span className="text-xs text-red-600">{error}</span>}
   </div>
 );
 

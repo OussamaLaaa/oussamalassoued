@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import type { Deal } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 
@@ -30,6 +32,15 @@ const badgeForProbability = (probability?: number) => {
   if (pct >= 20) return <Badge variant="warning">{pct}%</Badge>;
   return <Badge variant="neutral">{pct}%</Badge>;
 };
+
+const stageOptions = [
+  { value: '', label: 'Stage' },
+  { value: 'discovery', label: 'Discovery' },
+  { value: 'proposal_sent', label: 'Proposal Sent' },
+  { value: 'negotiation', label: 'Negotiation' },
+  { value: 'won', label: 'Won' },
+  { value: 'lost', label: 'Lost' },
+];
 
 const DealsTable: React.FC<{
   deals: Deal[];
@@ -79,82 +90,66 @@ const DealsTable: React.FC<{
   return (
     <Card>
       <CardHeader>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <CardTitle style={{ fontSize: '14px' }}>Deals</CardTitle>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{filtered.length} / {deals.length}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Deals</CardTitle>
+          <span className="text-xs text-neutral-500">{filtered.length} / {deals.length}</span>
         </div>
       </CardHeader>
       <CardContent>
         {filters && (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px',
-            marginBottom: '12px', paddingBottom: '12px',
-            borderBottom: '1px solid #e5e7eb',
-          }}>
-            <select
+          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+            <Select
               value={filters.stage}
               onChange={(e) => setFilter('stage', e.target.value)}
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', outline: 'none' }}
-            >
-              <option value="">Stage</option>
-              <option value="discovery">Discovery</option>
-              <option value="proposal_sent">Proposal Sent</option>
-              <option value="negotiation">Negotiation</option>
-              <option value="won">Won</option>
-              <option value="lost">Lost</option>
-            </select>
-            <input
+              options={stageOptions}
+            />
+            <Input
               type="number" min="0" max="1" step="0.1"
               value={filters.probabilityMin}
               onChange={(e) => setFilter('probabilityMin', e.target.value)}
               placeholder="Prob. min (0-1)"
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', width: '110px', outline: 'none' }}
             />
-            <input
+            <Input
               type="number" min="0" max="1" step="0.1"
               value={filters.probabilityMax}
               onChange={(e) => setFilter('probabilityMax', e.target.value)}
               placeholder="Prob. max (0-1)"
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', width: '110px', outline: 'none' }}
             />
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} style={{ color: '#dc2626' }}>Clear filters</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">Clear filters</Button>
             )}
           </div>
         )}
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr style={{ fontSize: '12px', color: '#475569', background: '#f8fafc' }}>
-                <th style={{ padding: '8px 12px' }}>Company</th>
-                <th style={{ padding: '8px 12px' }}>Contact</th>
-                <th style={{ padding: '8px 12px' }}>Service</th>
-                <th style={{ padding: '8px 12px' }}>Value</th>
-                <th style={{ padding: '8px 12px' }}>Stage</th>
-                <th style={{ padding: '8px 12px' }}>Probability</th>
-                <th style={{ padding: '8px 12px' }}>Actions</th>
+              <tr className="text-xs text-neutral-500 bg-neutral-50">
+                <th className="px-3 py-2">Company</th>
+                <th className="px-3 py-2">Contact</th>
+                <th className="px-3 py-2">Service</th>
+                <th className="px-3 py-2">Value</th>
+                <th className="px-3 py-2">Stage</th>
+                <th className="px-3 py-2">Probability</th>
+                <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((d) => (
-                <tr key={d.id} style={{ borderTop: '1px solid #e5e7eb' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a' }}>{d.companyName}</td>
-                  <td style={{ padding: '12px', color: '#0f172a' }}>{d.personName}</td>
-                  <td style={{ padding: '12px', color: '#0f172a' }}>{d.servicePackage}</td>
-                  <td style={{ padding: '12px', color: '#0f172a' }}>{d.value ? `${d.value} ${d.currency || ''}` : '—'}</td>
-                  <td style={{ padding: '12px' }}>{badgeForStage(d.stage)}</td>
-                  <td style={{ padding: '12px' }}>{badgeForProbability(d.probability)}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                <tr key={d.id} className="border-t border-neutral-200 hover:bg-neutral-50">
+                  <td className="px-3 py-3 font-semibold text-neutral-900">{d.companyName}</td>
+                  <td className="px-3 py-3 text-neutral-900">{d.personName}</td>
+                  <td className="px-3 py-3 text-neutral-900">{d.servicePackage}</td>
+                  <td className="px-3 py-3 text-neutral-900">{d.value ? `${d.value} ${d.currency || ''}` : '—'}</td>
+                  <td className="px-3 py-3">{badgeForStage(d.stage)}</td>
+                  <td className="px-3 py-3">{badgeForProbability(d.probability)}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex gap-1">
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(d)} style={{ color: '#2563eb' }}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(d)} className="text-blue-600 hover:text-blue-700">Edit</Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(d.id)} style={{ color: '#dc2626' }}>Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(d.id)} className="text-red-600 hover:text-red-700">Delete</Button>
                       )}
                     </div>
                   </td>
@@ -162,7 +157,7 @@ const DealsTable: React.FC<{
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '32px 12px', textAlign: 'center' }}>
+                  <td colSpan={7} className="px-3 py-8 text-center">
                     <EmptyState title="No deals match the current filters." />
                   </td>
                 </tr>

@@ -26,17 +26,9 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
   rightActions,
 }) => {
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: '#ffffff',
-        borderBottom: '1px solid #e5e7eb',
-        boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
-      }}>
-        <div style={{
-          maxWidth: '1400px', margin: '0 auto',
-          padding: '16px 24px 0',
-        }}>
+    <div className="min-h-screen bg-[var(--opp-bg,#f8fafc)]">
+      <div className="sticky top-0 z-50 bg-white border-b border-neutral-200">
+        <div className="max-w-[1400px] mx-auto px-6 pt-4">
           <PageHeader
             title={title}
             description={subtitle}
@@ -45,7 +37,6 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={onBackToDesktop}
-                style={{ gap: '4px' }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6"/>
@@ -54,7 +45,7 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
               </Button>
             }
             actions={rightActions}
-            style={{ marginBottom: '12px' }}
+            className="mb-3"
           />
 
           {tabs && tabs.length > 0 && activeTab !== undefined && onTabChange && (
@@ -62,16 +53,13 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
               tabs={tabs}
               activeTab={activeTab}
               onTabChange={onTabChange}
-              style={{ paddingBottom: '12px' }}
+              className="pb-3"
             />
           )}
         </div>
       </div>
 
-      <div style={{
-        maxWidth: '1400px', margin: '0 auto',
-        padding: '24px',
-      }}>
+      <div className="max-w-[1400px] mx-auto p-6">
         {children}
       </div>
     </div>

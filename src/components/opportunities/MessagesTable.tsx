@@ -1,5 +1,8 @@
 import React, { useMemo } from 'react';
 import type { OutreachMessage } from '../../types/opportunities';
+import Button from '../ui/Button';
+import Select from '../ui/Select';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 
 export interface MessageFilters {
   searchQuery: string;
@@ -21,6 +24,21 @@ function isToday(dateStr: string | undefined): boolean {
   if (!dateStr) return false;
   return dateStr === today();
 }
+
+const replyStatusOptions = [
+  { value: '', label: 'Reply Status' },
+  { value: 'no_reply', label: 'No Reply' },
+  { value: 'replied', label: 'Replied' },
+  { value: 'waiting', label: 'Waiting' },
+  { value: 'bounced', label: 'Bounced' },
+  { value: 'none', label: 'None' },
+];
+
+const followUpOptions = [
+  { value: '', label: 'Follow-ups' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'today', label: 'Today' },
+];
 
 const MessagesTable: React.FC<{
   messages: OutreachMessage[];
@@ -67,114 +85,90 @@ const MessagesTable: React.FC<{
   );
 
   return (
-    <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h3 className="font-medium text-lg text-[#0f172a]">Outreach Messages</h3>
-        <span className="text-xs text-[#64748b]">{filtered.length} / {messages.length}</span>
-      </div>
-
-      {/* Filters */}
-      {filters && (
-        <div className="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-[#e5e7eb]">
-          <select
-            value={filters.replyStatus}
-            onChange={(e) => setFilter('replyStatus', e.target.value)}
-            className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-          >
-            <option value="">Reply Status</option>
-            <option value="no_reply">No Reply</option>
-            <option value="replied">Replied</option>
-            <option value="waiting">Waiting</option>
-            <option value="bounced">Bounced</option>
-            <option value="none">None</option>
-          </select>
-          <select
-            value={filters.followUp}
-            onChange={(e) => setFilter('followUp', e.target.value)}
-            className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-          >
-            <option value="">Follow-ups</option>
-            <option value="overdue">Overdue</option>
-            <option value="today">Today</option>
-          </select>
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] text-[#dc2626] hover:bg-[#fef2f2]"
-            >
-              Clear filters
-            </button>
-          )}
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Outreach Messages</CardTitle>
+          <span className="text-xs text-neutral-500">{filtered.length} / {messages.length}</span>
         </div>
-      )}
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left table-auto">
-          <thead>
-            <tr className="text-xs text-[#475569] bg-[#f8fafc]">
-              <th className="px-3 py-2">Date</th>
-              <th className="px-3 py-2">Company</th>
-              <th className="px-3 py-2">Person</th>
-              <th className="px-3 py-2">Channel</th>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Reply Status</th>
-              <th className="px-3 py-2">Follow-up</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((m) => {
-              const overdue = isOverdue(m.nextFollowUpDate);
-              const followUpToday = isToday(m.nextFollowUpDate);
-              return (
-                <tr key={m.id} className={`border-t border-[#e5e7eb] hover:bg-[#f9fafb] ${overdue ? 'bg-[#fef2f2]' : followUpToday ? 'bg-[#fffbeb]' : ''}`}>
-                  <td className="px-3 py-3 text-sm text-[#0f172a]">{new Date(m.sentDate || '').toLocaleDateString()}</td>
-                  <td className="px-3 py-3 font-semibold text-[#0f172a]">{m.companyName}</td>
-                  <td className="px-3 py-3 text-[#0f172a]">{m.personName}</td>
-                  <td className="px-3 py-3 text-[#0f172a]">{m.channel}</td>
-                  <td className="px-3 py-3 text-[#0f172a]">{m.messageType}</td>
-                  <td className="px-3 py-3 text-sm text-[#0f172a]">{m.replyStatus}</td>
-                  <td className="px-3 py-3 text-xs">
-                    {overdue && <span className="text-[#dc2626] font-medium">Overdue</span>}
-                    {followUpToday && <span className="text-[#d97706] font-medium">Today</span>}
-                    {!overdue && !followUpToday && m.nextFollowUpDate && (
-                      <span className="text-[#64748b]">{new Date(m.nextFollowUpDate).toLocaleDateString()}</span>
-                    )}
-                    {!m.nextFollowUpDate && <span className="text-[#94a3b8]">—</span>}
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-1">
-                      {onEdit && (
-                        <button
-                          type="button"
-                          onClick={() => onEdit(m)}
-                          className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff]"
-                        >
-                          Edit
-                        </button>
-                      )}
-                      {onDelete && (
-                        <button
-                          type="button"
-                          onClick={() => onDelete(m.id)}
-                          className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#dc2626] hover:bg-[#fef2f2]"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-8 text-center text-sm text-[#64748b]">No messages match the current filters.</td></tr>
+      </CardHeader>
+      <CardContent>
+        {/* Filters */}
+        {filters && (
+          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+            <Select
+              value={filters.replyStatus}
+              onChange={(e) => setFilter('replyStatus', e.target.value)}
+              options={replyStatusOptions}
+            />
+            <Select
+              value={filters.followUp}
+              onChange={(e) => setFilter('followUp', e.target.value)}
+              options={followUpOptions}
+            />
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">
+                Clear filters
+              </Button>
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left table-auto">
+            <thead>
+              <tr className="text-xs text-neutral-500 bg-neutral-50">
+                <th className="px-3 py-2">Date</th>
+                <th className="px-3 py-2">Company</th>
+                <th className="px-3 py-2">Person</th>
+                <th className="px-3 py-2">Channel</th>
+                <th className="px-3 py-2">Type</th>
+                <th className="px-3 py-2">Reply Status</th>
+                <th className="px-3 py-2">Follow-up</th>
+                <th className="px-3 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((m) => {
+                const overdue = isOverdue(m.nextFollowUpDate);
+                const followUpToday = isToday(m.nextFollowUpDate);
+                return (
+                  <tr key={m.id} className={`border-t border-neutral-200 hover:bg-neutral-50 ${overdue ? 'bg-red-50' : followUpToday ? 'bg-amber-50' : ''}`}>
+                    <td className="px-3 py-3 text-sm text-neutral-900">{new Date(m.sentDate || '').toLocaleDateString()}</td>
+                    <td className="px-3 py-3 font-semibold text-neutral-900">{m.companyName}</td>
+                    <td className="px-3 py-3 text-neutral-900">{m.personName}</td>
+                    <td className="px-3 py-3 text-neutral-900">{m.channel}</td>
+                    <td className="px-3 py-3 text-neutral-900">{m.messageType}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-900">{m.replyStatus}</td>
+                    <td className="px-3 py-3 text-xs">
+                      {overdue && <span className="text-red-600 font-medium">Overdue</span>}
+                      {followUpToday && <span className="text-amber-600 font-medium">Today</span>}
+                      {!overdue && !followUpToday && m.nextFollowUpDate && (
+                        <span className="text-neutral-500">{new Date(m.nextFollowUpDate).toLocaleDateString()}</span>
+                      )}
+                      {!m.nextFollowUpDate && <span className="text-neutral-400">—</span>}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1">
+                        {onEdit && (
+                          <Button variant="ghost" size="sm" onClick={() => onEdit(m)} className="text-blue-600 hover:text-blue-700">Edit</Button>
+                        )}
+                        {onDelete && (
+                          <Button variant="ghost" size="sm" onClick={() => onDelete(m.id)} className="text-red-600 hover:text-red-700">Delete</Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr><td colSpan={8} className="px-3 py-8 text-center text-sm text-neutral-500">No messages match the current filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

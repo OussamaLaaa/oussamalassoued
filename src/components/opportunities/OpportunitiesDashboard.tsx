@@ -3,7 +3,7 @@ import type { Company, Person, OutreachMessage, Deal, PersonInput, MessageInput 
 import StatCard from '../ui/StatCard';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import PriorityBadge from './PriorityBadge';
 import StatusBadge from './StatusBadge';
@@ -20,7 +20,6 @@ const formatDate = (d?: string | null) => {
 
 const normalizeDate = (value?: string | null) => {
   if (!value) return null;
-
   const dateOnlyMatch = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const date = dateOnlyMatch
     ? (() => {
@@ -28,7 +27,6 @@ const normalizeDate = (value?: string | null) => {
         return new Date(year, month - 1, day);
       })()
     : new Date(value);
-
   if (Number.isNaN(date.getTime())) return null;
   date.setHours(0, 0, 0, 0);
   return date;
@@ -117,7 +115,6 @@ const OpportunitiesDashboard: React.FC<{
     const peopleFollowUps = people.flatMap((person) => {
       const sortDate = normalizeDate(person.nextFollowUpDate);
       if (!sortDate) return [];
-
       return [{
         kind: 'person' as const,
         id: person.id,
@@ -134,7 +131,6 @@ const OpportunitiesDashboard: React.FC<{
     const messageFollowUps = messages.flatMap((message) => {
       const sortDate = normalizeDate(message.nextFollowUpDate);
       if (!sortDate) return [];
-
       return [{
         kind: 'message' as const,
         id: message.id,
@@ -180,7 +176,6 @@ const OpportunitiesDashboard: React.FC<{
         await updatePerson(item.id, { ...toPersonInput(item.source as Person), nextFollowUpDate: null as unknown as string });
         return;
       }
-
       await updateMessage(item.id, { ...toMessageInput(item.source as OutreachMessage), nextFollowUpDate: null as unknown as string });
     } catch (error) {
       console.error('[Opportunities] Failed to mark follow-up done.', error);
@@ -194,14 +189,12 @@ const OpportunitiesDashboard: React.FC<{
 
   const handleSaveReschedule = async () => {
     if (!rescheduleTarget || !rescheduleDate) return;
-
     try {
       if (rescheduleTarget.kind === 'person') {
         await updatePerson(rescheduleTarget.id, { ...toPersonInput(rescheduleTarget.source as Person), nextFollowUpDate: rescheduleDate });
       } else {
         await updateMessage(rescheduleTarget.id, { ...toMessageInput(rescheduleTarget.source as OutreachMessage), nextFollowUpDate: rescheduleDate });
       }
-
       clearReschedule();
     } catch (error) {
       console.error('[Opportunities] Failed to reschedule follow-up.', error);
@@ -211,49 +204,44 @@ const OpportunitiesDashboard: React.FC<{
   const renderFollowUpSection = (title: string, items: FollowUpItem[], emptyText: string, highlight = false) => (
     <Card>
       <CardHeader>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <CardTitle style={{ fontSize: '14px' }}>{title}</CardTitle>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{items.length} items</span>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-sm">{title}</CardTitle>
+          <span className="text-xs text-neutral-500">{items.length} items</span>
         </div>
       </CardHeader>
       <CardContent>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {items.length === 0 ? (
             <EmptyState title={emptyText} />
           ) : (
             items.map((item) => {
               const isEditing = rescheduleTarget?.kind === item.kind && rescheduleTarget?.id === item.id;
-
               return (
-                <div key={`${item.kind}-${item.id}`} style={{
-                  borderRadius: '8px', border: `1px solid ${highlight ? '#fecaca' : '#e5e7eb'}`,
-                  background: highlight ? '#fff5f5' : '#f8fafc',
-                  padding: '12px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.companyName}</div>
-                      <div style={{ fontSize: '13px', color: '#475569' }}>{item.personName}</div>
-                      <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
+                <div
+                  key={`${item.kind}-${item.id}`}
+                  className={`rounded-lg border p-3 ${highlight ? 'border-red-200 bg-red-50/50' : 'border-neutral-200 bg-neutral-50'}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-black">{item.companyName}</div>
+                      <div className="text-sm text-neutral-600">{item.personName}</div>
+                      <div className="mt-1 flex flex-wrap gap-2 items-center text-xs text-neutral-500">
                         {item.channel && <Badge variant="neutral">{item.channel}</Badge>}
                         <Badge variant="neutral">Status: {item.statusText}</Badge>
                       </div>
                     </div>
-                    <div style={{ flexShrink: 0, textAlign: 'right', fontSize: '12px', color: '#64748b' }}>
+                    <div className="shrink-0 text-right text-xs text-neutral-500">
                       <div>{formatDate(item.nextFollowUpDate)}</div>
-                      <div style={{ marginTop: '4px', fontWeight: 500, color: '#0f172a' }}>Due</div>
+                      <div className="mt-1 font-medium text-black">Due</div>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <div className="mt-3 flex flex-wrap gap-2">
                     {onUseTemplate && (
-                      <Button
-                        variant="secondary" size="sm"
-                        onClick={() => {
-                          const targetPerson = people.find((person) => person.id === item.personId);
-                          if (targetPerson) onUseTemplate(targetPerson);
-                        }}
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => {
+                        const targetPerson = people.find((person) => person.id === item.personId);
+                        if (targetPerson) onUseTemplate(targetPerson);
+                      }}>
                         Use Template
                       </Button>
                     )}
@@ -262,16 +250,12 @@ const OpportunitiesDashboard: React.FC<{
                   </div>
 
                   {isEditing && (
-                    <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', borderRadius: '8px', border: '1px solid #bfdbfe', background: '#ffffff', padding: '12px' }}>
+                    <div className="mt-3 flex flex-wrap gap-2 rounded-lg border border-blue-200 bg-white p-3">
                       <input
                         type="date"
                         value={rescheduleDate}
                         onChange={(event) => setRescheduleDate(event.target.value)}
-                        style={{
-                          borderRadius: '6px', border: '1px solid #e5e7eb', padding: '6px 10px',
-                          fontSize: '12px', color: '#0f172a', background: '#ffffff',
-                          outline: 'none',
-                        }}
+                        className="rounded-md border border-neutral-200 px-2.5 py-1.5 text-xs text-black bg-white outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
                       />
                       <Button variant="primary" size="sm" onClick={() => void handleSaveReschedule()}>Save</Button>
                       <Button variant="secondary" size="sm" onClick={clearReschedule}>Cancel</Button>
@@ -287,13 +271,13 @@ const OpportunitiesDashboard: React.FC<{
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 600, color: '#0f172a' }}>Dashboard</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Pipeline health, follow-ups, and priority opportunities.</p>
+          <h2 className="m-0 text-xl font-semibold text-black">Dashboard</h2>
+          <p className="m-0 mt-1 text-sm text-neutral-500">Pipeline health, follow-ups, and priority opportunities.</p>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="flex flex-wrap gap-2">
           <Button variant="primary" size="md" onClick={onAddCompany}>Add Company</Button>
           <Button variant="secondary" size="md" onClick={onAddPerson}>Add Person</Button>
           <Button variant="secondary" size="md" onClick={onAddMessage}>Log Message</Button>
@@ -301,7 +285,7 @@ const OpportunitiesDashboard: React.FC<{
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
         <StatCard label="Total Companies" value={totalCompanies} icon="🏢" />
         <StatCard label="Total People" value={totalPeople} icon="👥" />
         <StatCard label="Messages Sent" value={messagesSent} icon="✉️" />
@@ -310,37 +294,33 @@ const OpportunitiesDashboard: React.FC<{
         <StatCard label="High Priority Leads" value={highPriorityCompanies.length} icon="⭐" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="grid grid-cols-1 gap-6">
+        <div className="flex flex-col gap-4">
           {renderFollowUpSection('Follow-ups Today', followUpsToday, 'No follow-ups today')}
           {renderFollowUpSection('Overdue Follow-ups', overdueFollowUps, 'No overdue items', true)}
           {upcomingFollowUps.length > 0 && renderFollowUpSection('Upcoming Follow-ups', upcomingFollowUps, 'No upcoming follow-ups')}
 
           <Card>
             <CardHeader>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <CardTitle style={{ fontSize: '14px' }}>High Priority Opportunities</CardTitle>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>{highPriorityCompanies.length} items</span>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">High Priority Opportunities</CardTitle>
+                <span className="text-xs text-neutral-500">{highPriorityCompanies.length} items</span>
               </div>
             </CardHeader>
             <CardContent>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {highPriorityCompanies.length === 0 ? (
                   <EmptyState title="No high priority opportunities." />
                 ) : (
                   highPriorityCompanies.map((company) => (
-                    <div key={company.id} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderRadius: '8px', border: '1px solid #e5e7eb',
-                      background: '#f8fafc', padding: '12px',
-                    }}>
+                    <div key={company.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 p-3">
                       <div>
-                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{company.name}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{company.databaseType || company.industry} • {company.city}</div>
+                        <div className="font-semibold text-black">{company.name}</div>
+                        <div className="text-xs text-neutral-500">{company.databaseType || company.industry} • {company.city}</div>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: '#64748b' }}>{company.nextAction ?? '—'}</span>
-                        <span style={{ fontSize: '13px', color: '#64748b' }}>Fit: {company.fitScore ?? '—'}</span>
+                      <div className="flex flex-wrap gap-3 items-center">
+                        <span className="text-sm text-neutral-500">{company.nextAction ?? '—'}</span>
+                        <span className="text-sm text-neutral-500">Fit: {company.fitScore ?? '—'}</span>
                         <PriorityBadge priority={company.priority} />
                         <StatusBadge status={company.status} />
                       </div>
@@ -353,24 +333,21 @@ const OpportunitiesDashboard: React.FC<{
 
           <Card>
             <CardHeader>
-              <CardTitle style={{ fontSize: '14px' }}>Recent Outreach</CardTitle>
+              <CardTitle className="text-sm">Recent Outreach</CardTitle>
             </CardHeader>
             <CardContent>
               {recentMessages.length === 0 ? (
                 <EmptyState title="No outreach yet." />
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className="flex flex-col">
                   {recentMessages.map((message) => (
-                    <div key={message.id} style={{
-                      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-                      padding: '12px 0', borderBottom: '1px solid #e5e7eb',
-                    }}>
+                    <div key={message.id} className="flex items-start justify-between py-3 border-b border-neutral-200 last:border-b-0">
                       <div>
-                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{message.companyName} — {message.personName}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{message.channel} • {message.messageType}</div>
-                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#94a3b8' }}>Reply: {message.replyStatus} • Next: {formatDate(message.nextFollowUpDate)}</div>
+                        <div className="font-semibold text-black">{message.companyName} — {message.personName}</div>
+                        <div className="text-xs text-neutral-500">{message.channel} • {message.messageType}</div>
+                        <div className="mt-1 text-xs text-neutral-400">Reply: {message.replyStatus} • Next: {formatDate(message.nextFollowUpDate)}</div>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', flexShrink: 0 }}>{formatDate(message.sentDate)}</div>
+                      <div className="text-xs text-neutral-500 shrink-0">{formatDate(message.sentDate)}</div>
                     </div>
                   ))}
                 </div>
@@ -380,16 +357,16 @@ const OpportunitiesDashboard: React.FC<{
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
         <Card>
           <CardContent>
-            <CardTitle style={{ fontSize: '14px' }}>Follow-up Snapshot</CardTitle>
-            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#64748b' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Today <strong>{followUpsToday.length}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Overdue <strong>{overdueFollowUps.length}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Upcoming <strong>{upcomingFollowUps.length}</strong></div>
+            <CardTitle className="text-sm">Follow-up Snapshot</CardTitle>
+            <div className="mt-3 flex flex-col gap-2 text-sm text-neutral-500">
+              <div className="flex justify-between">Today <strong className="text-black">{followUpsToday.length}</strong></div>
+              <div className="flex justify-between">Overdue <strong className="text-black">{overdueFollowUps.length}</strong></div>
+              <div className="flex justify-between">Upcoming <strong className="text-black">{upcomingFollowUps.length}</strong></div>
             </div>
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="mt-4 flex justify-end">
               <Button variant="secondary" size="sm" onClick={onResetDemoData}>Reset demo data</Button>
             </div>
           </CardContent>
@@ -397,12 +374,12 @@ const OpportunitiesDashboard: React.FC<{
 
         <Card>
           <CardContent>
-            <CardTitle style={{ fontSize: '14px' }}>Quick Stats</CardTitle>
-            <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: '#64748b' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Total Companies <strong>{totalCompanies}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Total People <strong>{totalPeople}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Open Deals <strong>{openDeals}</strong></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Follow-ups Due <strong>{followupsDue}</strong></div>
+            <CardTitle className="text-sm">Quick Stats</CardTitle>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-neutral-500">
+              <div className="flex justify-between">Total Companies <strong className="text-black">{totalCompanies}</strong></div>
+              <div className="flex justify-between">Total People <strong className="text-black">{totalPeople}</strong></div>
+              <div className="flex justify-between">Open Deals <strong className="text-black">{openDeals}</strong></div>
+              <div className="flex justify-between">Follow-ups Due <strong className="text-black">{followupsDue}</strong></div>
             </div>
           </CardContent>
         </Card>

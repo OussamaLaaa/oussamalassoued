@@ -1,13 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import Input from '../ui/Input';
+import Textarea from '../ui/Textarea';
 
-const STATUS_BADGE: Record<string, string> = {
-  todo: 'bg-[#f1f5f9] text-[#475569] border-[#e5e7eb]',
-  doing: 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]',
-  done: 'bg-[#f0fdf4] text-[#16a34a] border-[#bbf7d0]',
-  blocked: 'bg-[#fef2f2] text-[#dc2626] border-[#fecaca]',
-  cancelled: 'bg-[#f8fafc] text-[#94a3b8] border-[#e5e7eb]',
+const STATUS_BADGE_VARIANT: Record<string, 'neutral' | 'blue' | 'success' | 'danger'> = {
+  todo: 'neutral',
+  doing: 'blue',
+  done: 'success',
+  blocked: 'danger',
+  cancelled: 'neutral',
 };
 
 const PRIORITY_ICON: Record<string, string> = {
@@ -175,30 +179,30 @@ const TaskDetailWorkspace: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20">
-      <div className="w-full max-w-xl bg-white border-l border-[#e5e7eb] shadow-lg overflow-y-auto">
+      <div className="w-full max-w-xl bg-white border-l border-neutral-200 shadow-lg overflow-y-auto">
         <div className="p-5">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-xs px-1.5 py-0.5 rounded border ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+                <Badge variant={STATUS_BADGE_VARIANT[task.status] || 'neutral'}>{task.status}</Badge>
                 {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
-                {task.category && <span className="text-xs px-1.5 py-0.5 rounded bg-[#f8fafc] text-[#64748b] border border-[#e5e7eb]">{task.category}</span>}
+                {task.category && <Badge variant="neutral">{task.category}</Badge>}
               </div>
-              <h2 className="text-base font-semibold text-[#0f172a]">{task.title}</h2>
+              <h2 className="text-base font-semibold text-black">{task.title}</h2>
             </div>
-            <button type="button" onClick={onClose} className="text-xs px-2 py-1 rounded text-[#64748b] hover:bg-[#f8fafc]">✕</button>
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-[#e5e7eb] mb-4">
+          <div className="flex items-center gap-1 border-b border-neutral-200 mb-4">
             {(['overview', 'worklogs', 'links', 'notes'] as DetailTab[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
                 className={`text-xs px-3 py-2 border-b-2 transition-all ${
-                  tab === t ? 'border-[#2563eb] text-[#2563eb] font-medium' : 'border-transparent text-[#64748b] hover:text-[#0f172a]'
+                  tab === t ? 'border-black text-black font-medium' : 'border-transparent text-neutral-500 hover:text-black'
                 }`}
               >
                 {t === 'overview' ? 'Overview' : t === 'worklogs' ? `Work Logs (${logsForTask.length})` : t === 'links' ? 'Links' : 'Notes'}
@@ -211,48 +215,50 @@ const TaskDetailWorkspace: React.FC<{
             <div className="space-y-4">
               {task.description && (
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Description</label>
-                  <div className="text-sm text-[#0f172a]">{task.description}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Description</label>
+                  <div className="text-sm text-black">{task.description}</div>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Estimated</label>
-                  <div className="text-[#0f172a]">{formatHours(task.estimatedMinutes)}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Estimated</label>
+                  <div className="text-black">{formatHours(task.estimatedMinutes)}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Actual (logged)</label>
-                  <div className="text-[#0f172a]">{formatHours(totalMinutesLogged)}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Actual (logged)</label>
+                  <div className="text-black">{formatHours(totalMinutesLogged)}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Completed</label>
-                  <div className="text-[#0f172a]">{task.completedAt ? dayName(task.completedAt) : '—'}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Completed</label>
+                  <div className="text-black">{task.completedAt ? dayName(task.completedAt) : '—'}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Completed At</label>
-                  <div className="text-[#0f172a]">{task.completedAt ? formatDate(task.completedAt) : '—'}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Completed At</label>
+                  <div className="text-black">{task.completedAt ? formatDate(task.completedAt) : '—'}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Week</label>
-                  <div className="text-[#0f172a]">{task.weekStart || '—'}</div>
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Week</label>
+                  <div className="text-black">{task.weekStart || '—'}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#475569] mb-1 block">Linked Entities</label>
-                  <div className="text-[#0f172a]">
+                  <label className="text-xs font-medium text-neutral-600 mb-1 block">Linked Entities</label>
+                  <div className="text-black">
                     {task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedDocumentTitle ? 'Yes' : 'None'}
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[#e5e7eb]">
-                {task.status !== 'todo' && <button type="button" onClick={() => handleStatusChange('todo')} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">Todo</button>}
-                {task.status !== 'doing' && <button type="button" onClick={() => handleStatusChange('doing')} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe]">Doing</button>}
-                {task.status !== 'done' && <button type="button" onClick={() => handleStatusChange('done')} className="text-xs px-3 py-1.5 rounded border border-[#16a34a] bg-[#f0fdf4] text-[#16a34a] hover:bg-[#dcfce7]">Mark Done</button>}
-                {task.status !== 'blocked' && <button type="button" onClick={() => handleStatusChange('blocked')} className="text-xs px-3 py-1.5 rounded border border-[#dc2626] bg-[#fef2f2] text-[#dc2626] hover:bg-[#fee2e2]">Block</button>}
-                <button type="button" onClick={() => setEditing(true)} className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
-                <button type="button" onClick={() => { if (window.confirm('Delete this task?')) onDeleteTask(task.id); }} className="text-xs px-3 py-1.5 rounded border border-[#fecaca] text-[#dc2626] hover:bg-[#fef2f2]">Delete</button>
-                <button type="button" onClick={() => setShowAddLog(true)} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]">+ Log Time</button>
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-neutral-200">
+                {task.status !== 'todo' && <Button variant="outline" size="sm" onClick={() => handleStatusChange('todo')}>Todo</Button>}
+                {task.status !== 'doing' && (
+                  <button type="button" onClick={() => handleStatusChange('doing')} className="text-xs px-3 py-1.5 rounded-lg border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100">Doing</button>
+                )}
+                {task.status !== 'done' && <Button variant="success" size="sm" onClick={() => handleStatusChange('done')}>Mark Done</Button>}
+                {task.status !== 'blocked' && <Button variant="danger" size="sm" onClick={() => handleStatusChange('blocked')}>Block</Button>}
+                <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Edit</Button>
+                <Button variant="danger" size="sm" onClick={() => { if (window.confirm('Delete this task?')) onDeleteTask(task.id); }}>Delete</Button>
+                <Button variant="primary" size="sm" onClick={() => setShowAddLog(true)}>+ Log Time</Button>
               </div>
             </div>
           )}
@@ -261,30 +267,30 @@ const TaskDetailWorkspace: React.FC<{
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium text-[#0f172a]">Work Logs</span>
-                  <span className="text-xs text-[#64748b] ml-2">Total: {formatHours(totalMinutesLogged)}</span>
+                  <span className="text-sm font-medium text-black">Work Logs</span>
+                  <span className="text-xs text-neutral-500 ml-2">Total: {formatHours(totalMinutesLogged)}</span>
                 </div>
-                <button type="button" onClick={() => setShowAddLog(true)} className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]">+ Add Log</button>
+                <Button variant="primary" size="sm" onClick={() => setShowAddLog(true)}>+ Add Log</Button>
               </div>
 
               {logsForTask.length === 0 ? (
-                <div className="text-xs text-[#94a3b8] py-4 text-center">No work logs yet.</div>
+                <div className="text-xs text-neutral-400 py-4 text-center">No work logs yet.</div>
               ) : (
                 <div className="space-y-2">
                   {logsForTask.map((log) => (
-                    <div key={log.id} className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm">
+                    <div key={log.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-[#0f172a]">{formatDate(log.workDate)}</span>
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-[#eff6ff] text-[#2563eb]">{formatHours(log.minutesSpent)}</span>
+                            <span className="text-xs font-medium text-black">{formatDate(log.workDate)}</span>
+                            <Badge variant="blue">{formatHours(log.minutesSpent)}</Badge>
                           </div>
-                          {log.summary && <div className="mt-0.5 text-xs text-[#0f172a]">{log.summary}</div>}
-                          {log.notes && <div className="mt-0.5 text-xs text-[#64748b] italic">{log.notes}</div>}
+                          {log.summary && <div className="mt-0.5 text-xs text-black">{log.summary}</div>}
+                          {log.notes && <div className="mt-0.5 text-xs text-neutral-500 italic">{log.notes}</div>}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button type="button" onClick={() => startEditLog(log)} className="text-xs px-2 py-1 rounded text-[#2563eb] hover:bg-[#eff6ff]">Edit</button>
-                          <button type="button" onClick={() => handleDeleteLog(log.id)} className="text-xs px-2 py-1 rounded text-[#dc2626] hover:bg-[#fef2f2]">Del</button>
+                          <Button variant="ghost" size="sm" onClick={() => startEditLog(log)}>Edit</Button>
+                          <Button variant="danger" size="sm" onClick={() => handleDeleteLog(log.id)}>Del</Button>
                         </div>
                       </div>
                     </div>
@@ -298,15 +304,15 @@ const TaskDetailWorkspace: React.FC<{
             <div className="space-y-2">
               {(task.linkedProjectName || task.linkedPlanTitle || task.linkedStrategyGoalTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedDocumentTitle) ? (
                 <div className="flex flex-wrap gap-2">
-                  {task.linkedProjectName && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Project:</span> <span className="text-[#0f172a]">{task.linkedProjectName}</span></div>}
-                  {task.linkedPlanTitle && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Plan:</span> <span className="text-[#0f172a]">{task.linkedPlanTitle}</span></div>}
-                  {task.linkedStrategyGoalTitle && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Strategy Goal:</span> <span className="text-[#0f172a]">{task.linkedStrategyGoalTitle}</span></div>}
-                  {task.linkedCompanyName && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Company:</span> <span className="text-[#0f172a]">{task.linkedCompanyName}</span></div>}
-                  {task.linkedPersonName && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Person:</span> <span className="text-[#0f172a]">{task.linkedPersonName}</span></div>}
-                  {task.linkedDocumentTitle && <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm w-full"><span className="text-xs text-[#64748b]">Document:</span> <span className="text-[#0f172a]">{task.linkedDocumentTitle}</span></div>}
+                  {task.linkedProjectName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Project:</span> <span className="text-black">{task.linkedProjectName}</span></div>}
+                  {task.linkedPlanTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Plan:</span> <span className="text-black">{task.linkedPlanTitle}</span></div>}
+                  {task.linkedStrategyGoalTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Strategy Goal:</span> <span className="text-black">{task.linkedStrategyGoalTitle}</span></div>}
+                  {task.linkedCompanyName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Company:</span> <span className="text-black">{task.linkedCompanyName}</span></div>}
+                  {task.linkedPersonName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Person:</span> <span className="text-black">{task.linkedPersonName}</span></div>}
+                  {task.linkedDocumentTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Document:</span> <span className="text-black">{task.linkedDocumentTitle}</span></div>}
                 </div>
               ) : (
-                <div className="text-xs text-[#94a3b8] py-4 text-center">No linked entities.</div>
+                <div className="text-xs text-neutral-400 py-4 text-center">No linked entities.</div>
               )}
             </div>
           )}
@@ -314,47 +320,35 @@ const TaskDetailWorkspace: React.FC<{
           {tab === 'notes' && (
             <div>
               {task.notes ? (
-                <div className="rounded-md border border-[#e5e7eb] bg-white p-3 text-sm text-[#0f172a] whitespace-pre-wrap">{task.notes}</div>
+                <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-black whitespace-pre-wrap">{task.notes}</div>
               ) : (
-                <div className="text-xs text-[#94a3b8] py-4 text-center">No notes.</div>
+                <div className="text-xs text-neutral-400 py-4 text-center">No notes.</div>
               )}
             </div>
           )}
 
           {/* Add / Edit Work Log Form */}
           {(showAddLog || editingLog) && !editing && (
-            <div className="mt-4 pt-4 border-t border-[#e5e7eb] space-y-3">
-              <h4 className="text-sm font-medium text-[#0f172a]">{editingLog ? 'Edit Work Log' : 'Add Work Log'}</h4>
+            <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+              <h4 className="text-sm font-medium text-black">{editingLog ? 'Edit Work Log' : 'Add Work Log'}</h4>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-[#475569] mb-1">Date</label>
-                  <input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#475569] mb-1">Minutes</label>
-                  <input type="number" min={1} value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                </div>
+                <Input label="Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
+                <Input label="Minutes" type="number" min={1} value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-[#475569] mb-1">Summary</label>
-                <input type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#475569] mb-1">Notes</label>
-                <textarea value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-              </div>
+              <Input label="Summary" type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
+              <Textarea label="Notes" value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} />
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={() => { setShowAddLog(false); setEditingLog(null); }} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
-                <button type="button" onClick={editingLog ? handleUpdateLog : handleSubmitLog} className="px-4 py-2 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] text-sm">
+                <Button type="button" variant="secondary" onClick={() => { setShowAddLog(false); setEditingLog(null); }}>Cancel</Button>
+                <Button type="button" variant="primary" onClick={editingLog ? handleUpdateLog : handleSubmitLog}>
                   {editingLog ? 'Update' : 'Add'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
 
           {/* Edit Task Form */}
           {editing && (
-            <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+            <div className="mt-4 pt-4 border-t border-neutral-200">
               <TaskForm
                 initial={task}
                 projects={projects}
@@ -375,30 +369,18 @@ const TaskDetailWorkspace: React.FC<{
           {/* Completion Modal */}
           {completing && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30">
-              <div className="w-full max-w-sm rounded-lg border border-[#e5e7eb] bg-white p-5 shadow-lg">
-                <h3 className="text-sm font-medium text-[#0f172a] mb-3">Complete Task</h3>
-                <p className="text-xs text-[#64748b] mb-4">{task.title}</p>
+              <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-lg">
+                <h3 className="text-sm font-medium text-black mb-3">Complete Task</h3>
+                <p className="text-xs text-neutral-500 mb-4">{task.title}</p>
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-[#475569] mb-1">Completion Date</label>
-                    <input type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-[#475569] mb-1">Hours Spent</label>
-                    <input type="number" min={0} step={0.5} value={completionHours} onChange={(e) => setCompletionHours(e.target.value)} placeholder="e.g. 2.5" className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-[#475569] mb-1">Summary</label>
-                    <input type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-[#475569] mb-1">Notes</label>
-                    <textarea value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-                  </div>
+                  <Input label="Completion Date" type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} />
+                  <Input label="Hours Spent" type="number" min={0} step={0.5} value={completionHours} onChange={(e) => setCompletionHours(e.target.value)} placeholder="e.g. 2.5" />
+                  <Input label="Summary" type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} />
+                  <Textarea label="Notes" value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} />
                 </div>
-                <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#e5e7eb]">
-                  <button type="button" onClick={() => setCompleting(false)} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] text-sm">Cancel</button>
-                  <button type="button" onClick={handleComplete} className="px-4 py-2 rounded border border-[#16a34a] bg-[#16a34a] text-white hover:bg-[#15803d] text-sm">Mark Done</button>
+                <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-200">
+                  <Button type="button" variant="secondary" onClick={() => setCompleting(false)}>Cancel</Button>
+                  <Button type="button" variant="success" onClick={handleComplete}>Mark Done</Button>
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button, Badge } from '../ui';
 import type {
   Company, Person, Project,
   StrategyDecision, StrategyDecisionInput,
@@ -449,46 +450,47 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     const ethicalItems = strategyItems.filter((item) => item.section === 'ethical_filter');
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-[#e2e8f0] bg-gradient-to-br from-[#f8fafc] to-white p-4">
-          <h4 className="text-sm font-semibold text-[#0f172a]">Ethical Principles</h4>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h4 className="text-sm font-semibold text-black">Ethical Principles</h4>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-1.5 text-xs font-medium text-[#991b1b]">
-              <span className="text-[#b91c1c]">✕</span> avoid gambling
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
+              <span className="text-red-600">✕</span> avoid gambling
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-1.5 text-xs font-medium text-[#991b1b]">
-              <span className="text-[#b91c1c]">✕</span> avoid adult content
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
+              <span className="text-red-600">✕</span> avoid adult content
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-1.5 text-xs font-medium text-[#991b1b]">
-              <span className="text-[#b91c1c]">✕</span> avoid interest-based loans
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
+              <span className="text-red-600">✕</span> avoid interest-based loans
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#fed7aa] bg-[#fff7ed] px-3 py-1.5 text-xs font-medium text-[#9a3412]">
-              <span className="text-[#d97706]">⚠</span> review fintech/insurance/speculative crypto
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700">
+              <span className="text-orange-500">⚠</span> review fintech/insurance/speculative crypto
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#86efac] bg-[#f0fdf4] px-3 py-1.5 text-xs font-medium text-[#166534]">
-              <span className="text-[#16a34a]">✓</span> prefer education, health, productivity, ethical commerce
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+              <span className="text-emerald-600">✓</span> prefer education, health, productivity, ethical commerce
             </span>
           </div>
         </div>
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => onAddStrategyItem({ section: 'ethical_filter', title: 'New ethical filter rule', content: 'Define a concrete filter condition.', priority: 'medium', status: 'active' })}
-            className="rounded-lg border border-[#cbd5e1] bg-white px-4 py-2 text-sm font-medium text-[#475569] transition-all hover:border-[#2563eb] hover:text-[#2563eb]"
           >
             Add Ethical Item
-          </button>
+          </Button>
         </div>
         {ethicalItems.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-[#dbe3ef] bg-[#fafcff] p-6 text-center text-sm text-[#64748b]">No ethical filter items yet.</div>
+          <div className="rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 p-6 text-center text-sm text-neutral-500">No ethical filter items yet.</div>
         ) : (
           <div className="space-y-2">
             {ethicalItems.map((item) => (
-              <div key={item.id} className="rounded-xl border border-[#e2e8f0] bg-white p-3">
+              <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h5 className="text-sm font-semibold text-[#0f172a]">{item.title}</h5>
-                  <button type="button" onClick={() => onDeleteStrategyItem(item.id)} className="rounded-lg border border-[#fecaca] bg-white px-2 py-1 text-xs font-medium text-[#991b1b] transition-all hover:bg-[#fef2f2]">Delete</button>
+                  <h5 className="text-sm font-semibold text-black">{item.title}</h5>
+                  <Button type="button" variant="danger" size="sm" onClick={() => onDeleteStrategyItem(item.id)}>Delete</Button>
                 </div>
-                <p className="mt-1 text-sm text-[#64748b]">{item.content || 'No content'}</p>
+                <p className="mt-1 text-sm text-neutral-500">{item.content || 'No content'}</p>
               </div>
             ))}
           </div>
@@ -504,44 +506,44 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
 
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-[#e2e8f0] bg-gradient-to-br from-[#f8fafc] to-white p-4">
-          <h4 className="text-sm font-semibold text-[#0f172a]">Strategic Review</h4>
-          <p className="mt-1 text-xs text-[#64748b]">Keep strategic loops tight: review what is due, decide what to continue, stop, or switch.</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h4 className="text-sm font-semibold text-black">Strategic Review</h4>
+          <p className="mt-1 text-xs text-neutral-500">Keep strategic loops tight: review what is due, decide what to continue, stop, or switch.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-xl border border-[#e2e8f0] bg-white p-4">
-            <h5 className="text-sm font-semibold text-[#0f172a]">Overdue Goals</h5>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h5 className="text-sm font-semibold text-black">Overdue Goals</h5>
             <div className="mt-2 space-y-2">
               {dueGoals.length === 0
-                ? <p className="text-sm text-[#64748b]">No overdue goals.</p>
+                ? <p className="text-sm text-neutral-500">No overdue goals.</p>
                 : dueGoals.map((g) => (
-                  <div key={g.id} className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-2.5 text-sm text-[#334155]">
+                  <div key={g.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-sm text-neutral-700">
                     <div className="font-medium">{g.title}</div>
-                    <div className="text-xs text-[#64748b]">Target: {g.targetDate?.slice(0, 10)}</div>
+                    <div className="text-xs text-neutral-500">Target: {g.targetDate?.slice(0, 10)}</div>
                   </div>
                 ))}
             </div>
           </div>
-          <div className="rounded-xl border border-[#e2e8f0] bg-white p-4">
-            <h5 className="text-sm font-semibold text-[#0f172a]">Decisions to Review</h5>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h5 className="text-sm font-semibold text-black">Decisions to Review</h5>
             <div className="mt-2 space-y-2">
               {dueDecisions.length === 0
-                ? <p className="text-sm text-[#64748b]">No due decisions.</p>
+                ? <p className="text-sm text-neutral-500">No due decisions.</p>
                 : dueDecisions.map((d) => (
-                  <div key={d.id} className="rounded-lg border border-[#fecaca] bg-[#fff5f5] p-2.5 text-sm text-[#7f1d1d]">
+                  <div key={d.id} className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-sm text-red-700">
                     <div className="font-medium">{d.title}</div>
                     <div className="text-xs">Review: {d.reviewDate?.slice(0, 10)}</div>
                   </div>
                 ))}
             </div>
           </div>
-          <div className="rounded-xl border border-[#e2e8f0] bg-white p-4">
-            <h5 className="text-sm font-semibold text-[#0f172a]">Experiments Past End</h5>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h5 className="text-sm font-semibold text-black">Experiments Past End</h5>
             <div className="mt-2 space-y-2">
               {dueExperiments.length === 0
-                ? <p className="text-sm text-[#64748b]">No experiments past end date.</p>
+                ? <p className="text-sm text-neutral-500">No experiments past end date.</p>
                 : dueExperiments.map((e) => (
-                  <div key={e.id} className="rounded-lg border border-[#fed7aa] bg-[#fff7ed] p-2.5 text-sm text-[#9a3412]">
+                  <div key={e.id} className="rounded-lg border border-orange-200 bg-orange-50 p-2.5 text-sm text-orange-700">
                     <div className="font-medium">{e.title}</div>
                     <div className="text-xs">Ended: {e.endDate?.slice(0, 10)}</div>
                   </div>
@@ -585,26 +587,27 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
       ) : (
         <>
           {starterVisible ? (
-            <div className="rounded-xl border-2 border-dashed border-[#2563eb]/30 bg-gradient-to-br from-[#eff6ff] to-white p-6">
+            <div className="rounded-xl border-2 border-dashed border-neutral-200 bg-white p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-semibold text-[#0f172a]">Create Starter Strategy System</h3>
-                  <p className="mt-1 text-sm text-[#475569]">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
+                  <h3 className="text-base font-semibold text-black">Create Starter Strategy System</h3>
+                  <p className="mt-1 text-sm text-neutral-600">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="primary"
+                  size="lg"
                   onClick={handleCreateStarterSystem}
                   disabled={isBusy}
-                  className="rounded-lg bg-[#2563eb] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[#1d4ed8] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isBusy ? 'Creating...' : 'Create Starter Strategy'}
-                </button>
+                </Button>
               </div>
-              {formError ? <p className="mt-3 text-sm text-[#b91c1c]">{formError}</p> : null}
+              {formError ? <p className="mt-3 text-sm text-red-600">{formError}</p> : null}
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-1.5 border-b border-[#e2e8f0] pb-2">
+          <div className="flex flex-wrap gap-1.5 border-b border-neutral-200 pb-2">
             {SECTIONS.map((section) => (
               <button
                 key={section.value}
@@ -612,8 +615,8 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
                 onClick={() => setActiveSection(section.value)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                   activeSection === section.value
-                    ? 'bg-[#2563eb] text-white shadow-sm'
-                    : 'bg-[#f8fafc] text-[#475569] hover:bg-[#e2e8f0]'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-200'
                 }`}
               >
                 {section.label}
@@ -622,10 +625,10 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-            <div className="xl:col-span-9 rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <div className="xl:col-span-9 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
               {renderMainSection()}
             </div>
-            <div className="xl:col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+            <div className="xl:col-span-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
               <InsightSidebar goals={strategyGoals} plans={strategyPlans} decisions={strategyDecisions} />
             </div>
           </div>

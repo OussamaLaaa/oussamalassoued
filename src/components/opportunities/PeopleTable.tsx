@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { Person } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import Select from '../ui/Select';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 
@@ -35,6 +36,21 @@ const badgeForRelationshipStatus = (status?: string) => {
   if (s.includes('cold') || s.includes('old')) return <Badge variant="neutral">{status}</Badge>;
   return <Badge variant="blue">{status}</Badge>;
 };
+
+const decisionPowerOptions = [
+  { value: '', label: 'Decision Power' },
+  { value: '3', label: 'High' },
+  { value: '2', label: 'Medium' },
+  { value: '1', label: 'Low' },
+  { value: '0', label: 'None' },
+];
+
+const relevanceOptions = [
+  { value: '', label: 'Relevance' },
+  { value: '3', label: 'High' },
+  { value: '2', label: 'Medium' },
+  { value: '1', label: 'Low' },
+];
 
 const PeopleTable: React.FC<{
   people: Person[];
@@ -83,102 +99,79 @@ const PeopleTable: React.FC<{
 
   const statusSet = new Set<string>();
   people.forEach(p => { if (p.relationshipStatus) statusSet.add(p.relationshipStatus); });
-  const statusOptions = Array.from(statusSet).sort();
+  const statusOptions = Array.from(statusSet).sort().map((s) => ({ value: s, label: s }));
 
   return (
     <Card>
       <CardHeader>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <CardTitle style={{ fontSize: '14px' }}>People</CardTitle>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{filtered.length} / {people.length}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>People</CardTitle>
+          <span className="text-xs text-neutral-500">{filtered.length} / {people.length}</span>
         </div>
       </CardHeader>
       <CardContent>
         {filters && (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px',
-            marginBottom: '12px', paddingBottom: '12px',
-            borderBottom: '1px solid #e5e7eb',
-          }}>
-            <select
+          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+            <Select
               value={filters.decisionPower}
               onChange={(e) => setFilter('decisionPower', e.target.value)}
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', outline: 'none' }}
-            >
-              <option value="">Decision Power</option>
-              <option value="3">High</option>
-              <option value="2">Medium</option>
-              <option value="1">Low</option>
-              <option value="0">None</option>
-            </select>
-            <select
+              options={decisionPowerOptions}
+            />
+            <Select
               value={filters.relevance}
               onChange={(e) => setFilter('relevance', e.target.value)}
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', outline: 'none' }}
-            >
-              <option value="">Relevance</option>
-              <option value="3">High</option>
-              <option value="2">Medium</option>
-              <option value="1">Low</option>
-            </select>
-            <select
+              options={relevanceOptions}
+            />
+            <Select
               value={filters.relationshipStatus}
               onChange={(e) => setFilter('relationshipStatus', e.target.value)}
-              style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: '#ffffff', color: '#0f172a', outline: 'none' }}
-            >
-              <option value="">Relationship Status</option>
-              {statusOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'Relationship Status' }, ...statusOptions]}
+            />
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} style={{ color: '#dc2626' }}>Clear filters</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">Clear filters</Button>
             )}
           </div>
         )}
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr style={{ fontSize: '12px', color: '#475569', background: '#f8fafc' }}>
-                <th style={{ padding: '8px 12px' }}>Name</th>
-                <th style={{ padding: '8px 12px' }}>Company</th>
-                <th style={{ padding: '8px 12px' }}>Role</th>
-                <th style={{ padding: '8px 12px' }}>Seniority</th>
-                <th style={{ padding: '8px 12px' }}>Relevance</th>
-                <th style={{ padding: '8px 12px' }}>Decision Power</th>
-                <th style={{ padding: '8px 12px' }}>Relationship</th>
-                <th style={{ padding: '8px 12px' }}>Contact</th>
-                <th style={{ padding: '8px 12px' }}>Actions</th>
+              <tr className="text-xs text-neutral-500 bg-neutral-50">
+                <th className="px-3 py-2">Name</th>
+                <th className="px-3 py-2">Company</th>
+                <th className="px-3 py-2">Role</th>
+                <th className="px-3 py-2">Seniority</th>
+                <th className="px-3 py-2">Relevance</th>
+                <th className="px-3 py-2">Decision Power</th>
+                <th className="px-3 py-2">Relationship</th>
+                <th className="px-3 py-2">Contact</th>
+                <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} style={{ borderTop: '1px solid #e5e7eb' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f9fafb'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ fontWeight: 600, color: '#0f172a' }}>{p.fullName}</div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>{p.linkedin || p.emailPublic}</div>
+                <tr key={p.id} className="border-t border-neutral-200 hover:bg-neutral-50">
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-neutral-900">{p.fullName}</div>
+                    <div className="text-xs text-neutral-500">{p.linkedin || p.emailPublic}</div>
                   </td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{p.companyName}</td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{p.role}</td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{p.seniority}</td>
-                  <td style={{ padding: '12px' }}>{badgeForRelevance(p.relevance)}</td>
-                  <td style={{ padding: '12px' }}>{badgeForDecisionPower(p.decisionPower)}</td>
-                  <td style={{ padding: '12px' }}>{badgeForRelationshipStatus(p.relationshipStatus)}</td>
-                  <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a' }}>{p.contactChannel}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{p.companyName}</td>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{p.role}</td>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{p.seniority}</td>
+                  <td className="px-3 py-3">{badgeForRelevance(p.relevance)}</td>
+                  <td className="px-3 py-3">{badgeForDecisionPower(p.decisionPower)}</td>
+                  <td className="px-3 py-3">{badgeForRelationshipStatus(p.relationshipStatus)}</td>
+                  <td className="px-3 py-3 text-sm text-neutral-900">{p.contactChannel}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex gap-1 flex-wrap">
                       {onUseTemplate && (
-                        <Button variant="ghost" size="sm" onClick={() => onUseTemplate(p)} style={{ color: '#0f172a' }}>Template</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onUseTemplate(p)} className="text-neutral-900">Template</Button>
                       )}
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(p)} style={{ color: '#2563eb' }}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(p)} className="text-blue-600 hover:text-blue-700">Edit</Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(p.id)} style={{ color: '#dc2626' }}>Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(p.id)} className="text-red-600 hover:text-red-700">Delete</Button>
                       )}
                     </div>
                   </td>
@@ -186,7 +179,7 @@ const PeopleTable: React.FC<{
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} style={{ padding: '32px 12px', textAlign: 'center' }}>
+                  <td colSpan={9} className="px-3 py-8 text-center">
                     <EmptyState title="No people match the current filters." />
                   </td>
                 </tr>

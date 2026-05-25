@@ -46,42 +46,7 @@ interface FinancePanelProps {
   onDeleteFinanceRecurringRule: (id: string) => Promise<void>;
 }
 
-const s = {
-  page: { minHeight: '100vh', background: '#f8fafc' },
-  layout: { display: 'flex', gap: '24px', padding: '24px', maxWidth: '1280px', margin: '0 auto', alignItems: 'flex-start' as const },
-  main: { flex: '1', minWidth: '0' },
-  side: { width: '260px', flexShrink: '0' as const, position: 'sticky' as const, top: '24px' },
-  nav: { display: 'flex', gap: '8px', flexWrap: 'wrap' as const, marginBottom: '24px', borderBottom: '1px solid #e5e7eb', paddingBottom: '12px' },
-  navBtn: (active: boolean) => ({ padding: '8px 16px', fontSize: '14px', fontWeight: 500 as const, color: active ? '#2563eb' : '#64748b', background: active ? '#eff6ff' : 'transparent', border: active ? '1px solid #bfdbfe' : '1px solid transparent', borderRadius: '6px', cursor: 'pointer' }),
-  card: { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '16px' },
-  sCard: { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '14px' },
-  cardT: { fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 as const },
-  cardV: { fontSize: '22px', fontWeight: 700 as const, color: '#0f172a' },
-  dashGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '14px', marginBottom: '24px' },
-  badge: (c: string) => ({ display: 'inline-flex', padding: '2px 8px', fontSize: '11px', fontWeight: 600 as const, borderRadius: '999px', background: c === 'green' ? '#dcfce7' : c === 'red' ? '#fef2f2' : c === 'yellow' ? '#fef9c3' : c === 'blue' ? '#eff6ff' : c === 'purple' ? '#f3e8ff' : c === 'orange' ? '#fff7ed' : '#f1f5f9', color: c === 'green' ? '#166534' : c === 'red' ? '#991b1b' : c === 'yellow' ? '#854d0e' : c === 'blue' ? '#1d4ed8' : c === 'purple' ? '#6b21a8' : c === 'orange' ? '#c2410c' : '#475569' }),
-  input: { width: '100%', padding: '8px 12px', fontSize: '14px', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#0f172a', background: '#ffffff', boxSizing: 'border-box' as const, outline: 'none' as const },
-  select: { width: '100%', padding: '8px 12px', fontSize: '14px', border: '1px solid #e5e7eb', borderRadius: '6px', color: '#0f172a', background: '#ffffff', boxSizing: 'border-box' as const, outline: 'none' as const },
-  btn: (c: string) => ({ padding: '7px 16px', fontSize: '13px', fontWeight: 600 as const, border: 'none', borderRadius: '6px', cursor: 'pointer', background: c, color: '#ffffff' }),
-  btnS: (c: string) => ({ padding: '4px 10px', fontSize: '11px', fontWeight: 600 as const, border: 'none', borderRadius: '5px', cursor: 'pointer', background: c, color: '#ffffff' }),
-  btnO: { padding: '5px 10px', fontSize: '12px', fontWeight: 500 as const, border: '1px solid #e5e7eb', borderRadius: '5px', cursor: 'pointer', background: '#ffffff', color: '#64748b' },
-  formGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '8px' },
-  fullW: { gridColumn: '1 / -1' as const },
-  overlay: { position: 'fixed' as const, inset: '0', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center' as const, justifyContent: 'center' as const, zIndex: 1000 },
-  modal: { background: '#ffffff', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '680px', maxHeight: '85vh', overflowY: 'auto' as const },
-  act: { display: 'flex', gap: '8px', justifyContent: 'flex-end' as const, marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' },
-  bar: (p: number) => ({ height: '8px', background: '#e5e7eb', borderRadius: '999px', overflow: 'hidden' as const }),
-  fill: (p: number, c: string) => ({ height: '100%', width: `${Math.min(100, Math.max(0, p))}%`, background: c, borderRadius: '999px', transition: 'width 0.3s' }),
-  iBtn: { padding: '4px 8px', fontSize: '12px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent', color: '#64748b' },
-  empty: { textAlign: 'center' as const, padding: '48px 24px', color: '#64748b', fontSize: '14px' },
-  insCard: { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '14px', marginBottom: '10px' },
-  insT: { fontSize: '13px', fontWeight: 600 as const, color: '#0f172a', marginBottom: '6px' },
-  insX: { fontSize: '12px', color: '#64748b', lineHeight: '1.5' as const },
-  hdr: { fontSize: '18px', fontWeight: 700 as const, color: '#0f172a', margin: 0 },
-  row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' as const, gap: '8px' },
-  iNav: { display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #e5e7eb' },
-  iNavBtn: (a: boolean) => ({ padding: '6px 14px', fontSize: '13px', fontWeight: 500 as const, color: a ? '#2563eb' : '#64748b', background: a ? '#eff6ff' : 'transparent', border: a ? '1px solid #bfdbfe' : '1px solid transparent', borderRadius: '6px', cursor: 'pointer' }),
-  warn: { padding: '12px 16px', borderRadius: '8px', fontSize: '14px', marginBottom: '16px' },
-};
+
 
 const now = new Date();
 const cMonth = now.getMonth();
@@ -372,107 +337,107 @@ function FinancePanel({
 
   function renderIncomeForm(e?: FinanceIncome) {
     const d = e || defaultIncome;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Income title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Type</label><select style={s.select} defaultValue={d.incomeType||'other'} onChange={e=>handleModalChange('incomeType',e.target.value)}>{INCOME_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Source</label><select style={s.select} defaultValue={d.source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'expected'} onChange={e=>handleModalChange('status',e.target.value)}>{INCOME_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label style={s.cardT}>Recurrence</label><select style={s.select} defaultValue={d.recurrence||'once'} onChange={e=>handleModalChange('recurrence',e.target.value)}>{RECURRENCE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Income Date</label><input style={s.input} type="date" defaultValue={d.incomeDate||''} onChange={e=>handleModalChange('incomeDate',e.target.value)} /></div>
-      <div><label style={s.cardT}>Expected Date</label><input style={s.input} type="date" defaultValue={d.expectedDate||''} onChange={e=>handleModalChange('expectedDate',e.target.value)} /></div>
-      <div><label style={s.cardT}>Received Date</label><input style={s.input} type="date" defaultValue={(d as any).receivedDate||''} onChange={e=>handleModalChange('receivedDate',e.target.value)} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Finance Period</label><select style={s.select} defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Income title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Type</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.incomeType||'other'} onChange={e=>handleModalChange('incomeType',e.target.value)}>{INCOME_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Source</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'expected'} onChange={e=>handleModalChange('status',e.target.value)}>{INCOME_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Recurrence</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.recurrence||'once'} onChange={e=>handleModalChange('recurrence',e.target.value)}>{RECURRENCE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Income Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.incomeDate||''} onChange={e=>handleModalChange('incomeDate',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Expected Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.expectedDate||''} onChange={e=>handleModalChange('expectedDate',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Received Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).receivedDate||''} onChange={e=>handleModalChange('receivedDate',e.target.value)} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Finance Period</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
     </div>;
   }
 
   function renderExpenseForm(e?: FinanceExpense) {
     const d = e || defaultExpense;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Expense title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{EXPENSE_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label style={s.cardT}>Expense Date</label><input style={s.input} type="date" defaultValue={d.expenseDate||''} onChange={e=>handleModalChange('expenseDate',e.target.value)} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Finance Period</label><select style={s.select} defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Expense title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{EXPENSE_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Expense Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.expenseDate||''} onChange={e=>handleModalChange('expenseDate',e.target.value)} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Finance Period</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
     </div>;
   }
 
   function renderAllocationForm(e?: FinanceAllocationRule) {
     const d = e || defaultRule;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Name</label><input style={s.input} defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
-      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'needs'} onChange={e=>handleModalChange('category',e.target.value)}>{ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Percentage (%)</label><input style={s.input} type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Priority</label><input style={s.input} type="number" defaultValue={d.priority||0} onChange={e=>handleModalChange('priority',Number(e.target.value))} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Name</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'needs'} onChange={e=>handleModalChange('category',e.target.value)}>{ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Percentage (%)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Priority</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.priority||0} onChange={e=>handleModalChange('priority',Number(e.target.value))} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
     </div>;
   }
 
   function renderGoalForm(e?: FinancePurchaseGoal) {
     const d = e || defaultGoal;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="What to buy" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{GOAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Priority</label><select style={s.select} defaultValue={d.priority||'medium'} onChange={e=>handleModalChange('priority',e.target.value)}>{GOAL_PRIORITIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Target Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.targetAmount||0} onChange={e=>handleModalChange('targetAmount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Saved Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.savedAmount||0} onChange={e=>handleModalChange('savedAmount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label style={s.cardT}>Target Date</label><input style={s.input} type="date" defaultValue={(d as any).targetDate||''} onChange={e=>handleModalChange('targetDate',e.target.value)} /></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="What to buy" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{GOAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Priority</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.priority||'medium'} onChange={e=>handleModalChange('priority',e.target.value)}>{GOAL_PRIORITIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Target Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.targetAmount||0} onChange={e=>handleModalChange('targetAmount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Saved Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.savedAmount||0} onChange={e=>handleModalChange('savedAmount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Target Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).targetDate||''} onChange={e=>handleModalChange('targetDate',e.target.value)} /></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
     </div>;
   }
 
   function renderIdeaForm(e?: FinanceInvestmentIdea) {
     const d = e || defaultIdea;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="Investment idea" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Type</label><select style={s.select} defaultValue={d.type||'stocks'} onChange={e=>handleModalChange('type',e.target.value)}>{INVESTMENT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Risk Level</label><select style={s.select} defaultValue={d.riskLevel||'medium'} onChange={e=>handleModalChange('riskLevel',e.target.value)}>{RISK_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Ethical Status</label><select style={s.select} defaultValue={d.ethicalStatus||'good'} onChange={e=>handleModalChange('ethicalStatus',e.target.value)}>{ETHICAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Status</label><select style={s.select} defaultValue={d.status||'researching'} onChange={e=>handleModalChange('status',e.target.value)}>{INVESTMENT_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Planned Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.plannedAmount||0} onChange={e=>handleModalChange('plannedAmount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label style={s.cardT}>Decision</label><select style={s.select} defaultValue={(d as any).decision||'researching'} onChange={e=>handleModalChange('decision',e.target.value)}>{INVEST_DECISION_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Investment idea" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Type</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.type||'stocks'} onChange={e=>handleModalChange('type',e.target.value)}>{INVESTMENT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Risk Level</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.riskLevel||'medium'} onChange={e=>handleModalChange('riskLevel',e.target.value)}>{RISK_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Ethical Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.ethicalStatus||'good'} onChange={e=>handleModalChange('ethicalStatus',e.target.value)}>{ETHICAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'researching'} onChange={e=>handleModalChange('status',e.target.value)}>{INVESTMENT_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Planned Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.plannedAmount||0} onChange={e=>handleModalChange('plannedAmount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Decision</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).decision||'researching'} onChange={e=>handleModalChange('decision',e.target.value)}>{INVEST_DECISION_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
     </div>;
   }
 
   function renderAllocForm(e?: FinanceInvestmentAllocation) {
     const d = e || defaultInvAlloc;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Name</label><input style={s.input} defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
-      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'crypto'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Percentage (%)</label><input style={s.input} type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Name</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'crypto'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Percentage (%)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
     </div>;
   }
 
   function renderInvRuleForm(e?: FinanceInvestmentRule) {
     const d = e || defaultInvRule;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="e.g. No gambling stocks" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={d.category||'risk'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_RULE_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="e.g. No gambling stocks" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'risk'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_RULE_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
     </div>;
   }
 
   function renderRecurringForm(e?: FinanceRecurringRule) {
     const d = e || defaultRecurring;
-    return <div style={s.formGrid as React.CSSProperties}>
-      <div><label style={s.cardT}>Title</label><input style={s.input} defaultValue={(d as any).title||''} placeholder="e.g. Salary" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label style={s.cardT}>Kind</label><select style={s.select} defaultValue={d.kind||'income'} onChange={e=>handleModalChange('kind',e.target.value)}>{RECURRING_KINDS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Amount (MYR)</label><input style={s.input} type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label style={s.cardT}>Currency</label><input style={s.input} defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label style={s.cardT}>Frequency</label><select style={s.select} defaultValue={d.frequency||'monthly'} onChange={e=>handleModalChange('frequency',e.target.value)}>{RECURRING_FREQUENCIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Confidence</label><select style={s.select} defaultValue={d.confidence||'medium'} onChange={e=>handleModalChange('confidence',e.target.value)}>{CONFIDENCE_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Start Date</label><input style={s.input} type="date" defaultValue={(d as any).startDate||''} onChange={e=>handleModalChange('startDate',e.target.value)} /></div>
-      <div><label style={s.cardT}>End Date</label><input style={s.input} type="date" defaultValue={(d as any).endDate||''} onChange={e=>handleModalChange('endDate',e.target.value)} /></div>
-      <div><label style={s.cardT}>Source</label><select style={s.select} defaultValue={(d as any).source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label style={s.cardT}>Category</label><select style={s.select} defaultValue={(d as any).category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div style={s.fullW as React.CSSProperties}><label style={s.cardT}>Notes</label><input style={s.input} defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
+    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="e.g. Salary" onChange={e=>handleModalChange('title',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Kind</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.kind||'income'} onChange={e=>handleModalChange('kind',e.target.value)}>{RECURRING_KINDS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Frequency</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.frequency||'monthly'} onChange={e=>handleModalChange('frequency',e.target.value)}>{RECURRING_FREQUENCIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Confidence</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.confidence||'medium'} onChange={e=>handleModalChange('confidence',e.target.value)}>{CONFIDENCE_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Start Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).startDate||''} onChange={e=>handleModalChange('startDate',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">End Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).endDate||''} onChange={e=>handleModalChange('endDate',e.target.value)} /></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Source</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
     </div>;
   }
 
@@ -480,36 +445,36 @@ function FinancePanel({
     if (!modal) return null;
     const item = getEditItem(modal.type);
     const title = modal.id ? 'Edit' : 'New';
-    return <div style={s.overlay as React.CSSProperties} onClick={closeModal}>
-      <div style={s.modal as React.CSSProperties} onClick={e=>e.stopPropagation()}>
-        <h3 style={{...s.hdr, marginBottom:'16px'}}>{title} {modal.type.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</h3>
+    return <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000]" onClick={closeModal}>
+      <div className="bg-white rounded-xl p-6 w-[90%] max-w-[680px] max-h-[85vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-black m-0 mb-4">{title} {modal.type.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</h3>
         {modal.type === 'income' && renderIncomeForm(item)}
         {modal.type === 'expenses' && renderExpenseForm(item)}
         {modal.type === 'allocation' && renderAllocationForm(item)}
         {modal.type === 'purchase_goals' && renderGoalForm(item)}
         {modal.type === 'investments' && renderIdeaForm(item)}
         {modal.type === 'recurring' && renderRecurringForm(item)}
-        <div style={s.act as React.CSSProperties}>
-          <button style={s.btnO} onClick={closeModal}>Cancel</button>
-          <button style={s.btn('#2563eb')} onClick={handleSave}>Save</button>
+        <div className="flex gap-2 justify-end mt-4 pt-3 border-t border-neutral-200">
+          <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer" onClick={closeModal}>Cancel</button>
+          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={handleSave}>Save</button>
         </div>
       </div>
     </div>;
   }
 
   function renderPeriodSelector() {
-    return <div style={{display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap'}}>
-      <select style={{...s.select, width:'auto', minWidth:'180px'}} value={selectedPeriodId} onChange={e=>setSelectedPeriodId(e.target.value)}>
+    return <div className="flex gap-2 items-center flex-wrap">
+      <select className="w-auto min-w-[180px] px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" value={selectedPeriodId} onChange={e=>setSelectedPeriodId(e.target.value)}>
         <option value="">-- Select Period --</option>
         {sortedPeriods.map(p => <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>)}
       </select>
-      <button style={s.btnO} onClick={() => {
+      <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer" onClick={() => {
         const now = new Date();
         const y = now.getFullYear();
         const m = String(now.getMonth() + 1).padStart(2, '0');
         onAddFinancePeriod({ title: `${MONTHS[now.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`, status: 'open' });
       }}>+ Current Month</button>
-      <select style={{...s.select, width:'auto', minWidth:'110px'}} value={horizonView} onChange={e=>setHorizonView(e.target.value as HorizonView)}>
+      <select className="w-auto min-w-[110px] px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" value={horizonView} onChange={e=>setHorizonView(e.target.value as HorizonView)}>
         <option value="monthly">Monthly</option>
         <option value="six_months">6 Months</option>
         <option value="yearly">Yearly</option>
@@ -532,27 +497,27 @@ function FinancePanel({
     const needsTotal = dashboardExpenses.filter(e => e.category === 'needs' || e.category === 'family').reduce((s,e) => s + e.amount, 0);
 
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Dashboard</h2>
-        <div style={{fontSize:'12px', color:'#64748b'}}>{selectedPeriod?.name || 'No period selected — showing all records'}</div>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Dashboard</h2>
+        <div className="text-xs text-neutral-500">{selectedPeriod?.name || 'No period selected — showing all records'}</div>
       </div>
-      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
         Monthly view shows only records linked to this period or dated inside this month. Incomes/expenses from other months are hidden.
       </div>}
-      {!selectedPeriodId && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', marginBottom:'16px', fontSize:'13px'}}>
+      {!selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-xs">
         Select a period above to focus on a specific month.
       </div>}
-      <div style={s.dashGrid as React.CSSProperties}>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Expected Income</div><div style={s.cardV}>{toCur(expectedIncome)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Received Income</div><div style={s.cardV}>{toCur(receivedIncome)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(totalExpenses)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Paid</div><div style={{...s.cardV, color:'#16a34a'}}>{toCur(paidExpenses)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Unpaid / Planned</div><div style={{...s.cardV, color:'#ea580c'}}>{toCur(unpaidExpenses + plannedExpenses)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Net Cash (Received - Paid)</div><div style={{...s.cardV, color: netCash >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(netCash)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Net Projected (Expected - All)</div><div style={{...s.cardV, color: netProjected >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(netProjected)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Needs Ratio</div><div style={s.cardV}>{totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'}</div></div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Expected Income</div><div className="text-2xl font-bold text-black">{toCur(expectedIncome)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Received Income</div><div className="text-2xl font-bold text-black">{toCur(receivedIncome)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(totalExpenses)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Paid</div><div className="text-2xl font-bold text-emerald-600">{toCur(paidExpenses)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Unpaid / Planned</div><div className="text-2xl font-bold text-orange-600">{toCur(unpaidExpenses + plannedExpenses)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Net Cash (Received - Paid)</div><div className={`text-2xl font-bold ${netCash >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(netCash)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Net Projected (Expected - All)</div><div className={`text-2xl font-bold ${netProjected >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(netProjected)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Needs Ratio</div><div className="text-2xl font-bold text-black">{totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'}</div></div>
       </div>
-      <div style={{marginBottom:'16px', padding:'12px', background:'#fff7ed', borderRadius:'8px', border:'1px solid #fed7aa', fontSize:'13px', color:'#c2410c'}}>
+      <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200 text-xs text-orange-700">
         Variable income (expected/delayed) is estimated; actual net cash may differ.
       </div>
     </div>;
@@ -562,24 +527,25 @@ function FinancePanel({
     const list = filteredFinanceIncome;
     const received = list.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
     const expected = list.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+    const badgeColor = (status: string) => status === 'received' ? 'bg-emerald-100 text-emerald-700' : status === 'delayed' ? 'bg-amber-100 text-amber-700' : status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Income</h2>
-        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-          <span style={{fontSize:'13px', color:'#64748b'}}>Received: {toCur(received)} | Expected: {toCur(expected)}</span>
-          <button style={s.btn('#2563eb')} onClick={()=>openModal('income')}>+ Add</button>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Income</h2>
+        <div className="flex gap-2 items-center">
+          <span className="text-xs text-neutral-500">Received: {toCur(received)} | Expected: {toCur(expected)}</span>
+          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('income')}>+ Add</button>
         </div>
       </div>
-      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
         Showing income linked to this period or dated within this month.
       </div>}
-      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No income records for this period.</div> :
-        list.map(i => <div key={i.id} style={s.insCard as React.CSSProperties}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No income records for this period.</div> :
+        list.map(i => <div key={i.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={s.insT}>{i.title || i.incomeType} {i.isRecurring && <span style={s.badge('purple')}>Recurring</span>}</div>
-              <div style={s.insX}>
-                <span style={s.badge(i.status === 'received' ? 'green' : i.status === 'delayed' ? 'yellow' : i.status === 'cancelled' ? 'red' : 'blue')}>{i.status}</span>
+              <div className="text-xs font-semibold text-black mb-1.5">{i.title || i.incomeType} {i.isRecurring && <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">Recurring</span>}</div>
+              <div className="text-xs text-neutral-500 leading-relaxed">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(i.status)}`}>{i.status}</span>
                 {' '}{i.source} — {i.recurrence}
                 {i.incomeDate && <> — Date: {new Date(i.incomeDate).toLocaleDateString()}</>}
                 {i.expectedDate && <> — Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
@@ -587,15 +553,15 @@ function FinancePanel({
                 {i.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===i.financePeriodId)?.title || i.financePeriodId}</>}
               </div>
             </div>
-            <div style={{textAlign:'right' as const}}>
-              <div style={{fontSize:'16px', fontWeight:700, color:'#16a34a'}}>{toCur(i.amount, i.currency)}</div>
+            <div className="text-right">
+              <div className="text-base font-bold text-emerald-600">{toCur(i.amount, i.currency)}</div>
               <div>
-                <button style={s.iBtn} onClick={()=>openModal('income', i.id)}>Edit</button>
-                <button style={s.iBtn} onClick={()=>handleDelete('income', i.id)}>Del</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('income', i.id)}>Edit</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('income', i.id)}>Del</button>
               </div>
             </div>
           </div>
-          {(i as any).notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{(i as any).notes}</div>}
+          {(i as any).notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{(i as any).notes}</div>}
         </div>)
       }
     </div>;
@@ -604,38 +570,39 @@ function FinancePanel({
   function renderExpensesTab() {
     const list = filteredFinanceExpenses;
     const total = list.reduce((s,e) => s + e.amount, 0);
+    const badgeColor = (status: string) => status === 'paid' ? 'bg-emerald-100 text-emerald-700' : status === 'unpaid' ? 'bg-red-100 text-red-700' : status === 'cancelled' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700';
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Expenses</h2>
-        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-          <span style={{fontSize:'13px', color:'#64748b'}}>Total: {toCur(total)}</span>
-          <button style={s.btn('#2563eb')} onClick={()=>openModal('expenses')}>+ Add</button>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Expenses</h2>
+        <div className="flex gap-2 items-center">
+          <span className="text-xs text-neutral-500">Total: {toCur(total)}</span>
+          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('expenses')}>+ Add</button>
         </div>
       </div>
-      {selectedPeriodId && <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'13px'}}>
+      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
         Showing expenses linked to this period or dated within this month.
       </div>}
-      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No expenses for this period.</div> :
-        list.map(e => <div key={e.id} style={s.insCard as React.CSSProperties}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No expenses for this period.</div> :
+        list.map(e => <div key={e.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={s.insT}>{e.title || e.category}</div>
-              <div style={s.insX}>
-                <span style={s.badge(e.status === 'paid' ? 'green' : e.status === 'unpaid' ? 'red' : e.status === 'cancelled' ? 'orange' : 'yellow')}>{e.status}</span>
+              <div className="text-xs font-semibold text-black mb-1.5">{e.title || e.category}</div>
+              <div className="text-xs text-neutral-500 leading-relaxed">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(e.status)}`}>{e.status}</span>
                 {' '}{e.category}
                 {e.expenseDate && <> — Date: {new Date(e.expenseDate).toLocaleDateString()}</>}
                 {e.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
               </div>
             </div>
-            <div style={{textAlign:'right' as const}}>
-              <div style={{fontSize:'16px', fontWeight:700, color:'#dc2626'}}>{toCur(e.amount, e.currency)}</div>
+            <div className="text-right">
+              <div className="text-base font-bold text-red-600">{toCur(e.amount, e.currency)}</div>
               <div>
-                <button style={s.iBtn} onClick={()=>openModal('expenses', e.id)}>Edit</button>
-                <button style={s.iBtn} onClick={()=>handleDelete('expenses', e.id)}>Del</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('expenses', e.id)}>Edit</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('expenses', e.id)}>Del</button>
               </div>
             </div>
           </div>
-          {(e as any).notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{(e as any).notes}</div>}
+          {(e as any).notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{(e as any).notes}</div>}
         </div>)
       }
     </div>;
@@ -645,27 +612,27 @@ function FinancePanel({
     const list = allRules;
     const totalPct = list.reduce((s,r) => s + r.percentage, 0);
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Allocation Rules</h2>
-        <button style={s.btn('#2563eb')} onClick={()=>openModal('allocation')}>+ Add</button>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Allocation Rules</h2>
+        <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('allocation')}>+ Add</button>
       </div>
-      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No allocation rules. Add rules to distribute income across categories.</div> :
-        <div style={{display:'grid', gap:'10px'}}>
-          {list.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No allocation rules. Add rules to distribute income across categories.</div> :
+        <div className="grid gap-2.5">
+          {list.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+            <div className="flex justify-between items-start">
               <div>
-                <div style={s.insT}>{r.name || r.category} <span style={s.badge(r.isActive ? 'green' : 'orange')}>{r.isActive ? 'Active' : 'Inactive'}</span></div>
-                <div style={s.insX}>{r.category} — {r.percentage}% — Priority: {r.priority}</div>
+                <div className="text-xs font-semibold text-black mb-1.5">{r.name || r.category} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>{r.isActive ? 'Active' : 'Inactive'}</span></div>
+                <div className="text-xs text-neutral-500 leading-relaxed">{r.category} — {r.percentage}% — Priority: {r.priority}</div>
               </div>
               <div>
-                <button style={s.iBtn} onClick={()=>openModal('allocation', r.id)}>Edit</button>
-                <button style={s.iBtn} onClick={()=>handleDelete('allocation', r.id)}>Del</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('allocation', r.id)}>Edit</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('allocation', r.id)}>Del</button>
               </div>
             </div>
           </div>)}
         </div>
       }
-      {totalPct > 0 && <div style={{marginTop:'12px', padding:'10px', background:'#f0f9ff', borderRadius:'8px', border:'1px solid #bae6fd', fontSize:'13px', color:'#0369a1'}}>
+      {totalPct > 0 && <div className="mt-3 p-2.5 bg-blue-50 rounded-lg border border-sky-200 text-xs text-sky-700">
         Total allocated: {totalPct}% {totalPct !== 100 && <>({100 - totalPct}% unallocated — will be treated as remainder)</>}
       </div>}
     </div>;
@@ -673,29 +640,31 @@ function FinancePanel({
 
   function renderPurchaseGoalsTab() {
     const list = allGoals;
+    const badgeColor = (status: string) => status === 'bought' ? 'bg-emerald-100 text-emerald-700' : status === 'saving' ? 'bg-blue-100 text-blue-700' : status === 'paused' ? 'bg-amber-100 text-amber-700' : status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700';
+    const priorityColor = (p: string) => p === 'high' ? 'bg-red-100 text-red-700' : p === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Purchase Goals</h2>
-        <button style={s.btn('#2563eb')} onClick={()=>openModal('purchase_goals')}>+ Add</button>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Purchase Goals</h2>
+        <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('purchase_goals')}>+ Add</button>
       </div>
-      {list.length === 0 ? <div style={s.empty as React.CSSProperties}>No purchase goals. Track big purchases here.</div> :
-        <div style={{display:'grid', gap:'10px'}}>
+      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No purchase goals. Track big purchases here.</div> :
+        <div className="grid gap-2.5">
           {list.map(g => {
             const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
             const barColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 25 ? '#f59e0b' : '#ef4444';
-            return <div key={g.id} style={s.insCard as React.CSSProperties}>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+            return <div key={g.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+              <div className="flex justify-between items-start">
                 <div>
-                  <div style={s.insT}>{g.title || 'Unnamed'} <span style={s.badge(g.status === 'bought' ? 'green' : g.status === 'saving' ? 'blue' : g.status === 'paused' ? 'yellow' : g.status === 'cancelled' ? 'red' : 'orange')}>{g.status}</span>
-                  <span style={s.badge(g.priority === 'high' ? 'red' : g.priority === 'medium' ? 'yellow' : 'blue')}>{g.priority}</span></div>
-                  <div style={s.insX}>Target: {toCur(g.targetAmount, g.currency)} — Saved: {toCur(g.savedAmount, g.currency)} — {pct}%</div>
+                  <div className="text-xs font-semibold text-black mb-1.5">{g.title || 'Unnamed'} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(g.status)}`}>{g.status}</span>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${priorityColor(g.priority)}`}>{g.priority}</span></div>
+                  <div className="text-xs text-neutral-500 leading-relaxed">Target: {toCur(g.targetAmount, g.currency)} — Saved: {toCur(g.savedAmount, g.currency)} — {pct}%</div>
                 </div>
                 <div>
-                  <button style={s.iBtn} onClick={()=>openModal('purchase_goals', g.id)}>Edit</button>
-                  <button style={s.iBtn} onClick={()=>handleDelete('purchase_goals', g.id)}>Del</button>
+                  <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('purchase_goals', g.id)}>Edit</button>
+                  <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('purchase_goals', g.id)}>Del</button>
                 </div>
               </div>
-              <div style={{...s.bar(0), marginTop:'8px'}}><div style={s.fill(pct, barColor)} /></div>
+              <div className="h-2 bg-neutral-200 rounded-full overflow-hidden mt-2"><div className="h-full rounded-full transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`, background:barColor}} /></div>
             </div>;
           })}
         </div>
@@ -705,44 +674,44 @@ function FinancePanel({
 
   function renderRecurringRulesTab() {
     return <div>
-      <div style={s.row as React.CSSProperties}>
-        <h2 style={s.hdr}>Recurring Rules</h2>
-        <div style={{display:'flex', gap:'8px'}}>
-          {selectedPeriodId && <button style={s.btn('#059669')} disabled={generating || !selectedPeriodId} onClick={generateRecurringItemsForPeriod}>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-bold text-black m-0">Recurring Rules</h2>
+        <div className="flex gap-2">
+          {selectedPeriodId && <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50" disabled={generating || !selectedPeriodId} onClick={generateRecurringItemsForPeriod}>
             {generating ? 'Generating...' : 'Generate recurring items for this month'}
           </button>}
-          <button style={s.btn('#2563eb')} onClick={()=>openModal('recurring')}>+ Add Rule</button>
+          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('recurring')}>+ Add Rule</button>
         </div>
       </div>
-      {generateResult && <div style={{...s.warn, background:'#f0fdf4', border:'1px solid #bbf7d0', color:'#166534', marginBottom:'12px'}}>{generateResult}</div>}
-      {!selectedPeriodId && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', fontSize:'13px'}}>
+      {generateResult && <div className="px-4 py-3 rounded-lg text-sm mb-3 bg-emerald-50 border border-emerald-200 text-emerald-800">{generateResult}</div>}
+      {!selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm bg-amber-50 border border-amber-300 text-amber-800 text-xs">
         Select a Finance Period before generating recurring items.
       </div>}
-      {allRecurring.length === 0 ? <div style={s.empty as React.CSSProperties}>No recurring rules. Add rules for regular income/expenses (salary, rent, subscriptions).</div> :
-        <div style={{display:'grid', gap:'10px'}}>
-          {allRecurring.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+      {allRecurring.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No recurring rules. Add rules for regular income/expenses (salary, rent, subscriptions).</div> :
+        <div className="grid gap-2.5">
+          {allRecurring.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+            <div className="flex justify-between items-start">
               <div>
-                <div style={s.insT}>
+                <div className="text-xs font-semibold text-black mb-1.5">
                   {r.title}
-                  <span style={s.badge(r.kind === 'income' ? 'green' : 'red')}>{r.kind}</span>
-                  <span style={s.badge(r.isActive ? 'blue' : 'orange')}>{r.isActive ? 'Active' : 'Inactive'}</span>
-                  <span style={s.badge('purple')}>{r.frequency}</span>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.kind === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{r.kind}</span>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.isActive ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{r.isActive ? 'Active' : 'Inactive'}</span>
+                  <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">{r.frequency}</span>
                 </div>
-                <div style={s.insX}>
+                <div className="text-xs text-neutral-500 leading-relaxed">
                   {toCur(r.amount, r.currency)} — Confidence: {r.confidence}
                   {r.startDate && <> — Start: {new Date(r.startDate).toLocaleDateString()}</>}
                   {r.endDate && <> — End: {new Date(r.endDate).toLocaleDateString()}</>}
                   {r.source && <> — Source: {r.source}</>}
                 </div>
               </div>
-              <div style={{textAlign:'right' as const}}>
-                <div style={{fontSize:'16px', fontWeight:700, color: r.kind === 'income' ? '#16a34a' : '#dc2626'}}>{toCur(r.amount, r.currency)}</div>
-                <button style={s.iBtn} onClick={()=>openModal('recurring', r.id)}>Edit</button>
-                <button style={s.iBtn} onClick={()=>handleDelete('recurring', r.id)}>Del</button>
+              <div className="text-right">
+                <div className={`text-base font-bold ${r.kind === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(r.amount, r.currency)}</div>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('recurring', r.id)}>Edit</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('recurring', r.id)}>Del</button>
               </div>
             </div>
-            {r.notes && <div style={{...s.insX, marginTop:'6px', paddingTop:'6px', borderTop:'1px solid #f1f5f9'}}>{r.notes}</div>}
+            {r.notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{r.notes}</div>}
           </div>)}
         </div>
       }
@@ -750,70 +719,74 @@ function FinancePanel({
   }
 
   function renderInvestmentsTab() {
+    const badgeColor = (c: string) => {
+      const map: Record<string,string> = {green:'bg-emerald-100 text-emerald-700',red:'bg-red-100 text-red-700',yellow:'bg-amber-100 text-amber-700',blue:'bg-blue-100 text-blue-700',purple:'bg-purple-100 text-purple-700',orange:'bg-orange-100 text-orange-700'};
+      return map[c] || 'bg-neutral-100 text-neutral-700';
+    };
     return <div>
-      <div style={s.iNav as React.CSSProperties}>
-        {(['overview','ideas','allocation','rules','risk_review','ethical_review'] as InvestTab[]).map(t => <button key={t} style={s.iNavBtn(investTab === t)} onClick={()=>setInvestTab(t)}>{t.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
+      <div className="flex gap-1.5 flex-wrap mb-5 pb-2.5 border-b border-neutral-200">
+        {(['overview','ideas','allocation','rules','risk_review','ethical_review'] as InvestTab[]).map(t => <button key={t} className={`px-3.5 py-1.5 text-xs font-medium rounded-md cursor-pointer ${investTab === t ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>setInvestTab(t)}>{t.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
       </div>
       {investTab === 'overview' && <div>
-        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Overview</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add Idea</button></div>
-        <div style={s.dashGrid as React.CSSProperties}>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Ideas</div><div style={s.cardV}>{allIdeas.length}</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Rules</div><div style={s.cardV}>{allInvRules.length}</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Allocations</div><div style={s.cardV}>{allInvAllocs.length}</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Invested</div><div style={s.cardV}>{allIdeas.filter(i=>i.status==='invested').length}</div></div>
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Overview</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add Idea</button></div>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Ideas</div><div className="text-2xl font-bold text-black">{allIdeas.length}</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Rules</div><div className="text-2xl font-bold text-black">{allInvRules.length}</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Allocations</div><div className="text-2xl font-bold text-black">{allInvAllocs.length}</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Invested</div><div className="text-2xl font-bold text-black">{allIdeas.filter(i=>i.status==='invested').length}</div></div>
         </div>
       </div>}
       {investTab === 'ideas' && <div>
-        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Ideas</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allIdeas.length === 0 ? <div style={s.empty as React.CSSProperties}>No investment ideas.</div> :
-          allIdeas.map(i => <div key={i.id} style={s.insCard as React.CSSProperties}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Ideas</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allIdeas.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No investment ideas.</div> :
+          allIdeas.map(i => <div key={i.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+            <div className="flex justify-between items-start">
               <div>
-                <div style={s.insT}>{i.title || 'Unnamed'} <span style={s.badge(i.type === 'sukuk' ? 'green' : i.type === 'gold' ? 'yellow' : i.type === 'real_estate' ? 'blue' : i.type === 'stocks' ? 'purple' : i.type === 'business' ? 'orange' : i.type === 'crypto' ? 'red' : 'slate')}>{i.type}</span></div>
-                <div style={s.insX}>
-                  Risk: <span style={s.badge(i.riskLevel === 'low' ? 'green' : i.riskLevel === 'medium' ? 'yellow' : 'red')}>{i.riskLevel}</span>
-                  Ethics: <span style={s.badge(i.ethicalStatus === 'good' ? 'green' : i.ethicalStatus === 'needs_review' ? 'yellow' : 'red')}>{i.ethicalStatus}</span>
-                  Status: <span style={s.badge(i.status === 'invested' ? 'green' : i.status === 'planned' ? 'blue' : i.status === 'waiting' ? 'yellow' : 'orange')}>{i.status}</span>
+                <div className="text-xs font-semibold text-black mb-1.5">{i.title || 'Unnamed'} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.type === 'sukuk' ? badgeColor('green') : i.type === 'gold' ? badgeColor('yellow') : i.type === 'real_estate' ? badgeColor('blue') : i.type === 'stocks' ? badgeColor('purple') : i.type === 'business' ? badgeColor('orange') : i.type === 'crypto' ? badgeColor('red') : badgeColor('slate')}`}>{i.type}</span></div>
+                <div className="text-xs text-neutral-500 leading-relaxed">
+                  Risk: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.riskLevel === 'low' ? badgeColor('green') : i.riskLevel === 'medium' ? badgeColor('yellow') : badgeColor('red')}`}>{i.riskLevel}</span>
+                  Ethics: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.ethicalStatus === 'good' ? badgeColor('green') : i.ethicalStatus === 'needs_review' ? badgeColor('yellow') : badgeColor('red')}`}>{i.ethicalStatus}</span>
+                  Status: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.status === 'invested' ? badgeColor('green') : i.status === 'planned' ? badgeColor('blue') : i.status === 'waiting' ? badgeColor('yellow') : badgeColor('orange')}`}>{i.status}</span>
                 </div>
               </div>
-              <div style={{textAlign:'right' as const}}>
-                <div style={{fontSize:'16px', fontWeight:700}}>{toCur(i.plannedAmount, i.currency)}</div>
-                <button style={s.iBtn} onClick={()=>openModal('investments', i.id)}>Edit</button>
-                <button style={s.iBtn} onClick={()=>handleDelete('investments', i.id)}>Del</button>
+              <div className="text-right">
+                <div className="text-base font-bold text-black">{toCur(i.plannedAmount, i.currency)}</div>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('investments', i.id)}>Edit</button>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', i.id)}>Del</button>
               </div>
             </div>
           </div>)
         }
       </div>}
       {investTab === 'allocation' && <div>
-        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Allocation</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allInvAllocs.length === 0 ? <div style={s.empty as React.CSSProperties}>No allocation targets.</div> :
-          <div style={{display:'grid', gap:'10px'}}>
-            {allInvAllocs.map(a => <div key={a.id} style={s.insCard as React.CSSProperties}>
-              <div style={{display:'flex', justifyContent:'space-between'}}>
-                <div><div style={s.insT}>{a.name || a.category}</div><div style={s.insX}>Target: {a.percentage}% | Category: {a.category}</div></div>
-                <button style={s.iBtn} onClick={()=>handleDelete('investments', a.id)}>Del</button>
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Allocation</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allInvAllocs.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No allocation targets.</div> :
+          <div className="grid gap-2.5">
+            {allInvAllocs.map(a => <div key={a.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+              <div className="flex justify-between">
+                <div><div className="text-xs font-semibold text-black mb-1.5">{a.name || a.category}</div><div className="text-xs text-neutral-500 leading-relaxed">Target: {a.percentage}% | Category: {a.category}</div></div>
+                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', a.id)}>Del</button>
               </div>
             </div>)}
           </div>
         }
       </div>}
       {investTab === 'rules' && <div>
-        <div style={s.row as React.CSSProperties}><h2 style={s.hdr}>Investment Rules</h2><button style={s.btn('#2563eb')} onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allInvRules.length === 0 ? <div style={s.empty as React.CSSProperties}>No investment rules.</div> :
-          allInvRules.map(r => <div key={r.id} style={s.insCard as React.CSSProperties}>
-            <div style={s.insT}>{r.title} <span style={s.badge(r.category === 'risk' ? 'red' : r.category === 'ethics' ? 'purple' : r.category === 'strategy' ? 'blue' : r.category === 'process' ? 'orange' : 'slate')}>{r.category}</span></div>
-            <button style={s.iBtn} onClick={()=>handleDelete('investments', r.id)}>Del</button>
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Rules</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
+        {allInvRules.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No investment rules.</div> :
+          allInvRules.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
+            <div className="text-xs font-semibold text-black mb-1.5">{r.title} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.category === 'risk' ? badgeColor('red') : r.category === 'ethics' ? badgeColor('purple') : r.category === 'strategy' ? badgeColor('blue') : r.category === 'process' ? badgeColor('orange') : badgeColor('slate')}`}>{r.category}</span></div>
+            <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', r.id)}>Del</button>
           </div>)
         }
       </div>}
       {investTab === 'risk_review' && <div>
-        <h2 style={s.hdr}>Risk Review</h2>
-        <div style={s.empty as React.CSSProperties}>Review your investment risk profile here. Coming soon.</div>
+        <h2 className="text-lg font-bold text-black m-0">Risk Review</h2>
+        <div className="text-center py-12 px-6 text-neutral-500 text-sm">Review your investment risk profile here. Coming soon.</div>
       </div>}
       {investTab === 'ethical_review' && <div>
-        <h2 style={s.hdr}>Ethical Review</h2>
-        <div style={s.empty as React.CSSProperties}>Review your investments against ethical rules. Coming soon.</div>
+        <h2 className="text-lg font-bold text-black m-0">Ethical Review</h2>
+        <div className="text-center py-12 px-6 text-neutral-500 text-sm">Review your investments against ethical rules. Coming soon.</div>
       </div>}
     </div>;
   }
@@ -823,10 +796,10 @@ function FinancePanel({
       const inc = filteredFinanceIncome.reduce((s,i) => s + i.amount, 0);
       const exp = filteredFinanceExpenses.reduce((s,e) => s + e.amount, 0);
       const net = inc - exp;
-      return <div style={{...s.sCard, marginBottom:'16px'}}>
-        <div style={s.cardT}>Current Period Summary</div>
-        <div style={{fontSize:'24px', fontWeight:700, color: net >= 0 ? '#16a34a' : '#dc2626', marginTop:'4px'}}>{toCur(net)}</div>
-        <div style={{fontSize:'12px', color:'#64748b', marginTop:'4px'}}>Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
+      return <div className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-4">
+        <div className="text-xs text-neutral-500 mb-1 font-medium">Current Period Summary</div>
+        <div className={`text-2xl font-bold mt-1 ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(net)}</div>
+        <div className="text-xs text-neutral-500 mt-1">Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
       </div>;
     }
 
@@ -882,52 +855,52 @@ function FinancePanel({
     });
 
     return <div>
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:'12px', marginBottom:'20px'}}>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Income</div><div style={s.cardV}>{toCur(totalInc)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Total Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(totalExp)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Monthly Income</div><div style={s.cardV}>{toCur(avgMonthlyInc)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Monthly Expenses</div><div style={{...s.cardV, color:'#dc2626'}}>{toCur(avgMonthlyExp)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Avg Net/Month</div><div style={{...s.cardV, color: avgMonthlyInc - avgMonthlyExp >= 0 ? '#16a34a' : '#dc2626'}}>{toCur(avgMonthlyInc - avgMonthlyExp)}</div></div>
-        <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Months</div><div style={s.cardV}>{filteredMonths.length}</div></div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 mb-5">
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Income</div><div className="text-2xl font-bold text-black">{toCur(totalInc)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(totalExp)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Monthly Income</div><div className="text-2xl font-bold text-black">{toCur(avgMonthlyInc)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Monthly Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(avgMonthlyExp)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Net/Month</div><div className={`text-2xl font-bold ${avgMonthlyInc - avgMonthlyExp >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(avgMonthlyInc - avgMonthlyExp)}</div></div>
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Months</div><div className="text-2xl font-bold text-black">{filteredMonths.length}</div></div>
       </div>
 
       {filteredMonths.length > 0 && <div>
-        <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Monthly Breakdown</h3>
-        <div style={{display:'grid', gap:'6px'}}>
+        <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Monthly Breakdown</h3>
+        <div className="grid gap-1.5">
           {filteredMonths.map(m => {
             const net = m.income - m.expenses;
-            return <div key={m.key} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'#ffffff', border:'1px solid #e5e7eb', borderRadius:'8px'}}>
-              <div style={{fontSize:'13px', fontWeight:600, color:'#0f172a', minWidth:'70px'}}>{m.key}</div>
-              <div style={{display:'flex', gap:'20px', fontSize:'13px'}}>
-                <span style={{color:'#16a34a'}}>+{toCur(m.income)}</span>
-                <span style={{color:'#dc2626'}}>-{toCur(m.expenses)}</span>
-                <span style={{fontWeight:600, color: net >= 0 ? '#16a34a' : '#dc2626'}}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+            return <div key={m.key} className="flex justify-between items-center px-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg">
+              <div className="text-xs font-semibold text-black min-w-[70px]">{m.key}</div>
+              <div className="flex gap-5 text-xs">
+                <span className="text-emerald-600">+{toCur(m.income)}</span>
+                <span className="text-red-600">-{toCur(m.expenses)}</span>
+                <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
               </div>
-              <div style={{fontSize:'11px', color:'#94a3b8'}}>{m.count} items</div>
+              <div className="text-[11px] text-neutral-400">{m.count} items</div>
             </div>;
           })}
         </div>
       </div>}
 
-      {(horizonView === 'five_years' || horizonView === 'ten_years') && <div style={{marginTop:'24px'}}>
-        <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Yearly Rollup</h3>
-        <div style={{display:'grid', gap:'6px'}}>
+      {(horizonView === 'five_years' || horizonView === 'ten_years') && <div className="mt-6">
+        <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Yearly Rollup</h3>
+        <div className="grid gap-1.5">
           {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).map(([year, data]) => {
             const net = data.income - data.expenses;
-            return <div key={year} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 14px', background:'#ffffff', border:'1px solid #e5e7eb', borderRadius:'8px'}}>
-              <div style={{fontSize:'13px', fontWeight:600, color:'#0f172a'}}>{year}</div>
-              <div style={{display:'flex', gap:'20px', fontSize:'13px'}}>
-                <span style={{color:'#16a34a'}}>+{toCur(data.income)}</span>
-                <span style={{color:'#dc2626'}}>-{toCur(data.expenses)}</span>
-                <span style={{fontWeight:600, color: net >= 0 ? '#16a34a' : '#dc2626'}}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+            return <div key={year} className="flex justify-between items-center px-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg">
+              <div className="text-xs font-semibold text-black">{year}</div>
+              <div className="flex gap-5 text-xs">
+                <span className="text-emerald-600">+{toCur(data.income)}</span>
+                <span className="text-red-600">-{toCur(data.expenses)}</span>
+                <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
               </div>
-              <div style={{fontSize:'11px', color:'#94a3b8'}}>{data.months} months</div>
+              <div className="text-[11px] text-neutral-400">{data.months} months</div>
             </div>;
           })}
         </div>
       </div>}
 
-      {horizonView === 'ten_years' && filteredMonths.length === 0 && <div style={s.empty as React.CSSProperties}>
+      {horizonView === 'ten_years' && filteredMonths.length === 0 && <div className="text-center py-12 px-6 text-neutral-500 text-sm">
         Not enough data for 10-year projection. Add more income/expense records.
       </div>}
     </div>;
@@ -948,19 +921,19 @@ function FinancePanel({
     if (activeRecurring.length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
 
     return <div>
-      <h2 style={s.hdr}>Review & Gaps</h2>
-      <div style={{marginTop:'16px'}}>
-        <div style={s.dashGrid as React.CSSProperties}>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Needs Ratio</div><div style={s.cardV}>{needsPct}%</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Allocation Rules</div><div style={s.cardV}>{allRules.length}</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Active Recurring</div><div style={s.cardV}>{activeRecurring.length}</div></div>
-          <div style={s.sCard as React.CSSProperties}><div style={s.cardT}>Open Goals</div><div style={s.cardV}>{allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length}</div></div>
+      <h2 className="text-lg font-bold text-black m-0">Review & Gaps</h2>
+      <div className="mt-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Needs Ratio</div><div className="text-2xl font-bold text-black">{needsPct}%</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Allocation Rules</div><div className="text-2xl font-bold text-black">{allRules.length}</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Active Recurring</div><div className="text-2xl font-bold text-black">{activeRecurring.length}</div></div>
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Open Goals</div><div className="text-2xl font-bold text-black">{allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length}</div></div>
         </div>
-        {gaps.length > 0 && <div style={{marginTop:'16px'}}>
-          <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'8px'}}>Identified Gaps</h3>
-          {gaps.map((g,i) => <div key={i} style={{padding:'10px 14px', marginBottom:'6px', background:'#fef9c3', border:'1px solid #fde047', borderRadius:'8px', fontSize:'13px', color:'#854d0e'}}>{g}</div>)}
+        {gaps.length > 0 && <div className="mt-4">
+          <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-2">Identified Gaps</h3>
+          {gaps.map((g,i) => <div key={i} className="px-3.5 py-2.5 mb-1.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">{g}</div>)}
         </div>}
-        {gaps.length === 0 && <div style={{padding:'24px', textAlign:'center', color:'#64748b', fontSize:'14px'}}>No major gaps detected.</div>}
+        {gaps.length === 0 && <div className="p-6 text-center text-neutral-500 text-sm">No major gaps detected.</div>}
       </div>
     </div>;
   }
@@ -1111,61 +1084,61 @@ function FinancePanel({
     const hasData = dashboardIncome.length > 0 || dashboardExpenses.length > 0;
 
     return <div>
-      <h2 style={s.hdr}>AI Finance Assistant</h2>
-      <div style={{...s.warn, background:'#f0f9ff', border:'1px solid #bae6fd', color:'#0369a1', marginBottom:'16px', fontSize:'12px'}}>
+      <h2 className="text-lg font-bold text-black m-0">AI Finance Assistant</h2>
+      <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
         AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
       </div>
-      <div style={{marginTop:'12px', display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'16px'}}>
-        {aiModes.map(m => <button key={m} style={s.iNavBtn(aiMode === m)} onClick={()=>{setAiMode(m); setAiResult(null); setAiError(null);}}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
+      <div className="mt-3 flex gap-2 flex-wrap mb-4">
+        {aiModes.map(m => <button key={m} className={`px-3.5 py-1.5 text-xs font-medium rounded-md cursor-pointer ${aiMode === m ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>{setAiMode(m); setAiResult(null); setAiError(null);}}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
       </div>
-      <button style={s.btn('#2563eb')} disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
+      <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700 disabled:opacity-50" disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
         {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
       </button>
-      {!hasData && <div style={{...s.warn, background:'#fef9c3', border:'1px solid #fde047', color:'#854d0e', marginTop:'12px', fontSize:'13px'}}>
+      {!hasData && <div className="px-4 py-3 rounded-lg text-sm bg-amber-50 border border-amber-300 text-amber-800 mt-3 text-xs">
         Add income or expenses before using the AI Assistant.
       </div>}
-      {aiError && <div style={{...s.warn, background:'#fef2f2', border:'1px solid #fecaca', color:'#991b1b', marginTop:'16px'}}>{aiError}</div>}
-      {aiLoading && <div style={s.empty as React.CSSProperties}>Generating analysis...</div>}
-      {aiResult && <div style={{marginTop:'20px', display:'flex', flexDirection:'column', gap:'14px'}}>
-        {aiResult.summary && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Summary</div>
-          <div style={{fontSize:'14px', color:'#0f172a', marginTop:'4px', lineHeight:'1.5'}}>{aiResult.summary}</div>
+      {aiError && <div className="px-4 py-3 rounded-lg text-sm bg-red-50 border border-red-200 text-red-800 mt-4">{aiError}</div>}
+      {aiLoading && <div className="text-center py-12 px-6 text-neutral-500 text-sm">Generating analysis...</div>}
+      {aiResult && <div className="mt-5 flex flex-col gap-3.5">
+        {aiResult.summary && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Summary</div>
+          <div className="text-sm text-black mt-1 leading-relaxed">{aiResult.summary}</div>
         </div>}
-        {aiResult.incomeAnalysis?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Income Analysis</div>
-          {aiResult.incomeAnalysis.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.incomeAnalysis.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.incomeAnalysis?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Income Analysis</div>
+          {aiResult.incomeAnalysis.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.incomeAnalysis.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.expenseAnalysis?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Expense Analysis</div>
-          {aiResult.expenseAnalysis.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.expenseAnalysis.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.expenseAnalysis?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Expense Analysis</div>
+          {aiResult.expenseAnalysis.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.expenseAnalysis.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.allocationReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Allocation Review</div>
-          {aiResult.allocationReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.allocationReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.allocationReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Allocation Review</div>
+          {aiResult.allocationReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.allocationReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.purchaseGoalReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Purchase Goals</div>
-          {aiResult.purchaseGoalReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.purchaseGoalReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.purchaseGoalReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Purchase Goals</div>
+          {aiResult.purchaseGoalReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.purchaseGoalReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.investmentRiskReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Investment Risks</div>
-          {aiResult.investmentRiskReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.investmentRiskReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.investmentRiskReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Investment Risks</div>
+          {aiResult.investmentRiskReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.investmentRiskReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.recurringIncomeReview?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Recurring Income Review</div>
-          {aiResult.recurringIncomeReview.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.recurringIncomeReview.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.recurringIncomeReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Recurring Income Review</div>
+          {aiResult.recurringIncomeReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.recurringIncomeReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.ethicalReviewQuestions?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Ethical Review Questions</div>
-          {aiResult.ethicalReviewQuestions.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.ethicalReviewQuestions.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.ethicalReviewQuestions?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Ethical Review Questions</div>
+          {aiResult.ethicalReviewQuestions.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.ethicalReviewQuestions.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.warnings?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Warnings</div>
-          {aiResult.warnings.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#991b1b', borderBottom:i<aiResult.warnings.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.warnings?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Warnings</div>
+          {aiResult.warnings.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-red-700 leading-relaxed ${i<aiResult.warnings.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
-        {aiResult.nextActions?.length > 0 && <div style={s.sCard as React.CSSProperties}>
-          <div style={s.cardT}>Next Actions</div>
-          {aiResult.nextActions.map((item: string, i: number) => <div key={i} style={{padding:'6px 0', fontSize:'13px', color:'#0f172a', borderBottom:i<aiResult.nextActions.length-1?'1px solid #f1f5f9':'none', lineHeight:'1.4'}}>{item}</div>)}
+        {aiResult.nextActions?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Next Actions</div>
+          {aiResult.nextActions.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.nextActions.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
         </div>}
       </div>}
     </div>;
@@ -1175,18 +1148,18 @@ function FinancePanel({
     const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
     const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
     const netAll = totalInc - totalExp;
-    return <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-      <div style={s.sCard as React.CSSProperties}>
-        <div style={s.cardT}>All-time Totals</div>
-        <div style={{fontSize:'13px', marginTop:'4px'}}>
-          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0'}}><span>Income</span><span style={{color:'#16a34a', fontWeight:600}}>{toCur(totalInc)}</span></div>
-          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0'}}><span>Expenses</span><span style={{color:'#dc2626', fontWeight:600}}>{toCur(totalExp)}</span></div>
-          <div style={{display:'flex', justifyContent:'space-between', padding:'2px 0', borderTop:'1px solid #e5e7eb', marginTop:'4px', paddingTop:'4px', fontWeight:700, color: netAll >= 0 ? '#16a34a' : '#dc2626'}}><span>Net</span><span>{toCur(netAll)}</span></div>
+    return <div className="flex flex-col gap-3">
+      <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+        <div className="text-xs text-neutral-500 mb-1 font-medium">All-time Totals</div>
+        <div className="text-xs mt-1">
+          <div className="flex justify-between py-0.5"><span>Income</span><span className="text-emerald-600 font-semibold">{toCur(totalInc)}</span></div>
+          <div className="flex justify-between py-0.5"><span>Expenses</span><span className="text-red-600 font-semibold">{toCur(totalExp)}</span></div>
+          <div className={`flex justify-between py-0.5 border-t border-neutral-200 mt-1 pt-1 font-bold ${netAll >= 0 ? 'text-emerald-600' : 'text-red-600'}`}><span>Net</span><span>{toCur(netAll)}</span></div>
         </div>
       </div>
-      <div style={s.sCard as React.CSSProperties}>
-        <div style={s.cardT}>Quick Stats</div>
-        <div style={{fontSize:'12px', color:'#64748b', marginTop:'6px', display:'flex', flexDirection:'column', gap:'4px'}}>
+      <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+        <div className="text-xs text-neutral-500 mb-1 font-medium">Quick Stats</div>
+        <div className="text-xs text-neutral-500 mt-1.5 flex flex-col gap-1">
           <div>{allIncome.length} income records</div>
           <div>{allExpenses.length} expense records</div>
           <div>{allPeriods.length} periods</div>
@@ -1211,17 +1184,17 @@ function FinancePanel({
     {key:'ai_assistant', label:'AI'},
   ];
 
-  return <div style={s.page as React.CSSProperties}>
-    <div style={s.layout as React.CSSProperties}>
-      <div style={s.main as React.CSSProperties}>
-        <div style={s.row as React.CSSProperties}>
-          <div style={{display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap'}}>
-            {tabs.map(t => <button key={t.key} style={s.navBtn(tab === t.key)} onClick={()=>setTab(t.key)}>{t.label}</button>)}
-            <button style={{...s.btnO, marginLeft:'8px'}} onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</button>
+  return <div className="min-h-screen bg-neutral-50">
+    <div className="flex gap-6 p-6 max-w-7xl mx-auto items-start">
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div className="flex gap-2 items-center flex-wrap">
+            {tabs.map(t => <button key={t.key} className={`px-4 py-2 text-sm font-medium rounded-md cursor-pointer ${tab === t.key ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>setTab(t.key)}>{t.label}</button>)}
+            <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer ml-2" onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</button>
           </div>
         </div>
-        <div style={{marginBottom:'16px'}}>{renderPeriodSelector()}</div>
-        {tab !== 'monthly' && tab !== 'six_months' && tab !== 'yearly' && <div style={{marginBottom:'16px'}}>
+        <div className="mb-4">{renderPeriodSelector()}</div>
+        {tab !== 'monthly' && tab !== 'six_months' && tab !== 'yearly' && <div className="mb-4">
           {tab === 'dashboard' && renderDashboard()}
           {tab === 'income' && renderIncomeTab()}
           {tab === 'expenses' && renderExpensesTab()}
@@ -1232,14 +1205,14 @@ function FinancePanel({
           {tab === 'review' && renderReviewTab()}
           {tab === 'ai_assistant' && renderAiAssistant()}
         </div>}
-        <div style={{marginTop:'24px'}}>
-          <h3 style={{...s.hdr, fontSize:'15px', marginBottom:'12px'}}>Horizon View —{' '}
+        <div className="mt-6">
+          <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Horizon View —{' '}
             {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
           </h3>
           {renderHorizonSummary()}
         </div>
       </div>
-      <div style={s.side as React.CSSProperties}>
+      <div className="w-[260px] shrink-0 sticky top-6">
         {renderSidebar()}
       </div>
     </div>

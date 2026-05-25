@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import type { Task, TaskInput, TaskStatus, TaskPriority, TaskCategory, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import Textarea from '../ui/Textarea';
 
 const STATUS_OPTIONS: TaskStatus[] = ['todo', 'doing', 'done', 'blocked', 'cancelled'];
 const PRIORITY_OPTIONS: TaskPriority[] = ['high', 'medium', 'low'];
@@ -65,106 +69,42 @@ const TaskForm: React.FC<{
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-sm">
       {error && (
-        <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm text-[#dc2626]">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
 
-      <div>
-        <label className="block text-xs font-medium text-[#475569] mb-1">Title *</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" placeholder="Task title" />
-      </div>
+      <Input label="Title *" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" />
 
-      <div>
-        <label className="block text-xs font-medium text-[#475569] mb-1">Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+      <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+
+      <div className="grid grid-cols-3 gap-3">
+        <Select label="Status" options={STATUS_OPTIONS.map(s => ({ value: s, label: s }))} value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} />
+        <Select label="Priority" options={PRIORITY_OPTIONS.map(p => ({ value: p, label: p }))} value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} />
+        <Select label="Category" options={[{ value: '', label: 'None' }, ...CATEGORY_OPTIONS.map(c => ({ value: c, label: c }))]} value={category} onChange={(e) => setCategory(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Priority</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Category</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            <option value="">None</option>
-            {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Date</label>
-          <input type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Est. Minutes</label>
-          <input type="number" min={0} value={estimatedMinutes} onChange={(e) => setEstimatedMinutes(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Actual Minutes</label>
-          <input type="number" min={0} value={actualMinutes} onChange={(e) => setActualMinutes(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-        </div>
+        <Input label="Date" type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} />
+        <Input label="Est. Minutes" type="number" min={0} value={estimatedMinutes} onChange={(e) => setEstimatedMinutes(e.target.value)} />
+        <Input label="Actual Minutes" type="number" min={0} value={actualMinutes} onChange={(e) => setActualMinutes(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Project</label>
-          <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            <option value="">None</option>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Plan</label>
-          <select value={linkedPlanId} onChange={(e) => setLinkedPlanId(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            <option value="">None</option>
-            {plans.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
-        </div>
+        <Select label="Project" options={[{ value: '', label: 'None' }, ...projects.map(p => ({ value: p.id, label: p.name }))]} value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} />
+        <Select label="Plan" options={[{ value: '', label: 'None' }, ...plans.map(p => ({ value: p.id, label: p.title }))]} value={linkedPlanId} onChange={(e) => setLinkedPlanId(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Strategy Goal</label>
-          <select value={linkedStrategyGoalId} onChange={(e) => setLinkedStrategyGoalId(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            <option value="">None</option>
-            {strategyGoals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-[#475569] mb-1">Company</label>
-          <select value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-            <option value="">None</option>
-            {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
+        <Select label="Strategy Goal" options={[{ value: '', label: 'None' }, ...strategyGoals.map(g => ({ value: g.id, label: g.title }))]} value={linkedStrategyGoalId} onChange={(e) => setLinkedStrategyGoalId(e.target.value)} />
+        <Select label="Company" options={[{ value: '', label: 'None' }, ...companies.map(c => ({ value: c.id, label: c.name }))]} value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} />
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-[#475569] mb-1">Person</label>
-        <select value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-          <option value="">None</option>
-          {people.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
-        </select>
-      </div>
+      <Select label="Person" options={[{ value: '', label: 'None' }, ...people.map(p => ({ value: p.id, label: p.fullName }))]} value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} />
 
-      <div>
-        <label className="block text-xs font-medium text-[#475569] mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
-      </div>
+      <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]">Cancel</button>
-        <button type="submit" disabled={saving} className="px-4 py-2 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50">{saving ? 'Saving...' : initial?.id ? 'Update Task' : 'Add Task'}</button>
+        <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving...' : initial?.id ? 'Update Task' : 'Add Task'}</Button>
       </div>
     </form>
   );

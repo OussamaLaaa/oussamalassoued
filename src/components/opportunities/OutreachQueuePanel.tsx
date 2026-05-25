@@ -164,49 +164,46 @@ const QueueSection: React.FC<{
   return (
     <Card>
       <CardHeader>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <CardTitle style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</CardTitle>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>{count}</span>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xs uppercase tracking-wide">{title}</CardTitle>
+          <span className="text-xs text-neutral-500">{count}</span>
         </div>
       </CardHeader>
       <CardContent>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="flex flex-col gap-3">
           {items.length === 0 ? (
             <EmptyState title={emptyText} />
           ) : (
             items.map((item) => (
-              <article key={item.id} style={{
-                borderRadius: '8px', border: '1px solid #e5e7eb',
-                background: '#f8fafc', padding: '12px',
-              }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+              <article key={item.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 600, color: '#0f172a' }}>{item.person.fullName}</span>
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-black">{item.person.fullName}</span>
                       <Badge variant="neutral">{item.companyName}</Badge>
                       {item.source === 'message' && <Badge variant="blue">Message follow-up</Badge>}
                     </div>
-                    <div style={{ fontSize: '13px', color: '#475569' }}>{item.person.role || 'No role listed'}</div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{renderScoreLine(item.person)}</div>
+                    <div className="text-sm text-neutral-600">{item.person.role || 'No role listed'}</div>
+                    <div className="mt-1 text-xs text-neutral-500">{renderScoreLine(item.person)}</div>
                   </div>
-                  <div style={{ textAlign: 'right', fontSize: '12px', color: '#64748b', flexShrink: 0 }}>
+                  <div className="shrink-0 text-right text-xs text-neutral-500">
                     <div>Relationship: {item.person.relationshipStatus || 'No Contact'}</div>
                     <div>Contact: {item.person.contactChannel || '—'}</div>
                     <div>Follow-up: {item.nextFollowUpDate ? item.nextFollowUpDate.slice(0, 10) : '—'}</div>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button variant="secondary" size="sm" onClick={() => onUseTemplate(item.person)}>Use Template</Button>
                   <Button variant="primary" size="sm" onClick={() => onLogMessage(item.person)}>Log Message</Button>
                   <Button variant="secondary" size="sm" onClick={() => void onMarkContacted(item.person)}>Mark Contacted</Button>
                   {reschedulingId === item.id ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#ffffff', padding: '4px 8px' }}>
+                    <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white p-1">
                       <input
                         type="date"
                         value={draftDate}
                         onChange={(event) => setDraftDate(event.target.value)}
-                        style={{ borderRadius: '6px', border: '1px solid #e5e7eb', padding: '4px 8px', fontSize: '12px', color: '#0f172a', outline: 'none' }}
+                        className="rounded-md border border-neutral-200 p-1 text-xs text-black outline-none"
                       />
                       <Button variant="primary" size="sm" onClick={() => {
                         if (!draftDate) return;
@@ -226,7 +223,7 @@ const QueueSection: React.FC<{
                 </div>
 
                 {item.person.linkedin && (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b', wordBreak: 'break-all' }}>{item.person.linkedin}</div>
+                  <div className="mt-2 break-all text-xs text-neutral-500">{item.person.linkedin}</div>
                 )}
               </article>
             ))
@@ -257,22 +254,22 @@ const OutreachQueuePanel: React.FC<{
   const overdueCount = overdue.length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Messages Sent Today" value={sentToday} />
         <StatCard label="Follow-ups Due Today" value={followUpsDueTodayCount} />
         <StatCard label="Overdue Follow-ups" value={overdueCount} />
         <StatCard label="High Priority Not Contacted" value={highPriority.length} />
         <Card>
           <CardContent>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
+            <div className="flex items-center justify-between text-xs text-neutral-500">
               <span>Daily Goal</span>
               <span>{sentToday}/{DAY_GOAL}</span>
             </div>
-            <div style={{ marginTop: '8px', height: '8px', borderRadius: '999px', background: '#e5e7eb' }}>
-              <div style={{ height: '8px', borderRadius: '999px', background: '#2563eb', width: `${dailyGoalProgress}%` }} />
+            <div className="mt-2 h-2 rounded-full bg-neutral-200">
+              <div className="h-2 rounded-full bg-black" style={{ width: `${dailyGoalProgress}%` }} />
             </div>
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>{dailyGoalProgress}% complete</div>
+            <div className="mt-2 text-xs text-neutral-500">{dailyGoalProgress}% complete</div>
           </CardContent>
         </Card>
       </div>

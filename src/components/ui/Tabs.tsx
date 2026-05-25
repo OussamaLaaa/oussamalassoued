@@ -9,43 +9,21 @@ interface TabsProps {
   tabs: TabDef[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
-const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onTabChange, style }) => (
-  <div style={{
-    display: 'flex', gap: '4px',
-    overflowX: 'auto',
-    ...style,
-  }}>
+const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onTabChange, className = '' }) => (
+  <div className={`flex gap-1 overflow-x-auto ${className}`}>
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => onTabChange(tab.id)}
-        style={{
-          padding: '8px 16px',
-          fontSize: '13px', fontWeight: 500,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          background: activeTab === tab.id ? '#eff6ff' : 'transparent',
-          color: activeTab === tab.id ? '#1d4ed8' : '#64748b',
-          border: activeTab === tab.id ? '1px solid #bfdbfe' : '1px solid transparent',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
-          transition: 'all 0.15s ease',
-        }}
-        onMouseEnter={(e) => {
-          if (activeTab !== tab.id) {
-            e.currentTarget.style.background = '#f8fafc';
-            e.currentTarget.style.color = '#0f172a';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (activeTab !== tab.id) {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#64748b';
-          }
-        }}
+        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-150
+          ${
+            activeTab === tab.id
+              ? 'bg-neutral-100 text-black border border-neutral-200'
+              : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50 hover:text-black'
+          }`}
       >
         {tab.label}
       </button>

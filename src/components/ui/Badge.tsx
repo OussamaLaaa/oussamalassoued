@@ -5,54 +5,22 @@ type BadgeVariant = 'neutral' | 'blue' | 'success' | 'warning' | 'danger' | 'pur
 interface BadgeProps {
   variant?: BadgeVariant;
   children: React.ReactNode;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
-const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
-  neutral: {
-    background: '#f1f5f9',
-    color: '#334155',
-    border: '1px solid #cbd5e1',
-  },
-  blue: {
-    background: '#eff6ff',
-    color: '#1d4ed8',
-    border: '1px solid #bfdbfe',
-  },
-  success: {
-    background: '#dcfce7',
-    color: '#166534',
-    border: '1px solid #bbf7d0',
-  },
-  warning: {
-    background: '#fef3c7',
-    color: '#92400e',
-    border: '1px solid #fde68a',
-  },
-  danger: {
-    background: '#fee2e2',
-    color: '#991b1b',
-    border: '1px solid #fecaca',
-  },
-  purple: {
-    background: '#f3f0ff',
-    color: '#6d28d9',
-    border: '1px solid #ddd6fe',
-  },
+const variantStyles: Record<BadgeVariant, string> = {
+  neutral: 'bg-neutral-100 text-neutral-700 border-neutral-300',
+  blue: 'bg-blue-50 text-blue-700 border-blue-200',
+  success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  warning: 'bg-amber-50 text-amber-700 border-amber-200',
+  danger: 'bg-red-50 text-red-700 border-red-200',
+  purple: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
-const Badge: React.FC<BadgeProps> = ({ variant = 'neutral', children, style }) => (
-  <span style={{
-    display: 'inline-flex', alignItems: 'center',
-    padding: '2px 8px', gap: '4px',
-    fontSize: '11px', fontWeight: 600,
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    borderRadius: '6px',
-    lineHeight: 1.4,
-    whiteSpace: 'nowrap',
-    ...variantStyles[variant],
-    ...style,
-  }}>
+const Badge: React.FC<BadgeProps> = ({ variant = 'neutral', children, className = '' }) => (
+  <span
+    className={`inline-flex items-center px-2 py-0.5 gap-1 text-xs font-semibold rounded-md leading-normal whitespace-nowrap border ${variantStyles[variant]} ${className}`}
+  >
     {children}
   </span>
 );

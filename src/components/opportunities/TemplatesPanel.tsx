@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
-
-const inputClassName = 'w-full rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import Textarea from '../ui/Textarea';
+import Button from '../ui/Button';
 
 const emptyForm: MessageTemplateInput = {
   name: '',
@@ -103,131 +105,116 @@ const TemplatesPanel: React.FC<{
     }
   };
 
+  const AUDIENCE_SELECT_OPTIONS = [
+    { value: '', label: 'All audiences' },
+    ...audienceOptions.map((o) => ({ value: o.value, label: o.label })),
+  ];
+
+  const GOAL_SELECT_OPTIONS = [
+    { value: '', label: 'All goals' },
+    ...goalOptions.map((o) => ({ value: o.value, label: o.label })),
+  ];
+
+  const LANGUAGE_SELECT_OPTIONS = [
+    { value: '', label: 'All languages' },
+    ...languageOptions.map((o) => ({ value: o.value, label: o.label })),
+  ];
+
+  const FORM_LANGUAGE_OPTIONS = languageOptions.map((o) => ({ value: o.value, label: o.label }));
+  const FORM_AUDIENCE_OPTIONS = audienceOptions.map((o) => ({ value: o.value, label: o.label }));
+  const FORM_GOAL_OPTIONS = goalOptions.map((o) => ({ value: o.value, label: o.label }));
+
   return (
-    <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-medium text-lg text-[#0f172a]">Message Templates</h3>
+        <h3 className="text-lg font-medium text-black">Message Templates</h3>
         <div className="flex items-center gap-2">
           {templates.length === 0 && onSeedDefaults && (
-            <button
-              type="button"
-              onClick={() => void onSeedDefaults()}
-              className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
-            >
+            <Button variant="secondary" size="sm" onClick={() => void onSeedDefaults()}>
               Seed default templates
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={startAdd}
-            className="text-xs px-3 py-1.5 rounded border border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8] hover:bg-[#dbeafe]"
-          >
+          <Button variant="primary" size="sm" onClick={startAdd}>
             Add Template
-          </button>
+          </Button>
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-[#64748b]">
+      <p className="mt-2 text-xs text-neutral-500">
         Supported placeholders: {'{{personName}}'}, {'{{companyName}}'}, {'{{role}}'}, {'{{myName}}'}, {'{{service}}'}, {'{{observation}}'}.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-[#e5e7eb] pb-3">
-        <select value={filterAudience} onChange={(event) => setFilterAudience(event.target.value)} className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-          <option value="">All audiences</option>
-          {audienceOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-        <select value={filterGoal} onChange={(event) => setFilterGoal(event.target.value)} className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-          <option value="">All goals</option>
-          {goalOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-        <select value={filterLanguage} onChange={(event) => setFilterLanguage(event.target.value)} className="text-xs px-2 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] focus:outline-none focus:ring-1 focus:ring-[#2563eb]">
-          <option value="">All languages</option>
-          {languageOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3">
+        <Select
+          value={filterAudience}
+          onChange={(event) => setFilterAudience(event.target.value)}
+          options={AUDIENCE_SELECT_OPTIONS}
+          className="text-xs"
+        />
+        <Select
+          value={filterGoal}
+          onChange={(event) => setFilterGoal(event.target.value)}
+          options={GOAL_SELECT_OPTIONS}
+          className="text-xs"
+        />
+        <Select
+          value={filterLanguage}
+          onChange={(event) => setFilterLanguage(event.target.value)}
+          options={LANGUAGE_SELECT_OPTIONS}
+          className="text-xs"
+        />
       </div>
 
       {showForm && (
-        <div className="mt-4 rounded-md border border-[#e5e7eb] bg-[#f8fafc] p-3 space-y-3">
+        <div className="mt-4 space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label className="text-xs text-[#64748b] space-y-1">
-              <span>Name</span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                className={inputClassName}
-                placeholder="Founder / UX audit offer / English"
-              />
-            </label>
+            <Input
+              label="Name"
+              type="text"
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Founder / UX audit offer / English"
+            />
 
-            <label className="text-xs text-[#64748b] space-y-1">
-              <span>Language</span>
-              <select
-                value={form.language}
-                onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
-                className={inputClassName}
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
+            <Select
+              label="Language"
+              value={form.language}
+              onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
+              options={FORM_LANGUAGE_OPTIONS}
+            />
 
-            <label className="text-xs text-[#64748b] space-y-1">
-              <span>Audience</span>
-              <select
-                value={form.audience}
-                onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
-                className={inputClassName}
-              >
-                {audienceOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
+            <Select
+              label="Audience"
+              value={form.audience}
+              onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
+              options={FORM_AUDIENCE_OPTIONS}
+            />
 
-            <label className="text-xs text-[#64748b] space-y-1">
-              <span>Goal</span>
-              <select
-                value={form.goal}
-                onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
-                className={inputClassName}
-              >
-                {goalOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
+            <Select
+              label="Goal"
+              value={form.goal}
+              onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
+              options={FORM_GOAL_OPTIONS}
+            />
           </div>
 
-          <label className="text-xs text-[#64748b] space-y-1 block">
-            <span>Subject</span>
-            <input
-              type="text"
-              value={form.subject || ''}
-              onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
-              className={inputClassName}
-              placeholder="Quick UX audit idea for {{companyName}}"
-            />
-          </label>
+          <Input
+            label="Subject"
+            type="text"
+            value={form.subject || ''}
+            onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
+            placeholder="Quick UX audit idea for {{companyName}}"
+          />
 
-          <label className="text-xs text-[#64748b] space-y-1 block">
-            <span>Body</span>
-            <textarea
-              value={form.body}
-              onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
-              className={`${inputClassName} min-h-44`}
-              placeholder="Hi {{personName}}, ..."
-            />
-          </label>
+          <Textarea
+            label="Body"
+            value={form.body}
+            onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
+            className="min-h-44"
+            placeholder="Hi {{personName}}, ..."
+          />
 
-          <label className="inline-flex items-center gap-2 text-xs text-[#64748b]">
+          <label className="inline-flex items-center gap-2 text-xs text-neutral-500">
             <input
               type="checkbox"
               checked={form.isActive !== false}
@@ -237,34 +224,34 @@ const TemplatesPanel: React.FC<{
           </label>
 
           <div className="flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 setShowForm(false);
                 setEditingTemplate(null);
                 setForm(emptyForm);
                 setStatus('');
               }}
-              className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
             >
               Cancel
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => void handleSave()}
               disabled={isSubmitting}
-              className="text-xs px-3 py-1.5 rounded bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : editingTemplate ? 'Update Template' : 'Create Template'}
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-left table-auto">
+        <table className="w-full table-auto text-left">
           <thead>
-            <tr className="text-xs text-[#475569] bg-[#f8fafc]">
+            <tr className="bg-neutral-50 text-xs text-neutral-600">
               <th className="px-3 py-2">Name</th>
               <th className="px-3 py-2">Audience</th>
               <th className="px-3 py-2">Goal</th>
@@ -275,36 +262,36 @@ const TemplatesPanel: React.FC<{
           </thead>
           <tbody>
             {filteredTemplates.map((template) => (
-              <tr key={template.id} className="border-t border-[#e5e7eb] hover:bg-[#f9fafb]">
+              <tr key={template.id} className="border-t border-neutral-200 hover:bg-neutral-50">
                 <td className="px-3 py-3">
-                  <div className="font-medium text-[#0f172a]">{template.name}</div>
-                  <div className="text-xs text-[#64748b] truncate max-w-[360px]">{template.subject || template.body}</div>
+                  <div className="font-medium text-black">{template.name}</div>
+                  <div className="max-w-[360px] truncate text-xs text-neutral-500">{template.subject || template.body}</div>
                 </td>
-                <td className="px-3 py-3 text-sm text-[#0f172a]">{template.audience}</td>
-                <td className="px-3 py-3 text-sm text-[#0f172a]">{template.goal}</td>
-                <td className="px-3 py-3 text-sm text-[#0f172a]">{template.language}</td>
+                <td className="px-3 py-3 text-sm text-black">{template.audience}</td>
+                <td className="px-3 py-3 text-sm text-black">{template.goal}</td>
+                <td className="px-3 py-3 text-sm text-black">{template.language}</td>
                 <td className="px-3 py-3 text-sm">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${template.isActive === false ? 'bg-[#fee2e2] text-[#991b1b]' : 'bg-[#dcfce7] text-[#166534]'}`}>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${template.isActive === false ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
                     {template.isActive === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => startEdit(template)}
-                      className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff]"
                     >
                       Edit
-                    </button>
+                    </Button>
                     {template.isActive !== false && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => void handleDeactivate(template.id)}
-                        className="px-2 py-1 text-xs rounded border border-[#e5e7eb] text-[#dc2626] hover:bg-[#fef2f2]"
                       >
                         Deactivate
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>
@@ -312,7 +299,7 @@ const TemplatesPanel: React.FC<{
             ))}
             {filteredTemplates.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-sm text-[#64748b]">No templates match the current filters.</td>
+                <td colSpan={6} className="px-3 py-8 text-center text-sm text-neutral-500">No templates match the current filters.</td>
               </tr>
             )}
           </tbody>
@@ -320,7 +307,7 @@ const TemplatesPanel: React.FC<{
       </div>
 
       {status && (
-        <div className="mt-3 rounded-md border border-[#dbeafe] bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
           {status}
         </div>
       )}

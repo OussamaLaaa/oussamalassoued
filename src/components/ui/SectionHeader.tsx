@@ -4,35 +4,19 @@ interface SectionHeaderProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
-  style?: React.CSSProperties;
+  className?: string;
 }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description, action, style }) => (
-  <div style={{
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-    gap: '12px', flexWrap: 'wrap', minWidth: 0,
-    ...style,
-  }}>
-    <div style={{ minWidth: 0 }}>
-      <h2 style={{
-        margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        {title}
-      </h2>
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description, action, className = '' }) => (
+  <div className={`flex items-start justify-between gap-3 flex-wrap min-w-0 ${className}`}>
+    <div className="min-w-0">
+      <h2 className="m-0 text-sm font-semibold text-black">{title}</h2>
       {description && (
-        <p style={{
-          margin: '2px 0 0', fontSize: '12px', color: '#64748b',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
-          {description}
-        </p>
+        <p className="m-0 mt-0.5 text-xs text-neutral-500">{description}</p>
       )}
     </div>
     {action && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-        {action}
-      </div>
+      <div className="flex items-center gap-2 shrink-0">{action}</div>
     )}
   </div>
 );

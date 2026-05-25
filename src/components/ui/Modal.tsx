@@ -13,58 +13,27 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, width = '
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '20px',
-      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
       onClick={onClose}
     >
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'rgba(15,23,42,0.4)',
-      }} />
+      <div className="absolute inset-0 bg-black/30" />
       <div
-        style={{
-          position: 'relative',
-          background: '#ffffff',
-          borderRadius: '14px',
-          boxShadow: '0 20px 60px rgba(15,23,42,0.2)',
-          width: '100%',
-          maxWidth: width,
-          maxHeight: '85vh',
-          overflow: 'auto',
-        }}
+        className="relative bg-white rounded-xl shadow-xl max-h-[85vh] overflow-auto"
+        style={{ width: '100%', maxWidth: width }}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '16px 20px 0',
-          }}>
-            <h2 style={{
-              margin: 0, fontSize: '16px', fontWeight: 600, color: '#0f172a',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-            }}>
-              {title}
-            </h2>
+          <div className="flex items-center justify-between px-5 pt-4">
+            <h2 className="m-0 text-base font-semibold text-black">{title}</h2>
             <button
               onClick={onClose}
-              style={{
-                width: '28px', height: '28px', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                border: 'none', background: 'transparent',
-                borderRadius: '6px', cursor: 'pointer',
-                color: '#94a3b8', fontSize: '18px', lineHeight: 1,
-              }}
+              className="w-7 h-7 flex items-center justify-center border-none bg-transparent rounded-md cursor-pointer text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 text-lg leading-none transition-colors duration-150"
             >
               ×
             </button>
           </div>
         )}
-        <div style={{ padding: '16px 20px 20px' }}>
-          {children}
-        </div>
+        <div className="px-5 py-4">{children}</div>
       </div>
     </div>
   );

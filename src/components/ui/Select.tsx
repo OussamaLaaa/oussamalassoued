@@ -6,42 +6,22 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string }[];
 }
 
-const Select: React.FC<SelectProps> = ({ label, error, options, style, ...props }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+const Select: React.FC<SelectProps> = ({ label, error, options, className = '', ...props }) => (
+  <div className="flex flex-col gap-1 min-w-0">
     {label && (
-      <label style={{
-        fontSize: '12px', fontWeight: 600, color: '#0f172a',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        {label}
-      </label>
+      <label className="text-xs font-semibold text-black">{label}</label>
     )}
     <select
-      style={{
-        padding: '8px 12px',
-        fontSize: '13px',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        borderRadius: '8px',
-        border: error ? '1px solid #dc2626' : '1px solid #e5e7eb',
-        background: '#ffffff',
-        color: '#0f172a',
-        outline: 'none',
-        transition: 'border-color 0.15s ease',
-        minWidth: 0,
-        width: '100%',
-        boxSizing: 'border-box',
-        cursor: 'pointer',
-        ...style,
-      }}
+      className={`px-3 py-2 text-sm rounded-lg border bg-white text-black outline-none transition-colors duration-150 min-w-0 w-full box-border cursor-pointer
+        ${error ? 'border-red-400' : 'border-neutral-300 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200'}
+        ${className}`}
       {...props}
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>
-    {error && (
-      <span style={{ fontSize: '11px', color: '#dc2626' }}>{error}</span>
-    )}
+    {error && <span className="text-xs text-red-600">{error}</span>}
   </div>
 );
 
