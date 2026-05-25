@@ -1,103 +1,119 @@
 import React from 'react';
+import type { LucideIcon, LucideProps } from 'lucide-react';
+import {
+  Bell,
+  CalendarDays,
+  CheckSquare,
+  CircleUserRound,
+  Compass,
+  FileText,
+  FolderKanban,
+  Heart,
+  LayoutGrid,
+  Leaf,
+  MessageSquare,
+  Settings,
+  Share2,
+  Sparkles,
+  StickyNote,
+  Wallet,
+} from 'lucide-react';
 
 type AppId = 'desktop' | 'crm' | 'messages' | 'strategy' | 'plans' | 'tasks' | 'projects' | 'finance' | 'documents' | 'social' | 'relationships' | 'life' | 'notes' | 'ai_control';
 
-const APPS: { id: AppId; icon: string; label: string }[] = [
-  { id: 'crm', icon: '🤝', label: 'CRM' },
-  { id: 'messages', icon: '💬', label: 'Messages' },
-  { id: 'strategy', icon: '🎯', label: 'Strategy' },
-  { id: 'plans', icon: '🗓️', label: 'Plans' },
-  { id: 'tasks', icon: '✅', label: 'Tasks' },
-  { id: 'projects', icon: '🧩', label: 'Projects' },
-  { id: 'finance', icon: '💰', label: 'Finance' },
-  { id: 'documents', icon: '📄', label: 'Documents' },
-  { id: 'social', icon: '📣', label: 'Social Media' },
-  { id: 'relationships', icon: '👥', label: 'Relationships' },
-  { id: 'life', icon: '🌱', label: 'Life' },
-  { id: 'notes', icon: '📝', label: 'Notes' },
-  { id: 'ai_control', icon: '🧠', label: 'AI Control' },
+type AppShortcut = {
+  id: Exclude<AppId, 'desktop'>;
+  label: string;
+  icon: LucideIcon;
+};
+
+const iconProps: Partial<LucideProps> = {
+  strokeWidth: 1.75,
+};
+
+const APPS: AppShortcut[] = [
+  { id: 'crm', label: 'CRM', icon: LayoutGrid },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
+  { id: 'strategy', label: 'Strategy', icon: Compass },
+  { id: 'plans', label: 'Plans', icon: CalendarDays },
+  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { id: 'projects', label: 'Projects', icon: FolderKanban },
+  { id: 'finance', label: 'Finance', icon: Wallet },
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'social', label: 'Social Media', icon: Share2 },
+  { id: 'relationships', label: 'Relationships', icon: Heart },
+  { id: 'life', label: 'Life', icon: Leaf },
+  { id: 'notes', label: 'Notes', icon: StickyNote },
+  { id: 'ai_control', label: 'AI Control', icon: Sparkles },
 ];
+
+function TopBarButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-neutral-500 transition-colors hover:border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900"
+    >
+      <Icon className="h-[15px] w-[15px]" {...iconProps} />
+    </button>
+  );
+}
+
+function AppTile({ label, icon: Icon, onOpen }: AppShortcut & { onOpen?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+    >
+      <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-900 transition-colors group-hover:border-neutral-300 group-hover:bg-neutral-50">
+        <Icon className="h-7 w-7" {...iconProps} />
+      </span>
+      <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
+        {label}
+      </span>
+    </button>
+  );
+}
 
 const DesktopLauncher: React.FC<{ onLaunchApp: (appId: AppId) => void }> = ({ onLaunchApp }) => {
   return (
-    <div className="h-screen bg-white relative overflow-hidden flex flex-col">
-      <style>{`
-        @media (max-width: 540px) {
-          .desktop-grid { grid-template-columns: repeat(3, 92px) !important; gap: 34px 40px !important; }
-        }
-        @media (min-width: 541px) and (max-width: 820px) {
-          .desktop-grid { grid-template-columns: repeat(4, 92px) !important; gap: 34px 48px !important; }
-        }
-        @media (min-width: 821px) {
-          .desktop-grid { grid-template-columns: repeat(6, 92px) !important; gap: 40px 64px !important; }
-        }
-      `}</style>
-
-      {/* Top bar */}
-      <div className="relative z-10 h-10 flex items-center justify-between px-5 border-b border-neutral-100">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 flex items-center justify-center rounded-md border-none cursor-default text-neutral-500 hover:bg-neutral-100 transition-colors duration-150">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6" x2="21" y2="12"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </div>
-          <span className="text-xs font-semibold text-neutral-600">Personal OS</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 flex items-center justify-center rounded-md border-none cursor-default text-neutral-500 hover:bg-neutral-100 transition-colors duration-150">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-            </svg>
-          </div>
-          <div className="relative">
-            <div className="w-7 h-7 flex items-center justify-center rounded-md border-none cursor-default text-neutral-500 hover:bg-neutral-100 transition-colors duration-150">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white text-neutral-900">
+      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-11 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 bg-black text-white">
+              <span className="block h-1.5 w-1.5 rounded-[2px] bg-white" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold tracking-tight text-neutral-900">Personal OS</div>
             </div>
-            <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full pointer-events-none" />
           </div>
-          <div className="w-7 h-7 flex items-center justify-center rounded-md border-none cursor-default text-neutral-500 hover:bg-neutral-100 transition-colors duration-150">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </div>
-          <div className="w-7 h-7 flex items-center justify-center rounded-md border-none cursor-default text-neutral-500 hover:bg-neutral-100 transition-colors duration-150">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <div className="flex items-center gap-1.5 cursor-default text-xs font-medium text-black">
-            <div className="w-5 h-5 rounded bg-black flex items-center justify-center text-white text-[9px] font-bold">
-              OU
-            </div>
-            <span>Oussama</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Desktop icon area */}
-      <div className="relative z-10 flex-1 flex flex-col items-center pt-28 overflow-y-auto overflow-x-hidden">
-        <div className="desktop-grid grid justify-center max-w-[900px] box-border"
-          style={{ gridTemplateColumns: 'repeat(6, 92px)', gap: '40px 64px' }}>
-          {APPS.map((app) => (
+          <div className="flex items-center gap-1">
+            <TopBarButton icon={Bell} label="Notifications" />
+            <TopBarButton icon={Settings} label="Settings" />
+            <TopBarButton icon={CircleUserRound} label="Account" />
             <button
-              key={app.id}
-              onClick={() => onLaunchApp(app.id)}
-              className="flex flex-col items-center cursor-pointer bg-transparent border-none p-0 min-w-0 group"
+              type="button"
+              aria-label="User avatar"
+              className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
             >
-              <div className="w-16 h-16 bg-white border border-neutral-200 rounded-xl flex items-center justify-center text-[28px] transition-all duration-150 group-hover:border-neutral-300 group-hover:shadow-sm">
-                {app.icon}
-              </div>
-              <span className="mt-2.5 text-xs font-medium text-neutral-700 text-center leading-tight transition-colors duration-150 group-hover:text-black">
-                {app.label}
-              </span>
+              OU
             </button>
-          ))}
+          </div>
         </div>
-      </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-10 sm:px-6 sm:py-14">
+        <div className="flex-1 flex items-center justify-center py-6 sm:py-10">
+          <div className="grid w-full max-w-5xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+            {APPS.map((app) => (
+              <AppTile key={app.id} {...app} onOpen={() => onLaunchApp(app.id)} />
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
