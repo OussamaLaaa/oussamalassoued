@@ -1080,6 +1080,7 @@ const OpportunitiesLayout: React.FC<{
 
             {tab === 'documents' && (
               <DocumentStudioPanel
+                onBackToDesktop={handleBackToDesktop}
                 documentTemplates={documentTemplates}
                 documentBrandSettings={documentBrandSettings}
                 generatedDocuments={generatedDocuments}
