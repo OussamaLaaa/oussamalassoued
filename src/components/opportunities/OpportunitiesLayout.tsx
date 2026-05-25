@@ -644,9 +644,9 @@ const OpportunitiesLayout: React.FC<{
       <div className="space-y-4">
         {/* Global Search Bar - CRM only */}
         {activeApp === 'crm' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
+          <div className="rounded-xl border border-neutral-200 bg-white p-3">
             <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#64748b] shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-neutral-500">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
               <input
@@ -654,13 +654,13 @@ const OpportunitiesLayout: React.FC<{
                 value={globalSearch}
                 onChange={(e) => handleGlobalSearchChange(e.target.value)}
                 placeholder="Search across companies, people, emails, LinkedIn..."
-                className="w-full text-sm bg-transparent border-none outline-none text-[#0f172a] placeholder-[#94a3b8]"
+                className="w-full border-none bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
               />
               {globalSearch && (
                 <button
                   type="button"
                   onClick={() => handleGlobalSearchChange('')}
-                  className="text-xs px-2 py-1 rounded text-[#64748b] hover:text-[#dc2626] hover:bg-[#fef2f2]"
+                  className="rounded-md px-2 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
                 >
                   Clear
                 </button>

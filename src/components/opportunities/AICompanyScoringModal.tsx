@@ -138,7 +138,7 @@ const AICompanyScoringModal: React.FC<{
     <Modal open={isOpen} onClose={onClose} title={`AI Lead Scoring — ${company.name}`} width="640px">
       <div className="flex flex-col gap-4">
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
+          <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs text-neutral-700">
             {error}
           </div>
         )}
@@ -257,7 +257,7 @@ const AICompanyScoringModal: React.FC<{
             {loading ? 'Analyzing...' : 'Analyze Company'}
           </Button>
         ) : (
-          <Button variant="success" size="md" onClick={handleApply}>Apply Suggestions</Button>
+          <Button variant="primary" size="md" onClick={handleApply}>Apply Suggestions</Button>
         )}
       </div>
     </Modal>

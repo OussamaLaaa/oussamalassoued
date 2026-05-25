@@ -175,20 +175,20 @@ const CompanySegmentView: React.FC<{
       </div>
 
       {/* Strategy Card */}
-      <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-gradient-to-r from-blue-50 to-white p-4 shadow-sm">
-        <div className="mt-0.5 shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+      <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div className="mt-0.5 shrink-0 rounded-lg border border-neutral-200 bg-neutral-50 p-2 text-neutral-700">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
           </svg>
         </div>
-        <div>
-          <div className="text-sm font-semibold text-black">{strategy.goal}</div>
-          <div className="mt-1 text-xs text-neutral-500">{strategy.hint}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-neutral-900">{strategy.goal}</div>
+          <div className="mt-1 text-xs leading-relaxed text-neutral-500">{strategy.hint}</div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard label="Total" value={stats.totalCompanies} />
         <StatCard label="People Connected" value={stats.totalPeople} />
         <StatCard label="Messages Sent" value={stats.messagesSent} />
@@ -212,7 +212,7 @@ const CompanySegmentView: React.FC<{
 
       {/* Companies Table */}
       <div>
-        <div className="mb-2 flex justify-end gap-2">
+        <div className="mb-3 flex flex-wrap justify-end gap-2">
           {onAddCompany && (
             <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>
           )}

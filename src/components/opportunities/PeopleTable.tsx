@@ -3,6 +3,7 @@ import type { Person } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Select from '../ui/Select';
+import Input from '../ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 
@@ -15,26 +16,22 @@ export interface PersonFilters {
 
 const badgeForRelevance = (value?: number) => {
   if (value == null) return null;
-  if (value >= 3) return <Badge variant="success">High</Badge>;
-  if (value >= 2) return <Badge variant="blue">Medium</Badge>;
+  if (value >= 3) return <Badge variant="neutral">High</Badge>;
+  if (value >= 2) return <Badge variant="neutral">Medium</Badge>;
   return <Badge variant="neutral">Low</Badge>;
 };
 
 const badgeForDecisionPower = (value?: number) => {
   if (value == null) return null;
-  if (value >= 3) return <Badge variant="success">High</Badge>;
-  if (value >= 2) return <Badge variant="blue">Medium</Badge>;
-  if (value >= 1) return <Badge variant="warning">Low</Badge>;
+  if (value >= 3) return <Badge variant="neutral">High</Badge>;
+  if (value >= 2) return <Badge variant="neutral">Medium</Badge>;
+  if (value >= 1) return <Badge variant="neutral">Low</Badge>;
   return <Badge variant="neutral">None</Badge>;
 };
 
 const badgeForRelationshipStatus = (status?: string) => {
   if (!status || status === 'No Contact') return <Badge variant="neutral">No Contact</Badge>;
-  const s = status.toLowerCase();
-  if (s.includes('active') || s.includes('connected')) return <Badge variant="success">{status}</Badge>;
-  if (s.includes('pending') || s.includes('follow')) return <Badge variant="warning">{status}</Badge>;
-  if (s.includes('cold') || s.includes('old')) return <Badge variant="neutral">{status}</Badge>;
-  return <Badge variant="blue">{status}</Badge>;
+  return <Badge variant="neutral">{status}</Badge>;
 };
 
 const decisionPowerOptions = [
@@ -105,13 +102,20 @@ const PeopleTable: React.FC<{
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>People</CardTitle>
+          <CardTitle className="text-sm">People</CardTitle>
           <span className="text-xs text-neutral-500">{filtered.length} / {people.length}</span>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {filters && (
-          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+            <Input
+              type="text"
+              value={filters.searchQuery}
+              onChange={(event) => setFilter('searchQuery', event.target.value)}
+              placeholder="Search people"
+              className="min-w-[220px] flex-1"
+            />
             <Select
               value={filters.decisionPower}
               onChange={(e) => setFilter('decisionPower', e.target.value)}
@@ -128,50 +132,54 @@ const PeopleTable: React.FC<{
               options={[{ value: '', label: 'Relationship Status' }, ...statusOptions]}
             />
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">Clear filters</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-700 hover:text-neutral-900">Clear filters</Button>
             )}
           </div>
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="min-w-[1140px] w-full border-collapse text-left">
             <thead>
-              <tr className="text-xs text-neutral-500 bg-neutral-50">
-                <th className="px-3 py-2">Name</th>
-                <th className="px-3 py-2">Company</th>
-                <th className="px-3 py-2">Role</th>
-                <th className="px-3 py-2">Seniority</th>
-                <th className="px-3 py-2">Relevance</th>
-                <th className="px-3 py-2">Decision Power</th>
-                <th className="px-3 py-2">Relationship</th>
-                <th className="px-3 py-2">Contact</th>
-                <th className="px-3 py-2">Actions</th>
+              <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Company</th>
+                <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Seniority</th>
+                <th className="px-4 py-3 font-medium">Relevance</th>
+                <th className="px-4 py-3 font-medium">Decision Power</th>
+                <th className="px-4 py-3 font-medium">Relationship</th>
+                <th className="px-4 py-3 font-medium">Contact</th>
+                <th className="px-4 py-3 font-medium">Next follow-up</th>
+                <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-t border-neutral-200 hover:bg-neutral-50">
-                  <td className="px-3 py-3">
+                <tr key={p.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-4 align-top">
                     <div className="font-semibold text-neutral-900">{p.fullName}</div>
-                    <div className="text-xs text-neutral-500">{p.linkedin || p.emailPublic}</div>
+                    <div className="mt-1 text-xs text-neutral-500 break-words">{p.linkedin || p.emailPublic || '—'}</div>
                   </td>
-                  <td className="px-3 py-3 text-sm text-neutral-900">{p.companyName}</td>
-                  <td className="px-3 py-3 text-sm text-neutral-900">{p.role}</td>
-                  <td className="px-3 py-3 text-sm text-neutral-900">{p.seniority}</td>
-                  <td className="px-3 py-3">{badgeForRelevance(p.relevance)}</td>
-                  <td className="px-3 py-3">{badgeForDecisionPower(p.decisionPower)}</td>
-                  <td className="px-3 py-3">{badgeForRelationshipStatus(p.relationshipStatus)}</td>
-                  <td className="px-3 py-3 text-sm text-neutral-900">{p.contactChannel}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex gap-1 flex-wrap">
+                  <td className="px-4 py-4 align-top text-sm text-neutral-700">{p.companyName || '—'}</td>
+                  <td className="px-4 py-4 align-top text-sm text-neutral-700 max-w-[220px] truncate">{p.role || '—'}</td>
+                  <td className="px-4 py-4 align-top">
+                    <Badge variant="neutral">{p.seniority || '—'}</Badge>
+                  </td>
+                  <td className="px-4 py-4 align-top">{badgeForRelevance(p.relevance)}</td>
+                  <td className="px-4 py-4 align-top">{badgeForDecisionPower(p.decisionPower)}</td>
+                  <td className="px-4 py-4 align-top">{badgeForRelationshipStatus(p.relationshipStatus)}</td>
+                  <td className="px-4 py-4 align-top text-sm text-neutral-700">{p.contactChannel || '—'}</td>
+                  <td className="px-4 py-4 align-top text-sm text-neutral-700">{p.nextFollowUpDate ? p.nextFollowUpDate.slice(0, 10) : '—'}</td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex flex-wrap justify-end gap-1.5">
                       {onUseTemplate && (
-                        <Button variant="ghost" size="sm" onClick={() => onUseTemplate(p)} className="text-neutral-900">Template</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onUseTemplate(p)} className="text-neutral-700 hover:text-neutral-900">Template</Button>
                       )}
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(p)} className="text-blue-600 hover:text-blue-700">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(p)} className="text-neutral-700 hover:text-neutral-900">Edit</Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(p.id)} className="text-red-600 hover:text-red-700">Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(p.id)} className="text-neutral-700 hover:text-neutral-900">Delete</Button>
                       )}
                     </div>
                   </td>
@@ -179,8 +187,12 @@ const PeopleTable: React.FC<{
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center">
-                    <EmptyState title="No people match the current filters." />
+                  <td colSpan={10} className="px-4 py-8 text-center">
+                    <EmptyState
+                      title="No people match the current filters."
+                      description="Clear the filters or add a person to continue."
+                      action={hasActiveFilters ? <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button> : undefined}
+                    />
                   </td>
                 </tr>
               )}

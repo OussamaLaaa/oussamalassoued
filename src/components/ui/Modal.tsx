@@ -18,7 +18,7 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, width = '
     >
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="relative bg-white rounded-xl shadow-xl max-h-[85vh] overflow-auto"
+        className="relative bg-white rounded-xl border border-neutral-200 max-h-[85vh] overflow-auto"
         style={{ width: '100%', maxWidth: width }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -181,7 +181,7 @@ const QueueSection: React.FC<{
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-black">{item.person.fullName}</span>
                       <Badge variant="neutral">{item.companyName}</Badge>
-                      {item.source === 'message' && <Badge variant="blue">Message follow-up</Badge>}
+                      {item.source === 'message' && <Badge variant="neutral">Message follow-up</Badge>}
                     </div>
                     <div className="text-sm text-neutral-600">{item.person.role || 'No role listed'}</div>
                     <div className="mt-1 text-xs text-neutral-500">{renderScoreLine(item.person)}</div>

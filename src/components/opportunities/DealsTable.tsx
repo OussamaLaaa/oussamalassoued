@@ -16,20 +16,15 @@ export interface DealFilters {
 
 const badgeForStage = (stage?: string) => {
   if (!stage) return null;
-  const s = stage.toLowerCase();
-  if (s === 'won') return <Badge variant="success">Won</Badge>;
-  if (s === 'lost') return <Badge variant="danger">Lost</Badge>;
-  if (s === 'negotiation') return <Badge variant="warning">Negotiation</Badge>;
-  if (s === 'proposal_sent') return <Badge variant="blue">Proposal Sent</Badge>;
-  return <Badge variant="neutral">{stage}</Badge>;
+  return <Badge variant="neutral">{stage.replace(/_/g, ' ')}</Badge>;
 };
 
 const badgeForProbability = (probability?: number) => {
   if (probability == null) return null;
   const pct = Math.round(probability * 100);
-  if (pct >= 70) return <Badge variant="success">{pct}%</Badge>;
-  if (pct >= 40) return <Badge variant="blue">{pct}%</Badge>;
-  if (pct >= 20) return <Badge variant="warning">{pct}%</Badge>;
+  if (pct >= 70) return <Badge variant="neutral">{pct}%</Badge>;
+  if (pct >= 40) return <Badge variant="neutral">{pct}%</Badge>;
+  if (pct >= 20) return <Badge variant="neutral">{pct}%</Badge>;
   return <Badge variant="neutral">{pct}%</Badge>;
 };
 
@@ -91,13 +86,20 @@ const DealsTable: React.FC<{
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Deals</CardTitle>
+          <CardTitle className="text-sm">Deals</CardTitle>
           <span className="text-xs text-neutral-500">{filtered.length} / {deals.length}</span>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {filters && (
-          <div className="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-neutral-200">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+            <Input
+              type="text"
+              value={filters.searchQuery}
+              onChange={(event) => setFilter('searchQuery', event.target.value)}
+              placeholder="Search deals"
+              className="min-w-[220px] flex-1"
+            />
             <Select
               value={filters.stage}
               onChange={(e) => setFilter('stage', e.target.value)}
@@ -116,40 +118,42 @@ const DealsTable: React.FC<{
               placeholder="Prob. max (0-1)"
             />
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700">Clear filters</Button>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-700 hover:text-neutral-900">Clear filters</Button>
             )}
           </div>
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="min-w-[1040px] w-full border-collapse text-left">
             <thead>
-              <tr className="text-xs text-neutral-500 bg-neutral-50">
-                <th className="px-3 py-2">Company</th>
-                <th className="px-3 py-2">Contact</th>
-                <th className="px-3 py-2">Service</th>
-                <th className="px-3 py-2">Value</th>
-                <th className="px-3 py-2">Stage</th>
-                <th className="px-3 py-2">Probability</th>
-                <th className="px-3 py-2">Actions</th>
+              <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+                <th className="px-4 py-3 font-medium">Company</th>
+                <th className="px-4 py-3 font-medium">Contact</th>
+                <th className="px-4 py-3 font-medium">Service package</th>
+                <th className="px-4 py-3 font-medium">Stage</th>
+                <th className="px-4 py-3 font-medium">Probability</th>
+                <th className="px-4 py-3 font-medium text-right">Value</th>
+                <th className="px-4 py-3 font-medium">Next action</th>
+                <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((d) => (
-                <tr key={d.id} className="border-t border-neutral-200 hover:bg-neutral-50">
-                  <td className="px-3 py-3 font-semibold text-neutral-900">{d.companyName}</td>
-                  <td className="px-3 py-3 text-neutral-900">{d.personName}</td>
-                  <td className="px-3 py-3 text-neutral-900">{d.servicePackage}</td>
-                  <td className="px-3 py-3 text-neutral-900">{d.value ? `${d.value} ${d.currency || ''}` : '—'}</td>
-                  <td className="px-3 py-3">{badgeForStage(d.stage)}</td>
-                  <td className="px-3 py-3">{badgeForProbability(d.probability)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex gap-1">
+                <tr key={d.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50">
+                  <td className="px-4 py-4 align-top font-semibold text-neutral-900">{d.companyName || '—'}</td>
+                  <td className="px-4 py-4 align-top text-neutral-700">{d.personName || '—'}</td>
+                  <td className="px-4 py-4 align-top text-neutral-700 max-w-[240px] truncate">{d.servicePackage || '—'}</td>
+                  <td className="px-4 py-4 align-top">{badgeForStage(d.stage)}</td>
+                  <td className="px-4 py-4 align-top">{badgeForProbability(d.probability)}</td>
+                  <td className="px-4 py-4 align-top text-right text-neutral-900 tabular-nums">{d.value ? `${d.value} ${d.currency || ''}` : '—'}</td>
+                  <td className="px-4 py-4 align-top text-neutral-700 max-w-[220px] truncate">{d.nextAction || '—'}</td>
+                  <td className="px-4 py-4 align-top">
+                    <div className="flex flex-wrap justify-end gap-1.5">
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(d)} className="text-blue-600 hover:text-blue-700">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(d)} className="text-neutral-700 hover:text-neutral-900">Edit</Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(d.id)} className="text-red-600 hover:text-red-700">Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => onDelete(d.id)} className="text-neutral-700 hover:text-neutral-900">Delete</Button>
                       )}
                     </div>
                   </td>
@@ -157,8 +161,12 @@ const DealsTable: React.FC<{
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center">
-                    <EmptyState title="No deals match the current filters." />
+                  <td colSpan={8} className="px-4 py-8 text-center">
+                    <EmptyState
+                      title="No deals match the current filters."
+                      description="Clear the filters or add a deal to continue."
+                      action={hasActiveFilters ? <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button> : undefined}
+                    />
                   </td>
                 </tr>
               )}
