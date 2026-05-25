@@ -5,18 +5,13 @@ import type { CompanyFilters } from './CompaniesTable';
 import type { SegmentType } from '../../types/opportunities';
 import CompaniesTable from './CompaniesTable';
 import CsvImportModal from './CsvImportModal';
+import StatCard from '../ui/StatCard';
+import Button from '../ui/Button';
+import EmptyState from '../ui/EmptyState';
 
 const isSegmentMatch = (company: Company, segment: SegmentType): boolean => {
   return normalizeDatabaseType(company.databaseType) === segment;
 };
-
-// ── Stat Card ──
-const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
-  <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-    <div className="text-xs font-mono uppercase text-[#64748b]">{title}</div>
-    <div className="mt-1 text-2xl font-semibold text-[#0f172a]">{value}</div>
-  </div>
-);
 
 // ── Strategy Card ──
 const segmentStrategy: Record<SegmentType, { title: string; goal: string; hint: string }> = {
@@ -180,17 +175,20 @@ const CompanySegmentView: React.FC<{
       </div>
 
       {/* Strategy Card */}
-      <div className="rounded-lg border border-[#e5e7eb] bg-gradient-to-r from-[#f0f9ff] to-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 mt-0.5">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#2563eb]">
-              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-            </svg>
-          </div>
-          <div>
-            <div className="font-semibold text-[#0f172a] text-sm">{strategy.goal}</div>
-            <div className="mt-1 text-xs text-[#64748b]">{strategy.hint}</div>
-          </div>
+      <div style={{
+        background: 'linear-gradient(to right, #f0f9ff, #ffffff)',
+        border: '1px solid #e5e7eb', borderRadius: '12px',
+        padding: '16px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+        display: 'flex', gap: '12px', alignItems: 'flex-start',
+      }}>
+        <div style={{ flexShrink: 0, marginTop: '2px' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{strategy.goal}</div>
+          <div style={{ marginTop: '4px', fontSize: '12px', color: '#64748b' }}>{strategy.hint}</div>
         </div>
       </div>
 
@@ -219,33 +217,20 @@ const CompanySegmentView: React.FC<{
 
       {/* Companies Table */}
       <div>
-        <div className="flex items-center justify-end gap-2 mb-2">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '8px' }}>
           {onAddCompany && (
-            <button
-              type="button"
-              onClick={onAddCompany}
-              className="text-xs px-3 py-1.5 rounded border border-[#2563eb] bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
-            >
-              Add Company
-            </button>
+            <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>
           )}
           {onImportCompaniesBatch && (
-            <button
-              type="button"
-              onClick={() => setShowCsvImport(true)}
-              className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
-            >
-              Import CSV
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => setShowCsvImport(true)}>Import CSV</Button>
           )}
         </div>
         {segmentCompanies.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#e5e7eb] bg-white p-8 text-center shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <div className="text-sm text-[#64748b]">{emptyMessage}</div>
-            <div className="mt-2 text-xs text-[#94a3b8]">
-              Create a new company with the appropriate type, or change an existing company's type.
-            </div>
-          </div>
+          <EmptyState
+            title={emptyMessage}
+            description="Create a new company with the appropriate type, or change an existing company's type."
+            action={onAddCompany && <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>}
+          />
         ) : (
           <CompaniesTable
             companies={segmentCompanies}

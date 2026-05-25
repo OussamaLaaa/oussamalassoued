@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import type { Company, OutreachMessage, Person } from '../../types/opportunities';
+import StatCard from '../ui/StatCard';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
 
 type QueueGroupKey = 'overdue' | 'dueToday' | 'highPriority' | 'newContacts';
 
@@ -15,9 +20,6 @@ type QueueItem = {
 };
 
 const DAY_GOAL = 10;
-
-const baseButton = 'rounded-md border border-[#e5e7eb] bg-white px-2.5 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50';
-const primaryButton = 'rounded-md bg-[#2563eb] px-2.5 py-1.5 text-xs text-white hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-50';
 
 const toDayKey = (value: string | undefined | null) => {
   if (!value) return null;
@@ -160,94 +162,78 @@ const QueueSection: React.FC<{
   const [draftDate, setDraftDate] = useState('');
 
   return (
-    <section className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-mono uppercase text-[#0f172a]">{title}</h3>
-        <span className="text-xs text-[#64748b]">{count}</span>
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-[#e5e7eb] bg-[#f8fafc] px-3 py-4 text-sm text-[#64748b]">
-            {emptyText}
-          </div>
-        ) : (
-          items.map((item) => (
-            <article key={item.id} className="rounded-md border border-[#e5e7eb] bg-[#f8fafc] p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="font-semibold text-[#0f172a]">{item.person.fullName}</div>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-[#475569] border border-[#e5e7eb]">{item.companyName}</span>
-                    {item.source === 'message' && <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] text-[#1d4ed8] border border-[#bfdbfe]">Message follow-up</span>}
+    <Card>
+      <CardHeader>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <CardTitle style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</CardTitle>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>{count}</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {items.length === 0 ? (
+            <EmptyState title={emptyText} />
+          ) : (
+            items.map((item) => (
+              <article key={item.id} style={{
+                borderRadius: '8px', border: '1px solid #e5e7eb',
+                background: '#f8fafc', padding: '12px',
+              }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: '#0f172a' }}>{item.person.fullName}</span>
+                      <Badge variant="neutral">{item.companyName}</Badge>
+                      {item.source === 'message' && <Badge variant="blue">Message follow-up</Badge>}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#475569' }}>{item.person.role || 'No role listed'}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{renderScoreLine(item.person)}</div>
                   </div>
-                  <div className="mt-1 text-sm text-[#475569]">{item.person.role || 'No role listed'}</div>
-                  <div className="mt-1 text-xs text-[#64748b]">{renderScoreLine(item.person)}</div>
+                  <div style={{ textAlign: 'right', fontSize: '12px', color: '#64748b', flexShrink: 0 }}>
+                    <div>Relationship: {item.person.relationshipStatus || 'No Contact'}</div>
+                    <div>Contact: {item.person.contactChannel || '—'}</div>
+                    <div>Follow-up: {item.nextFollowUpDate ? item.nextFollowUpDate.slice(0, 10) : '—'}</div>
+                  </div>
                 </div>
-                <div className="text-right text-xs text-[#64748b]">
-                  <div>Relationship: {item.person.relationshipStatus || 'No Contact'}</div>
-                  <div>Contact: {item.person.contactChannel || '—'}</div>
-                  <div>Follow-up: {item.nextFollowUpDate ? item.nextFollowUpDate.slice(0, 10) : '—'}</div>
-                </div>
-              </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button type="button" onClick={() => onUseTemplate(item.person)} className={baseButton}>Use Template</button>
-                <button type="button" onClick={() => onLogMessage(item.person)} className={primaryButton}>Log Message</button>
-                <button type="button" onClick={() => void onMarkContacted(item.person)} className={baseButton}>Mark Contacted</button>
-                {reschedulingId === item.id ? (
-                  <div className="flex items-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-2 py-1">
-                    <input
-                      type="date"
-                      value={draftDate}
-                      onChange={(event) => setDraftDate(event.target.value)}
-                      className="rounded border border-[#e5e7eb] px-2 py-1 text-xs text-[#0f172a]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
+                <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <Button variant="secondary" size="sm" onClick={() => onUseTemplate(item.person)}>Use Template</Button>
+                  <Button variant="primary" size="sm" onClick={() => onLogMessage(item.person)}>Log Message</Button>
+                  <Button variant="secondary" size="sm" onClick={() => void onMarkContacted(item.person)}>Mark Contacted</Button>
+                  {reschedulingId === item.id ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#ffffff', padding: '4px 8px' }}>
+                      <input
+                        type="date"
+                        value={draftDate}
+                        onChange={(event) => setDraftDate(event.target.value)}
+                        style={{ borderRadius: '6px', border: '1px solid #e5e7eb', padding: '4px 8px', fontSize: '12px', color: '#0f172a', outline: 'none' }}
+                      />
+                      <Button variant="primary" size="sm" onClick={() => {
                         if (!draftDate) return;
                         void onReschedule(item.person, item.message, draftDate);
                         setReschedulingId(null);
                         setDraftDate('');
-                      }}
-                      className={primaryButton}
-                    >
-                      Save
-                    </button>
-                    <button type="button" onClick={() => { setReschedulingId(null); setDraftDate(''); }} className={baseButton}>Cancel</button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const nextValue = window.prompt('Reschedule follow-up to (YYYY-MM-DD)', item.nextFollowUpDate?.slice(0, 10) || todayKey);
-                      if (!nextValue) return;
-                      void onReschedule(item.person, item.message, nextValue);
-                    }}
-                    className={baseButton}
-                  >
-                    Reschedule
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onOpenLinkedIn(item.person)}
-                  disabled={!item.person.linkedin}
-                  className={baseButton}
-                >
-                  Open LinkedIn
-                </button>
-              </div>
+                      }}>Save</Button>
+                      <Button variant="secondary" size="sm" onClick={() => { setReschedulingId(null); setDraftDate(''); }}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button variant="secondary" size="sm" onClick={() => {
+                      setReschedulingId(item.id);
+                      setDraftDate(item.nextFollowUpDate?.slice(0, 10) || '');
+                    }}>Reschedule</Button>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => onOpenLinkedIn(item.person)} disabled={!item.person.linkedin}>Open LinkedIn</Button>
+                </div>
 
-              {item.person.linkedin && (
-                <div className="mt-2 text-xs text-[#64748b] break-all">{item.person.linkedin}</div>
-              )}
-            </article>
-          ))
-        )}
-      </div>
-    </section>
+                {item.person.linkedin && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b', wordBreak: 'break-all' }}>{item.person.linkedin}</div>
+                )}
+              </article>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -271,83 +257,45 @@ const OutreachQueuePanel: React.FC<{
   const overdueCount = overdue.length;
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="text-xs text-[#64748b]">Messages Sent Today</div>
-          <div className="mt-2 text-2xl font-semibold text-[#0f172a]">{sentToday}</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="text-xs text-[#64748b]">Follow-ups Due Today</div>
-          <div className="mt-2 text-2xl font-semibold text-[#0f172a]">{followUpsDueTodayCount}</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="text-xs text-[#64748b]">Overdue Follow-ups</div>
-          <div className="mt-2 text-2xl font-semibold text-[#0f172a]">{overdueCount}</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="text-xs text-[#64748b]">High Priority Not Contacted</div>
-          <div className="mt-2 text-2xl font-semibold text-[#0f172a]">{highPriority.length}</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center justify-between text-xs text-[#64748b]">
-            <span>Daily Goal Progress</span>
-            <span>{sentToday}/{DAY_GOAL}</span>
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-[#e5e7eb]">
-            <div className="h-2 rounded-full bg-[#2563eb]" style={{ width: `${dailyGoalProgress}%` }} />
-          </div>
-          <div className="mt-2 text-xs text-[#64748b]">{dailyGoalProgress}% complete</div>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+        <StatCard label="Messages Sent Today" value={sentToday} />
+        <StatCard label="Follow-ups Due Today" value={followUpsDueTodayCount} />
+        <StatCard label="Overdue Follow-ups" value={overdueCount} />
+        <StatCard label="High Priority Not Contacted" value={highPriority.length} />
+        <Card>
+          <CardContent>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
+              <span>Daily Goal</span>
+              <span>{sentToday}/{DAY_GOAL}</span>
+            </div>
+            <div style={{ marginTop: '8px', height: '8px', borderRadius: '999px', background: '#e5e7eb' }}>
+              <div style={{ height: '8px', borderRadius: '999px', background: '#2563eb', width: `${dailyGoalProgress}%` }} />
+            </div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>{dailyGoalProgress}% complete</div>
+          </CardContent>
+        </Card>
       </div>
 
-      <QueueSection
-        title="Overdue Follow-ups"
-        count={overdue.length}
-        emptyText="No overdue follow-ups."
+      <QueueSection title="Overdue Follow-ups" count={overdue.length} emptyText="No overdue follow-ups."
         items={overdue}
-        onUseTemplate={onUseTemplate}
-        onLogMessage={onLogMessage}
-        onMarkContacted={onMarkContacted}
-        onReschedule={onReschedule}
-        onOpenLinkedIn={onOpenLinkedIn}
-      />
+        onUseTemplate={onUseTemplate} onLogMessage={onLogMessage}
+        onMarkContacted={onMarkContacted} onReschedule={onReschedule} onOpenLinkedIn={onOpenLinkedIn} />
 
-      <QueueSection
-        title="Follow-ups Due Today"
-        count={followUpsDueTodayCount}
-        emptyText="No follow-ups due today."
+      <QueueSection title="Follow-ups Due Today" count={followUpsDueTodayCount} emptyText="No follow-ups due today."
         items={dueToday}
-        onUseTemplate={onUseTemplate}
-        onLogMessage={onLogMessage}
-        onMarkContacted={onMarkContacted}
-        onReschedule={onReschedule}
-        onOpenLinkedIn={onOpenLinkedIn}
-      />
+        onUseTemplate={onUseTemplate} onLogMessage={onLogMessage}
+        onMarkContacted={onMarkContacted} onReschedule={onReschedule} onOpenLinkedIn={onOpenLinkedIn} />
 
-      <QueueSection
-        title="High Priority Not Contacted"
-        count={highPriority.length}
-        emptyText="No high-priority contacts waiting."
+      <QueueSection title="High Priority Not Contacted" count={highPriority.length} emptyText="No high-priority contacts waiting."
         items={highPriority}
-        onUseTemplate={onUseTemplate}
-        onLogMessage={onLogMessage}
-        onMarkContacted={onMarkContacted}
-        onReschedule={onReschedule}
-        onOpenLinkedIn={onOpenLinkedIn}
-      />
+        onUseTemplate={onUseTemplate} onLogMessage={onLogMessage}
+        onMarkContacted={onMarkContacted} onReschedule={onReschedule} onOpenLinkedIn={onOpenLinkedIn} />
 
-      <QueueSection
-        title="Recently Imported / New Contacts"
-        count={newContacts.length}
-        emptyText="No new contacts waiting."
+      <QueueSection title="Recently Imported / New Contacts" count={newContacts.length} emptyText="No new contacts waiting."
         items={newContacts}
-        onUseTemplate={onUseTemplate}
-        onLogMessage={onLogMessage}
-        onMarkContacted={onMarkContacted}
-        onReschedule={onReschedule}
-        onOpenLinkedIn={onOpenLinkedIn}
-      />
+        onUseTemplate={onUseTemplate} onLogMessage={onLogMessage}
+        onMarkContacted={onMarkContacted} onReschedule={onReschedule} onOpenLinkedIn={onOpenLinkedIn} />
     </div>
   );
 };

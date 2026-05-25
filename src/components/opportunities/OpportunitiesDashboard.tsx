@@ -1,14 +1,12 @@
 import React from 'react';
 import type { Company, Person, OutreachMessage, Deal, PersonInput, MessageInput } from '../../types/opportunities';
+import StatCard from '../ui/StatCard';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
 import PriorityBadge from './PriorityBadge';
 import StatusBadge from './StatusBadge';
-
-const StatCard: React.FC<{ title: string; value: string | number }> = ({ title, value }) => (
-  <div className="rounded-[12px] border border-[#e5e7eb] bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-    <div className="text-xs font-mono uppercase text-[#64748b]">{title}</div>
-    <div className="mt-1 text-2xl font-semibold text-[#0f172a]">{value}</div>
-  </div>
-);
 
 const formatDate = (d?: string | null) => {
   if (!d) return '-';
@@ -211,187 +209,205 @@ const OpportunitiesDashboard: React.FC<{
   };
 
   const renderFollowUpSection = (title: string, items: FollowUpItem[], emptyText: string, highlight = false) => (
-    <div className={`rounded-lg border bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)] ${highlight ? 'border-[#fecaca] bg-[#fffafa]' : 'border-[#e5e7eb]'}`}>
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="font-medium text-[#0f172a]">{title}</h3>
-        <div className="text-xs text-[#64748b]">{items.length} items</div>
-      </div>
+    <Card>
+      <CardHeader>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <CardTitle style={{ fontSize: '14px' }}>{title}</CardTitle>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>{items.length} items</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {items.length === 0 ? (
+            <EmptyState title={emptyText} />
+          ) : (
+            items.map((item) => {
+              const isEditing = rescheduleTarget?.kind === item.kind && rescheduleTarget?.id === item.id;
 
-      <div className="mt-3 space-y-2">
-        {items.length === 0 ? (
-          <div className="rounded-md border border-dashed border-[#e5e7eb] bg-[#f8fafc] px-3 py-4 text-sm text-[#64748b]">{emptyText}</div>
-        ) : (
-          items.map((item) => {
-            const isEditing = rescheduleTarget?.kind === item.kind && rescheduleTarget?.id === item.id;
-
-            return (
-              <div key={`${item.kind}-${item.id}`} className={`rounded-md border p-3 ${highlight ? 'border-[#fecaca] bg-[#fff5f5]' : 'border-[#e5e7eb] bg-[#f8fafc]'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-[#0f172a]">{item.companyName}</div>
-                    <div className="text-sm text-[#475569]">{item.personName}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#64748b]">
-                      {item.channel && <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-0.5">{item.channel}</span>}
-                      <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-0.5">Status: {item.statusText}</span>
+              return (
+                <div key={`${item.kind}-${item.id}`} style={{
+                  borderRadius: '8px', border: `1px solid ${highlight ? '#fecaca' : '#e5e7eb'}`,
+                  background: highlight ? '#fff5f5' : '#f8fafc',
+                  padding: '12px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.companyName}</div>
+                      <div style={{ fontSize: '13px', color: '#475569' }}>{item.personName}</div>
+                      <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
+                        {item.channel && <Badge variant="neutral">{item.channel}</Badge>}
+                        <Badge variant="neutral">Status: {item.statusText}</Badge>
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: 'right', fontSize: '12px', color: '#64748b' }}>
+                      <div>{formatDate(item.nextFollowUpDate)}</div>
+                      <div style={{ marginTop: '4px', fontWeight: 500, color: '#0f172a' }}>Due</div>
                     </div>
                   </div>
-                  <div className="shrink-0 text-right text-xs text-[#64748b]">
-                    <div>{formatDate(item.nextFollowUpDate)}</div>
-                    <div className="mt-1 font-medium text-[#0f172a]">Due</div>
-                  </div>
-                </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {onUseTemplate && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetPerson = people.find((person) => person.id === item.personId);
-                        if (targetPerson) onUseTemplate(targetPerson);
-                      }}
-                      className="rounded-md border border-[#dbe2ea] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]"
-                    >
-                      Use Template
-                    </button>
+                  <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {onUseTemplate && (
+                      <Button
+                        variant="secondary" size="sm"
+                        onClick={() => {
+                          const targetPerson = people.find((person) => person.id === item.personId);
+                          if (targetPerson) onUseTemplate(targetPerson);
+                        }}
+                      >
+                        Use Template
+                      </Button>
+                    )}
+                    <Button variant="secondary" size="sm" onClick={() => void handleMarkDone(item)}>Mark Done</Button>
+                    <Button variant="primary" size="sm" onClick={() => handleOpenReschedule(item)}>Reschedule</Button>
+                  </div>
+
+                  {isEditing && (
+                    <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', borderRadius: '8px', border: '1px solid #bfdbfe', background: '#ffffff', padding: '12px' }}>
+                      <input
+                        type="date"
+                        value={rescheduleDate}
+                        onChange={(event) => setRescheduleDate(event.target.value)}
+                        style={{
+                          borderRadius: '6px', border: '1px solid #e5e7eb', padding: '6px 10px',
+                          fontSize: '12px', color: '#0f172a', background: '#ffffff',
+                          outline: 'none',
+                        }}
+                      />
+                      <Button variant="primary" size="sm" onClick={() => void handleSaveReschedule()}>Save</Button>
+                      <Button variant="secondary" size="sm" onClick={clearReschedule}>Cancel</Button>
+                    </div>
                   )}
-                  <button type="button" onClick={() => void handleMarkDone(item)} className="rounded-md border border-[#dbe2ea] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">
-                    Mark Done
-                  </button>
-                  <button type="button" onClick={() => handleOpenReschedule(item)} className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1.5 text-xs text-[#1d4ed8] hover:bg-[#dbeafe]">
-                    Reschedule
-                  </button>
                 </div>
-
-                {isEditing && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-[#bfdbfe] bg-white p-3">
-                    <input
-                      type="date"
-                      value={rescheduleDate}
-                      onChange={(event) => setRescheduleDate(event.target.value)}
-                      className="rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15"
-                    />
-                    <button type="button" onClick={() => void handleSaveReschedule()} className="rounded-md bg-[#2563eb] px-3 py-2 text-xs text-white hover:bg-[#1d4ed8]">
-                      Save
-                    </button>
-                    <button type="button" onClick={clearReschedule} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-xs text-[#0f172a] hover:bg-[#f8fafc]">
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
+              );
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
         <div>
-          <h2 className="text-2xl font-semibold text-[#0f172a]">Dashboard</h2>
-          <p className="mt-1 text-sm text-[#64748b]">Pipeline health, follow-ups, and priority opportunities.</p>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 600, color: '#0f172a' }}>Dashboard</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Pipeline health, follow-ups, and priority opportunities.</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={onAddCompany} className="rounded-md border border-[#2563eb] bg-[#2563eb] px-3 py-2 text-sm text-white shadow-sm">Add Company</button>
-          <button type="button" onClick={onAddPerson} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Add Person</button>
-          <button type="button" onClick={onAddMessage} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Log Message</button>
-          <button type="button" onClick={onAddDeal} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Add Deal</button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <Button variant="primary" size="md" onClick={onAddCompany}>Add Company</Button>
+          <Button variant="secondary" size="md" onClick={onAddPerson}>Add Person</Button>
+          <Button variant="secondary" size="md" onClick={onAddMessage}>Log Message</Button>
+          <Button variant="secondary" size="md" onClick={onAddDeal}>Add Deal</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Companies" value={totalCompanies} />
-        <StatCard title="Total People" value={totalPeople} />
-        <StatCard title="Messages Sent" value={messagesSent} />
-        <StatCard title="Follow-ups Due" value={followupsDue} />
-        <StatCard title="Open Deals" value={openDeals} />
-        <StatCard title="High Priority Leads" value={highPriorityCompanies.length} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+        <StatCard label="Total Companies" value={totalCompanies} icon="🏢" />
+        <StatCard label="Total People" value={totalPeople} icon="👥" />
+        <StatCard label="Messages Sent" value={messagesSent} icon="✉️" />
+        <StatCard label="Follow-ups Due" value={followupsDue} icon="📅" />
+        <StatCard label="Open Deals" value={openDeals} icon="💰" />
+        <StatCard label="High Priority Leads" value={highPriorityCompanies.length} icon="⭐" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {renderFollowUpSection('Follow-ups Today', followUpsToday, 'No follow-ups today')}
           {renderFollowUpSection('Overdue Follow-ups', overdueFollowUps, 'No overdue items', true)}
           {upcomingFollowUps.length > 0 && renderFollowUpSection('Upcoming Follow-ups', upcomingFollowUps, 'No upcoming follow-ups')}
 
-          <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-[#0f172a]">High Priority Opportunities</h3>
-              <div className="text-xs text-[#64748b]">{highPriorityCompanies.length} items</div>
-            </div>
-            <div className="mt-3 space-y-2">
-              {highPriorityCompanies.length === 0 ? (
-                <div className="text-sm text-[#64748b]">No high priority opportunities.</div>
-              ) : (
-                highPriorityCompanies.map((company) => (
-                  <div key={company.id} className="flex items-center justify-between rounded-md border border-[#e5e7eb] bg-[#f8fafc] p-3">
-                    <div>
-                      <div className="font-semibold text-[#0f172a]">{company.name}</div>
-                      <div className="text-xs text-[#64748b]">{company.databaseType || company.industry} • {company.city}</div>
+          <Card>
+            <CardHeader>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <CardTitle style={{ fontSize: '14px' }}>High Priority Opportunities</CardTitle>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>{highPriorityCompanies.length} items</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {highPriorityCompanies.length === 0 ? (
+                  <EmptyState title="No high priority opportunities." />
+                ) : (
+                  highPriorityCompanies.map((company) => (
+                    <div key={company.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      borderRadius: '8px', border: '1px solid #e5e7eb',
+                      background: '#f8fafc', padding: '12px',
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{company.name}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{company.databaseType || company.industry} • {company.city}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: '#64748b' }}>{company.nextAction ?? '—'}</span>
+                        <span style={{ fontSize: '13px', color: '#64748b' }}>Fit: {company.fitScore ?? '—'}</span>
+                        <PriorityBadge priority={company.priority} />
+                        <StatusBadge status={company.status} />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center justify-end gap-3">
-                      <div className="text-sm text-[#64748b]">{company.nextAction ?? '—'}</div>
-                      <div className="text-sm text-[#64748b]">Fit: {company.fitScore ?? '—'}</div>
-                      <PriorityBadge priority={company.priority} />
-                      <StatusBadge status={company.status} />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <h3 className="font-medium text-[#0f172a]">Recent Outreach</h3>
-            <div className="mt-3 divide-y divide-[#e5e7eb]">
+          <Card>
+            <CardHeader>
+              <CardTitle style={{ fontSize: '14px' }}>Recent Outreach</CardTitle>
+            </CardHeader>
+            <CardContent>
               {recentMessages.length === 0 ? (
-                <div className="p-3 text-sm text-[#64748b]">No outreach yet.</div>
+                <EmptyState title="No outreach yet." />
               ) : (
-                recentMessages.map((message) => (
-                  <div key={message.id} className="flex items-start justify-between p-3">
-                    <div>
-                      <div className="font-semibold text-[#0f172a]">{message.companyName} — {message.personName}</div>
-                      <div className="text-xs text-[#64748b]">{message.channel} • {message.messageType}</div>
-                      <div className="mt-1 text-xs text-[#94a3b8]">Reply: {message.replyStatus} • Next: {formatDate(message.nextFollowUpDate)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {recentMessages.map((message) => (
+                    <div key={message.id} style={{
+                      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                      padding: '12px 0', borderBottom: '1px solid #e5e7eb',
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{message.companyName} — {message.personName}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{message.channel} • {message.messageType}</div>
+                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#94a3b8' }}>Reply: {message.replyStatus} • Next: {formatDate(message.nextFollowUpDate)}</div>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', flexShrink: 0 }}>{formatDate(message.sentDate)}</div>
                     </div>
-                    <div className="text-xs text-[#64748b]">{formatDate(message.sentDate)}</div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <h4 className="font-medium text-[#0f172a]">Follow-up Snapshot</h4>
-            <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-[#64748b]">
-              <div>Today<span className="float-right">{followUpsToday.length}</span></div>
-              <div>Overdue<span className="float-right">{overdueFollowUps.length}</span></div>
-              <div>Upcoming<span className="float-right">{upcomingFollowUps.length}</span></div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button type="button" onClick={onResetDemoData} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
-                Reset demo data
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)]">
-            <h4 className="font-medium text-[#0f172a]">Quick Stats</h4>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-[#64748b]">
-              <div>Total Companies<span className="float-right">{totalCompanies}</span></div>
-              <div>Total People<span className="float-right">{totalPeople}</span></div>
-              <div>Open Deals<span className="float-right">{openDeals}</span></div>
-              <div>Follow-ups Due<span className="float-right">{followupsDue}</span></div>
-            </div>
-          </div>
-        </aside>
       </div>
-    </section>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+        <Card>
+          <CardContent>
+            <CardTitle style={{ fontSize: '14px' }}>Follow-up Snapshot</CardTitle>
+            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Today <strong>{followUpsToday.length}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Overdue <strong>{overdueFollowUps.length}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Upcoming <strong>{upcomingFollowUps.length}</strong></div>
+            </div>
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="secondary" size="sm" onClick={onResetDemoData}>Reset demo data</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <CardTitle style={{ fontSize: '14px' }}>Quick Stats</CardTitle>
+            <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Total Companies <strong>{totalCompanies}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Total People <strong>{totalPeople}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Open Deals <strong>{openDeals}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>Follow-ups Due <strong>{followupsDue}</strong></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
