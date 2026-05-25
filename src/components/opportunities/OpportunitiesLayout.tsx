@@ -146,6 +146,8 @@ const defaultDealFilters: DealFilters = {
   probabilityMax: '',
 };
 
+type LifeQuickTab = 'dashboard' | 'nutrition' | 'fitness' | 'deen' | 'family' | 'weekly-review';
+
 const toDayKey = (value?: string) => {
   if (!value) return null;
   const date = new Date(value);
@@ -336,6 +338,7 @@ const OpportunitiesLayout: React.FC<{
   const [dealFilters, setDealFilters] = useState<DealFilters>(defaultDealFilters);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
+  const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
 
   const [activeApp, setActiveApp] = useState<AppId>('desktop');
 
@@ -659,6 +662,13 @@ const OpportunitiesLayout: React.FC<{
           <Button variant="secondary" size="md" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
           <Button variant="secondary" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
           <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
+        </>
+      ) : activeApp === 'life' ? (
+        <>
+          <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('nutrition')}>Add Meal</Button>
+          <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('fitness')}>Add Workout</Button>
+          <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('family')}>Add Family Action</Button>
+          <Button variant="primary" size="md" onClick={() => setLifeQuickTab('weekly-review')}>Create Review</Button>
         </>
       ) : activeApp === 'messages' ? (
         <>
@@ -1162,6 +1172,7 @@ const OpportunitiesLayout: React.FC<{
                 lifeDeenLogs={lifeDeenLogs}
                 lifeFamilyActions={lifeFamilyActions}
                 lifeWeeklyReviews={lifeWeeklyReviews}
+                requestedTab={lifeQuickTab}
                 onAddLifeNutritionLog={addLifeNutritionLog}
                 onUpdateLifeNutritionLog={updateLifeNutritionLog}
                 onDeleteLifeNutritionLog={deleteLifeNutritionLog}
