@@ -321,209 +321,199 @@ export default function AISocialMediaAssistantPanel({
     }
   };
 
-  const sectionHeader = (label: string) => (
-    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#64748b] mb-2">{label}</div>
-  );
-
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <div className="space-y-7">
+      <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
         AI Social Media Assistant helps draft and plan content. Review before publishing.
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          {sectionHeader('Mode')}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Mode</div>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as SocialMediaAIMode)}
-            className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+            className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
           >
             {MODE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-[#64748b]">{MODE_OPTIONS.find((o) => o.value === mode)?.description}</p>
-        </div>
+          <p className="text-xs text-neutral-500">{MODE_OPTIONS.find((o) => o.value === mode)?.description}</p>
+        </label>
 
-        <div>
-          {sectionHeader('Language')}
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Language</div>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as SocialMediaAILanguage)}
-            className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+            className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
           >
             {LANGUAGE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-        </div>
+        </label>
 
-        <div>
-          {sectionHeader('Strategy')}
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Strategy</div>
           <select
             value={selectedStrategyId}
             onChange={(e) => setSelectedStrategyId(e.target.value)}
-            className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+            className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
           >
             <option value="">{strategies.length > 0 ? 'Select strategy' : 'No strategies'}</option>
             {strategies.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-        </div>
-      </div>
+        </label>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {MODES_USING_STRATEGY.includes(mode) || MODES_REQUIRING_CONTENT.includes(mode) ? (
-          <div>
-            {sectionHeader('Pillar')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Pillar</div>
             <select
               value={selectedPillarId}
               onChange={(e) => setSelectedPillarId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">Any pillar</option>
               {pillars.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
 
         {MODES_USING_STRATEGY.includes(mode) || MODES_REQUIRING_CONTENT.includes(mode) ? (
-          <div>
-            {sectionHeader('Platform')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platform</div>
             <select
               value={selectedPlatformId}
               onChange={(e) => setSelectedPlatformId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">Any platform</option>
               {platforms.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
 
         {MODES_REQUIRING_CONTENT.includes(mode) ? (
-          <div>
-            {sectionHeader('Content Item')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content Item</div>
             <select
               value={selectedContentItemId}
               onChange={(e) => setSelectedContentItemId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">Select content item</option>
               {contentItems.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
 
         {mode === 'note_to_post' ? (
-          <div>
-            {sectionHeader('Note')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Note</div>
             <select
               value={selectedNoteId}
               onChange={(e) => setSelectedNoteId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">Select note</option>
               {smartNotes.map((n) => (
                 <option key={n.id} value={n.id}>{n.title}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
 
         {mode === 'project_to_case_study' ? (
-          <div>
-            {sectionHeader('Project')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Project</div>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">Select project</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
 
         {mode === 'weekly_plan' ? (
-          <div>
-            {sectionHeader('Existing Weekly Plan')}
+          <label className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Existing Weekly Plan</div>
             <select
               value={selectedWeeklyPlanId}
               onChange={(e) => setSelectedWeeklyPlanId(e.target.value)}
-              className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb]"
+              className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
             >
               <option value="">No plan selected</option>
               {weeklyContentPlans.map((p) => (
                 <option key={p.id} value={p.id}>{p.weekStart}</option>
               ))}
             </select>
-          </div>
+          </label>
         ) : null}
       </div>
 
-      <div>
-        {sectionHeader('Instructions (optional)')}
+      <label className="block space-y-1.5">
+        <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Instructions (optional)</div>
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          className="w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] min-h-[60px]"
+          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px]"
           placeholder="Any specific instructions for the AI..."
         />
-      </div>
+      </label>
 
       <button
         type="button"
         onClick={handleGenerate}
         disabled={loading}
-        className="rounded-xl bg-[#2563eb] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Generating...' : 'Generate'}
       </button>
 
       {error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          {error}
-        </div>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
       {statusMessage ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          {statusMessage}
-        </div>
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{statusMessage}</div>
       ) : null}
 
       {result ? (
         <div className="space-y-4">
           {result.summary ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Summary')}
-              <p className="text-sm text-[#0f172a] whitespace-pre-wrap">{result.summary}</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</div>
+              <p className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap">{result.summary}</p>
             </div>
           ) : null}
 
           {result.ideas?.length > 0 ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Ideas')}
-              <ul className="space-y-2 text-sm text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Ideas</div>
+              <ul className="mt-3 space-y-2 text-sm text-neutral-900">
                 {result.ideas.map((idea, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-[#2563eb]">•</span>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
                     <span className="flex-1">{idea}</span>
                     <button
                       type="button"
                       onClick={() => handleCreateIdea(idea)}
-                      className="shrink-0 text-xs text-[#2563eb] hover:underline"
+                      className="shrink-0 text-xs text-neutral-500 hover:text-neutral-900 transition-colors underline"
                     >
                       Create
                     </button>
@@ -534,7 +524,7 @@ export default function AISocialMediaAssistantPanel({
                 <button
                   type="button"
                   onClick={async () => { await copyToClipboard(result.ideas!.join('\n')); setStatusMessage('Ideas copied.'); }}
-                  className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]"
+                  className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors"
                 >
                   Copy Ideas
                 </button>
@@ -543,12 +533,12 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.hooks?.length > 0 ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Hooks')}
-              <ul className="space-y-2 text-sm text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Hooks</div>
+              <ul className="mt-3 space-y-2 text-sm text-neutral-900">
                 {result.hooks.map((hook, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-[#2563eb]">•</span>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
                     <span className="flex-1">{hook}</span>
                   </li>
                 ))}
@@ -557,7 +547,7 @@ export default function AISocialMediaAssistantPanel({
                 <button
                   type="button"
                   onClick={async () => { await copyToClipboard(result.hooks!.join('\n')); setStatusMessage('Hooks copied.'); }}
-                  className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]"
+                  className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors"
                 >
                   Copy Hooks
                 </button>
@@ -565,7 +555,7 @@ export default function AISocialMediaAssistantPanel({
                   <button
                     type="button"
                     onClick={handleApplyHook}
-                    className="text-xs px-3 py-1.5 rounded-md bg-[#2563eb] text-white"
+                    className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors"
                   >
                     Apply Hook to Selected
                   </button>
@@ -575,21 +565,21 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.contentDraft ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Content Draft')}
-              <div className="text-sm text-[#0f172a] whitespace-pre-wrap mb-3">{result.contentDraft}</div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content Draft</div>
+              <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap mb-3">{result.contentDraft}</div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={async () => { await copyToClipboard(result.contentDraft!); setStatusMessage('Draft copied.'); }}
-                  className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]"
+                  className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors"
                 >
                   Copy Draft
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCreateContentItem()}
-                  className="text-xs px-3 py-1.5 rounded-md bg-[#2563eb] text-white"
+                  className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors"
                 >
                   Save as New Content Item
                 </button>
@@ -597,7 +587,7 @@ export default function AISocialMediaAssistantPanel({
                   <button
                     type="button"
                     onClick={handleReplaceDraft}
-                    className="text-xs px-3 py-1.5 rounded-md border border-amber-300 text-amber-800 hover:bg-amber-50"
+                    className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-amber-700 hover:bg-amber-50 transition-colors"
                   >
                     Replace Selected Draft
                   </button>
@@ -607,14 +597,14 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.weeklyPlan ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Weekly Plan')}
-              <div className="text-sm text-[#0f172a] whitespace-pre-wrap mb-3">{result.weeklyPlan}</div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Plan</div>
+              <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap mb-3">{result.weeklyPlan}</div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={async () => { await copyToClipboard(result.weeklyPlan!); setStatusMessage('Plan copied.'); }}
-                  className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]"
+                  className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors"
                 >
                   Copy Weekly Plan
                 </button>
@@ -622,7 +612,7 @@ export default function AISocialMediaAssistantPanel({
                   <button
                     type="button"
                     onClick={handleCreateWeeklyPlan}
-                    className="text-xs px-3 py-1.5 rounded-md bg-[#2563eb] text-white"
+                    className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors"
                   >
                     Save as Weekly Plan
                   </button>
@@ -632,19 +622,19 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.repurposedContent ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Repurposed Content')}
-              <div className="text-sm text-[#0f172a] whitespace-pre-wrap">{result.repurposedContent}</div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Repurposed Content</div>
+              <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap">{result.repurposedContent}</div>
             </div>
           ) : null}
 
           {result.performanceInsights?.length > 0 ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Performance Insights')}
-              <ul className="space-y-1 text-sm text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Performance Insights</div>
+              <ul className="mt-3 space-y-1 text-sm text-neutral-900">
                 {result.performanceInsights.map((insight, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-[#2563eb]">•</span>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
                     <span>{insight}</span>
                   </li>
                 ))}
@@ -653,12 +643,12 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.questionsToReview?.length > 0 ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Questions to Review')}
-              <ul className="space-y-1 text-sm text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Questions to Review</div>
+              <ul className="mt-3 space-y-1 text-sm text-neutral-900">
                 {result.questionsToReview.map((q, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-[#2563eb]">•</span>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
                     <span>{q}</span>
                   </li>
                 ))}
@@ -667,12 +657,12 @@ export default function AISocialMediaAssistantPanel({
           ) : null}
 
           {result.nextActions?.length > 0 ? (
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
-              {sectionHeader('Next Actions')}
-              <ul className="space-y-1 text-sm text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Actions</div>
+              <ul className="mt-3 space-y-1 text-sm text-neutral-900">
                 {result.nextActions.map((action, i) => (
                   <li key={i} className="flex items-start gap-2">
-                    <span className="mt-0.5 text-[#2563eb]">•</span>
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
                     <span>{action}</span>
                   </li>
                 ))}

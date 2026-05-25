@@ -2,8 +2,18 @@ import React, { useMemo, useState } from 'react';
 import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 
-const SOCIAL_SECTION_KEYS = ['dashboard', 'strategy', 'platforms', 'pillars', 'ideas', 'weekly', 'production', 'calendar', 'performance', 'ai-assistant'] as const;
-type SocialSection = typeof SOCIAL_SECTION_KEYS[number];
+const SOCIAL_TABS = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'strategy', label: 'Strategy' },
+  { id: 'platforms', label: 'Platforms' },
+  { id: 'pillars', label: 'Pillars' },
+  { id: 'ideas', label: 'Ideas' },
+  { id: 'weekly', label: 'Weekly Plan' },
+  { id: 'production', label: 'Production Board' },
+  { id: 'calendar', label: 'Calendar' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'ai-assistant', label: 'AI Assistant' },
+] as const;
 
 const CONTENT_TYPES = ['text_post', 'video', 'short_video', 'carousel', 'thread', 'story', 'reel', 'case_study', 'newsletter', 'image_post', 'poll', 'live', 'other'] as const;
 const CONTENT_STATUSES = ['idea', 'drafted', 'designing', 'recording', 'editing', 'ready', 'scheduled', 'published', 'repurpose', 'archived'] as const;
@@ -51,30 +61,24 @@ const formatDate = (date?: string) => {
   return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const statusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    idea: 'bg-purple-100 text-purple-800',
-    drafted: 'bg-gray-100 text-gray-800',
-    designing: 'bg-blue-100 text-blue-800',
-    recording: 'bg-orange-100 text-orange-800',
-    editing: 'bg-yellow-100 text-yellow-800',
-    ready: 'bg-green-100 text-green-800',
-    scheduled: 'bg-indigo-100 text-indigo-800',
-    published: 'bg-emerald-100 text-emerald-800',
-    repurpose: 'bg-teal-100 text-teal-800',
-    archived: 'bg-gray-100 text-gray-500',
-  };
-  return colors[status] || 'bg-gray-100 text-gray-800';
+const statusBadge = (status: string) => {
+  const value = status.toLowerCase();
+  if (['published', 'ready'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (['scheduled'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';
+  if (['editing'].includes(value)) return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (['archived'].includes(value)) return 'border-red-200 bg-red-50 text-red-700';
+  return 'border-neutral-200 bg-neutral-50 text-neutral-600';
 };
 
-const priorityColor = (priority: string) => {
-  const colors: Record<string, string> = {
-    high: 'text-red-600 bg-red-50',
-    medium: 'text-amber-600 bg-amber-50',
-    low: 'text-slate-600 bg-slate-50',
-  };
-  return colors[priority] || 'text-slate-600 bg-slate-50';
+const priorityBadge = (priority: string) => {
+  const value = priority.toLowerCase();
+  if (value === 'high') return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (value === 'medium') return 'border-neutral-200 bg-neutral-50 text-neutral-600';
+  return 'border-neutral-200 bg-neutral-50 text-neutral-500';
 };
+
+const isActiveBadge = (isActive: boolean) =>
+  isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500';
 
 interface SocialMediaPanelProps {
   socialPlatforms: SocialPlatform[];
@@ -103,767 +107,906 @@ interface SocialMediaPanelProps {
 }
 
 export default function SocialMediaPanel(props: SocialMediaPanelProps) {
-  const [section, setSection] = useState<SocialSection>('dashboard');
-  const [formMode, setFormMode] = useState<{ type: string; id?: string } | null>(null);
-
-  const now = new Date();
-  const [selectedWeek, setSelectedWeek] = useState(() => WEEK_START(now));
-
-  const todayStr = now.toISOString().slice(0, 10);
-
-  const sectionNav = (
-    <div className="flex flex-wrap gap-1.5 mb-4">
-      {SOCIAL_SECTION_KEYS.map((key) => (
-        <button
-          key={key}
-          onClick={() => setSection(key)}
-          className={`px-3 py-1.5 text-xs rounded-md font-medium transition-all ${section === key ? 'bg-[#0f172a] text-white' : 'bg-white text-[#475569] border border-[#e5e7eb] hover:bg-[#f8fafc]'}`}
-        >
-          {key === 'weekly' ? 'Weekly Plan' : key === 'ai-assistant' ? 'AI Assistant' : key.charAt(0).toUpperCase() + key.slice(1)}
-        </button>
-      ))}
-    </div>
-  );
-
-  const loadingSpinner = <div className="text-xs text-[#64748b] py-10 text-center">Loading...</div>;
-
-  if (section === 'dashboard') return <SocialDashboard {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'strategy') return <StrategySection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'platforms') return <PlatformsSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'pillars') return <PillarsSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'ideas') return <IdeasSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'weekly') return <WeeklyPlanSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} selectedWeek={selectedWeek} onSetSelectedWeek={setSelectedWeek} />;
-  if (section === 'production') return <ProductionBoard {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'calendar') return <CalendarSection {...props} sectionNav={sectionNav} onSetFormMode={setFormMode} formMode={formMode} />;
-  if (section === 'performance') return <PerformanceSection {...props} sectionNav={sectionNav} />;
-  if (section === 'ai-assistant') return <AIAssistantSection {...props} sectionNav={sectionNav} />;
-  return null;
-}
-
-interface SectionProps extends SocialMediaPanelProps {
-  sectionNav: React.ReactNode;
-  onSetFormMode?: (mode: { type: string; id?: string } | null) => void;
-  formMode?: { type: string; id?: string } | null;
-  selectedWeek?: string;
-  onSetSelectedWeek?: (week: string) => void;
-}
-
-// ── Dashboard ──
-
-function SocialDashboard({ contentItems, contentStrategies, weeklyContentPlans, sectionNav, onSetFormMode }: SectionProps) {
+  const [activeTab, setActiveTab] = useState<typeof SOCIAL_TABS[number]['id']>('dashboard');
+  const [selectedWeek, setSelectedWeek] = useState(() => WEEK_START(new Date()));
   const now = new Date();
   const currentWeek = WEEK_START(now);
+  const todayStr = now.toISOString().slice(0, 10);
 
-  const thisWeekItems = useMemo(() => contentItems.filter((item) => item.weekStart === currentWeek), [contentItems, currentWeek]);
+  // ── Dashboard ──
+
+  const thisWeekItems = useMemo(() => props.contentItems.filter((item) => item.weekStart === currentWeek), [props.contentItems, currentWeek]);
   const publishedThisWeek = useMemo(() => thisWeekItems.filter((item) => item.status === 'published'), [thisWeekItems]);
-  const plannedPosts = useMemo(() => thisWeekItems.filter((item) => item.status === 'scheduled' || item.status === 'ready'), [thisWeekItems]);
-  const ideasCount = useMemo(() => contentItems.filter((item) => item.status === 'idea').length, [contentItems]);
-  const inProduction = useMemo(() => contentItems.filter((item) => ['drafted', 'designing', 'recording', 'editing'].includes(item.status)).length, [contentItems]);
-  const readyToPublish = useMemo(() => contentItems.filter((item) => item.status === 'ready').length, [contentItems]);
-  const totalLeads = useMemo(() => contentItems.reduce((sum, item) => sum + (item.leadsGenerated || 0), 0), [contentItems]);
+  const scheduledItems = useMemo(() => props.contentItems.filter((item) => item.status === 'scheduled'), [props.contentItems]);
+  const ideasCount = useMemo(() => props.contentItems.filter((item) => item.status === 'idea').length, [props.contentItems]);
+  const inProduction = useMemo(() => props.contentItems.filter((item) => ['drafted', 'designing', 'recording', 'editing'].includes(item.status)).length, [props.contentItems]);
+  const readyToPublish = useMemo(() => props.contentItems.filter((item) => item.status === 'ready').length, [props.contentItems]);
+  const totalLeads = useMemo(() => props.contentItems.reduce((sum, item) => sum + (item.leadsGenerated || 0), 0), [props.contentItems]);
+  const totalViews = useMemo(() => props.contentItems.reduce((sum, item) => sum + (item.performanceViews || 0), 0), [props.contentItems]);
+  const plan = useMemo(() => props.weeklyContentPlans.find((p) => p.weekStart === currentWeek), [props.weeklyContentPlans, currentWeek]);
+  const activeStrategy = props.contentStrategies[0];
+  const recentIdeas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea').slice(0, 5), [props.contentItems]);
+  const readyScheduled = useMemo(() => props.contentItems.filter((item) => item.status === 'ready' || item.status === 'scheduled').slice(0, 5), [props.contentItems]);
 
-  const plan = useMemo(() => weeklyContentPlans.find((p) => p.weekStart === currentWeek), [weeklyContentPlans, currentWeek]);
-  const activeStrategy = contentStrategies[0];
-
-  const cards = [
-    { label: 'Content This Week', value: thisWeekItems.length, color: 'bg-[#0f172a]' },
-    { label: 'Published This Week', value: publishedThisWeek.length, color: 'bg-emerald-600' },
-    { label: 'Planned Posts', value: plannedPosts.length, color: 'bg-indigo-600' },
-    { label: 'Planned Videos', value: plan?.targetVideos || 0, color: 'bg-violet-600' },
-    { label: 'Ideas Bank', value: ideasCount, color: 'bg-purple-600' },
-    { label: 'In Production', value: inProduction, color: 'bg-amber-600' },
-    { label: 'Ready to Publish', value: readyToPublish, color: 'bg-green-600' },
-    { label: 'Leads Generated', value: totalLeads, color: 'bg-blue-600' },
-  ];
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {cards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm">
-            <div className={`w-8 h-1 rounded-full mb-2 ${card.color}`} />
-            <div className="text-2xl font-bold text-[#0f172a]">{card.value}</div>
-            <div className="text-xs text-[#64748b] mt-1">{card.label}</div>
-          </div>
-        ))}
-      </div>
-      {activeStrategy && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-          <div className="text-sm font-semibold text-[#0f172a] mb-1">{activeStrategy.name}</div>
-          <div className="text-xs text-[#64748b]">{activeStrategy.positioning || 'No positioning set'}</div>
-        </div>
-      )}
-      {!activeStrategy && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-4 text-center">
-          <div className="text-sm text-[#64748b]">No content strategy yet.</div>
-          <button onClick={() => onSetFormMode?.({ type: 'strategy' })} className="mt-2 text-xs px-4 py-2 rounded-md bg-[#0f172a] text-white hover:bg-[#1e293b]">
-            Create Strategy
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Strategy Section ──
-
-function StrategySection({ contentStrategies, onAddContentStrategy, onUpdateContentStrategy, onDeleteContentStrategy, sectionNav, onSetFormMode, formMode }: SectionProps) {
-  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentStrategyInput> } | null>(null);
-
-  const handleSave = async (input: ContentStrategyInput) => {
-    if (editing?.id) {
-      await onUpdateContentStrategy(editing.id, input);
-    } else {
-      await onAddContentStrategy(input);
-    }
-    setEditing(null);
-  };
-
-  if (editing) {
-    return (
-      <div>
-        {sectionNav}
-        <ContentStrategyForm
-          initial={editing.data}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[#0f172a]">Content Strategy</h3>
-        {contentStrategies.length === 0 && (
-          <button onClick={() => setEditing({})} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Add Strategy</button>
-        )}
-      </div>
-      {contentStrategies.length === 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-6 text-center text-sm text-[#64748b]">
-          No content strategy defined. Create one to guide your content efforts.
-        </div>
-      )}
-      {contentStrategies.map((strategy) => (
-        <div key={strategy.id} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-sm font-semibold text-[#0f172a]">{strategy.name}</div>
-              {strategy.positioning && <div className="text-xs text-[#64748b] mt-1">Positioning: {strategy.positioning}</div>}
-              {strategy.mainPromise && <div className="text-xs text-[#64748b] mt-0.5">Promise: {strategy.mainPromise}</div>}
-              {strategy.tone && <div className="text-xs text-[#64748b] mt-0.5">Tone: {strategy.tone}</div>}
-              {strategy.targetAudience && <div className="text-xs text-[#64748b] mt-0.5">Audience: {strategy.targetAudience}</div>}
-              {strategy.languages && <div className="text-xs text-[#64748b] mt-0.5">Languages: {strategy.languages}</div>}
-              {strategy.activePlatforms && <div className="text-xs text-[#64748b] mt-0.5">Platforms: {strategy.activePlatforms}</div>}
-              <div className="flex gap-3 mt-2 text-xs text-[#64748b]">
-                {strategy.weeklyPostTarget != null && <span>Posts/week: {strategy.weeklyPostTarget}</span>}
-                {strategy.weeklyVideoTarget != null && <span>Videos/week: {strategy.weeklyVideoTarget}</span>}
-              </div>
-            </div>
-            <div className="flex gap-1">
-              <button onClick={() => setEditing({ id: strategy.id, data: strategy })} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f8fafc]">Edit</button>
-              <button onClick={() => { if (window.confirm('Delete this strategy?')) onDeleteContentStrategy(strategy.id); }} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-red-600 hover:bg-red-50">Delete</button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Platforms Section ──
-
-function PlatformsSection({ socialPlatforms, onAddSocialPlatform, onUpdateSocialPlatform, onDeleteSocialPlatform, sectionNav, onSetFormMode, formMode }: SectionProps) {
-  const [editing, setEditing] = useState<{ id?: string; data?: Partial<SocialPlatformInput> } | null>(null);
-
-  const createDefaults = async () => {
-    for (const p of DEFAULT_PLATFORMS) {
-      await onAddSocialPlatform({ name: p.name, slug: p.slug, isActive: true });
-    }
-  };
-
-  const handleSave = async (input: SocialPlatformInput) => {
-    if (editing?.id) {
-      await onUpdateSocialPlatform(editing.id, input);
-    } else {
-      await onAddSocialPlatform(input);
-    }
-    setEditing(null);
-  };
-
-  if (editing) {
-    return (
-      <div>
-        {sectionNav}
-        <SocialPlatformForm
-          initial={editing.data}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[#0f172a]">Platforms</h3>
-        <div className="flex gap-2">
-          {socialPlatforms.length === 0 && (
-            <button onClick={createDefaults} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Create Default Platforms</button>
-          )}
-          <button onClick={() => setEditing({})} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#0f172a]">Add Platform</button>
-        </div>
-      </div>
-      {socialPlatforms.length === 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-6 text-center text-sm text-[#64748b]">
-          No platforms yet. Create default platforms or add your own.
-        </div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {socialPlatforms.map((platform) => (
-          <div key={platform.id} className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium text-[#0f172a]">{platform.name}</div>
-              <div className="text-xs text-[#64748b]">/{platform.slug}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${platform.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{platform.isActive ? 'Active' : 'Inactive'}</span>
-              <button onClick={() => setEditing({ id: platform.id, data: platform })} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f8fafc]">Edit</button>
-              <button onClick={() => { if (window.confirm('Delete this platform?')) onDeleteSocialPlatform(platform.id); }} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-red-600 hover:bg-red-50">Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Pillars Section ──
-
-function PillarsSection({ contentPillars, onAddContentPillar, onUpdateContentPillar, onDeleteContentPillar, sectionNav }: SectionProps) {
-  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentPillarInput> } | null>(null);
-
-  const createStarterPillars = async () => {
-    for (const p of STARTER_PILLARS) {
-      const exists = contentPillars.some((cp) => cp.slug === p.slug);
-      if (!exists) {
-        await onAddContentPillar({ name: p.name, slug: p.slug, description: p.description, priority: 'medium', isActive: true });
-      }
-    }
-  };
-
-  const handleSave = async (input: ContentPillarInput) => {
-    if (editing?.id) {
-      await onUpdateContentPillar(editing.id, input);
-    } else {
-      await onAddContentPillar(input);
-    }
-    setEditing(null);
-  };
-
-  if (editing) {
-    return (
-      <div>
-        {sectionNav}
-        <ContentPillarForm
-          initial={editing.data}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[#0f172a]">Content Pillars</h3>
-        <div className="flex gap-2">
-          {contentPillars.length === 0 && (
-            <button onClick={createStarterPillars} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Create Starter Content Pillars</button>
-          )}
-          <button onClick={() => setEditing({})} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#0f172a]">Add Pillar</button>
-        </div>
-      </div>
-      {contentPillars.length === 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-6 text-center text-sm text-[#64748b]">
-          No pillars yet. Create starter pillars or add your own.
-        </div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {contentPillars.map((pillar) => (
-          <div key={pillar.id} className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-sm font-medium text-[#0f172a]">{pillar.name}</div>
-                <div className="text-xs text-[#64748b]">/{pillar.slug}</div>
-                {pillar.description && <div className="text-xs text-[#64748b] mt-1">{pillar.description}</div>}
-                {pillar.targetAudience && <div className="text-xs text-[#64748b] mt-0.5">Audience: {pillar.targetAudience}</div>}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColor(pillar.priority)}`}>{pillar.priority}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${pillar.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{pillar.isActive ? 'Active' : 'Inactive'}</span>
-              </div>
-            </div>
-            <div className="flex gap-1 mt-2">
-              <button onClick={() => setEditing({ id: pillar.id, data: pillar })} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f8fafc]">Edit</button>
-              <button onClick={() => { if (window.confirm('Delete this pillar?')) onDeleteContentPillar(pillar.id); }} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-red-600 hover:bg-red-50">Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Ideas Section ──
-
-function IdeasSection({ contentItems, socialPlatforms, contentPillars, projects, smartNotes, companies, onAddContentItem, onUpdateContentItem, onDeleteContentItem, sectionNav, onSetFormMode, formMode }: SectionProps) {
-  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
-
-  const ideas = useMemo(() => contentItems.filter((item) => item.status === 'idea'), [contentItems]);
-
-  const handleSave = async (input: ContentItemInput) => {
-    if (editing?.id) {
-      await onUpdateContentItem(editing.id, { ...input, status: 'idea' });
-    } else {
-      await onAddContentItem({ ...input, status: 'idea' });
-    }
-    setEditing(null);
-  };
-
-  if (editing) {
-    return (
-      <div>
-        {sectionNav}
-        <ContentItemForm
-          initial={editing.data}
-          socialPlatforms={socialPlatforms}
-          contentPillars={contentPillars}
-          projects={projects}
-          smartNotes={smartNotes}
-          companies={companies}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[#0f172a]">Ideas Bank</h3>
-        <button onClick={() => setEditing({})} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Add Idea</button>
-      </div>
-      {ideas.length === 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-6 text-center text-sm text-[#64748b]">
-          No ideas yet. Add your first content idea.
-        </div>
-      )}
-      <div className="space-y-2">
-        {ideas.map((item) => (
-          <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[#0f172a]">{item.title}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${priorityColor(item.priority)}`}>{item.priority}</span>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-1 text-xs text-[#64748b]">
-                  <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.type}</span>
-                  {item.platformName && <span>{item.platformName}</span>}
-                  {item.pillarName && <span>{item.pillarName}</span>}
-                  {item.hook && <span className="italic">&ldquo;{item.hook.slice(0, 60)}&rdquo;</span>}
-                </div>
-              </div>
-              <div className="flex gap-1 ml-2">
-                <button onClick={() => setEditing({ id: item.id, data: item })} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-[#f8fafc]">Edit</button>
-                <button onClick={() => { if (window.confirm('Delete this idea?')) onDeleteContentItem(item.id); }} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-red-600 hover:bg-red-50">Delete</button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Weekly Plan Section ──
-
-function WeeklyPlanSection({ contentItems, weeklyContentPlans, socialPlatforms, contentPillars, projects, smartNotes, companies, onAddWeeklyContentPlan, onUpdateWeeklyContentPlan, onDeleteWeeklyContentPlan, onUpdateContentItem, sectionNav, selectedWeek = '', onSetSelectedWeek }: SectionProps) {
-  const plan = useMemo(() => weeklyContentPlans.find((p) => p.weekStart === selectedWeek), [weeklyContentPlans, selectedWeek]);
-  const weekItems = useMemo(() => contentItems.filter((item) => item.weekStart === selectedWeek), [contentItems, selectedWeek]);
-  const unassignedItems = useMemo(() => contentItems.filter((item) => !item.weekStart || item.weekStart === ''), [contentItems]);
-
-  const [editing, setEditing] = useState<boolean>(false);
-  const [formData, setFormData] = useState<Partial<WeeklyContentPlanInput>>({});
-
-  const handleSavePlan = async () => {
-    if (plan) {
-      await onUpdateWeeklyContentPlan(plan.id, { ...formData, weekStart: selectedWeek });
-    } else {
-      await onAddWeeklyContentPlan({ ...formData, weekStart: selectedWeek } as WeeklyContentPlanInput);
-    }
-    setEditing(false);
-  };
-
-  const assignToWeek = async (itemId: string) => {
-    await onUpdateContentItem(itemId, { weekStart: selectedWeek });
-  };
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <button onClick={() => onSetSelectedWeek?.(addWeeks(selectedWeek, -1))} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[#0f172a]">&larr; Prev</button>
-          <span className="text-sm font-semibold text-[#0f172a]">Week of {formatDate(selectedWeek)}</span>
-          <button onClick={() => onSetSelectedWeek?.(addWeeks(selectedWeek, 1))} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[#0f172a]">Next &rarr;</button>
-          <button onClick={() => onSetSelectedWeek?.(WEEK_START(new Date()))} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[#0f172a]">This Week</button>
-        </div>
-        <button onClick={() => { setFormData(plan || { weekStart: selectedWeek }); setEditing(true); }} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">
-          {plan ? 'Edit Plan' : 'Create Plan'}
-        </button>
-      </div>
-
-      {editing && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Focus</label>
-              <input value={formData.focus || ''} onChange={(e) => setFormData((prev) => ({ ...prev, focus: e.target.value }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Target Posts</label>
-              <input type="number" min="0" value={formData.targetPosts ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetPosts: e.target.value ? Number(e.target.value) : undefined }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Target Videos</label>
-              <input type="number" min="0" value={formData.targetVideos ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetVideos: e.target.value ? Number(e.target.value) : undefined }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Target Carousels</label>
-              <input type="number" min="0" value={formData.targetCarousels ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetCarousels: e.target.value ? Number(e.target.value) : undefined }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Target Other</label>
-              <input type="number" min="0" value={formData.targetOther ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetOther: e.target.value ? Number(e.target.value) : undefined }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-            <div>
-              <label className="text-xs text-[#64748b] block mb-1">Review Notes</label>
-              <input value={formData.reviewNotes || ''} onChange={(e) => setFormData((prev) => ({ ...prev, reviewNotes: e.target.value }))} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleSavePlan} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Save</button>
-            <button onClick={() => setEditing(false)} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {plan && !editing && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm mb-4">
-          <div className="text-xs text-[#64748b]">
-            {plan.focus && <div>Focus: {plan.focus}</div>}
-            <div className="flex gap-3 mt-1">
-              <span>Posts: {plan.targetPosts ?? '-'}</span>
-              <span>Videos: {plan.targetVideos ?? '-'}</span>
-              <span>Carousels: {plan.targetCarousels ?? '-'}</span>
-              <span>Other: {plan.targetOther ?? '-'}</span>
-            </div>
-            {plan.reviewNotes && <div className="mt-1">Review: {plan.reviewNotes}</div>}
-          </div>
-        </div>
-      )}
-
-      <div className="text-xs font-semibold text-[#0f172a] mb-2">Content Items This Week ({weekItems.length})</div>
-      {weekItems.length === 0 && <div className="text-xs text-[#64748b] mb-3">No items assigned to this week.</div>}
-      <div className="space-y-2 mb-4">
-        {weekItems.map((item) => (
-          <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-white p-2 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`text-xs px-1.5 py-0.5 rounded ${statusColor(item.status)}`}>{item.status}</span>
-              <span className="text-xs font-medium text-[#0f172a]">{item.title}</span>
-              <span className="text-xs text-[#64748b]">{item.type}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {unassignedItems.length > 0 && (
-        <>
-          <div className="text-xs font-semibold text-[#0f172a] mb-2">Unassigned Items</div>
-          <div className="space-y-2">
-            {unassignedItems.map((item) => (
-              <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${statusColor(item.status)}`}>{item.status}</span>
-                  <span className="text-xs font-medium text-[#0f172a]">{item.title}</span>
-                </div>
-                <button onClick={() => assignToWeek(item.id)} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] bg-white text-[#0f172a]">Assign to Week</button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Production Board ──
-
-function ProductionBoard({ contentItems, socialPlatforms, contentPillars, projects, smartNotes, companies, onUpdateContentItem, onDeleteContentItem, sectionNav, onSetFormMode, formMode }: SectionProps) {
-  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
-
-  const groupedByStatus = useMemo(() => {
-    const groups: Record<string, ContentItem[]> = {};
-    for (const item of contentItems) {
-      const key = item.status;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
-    }
-    return groups;
-  }, [contentItems]);
-
-  const handleSave = async (input: ContentItemInput) => {
-    if (editing?.id) {
-      await onUpdateContentItem(editing.id, input);
-    }
-    setEditing(null);
-  };
-
-  const moveStatus = async (itemId: string, status: string) => {
-    await onUpdateContentItem(itemId, { status: status as any });
-  };
-
-  if (editing) {
-    return (
-      <div>
-        {sectionNav}
-        <ContentItemForm
-          initial={editing.data}
-          socialPlatforms={socialPlatforms}
-          contentPillars={contentPillars}
-          projects={projects}
-          smartNotes={smartNotes}
-          companies={companies}
-          onSave={handleSave}
-          onCancel={() => setEditing(null)}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {CONTENT_STATUSES.map((status) => {
-          const items = groupedByStatus[status] || [];
+  const renderTabs = () => (
+    <div className="border-b border-neutral-200">
+      <div className="flex flex-wrap gap-1 overflow-x-auto">
+        {SOCIAL_TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
           return (
-            <div key={status} className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm">
-              <div className={`px-3 py-2 border-b border-[#e5e7eb] flex items-center justify-between ${statusColor(status).split(' ')[0]} bg-opacity-30 rounded-t-lg`}>
-                <span className="text-xs font-semibold text-[#0f172a] capitalize">{status}</span>
-                <span className="text-xs text-[#64748b]">{items.length}</span>
-              </div>
-              <div className="p-2 space-y-2 max-h-[60vh] overflow-y-auto">
-                {items.length === 0 && <div className="text-xs text-[#64748b] text-center py-4">No items</div>}
-                {items.map((item) => (
-                  <div key={item.id} className="rounded border border-[#e5e7eb] p-2 bg-[#f8fafc]">
-                    <div className="text-xs font-medium text-[#0f172a]">{item.title}</div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <span className="text-[10px] px-1 py-0.5 rounded bg-gray-100 text-[#64748b]">{item.type}</span>
-                      {item.platformName && <span className="text-[10px] px-1 py-0.5 rounded bg-gray-100 text-[#64748b]">{item.platformName}</span>}
-                      {item.pillarName && <span className="text-[10px] px-1 py-0.5 rounded bg-gray-100 text-[#64748b]">{item.pillarName}</span>}
-                    </div>
-                    {item.publishDate && <div className="text-[10px] text-[#64748b] mt-1">Publish: {formatDate(item.publishDate)}</div>}
-                    <div className="flex gap-1 mt-1.5">
-                      <button onClick={() => setEditing({ id: item.id, data: item })} className="text-[10px] px-1.5 py-0.5 rounded border border-[#e5e7eb] text-[#0f172a] hover:bg-white">Edit</button>
-                      <select
-                        value={item.status}
-                        onChange={(e) => moveStatus(item.id, e.target.value)}
-                        className="text-[10px] px-1 py-0.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a]"
-                      >
-                        {CONTENT_STATUSES.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      <button onClick={() => { if (window.confirm('Delete?')) onDeleteContentItem(item.id); }} className="text-[10px] px-1.5 py-0.5 rounded border border-[#e5e7eb] text-red-600 hover:bg-red-50">Del</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={
+                'relative px-3 pb-3 pt-2 text-sm whitespace-nowrap transition-colors border-b-2 ' +
+                (isActive
+                  ? 'border-neutral-900 text-neutral-900'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-900')
+              }
+            >
+              {tab.label}
+            </button>
           );
         })}
       </div>
     </div>
   );
-}
 
-// ── Calendar Section ──
+  const renderDashboard = () => {
+    const metricCards = [
+      { label: 'Planned This Week', value: thisWeekItems.length },
+      { label: 'Published This Week', value: publishedThisWeek.length },
+      { label: 'Ideas Bank', value: ideasCount },
+      { label: 'In Production', value: inProduction },
+      { label: 'Ready to Publish', value: readyToPublish },
+      { label: 'Scheduled', value: scheduledItems.length },
+      { label: 'Leads Generated', value: totalLeads },
+      { label: 'Total Views', value: totalViews.toLocaleString() },
+    ];
 
-function CalendarSection({ contentItems, socialPlatforms, contentPillars, projects, smartNotes, companies, onUpdateContentItem, sectionNav }: SectionProps) {
-  const itemsWithDate = useMemo(() => contentItems.filter((item) => item.publishDate).sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '')), [contentItems]);
+    return (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-7">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {metricCards.map((card) => (
+              <div key={card.label} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-2xl font-semibold text-neutral-900">{card.value}</div>
+                <div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{card.label}</div>
+              </div>
+            ))}
+          </div>
 
-  const groupedByDate = useMemo(() => {
-    const groups: Record<string, ContentItem[]> = {};
-    for (const item of itemsWithDate) {
-      const date = item.publishDate?.slice(0, 10) || '';
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(item);
-    }
-    return groups;
-  }, [itemsWithDate]);
-
-  return (
-    <div>
-      {sectionNav}
-      <h3 className="text-sm font-semibold text-[#0f172a] mb-4">Content Calendar</h3>
-      {Object.keys(groupedByDate).length === 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-6 text-center text-sm text-[#64748b]">
-          No scheduled content. Set a publish date on content items to see them here.
-        </div>
-      )}
-      <div className="space-y-3">
-        {Object.entries(groupedByDate).map(([date, items]) => (
-          <div key={date} className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm">
-            <div className="px-3 py-2 border-b border-[#e5e7eb] bg-[#f8fafc]">
-              <span className="text-xs font-semibold text-[#0f172a]">{formatDate(date)}</span>
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-900">This Week Plan</h3>
+                <p className="mt-0.5 text-xs text-neutral-500">Week of {formatDate(currentWeek)}</p>
+              </div>
+              <button type="button" onClick={() => setActiveTab('weekly')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">View Week</button>
             </div>
-            <div className="p-2 space-y-1">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-2 rounded bg-[#f8fafc]">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${statusColor(item.status)}`}>{item.status}</span>
-                    <span className="text-xs font-medium text-[#0f172a]">{item.title}</span>
-                    <span className="text-xs text-[#64748b]">{item.type}</span>
-                    {item.platformName && <span className="text-xs text-[#64748b]">{item.platformName}</span>}
+            {plan ? (
+              <div className="mt-3 space-y-2 text-sm text-neutral-700">
+                {plan.focus && <div className="rounded-md bg-neutral-50 p-3"><span className="font-medium text-neutral-900">Focus:</span> {plan.focus}</div>}
+                <div className="flex flex-wrap gap-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
+                  <span>Posts: {plan.targetPosts ?? '—'}</span>
+                  <span>Videos: {plan.targetVideos ?? '—'}</span>
+                  <span>Carousels: {plan.targetCarousels ?? '—'}</span>
+                  <span>Other: {plan.targetOther ?? '—'}</span>
+                </div>
+                {plan.reviewNotes && <div className="rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">Review: {plan.reviewNotes}</div>}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No plan for this week yet.</div>
+            )}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-neutral-900">Content Pipeline</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">{inProduction} items in production</p>
+              <div className="mt-3 space-y-2">
+                {inProduction === 0 ? (
+                  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No items in production.</div>
+                ) : (
+                  props.contentItems.filter((item) => ['drafted', 'designing', 'recording', 'editing'].includes(item.status)).slice(0, 5).map((item) => (
+                    <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-neutral-900 truncate">{item.title}</div>
+                        <div className="text-xs text-neutral-500">{item.status} · {item.type}</div>
+                      </div>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-neutral-900">Ready / Scheduled</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">{readyScheduled.length} items ready to go</p>
+              <div className="mt-3 space-y-2">
+                {readyScheduled.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No ready or scheduled items.</div>
+                ) : (
+                  readyScheduled.map((item) => (
+                    <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-neutral-900 truncate">{item.title}</div>
+                        <div className="text-xs text-neutral-500">{item.platformName || 'No platform'} · {item.publishDate ? formatDate(item.publishDate) : 'No date'}</div>
+                      </div>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900">Recent Ideas</h3>
+                  <p className="mt-0.5 text-xs text-neutral-500">{ideasCount} total ideas</p>
+                </div>
+                <button type="button" onClick={() => setActiveTab('ideas')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">View All</button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {recentIdeas.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No ideas yet.</div>
+                ) : (
+                  recentIdeas.map((item) => (
+                    <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-neutral-900 truncate">{item.title}</div>
+                        <div className="text-xs text-neutral-500">{item.type}{item.pillarName ? ` · ${item.pillarName}` : ''}</div>
+                      </div>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${priorityBadge(item.priority)}`}>{item.priority}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-neutral-900">Performance Snapshot</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">Lifetime aggregate metrics</p>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="rounded-md bg-neutral-50 p-3">
+                  <div className="text-lg font-semibold text-neutral-900">{totalViews.toLocaleString()}</div>
+                  <div className="text-xs text-neutral-500">Views</div>
+                </div>
+                <div className="rounded-md bg-neutral-50 p-3">
+                  <div className="text-lg font-semibold text-neutral-900">{totalLeads.toLocaleString()}</div>
+                  <div className="text-xs text-neutral-500">Leads</div>
+                </div>
+              </div>
+              <button type="button" onClick={() => setActiveTab('performance')} className="mt-3 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Full Performance</button>
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-4 xl:sticky xl:top-4 xl:h-fit">
+          {activeStrategy && (
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Active Strategy</h3>
+              <div className="mt-2 space-y-2 text-sm">
+                <div className="font-medium text-neutral-900">{activeStrategy.name}</div>
+                {activeStrategy.positioning && <div className="text-xs text-neutral-500">{activeStrategy.positioning}</div>}
+                {activeStrategy.weeklyPostTarget != null && <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-600">Target: {activeStrategy.weeklyPostTarget} posts/week</div>}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</h3>
+            <div className="mt-2 space-y-2">
+              {plan ? (
+                <>
+                  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Posts:</span> <span className="text-neutral-600">{plan.targetPosts ?? '—'}</span></div>
+                  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Videos:</span> <span className="text-neutral-600">{plan.targetVideos ?? '—'}</span></div>
+                  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Carousels:</span> <span className="text-neutral-600">{plan.targetCarousels ?? '—'}</span></div>
+                  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Other:</span> <span className="text-neutral-600">{plan.targetOther ?? '—'}</span></div>
+                </>
+              ) : (
+                <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-500">No targets set</div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Quick Stats</h3>
+            <div className="mt-2 space-y-2">
+              <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Platforms:</span> <span className="text-neutral-600">{props.socialPlatforms.length}</span></div>
+              <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Pillars:</span> <span className="text-neutral-600">{props.contentPillars.length}</span></div>
+              <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Total Content:</span> <span className="text-neutral-600">{props.contentItems.length}</span></div>
+              <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Published:</span> <span className="text-neutral-600">{props.contentItems.filter((i) => i.status === 'published').length}</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    );
+  };
+
+  // ── Strategy Section ──
+
+  const renderStrategy = () => {
+    const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentStrategyInput> } | null>(null);
+    const handleSave = async (input: ContentStrategyInput) => {
+      if (editing?.id) { await props.onUpdateContentStrategy(editing.id, input); }
+      else { await props.onAddContentStrategy(input); }
+      setEditing(null);
+    };
+    if (editing) {
+      return <ContentStrategyForm initial={editing.data} onSave={handleSave} onCancel={() => setEditing(null)} />;
+    }
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Content Strategy</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Define your audience, positioning, and weekly targets.</p>
+          </div>
+          {props.contentStrategies.length === 0 && (
+            <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Strategy</button>
+          )}
+        </div>
+        {props.contentStrategies.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No content strategy yet. Define your audience, positioning, and weekly targets.</div>
+        ) : (
+          <div className="space-y-3">
+            {props.contentStrategies.map((strategy) => (
+              <div key={strategy.id} className="rounded-xl border border-neutral-200 bg-white p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg font-semibold text-neutral-900">{strategy.name}</div>
+                    <div className="mt-2 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
+                      {strategy.targetAudience && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Audience</div><div className="mt-1">{strategy.targetAudience}</div></div>}
+                      {strategy.positioning && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div><div className="mt-1">{strategy.positioning}</div></div>}
+                      {strategy.mainPromise && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Promise</div><div className="mt-1">{strategy.mainPromise}</div></div>}
+                      {strategy.tone && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div><div className="mt-1">{strategy.tone}</div></div>}
+                      {strategy.languages && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div><div className="mt-1">{strategy.languages}</div></div>}
+                      {strategy.activePlatforms && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platforms</div><div className="mt-1">{strategy.activePlatforms}</div></div>}
+                      <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</div><div className="mt-1">{strategy.weeklyPostTarget != null ? `${strategy.weeklyPostTarget} posts` : '—'}{strategy.weeklyVideoTarget != null ? ` · ${strategy.weeklyVideoTarget} videos` : ''}</div></div>
+                    </div>
+                    {strategy.notes && <div className="mt-2 text-sm text-neutral-500">{strategy.notes}</div>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button type="button" onClick={() => setEditing({ id: strategy.id, data: strategy })} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+                    <button type="button" onClick={() => { if (window.confirm('Delete this strategy?')) props.onDeleteContentStrategy(strategy.id); }} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Platforms Section ──
+
+  const renderPlatforms = () => {
+    const [editing, setEditing] = useState<{ id?: string; data?: Partial<SocialPlatformInput> } | null>(null);
+    const createDefaults = async () => {
+      for (const p of DEFAULT_PLATFORMS) { await props.onAddSocialPlatform({ name: p.name, slug: p.slug, isActive: true }); }
+    };
+    const handleSave = async (input: SocialPlatformInput) => {
+      if (editing?.id) { await props.onUpdateSocialPlatform(editing.id, input); }
+      else { await props.onAddSocialPlatform(input); }
+      setEditing(null);
+    };
+    if (editing) {
+      return <SocialPlatformForm initial={editing.data} onSave={handleSave} onCancel={() => setEditing(null)} />;
+    }
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Platforms</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Social media platforms where content is published.</p>
+          </div>
+          <div className="flex gap-2">
+            {props.socialPlatforms.length === 0 && (
+              <button type="button" onClick={createDefaults} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Create Default Platforms</button>
+            )}
+            <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Add Platform</button>
+          </div>
+        </div>
+        {props.socialPlatforms.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No platforms yet. Create default platforms or add your own.</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {props.socialPlatforms.map((platform) => (
+              <div key={platform.id} className="rounded-xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-neutral-900">{platform.name}</div>
+                  <div className="text-xs text-neutral-500">/{platform.slug}</div>
+                  {platform.url && <div className="text-xs text-neutral-500 truncate">{platform.url}</div>}
+                  {platform.notes && <div className="text-xs text-neutral-500 mt-1">{platform.notes}</div>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(platform.isActive)}`}>{platform.isActive ? 'Active' : 'Inactive'}</span>
+                  <button type="button" onClick={() => setEditing({ id: platform.id, data: platform })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+                  <button type="button" onClick={() => { if (window.confirm('Delete this platform?')) props.onDeleteSocialPlatform(platform.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Pillars Section ──
+
+  const renderPillars = () => {
+    const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentPillarInput> } | null>(null);
+    const createStarterPillars = async () => {
+      for (const p of STARTER_PILLARS) {
+        const exists = props.contentPillars.some((cp) => cp.slug === p.slug);
+        if (!exists) { await props.onAddContentPillar({ name: p.name, slug: p.slug, description: p.description, priority: 'medium', isActive: true }); }
+      }
+    };
+    const handleSave = async (input: ContentPillarInput) => {
+      if (editing?.id) { await props.onUpdateContentPillar(editing.id, input); }
+      else { await props.onAddContentPillar(input); }
+      setEditing(null);
+    };
+    if (editing) {
+      return <ContentPillarForm initial={editing.data} onSave={handleSave} onCancel={() => setEditing(null)} />;
+    }
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Content Pillars</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Themes that define your content categories.</p>
+          </div>
+          <div className="flex gap-2">
+            {props.contentPillars.length === 0 && (
+              <button type="button" onClick={createStarterPillars} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Create Starter Pillars</button>
+            )}
+            <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Add Pillar</button>
+          </div>
+        </div>
+        {props.contentPillars.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No pillars yet. Create starter pillars or add your own.</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {props.contentPillars.map((pillar) => (
+              <div key={pillar.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-neutral-900">{pillar.name}</div>
+                    <div className="text-xs text-neutral-500">/{pillar.slug}</div>
+                    {pillar.description && <div className="text-xs text-neutral-500 mt-1">{pillar.description}</div>}
+                    {pillar.targetAudience && <div className="text-xs text-neutral-500 mt-0.5">Audience: {pillar.targetAudience}</div>}
+                    {pillar.notes && <div className="text-xs text-neutral-500 mt-1">{pillar.notes}</div>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(pillar.priority)}`}>{pillar.priority}</span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(pillar.isActive)}`}>{pillar.isActive ? 'Active' : 'Inactive'}</span>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => setEditing({ id: pillar.id, data: pillar })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+                  <button type="button" onClick={() => { if (window.confirm('Delete this pillar?')) props.onDeleteContentPillar(pillar.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Ideas Section ──
+
+  const renderIdeas = () => {
+    const ideas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea'), [props.contentItems]);
+    const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
+    const [platformFilter, setPlatformFilter] = useState('');
+    const [pillarFilter, setPillarFilter] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState('');
+
+    const filteredIdeas = useMemo(() => {
+      return ideas.filter((item) => {
+        const searchMatch = !searchQuery || item.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const typeMatch = !typeFilter || item.type === typeFilter;
+        const platformMatch = !platformFilter || item.platformId === platformFilter;
+        const pillarMatch = !pillarFilter || item.pillarId === pillarFilter;
+        const priorityMatch = !priorityFilter || item.priority === priorityFilter;
+        return searchMatch && typeMatch && platformMatch && pillarMatch && priorityMatch;
+      });
+    }, [ideas, searchQuery, typeFilter, platformFilter, pillarFilter, priorityFilter]);
+
+    const handleSave = async (input: ContentItemInput) => {
+      if (editing?.id) { await props.onUpdateContentItem(editing.id, { ...input, status: 'idea' }); }
+      else { await props.onAddContentItem({ ...input, status: 'idea' }); }
+      setEditing(null);
+    };
+
+    if (editing) {
+      return (
+        <ContentItemForm
+          initial={editing.data}
+          socialPlatforms={props.socialPlatforms}
+          contentPillars={props.contentPillars}
+          projects={props.projects}
+          smartNotes={props.smartNotes}
+          companies={props.companies}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Ideas Bank</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">{ideas.length} content ideas waiting to be developed.</p>
+          </div>
+          <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Idea</button>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[200px]" placeholder="Search ideas..." />
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+            <option value="">All types</option>
+            {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+            <option value="">All platforms</option>
+            {props.socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <select value={pillarFilter} onChange={(e) => setPillarFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+            <option value="">All pillars</option>
+            {props.contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+            <option value="">All priorities</option>
+            {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+
+        {filteredIdeas.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No ideas found.</div>
+        ) : (
+          <div className="space-y-2">
+            {filteredIdeas.map((item) => (
+              <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-neutral-900 truncate">{item.title}</span>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${priorityBadge(item.priority)}`}>{item.priority}</span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                      <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.type}</span>
+                      {item.platformName && <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.platformName}</span>}
+                      {item.pillarName && <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.pillarName}</span>}
+                      {item.hook && <span className="italic text-neutral-400 truncate max-w-[200px]">"{item.hook}"</span>}
+                    </div>
+                    {item.content && <div className="mt-1 text-xs text-neutral-500 truncate">{item.content}</div>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'drafted' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Draft</button>
+                    <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+                    <button type="button" onClick={() => { if (window.confirm('Delete this idea?')) props.onDeleteContentItem(item.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Weekly Plan Section ──
+
+  const renderWeeklyPlan = () => {
+    const plan = useMemo(() => props.weeklyContentPlans.find((p) => p.weekStart === selectedWeek), [props.weeklyContentPlans, selectedWeek]);
+    const weekItems = useMemo(() => props.contentItems.filter((item) => item.weekStart === selectedWeek), [props.contentItems, selectedWeek]);
+    const unassignedItems = useMemo(() => props.contentItems.filter((item) => !item.weekStart || item.weekStart === ''), [props.contentItems]);
+    const [editing, setEditing] = useState<boolean>(false);
+    const [formData, setFormData] = useState<Partial<WeeklyContentPlanInput>>({});
+
+    const handleSavePlan = async () => {
+      if (plan) { await props.onUpdateWeeklyContentPlan(plan.id, { ...formData, weekStart: selectedWeek }); }
+      else { await props.onAddWeeklyContentPlan({ ...formData, weekStart: selectedWeek } as WeeklyContentPlanInput); }
+      setEditing(false);
+    };
+
+    const assignToWeek = async (itemId: string) => {
+      await props.onUpdateContentItem(itemId, { weekStart: selectedWeek });
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setSelectedWeek(addWeeks(selectedWeek, -1))} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">&larr; Prev</button>
+            <span className="text-sm font-semibold text-neutral-900">Week of {formatDate(selectedWeek)}</span>
+            <button type="button" onClick={() => setSelectedWeek(addWeeks(selectedWeek, 1))} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Next &rarr;</button>
+            <button type="button" onClick={() => setSelectedWeek(WEEK_START(new Date()))} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">This Week</button>
+          </div>
+          <button type="button" onClick={() => { setFormData(plan || { weekStart: selectedWeek }); setEditing(true); }} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">
+            {plan ? 'Edit Plan' : 'Create Plan'}
+          </button>
+        </div>
+
+        {editing && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Focus</div>
+                <input value={formData.focus || ''} onChange={(e) => setFormData((prev) => ({ ...prev, focus: e.target.value }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Posts</div>
+                <input type="number" min="0" value={formData.targetPosts ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetPosts: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Videos</div>
+                <input type="number" min="0" value={formData.targetVideos ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetVideos: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Carousels</div>
+                <input type="number" min="0" value={formData.targetCarousels ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetCarousels: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Other</div>
+                <input type="number" min="0" value={formData.targetOther ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetOther: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+              <label className="space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Review Notes</div>
+                <input value={formData.reviewNotes || ''} onChange={(e) => setFormData((prev) => ({ ...prev, reviewNotes: e.target.value }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button type="button" onClick={handleSavePlan} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Save</button>
+              <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {plan && !editing && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="space-y-2 text-sm text-neutral-700">
+              {plan.focus && <div className="rounded-md bg-neutral-50 p-3"><span className="font-medium text-neutral-900">Focus:</span> {plan.focus}</div>}
+              <div className="flex flex-wrap gap-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
+                <span>Posts: {plan.targetPosts ?? '—'}</span>
+                <span>Videos: {plan.targetVideos ?? '—'}</span>
+                <span>Carousels: {plan.targetCarousels ?? '—'}</span>
+                <span>Other: {plan.targetOther ?? '—'}</span>
+              </div>
+              {plan.reviewNotes && <div className="rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">Review: {plan.reviewNotes}</div>}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <h3 className="text-sm font-semibold text-neutral-900">Content Items This Week ({weekItems.length})</h3>
+          {weekItems.length === 0 ? (
+            <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No items assigned to this week.</div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {weekItems.map((item) => (
+                <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
+                    <span className="text-sm font-medium text-neutral-900 truncate">{item.title}</span>
+                    <span className="text-xs text-neutral-500 shrink-0">{item.type}</span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+          )}
 
-// ── Performance Section ──
-
-function PerformanceSection({ contentItems, sectionNav }: SectionProps) {
-  const published = useMemo(() => contentItems.filter((item) => item.status === 'published'), [contentItems]);
-
-  const stats = useMemo(() => {
-    const totalViews = published.reduce((sum, item) => sum + (item.performanceViews || 0), 0);
-    const totalLikes = published.reduce((sum, item) => sum + (item.performanceLikes || 0), 0);
-    const totalLeads = published.reduce((sum, item) => sum + (item.leadsGenerated || 0), 0);
-    const totalComments = published.reduce((sum, item) => sum + (item.performanceComments || 0), 0);
-    const totalShares = published.reduce((sum, item) => sum + (item.performanceShares || 0), 0);
-    const byViews = [...published].sort((a, b) => (b.performanceViews || 0) - (a.performanceViews || 0));
-    const byLeads = [...published].sort((a, b) => (b.leadsGenerated || 0) - (a.leadsGenerated || 0));
-    return { totalViews, totalLikes, totalLeads, totalComments, totalShares, byViews, byLeads };
-  }, [published]);
-
-  const [editPerf, setEditPerf] = useState<string | null>(null);
-  const [perfData, setPerfData] = useState<Partial<ContentItemInput>>({});
-
-  const handleSavePerf = async (item: ContentItem) => {
-    if (editPerf) {
-      await onUpdateContentItem(item.id, perfData);
-      setEditPerf(null);
-    }
-  };
-
-  return (
-    <div>
-      {sectionNav}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-          <div className="text-lg font-bold text-[#0f172a]">{stats.totalViews.toLocaleString()}</div>
-          <div className="text-xs text-[#64748b]">Total Views</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-          <div className="text-lg font-bold text-[#0f172a]">{stats.totalLikes.toLocaleString()}</div>
-          <div className="text-xs text-[#64748b]">Total Likes</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-          <div className="text-lg font-bold text-[#0f172a]">{stats.totalComments.toLocaleString()}</div>
-          <div className="text-xs text-[#64748b]">Total Comments</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-          <div className="text-lg font-bold text-[#0f172a]">{stats.totalShares.toLocaleString()}</div>
-          <div className="text-xs text-[#64748b]">Total Shares</div>
-        </div>
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-          <div className="text-lg font-bold text-[#0f172a]">{stats.totalLeads.toLocaleString()}</div>
-          <div className="text-xs text-[#64748b]">Total Leads</div>
-        </div>
-      </div>
-
-      {stats.byViews.length > 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm mb-3">
-          <div className="text-xs font-semibold text-[#0f172a] mb-2">Best by Views</div>
-          <div className="text-xs text-[#0f172a] font-medium">{stats.byViews[0].title}</div>
-          <div className="text-xs text-[#64748b]">{stats.byViews[0].performanceViews?.toLocaleString()} views</div>
-        </div>
-      )}
-
-      {stats.byLeads.length > 0 && (
-        <div className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm mb-3">
-          <div className="text-xs font-semibold text-[#0f172a] mb-2">Best by Leads</div>
-          <div className="text-xs text-[#0f172a] font-medium">{stats.byLeads[0].title}</div>
-          <div className="text-xs text-[#64748b]">{stats.byLeads[0].leadsGenerated} leads</div>
-        </div>
-      )}
-
-      <div className="text-xs font-semibold text-[#0f172a] mb-2 mt-4">Published Content ({published.length})</div>
-      <div className="space-y-2">
-        {published.map((item) => (
-          <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-sm font-medium text-[#0f172a]">{item.title}</div>
-                <div className="text-xs text-[#64748b]">{item.type} | {item.platformName || 'No platform'}</div>
-              </div>
-              <button onClick={() => { setEditPerf(item.id); setPerfData(item); }} className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#0f172a]">Edit Perf</button>
-            </div>
-            {editPerf === item.id && (
-              <div className="mt-3 grid grid-cols-3 md:grid-cols-4 gap-2 p-3 bg-[#f8fafc] rounded border border-[#e5e7eb]">
-                {(['performanceViews', 'performanceLikes', 'performanceComments', 'performanceShares', 'performanceSaves', 'performanceClicks', 'leadsGenerated'] as const).map((field) => (
-                  <div key={field}>
-                    <label className="text-[10px] text-[#64748b] block">{field.replace('performance', '').toLowerCase()}</label>
-                    <input
-                      type="number" min="0"
-                      value={(perfData as any)[field] ?? ''}
-                      onChange={(e) => setPerfData((prev) => ({ ...prev, [field]: e.target.value ? Number(e.target.value) : undefined }))}
-                      className="w-full text-xs px-1.5 py-1 rounded border border-[#e5e7eb]"
-                    />
+          {unassignedItems.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-neutral-900 mb-2">Unassigned Items ({unassignedItems.length})</h4>
+              <div className="space-y-2">
+                {unassignedItems.map((item) => (
+                  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
+                      <span className="text-sm font-medium text-neutral-900 truncate">{item.title}</span>
+                    </div>
+                    <button type="button" onClick={() => assignToWeek(item.id)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Assign to Week</button>
                   </div>
                 ))}
-                <div className="col-span-full flex gap-2 mt-1">
-                  <button onClick={() => handleSavePerf(item)} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">Save</button>
-                  <button onClick={() => setEditPerf(null)} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Production Board ──
+
+  const renderProductionBoard = () => {
+    const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
+    const groupedByStatus = useMemo(() => {
+      const groups: Record<string, ContentItem[]> = {};
+      for (const item of props.contentItems) {
+        const key = item.status;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      }
+      return groups;
+    }, [props.contentItems]);
+
+    const handleSave = async (input: ContentItemInput) => {
+      if (editing?.id) { await props.onUpdateContentItem(editing.id, input); }
+      setEditing(null);
+    };
+
+    const moveStatus = async (itemId: string, status: string) => {
+      await props.onUpdateContentItem(itemId, { status: status as any });
+    };
+
+    if (editing) {
+      return (
+        <ContentItemForm
+          initial={editing.data}
+          socialPlatforms={props.socialPlatforms}
+          contentPillars={props.contentPillars}
+          projects={props.projects}
+          smartNotes={props.smartNotes}
+          companies={props.companies}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <div className="flex gap-4 min-w-[1200px] pb-2">
+          {CONTENT_STATUSES.map((status) => {
+            const items = groupedByStatus[status] || [];
+            return (
+              <div key={status} className="w-56 shrink-0">
+                <div className="rounded-xl border border-neutral-200 bg-white">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
+                    <span className="text-sm font-semibold text-neutral-900 capitalize">{status}</span>
+                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600">{items.length}</span>
+                  </div>
+                  <div className="p-3 space-y-3 max-h-[65vh] overflow-y-auto">
+                    {items.length === 0 && (
+                      <div className="rounded-md border border-dashed border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500 text-center">No items</div>
+                    )}
+                    {items.map((item) => (
+                      <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                        <div className="text-sm font-medium text-neutral-900 break-words">{item.title}</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.type}</span>
+                          {item.platformName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.platformName}</span>}
+                          {item.pillarName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.pillarName}</span>}
+                        </div>
+                        {item.publishDate && <div className="mt-1 text-[10px] text-neutral-500">Publish: {formatDate(item.publishDate)}</div>}
+                        {item.hook && <div className="mt-1 text-[10px] text-neutral-500 truncate">"{item.hook}"</div>}
+                        <div className="mt-2 flex gap-1">
+                          <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+                          <select
+                            value={item.status}
+                            onChange={(e) => moveStatus(item.id, e.target.value)}
+                            className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900 outline-none"
+                          >
+                            {CONTENT_STATUSES.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                          <button type="button" onClick={() => { if (window.confirm('Delete?')) props.onDeleteContentItem(item.id); }} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-red-600 hover:bg-red-50 transition-colors">Del</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  // ── Calendar Section ──
+
+  const renderCalendar = () => {
+    const itemsWithDate = useMemo(() => props.contentItems.filter((item) => item.publishDate).sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '')), [props.contentItems]);
+    const groupedByDate = useMemo(() => {
+      const groups: Record<string, ContentItem[]> = {};
+      for (const item of itemsWithDate) {
+        const date = item.publishDate?.slice(0, 10) || '';
+        if (!groups[date]) groups[date] = [];
+        groups[date].push(item);
+      }
+      return groups;
+    }, [itemsWithDate]);
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-neutral-900">Content Calendar</h3>
+        {Object.keys(groupedByDate).length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No scheduled content. Set a publish date on content items to see them here.</div>
+        ) : (
+          <div className="space-y-3">
+            {Object.entries(groupedByDate).map(([date, items]) => (
+              <div key={date} className="rounded-xl border border-neutral-200 bg-white">
+                <div className="px-4 py-3 border-b border-neutral-200 bg-neutral-50">
+                  <span className="text-sm font-semibold text-neutral-900">{formatDate(date)}</span>
+                </div>
+                <div className="p-3 space-y-2">
+                  {items.map((item) => (
+                    <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
+                        <span className="text-sm font-medium text-neutral-900 truncate">{item.title}</span>
+                        <span className="text-xs text-neutral-500 shrink-0">{item.type}</span>
+                        {item.platformName && <span className="text-xs text-neutral-500 shrink-0">{item.platformName}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Performance Section ──
+
+  const renderPerformance = () => {
+    const published = useMemo(() => props.contentItems.filter((item) => item.status === 'published'), [props.contentItems]);
+    const stats = useMemo(() => {
+      const totalViews = published.reduce((sum, item) => sum + (item.performanceViews || 0), 0);
+      const totalLikes = published.reduce((sum, item) => sum + (item.performanceLikes || 0), 0);
+      const totalLeads = published.reduce((sum, item) => sum + (item.leadsGenerated || 0), 0);
+      const totalComments = published.reduce((sum, item) => sum + (item.performanceComments || 0), 0);
+      const totalShares = published.reduce((sum, item) => sum + (item.performanceShares || 0), 0);
+      const totalSaves = published.reduce((sum, item) => sum + (item.performanceSaves || 0), 0);
+      const totalClicks = published.reduce((sum, item) => sum + (item.performanceClicks || 0), 0);
+      const byViews = [...published].sort((a, b) => (b.performanceViews || 0) - (a.performanceViews || 0));
+      const byLeads = [...published].sort((a, b) => (b.leadsGenerated || 0) - (a.leadsGenerated || 0));
+      return { totalViews, totalLikes, totalLeads, totalComments, totalShares, totalSaves, totalClicks, byViews, byLeads };
+    }, [published]);
+
+    const [editPerf, setEditPerf] = useState<string | null>(null);
+    const [perfData, setPerfData] = useState<Partial<ContentItemInput>>({});
+    const handleSavePerf = async (item: ContentItem) => {
+      if (editPerf) { await props.onUpdateContentItem(item.id, perfData); setEditPerf(null); }
+    };
+
+    return (
+      <div className="space-y-7">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalViews.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Views</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalLikes.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Likes</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalComments.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Comments</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalShares.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Shares</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalSaves.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Saves</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalClicks.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Clicks</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{totalLeads.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Leads Generated</div></div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{published.length}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Published Items</div></div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {stats.byViews.length > 0 && (
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-neutral-900">Best by Views</h3>
+              <div className="mt-2 gap-2 text-sm">
+                <div className="rounded-md bg-neutral-50 p-3">
+                  <div className="font-medium text-neutral-900">{stats.byViews[0].title}</div>
+                  <div className="text-xs text-neutral-500 mt-1">{stats.byViews[0].performanceViews?.toLocaleString()} views</div>
+                </div>
+              </div>
+            </div>
+          )}
+          {stats.byLeads.length > 0 && (
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-neutral-900">Best by Leads</h3>
+              <div className="mt-2 gap-2 text-sm">
+                <div className="rounded-md bg-neutral-50 p-3">
+                  <div className="font-medium text-neutral-900">{stats.byLeads[0].title}</div>
+                  <div className="text-xs text-neutral-500 mt-1">{stats.byLeads[0].leadsGenerated} leads</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <h3 className="text-sm font-semibold text-neutral-900">Published Content ({published.length})</h3>
+          {published.length === 0 ? (
+            <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No published content yet.</div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {published.map((item) => (
+                <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-neutral-900">{item.title}</div>
+                      <div className="text-xs text-neutral-500 mt-0.5">{item.type} | {item.platformName || 'No platform'} | {item.publishDate ? formatDate(item.publishDate) : 'No date'}</div>
+                    </div>
+                    <button type="button" onClick={() => { setEditPerf(item.id); setPerfData(item); }} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Edit Perf</button>
+                  </div>
+                  {editPerf === item.id && (
+                    <div className="mt-3 grid grid-cols-3 md:grid-cols-4 gap-3 p-3 bg-white rounded-md border border-neutral-200">
+                      {(['performanceViews', 'performanceLikes', 'performanceComments', 'performanceShares', 'performanceSaves', 'performanceClicks', 'leadsGenerated'] as const).map((field) => (
+                        <div key={field}>
+                          <label className="text-[10px] font-medium uppercase tracking-[0.1em] text-neutral-500 block">{field.replace('performance', '').toLowerCase()}</label>
+                          <input
+                            type="number" min="0"
+                            value={(perfData as any)[field] ?? ''}
+                            onChange={(e) => setPerfData((prev) => ({ ...prev, [field]: e.target.value ? Number(e.target.value) : undefined }))}
+                            className="h-8 w-full rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400 mt-1"
+                          />
+                        </div>
+                      ))}
+                      <div className="col-span-full flex gap-2 mt-2">
+                        <button type="button" onClick={() => handleSavePerf(item)} className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">Save</button>
+                        <button type="button" onClick={() => setEditPerf(null)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── AI Assistant Section ──
+
+  const renderAIAssistant = () => (
+    <AISocialMediaAssistantPanel
+      strategies={props.contentStrategies}
+      platforms={props.socialPlatforms}
+      pillars={props.contentPillars}
+      contentItems={props.contentItems}
+      weeklyContentPlans={props.weeklyContentPlans}
+      smartNotes={props.smartNotes}
+      projects={props.projects}
+      onCreateContentItem={props.onAddContentItem}
+      onUpdateContentItem={props.onUpdateContentItem}
+      onCreateWeeklyPlan={props.onAddWeeklyContentPlan}
+    />
+  );
+
+  // ── Main Render ──
+
+  return (
+    <section className="space-y-7">
+      {renderTabs()}
+      {activeTab === 'dashboard' && renderDashboard()}
+      {activeTab === 'strategy' && renderStrategy()}
+      {activeTab === 'platforms' && renderPlatforms()}
+      {activeTab === 'pillars' && renderPillars()}
+      {activeTab === 'ideas' && renderIdeas()}
+      {activeTab === 'weekly' && renderWeeklyPlan()}
+      {activeTab === 'production' && renderProductionBoard()}
+      {activeTab === 'calendar' && renderCalendar()}
+      {activeTab === 'performance' && renderPerformance()}
+      {activeTab === 'ai-assistant' && renderAIAssistant()}
+    </section>
   );
 }
 
-// ── Forms ──
+// ── Standalone Forms ──
 
 function SocialPlatformForm({ initial, onSave, onCancel }: { initial?: Partial<SocialPlatformInput>; onSave: (input: SocialPlatformInput) => Promise<void>; onCancel: () => void }) {
   const [name, setName] = useState(initial?.name || '');
@@ -881,33 +1024,33 @@ function SocialPlatformForm({ initial, onSave, onCancel }: { initial?: Partial<S
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-      <h4 className="text-sm font-semibold text-[#0f172a] mb-3">{initial?.id ? 'Edit' : 'Add'} Platform</h4>
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Slug *</label>
-          <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">URL</label>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div className="flex items-center gap-2 pt-4">
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} id="sp-active" />
-          <label htmlFor="sp-active" className="text-xs text-[#64748b]">Active</label>
-        </div>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
+      <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Platform</h4>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+          <input value={name} onChange={(e) => setName(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Slug *</div>
+          <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">URL</div>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 self-end">
+          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4" />
+          <span className="text-sm text-neutral-900">Active</span>
+        </label>
+        <label className="space-y-1.5 md:col-span-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+        </label>
       </div>
-      <div className="mb-3">
-        <label className="text-xs text-[#64748b] block mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={2} />
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">{saving ? 'Saving...' : 'Save'}</button>
-        <button type="button" onClick={onCancel} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
+      <div className="flex gap-2 mt-4">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
       </div>
     </form>
   );
@@ -937,43 +1080,43 @@ function ContentPillarForm({ initial, onSave, onCancel }: { initial?: Partial<Co
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-      <h4 className="text-sm font-semibold text-[#0f172a] mb-3">{initial?.id ? 'Edit' : 'Add'} Pillar</h4>
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Slug *</label>
-          <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Description</label>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Target Audience</label>
-          <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Priority</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
+      <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Pillar</h4>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+          <input value={name} onChange={(e) => setName(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Slug *</div>
+          <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Description</div>
+          <input value={description} onChange={(e) => setDescription(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Audience</div>
+          <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Priority</div>
+          <select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-        </div>
-        <div className="flex items-center gap-2 pt-4">
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} id="cp-active" />
-          <label htmlFor="cp-active" className="text-xs text-[#64748b]">Active</label>
-        </div>
+        </label>
+        <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 self-end">
+          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4" />
+          <span className="text-sm text-neutral-900">Active</span>
+        </label>
+        <label className="space-y-1.5 md:col-span-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+        </label>
       </div>
-      <div className="mb-3">
-        <label className="text-xs text-[#64748b] block mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={2} />
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">{saving ? 'Saving...' : 'Save'}</button>
-        <button type="button" onClick={onCancel} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
+      <div className="flex gap-2 mt-4">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
       </div>
     </form>
   );
@@ -1009,75 +1152,55 @@ function ContentStrategyForm({ initial, onSave, onCancel }: { initial?: Partial<
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-      <h4 className="text-sm font-semibold text-[#0f172a] mb-3">{initial?.id ? 'Edit' : 'Add'} Strategy</h4>
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div className="col-span-2">
-          <label className="text-xs text-[#64748b] block mb-1">Name *</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Target Audience</label>
-          <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Positioning</label>
-          <input value={positioning} onChange={(e) => setPositioning(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Main Promise</label>
-          <input value={mainPromise} onChange={(e) => setMainPromise(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Tone</label>
-          <input value={tone} onChange={(e) => setTone(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Languages</label>
-          <input value={languages} onChange={(e) => setLanguages(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Weekly Post Target</label>
-          <input type="number" min="0" value={weeklyPostTarget} onChange={(e) => setWeeklyPostTarget(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Weekly Video Target</label>
-          <input type="number" min="0" value={weeklyVideoTarget} onChange={(e) => setWeeklyVideoTarget(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Active Platforms</label>
-          <input value={activePlatforms} onChange={(e) => setActivePlatforms(e.target.value)} placeholder="e.g. LinkedIn, X, Instagram" className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
+      <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Strategy</h4>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="space-y-1.5 md:col-span-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+          <input value={name} onChange={(e) => setName(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Audience</div>
+          <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div>
+          <input value={positioning} onChange={(e) => setPositioning(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Main Promise</div>
+          <input value={mainPromise} onChange={(e) => setMainPromise(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div>
+          <input value={tone} onChange={(e) => setTone(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div>
+          <input value={languages} onChange={(e) => setLanguages(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Post Target</div>
+          <input type="number" min="0" value={weeklyPostTarget} onChange={(e) => setWeeklyPostTarget(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Video Target</div>
+          <input type="number" min="0" value={weeklyVideoTarget} onChange={(e) => setWeeklyVideoTarget(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5 md:col-span-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Active Platforms</div>
+          <input value={activePlatforms} onChange={(e) => setActivePlatforms(e.target.value)} placeholder="e.g. LinkedIn, X, Instagram" className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5 md:col-span-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+        </label>
       </div>
-      <div className="mb-3">
-        <label className="text-xs text-[#64748b] block mb-1">Notes</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={2} />
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">{saving ? 'Saving...' : 'Save'}</button>
-        <button type="button" onClick={onCancel} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
+      <div className="flex gap-2 mt-4">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
       </div>
     </form>
-  );
-}
-
-function AIAssistantSection({ contentStrategies, socialPlatforms, contentPillars, contentItems, weeklyContentPlans, smartNotes, projects, onAddContentItem, onUpdateContentItem, onAddWeeklyContentPlan, sectionNav }: SectionProps) {
-  return (
-    <div>
-      {sectionNav}
-      <AISocialMediaAssistantPanel
-        strategies={contentStrategies}
-        platforms={socialPlatforms}
-        pillars={contentPillars}
-        contentItems={contentItems}
-        weeklyContentPlans={weeklyContentPlans}
-        smartNotes={smartNotes}
-        projects={projects}
-        onCreateContentItem={onAddContentItem}
-        onUpdateContentItem={onUpdateContentItem}
-        onCreateWeeklyPlan={onAddWeeklyContentPlan}
-      />
-    </div>
   );
 }
 
@@ -1127,98 +1250,98 @@ function ContentItemForm({ initial, socialPlatforms, contentPillars, projects, s
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm mb-4">
-      <h4 className="text-sm font-semibold text-[#0f172a] mb-3">{initial?.id ? 'Edit' : 'Add'} Content</h4>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-        <div className="col-span-full">
-          <label className="text-xs text-[#64748b] block mb-1">Title *</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Type</label>
-          <select value={type} onChange={(e) => setType(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
+      <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Content</h4>
+      <div className="grid gap-4 md:grid-cols-3">
+        <label className="space-y-1.5 md:col-span-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Title *</div>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Type</div>
+          <select value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Priority</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Priority</div>
+          <select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Status</div>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             {CONTENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Platform</label>
-          <select value={platformId} onChange={(e) => setPlatformId(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platform</div>
+          <select value={platformId} onChange={(e) => setPlatformId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             <option value="">None</option>
             {socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Pillar</label>
-          <select value={pillarId} onChange={(e) => setPillarId(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Pillar</div>
+          <select value={pillarId} onChange={(e) => setPillarId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             <option value="">None</option>
             {contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Publish Date</label>
-          <input type="date" value={publishDate} onChange={(e) => setPublishDate(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Week Start</label>
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Asset URL</label>
-          <input value={assetUrl} onChange={(e) => setAssetUrl(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Hook</label>
-          <input value={hook} onChange={(e) => setHook(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" />
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Linked Project</label>
-          <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Publish Date</div>
+          <input type="date" value={publishDate} onChange={(e) => setPublishDate(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Week Start</div>
+          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Asset URL</div>
+          <input value={assetUrl} onChange={(e) => setAssetUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Hook</div>
+          <input value={hook} onChange={(e) => setHook(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</div>
+          <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             <option value="">None</option>
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Linked Note</label>
-          <select value={linkedNoteId} onChange={(e) => setLinkedNoteId(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Note</div>
+          <select value={linkedNoteId} onChange={(e) => setLinkedNoteId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             <option value="">None</option>
             {smartNotes.map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-[#64748b] block mb-1">Linked Company</label>
-          <select value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]">
+        </label>
+        <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Company</div>
+          <select value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
             <option value="">None</option>
             {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-        </div>
-        <div className="col-span-full">
-          <label className="text-xs text-[#64748b] block mb-1">Content</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={3} />
-        </div>
-        <div className="col-span-full">
-          <label className="text-xs text-[#64748b] block mb-1">Caption</label>
-          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={2} />
-        </div>
-        <div className="col-span-full">
-          <label className="text-xs text-[#64748b] block mb-1">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full text-xs px-2 py-1.5 rounded border border-[#e5e7eb]" rows={2} />
-        </div>
+        </label>
+        <label className="space-y-1.5 md:col-span-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content</div>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={3} />
+        </label>
+        <label className="space-y-1.5 md:col-span-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Caption</div>
+          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+        </label>
+        <label className="space-y-1.5 md:col-span-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+        </label>
       </div>
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="text-xs px-3 py-1.5 rounded-md bg-[#0f172a] text-white">{saving ? 'Saving...' : 'Save'}</button>
-        <button type="button" onClick={onCancel} className="text-xs px-3 py-1.5 rounded-md border border-[#e5e7eb] text-[#0f172a]">Cancel</button>
+      <div className="flex gap-2 mt-4">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
       </div>
     </form>
   );

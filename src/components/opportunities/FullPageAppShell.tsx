@@ -403,6 +403,38 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
     );
   }
 
+  if (title === 'Social Media') {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden bg-neutral-50 text-neutral-900">
+        <header className="border-b border-neutral-200 bg-white">
+          <div className="mx-auto max-w-[1400px] px-6 pt-5 pb-4">
+            <button
+              type="button"
+              onClick={onBackToDesktop}
+              className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Back to Desktop
+            </button>
+
+            <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Social Media</h1>
+                <p className="mt-1 text-sm text-neutral-500">Content strategy, ideas, weekly plan, calendar, and performance.</p>
+              </div>
+
+              {rightActions ? <div className="flex flex-wrap items-center gap-2">{rightActions}</div> : null}
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
+      </div>
+    );
+  }
+
   if (title === 'Documents') {
     return (
       <div className="min-h-screen w-full overflow-x-hidden bg-neutral-50 text-neutral-900">
