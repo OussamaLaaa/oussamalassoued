@@ -1,57 +1,126 @@
 import React from 'react';
-import LabelPill from './StrategyLabelPill';
 import type { StrategyTactic, StrategyTacticInput } from '../../types/opportunities';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import EmptyState from '../ui/EmptyState';
+
+const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 'failed'];
+
+const getStatusVariant = (s: string) => {
+  if (s === 'active') return 'success';
+  if (s === 'planned') return 'blue';
+  if (s === 'paused' || s === 'archived') return 'warning';
+  if (s === 'completed') return 'success';
+  if (s === 'failed') return 'danger';
+  return 'neutral';
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  return value.slice(0, 10);
+};
 
 type Props = {
   tactics: StrategyTactic[];
+  tacticForm: StrategyTacticInput;
+  setTacticForm: React.Dispatch<React.SetStateAction<StrategyTacticInput>>;
   onAdd: (input: StrategyTacticInput) => Promise<StrategyTactic>;
   onUpdate: (id: string, input: Partial<StrategyTacticInput>) => Promise<StrategyTactic>;
   onDelete: (id: string) => Promise<void>;
   onEdit: (tactic: StrategyTactic) => void;
   onOpenNew: () => void;
+  filterStatus: string;
+  setFilterStatus: (v: string) => void;
 };
 
-const TacticsPanel: React.FC<Props> = ({ tactics, onAdd, onUpdate, onDelete, onEdit, onOpenNew }) => (
-  <div className="space-y-4">
-    <div className="flex justify-end">
-      <button type="button" onClick={onOpenNew} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#1d4ed8] active:scale-[0.97]">
-        Add Tactic
-      </button>
-    </div>
-    {tactics.length === 0 ? (
-      <div className="rounded-xl border-2 border-dashed border-[#dbe3ef] bg-[#fafcff] p-8 text-center">
-        <div className="text-3xl">⚡</div>
-        <p className="mt-2 text-sm text-[#64748b]">No tactics yet. Add repeatable methods that move goals forward.</p>
+const TacticsPanel: React.FC<Props> = ({
+  tactics, onEdit, onDelete, onOpenNew,
+  filterStatus, setFilterStatus,
+}) => {
+  const filtered = tactics.filter((t) => {
+    if (filterStatus && t.status !== filterStatus) return false;
+    return true;
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+            className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <Button variant="primary" size="sm" onClick={onOpenNew}>Add Tactic</Button>
       </div>
-    ) : (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {tactics.map((item) => (
-          <div key={item.id} className="rounded-xl border border-[#e2e8f0] bg-white p-4 transition-shadow hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <h4 className="text-sm font-semibold text-[#0f172a]">{item.title}</h4>
-                {item.description ? <p className="mt-0.5 text-xs text-[#64748b]">{item.description}</p> : null}
-              </div>
-              <div className="flex shrink-0 gap-1.5">
-                <button type="button" onClick={() => onEdit(item)} className="rounded-lg border border-[#cbd5e1] bg-white px-2.5 py-1 text-xs font-medium text-[#475569] transition-all hover:border-[#2563eb] hover:text-[#2563eb]">Edit</button>
-                <button type="button" onClick={() => onDelete(item.id)} className="rounded-lg border border-[#fecaca] bg-white px-2.5 py-1 text-xs font-medium text-[#991b1b] transition-all hover:bg-[#fef2f2]">Delete</button>
-              </div>
-            </div>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              <LabelPill text={`Frequency: ${item.frequency || 'none'}`} />
-              <LabelPill text={`Metric: ${item.metric || 'none'}`} />
-              <LabelPill text={`Next: ${item.nextAction || 'none'}`} />
-              <LabelPill text={`Goal: ${item.linkedGoalTitle || 'none'}`} />
-              <LabelPill text={`Plan: ${item.linkedPlanName || 'none'}`} />
-              <LabelPill text={`Project: ${item.linkedProjectName || 'none'}`} />
-              <LabelPill text={item.status} tone={item.status === 'failed' ? 'danger' : item.status === 'completed' ? 'success' : 'neutral'} />
-              <LabelPill text={item.priority} tone={item.priority === 'high' ? 'high' : item.priority === 'medium' ? 'medium' : 'low'} />
-            </div>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <EmptyState title="No tactics yet." description="Tactics are concrete actions feeding into plans and goals." action={<Button variant="primary" size="sm" onClick={onOpenNew}>Add Tactic</Button>} />
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Tactic</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Goal</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Plan</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Status</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Progress</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Due date</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((tactic) => {
+                  const progress = Math.round(Number(tactic.progress ?? 0));
+                  return (
+                    <tr key={tactic.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors">
+                      <td className="px-4 py-3 align-middle">
+                        <div>
+                          <div className="text-sm text-neutral-900 font-medium">{tactic.name}</div>
+                          {tactic.description && (
+                            <div className="mt-0.5 text-xs text-neutral-500 max-w-[200px] truncate">{tactic.description}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-sm text-neutral-700">{tactic.goalName || '—'}</td>
+                      <td className="px-4 py-3 align-middle text-sm text-neutral-700">{tactic.planName || '—'}</td>
+                      <td className="px-4 py-3 align-middle"><Badge variant={getStatusVariant(tactic.status)}>{tactic.status}</Badge></td>
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-2 min-w-[100px]">
+                          <div className="h-1.5 w-16 rounded-full bg-neutral-100 overflow-hidden">
+                            <div className="h-full bg-neutral-900 rounded-full" style={{ width: `${progress}%` }} />
+                          </div>
+                          <span className="text-sm tabular-nums text-neutral-700">{progress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-middle text-sm text-neutral-700">{formatDate(tactic.dueDate)}</td>
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex items-center gap-1">
+                          <button type="button" aria-label="Edit" onClick={() => onEdit(tactic)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                          </button>
+                          <button type="button" aria-label="Delete" onClick={() => onDelete(tactic.id)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default TacticsPanel;

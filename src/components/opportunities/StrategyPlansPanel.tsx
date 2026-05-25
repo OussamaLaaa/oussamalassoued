@@ -1,130 +1,141 @@
 import React from 'react';
-import LabelPill from './StrategyLabelPill';
-import type { StrategyPlan, StrategyPlanInput, StrategyStatus } from '../../types/opportunities';
+import type { StrategyPlan, StrategyPlanInput, StrategyPlanVariant } from '../../types/opportunities';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import EmptyState from '../ui/EmptyState';
 
-const STATUS_OPTIONS: StrategyStatus[] = ['active', 'planned', 'paused', 'completed', 'archived', 'failed'];
+const PRIORITY_OPTIONS = ['high', 'medium', 'low'];
+const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 'failed'];
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
-
-const getRiskFlag = (plan: StrategyPlan) => {
-  const status = String(plan.status || '').toLowerCase();
-  if (status === 'paused' || status === 'blocked') return true;
-  if (!plan.targetDate) return false;
-  const target = new Date(plan.targetDate).getTime();
-  if (!Number.isFinite(target)) return false;
-  const daysLeft = Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
-  const progress = Number(plan.progress ?? 0);
-  return daysLeft <= 14 && progress < 45;
+const getPriorityVariant = (p: string) => {
+  if (p === 'high') return 'warning';
+  return 'neutral';
 };
 
-const parseProgress = (value: string) => {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return 0;
-  return Math.max(0, Math.min(100, numeric));
+const getStatusVariant = (s: string) => {
+  if (s === 'active') return 'success';
+  if (s === 'planned') return 'blue';
+  if (s === 'paused' || s === 'archived') return 'warning';
+  if (s === 'completed') return 'success';
+  if (s === 'failed') return 'danger';
+  return 'neutral';
 };
 
-const LANE_LABELS: Record<string, string> = { A: 'Plan A', B: 'Plan B', C: 'Plan C', other: 'Other' };
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  return value.slice(0, 10);
+};
+
+const variantLabelMap: Record<string, string> = { a: 'Plan A', b: 'Plan B', c: 'Plan C' };
+
+const getVariantBadge = (v: string) => {
+  const label = variantLabelMap[v] || v;
+  let variant: 'success' | 'warning' | 'danger' | 'neutral' | 'blue' = 'neutral';
+  if (v === 'a') variant = 'success';
+  else if (v === 'b') variant = 'warning';
+  else if (v === 'c') variant = 'danger';
+  return <Badge variant={variant}>{label}</Badge>;
+};
 
 type Props = {
   plans: StrategyPlan[];
-  onAdd: (input: StrategyPlanInput) => Promise<StrategyPlan>;
-  onUpdate: (id: string, input: Partial<StrategyPlanInput>) => Promise<StrategyPlan>;
-  onDelete: (id: string) => Promise<void>;
-  onEdit: (plan: StrategyPlan) => void;
+  filterVariant: string;
+  setFilterVariant: (v: string) => void;
+  filterStatus: string;
+  setFilterStatus: (v: string) => void;
+  filterPriority: string;
+  setFilterPriority: (v: string) => void;
   onOpenNew: () => void;
-  progressDraft: Record<string, number>;
-  setProgressDraft: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  statusDraft: Record<string, StrategyStatus>;
-  setStatusDraft: React.Dispatch<React.SetStateAction<Record<string, StrategyStatus>>>;
+  onEdit: (plan: StrategyPlan) => void;
+  onDelete: (id: string) => Promise<void>;
 };
 
-const PlanCard: React.FC<{ plan: StrategyPlan; progressDraft: Record<string, number>; statusDraft: Record<string, StrategyStatus>; setProgressDraft: Props['setProgressDraft']; setStatusDraft: Props['setStatusDraft']; onUpdate: Props['onUpdate']; onEdit: Props['onEdit']; onDelete: Props['onDelete'] }> = ({
-  plan, progressDraft, statusDraft, setProgressDraft, setStatusDraft, onUpdate, onEdit, onDelete,
+const PlansPanel: React.FC<Props> = ({
+  plans, filterVariant, setFilterVariant, filterStatus, setFilterStatus, filterPriority, setFilterPriority, onOpenNew, onEdit, onDelete,
 }) => {
-  const progress = progressDraft[plan.id] ?? Number(plan.progress ?? 0);
-  const status = statusDraft[plan.id] ?? plan.status;
-  const isRisk = getRiskFlag({ ...plan, progress, status });
-
-  const updateInline = async () => {
-    const nextProgress = progressDraft[plan.id] ?? Number(plan.progress ?? 0);
-    const nextStatus = statusDraft[plan.id] ?? plan.status;
-    try { await onUpdate(plan.id, { progress: nextProgress, status: nextStatus }); } catch { /* ignore */ }
-  };
-
-  return (
-    <div className={`rounded-xl border p-3 transition-all hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)] ${isRisk ? 'border-[#fca5a5] bg-[#fff5f5]' : 'border-[#dbe3ef] bg-white'}`}>
-      <div className="flex items-start justify-between gap-2">
-        <h5 className="text-sm font-semibold text-[#0f172a]">{plan.name}</h5>
-        {isRisk ? <LabelPill text="At Risk" tone="danger" /> : null}
-      </div>
-      {plan.description ? <p className="mt-0.5 text-xs text-[#64748b]">{plan.description}</p> : null}
-      <div className="mt-2 space-y-0.5 text-xs text-[#475569]">
-        <div><span className="font-medium text-[#64748b]">Assumptions:</span> {plan.assumptions || 'none'}</div>
-        <div><span className="font-medium text-[#64748b]">Risks:</span> {plan.risks || 'none'}</div>
-        <div><span className="font-medium text-[#64748b]">Trigger:</span> {plan.triggerToSwitch || 'none'}</div>
-        <div><span className="font-medium text-[#64748b]">Next:</span> {plan.nextAction || 'none'}</div>
-        <div><span className="font-medium text-[#64748b]">Goal:</span> {plan.linkedGoalTitle || 'none'}</div>
-        <div><span className="font-medium text-[#64748b]">Project:</span> {plan.linkedProjectName || 'none'}</div>
-      </div>
-      <div className="mt-2">
-        <label className="text-[10px] font-mono uppercase tracking-[0.08em] text-[#64748b]">Status</label>
-        <select value={status} onChange={(e) => setStatusDraft((prev) => ({ ...prev, [plan.id]: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-lg border border-[#cbd5e1] bg-white px-2 py-1 text-xs text-[#0f172a]">
-          {STATUS_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      </div>
-      <div className="mt-2">
-        <div className="mb-1 flex items-center justify-between text-[10px] text-[#64748b]">
-          <span className="font-medium">Progress</span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <input type="range" min={0} max={100} value={progress} onChange={(e) => setProgressDraft((prev) => ({ ...prev, [plan.id]: parseProgress(e.target.value) }))} className="w-full accent-[#2563eb]" />
-      </div>
-      <div className="mt-2 flex gap-1.5">
-        <button type="button" onClick={updateInline} className="rounded-lg border border-[#cbd5e1] bg-white px-2 py-1 text-xs font-medium text-[#475569] transition-all hover:border-[#2563eb] hover:text-[#2563eb]">Save</button>
-        <button type="button" onClick={() => onEdit(plan)} className="rounded-lg border border-[#cbd5e1] bg-white px-2 py-1 text-xs font-medium text-[#475569] transition-all hover:border-[#2563eb] hover:text-[#2563eb]">Edit</button>
-        <button type="button" onClick={() => onDelete(plan.id)} className="rounded-lg border border-[#fecaca] bg-white px-2 py-1 text-xs font-medium text-[#991b1b] transition-all hover:bg-[#fef2f2]">Delete</button>
-      </div>
-    </div>
-  );
-};
-
-const PlansPanel: React.FC<Props> = ({ plans, onAdd, onUpdate, onDelete, onEdit, onOpenNew, progressDraft, setProgressDraft, statusDraft, setStatusDraft }) => {
-  const byLane = React.useMemo(() => ({
-    A: plans.filter((p) => p.label === 'A'),
-    B: plans.filter((p) => p.label === 'B'),
-    C: plans.filter((p) => p.label === 'C'),
-    other: plans.filter((p) => p.label !== 'A' && p.label !== 'B' && p.label !== 'C'),
-  }), [plans]);
+  const filtered = plans.filter((p) => {
+    if (filterVariant && p.variant !== filterVariant) return false;
+    if (filterStatus && p.status !== filterStatus) return false;
+    if (filterPriority && p.priority !== filterPriority) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button type="button" onClick={onOpenNew} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-[#1d4ed8] active:scale-[0.97]">
-          Add Plan
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <select value={filterVariant} onChange={(e) => setFilterVariant(e.target.value)}
+            className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+            <option value="">All variants</option>
+            {['a', 'b', 'c'].map((v) => <option key={v} value={v}>Plan {v.toUpperCase()}</option>)}
+          </select>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+            className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
+            className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+            <option value="">All priorities</option>
+            {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <Button variant="primary" size="sm" onClick={onOpenNew}>Add Plan</Button>
       </div>
-      {plans.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-[#dbe3ef] bg-[#fafcff] p-8 text-center">
-          <div className="text-3xl">📋</div>
-          <p className="mt-2 text-sm text-[#64748b]">No plans yet. Create Plan A, then define B and C as fallback paths.</p>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <EmptyState title="No plans yet." description="Create Plan A, B, or C to parallel your bets." action={<Button variant="primary" size="sm" onClick={onOpenNew}>Add Plan</Button>} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
-          {(Object.entries(byLane) as [string, StrategyPlan[]][]).map(([key, items]) => (
-            <div key={key} className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3">
-              <div className="mb-2 flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#2563eb]/10 text-xs font-bold text-[#2563eb]">{key === 'other' ? '~' : key}</div>
-                <h4 className="text-sm font-semibold text-[#0f172a]">{LANE_LABELS[key] || key}</h4>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((plan) => {
+            const progress = Math.round(Number(plan.progress ?? 0));
+            return (
+              <div key={plan.id} className="rounded-xl border border-neutral-200 bg-white hover:border-neutral-300 transition-colors">
+                <div className="flex items-start justify-between gap-2 px-4 pt-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {getVariantBadge(plan.variant)}
+                      <Badge variant={getPriorityVariant(plan.priority)}>{plan.priority}</Badge>
+                    </div>
+                    <h4 className="mt-1.5 text-sm font-semibold text-neutral-900 truncate">{plan.name}</h4>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <button type="button" aria-label="Edit" onClick={() => onEdit(plan)}
+                      className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                    </button>
+                    <button type="button" aria-label="Delete" onClick={() => onDelete(plan.id)}
+                      className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="px-4 pb-2">
+                  <Badge variant={getStatusVariant(plan.status)}>{plan.status}</Badge>
+                </div>
+                <div className="px-4 pb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-neutral-100 overflow-hidden">
+                      <div className="h-full bg-neutral-900 rounded-full" style={{ width: `${progress}%` }} />
+                    </div>
+                    <span className="text-sm tabular-nums text-neutral-500">{progress}%</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 border-t border-neutral-100 text-xs">
+                  <div className="border-r border-neutral-100 px-4 py-2.5">
+                    <span className="text-neutral-500">Target</span>
+                    <div className="mt-0.5 text-neutral-900">{formatDate(plan.targetDate)}</div>
+                  </div>
+                  <div className="px-4 py-2.5">
+                    <span className="text-neutral-500">Reviewed</span>
+                    <div className="mt-0.5 text-neutral-900">{plan.reviewed ? 'Yes' : 'No'}</div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                {items.length === 0 ? (
-                  <div className="rounded-lg border-2 border-dashed border-[#dbe3ef] bg-white p-4 text-center text-xs text-[#94a3b8]">Empty lane</div>
-                ) : items.map((plan) => (
-                  <PlanCard key={plan.id} plan={plan} progressDraft={progressDraft} statusDraft={statusDraft} setProgressDraft={setProgressDraft} setStatusDraft={setStatusDraft} onUpdate={onUpdate} onEdit={onEdit} onDelete={onDelete} />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

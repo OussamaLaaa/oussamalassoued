@@ -16,7 +16,6 @@ import PlansPanel from './StrategyPlansPanel';
 import TacticsPanel from './StrategyTacticsPanel';
 import ExperimentsPanel from './StrategyExperimentsPanel';
 import DecisionsPanel from './StrategyDecisionsPanel';
-import InsightSidebar from './StrategyInsightSidebar';
 import GoalDetailView from './StrategyGoalDetailView';
 import ItemModal, { type ModalState } from './StrategyItemModal';
 
@@ -100,6 +99,13 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   const [tacticForm, setTacticForm] = useState<StrategyTacticInput>(emptyTacticForm());
   const [experimentForm, setExperimentForm] = useState<StrategyExperimentInput>(emptyExperimentForm());
   const [decisionForm, setDecisionForm] = useState<StrategyDecisionInput>(emptyDecisionForm());
+
+  const [planFilterVariant, setPlanFilterVariant] = useState('');
+  const [planFilterStatus, setPlanFilterStatus] = useState('');
+  const [planFilterPriority, setPlanFilterPriority] = useState('');
+  const [tacticFilterStatus, setTacticFilterStatus] = useState('');
+  const [experimentFilterStatus, setExperimentFilterStatus] = useState('');
+  const [decisionFilterStatus, setDecisionFilterStatus] = useState('');
 
   const today = todayKey();
 
@@ -346,11 +352,6 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
       case 'command_center':
         return (
           <CommandCenter
-            strategyGoalsCount={strategyGoals.length}
-            strategyPlansCount={strategyPlans.length}
-            strategyTacticsCount={strategyTactics.length}
-            strategyExperimentsCount={strategyExperiments.length}
-            strategyDecisionsCount={strategyDecisions.length}
             activeGoalsCount={activeGoalsCount}
             activePlansCount={activePlansCount}
             runningExperimentsCount={runningExperimentsCount}
@@ -359,6 +360,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
             averageProgress={averageProgress}
             completedExperimentsCount={completedExperimentsCount}
             failedExperimentsCount={failedExperimentsCount}
+            strategyGoals={strategyGoals}
+            strategyPlans={strategyPlans}
+            strategyDecisions={strategyDecisions}
             quickActions={[
               { label: '+ Goal', onClick: () => openModal({ type: 'goal' }) },
               { label: '+ Plan', onClick: () => openModal({ type: 'plan' }) },
@@ -366,6 +370,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
               { label: '+ Experiment', onClick: () => openModal({ type: 'experiment' }) },
               { label: '+ Decision', onClick: () => openModal({ type: 'decision' }) },
             ]}
+            onViewAllGoals={() => setActiveSection('goals')}
           />
         );
       case 'goals':
@@ -394,47 +399,60 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
         return (
           <PlansPanel
             plans={strategyPlans}
-            onAdd={onAddStrategyPlan}
-            onUpdate={onUpdateStrategyPlan}
-            onDelete={onDeleteStrategyPlan}
+            filterVariant={planFilterVariant}
+            setFilterVariant={setPlanFilterVariant}
+            filterStatus={planFilterStatus}
+            setFilterStatus={setPlanFilterStatus}
+            filterPriority={planFilterPriority}
+            setFilterPriority={setPlanFilterPriority}
             onEdit={(plan) => openModal({ type: 'plan', item: plan })}
+            onDelete={onDeleteStrategyPlan}
             onOpenNew={() => openModal({ type: 'plan' })}
-            progressDraft={planProgressDraft}
-            setProgressDraft={setPlanProgressDraft}
-            statusDraft={planStatusDraft}
-            setStatusDraft={setPlanStatusDraft}
           />
         );
       case 'tactics':
         return (
           <TacticsPanel
             tactics={strategyTactics}
+            tacticForm={tacticForm}
+            setTacticForm={setTacticForm}
             onAdd={onAddStrategyTactic}
             onUpdate={onUpdateStrategyTactic}
             onDelete={onDeleteStrategyTactic}
             onEdit={(tactic) => openModal({ type: 'tactic', item: tactic })}
             onOpenNew={() => openModal({ type: 'tactic' })}
+            filterStatus={tacticFilterStatus}
+            setFilterStatus={setTacticFilterStatus}
           />
         );
       case 'experiments':
         return (
           <ExperimentsPanel
             experiments={strategyExperiments}
+            experimentForm={experimentForm}
+            setExperimentForm={setExperimentForm}
             onAdd={onAddStrategyExperiment}
             onUpdate={onUpdateStrategyExperiment}
             onDelete={onDeleteStrategyExperiment}
             onEdit={(exp) => openModal({ type: 'experiment', item: exp })}
             onOpenNew={() => openModal({ type: 'experiment' })}
+            experimentsFilterStatus={experimentFilterStatus}
+            setExperimentsFilterStatus={setExperimentFilterStatus}
           />
         );
       case 'decisions':
         return (
           <DecisionsPanel
             decisions={strategyDecisions}
+            decisionForm={decisionForm}
+            setDecisionForm={setDecisionForm}
+            onAdd={onAddStrategyDecision}
             onUpdate={onUpdateStrategyDecision}
             onDelete={onDeleteStrategyDecision}
             onEdit={(decision) => openModal({ type: 'decision', item: decision })}
             onOpenNew={() => openModal({ type: 'decision' })}
+            filterStatus={decisionFilterStatus}
+            setFilterStatus={setDecisionFilterStatus}
           />
         );
       case 'ethical_filter':
@@ -450,30 +468,20 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
     const ethicalItems = strategyItems.filter((item) => item.section === 'ethical_filter');
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <h4 className="text-sm font-semibold text-black">Ethical Principles</h4>
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <h4 className="text-sm font-semibold text-neutral-900">Ethical Principles</h4>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
-              <span className="text-red-600">✕</span> avoid gambling
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
-              <span className="text-red-600">✕</span> avoid adult content
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700">
-              <span className="text-red-600">✕</span> avoid interest-based loans
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700">
-              <span className="text-orange-500">⚠</span> review fintech/insurance/speculative crypto
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
-              <span className="text-emerald-600">✓</span> prefer education, health, productivity, ethical commerce
-            </span>
+            <Badge variant="danger">avoid gambling</Badge>
+            <Badge variant="danger">avoid adult content</Badge>
+            <Badge variant="danger">avoid interest-based loans</Badge>
+            <Badge variant="warning">review fintech/insurance/speculative crypto</Badge>
+            <Badge variant="success">prefer education, health, productivity, ethical commerce</Badge>
           </div>
         </div>
         <div className="flex justify-end">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => onAddStrategyItem({ section: 'ethical_filter', title: 'New ethical filter rule', content: 'Define a concrete filter condition.', priority: 'medium', status: 'active' })}
           >
@@ -485,12 +493,14 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
         ) : (
           <div className="space-y-2">
             {ethicalItems.map((item) => (
-              <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-3">
+              <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <h5 className="text-sm font-semibold text-black">{item.title}</h5>
+                  <div className="min-w-0">
+                    <h5 className="text-sm font-semibold text-neutral-900">{item.title}</h5>
+                    <p className="mt-1 text-sm text-neutral-500">{item.content || 'No content'}</p>
+                  </div>
                   <Button type="button" variant="danger" size="sm" onClick={() => onDeleteStrategyItem(item.id)}>Delete</Button>
                 </div>
-                <p className="mt-1 text-sm text-neutral-500">{item.content || 'No content'}</p>
               </div>
             ))}
           </div>
@@ -506,14 +516,14 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
 
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <h4 className="text-sm font-semibold text-black">Strategic Review</h4>
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <h4 className="text-sm font-semibold text-neutral-900">Strategic Review</h4>
           <p className="mt-1 text-xs text-neutral-500">Keep strategic loops tight: review what is due, decide what to continue, stop, or switch.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h5 className="text-sm font-semibold text-black">Overdue Goals</h5>
-            <div className="mt-2 space-y-2">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <h5 className="text-sm font-semibold text-neutral-900">Overdue Goals</h5>
+            <div className="mt-3 space-y-2">
               {dueGoals.length === 0
                 ? <p className="text-sm text-neutral-500">No overdue goals.</p>
                 : dueGoals.map((g) => (
@@ -524,9 +534,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
                 ))}
             </div>
           </div>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h5 className="text-sm font-semibold text-black">Decisions to Review</h5>
-            <div className="mt-2 space-y-2">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <h5 className="text-sm font-semibold text-neutral-900">Decisions to Review</h5>
+            <div className="mt-3 space-y-2">
               {dueDecisions.length === 0
                 ? <p className="text-sm text-neutral-500">No due decisions.</p>
                 : dueDecisions.map((d) => (
@@ -537,13 +547,13 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
                 ))}
             </div>
           </div>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h5 className="text-sm font-semibold text-black">Experiments Past End</h5>
-            <div className="mt-2 space-y-2">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <h5 className="text-sm font-semibold text-neutral-900">Experiments Past End</h5>
+            <div className="mt-3 space-y-2">
               {dueExperiments.length === 0
                 ? <p className="text-sm text-neutral-500">No experiments past end date.</p>
                 : dueExperiments.map((e) => (
-                  <div key={e.id} className="rounded-lg border border-orange-200 bg-orange-50 p-2.5 text-sm text-orange-700">
+                  <div key={e.id} className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-700">
                     <div className="font-medium">{e.title}</div>
                     <div className="text-xs">Ended: {e.endDate?.slice(0, 10)}</div>
                   </div>
@@ -587,10 +597,10 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
       ) : (
         <>
           {starterVisible ? (
-            <div className="rounded-xl border-2 border-dashed border-neutral-200 bg-white p-6">
+            <div className="rounded-xl border border-neutral-200 bg-white p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-semibold text-black">Create Starter Strategy System</h3>
+                  <h3 className="text-base font-semibold text-neutral-900">Create Starter Strategy System</h3>
                   <p className="mt-1 text-sm text-neutral-600">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
                 </div>
                 <Button
@@ -613,10 +623,10 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
                 key={section.value}
                 type="button"
                 onClick={() => setActiveSection(section.value)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                className={`px-4 py-2 text-sm font-medium transition-all ${
                   activeSection === section.value
-                    ? 'bg-black text-white shadow-sm'
-                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-200'
+                    ? 'text-neutral-900 border-b-2 border-neutral-900'
+                    : 'text-neutral-500 hover:text-neutral-700 border-b-2 border-transparent'
                 }`}
               >
                 {section.label}
@@ -624,13 +634,8 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-            <div className="xl:col-span-9 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-              {renderMainSection()}
-            </div>
-            <div className="xl:col-span-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <InsightSidebar goals={strategyGoals} plans={strategyPlans} decisions={strategyDecisions} />
-            </div>
+          <div>
+            {renderMainSection()}
           </div>
         </>
       )}

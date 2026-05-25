@@ -1,23 +1,35 @@
 import React from 'react';
+import type { StrategyGoal, StrategyPlan, StrategyDecision } from '../../types/opportunities';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import StatCard from '../ui/StatCard';
 
-const PanelCard: React.FC<{ title: string; value: string | number; accent?: string }> = ({ title, value, accent = 'text-[#0f172a]' }) => (
-  <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_6px_18px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-    <div className="text-[11px] font-mono uppercase tracking-[0.1em] text-[#64748b]">{title}</div>
-    <div className={`mt-1.5 text-2xl font-semibold ${accent}`}>{value}</div>
-  </div>
-);
+const questions = [
+  'What is the next concrete action?',
+  'Does this support money, independence, or positioning?',
+  'What proof will this create?',
+  'What should be stopped?',
+  'What is the fallback if Plan A fails?',
+  'Is this aligned with ethical filters?',
+];
 
-type QuickAction = {
-  label: string;
-  onClick: () => void;
+const formatDate = (value?: string) => {
+  if (!value) return '';
+  return value.slice(0, 10);
+};
+
+const getRiskFlag = (plan: StrategyPlan) => {
+  const status = String(plan.status || '').toLowerCase();
+  if (status === 'paused' || status === 'blocked') return true;
+  if (!plan.targetDate) return false;
+  const target = new Date(plan.targetDate).getTime();
+  if (!Number.isFinite(target)) return false;
+  const daysLeft = Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
+  const progress = Number(plan.progress ?? 0);
+  return daysLeft <= 14 && progress < 45;
 };
 
 const CommandCenter: React.FC<{
-  strategyGoalsCount: number;
-  strategyPlansCount: number;
-  strategyTacticsCount: number;
-  strategyExperimentsCount: number;
-  strategyDecisionsCount: number;
   activeGoalsCount: number;
   activePlansCount: number;
   runningExperimentsCount: number;
@@ -26,79 +38,250 @@ const CommandCenter: React.FC<{
   averageProgress: number;
   completedExperimentsCount: number;
   failedExperimentsCount: number;
-  quickActions: QuickAction[];
+  strategyGoals: StrategyGoal[];
+  strategyPlans: StrategyPlan[];
+  strategyDecisions: StrategyDecision[];
+  quickActions: { label: string; onClick: () => void }[];
+  onViewAllGoals?: () => void;
 }> = ({
-  activeGoalsCount,
-  activePlansCount,
-  runningExperimentsCount,
-  decisionsToReviewCount,
-  highPriorityItemsCount,
-  averageProgress,
-  completedExperimentsCount,
-  failedExperimentsCount,
-  quickActions,
-}) => (
-  <div className="space-y-4">
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-      <PanelCard title="Active Goals" value={activeGoalsCount} />
-      <PanelCard title="Active Plans" value={activePlansCount} />
-      <PanelCard title="Running Experiments" value={runningExperimentsCount} />
-      <PanelCard title="Decisions to Review" value={decisionsToReviewCount} accent="text-[#9a3412]" />
-      <PanelCard title="High Priority Items" value={highPriorityItemsCount} accent="text-[#991b1b]" />
-      <PanelCard title="Average Progress" value={`${averageProgress}%`} accent="text-[#1e3a8a]" />
-    </div>
+  activeGoalsCount, activePlansCount, runningExperimentsCount,
+  decisionsToReviewCount, highPriorityItemsCount, averageProgress,
+  completedExperimentsCount, failedExperimentsCount,
+  strategyGoals, strategyPlans, strategyDecisions, quickActions, onViewAllGoals,
+}) => {
+  const topPriorityGoals = strategyGoals
+    .filter((g) => g.priority === 'high')
+    .slice()
+    .sort((a, b) => Number(b.progress ?? 0) - Number(a.progress ?? 0))
+    .slice(0, 3);
 
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-      <div className="rounded-xl border border-[#e2e8f0] bg-gradient-to-br from-[#f8fafc] to-white p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#0f172a]">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#2563eb]/10 text-xs text-[#2563eb]">G</span>
-          Goal Coverage
-        </div>
-        <div className="mt-2 space-y-1 text-sm text-[#475569]">
-          <div className="flex justify-between"><span>Goals</span><span className="font-medium text-[#0f172a]">{activeGoalsCount} active</span></div>
-          <div className="flex justify-between"><span>Plans</span><span className="font-medium text-[#0f172a]">{activePlansCount} active</span></div>
-          <div className="flex justify-between"><span>Tactics</span><span className="font-medium text-[#0f172a]">{runningExperimentsCount > 0 ? 'active' : 'set up'}</span></div>
-        </div>
-      </div>
-      <div className="rounded-xl border border-[#e2e8f0] bg-gradient-to-br from-[#f8fafc] to-white p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#0f172a]">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#7c3aed]/10 text-xs text-[#7c3aed]">E</span>
-          Experiment Engine
-        </div>
-        <div className="mt-2 space-y-1 text-sm text-[#475569]">
-          <div className="flex justify-between"><span>Running</span><span className="font-medium text-[#0f172a]">{runningExperimentsCount}</span></div>
-          <div className="flex justify-between"><span>Completed</span><span className="font-medium text-[#0f172a]">{completedExperimentsCount}</span></div>
-          <div className="flex justify-between"><span>Failed</span><span className="font-medium text-[#0f172a]">{failedExperimentsCount}</span></div>
-        </div>
-      </div>
-      <div className="rounded-xl border border-[#e2e8f0] bg-gradient-to-br from-[#f8fafc] to-white p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#0f172a]">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#059669]/10 text-xs text-[#059669]">D</span>
-          Decision Quality
-        </div>
-        <div className="mt-2 space-y-1 text-sm text-[#475569]">
-          <div className="flex justify-between"><span>Due Reviews</span><span className="font-medium text-[#0f172a]">{decisionsToReviewCount}</span></div>
-          <div className="flex justify-between"><span>Average Progress</span><span className="font-medium text-[#0f172a]">{averageProgress}%</span></div>
-        </div>
-      </div>
-    </div>
+  const nearestReviews = strategyDecisions
+    .filter((d) => Boolean(d.reviewDate))
+    .slice()
+    .sort((a, b) => (a.reviewDate || '').localeCompare(b.reviewDate || ''))
+    .slice(0, 5);
 
-    <div className="rounded-xl border border-[#e2e8f0] bg-white p-4">
-      <h5 className="text-sm font-semibold text-[#0f172a]">Quick Actions</h5>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {quickActions.map((action) => (
-          <button
-            key={action.label}
-            type="button"
-            onClick={action.onClick}
-            className="rounded-lg border border-[#cbd5e1] bg-white px-3.5 py-2 text-sm font-medium text-[#334155] transition-all hover:border-[#2563eb] hover:text-[#2563eb] hover:shadow-sm active:scale-[0.97]"
-          >
-            {action.label}
-          </button>
-        ))}
+  const plansAtRisk = strategyPlans.filter(getRiskFlag).slice(0, 5);
+
+  const tacticsCount = strategyGoals.reduce((sum, g) => sum + (g as any)._count?.tactics || 0, 0);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="lg:col-span-2 space-y-6">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <StatCard label="Active Goals" value={activeGoalsCount} hint="Current total" />
+          <StatCard label="Active Plans" value={activePlansCount} hint="Current total" />
+          <StatCard label="Running Experiments" value={runningExperimentsCount} hint="Current total" />
+          <StatCard label="Decisions to Review" value={decisionsToReviewCount} hint="Due now" />
+          <StatCard label="High Priority Items" value={highPriorityItemsCount} hint="Across all tabs" />
+          <StatCard label="Average Progress" value={`${averageProgress}%`} hint="Goals + Plans" />
+        </section>
+
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Goal Coverage</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">What's active across the strategy stack.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-neutral-100">
+            <div className="px-5 py-5">
+              <div className="text-xs text-neutral-500">Goals active</div>
+              <div className="mt-1 text-neutral-900" style={{ fontSize: 24, lineHeight: '28px', fontWeight: 700 }}>{activeGoalsCount}</div>
+            </div>
+            <div className="px-5 py-5">
+              <div className="text-xs text-neutral-500">Plans active</div>
+              <div className="mt-1 text-neutral-900" style={{ fontSize: 24, lineHeight: '28px', fontWeight: 700 }}>{activePlansCount}</div>
+            </div>
+            <div className="px-5 py-5">
+              <div className="text-xs text-neutral-500">Tactics active</div>
+              <div className="mt-1 text-neutral-900" style={{ fontSize: 24, lineHeight: '28px', fontWeight: 700 }}>{tacticsCount > 0 ? tacticsCount : '—'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-neutral-200 bg-white">
+            <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-neutral-900">Experiment Engine</h3>
+                <p className="mt-0.5 text-xs text-neutral-500">Learning velocity.</p>
+              </div>
+            </div>
+            <ul className="divide-y divide-neutral-100">
+              <li className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm text-neutral-700">Running</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm tabular-nums text-neutral-900">{runningExperimentsCount}</span>
+                  <Badge variant="blue">Running</Badge>
+                </div>
+              </li>
+              <li className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm text-neutral-700">Completed</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm tabular-nums text-neutral-900">{completedExperimentsCount}</span>
+                  <Badge variant="success">Completed</Badge>
+                </div>
+              </li>
+              <li className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm text-neutral-700">Failed</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm tabular-nums text-neutral-900">{failedExperimentsCount}</span>
+                  <Badge variant="danger">Failed</Badge>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white">
+            <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-neutral-900">Decision Quality</h3>
+                <p className="mt-0.5 text-xs text-neutral-500">How well you're closing loops.</p>
+              </div>
+            </div>
+            <ul className="divide-y divide-neutral-100">
+              <li className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm text-neutral-700">Due reviews</span>
+                <span className="text-sm tabular-nums text-neutral-900">{decisionsToReviewCount}</span>
+              </li>
+              <li className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm text-neutral-700">Average progress</span>
+                <span className="text-sm tabular-nums text-neutral-900">{averageProgress}%</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Quick Actions</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">Add to your strategy stack.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 px-5 py-4">
+            {quickActions.map((action) => {
+              const isPrimary = action.label === '+ Goal';
+              return (
+                <Button key={action.label} variant={isPrimary ? 'primary' : 'secondary'} size="sm" onClick={action.onClick}>
+                  {action.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      <aside className="space-y-4">
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Strategic Questions</h3>
+              <p className="mt-0.5 text-xs text-neutral-500">Use these to pressure-test work.</p>
+            </div>
+          </div>
+          <ul className="divide-y divide-neutral-100">
+            {questions.map((q) => (
+              <li key={q} className="px-5 py-3 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors">{q}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Top High Priority Goals</h3>
+            </div>
+            {onViewAllGoals ? (
+              <button type="button" onClick={onViewAllGoals} className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900">
+                View all
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              </button>
+            ) : null}
+          </div>
+          {topPriorityGoals.length === 0 ? (
+            <div className="px-5 py-4 text-sm text-neutral-500">No high priority goals yet.</div>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {topPriorityGoals.map((g) => {
+                const progress = Math.round(Number(g.progress ?? 0));
+                return (
+                  <li key={g.id} className="px-5 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-neutral-900 truncate">{g.title}</span>
+                      <span className="text-xs tabular-nums text-neutral-500">{progress}%</span>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden">
+                      <div className="h-full bg-neutral-900 rounded-full" style={{ width: `${progress}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Nearest Review Dates</h3>
+            </div>
+          </div>
+          {nearestReviews.length === 0 ? (
+            <div className="px-5 py-4 text-sm text-neutral-500">No review dates scheduled.</div>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {nearestReviews.map((d) => (
+                <li key={d.id} className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-neutral-400"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
+                    <span className="text-sm text-neutral-700 truncate">{d.title}</span>
+                  </div>
+                  <span className="text-xs text-neutral-500 shrink-0">{formatDate(d.reviewDate)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-end justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-neutral-900">Plans at Risk</h3>
+            </div>
+          </div>
+          {plansAtRisk.length === 0 ? (
+            <div className="px-5 py-4 text-sm text-neutral-500">No plans at risk.</div>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {plansAtRisk.map((p) => (
+                <li key={p.id} className="px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-amber-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                    <span className="text-sm text-neutral-900 truncate">{p.name}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-neutral-500">{Math.round(Number(p.progress ?? 0))}% · {formatDate(p.targetDate)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-700"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-neutral-900">Ethical Filter Reminder</div>
+              <p className="mt-1 text-xs text-neutral-500">Before adopting a tactic, confirm it passes your non-negotiables and client criteria.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
-  </div>
-);
+  );
+};
 
 export default CommandCenter;
