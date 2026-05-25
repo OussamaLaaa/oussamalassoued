@@ -12,7 +12,7 @@ const CTA_TYPES = [
   { value: 'soft_follow_up', label: 'Soft follow-up' },
 ] as const;
 
-const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
+const baseInput = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
@@ -255,17 +255,17 @@ const OutreachTemplateModal: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-3xl rounded-lg border border-[#e5e7eb] bg-white p-6 shadow-[0_22px_44px_-18px_rgba(0,0,0,0.28)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-5">
+      <div className="w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-sm font-mono uppercase text-[#0f172a]">Outreach Template</h3>
-            <p className="mt-1 text-xs text-[#64748b]">Pick a template, preview the message, copy it, or log it as sent.</p>
+            <h3 className="text-sm font-mono uppercase text-neutral-900">Outreach Template</h3>
+            <p className="mt-1 text-xs text-neutral-500">Pick a template, preview the message, copy it, or log it as sent.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-2 py-1 rounded border border-[#e5e7eb] text-[#64748b] hover:bg-[#f8fafc]"
+            className="rounded border border-neutral-200 px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50"
           >
             Close
           </button>
@@ -274,21 +274,21 @@ const OutreachTemplateModal: React.FC<{
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>Audience</span>
                 <select className={baseInput} value={audience} onChange={(event) => setAudience(event.target.value as TemplateAudience | '')}>
                   <option value="">All</option>
                   {audienceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>Goal</span>
                 <select className={baseInput} value={goal} onChange={(event) => setGoal(event.target.value as TemplateGoal | '')}>
                   <option value="">All</option>
                   {goalOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>Language</span>
                 <select className={baseInput} value={language} onChange={(event) => setLanguage(event.target.value as TemplateLanguage | '')}>
                   <option value="">All</option>
@@ -298,7 +298,7 @@ const OutreachTemplateModal: React.FC<{
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>Tone</span>
                 <select className={baseInput} value={tone} onChange={(event) => setTone(event.target.value as 'professional' | 'friendly' | 'concise')}>
                   <option value="professional">Professional</option>
@@ -306,14 +306,14 @@ const OutreachTemplateModal: React.FC<{
                   <option value="concise">Concise</option>
                 </select>
               </label>
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>Length</span>
                 <select className={baseInput} value={length} onChange={(event) => setLength(event.target.value as 'short' | 'medium')}>
                   <option value="short">Short</option>
                   <option value="medium">Medium</option>
                 </select>
               </label>
-              <label className="space-y-1 text-xs text-[#64748b]">
+              <label className="space-y-1 text-xs text-neutral-500">
                 <span>CTA Type</span>
                 <select className={baseInput} value={ctaType} onChange={(event) => setCtaType(event.target.value)}>
                   {CTA_TYPES.map((opt) => (
@@ -323,7 +323,7 @@ const OutreachTemplateModal: React.FC<{
               </label>
             </div>
 
-            <label className="block space-y-1 text-xs text-[#64748b]">
+            <label className="block space-y-1 text-xs text-neutral-500">
               <span>Template</span>
               <select className={baseInput} value={selectedTemplate?.id || ''} onChange={(event) => setSelectedTemplateId(event.target.value)}>
                 {filteredTemplates.map((template) => (
@@ -333,7 +333,7 @@ const OutreachTemplateModal: React.FC<{
               </select>
             </label>
 
-            <label className="block space-y-1 text-xs text-[#64748b]">
+            <label className="block space-y-1 text-xs text-neutral-500">
               <span>Observation</span>
               <textarea
                 className={`${baseInput} min-h-24`}
@@ -343,8 +343,8 @@ const OutreachTemplateModal: React.FC<{
               />
             </label>
 
-            <div className="rounded-md border border-[#e5e7eb] bg-[#f8fafc] p-3 text-xs text-[#64748b]">
-              <div className="font-medium text-[#0f172a]">Context</div>
+            <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500">
+              <div className="font-medium text-neutral-900">Context</div>
               <div className="mt-1">Person: {person.fullName}</div>
               <div>Company: {company?.name || person.companyName || 'Unknown company'}</div>
               <div>Role: {person.role || '—'}</div>
@@ -352,11 +352,11 @@ const OutreachTemplateModal: React.FC<{
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-lg border border-[#e5e7eb] bg-white p-3">
-              <div className="mb-2 text-xs font-medium text-[#0f172a]">Preview</div>
+            <div className="rounded-lg border border-neutral-200 bg-white p-3">
+              <div className="mb-2 text-xs font-medium text-neutral-900">Preview</div>
               {selectedTemplate?.subject && (
-                <div className="mb-2 text-xs text-[#64748b]">
-                  Subject: <span className="font-medium text-[#0f172a]">{renderedSubject}</span>
+                <div className="mb-2 text-xs text-neutral-500">
+                  Subject: <span className="font-medium text-neutral-900">{renderedSubject}</span>
                 </div>
               )}
               <textarea
@@ -371,7 +371,7 @@ const OutreachTemplateModal: React.FC<{
             </div>
 
             {status && (
-              <div className="rounded-md border border-[#dbeafe] bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">
+              <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
                 {status}
               </div>
             )}
@@ -381,7 +381,7 @@ const OutreachTemplateModal: React.FC<{
                 type="button"
                 onClick={() => void handleImproveWithAi()}
                 disabled={isImproving || !selectedTemplate}
-                className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-4 py-2 text-sm text-[#1d4ed8] hover:bg-[#dbeafe] disabled:opacity-50"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
               >
                 {isImproving ? 'Improving...' : 'Improve with AI'}
               </button>
@@ -389,7 +389,7 @@ const OutreachTemplateModal: React.FC<{
                 type="button"
                 onClick={handleCopy}
                 disabled={isCopying || !messageText}
-                className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc] disabled:opacity-50"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
               >
                 {isCopying ? 'Copying...' : 'Copy Message'}
               </button>
@@ -397,14 +397,14 @@ const OutreachTemplateModal: React.FC<{
                 type="button"
                 onClick={() => void handleLog()}
                 disabled={isLogging || !selectedTemplate}
-                className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8] disabled:opacity-50"
+                className="rounded-md border border-black bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50"
               >
                 {isLogging ? 'Logging...' : 'Log as Sent'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>

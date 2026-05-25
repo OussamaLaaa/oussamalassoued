@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { Company, Person, MessageInput } from '../../types/opportunities';
 
-const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
+const baseInput = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400';
 
 const LogMessageForm: React.FC<{
   companies: Company[];
@@ -46,7 +46,7 @@ const LogMessageForm: React.FC<{
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Company</span>
+          <span className="text-sm font-medium text-neutral-900">Company</span>
           <select
             className={baseInput}
             value={companyId}
@@ -63,14 +63,14 @@ const LogMessageForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Person</span>
+          <span className="text-sm font-medium text-neutral-900">Person</span>
           <select className={baseInput} value={personId} onChange={(e) => { setPersonId(e.target.value); setField('personId', e.target.value); }}>
             <option value="">Select a person</option>
             {filteredPeople.map((person) => <option key={person.id} value={person.id}>{person.fullName}</option>)}
           </select>
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Channel</span>
+          <span className="text-sm font-medium text-neutral-900">Channel</span>
           <select className={baseInput} value={form.channel} onChange={(e) => setField('channel', e.target.value)}>
             <option>LinkedIn</option>
             <option>Email</option>
@@ -80,7 +80,7 @@ const LogMessageForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Language</span>
+          <span className="text-sm font-medium text-neutral-900">Language</span>
           <select className={baseInput} value={form.language} onChange={(e) => setField('language', e.target.value)}>
             <option>Arabic</option>
             <option>French</option>
@@ -88,19 +88,19 @@ const LogMessageForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Message Type</span>
+          <span className="text-sm font-medium text-neutral-900">Message Type</span>
           <input className={baseInput} value={form.messageType || ''} onChange={(e) => setField('messageType', e.target.value)} />
         </label>
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Message Text</span>
+          <span className="text-sm font-medium text-neutral-900">Message Text</span>
           <textarea className={`${baseInput} min-h-24`} value={form.messageText || ''} onChange={(e) => setField('messageText', e.target.value)} />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Sent Date</span>
+          <span className="text-sm font-medium text-neutral-900">Sent Date</span>
           <input type="datetime-local" className={baseInput} value={form.sentDate?.slice(0, 16) || ''} onChange={(e) => setField('sentDate', e.target.value)} />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Reply Status</span>
+          <span className="text-sm font-medium text-neutral-900">Reply Status</span>
           <select className={baseInput} value={form.replyStatus} onChange={(e) => setField('replyStatus', e.target.value as MessageInput['replyStatus'])}>
             <option value="no_reply">no_reply</option>
             <option value="replied">replied</option>
@@ -110,15 +110,15 @@ const LogMessageForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Reply Summary</span>
+          <span className="text-sm font-medium text-neutral-900">Reply Summary</span>
           <input className={baseInput} value={form.replySummary || ''} onChange={(e) => setField('replySummary', e.target.value)} />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Next Follow-up Date</span>
+          <span className="text-sm font-medium text-neutral-900">Next Follow-up Date</span>
           <input type="date" className={baseInput} value={form.nextFollowUpDate || ''} onChange={(e) => setField('nextFollowUpDate', e.target.value)} />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Status</span>
+          <span className="text-sm font-medium text-neutral-900">Status</span>
           <select className={baseInput} value={form.status} onChange={(e) => setField('status', e.target.value as MessageInput['status'])}>
             <option value="sent">sent</option>
             <option value="scheduled">scheduled</option>
@@ -129,8 +129,8 @@ const LogMessageForm: React.FC<{
       </div>
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">Cancel</button>
-        <button type="submit" className="rounded-md bg-[#2563eb] px-4 py-2 text-sm text-white hover:bg-[#1d4ed8]">Save Message</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50">Cancel</button>
+        <button type="submit" className="rounded-md border border-black bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800">Save Message</button>
       </div>
     </form>
   );

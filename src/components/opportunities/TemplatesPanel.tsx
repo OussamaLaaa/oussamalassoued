@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import EmptyState from '../ui/EmptyState';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Textarea from '../ui/Textarea';
-import Button from '../ui/Button';
 
 const emptyForm: MessageTemplateInput = {
   name: '',
@@ -14,6 +16,13 @@ const emptyForm: MessageTemplateInput = {
   subject: '',
   body: '',
   isActive: true,
+};
+
+const formatDateLabel = (value?: string) => {
+  if (!value) return 'Current';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Current';
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 const TemplatesPanel: React.FC<{
@@ -28,18 +37,27 @@ const TemplatesPanel: React.FC<{
   const [form, setForm] = useState<MessageTemplateInput>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterAudience, setFilterAudience] = useState('');
   const [filterGoal, setFilterGoal] = useState('');
   const [filterLanguage, setFilterLanguage] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
+      const haystack = [template.name, template.audience, template.goal, template.language, template.subject || '', template.body || '']
+        .join(' ')
+        .toLowerCase();
+
+      if (searchQuery && !haystack.includes(searchQuery.toLowerCase())) return false;
       if (filterAudience && template.audience !== filterAudience) return false;
       if (filterGoal && template.goal !== filterGoal) return false;
       if (filterLanguage && template.language !== filterLanguage) return false;
+      if (filterStatus === 'active' && template.isActive === false) return false;
+      if (filterStatus === 'inactive' && template.isActive !== false) return false;
       return true;
     });
-  }, [templates, filterAudience, filterGoal, filterLanguage]);
+  }, [templates, searchQuery, filterAudience, filterGoal, filterLanguage, filterStatus]);
 
   const startAdd = () => {
     setEditingTemplate(null);
@@ -105,212 +123,193 @@ const TemplatesPanel: React.FC<{
     }
   };
 
-  const AUDIENCE_SELECT_OPTIONS = [
+  const audienceSelectOptions = [
     { value: '', label: 'All audiences' },
-    ...audienceOptions.map((o) => ({ value: o.value, label: o.label })),
+    ...audienceOptions.map((option) => ({ value: option.value, label: option.label })),
   ];
-
-  const GOAL_SELECT_OPTIONS = [
+  const goalSelectOptions = [
     { value: '', label: 'All goals' },
-    ...goalOptions.map((o) => ({ value: o.value, label: o.label })),
+    ...goalOptions.map((option) => ({ value: option.value, label: option.label })),
   ];
-
-  const LANGUAGE_SELECT_OPTIONS = [
+  const languageSelectOptions = [
     { value: '', label: 'All languages' },
-    ...languageOptions.map((o) => ({ value: o.value, label: o.label })),
+    ...languageOptions.map((option) => ({ value: option.value, label: option.label })),
   ];
-
-  const FORM_LANGUAGE_OPTIONS = languageOptions.map((o) => ({ value: o.value, label: o.label }));
-  const FORM_AUDIENCE_OPTIONS = audienceOptions.map((o) => ({ value: o.value, label: o.label }));
-  const FORM_GOAL_OPTIONS = goalOptions.map((o) => ({ value: o.value, label: o.label }));
+  const statusSelectOptions = [
+    { value: '', label: 'Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+  ];
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-lg font-medium text-black">Message Templates</h3>
-        <div className="flex items-center gap-2">
-          {templates.length === 0 && onSeedDefaults && (
-            <Button variant="secondary" size="sm" onClick={() => void onSeedDefaults()}>
-              Seed default templates
-            </Button>
-          )}
-          <Button variant="primary" size="sm" onClick={startAdd}>
-            Add Template
-          </Button>
-        </div>
-      </div>
-
-      <p className="mt-2 text-xs text-neutral-500">
+    <div className="space-y-4">
+      <div className="text-xs text-neutral-500">
         Supported placeholders: {'{{personName}}'}, {'{{companyName}}'}, {'{{role}}'}, {'{{myName}}'}, {'{{service}}'}, {'{{observation}}'}.
-      </p>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3">
-        <Select
-          value={filterAudience}
-          onChange={(event) => setFilterAudience(event.target.value)}
-          options={AUDIENCE_SELECT_OPTIONS}
-          className="text-xs"
-        />
-        <Select
-          value={filterGoal}
-          onChange={(event) => setFilterGoal(event.target.value)}
-          options={GOAL_SELECT_OPTIONS}
-          className="text-xs"
-        />
-        <Select
-          value={filterLanguage}
-          onChange={(event) => setFilterLanguage(event.target.value)}
-          options={LANGUAGE_SELECT_OPTIONS}
-          className="text-xs"
-        />
       </div>
 
-      {showForm && (
-        <div className="mt-4 space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2">
+        <Input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search templates..."
+          className="min-w-[220px] flex-1"
+        />
+        <Select value={filterAudience} onChange={(event) => setFilterAudience(event.target.value)} options={audienceSelectOptions} />
+        <Select value={filterGoal} onChange={(event) => setFilterGoal(event.target.value)} options={goalSelectOptions} />
+        <Select value={filterLanguage} onChange={(event) => setFilterLanguage(event.target.value)} options={languageSelectOptions} />
+        <Select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} options={statusSelectOptions} />
+        {templates.length === 0 && onSeedDefaults ? (
+          <Button variant="secondary" size="sm" onClick={() => void onSeedDefaults()}>
+            Seed default templates
+          </Button>
+        ) : null}
+        <Button variant="primary" size="sm" onClick={startAdd}>
+          New Template
+        </Button>
+      </div>
+
+      {showForm ? (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="border-b border-neutral-200 px-5 py-4">
+            <h3 className="text-sm font-semibold text-neutral-900">{editingTemplate ? 'Edit Template' : 'New Template'}</h3>
+            <p className="mt-1 text-xs text-neutral-500">Reusable outreach copy you can personalize on send.</p>
+          </div>
+          <div className="space-y-4 p-5">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Input
+                label="Name"
+                type="text"
+                value={form.name}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="Founder / UX audit offer / English"
+              />
+              <Select
+                label="Language"
+                value={form.language}
+                onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
+                options={languageOptions.map((option) => ({ value: option.value, label: option.label }))}
+              />
+              <Select
+                label="Audience"
+                value={form.audience}
+                onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
+                options={audienceOptions.map((option) => ({ value: option.value, label: option.label }))}
+              />
+              <Select
+                label="Goal"
+                value={form.goal}
+                onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
+                options={goalOptions.map((option) => ({ value: option.value, label: option.label }))}
+              />
+            </div>
+
             <Input
-              label="Name"
+              label="Subject"
               type="text"
-              value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              placeholder="Founder / UX audit offer / English"
+              value={form.subject || ''}
+              onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
+              placeholder="Quick UX audit idea for {{companyName}}"
             />
 
-            <Select
-              label="Language"
-              value={form.language}
-              onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
-              options={FORM_LANGUAGE_OPTIONS}
+            <Textarea
+              label="Body"
+              value={form.body}
+              onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
+              className="min-h-44"
+              placeholder="Hi {{personName}}, ..."
             />
 
-            <Select
-              label="Audience"
-              value={form.audience}
-              onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
-              options={FORM_AUDIENCE_OPTIONS}
-            />
+            <label className="inline-flex items-center gap-2 text-xs text-neutral-500">
+              <input
+                type="checkbox"
+                checked={form.isActive !== false}
+                onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+              />
+              Active template
+            </label>
 
-            <Select
-              label="Goal"
-              value={form.goal}
-              onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
-              options={FORM_GOAL_OPTIONS}
-            />
-          </div>
-
-          <Input
-            label="Subject"
-            type="text"
-            value={form.subject || ''}
-            onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
-            placeholder="Quick UX audit idea for {{companyName}}"
-          />
-
-          <Textarea
-            label="Body"
-            value={form.body}
-            onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
-            className="min-h-44"
-            placeholder="Hi {{personName}}, ..."
-          />
-
-          <label className="inline-flex items-center gap-2 text-xs text-neutral-500">
-            <input
-              type="checkbox"
-              checked={form.isActive !== false}
-              onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
-            />
-            Active template
-          </label>
-
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setShowForm(false);
-                setEditingTemplate(null);
-                setForm(emptyForm);
-                setStatus('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => void handleSave()}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Saving...' : editingTemplate ? 'Update Template' : 'Create Template'}
-            </Button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingTemplate(null);
+                  setForm(emptyForm);
+                  setStatus('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => void handleSave()}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : editingTemplate ? 'Update Template' : 'Create Template'}
+              </Button>
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full table-auto text-left">
-          <thead>
-            <tr className="bg-neutral-50 text-xs text-neutral-600">
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Audience</th>
-              <th className="px-3 py-2">Goal</th>
-              <th className="px-3 py-2">Language</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTemplates.map((template) => (
-              <tr key={template.id} className="border-t border-neutral-200 hover:bg-neutral-50">
-                <td className="px-3 py-3">
-                  <div className="font-medium text-black">{template.name}</div>
-                  <div className="max-w-[360px] truncate text-xs text-neutral-500">{template.subject || template.body}</div>
-                </td>
-                <td className="px-3 py-3 text-sm text-black">{template.audience}</td>
-                <td className="px-3 py-3 text-sm text-black">{template.goal}</td>
-                <td className="px-3 py-3 text-sm text-black">{template.language}</td>
-                <td className="px-3 py-3 text-sm">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${template.isActive === false ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                    {template.isActive === false ? 'Inactive' : 'Active'}
-                  </span>
-                </td>
-                <td className="px-3 py-3">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => startEdit(template)}
-                    >
-                      Edit
-                    </Button>
-                    {template.isActive !== false && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => void handleDeactivate(template.id)}
-                      >
-                        Deactivate
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredTemplates.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-sm text-neutral-500">No templates match the current filters.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {status && (
-        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-          {status}
+      {filteredTemplates.length ? (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-[1080px] w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+                  <th className="px-4 py-3 font-medium">Template Name</th>
+                  <th className="px-4 py-3 font-medium">Audience</th>
+                  <th className="px-4 py-3 font-medium">Goal</th>
+                  <th className="px-4 py-3 font-medium">Language</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Updated</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTemplates.map((template) => (
+                  <tr key={template.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50">
+                    <td className="px-4 py-4 align-top">
+                      <div className="font-semibold text-neutral-900">{template.name}</div>
+                      <div className="mt-1 max-w-[320px] truncate text-xs text-neutral-500">{template.subject || template.body}</div>
+                    </td>
+                    <td className="px-4 py-4 align-top"><Badge variant="neutral">{template.audience}</Badge></td>
+                    <td className="px-4 py-4 align-top"><Badge variant="neutral">{template.goal.replace(/_/g, ' ')}</Badge></td>
+                    <td className="px-4 py-4 align-top text-neutral-700">{template.language}</td>
+                    <td className="px-4 py-4 align-top">
+                      <Badge variant={template.isActive === false ? 'warning' : 'success'}>
+                        {template.isActive === false ? 'Inactive' : 'Active'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 align-top text-neutral-500">{formatDateLabel(template.updatedAt)}</td>
+                    <td className="px-4 py-4 align-top">
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <Button variant="ghost" size="sm" onClick={() => startEdit(template)} className="text-neutral-700 hover:text-neutral-900">
+                          Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => void handleDeactivate(template.id)} className="text-neutral-700 hover:text-neutral-900">
+                          Deactivate
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      ) : (
+        <EmptyState
+          title="No templates yet."
+          description="Create your first outreach template."
+          action={<Button variant="primary" size="sm" onClick={startAdd}>New Template</Button>}
+        />
       )}
+
+      {status ? <p className="text-xs text-neutral-500">{status}</p> : null}
     </div>
   );
 };

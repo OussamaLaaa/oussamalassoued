@@ -133,6 +133,9 @@ const defaultMessageFilters: MessageFilters = {
   searchQuery: '',
   replyStatus: '',
   followUp: '',
+  channel: '',
+  messageType: '',
+  dateRange: '',
 };
 
 const defaultDealFilters: DealFilters = {
@@ -656,6 +659,17 @@ const OpportunitiesLayout: React.FC<{
           <Button variant="secondary" size="sm" onClick={() => setActiveModal('company')}>Add Company</Button>
           <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}>Add Deal</Button>
         </>
+      ) : activeApp === 'messages' ? (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => {
+            const firstPerson = people[0];
+            if (firstPerson) {
+              setTemplatePerson(firstPerson);
+            }
+          }}>AI Personalize</Button>
+          <Button variant="secondary" size="sm" onClick={() => setTab('templates')}>New Template</Button>
+          <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}>Log Message</Button>
+        </>
       ) : undefined}
       searchValue={activeApp === 'crm' ? globalSearch : undefined}
       onSearchChange={activeApp === 'crm' ? handleGlobalSearchChange : undefined}
@@ -831,6 +845,7 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteMessage}
                 filters={messageFilters}
                 onFilterChange={setMessageFilters}
+                onLogMessage={() => setActiveModal('message')}
               />
             )}
 
