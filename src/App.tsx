@@ -5,7 +5,7 @@ import { SiteConfigProvider } from './context/SiteConfigContext';
 const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Opportunities = lazy(() => import('./pages/Opportunities'));
+const Personal = lazy(() => import('./pages/Personal'));
 const Articles = lazy(() => import('./pages/Articles'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -17,7 +17,7 @@ const AboutOussama = lazy(() => import('./pages/AboutOussama'));
 type AppRoute =
   | { page: 'home' }
   | { page: 'dashboard' }
-  | { page: 'opportunities' }
+  | { page: 'personal' }
   | { page: 'contact' }
   | { page: 'terms' }
   | { page: 'privacy' }
@@ -47,8 +47,8 @@ const getRoute = (): AppRoute => {
     return { page: 'dashboard' };
   }
 
-  if (section === 'opportunities') {
-    return { page: 'opportunities' };
+  if (section === 'opportunities' || section === 'personal') {
+    return { page: 'personal' };
   }
 
   if (section === 'contact') {
@@ -139,27 +139,25 @@ class ErrorBoundary extends React.Component<
 }
 
 function App() {
-  // Early route detection for isolated pages (Opportunities)
+  // Early route detection for isolated pages (Personal OS)
   // This runs BEFORE any hooks so we can return a fully isolated render
   if (typeof window !== 'undefined') {
     const hash = window.location.hash.replace(/^#/, '');
     const path = window.location.pathname;
     const routeSource = hash && hash !== '/' ? hash : path;
     const firstSeg = routeSource.replace(/^\/+/, '').split('/')[0]?.toLowerCase();
-    if (firstSeg === 'opportunities') {
-      return (
-        <>
-          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-            <Opportunities />
-          </Suspense>
-        </>
-      );
+    if (firstSeg === 'opportunities' && path !== '/personal') {
+      window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
     }
   }
 
   const [route, setRoute] = useState<AppRoute>(() => getRoute());
 
   useEffect(() => {
+    if (window.location.pathname === '/opportunities') {
+      window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
+    }
+
     const handleRouteChange = () => {
       setRoute(getRoute());
     };
@@ -188,9 +186,9 @@ function App() {
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
             <Dashboard />
           </Suspense>
-        ) : route.page === 'opportunities' ? (
+        ) : route.page === 'personal' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-            <Opportunities />
+            <Personal />
           </Suspense>
         ) : route.page === 'contact' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>

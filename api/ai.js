@@ -6,11 +6,11 @@ import aiRelationshipHandler from '../server/lib/aiRelationshipHandler.js';
 import { createClient } from '@supabase/supabase-js';
 import { encryptApiKey, decryptApiKey } from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
+import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
 
 const { testProviderConnection, checkAIUseCaseStatus } = aiProviderRouter;
 
-const COOKIE_NAME = 'dashboard_session';
-const COOKIE_VALUE = 'test123';
+const allowedEmails = parseAllowedEmails();
 const ALLOWED_PROVIDERS = new Set(['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama']);
 
 const toSafeJson = (res, status, body) => res.status(status).json(body);
@@ -21,21 +21,11 @@ const cloneRequest = (req, overrides = {}) => ({
   body: overrides.body !== undefined ? overrides.body : req.body,
 });
 
-const parseCookies = (cookieHeader) => {
-  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
-  return cookieHeader.split(';').reduce((accumulator, part) => {
-    const separatorIndex = part.indexOf('=');
-    if (separatorIndex === -1) return accumulator;
-    const key = part.slice(0, separatorIndex).trim();
-    const value = part.slice(separatorIndex + 1).trim();
-    if (key) accumulator[key] = value;
-    return accumulator;
-  }, {});
-};
-
 const isAuthenticated = (req) => {
-  const cookies = parseCookies(req.headers?.cookie);
-  return cookies[COOKIE_NAME] === COOKIE_VALUE;
+  const { googleGate, osGate } = getPersonalGateCookies(req);
+  if (!googleGate || !osGate) return false;
+  if (googleGate.email !== osGate.email) return false;
+  return isEmailAllowed(osGate.email, allowedEmails);
 };
 
 const readBody = (req) => {
@@ -928,6 +918,10 @@ const handleSocialMediaAction = async (req, res) => {
 
 export default async function handler(req, res) {
   const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();
+
+  if (!isAuthenticated(req)) {
+    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
+  }
 
   if (req.method === 'GET' && action === 'health') {
     const type = String(req.query?.type || '').trim().toLowerCase();

@@ -1,5 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
+
+const allowedEmails = parseAllowedEmails();
+
+const isAuthenticated = (req) => {
+  const { googleGate, osGate } = getPersonalGateCookies(req);
+  if (!googleGate || !osGate) return false;
+  if (googleGate.email !== osGate.email) return false;
+  return isEmailAllowed(osGate.email, allowedEmails);
+};
 
 const allowedEntities = new Set([
   'companies',
@@ -125,9 +135,6 @@ const tablesAttempted = [
   'life_family_actions',
   'life_weekly_reviews',
 ];
-const COOKIE_NAME = 'dashboard_session';
-const COOKIE_VALUE = 'test123';
-
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -1101,23 +1108,6 @@ const normalizeEntityRow = (entity, row) => {
   return row;
 };
 
-const parseCookies = (cookieHeader) => {
-  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
-  return cookieHeader.split(';').reduce((accumulator, part) => {
-    const separatorIndex = part.indexOf('=');
-    if (separatorIndex === -1) return accumulator;
-    const key = part.slice(0, separatorIndex).trim();
-    const value = part.slice(separatorIndex + 1).trim();
-    if (key) accumulator[key] = value;
-    return accumulator;
-  }, {});
-};
-
-const isAuthenticated = (req) => {
-  const cookies = parseCookies(req.headers?.cookie);
-  return cookies[COOKIE_NAME] === COOKIE_VALUE;
-};
-
 // ── Table classification ──
 const CRITICAL_TABLES = new Set([
   'companies',
@@ -1202,6 +1192,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (!isAuthenticated(req)) {
+    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
 
   if (req.method === 'GET' && (req?.query?.health === '1' || req?.query?.health === 1)) {

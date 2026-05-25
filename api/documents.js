@@ -1,29 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import generatePdfHandler from '../server/lib/generatePdfHandler.js';
+import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
 
-const COOKIE_NAME = 'dashboard_session';
-const COOKIE_VALUE = 'test123';
+const allowedEmails = parseAllowedEmails();
 const BUCKET_NAME = 'generated-documents';
 const MAX_BASE64_LENGTH = 15 * 1024 * 1024;
 const MAX_PDF_BYTES = 12 * 1024 * 1024;
 const VALID_SOURCE_TYPES = new Set(['generated_document', 'invoice']);
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const parseCookies = (cookieHeader) => {
-  if (!cookieHeader || typeof cookieHeader !== 'string') return {};
-  return cookieHeader.split(';').reduce((accumulator, part) => {
-    const separatorIndex = part.indexOf('=');
-    if (separatorIndex === -1) return accumulator;
-    const key = part.slice(0, separatorIndex).trim();
-    const value = part.slice(separatorIndex + 1).trim();
-    if (key) accumulator[key] = value;
-    return accumulator;
-  }, {});
-};
-
 const isAuthenticated = (req) => {
-  const cookies = parseCookies(req.headers?.cookie);
-  return cookies[COOKIE_NAME] === COOKIE_VALUE;
+  const { googleGate, osGate } = getPersonalGateCookies(req);
+  if (!googleGate || !osGate) return false;
+  if (googleGate.email !== osGate.email) return false;
+  return isEmailAllowed(osGate.email, allowedEmails);
 };
 
 const readBody = (req) => {
@@ -350,6 +340,10 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(200).end();
+  }
+
+  if (!isAuthenticated(req)) {
+    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
 
   if (!isAuthenticated(req)) {
