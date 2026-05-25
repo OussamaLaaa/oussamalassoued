@@ -3,7 +3,7 @@ import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurch
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 
-type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'review' | 'ai_assistant';
+type FinanceTab = 'dashboard' | 'periods' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'ai_assistant';
 type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'recurring_income_review' | 'next_actions';
 type InvestTab = 'overview' | 'ideas' | 'allocation' | 'rules' | 'risk_review' | 'ethical_review';
 
@@ -121,6 +121,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 }
 
 interface FinancePanelProps {
+  onBackToDesktop?: () => void;
   financeIncome: FinanceIncome[];
   financeExpenses: FinanceExpense[];
   financeAllocationRules: FinanceAllocationRule[];
@@ -162,6 +163,7 @@ interface FinancePanelProps {
 }
 
 function FinancePanel({
+  onBackToDesktop,
   financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
   financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
   projects, companies,
@@ -268,6 +270,9 @@ function FinancePanel({
       } else if (type === 'recurring') {
         if (id) await onUpdateFinanceRecurringRule(id, formData);
         else await onAddFinanceRecurringRule({ ...defaultRecurring, ...formData });
+      } else if (type === 'periods') {
+        if (id) await onUpdateFinancePeriod(id, formData);
+        else await onAddFinancePeriod({ ...defaultPeriod, ...formData });
       }
       closeModal();
     } catch (e) {
@@ -283,6 +288,7 @@ function FinancePanel({
       else if (type === 'purchase_goals') await onDeleteFinancePurchaseGoal(id);
       else if (type === 'investments') await onDeleteFinanceInvestmentIdea(id);
       else if (type === 'recurring') await onDeleteFinanceRecurringRule(id);
+      else if (type === 'periods') await onDeleteFinancePeriod(id);
     } catch (e) {
       console.error('Delete failed', e);
     }
@@ -301,6 +307,7 @@ function FinancePanel({
     if (type === 'purchase_goals') return allGoals.find(i => i.id === id);
     if (type === 'investments') return allIdeas.find(i => i.id === id);
     if (type === 'recurring') return allRecurring.find(i => i.id === id);
+    if (type === 'periods') return allPeriods.find(i => i.id === id);
     return null;
   }
 
@@ -537,6 +544,7 @@ function FinancePanel({
             {modal.type === 'purchase_goals' && renderGoalForm(item)}
             {modal.type === 'investments' && renderIdeaForm(item)}
             {modal.type === 'recurring' && renderRecurringForm(item)}
+            {modal.type === 'periods' && renderPeriodForm(item)}
           </div>
           <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 rounded-b-2xl">
             <Button variant="outline" size="sm" onClick={closeModal}>Cancel</Button>
@@ -566,26 +574,18 @@ function FinancePanel({
           const m = String(n.getMonth() + 1).padStart(2, '0');
           onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
         }}>+ Current Month</Button>
-        <select
-          value={horizonView}
-          onChange={e => setHorizonView(e.target.value as HorizonView)}
-          className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 cursor-pointer"
-        >
-          <option value="monthly">Monthly</option>
-          <option value="six_months">6 Months</option>
-          <option value="yearly">Yearly</option>
-          <option value="five_years">5 Years</option>
-          <option value="ten_years">10 Years</option>
-        </select>
+        {selectedPeriodId && (
+          <Button variant="outline" size="sm" onClick={() => { setSelectedPeriodId(''); }}>Clear</Button>
+        )}
       </div>
     );
   }
 
   function MetricCard({ label, value, className }: { label: string; value: string; className?: string }) {
     return (
-      <div className={`rounded-xl border border-neutral-200 bg-white p-3.5 ${className || ''}`}>
-        <div className="text-xs text-neutral-500 mb-1 font-medium">{label}</div>
-        <div className="text-xl font-bold text-black">{value}</div>
+      <div className={`rounded-xl border border-neutral-200 bg-white p-4 ${className || ''}`}>
+        <div className="text-xs text-neutral-500 mb-1 font-medium truncate">{label}</div>
+        <div className="text-xl font-bold text-black truncate">{value}</div>
       </div>
     );
   }
@@ -601,10 +601,15 @@ function FinancePanel({
     const netCash = receivedIncome - paidExpenses;
     const netProjected = expectedIncome - totalExpenses;
     const needsTotal = dashboardExpenses.filter(e => e.category === 'needs' || e.category === 'family').reduce((s,e) => s + e.amount, 0);
+    const recentIncome = [...dashboardIncome].sort((a,b) => new Date(b.incomeDate || b.expectedDate || '').getTime() - new Date(a.incomeDate || a.expectedDate || '').getTime()).slice(0, 5);
+    const recentExpenses = [...dashboardExpenses].sort((a,b) => new Date(b.expenseDate || '').getTime() - new Date(a.expenseDate || '').getTime()).slice(0, 5);
+    const activeRules = allRules.filter(r => r.isActive).slice(0, 3);
+    const totalPct = allRules.reduce((s,r) => s + r.percentage, 0);
+    const activeGoals = allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled');
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <MetricCard label="Expected Income" value={toCur(expectedIncome)} />
           <MetricCard label="Received Income" value={toCur(receivedIncome)} />
           <MetricCard label="Total Expenses" value={toCur(totalExpenses)} />
@@ -614,12 +619,189 @@ function FinancePanel({
           <MetricCard label="Net Projected" value={toCur(netProjected)} />
           <MetricCard label="Needs Ratio" value={totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'} />
         </div>
+
         <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
           {selectedPeriodId
             ? 'Showing records linked to this period or dated within this month. Incomes/expenses from other months are hidden.'
             : 'Select a period above to focus on a specific month.'}
           <span className="ml-2">Variable income (expected/delayed) is estimated; actual net cash may differ.</span>
         </div>
+
+        {(recentIncome.length > 0 || recentExpenses.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {recentIncome.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Income</div>
+                {recentIncome.map(i => (
+                  <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
+                    <div className="min-w-0 flex-1 truncate pr-2">
+                      <span className="text-black font-medium">{i.title || i.incomeType}</span>
+                      <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+                    </div>
+                    <span className="font-semibold text-black shrink-0">{toCur(i.amount, i.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {recentExpenses.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Expenses</div>
+                {recentExpenses.map(e => (
+                  <div key={e.id} className="px-4 py-2 flex items-center justify-between text-xs">
+                    <div className="min-w-0 flex-1 truncate pr-2">
+                      <span className="text-black font-medium">{e.title || e.category}</span>
+                      <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
+                    </div>
+                    <span className="font-semibold text-black shrink-0">{toCur(e.amount, e.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeRules.length > 0 && (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Allocation Rules</div>
+            {activeRules.map(r => (
+              <div key={r.id} className="px-4 py-2 flex items-center justify-between text-xs">
+                <span className="text-black">{r.name || r.category}</span>
+                <span className="text-neutral-500">{r.category} &middot; {r.percentage}%</span>
+              </div>
+            ))}
+            {totalPct > 0 && (
+              <div className="px-4 py-2 text-xs text-neutral-400">Total allocated: {totalPct}%</div>
+            )}
+          </div>
+        )}
+
+        {(allIdeas.length > 0 || allGoals.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {allIdeas.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Investment Ideas</div>
+                {allIdeas.slice(0, 3).map(i => (
+                  <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
+                    <div className="min-w-0 flex-1 truncate pr-2">
+                      <span className="text-black font-medium">{i.title || 'Unnamed'}</span>
+                      <Badge variant="neutral">{i.type}</Badge>
+                    </div>
+                    <span className="font-semibold text-black shrink-0">{toCur(i.plannedAmount, i.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeGoals.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Purchase Goals</div>
+                {activeGoals.slice(0, 3).map(g => {
+                  const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+                  return (
+                    <div key={g.id} className="px-4 py-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-black font-medium">{g.title || 'Unnamed'}</span>
+                        <span className="text-neutral-500">{pct}%</span>
+                      </div>
+                      <div className="mt-1 h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
+                        <div className="h-full rounded-full bg-black transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`}} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {selectedPeriodId && allRecurring.some(r => r.isActive) && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-neutral-500">Recurring rules: {allRecurring.filter(r => r.isActive).length} active</div>
+              <Button variant="outline" size="sm" disabled={generating} onClick={generateRecurringItemsForPeriod}>
+                {generating ? 'Generating...' : 'Generate Recurring'}
+              </Button>
+            </div>
+            {generateResult && (
+              <div className="mt-2 p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-xs text-emerald-800">{generateResult}</div>
+            )}
+          </div>
+        )}
+
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs font-semibold text-neutral-600 mb-3">Review & Gaps</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+            <MetricCard label="Needs Ratio" value={totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'} />
+            <MetricCard label="Allocation Rules" value={String(allRules.length)} />
+            <MetricCard label="Active Recurring" value={String(allRecurring.filter(r => r.isActive).length)} />
+            <MetricCard label="Open Goals" value={String(activeGoals.length)} />
+          </div>
+          {(() => {
+            const gaps: string[] = [];
+            const needsPct = totalExpenses > 0 ? Math.round(needsTotal / totalExpenses * 100) : 0;
+            if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
+            if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
+            if (allRecurring.filter(r => r.isActive).length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
+            if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
+            return gaps.length > 0 ? (
+              <div className="space-y-1.5">
+                {gaps.map((g,i) => (
+                  <div key={i} className="p-2.5 rounded-lg border border-amber-200 bg-amber-50 text-xs text-amber-800">{g}</div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-neutral-400">No major gaps detected.</div>
+            );
+          })()}
+        </div>
+      </div>
+    );
+  }
+
+  function renderPeriodsTab() {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-black">Periods ({sortedPeriods.length})</h3>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const n = new Date();
+              const y = n.getFullYear();
+              const m = String(n.getMonth() + 1).padStart(2, '0');
+              onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
+            }}>+ Current Month</Button>
+            <Button variant="primary" size="sm" onClick={() => openModal('periods')}>+ New Period</Button>
+          </div>
+        </div>
+        {sortedPeriods.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No periods yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {sortedPeriods.map(p => (
+              <div key={p.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-black">{p.title}</span>
+                      <Badge variant={p.status === 'open' ? 'success' : 'neutral'}>{p.status}</Badge>
+                      {selectedPeriodId === p.id && <Badge variant="success">Active</Badge>}
+                    </div>
+                    <div className="mt-0.5 text-xs text-neutral-500">
+                      {new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()}
+                      {p.type !== 'manual' && <> &middot; {p.type}</>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant={selectedPeriodId === p.id ? 'primary' : 'outline'} size="sm" onClick={() => setSelectedPeriodId(p.id)}>
+                      {selectedPeriodId === p.id ? 'Selected' : 'Select'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => openModal('periods', p.id)}>Edit</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete('periods', p.id)}>Del</Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -897,7 +1079,7 @@ function FinancePanel({
               <h3 className="text-sm font-semibold text-black">Investment Overview</h3>
               <Button variant="primary" size="sm" onClick={() => openModal('investments')}>+ Add Idea</Button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <MetricCard label="Ideas" value={String(allIdeas.length)} />
               <MetricCard label="Rules" value={String(allInvRules.length)} />
               <MetricCard label="Allocations" value={String(allInvAllocs.length)} />
@@ -1008,59 +1190,140 @@ function FinancePanel({
     );
   }
 
-  function renderReviewTab() {
-    const needsTotal = allExpenses.filter(e => e.category === 'needs').reduce((s,e) => s + e.amount, 0);
-    const familyTotal = allExpenses.filter(e => e.category === 'family').reduce((s,e) => s + e.amount, 0);
-    const totalAllExp = allExpenses.reduce((s,e) => s + e.amount, 0);
-    const needsPct = totalAllExp > 0 ? Math.round((needsTotal + familyTotal) / totalAllExp * 100) : 0;
-    const highPriorityGoals = allGoals.filter(g => g.priority === 'high' && g.status !== 'bought' && g.status !== 'cancelled');
-    const gaps: string[] = [];
-    if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
-    if (highPriorityGoals.length > 0) gaps.push(`You have ${highPriorityGoals.length} high-priority purchase goals not yet completed.`);
-    if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
-    if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
-    const activeRecurring = allRecurring.filter(r => r.isActive);
-    if (activeRecurring.length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
+  function renderAiAssistant() {
+    const aiModes: AiMode[] = ['monthly_review', 'allocation_review', 'purchase_review', 'investment_review', 'recurring_income_review', 'next_actions'];
+    const hasData = dashboardIncome.length > 0 || dashboardExpenses.length > 0;
 
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-black">Review & Gaps</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <MetricCard label="Needs Ratio" value={`${needsPct}%`} />
-          <MetricCard label="Allocation Rules" value={String(allRules.length)} />
-          <MetricCard label="Active Recurring" value={String(activeRecurring.length)} />
-          <MetricCard label="Open Goals" value={String(allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length)} />
+        <h3 className="text-sm font-semibold text-black">AI Finance Assistant</h3>
+        <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
+          AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
         </div>
-        {gaps.length > 0 ? (
-          <div className="space-y-1.5">
-            <h4 className="text-xs font-semibold text-black">Identified Gaps</h4>
-            {gaps.map((g,i) => (
-              <div key={i} className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-xs text-amber-800">{g}</div>
-            ))}
+        <div className="flex gap-1.5 flex-wrap">
+          {aiModes.map(m => (
+            <button key={m}
+              onClick={() => { setAiMode(m); setAiResult(null); setAiError(null); }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                aiMode === m
+                  ? 'border-neutral-900 bg-neutral-900 text-white'
+                  : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
+            {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
+          </Button>
+          {!hasData && <span className="text-xs text-neutral-400">Add income or expenses first.</span>}
+        </div>
+        {aiError && <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700">{aiError}</div>}
+        {aiLoading && <div className="p-8 text-center text-sm text-neutral-400">Generating analysis...</div>}
+        {aiResult && (
+          <div className="space-y-3">
+            {aiResult.summary && (
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-xs text-neutral-500 mb-1 font-medium">Summary</div>
+                <div className="text-sm text-black mt-1 leading-relaxed">{aiResult.summary}</div>
+              </div>
+            )}
+            {aiResult.incomeAnalysis?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Income Analysis</div>
+                {aiResult.incomeAnalysis.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.expenseAnalysis?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Expense Analysis</div>
+                {aiResult.expenseAnalysis.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.allocationReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Allocation Review</div>
+                {aiResult.allocationReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.purchaseGoalReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Purchase Goals</div>
+                {aiResult.purchaseGoalReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.investmentRiskReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Investment Risks</div>
+                {aiResult.investmentRiskReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.recurringIncomeReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Recurring Income Review</div>
+                {aiResult.recurringIncomeReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.ethicalReviewQuestions?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Ethical Review Questions</div>
+                {aiResult.ethicalReviewQuestions.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.warnings?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Warnings</div>
+                {aiResult.warnings.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-red-700 leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.nextActions?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Next Actions</div>
+                {aiResult.nextActions.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No major gaps detected.</div>
         )}
       </div>
     );
   }
 
-  function renderHorizonSummary() {
+  function renderCompactHorizonView() {
     if (horizonView === 'monthly' && selectedPeriodId) {
       const inc = filteredFinanceIncome.reduce((s,i) => s + i.amount, 0);
       const exp = filteredFinanceExpenses.reduce((s,e) => s + e.amount, 0);
       const net = inc - exp;
       return (
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Current Period Summary</div>
-          <div className="text-2xl font-bold text-black">{toCur(net)}</div>
-          <div className="text-xs text-neutral-500 mt-1">Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
+        <div className="space-y-2">
+          <div className="text-xs text-neutral-500 font-medium">Current Period</div>
+          <div className="text-base font-bold text-black">{toCur(net)}</div>
+          <div className="space-y-0.5 text-xs text-neutral-500">
+            <div className="flex justify-between"><span>Income</span><span className="text-black font-medium">{toCur(inc)}</span></div>
+            <div className="flex justify-between"><span>Expenses</span><span className="text-black font-medium">{toCur(exp)}</span></div>
+          </div>
         </div>
       );
     }
 
     const allPeriodIncomeMap: Record<string, {income: number; expenses: number; count: number}> = {};
-
     allPeriods.forEach(p => {
       const key = p.id;
       const inc = allIncome.filter(i => incomeInPeriod(i, p.id, p)).reduce((s,i) => s + i.amount, 0);
@@ -1111,65 +1374,91 @@ function FinancePanel({
     });
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          <MetricCard label="Total Income" value={toCur(totalInc)} />
-          <MetricCard label="Total Expenses" value={toCur(totalExp)} />
-          <MetricCard label="Avg Monthly Income" value={toCur(avgMonthlyInc)} />
-          <MetricCard label="Avg Monthly Expenses" value={toCur(avgMonthlyExp)} />
-          <MetricCard label="Avg Net/Month" value={toCur(avgMonthlyInc - avgMonthlyExp)} />
-          <MetricCard label="Months" value={String(filteredMonths.length)} />
+      <div className="space-y-2">
+        <div className="text-xs text-neutral-500 font-medium">
+          {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
+        </div>
+        <div className="space-y-1 text-xs">
+          <div className="flex justify-between"><span>Total Income</span><span className="text-black font-medium">{toCur(totalInc)}</span></div>
+          <div className="flex justify-between"><span>Total Expenses</span><span className="text-black font-medium">{toCur(totalExp)}</span></div>
+          <div className="flex justify-between pt-1 mt-1 border-t border-neutral-200 font-semibold text-black"><span>Avg Net</span><span>{toCur(avgMonthlyInc - avgMonthlyExp)}</span></div>
+        </div>
+        {filteredMonths.length > 0 && (
+          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+            {filteredMonths.slice(-6).map(m => {
+              const net = m.income - m.expenses;
+              return (
+                <div key={m.key} className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500">{m.key}</span>
+                  <span className={net >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {(horizonView === 'five_years' || horizonView === 'ten_years') && (
+          <div className="space-y-0.5">
+            {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).slice(-3).map(([year, data]) => {
+              const net = data.income - data.expenses;
+              return (
+                <div key={year} className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500">{year}</span>
+                  <span className={net >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderSidebar() {
+    const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
+    const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
+    const netAll = totalInc - totalExp;
+
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold text-black">Horizon View</span>
+            <select
+              value={horizonView}
+              onChange={e => setHorizonView(e.target.value as HorizonView)}
+              className="h-7 text-xs rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none focus:border-neutral-400 cursor-pointer px-2"
+            >
+              <option value="monthly">Monthly</option>
+              <option value="six_months">6 Months</option>
+              <option value="yearly">Yearly</option>
+              <option value="five_years">5 Years</option>
+              <option value="ten_years">10 Years</option>
+            </select>
+          </div>
+          {renderCompactHorizonView()}
         </div>
 
-        {filteredMonths.length > 0 && (
-          <div className="space-y-1">
-            <h4 className="text-xs font-semibold text-black">Monthly Breakdown</h4>
-            <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-              {filteredMonths.map(m => {
-                const net = m.income - m.expenses;
-                return (
-                  <div key={m.key} className="px-4 py-2 flex items-center justify-between text-xs hover:bg-neutral-50 transition-colors">
-                    <span className="font-semibold text-black min-w-[70px]">{m.key}</span>
-                    <div className="flex gap-4">
-                      <span className="text-emerald-600">+{toCur(m.income)}</span>
-                      <span className="text-red-600">-{toCur(m.expenses)}</span>
-                      <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
-                    </div>
-                    <span className="text-neutral-400">{m.count} items</span>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs font-semibold text-neutral-600 mb-2">All-time Totals</div>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between"><span className="text-neutral-500">Income</span><span className="font-semibold text-black">{toCur(totalInc)}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Expenses</span><span className="font-semibold text-black">{toCur(totalExp)}</span></div>
+            <div className="flex justify-between pt-1.5 mt-1.5 border-t border-neutral-200 font-bold text-black"><span>Net</span><span>{toCur(netAll)}</span></div>
           </div>
-        )}
+        </div>
 
-        {(horizonView === 'five_years' || horizonView === 'ten_years') && (
-          <div className="space-y-1">
-            <h4 className="text-xs font-semibold text-black">Yearly Rollup</h4>
-            <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-              {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).map(([year, data]) => {
-                const net = data.income - data.expenses;
-                return (
-                  <div key={year} className="px-4 py-2 flex items-center justify-between text-xs hover:bg-neutral-50 transition-colors">
-                    <span className="font-semibold text-black">{year}</span>
-                    <div className="flex gap-4">
-                      <span className="text-emerald-600">+{toCur(data.income)}</span>
-                      <span className="text-red-600">-{toCur(data.expenses)}</span>
-                      <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
-                    </div>
-                    <span className="text-neutral-400">{data.months} months</span>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs font-semibold text-neutral-600 mb-2">Quick Stats</div>
+          <div className="space-y-1 text-xs text-neutral-500">
+            <div className="flex justify-between"><span>Income records</span><span className="text-black">{allIncome.length}</span></div>
+            <div className="flex justify-between"><span>Expense records</span><span className="text-black">{allExpenses.length}</span></div>
+            <div className="flex justify-between"><span>Periods</span><span className="text-black">{allPeriods.length}</span></div>
+            <div className="flex justify-between"><span>Recurring rules</span><span className="text-black">{allRecurring.length}</span></div>
+            <div className="flex justify-between"><span>Purchase goals</span><span className="text-black">{allGoals.length}</span></div>
+            <div className="flex justify-between"><span>Investment ideas</span><span className="text-black">{allIdeas.length}</span></div>
+            <div className="flex justify-between"><span>Allocation rules</span><span className="text-black">{allRules.length}</span></div>
           </div>
-        )}
-
-        {horizonView === 'ten_years' && filteredMonths.length === 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">
-            Not enough data for 10-year projection.
-          </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -1315,234 +1604,60 @@ function FinancePanel({
     }
   }
 
-  function renderAiAssistant() {
-    const aiModes: AiMode[] = ['monthly_review', 'allocation_review', 'purchase_review', 'investment_review', 'recurring_income_review', 'next_actions'];
-    const hasData = dashboardIncome.length > 0 || dashboardExpenses.length > 0;
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-black">AI Finance Assistant</h3>
-        <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
-          AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {aiModes.map(m => (
-            <button key={m}
-              onClick={() => { setAiMode(m); setAiResult(null); setAiError(null); }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                aiMode === m
-                  ? 'border-neutral-900 bg-neutral-900 text-white'
-                  : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-              }`}
-            >{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="primary" size="sm" disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
-            {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
-          </Button>
-          {!hasData && <span className="text-xs text-neutral-400">Add income or expenses first.</span>}
-        </div>
-        {aiError && <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700">{aiError}</div>}
-        {aiLoading && <div className="p-8 text-center text-sm text-neutral-400">Generating analysis...</div>}
-        {aiResult && (
-          <div className="space-y-3">
-            {aiResult.summary && (
-              <div className="rounded-xl border border-neutral-200 bg-white p-4">
-                <div className="text-xs text-neutral-500 mb-1 font-medium">Summary</div>
-                <div className="text-sm text-black mt-1 leading-relaxed">{aiResult.summary}</div>
-              </div>
-            )}
-            {aiResult.incomeAnalysis?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Income Analysis</div>
-                {aiResult.incomeAnalysis.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.expenseAnalysis?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Expense Analysis</div>
-                {aiResult.expenseAnalysis.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.allocationReview?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Allocation Review</div>
-                {aiResult.allocationReview.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.purchaseGoalReview?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Purchase Goals</div>
-                {aiResult.purchaseGoalReview.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.investmentRiskReview?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Investment Risks</div>
-                {aiResult.investmentRiskReview.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.recurringIncomeReview?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Recurring Income Review</div>
-                {aiResult.recurringIncomeReview.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.ethicalReviewQuestions?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Ethical Review Questions</div>
-                {aiResult.ethicalReviewQuestions.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.warnings?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Warnings</div>
-                {aiResult.warnings.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-red-700 leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-            {aiResult.nextActions?.length > 0 && (
-              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Next Actions</div>
-                {aiResult.nextActions.map((item: string, i: number) => (
-                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function renderSidebar() {
-    const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
-    const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
-    const netAll = totalInc - totalExp;
-    return (
-      <div className="flex flex-col gap-3">
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs font-medium text-neutral-500 mb-2">All-time Totals</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between"><span>Income</span><span className="font-semibold text-black">{toCur(totalInc)}</span></div>
-            <div className="flex justify-between"><span>Expenses</span><span className="font-semibold text-black">{toCur(totalExp)}</span></div>
-            <div className="flex justify-between pt-1 mt-1 border-t border-neutral-200 font-bold text-black"><span>Net</span><span>{toCur(netAll)}</span></div>
-          </div>
-        </div>
-        <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs font-medium text-neutral-500 mb-2">Quick Stats</div>
-          <div className="space-y-1 text-xs text-neutral-500">
-            <div>{allIncome.length} income records</div>
-            <div>{allExpenses.length} expense records</div>
-            <div>{allPeriods.length} periods</div>
-            <div>{allRecurring.length} recurring rules</div>
-            <div>{allGoals.length} purchase goals</div>
-            <div>{allIdeas.length} investment ideas</div>
-            <div>{allRules.length} allocation rules</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const tabs: {key: FinanceTab; label: string}[] = [
     {key:'dashboard', label:'Dashboard'},
+    {key:'periods', label:'Periods'},
     {key:'income', label:'Income'},
     {key:'expenses', label:'Expenses'},
     {key:'allocation', label:'Allocation'},
     {key:'purchase_goals', label:'Goals'},
     {key:'investments', label:'Investments'},
     {key:'recurring', label:'Recurring'},
-    {key:'review', label:'Review'},
-    {key:'ai_assistant', label:'AI'},
+    {key:'ai_assistant', label:'AI Finance'},
   ];
 
-  return (
-    <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
-      {/* Header */}
-      <div className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto max-w-[1400px] px-6 pt-5 pb-0">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Finance</h1>
-              <p className="mt-1 text-sm text-neutral-500">Income, expenses, allocation, investments, and financial review.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" size="sm" onClick={() => openModal('income')}>+ Add Income</Button>
-              <Button variant="outline" size="sm" onClick={() => openModal('expenses')}>+ Add Expense</Button>
-              <Button variant="outline" size="sm" onClick={() => openModal('purchase_goals')}>+ Add Goal</Button>
-              <Button variant="outline" size="sm" onClick={() => openModal('investments')}>+ Add Investment</Button>
-            </div>
-          </div>
-        </div>
+  const showSidebar = tab === 'dashboard';
 
-        {/* Tabs */}
-        <div className="mx-auto max-w-[1400px] px-6 mt-3 overflow-x-auto">
-          <div className="flex gap-0 min-w-max border-b border-neutral-200">
-            {tabs.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                className={`px-3.5 py-2 text-xs font-medium border-b-2 transition-all whitespace-nowrap ${
-                  tab === t.key
-                    ? 'text-black border-black'
-                    : 'text-neutral-500 border-transparent hover:text-black hover:border-neutral-300'
-                }`}
-              >{t.label}</button>
-            ))}
-          </div>
+  return (
+    <div>
+      <div className="overflow-x-auto -mx-6 px-6 border-b border-neutral-200 bg-white">
+        <div className="flex gap-0 min-w-max">
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 whitespace-nowrap ${
+                tab === t.key
+                  ? 'border-neutral-900 text-neutral-900'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-900'
+              }`}
+            >{t.label}</button>
+          ))}
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="mx-auto max-w-[1400px] px-6 py-6">
+      <div className="mt-6">
         <div className="flex gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Period selector */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {renderPeriodSelector()}
-              <Button variant="outline" size="sm" onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</Button>
-            </div>
-
-            {/* Tab content */}
+            {tab === 'dashboard' && (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {renderPeriodSelector()}
+              </div>
+            )}
             {tab === 'dashboard' && renderDashboard()}
+            {tab === 'periods' && renderPeriodsTab()}
             {tab === 'income' && renderIncomeTab()}
             {tab === 'expenses' && renderExpensesTab()}
             {tab === 'allocation' && renderAllocationTab()}
             {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
             {tab === 'investments' && renderInvestmentsTab()}
             {tab === 'recurring' && renderRecurringRulesTab()}
-            {tab === 'review' && renderReviewTab()}
             {tab === 'ai_assistant' && renderAiAssistant()}
+          </div>
 
-            {/* Horizon view */}
-            <div className="pt-2">
-              <h3 className="text-sm font-semibold text-black mb-3">
-                Horizon View &mdash;{' '}
-                {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
-              </h3>
-              {renderHorizonSummary()}
+          {showSidebar && (
+            <div className="w-[240px] shrink-0 sticky top-6 hidden lg:block">
+              {renderSidebar()}
             </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="w-[240px] shrink-0 sticky top-6 hidden lg:block">
-            {renderSidebar()}
-          </div>
+          )}
         </div>
       </div>
 

@@ -1036,6 +1036,7 @@ const OpportunitiesLayout: React.FC<{
 
             {tab === 'finance' && (
               <FinancePanel
+                onBackToDesktop={handleBackToDesktop}
                 financeIncome={financeIncome}
                 financeExpenses={financeExpenses}
                 financeAllocationRules={financeAllocationRules}
