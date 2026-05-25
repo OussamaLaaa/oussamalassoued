@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
@@ -654,21 +655,21 @@ const OpportunitiesLayout: React.FC<{
       onTabChange={handleShellTabChange}
       rightActions={activeApp === 'crm' ? (
         <>
-          <Button variant="secondary" size="sm" onClick={() => setActiveModal('message')}>Log Message</Button>
-          <Button variant="secondary" size="sm" onClick={() => setActiveModal('person')}>Add Person</Button>
-          <Button variant="secondary" size="sm" onClick={() => setActiveModal('company')}>Add Company</Button>
-          <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}>Add Deal</Button>
+          <Button variant="secondary" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+          <Button variant="secondary" size="md" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
+          <Button variant="secondary" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+          <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
         </>
       ) : activeApp === 'messages' ? (
         <>
-          <Button variant="secondary" size="sm" onClick={() => {
+          <Button variant="secondary" size="md" onClick={() => {
             const firstPerson = people[0];
             if (firstPerson) {
               setTemplatePerson(firstPerson);
             }
-          }}>AI Personalize</Button>
-          <Button variant="secondary" size="sm" onClick={() => setTab('templates')}>New Template</Button>
-          <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}>Log Message</Button>
+          }}><Sparkles className="h-4 w-4" />AI Personalize</Button>
+          <Button variant="secondary" size="md" onClick={() => setTab('templates')}><FileText className="h-4 w-4" />New Template</Button>
+          <Button variant="primary" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
         </>
       ) : undefined}
       searchValue={activeApp === 'crm' ? globalSearch : undefined}

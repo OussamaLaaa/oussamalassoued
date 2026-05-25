@@ -11,13 +11,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-black text-white border border-black hover:bg-neutral-800 active:bg-neutral-900 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:border-neutral-200',
+    'bg-neutral-900 text-white hover:bg-neutral-800 active:bg-neutral-900 disabled:bg-neutral-200 disabled:text-neutral-400',
   secondary:
-    'bg-white text-black border border-neutral-200 hover:bg-neutral-50 active:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:border-neutral-200',
+    'bg-white text-neutral-700 border border-neutral-200 hover:border-neutral-300 hover:text-neutral-900 active:bg-neutral-50 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:border-neutral-200',
   outline:
-    'bg-white text-black border border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:border-neutral-200',
+    'bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 active:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-400 disabled:border-neutral-200',
   ghost:
-    'bg-transparent text-neutral-600 border border-transparent hover:bg-neutral-100 hover:text-black active:bg-neutral-200 disabled:text-neutral-400',
+    'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-100 hover:text-neutral-900 active:bg-neutral-200 disabled:text-neutral-400',
   danger:
     'bg-white text-red-600 border border-red-200 hover:bg-red-50 hover:text-red-700 active:bg-red-100 disabled:text-neutral-400 disabled:border-neutral-200',
   success:
@@ -25,8 +25,8 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-2.5 py-1 text-xs rounded-md',
-  md: 'px-3.5 py-1.5 text-sm rounded-lg',
+  sm: 'px-3 py-1.5 text-xs rounded-md',
+  md: 'px-3.5 py-2 text-sm rounded-md',
   lg: 'px-5 py-2.5 text-sm rounded-xl',
 };
 
