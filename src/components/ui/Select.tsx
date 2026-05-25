@@ -12,8 +12,8 @@ const Select: React.FC<SelectProps> = ({ label, error, options, className = '', 
       <label className="text-xs font-semibold text-black">{label}</label>
     )}
     <select
-      className={`px-3 py-2 text-sm rounded-lg border bg-white text-black outline-none transition-colors duration-150 min-w-0 w-full box-border cursor-pointer
-        ${error ? 'border-red-400' : 'border-neutral-300 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200'}
+      className={`h-9 px-3 text-sm rounded-md border bg-white text-neutral-900 outline-none transition-colors min-w-0 w-full box-border cursor-pointer
+        ${error ? 'border-red-400' : 'border-neutral-200 focus:border-neutral-400'}
         ${className}`}
       {...props}
     >
