@@ -125,15 +125,15 @@ const FormField: React.FC<{ label: string; children: React.ReactNode }> = ({ lab
 );
 
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-  <input {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 transition-all" />
+  <input {...props} className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors focus:border-neutral-400 w-full" />
 );
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-  <textarea {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 resize-none transition-all" />
+  <textarea {...props} className="px-3 py-2 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors focus:border-neutral-400 w-full resize-none" />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }> = ({ options, ...props }) => (
-  <select {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 transition-all">
+  <select {...props} className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 w-full cursor-pointer">
     {options.map((opt) => (
       <option key={opt.value} value={opt.value}>{opt.label}</option>
     ))}
@@ -780,7 +780,7 @@ const ProjectDetailView: React.FC<{
           <Button variant="outline" onClick={() => setShowModal('meeting')}>+ Add Meeting</Button>
           <Button variant="outline" onClick={() => setShowModal('document')}>+ Add Document</Button>
           <Button variant="outline" onClick={() => setShowModal('finance')}>+ Add Finance Item</Button>
-          <Button variant="ghost" onClick={() => { setNoteText(project.notes || ''); setShowNoteInput(true); }}>+ Add Note</Button>
+          <Button variant="outline" onClick={() => { setNoteText(project.notes || ''); setShowNoteInput(true); setActiveTab('notes'); }}>+ Add Note</Button>
         </div>
 
         {/* Tab navigation */}
