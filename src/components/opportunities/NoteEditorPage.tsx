@@ -18,10 +18,8 @@ import type {
   Task,
 } from '../../types/opportunities';
 
-const shellClass = 'rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
-const inputClass = 'w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15';
-const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#64748b]';
-const tabClass = (active: boolean) => `rounded-full border px-3 py-1.5 text-sm transition ${active ? 'border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]' : 'border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]'}`;
+const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
+const textareaClass = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y';
 
 const noteStatuses: SmartNoteInput['status'][] = ['active', 'pinned', 'draft', 'archived'];
 const notePriorities: SmartNoteInput['priority'][] = ['high', 'medium', 'low'];
@@ -50,19 +48,15 @@ const createDefaultBlock = (type: NoteBlockType, noteId: string, sortOrder: numb
   if (type === 'checklist') {
     return { noteId, type, dataJson: { items: [{ text: '', done: false }] }, sortOrder };
   }
-
   if (type === 'table') {
     return { noteId, type, dataJson: { columns: ['Column 1', 'Column 2'], rows: [['', '']] }, sortOrder };
   }
-
   if (type === 'divider') {
     return { noteId, type, content: '', dataJson: null, sortOrder };
   }
-
   if (type === 'image' || type === 'video' || type === 'audio' || type === 'link') {
     return { noteId, type, content: '', dataJson: { title: '' }, sortOrder };
   }
-
   return { noteId, type, content: '', dataJson: null, sortOrder };
 };
 
@@ -194,8 +188,6 @@ const NoteEditorPage: React.FC<{
     }
   };
 
-  const activeNote = note;
-
   const addBlock = async (type: NoteBlockType) => {
     if (!noteId) {
       setError('Save the note first before adding blocks.');
@@ -241,9 +233,7 @@ const NoteEditorPage: React.FC<{
 
   const handleAttachmentSave = async (attachmentId: string) => {
     const draftAttachment = attachmentEdits[attachmentId];
-    if (!draftAttachment) {
-      return;
-    }
+    if (!draftAttachment) return;
 
     const url = draftAttachment.url.trim();
     if (!url) {
@@ -338,210 +328,259 @@ const NoteEditorPage: React.FC<{
     }
   };
 
+  const priorityBadge = (priority: string) => {
+    if (priority === 'high') return 'border-red-200 bg-red-50 text-red-700';
+    if (priority === 'low') return 'border-neutral-200 bg-neutral-50 text-neutral-500';
+    return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === 'archived') return 'border-neutral-200 bg-neutral-50 text-neutral-500';
+    if (status === 'pinned') return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+    return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+  };
+
+  const categoryName = note?.categoryName || categoryOptions.find((c) => c.id === form.categoryId)?.name || null;
+
   return (
-    <div className="space-y-4">
-      <div className={`${shellClass} p-4 lg:p-5`}>
+    <div className="space-y-6">
+      <div className="rounded-xl border border-neutral-200 bg-white p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <button type="button" onClick={onBack} className="text-sm text-[#2563eb] hover:underline">
+          <div className="min-w-0">
+            <button type="button" onClick={onBack} className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
               Back to Notes
             </button>
-            <h2 className="mt-2 text-2xl font-semibold text-[#0f172a]">{note?.title || 'New Note'}</h2>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1 text-[#475569]">{note?.status || form.status || 'draft'}</span>
-              <span className="rounded-full border border-[#e5e7eb] bg-[#f8fafc] px-3 py-1 text-[#475569]">{note?.priority || form.priority || 'medium'}</span>
-              {activeNote?.categoryName || form.categoryId ? (
-                <span className="rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-[#1d4ed8]">{activeNote?.categoryName || categoryOptions.find((category) => category.id === form.categoryId)?.name || 'Uncategorized'}</span>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadge(note?.status || form.status || 'active')}`}>
+                {note?.status || form.status || 'active'}
+              </span>
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(note?.priority || form.priority || 'medium')}`}>
+                {note?.priority || form.priority || 'medium'}
+              </span>
+              {categoryName ? (
+                <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+                  {categoryName}
+                </span>
               ) : null}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={persistNote} className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]" disabled={saving}>
+            <button type="button" onClick={persistNote} disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60">
               {saving ? 'Saving...' : 'Save'}
             </button>
             {noteId ? (
-              <button type="button" onClick={() => onArchiveNote(noteId)} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+              <button type="button" onClick={() => onArchiveNote(noteId)} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                 Archive
               </button>
             ) : null}
             {noteId ? (
-              <button type="button" onClick={() => onDeleteNote(noteId)} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-4 py-2 text-sm text-[#b91c1c] hover:bg-[#fee2e2]">
+              <button type="button" onClick={() => onDeleteNote(noteId)} className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
                 Delete
               </button>
             ) : null}
           </div>
         </div>
-        {error ? <div className="mt-4 rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">{error}</div> : null}
+        {error ? <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
       </div>
 
-      <div className={`${shellClass} p-4 lg:p-5`}>
-        <div className="flex flex-wrap gap-2 border-b border-[#e5e7eb] pb-4">
-          <button type="button" onClick={() => setActiveTab('write')} className={tabClass(activeTab === 'write')}>Write</button>
-          <button type="button" onClick={() => setActiveTab('ai')} className={tabClass(activeTab === 'ai')}>AI Assistant</button>
-          <button type="button" onClick={() => setActiveTab('blocks')} className={tabClass(activeTab === 'blocks')}>Blocks</button>
-          <button type="button" onClick={() => setActiveTab('attachments')} className={tabClass(activeTab === 'attachments')}>Attachments</button>
-          <button type="button" onClick={() => setActiveTab('links')} className={tabClass(activeTab === 'links')}>Links</button>
-          <button type="button" onClick={() => setActiveTab('metadata')} className={tabClass(activeTab === 'metadata')}>Metadata</button>
+      <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-3">
+        {(['write', 'ai', 'blocks', 'attachments', 'links', 'metadata'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`relative px-3 py-2 text-sm transition-colors border-b-2 ${
+              activeTab === tab ? 'border-neutral-900 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            {tab === 'write' ? 'Write' : tab === 'ai' ? 'AI Assistant' : tab === 'blocks' ? 'Blocks' : tab === 'attachments' ? 'Attachments' : tab === 'links' ? 'Links' : 'Metadata'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'ai' ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <AINotesAssistantPanel
+            note={assistantNote}
+            blocks={blocks}
+            attachments={attachments}
+            context={assistantContext}
+            noteCategories={noteCategories}
+            onReplaceContent={replaceCurrentNote}
+            onAppendToNote={appendToCurrentNote}
+            onApplyCategoryTags={applyCategoryAndTags}
+          />
         </div>
+      ) : null}
 
-        {activeTab === 'ai' ? (
-          <div className="mt-4">
-            <AINotesAssistantPanel
-              note={assistantNote}
-              blocks={blocks}
-              attachments={attachments}
-              context={assistantContext}
-              noteCategories={noteCategories}
-              onReplaceContent={replaceCurrentNote}
-              onAppendToNote={appendToCurrentNote}
-              onApplyCategoryTags={applyCategoryAndTags}
-            />
+      {activeTab === 'write' ? (
+        <div className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Title</div>
+              <input
+                value={form.title}
+                onChange={(event) => setField('title', event.target.value)}
+                className="mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-lg font-medium text-neutral-900 outline-none focus:border-neutral-400"
+                placeholder="Untitled note"
+              />
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Content</div>
+              <textarea
+                value={form.content || ''}
+                onChange={(event) => setField('content', event.target.value)}
+                rows={20}
+                className="mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-6 text-neutral-900 outline-none focus:border-neutral-400 resize-y min-h-[400px]"
+                placeholder="Write your note here..."
+              />
+            </div>
           </div>
-        ) : null}
 
-        {activeTab === 'write' ? (
-          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)]">
-            <div className="space-y-4">
-              <label className="space-y-2">
-                <div className={labelClass}>Title</div>
-                <input value={form.title} onChange={(event) => setField('title', event.target.value)} className="w-full rounded-xl border border-[#cbd5e1] bg-white px-4 py-3 text-xl font-medium text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15" placeholder="Untitled note" />
+          <div className="space-y-4">
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Category</span>
+                <select value={form.categoryId || ''} onChange={(event) => {
+                  const selected = categoryOptions.find((category) => category.id === event.target.value);
+                  setField('categoryId', event.target.value);
+                  setField('categorySlug', selected?.slug || '');
+                }} className={inputClass}>
+                  <option value="">Uncategorized</option>
+                  {categoryOptions.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                </select>
               </label>
-              <label className="space-y-2">
-                <div className={labelClass}>Content</div>
-                <textarea value={form.content || ''} onChange={(event) => setField('content', event.target.value)} rows={18} className="min-h-[420px] w-full rounded-xl border border-[#cbd5e1] bg-white px-4 py-3 text-sm leading-6 text-[#0f172a] outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15" placeholder="Write your note here..." />
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Priority</span>
+                <select value={form.priority || 'medium'} onChange={(event) => setField('priority', event.target.value as SmartNoteInput['priority'])} className={inputClass}>
+                  {notePriorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+                </select>
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Status</span>
+                <select value={form.status || 'active'} onChange={(event) => setField('status', event.target.value as SmartNoteInput['status'])} className={inputClass}>
+                  {noteStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+                </select>
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Tags</span>
+                <input value={form.tags || ''} onChange={(event) => setField('tags', event.target.value)} className={inputClass} placeholder="strategy, research, follow-up" />
               </label>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-4">
-                <label className="space-y-2">
-                  <div className={labelClass}>Category</div>
-                  <select value={form.categoryId || ''} onChange={(event) => {
-                    const selected = categoryOptions.find((category) => category.id === event.target.value);
-                    setField('categoryId', event.target.value);
-                    setField('categorySlug', selected?.slug || '');
-                  }} className={inputClass}>
-                    <option value="">Uncategorized</option>
-                    {categoryOptions.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                  </select>
-                </label>
-                <label className="space-y-2">
-                  <div className={labelClass}>Priority</div>
-                  <select value={form.priority || 'medium'} onChange={(event) => setField('priority', event.target.value as SmartNoteInput['priority'])} className={inputClass}>
-                    {notePriorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
-                  </select>
-                </label>
-                <label className="space-y-2">
-                  <div className={labelClass}>Status</div>
-                  <select value={form.status || 'active'} onChange={(event) => setField('status', event.target.value as SmartNoteInput['status'])} className={inputClass}>
-                    {noteStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
-                  </select>
-                </label>
-                <label className="space-y-2">
-                  <div className={labelClass}>Tags</div>
-                  <input value={form.tags || ''} onChange={(event) => setField('tags', event.target.value)} className={inputClass} placeholder="strategy, research, follow-up" />
-                </label>
-              </div>
-
-              <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 space-y-4">
-                <div className={labelClass}>Quick actions</div>
-                <button type="button" onClick={persistNote} className="w-full rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save note'}
-                </button>
-                <p className="text-sm leading-6 text-[#64748b]">Save once to unlock blocks and attachments. You can still write freely before the first save.</p>
-              </div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Quick actions</div>
+              <button type="button" onClick={persistNote} disabled={saving} className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60">
+                {saving ? 'Saving...' : 'Save note'}
+              </button>
+              <p className="text-sm leading-6 text-neutral-500">Save once to unlock blocks and attachments. You can still write freely before the first save.</p>
             </div>
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        {activeTab === 'blocks' ? (
-          <div className="mt-4 space-y-4">
+      {activeTab === 'blocks' ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
             <div className="flex flex-wrap gap-2">
               {blockTypes.map((type) => (
-                <button key={type} type="button" onClick={() => addBlock(type)} className="rounded-full border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+                <button key={type} type="button" onClick={() => addBlock(type)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50">
                   + {type}
                 </button>
               ))}
             </div>
-            {!noteId ? <div className="rounded-xl border border-dashed border-[#dbeafe] bg-[#f8fafc] px-4 py-5 text-sm text-[#64748b]">Save the note first to add blocks.</div> : null}
-            <div className="space-y-4">
-              {sortedBlocks.map((block, index) => (
-                <div key={block.id} className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_4px_12px_rgba(15,23,42,0.04)]">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e5e7eb] pb-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#64748b]">{block.type}</div>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => onDeleteBlock(block.id)} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-3 py-1.5 text-xs text-[#b91c1c] hover:bg-[#fee2e2]">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-4">
-                    {block.type === 'paragraph' ? (
-                      <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={inputClass} placeholder="Paragraph text" />
-                    ) : null}
-                    {block.type === 'heading' ? (
-                      <input value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} className={inputClass} placeholder="Heading" />
-                    ) : null}
-                    {block.type === 'quote' ? (
-                      <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={`${inputClass} border-l-4 border-l-[#2563eb] pl-4 italic`} placeholder="Quote" />
-                    ) : null}
-                    {block.type === 'link' ? (
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="https://..." />
-                        <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Link label" />
-                      </div>
-                    ) : null}
-                    {block.type === 'image' ? (
-                      <div className="space-y-3">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Image URL" />
-                          <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Caption" />
-                        </div>
-                        {block.content ? <img src={block.content} alt={String((block.dataJson as any)?.title || 'Note image')} className="max-h-[280px] w-full rounded-xl border border-[#e5e7eb] object-cover" /> : null}
-                      </div>
-                    ) : null}
-                    {block.type === 'video' ? (
-                      <div className="space-y-3">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Video URL" />
-                          <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
-                        </div>
-                        {block.content ? <a href={block.content} target="_blank" rel="noreferrer" className="text-sm text-[#2563eb] hover:underline">Open video</a> : null}
-                      </div>
-                    ) : null}
-                    {block.type === 'audio' ? (
-                      <div className="space-y-3">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Audio URL" />
-                          <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
-                        </div>
-                        {block.content ? <audio controls src={block.content} className="w-full" /> : null}
-                      </div>
-                    ) : null}
-                    {block.type === 'divider' ? <hr className="border-[#e5e7eb]" /> : null}
-                    {block.type === 'checklist' ? (
-                      <ChecklistEditor
-                        items={Array.isArray((block.dataJson as any)?.items) ? (block.dataJson as any).items : [{ text: '', done: false }]}
-                        onChange={(items) => updateChecklistItem(block, items)}
-                      />
-                    ) : null}
-                    {block.type === 'table' ? (
-                      <TableEditor
-                        table={block.dataJson as any}
-                        onChange={(nextTable) => updateTable(block, nextTable)}
-                      />
-                    ) : null}
-                    <div className="text-xs text-[#64748b]">Block #{index + 1}</div>
+            {!noteId ? (
+              <div className="mt-4 rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-4 py-5 text-sm text-neutral-500">
+                Save the note first to add blocks.
+              </div>
+            ) : null}
+          </div>
+          <div className="space-y-3">
+            {sortedBlocks.map((block, index) => (
+              <div key={block.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{block.type}</div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => onDeleteBlock(block.id)} className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100">
+                      Delete
+                    </button>
                   </div>
                 </div>
-              ))}
-              {sortedBlocks.length === 0 ? <div className="rounded-xl border border-dashed border-[#dbeafe] bg-[#f8fafc] px-4 py-5 text-sm text-[#64748b]">No blocks yet. Add one above.</div> : null}
-            </div>
+                <div className="mt-4 space-y-4">
+                  {block.type === 'paragraph' ? (
+                    <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={textareaClass} placeholder="Paragraph text" />
+                  ) : null}
+                  {block.type === 'heading' ? (
+                    <input value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} className={inputClass} placeholder="Heading" />
+                  ) : null}
+                  {block.type === 'quote' ? (
+                    <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={`${textareaClass} border-l-4 border-l-neutral-400 pl-4 italic`} placeholder="Quote" />
+                  ) : null}
+                  {block.type === 'link' ? (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="https://..." />
+                      <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Link label" />
+                    </div>
+                  ) : null}
+                  {block.type === 'image' ? (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Image URL" />
+                        <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Caption" />
+                      </div>
+                      {block.content ? <img src={block.content} alt={String((block.dataJson as any)?.title || 'Note image')} className="max-h-[280px] w-full rounded-md border border-neutral-200 object-cover" /> : null}
+                    </div>
+                  ) : null}
+                  {block.type === 'video' ? (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Video URL" />
+                        <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
+                      </div>
+                      {block.content ? <a href={block.content} target="_blank" rel="noreferrer" className="text-sm text-neutral-600 hover:underline">Open video</a> : null}
+                    </div>
+                  ) : null}
+                  {block.type === 'audio' ? (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Audio URL" />
+                        <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
+                      </div>
+                      {block.content ? <audio controls src={block.content} className="w-full" /> : null}
+                    </div>
+                  ) : null}
+                  {block.type === 'divider' ? <hr className="border-neutral-200" /> : null}
+                  {block.type === 'checklist' ? (
+                    <ChecklistEditor
+                      items={Array.isArray((block.dataJson as any)?.items) ? (block.dataJson as any).items : [{ text: '', done: false }]}
+                      onChange={(items) => updateChecklistItem(block, items)}
+                    />
+                  ) : null}
+                  {block.type === 'table' ? (
+                    <TableEditor
+                      table={block.dataJson as any}
+                      onChange={(nextTable) => updateTable(block, nextTable)}
+                    />
+                  ) : null}
+                  <div className="text-xs text-neutral-500">Block #{index + 1}</div>
+                </div>
+              </div>
+            ))}
+            {sortedBlocks.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8 text-sm text-neutral-500">
+                No blocks yet. Add one above.
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        {activeTab === 'attachments' ? (
-          <div className="mt-4 space-y-4">
+      {activeTab === 'attachments' ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
             <div className="grid gap-3 md:grid-cols-4">
               <select value={attachmentDraft.type || 'link'} onChange={(event) => setAttachmentDraft((current) => ({ ...current, type: event.target.value as NoteAttachment['type'] }))} className={inputClass}>
                 <option value="link">Link</option>
@@ -554,129 +593,139 @@ const NoteEditorPage: React.FC<{
               </select>
               <input value={attachmentDraft.title || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, title: event.target.value }))} className={inputClass} placeholder="Title" />
               <input value={attachmentDraft.url || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, url: event.target.value }))} className={inputClass} placeholder="URL" />
-              <button type="button" onClick={handleAttachmentSubmit} className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4ed8]">
+              <button type="button" onClick={handleAttachmentSubmit} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">
                 Add attachment
               </button>
             </div>
-            <textarea value={attachmentDraft.notes || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, notes: event.target.value }))} rows={3} className={inputClass} placeholder="Optional notes" />
-            <div className="space-y-3">
-              {sortedAttachments.map((attachment) => (
-                <div key={attachment.id} className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-[#0f172a]">{attachment.title || attachment.url}</div>
-                      <div className="mt-1 text-xs uppercase tracking-[0.14em] text-[#64748b]">{attachment.type}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button type="button" onClick={() => onDeleteAttachment(attachment.id)} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-3 py-1.5 text-xs text-[#b91c1c] hover:bg-[#fee2e2]">Delete</button>
-                    </div>
+            <textarea value={attachmentDraft.notes || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, notes: event.target.value }))} rows={3} className={`${textareaClass} mt-3`} placeholder="Optional notes" />
+          </div>
+
+          <div className="space-y-3">
+            {sortedAttachments.map((attachment) => (
+              <div key={attachment.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-neutral-900 truncate">{attachment.title || attachment.url}</div>
+                    <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{attachment.type}</div>
                   </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <select
-                      value={attachmentEdits[attachment.id]?.type || attachment.type}
-                      onChange={(event) => setAttachmentEdits((current) => ({
-                        ...current,
-                        [attachment.id]: {
-                          ...(current[attachment.id] || { title: attachment.title || '', url: attachment.url || '', notes: attachment.notes || '' }),
-                          type: event.target.value as NoteAttachment['type'],
-                        },
-                      }))}
-                      className={inputClass}
-                    >
-                      <option value="link">Link</option>
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                      <option value="audio">Audio</option>
-                      <option value="pdf">PDF</option>
-                      <option value="file">File</option>
-                      <option value="other">Other</option>
-                    </select>
-                    <input
-                      value={attachmentEdits[attachment.id]?.title || attachment.title || ''}
-                      onChange={(event) => setAttachmentEdits((current) => ({
-                        ...current,
-                        [attachment.id]: {
-                          ...(current[attachment.id] || { type: attachment.type, url: attachment.url || '', notes: attachment.notes || '' }),
-                          title: event.target.value,
-                        },
-                      }))}
-                      className={inputClass}
-                      placeholder="Title"
-                    />
-                    <input
-                      value={attachmentEdits[attachment.id]?.url || attachment.url || ''}
-                      onChange={(event) => setAttachmentEdits((current) => ({
-                        ...current,
-                        [attachment.id]: {
-                          ...(current[attachment.id] || { type: attachment.type, title: attachment.title || '', notes: attachment.notes || '' }),
-                          url: event.target.value,
-                        },
-                      }))}
-                      className={`${inputClass} md:col-span-2`}
-                      placeholder="URL"
-                    />
-                    <textarea
-                      value={attachmentEdits[attachment.id]?.notes || attachment.notes || ''}
-                      onChange={(event) => setAttachmentEdits((current) => ({
-                        ...current,
-                        [attachment.id]: {
-                          ...(current[attachment.id] || { type: attachment.type, title: attachment.title || '', url: attachment.url || '' }),
-                          notes: event.target.value,
-                        },
-                      }))}
-                      rows={3}
-                      className={`${inputClass} md:col-span-2`}
-                      placeholder="Notes"
-                    />
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" onClick={() => handleAttachmentSave(attachment.id)} className="rounded-md bg-[#2563eb] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1d4ed8]">
-                      Save
-                    </button>
-                    <a href={attachment.url} target="_blank" rel="noreferrer" className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-xs text-[#0f172a] hover:bg-[#f8fafc]">
-                      Open
-                    </a>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => onDeleteAttachment(attachment.id)} className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100">Delete</button>
                   </div>
                 </div>
-              ))}
-              {sortedAttachments.length === 0 ? <div className="rounded-xl border border-dashed border-[#dbeafe] bg-[#f8fafc] px-4 py-5 text-sm text-[#64748b]">No attachments yet.</div> : null}
-            </div>
-          </div>
-        ) : null}
-
-        {activeTab === 'links' ? (
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            {linkedItems.map((item) => (
-              <div key={`${item.label}-${item.value}`} className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-                <div className={labelClass}>{item.label}</div>
-                <div className="mt-2 text-sm text-[#0f172a]">{item.value}</div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <select
+                    value={attachmentEdits[attachment.id]?.type || attachment.type}
+                    onChange={(event) => setAttachmentEdits((current) => ({
+                      ...current,
+                      [attachment.id]: {
+                        ...(current[attachment.id] || { title: attachment.title || '', url: attachment.url || '', notes: attachment.notes || '' }),
+                        type: event.target.value as NoteAttachment['type'],
+                      },
+                    }))}
+                    className={inputClass}
+                  >
+                    <option value="link">Link</option>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                    <option value="audio">Audio</option>
+                    <option value="pdf">PDF</option>
+                    <option value="file">File</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <input
+                    value={attachmentEdits[attachment.id]?.title || attachment.title || ''}
+                    onChange={(event) => setAttachmentEdits((current) => ({
+                      ...current,
+                      [attachment.id]: {
+                        ...(current[attachment.id] || { type: attachment.type, url: attachment.url || '', notes: attachment.notes || '' }),
+                        title: event.target.value,
+                      },
+                    }))}
+                    className={inputClass}
+                    placeholder="Title"
+                  />
+                  <input
+                    value={attachmentEdits[attachment.id]?.url || attachment.url || ''}
+                    onChange={(event) => setAttachmentEdits((current) => ({
+                      ...current,
+                      [attachment.id]: {
+                        ...(current[attachment.id] || { type: attachment.type, title: attachment.title || '', notes: attachment.notes || '' }),
+                        url: event.target.value,
+                      },
+                    }))}
+                    className={`${inputClass} md:col-span-2`}
+                    placeholder="URL"
+                  />
+                  <textarea
+                    value={attachmentEdits[attachment.id]?.notes || attachment.notes || ''}
+                    onChange={(event) => setAttachmentEdits((current) => ({
+                      ...current,
+                      [attachment.id]: {
+                        ...(current[attachment.id] || { type: attachment.type, title: attachment.title || '', url: attachment.url || '' }),
+                        notes: event.target.value,
+                      },
+                    }))}
+                    rows={3}
+                    className={`${textareaClass} md:col-span-2`}
+                    placeholder="Notes"
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => handleAttachmentSave(attachment.id)} className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800">
+                    Save
+                  </button>
+                  <a href={attachment.url} target="_blank" rel="noreferrer" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+                    Open
+                  </a>
+                </div>
               </div>
             ))}
-            {linkedItems.length === 0 ? <div className="rounded-xl border border-dashed border-[#dbeafe] bg-[#f8fafc] px-4 py-5 text-sm text-[#64748b]">No linked items yet.</div> : null}
+            {sortedAttachments.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8 text-sm text-neutral-500">
+                No attachments yet. Add a link, image, video, audio, PDF, or file URL.
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        {activeTab === 'metadata' ? (
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-              <div className={labelClass}>Created</div>
-              <div className="mt-2 text-sm text-[#0f172a]">{formatDate(activeNote?.createdAt)}</div>
+      {activeTab === 'links' ? (
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          {linkedItems.length === 0 ? (
+            <div className="text-sm text-neutral-500">This note is not linked to anything yet.</div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {linkedItems.map((item) => (
+                <div key={`${item.label}-${item.value}`} className="rounded-md border border-neutral-200 bg-neutral-50 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{item.label}</div>
+                  <div className="mt-1.5 text-sm font-medium text-neutral-900 truncate">{item.value}</div>
+                </div>
+              ))}
             </div>
-            <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-              <div className={labelClass}>Updated</div>
-              <div className="mt-2 text-sm text-[#0f172a]">{formatDate(activeNote?.updatedAt)}</div>
-            </div>
-            <label className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
-              <div className={labelClass}>Source</div>
-              <input value={form.source || ''} onChange={(event) => setField('source', event.target.value)} className={`${inputClass} mt-2`} placeholder="Meeting, link, doc, call" />
-            </label>
-            <label className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 md:col-span-2 xl:col-span-3">
-              <div className={labelClass}>Internal notes</div>
-              <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={4} className={`${inputClass} mt-2`} placeholder="Private notes about this note." />
-            </label>
+          )}
+        </div>
+      ) : null}
+
+      {activeTab === 'metadata' ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Created</div>
+            <div className="mt-1.5 text-sm font-medium text-neutral-900">{formatDate(note?.createdAt)}</div>
           </div>
-        ) : null}
-      </div>
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Updated</div>
+            <div className="mt-1.5 text-sm font-medium text-neutral-900">{formatDate(note?.updatedAt)}</div>
+          </div>
+          <label className="rounded-xl border border-neutral-200 bg-white p-5 space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Source</div>
+            <input value={form.source || ''} onChange={(event) => setField('source', event.target.value)} className={inputClass} placeholder="Meeting, link, doc, call" />
+          </label>
+          <label className="rounded-xl border border-neutral-200 bg-white p-5 space-y-1.5 md:col-span-2 xl:col-span-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Internal notes</div>
+            <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={4} className={textareaClass} placeholder="Private notes about this note." />
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -692,15 +741,15 @@ const ChecklistEditor: React.FC<{
   return (
     <div className="space-y-3">
       {items.map((item, index) => (
-        <div key={index} className="flex items-start gap-3 rounded-lg border border-[#e5e7eb] bg-white p-3">
+        <div key={index} className="flex items-start gap-3 rounded-md border border-neutral-200 bg-white p-3">
           <input type="checkbox" checked={Boolean(item.done)} onChange={(event) => setItem(index, { done: event.target.checked })} className="mt-1" />
           <input value={item.text} onChange={(event) => setItem(index, { text: event.target.value })} className={inputClass} placeholder={`Item ${index + 1}`} />
-          <button type="button" onClick={() => onChange(items.filter((_, currentIndex) => currentIndex !== index))} className="rounded-md border border-[#fee2e2] bg-[#fff1f2] px-3 py-2 text-xs text-[#b91c1c]">
+          <button type="button" onClick={() => onChange(items.filter((_, currentIndex) => currentIndex !== index))} className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100">
             Remove
           </button>
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...items, { text: '', done: false }])} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+      <button type="button" onClick={() => onChange([...items, { text: '', done: false }])} className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
         Add item
       </button>
     </div>
@@ -730,28 +779,28 @@ const TableEditor: React.FC<{
   return (
     <div className="space-y-4 overflow-x-auto">
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => onChange({ columns: [...columns, `Column ${columns.length + 1}`], rows: rows.map((row) => [...row, '']) })} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={() => onChange({ columns: [...columns, `Column ${columns.length + 1}`], rows: rows.map((row) => [...row, '']) })} className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
           Add column
         </button>
-        <button type="button" onClick={() => onChange({ columns, rows: [...rows, Array(columns.length).fill('')] })} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={() => onChange({ columns, rows: [...rows, Array(columns.length).fill('')] })} className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
           Add row
         </button>
       </div>
-      <div className="min-w-[520px] rounded-xl border border-[#e5e7eb] bg-white">
-        <div className="grid gap-0 border-b border-[#e5e7eb]" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+      <div className="min-w-[520px] rounded-md border border-neutral-200 bg-white">
+        <div className="grid gap-0 border-b border-neutral-200" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
           {columns.map((column, index) => (
-            <input key={index} value={column} onChange={(event) => updateColumn(index, event.target.value)} className="border-0 border-r border-[#e5e7eb] px-3 py-2 text-sm font-medium text-[#0f172a] outline-none last:border-r-0" />
+            <input key={index} value={column} onChange={(event) => updateColumn(index, event.target.value)} className="border-0 border-r border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-900 outline-none last:border-r-0" />
           ))}
         </div>
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid gap-0 border-b border-[#e5e7eb] last:border-b-0" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+          <div key={rowIndex} className="grid gap-0 border-b border-neutral-200 last:border-b-0" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
             {columns.map((_, columnIndex) => (
               <textarea
                 key={columnIndex}
                 value={row[columnIndex] || ''}
                 onChange={(event) => updateCell(rowIndex, columnIndex, event.target.value)}
                 rows={2}
-                className="border-0 border-r border-[#e5e7eb] px-3 py-2 text-sm text-[#0f172a] outline-none last:border-r-0"
+                className="border-0 border-r border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none last:border-r-0"
               />
             ))}
           </div>

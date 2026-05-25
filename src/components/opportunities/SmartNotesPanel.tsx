@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Badge } from '../ui';
 import type {
   Company,
   NoteAttachment,
@@ -20,9 +19,6 @@ import type {
 import OpportunityModal from './OpportunityModal';
 import NoteCategoryForm from './NoteCategoryForm';
 import NoteEditorPage from './NoteEditorPage';
-
-const pillClass = 'rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-black hover:bg-neutral-50';
-const activePillClass = 'rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-700';
 
 const fixedCategories = [
   { slug: 'work', label: 'Work' },
@@ -77,6 +73,14 @@ const sortNotes = (notes: SmartNote[], sortBy: string) => {
 };
 
 const excerpt = (note: SmartNote) => String(note.content || note.notes || '').trim().replace(/\s+/g, ' ').slice(0, 160);
+
+const formatNoteDate = (date?: string): string => {
+  if (!date) return '—';
+  try { return new Date(date).toLocaleDateString('en-CA'); }
+  catch { return '—'; }
+};
+
+const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
 
 const SmartNotesPanel: React.FC<{
   noteCategories: NoteCategory[];
@@ -163,12 +167,11 @@ const SmartNotesPanel: React.FC<{
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return [
-      { id: 'all', slug: 'all', name: 'All', color: '#2563eb', count: smartNotes.length },
+      { id: 'all', slug: 'all', name: 'All', count: smartNotes.length },
       ...fixedCategories.map((item) => ({
         id: item.slug,
         slug: item.slug,
         name: item.label,
-        color: '#2563eb',
         count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === item.slug).length,
       })),
       ...customCategories.map((category) => ({
@@ -176,7 +179,7 @@ const SmartNotesPanel: React.FC<{
         slug: categoryKey(category),
         count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === categoryKey(category)).length,
       })),
-      { id: 'uncategorized', slug: 'uncategorized', name: 'Uncategorized', color: '#64748b', count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === 'uncategorized').length },
+      { id: 'uncategorized', slug: 'uncategorized', name: 'Uncategorized', count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === 'uncategorized').length },
     ];
   }, [noteCategories, smartNotes]);
 
@@ -238,30 +241,6 @@ const SmartNotesPanel: React.FC<{
     setIsCreatingNote(false);
   };
 
-  const handleSaveCategoryEdit = async (input: NoteCategoryInput) => {
-    if (categoryModalOpen) {
-      await onAddNoteCategory(input);
-    }
-  };
-
-  const renderCategoryPill = (category: { id: string; slug: string; name: string; count: number }) => {
-    const active = selectedCategorySlug === category.slug;
-    return (
-      <button
-        key={category.id}
-        type="button"
-        onClick={() => {
-          setSelectedCategorySlug(category.slug);
-          setSelectedNoteId(null);
-          setIsCreatingNote(false);
-        }}
-        className={active ? activePillClass : pillClass}
-      >
-        {category.name} <span className="ml-1 text-xs text-neutral-500">{category.count}</span>
-      </button>
-    );
-  };
-
   const selectedCategoryName = categoryMenu.find((category) => category.slug === selectedCategorySlug)?.name || 'All';
 
   if (selectedNoteId || isCreatingNote) {
@@ -299,66 +278,70 @@ const SmartNotesPanel: React.FC<{
     );
   }
 
-  const formatNoteDate = (date?: string): string => {
-    if (!date) return 'Created: —';
-    try { return `Created: ${new Date(date).toLocaleDateString('en-CA')}`; }
-    catch { return 'Created: —'; }
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl min-w-0 break-words">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Smart Notes OS</div>
-            <h2 className="mt-2 text-xl font-semibold leading-tight text-black sm:text-2xl">Notes that feel like a living workspace</h2>
-            <p className="mt-2 max-w-2xl whitespace-normal break-words text-sm leading-relaxed text-neutral-500">
-              Capture ideas, link them to the rest of the OS, and sort them fast.
-              <br />
-              Open any note into a full-page editor when you need to write seriously.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button type="button" variant="primary" size="sm" onClick={openCreateNote}>
-              + New Note
-            </Button>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-3 overflow-x-auto">
+        {categoryMenu.map((category) => {
+          const active = selectedCategorySlug === category.slug;
+          return (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => {
+                setSelectedCategorySlug(category.slug);
+                setSelectedNoteId(null);
+                setIsCreatingNote(false);
+              }}
+              className={`relative shrink-0 px-3 py-2 text-sm transition-colors border-b-2 whitespace-nowrap ${
+                active ? 'border-neutral-900 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'
+              }`}
+            >
+              {category.name}
+              <span className="ml-1.5 text-xs text-neutral-400">{category.count}</span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={openCreateCategory}
+          className="shrink-0 px-3 py-2 text-sm text-neutral-500 border-b-2 border-transparent hover:text-neutral-900"
+        >
+          + Category
+        </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white p-3 shadow-sm">
-        <div className="flex min-w-max items-center gap-2">
-          {categoryMenu.map((category) => renderCategoryPill(category))}
-          <Button type="button" variant="outline" size="sm" onClick={openCreateCategory}>
-            + Category
-          </Button>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="min-w-[260px] flex-1">
-              <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search notes, content, tags..." className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-black outline-none focus:border-neutral-300" />
-            </div>
-            <select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-black">
-              <option value="created_desc">Newest</option>
-              <option value="created_asc">Oldest</option>
-              <option value="updated_desc">Recently updated</option>
-              <option value="name_asc">Name A-Z</option>
-              <option value="name_desc">Name Z-A</option>
-              <option value="priority">Priority</option>
-            </select>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search notes, content, tags..."
+              className={inputClass}
+            />
           </div>
-          <Button type="button" variant="primary" size="md" onClick={openCreateNote}>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
+            className={inputClass}
+            style={{ width: 'auto', minWidth: '140px' }}
+          >
+            <option value="created_desc">Newest</option>
+            <option value="created_asc">Oldest</option>
+            <option value="updated_desc">Recently updated</option>
+            <option value="name_asc">Name A-Z</option>
+            <option value="name_desc">Name Z-A</option>
+            <option value="priority">Priority</option>
+          </select>
+          <button type="button" onClick={openCreateNote} className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800">
             + New Note
-          </Button>
+          </button>
         </div>
       </div>
 
       <div className="space-y-2">
         {filteredNotes.map((note) => {
-          const category = noteCategories.find((item) => item.id === note.categoryId) || categoryBySlug.get(note.categorySlug || '') || null;
+          const filterCategory = noteCategories.find((item) => item.id === note.categoryId) || categoryBySlug.get(note.categorySlug || '') || null;
 
           const editNote = (event: React.MouseEvent) => {
             event.stopPropagation();
@@ -375,37 +358,66 @@ const SmartNotesPanel: React.FC<{
             await onDeleteSmartNote(note.id);
           };
 
+          const priorityBadge = (priority: string) => {
+            if (priority === 'high') return 'border-red-200 bg-red-50 text-red-700';
+            if (priority === 'low') return 'border-neutral-200 bg-neutral-50 text-neutral-500';
+            return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+          };
+
+          const statusBadge = (status: string) => {
+            if (status === 'archived') return 'border-neutral-200 bg-neutral-50 text-neutral-500';
+            if (status === 'pinned') return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+            return 'border-neutral-200 bg-neutral-50 text-neutral-700';
+          };
+
+          const blocks = blocksByNoteId.get(note.id);
+          const attachments = attachmentsByNoteId.get(note.id);
+
           return (
             <div
               key={note.id}
               onClick={() => openNote(note)}
               className="group cursor-pointer rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left transition hover:bg-neutral-50"
             >
-              <div className="flex flex-col gap-2 xl:flex-row xl:items-start">
+              <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold text-black">{note.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-sm font-semibold text-neutral-900">{note.title}</h3>
+                    {blocks?.length ? <span className="shrink-0 text-xs text-neutral-400">B:{blocks.length}</span> : null}
+                    {attachments?.length ? <span className="shrink-0 text-xs text-neutral-400">A:{attachments.length}</span> : null}
+                  </div>
                   <p className="mt-0.5 line-clamp-2 overflow-hidden break-words text-sm text-neutral-500">
                     {excerpt(note) || 'No content yet.'}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-1.5 text-xs">
-                  {category ? (
-                    <Badge variant="blue">{category.name}</Badge>
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                  {filterCategory ? (
+                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+                      {filterCategory.name}
+                    </span>
                   ) : null}
-                  <Badge variant="neutral">{note.priority}</Badge>
-                  <Badge variant="neutral">{note.status}</Badge>
-                  {note.tags
-                    ? note.tags.split(',').slice(0, 2).map((tag) => (
-                        <Badge key={tag.trim()} variant="neutral">{tag.trim()}</Badge>
-                      ))
-                    : null}
-                </div>
-                <div className="flex shrink-0 items-center gap-3 xl:flex-col xl:items-end xl:gap-1">
-                  <span className="whitespace-nowrap text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
+                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(note.priority)}`}>
+                    {note.priority}
+                  </span>
+                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadge(note.status)}`}>
+                    {note.status}
+                  </span>
+                  {note.tags ? note.tags.split(',').slice(0, 2).map((tag) => (
+                    <span key={tag.trim()} className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs text-neutral-600">
+                      {tag.trim()}
+                    </span>
+                  )) : null}
+                  <span className="text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
                   <div className="flex items-center gap-1">
-                    <Button type="button" variant="ghost" size="sm" onClick={editNote}>Edit</Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={archiveNote}>Archive</Button>
-                    <Button type="button" variant="danger" size="sm" onClick={deleteNote}>Delete</Button>
+                    <button type="button" onClick={editNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+                      Open
+                    </button>
+                    <button type="button" onClick={archiveNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50">
+                      Archive
+                    </button>
+                    <button type="button" onClick={deleteNote} className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100">
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -413,8 +425,10 @@ const SmartNotesPanel: React.FC<{
           );
         })}
         {filteredNotes.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 p-6 text-sm text-neutral-500">
-            No notes found in {selectedCategoryName.toLowerCase()}. Try a different category or create a new note.
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8 text-sm text-neutral-500">
+            {searchQuery || selectedCategorySlug !== 'all'
+              ? 'No notes match your filters. Try changing search or category.'
+              : 'No notes yet. Create your first note to start building your personal memory.'}
           </div>
         ) : null}
       </div>

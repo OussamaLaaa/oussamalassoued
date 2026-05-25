@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { NoteCategory, NoteCategoryInput } from '../../types/opportunities';
 
-const baseInput = 'w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15';
-const baseLabel = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#64748b]';
+const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
+const labelClass = 'text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500';
 
 const slugify = (value: string) =>
   value
@@ -73,41 +73,41 @@ const NoteCategoryForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-[#0f172a]">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2 md:col-span-2">
-          <div className={baseLabel}>Name</div>
-          <input value={form.name} onChange={(event) => setField('name', event.target.value)} className={baseInput} placeholder="Knowledge Base" />
+        <label className="space-y-1.5 md:col-span-2">
+          <span className={labelClass}>Name</span>
+          <input value={form.name} onChange={(event) => setField('name', event.target.value)} className={inputClass} placeholder="Knowledge Base" />
         </label>
 
-        <label className="space-y-2">
-          <div className={baseLabel}>Slug</div>
-          <input value={form.slug} onChange={(event) => setField('slug', event.target.value)} className={baseInput} placeholder="knowledge-base" />
+        <label className="space-y-1.5">
+          <span className={labelClass}>Slug</span>
+          <input value={form.slug} onChange={(event) => setField('slug', event.target.value)} className={inputClass} placeholder="knowledge-base" />
         </label>
 
-        <label className="space-y-2">
-          <div className={baseLabel}>Color</div>
-          <input type="color" value={form.color || '#2563eb'} onChange={(event) => setField('color', event.target.value)} className="h-10 w-full rounded-md border border-[#cbd5e1] bg-white p-1" />
+        <label className="space-y-1.5">
+          <span className={labelClass}>Color</span>
+          <input type="color" value={form.color || '#000000'} onChange={(event) => setField('color', event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white p-1" />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
-          <div className={baseLabel}>Description</div>
-          <textarea value={form.description || ''} onChange={(event) => setField('description', event.target.value)} rows={3} className={baseInput} />
+        <label className="space-y-1.5 md:col-span-2">
+          <span className={labelClass}>Description</span>
+          <textarea value={form.description || ''} onChange={(event) => setField('description', event.target.value)} rows={3} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400 resize-y" />
         </label>
 
-        <label className="flex items-center gap-3 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-2 md:col-span-2">
-          <input type="checkbox" checked={form.isActive ?? true} onChange={(event) => setField('isActive', event.target.checked)} />
-          <span className="text-sm text-[#0f172a]">Active</span>
+        <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5 md:col-span-2">
+          <input type="checkbox" checked={form.isActive ?? true} onChange={(event) => setField('isActive', event.target.checked)} className="rounded border-neutral-300" />
+          <span className="text-sm text-neutral-900">Active</span>
         </label>
       </div>
 
-      {error ? <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">{error}</div> : null}
+      {error ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
           Cancel
         </button>
-        <button type="submit" disabled={saving} className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60">
           {saving ? 'Saving...' : submitLabel}
         </button>
       </div>
