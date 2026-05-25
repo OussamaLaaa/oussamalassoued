@@ -8,18 +8,25 @@ import {
 
 type PersonalAuthState = {
   success: boolean;
-  emailAuthenticated: boolean;
-  allowedEmail: boolean;
+  mainPasswordPassed: boolean;
   secondFactorPassed: boolean;
   email?: string;
-  error?: string;
+  displayName?: string;
 };
 
 const initialState: PersonalAuthState = {
   success: true,
-  emailAuthenticated: false,
-  allowedEmail: false,
+  mainPasswordPassed: false,
   secondFactorPassed: false,
+};
+
+const getStatusError = (status: number, fallback: string): string => {
+  const statusMessages: Record<number, string> = {
+    500: 'Login service is temporarily unavailable.',
+    403: 'Access denied.',
+    429: 'Too many failed attempts. Try again later.',
+  };
+  return statusMessages[status] || fallback;
 };
 
 const AuthShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -47,24 +54,20 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
   const refreshStatus = async () => {
     setIsLoading(true);
     try {
-      const nextStatus = (await fetchPersonalAuthStatus()) as PersonalAuthState;
+      const nextStatus = await fetchPersonalAuthStatus();
       setStatus({
         success: true,
-        emailAuthenticated: Boolean(nextStatus.emailAuthenticated),
-        allowedEmail: Boolean(nextStatus.allowedEmail),
+        mainPasswordPassed: Boolean(nextStatus.mainPasswordPassed),
         secondFactorPassed: Boolean(nextStatus.secondFactorPassed),
         email: nextStatus.email,
+        displayName: nextStatus.displayName,
       });
-      if (!nextStatus.emailAuthenticated) {
+      if (!nextStatus.mainPasswordPassed) {
         setLoginPassword('');
         setPassword('');
         setRememberDevice(false);
       }
-      if (nextStatus.emailAuthenticated && !nextStatus.allowedEmail) {
-        setLoginPassword('');
-        setPassword('');
-      }
-      if (nextStatus.emailAuthenticated && nextStatus.allowedEmail && !nextStatus.secondFactorPassed) {
+      if (nextStatus.mainPasswordPassed && !nextStatus.secondFactorPassed) {
         setPassword('');
       }
       setAuthError('');
@@ -95,7 +98,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     try {
       const result = await customLogin(email.trim(), loginPassword);
       if (!result.success) {
-        setAuthError(result.error || 'Login failed. Try again.');
+        setAuthError(getStatusError(result.status || 0, result.error || 'Invalid email or password.'));
         return;
       }
 
@@ -112,10 +115,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     setAuthError('');
 
     try {
-      const response = (await verifyPersonalSecondFactor(password)) as {
-        success: boolean;
-        error?: string;
-      };
+      const response = await verifyPersonalSecondFactor(password);
 
       if (!response.success) {
         setAuthError('Invalid password.');
@@ -152,7 +152,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     return <AuthShell><div className="text-sm text-neutral-600">Checking access...</div></AuthShell>;
   }
 
-  if (!status.emailAuthenticated) {
+  if (!status.mainPasswordPassed) {
     return (
       <AuthShell>
         <form onSubmit={handleSignIn} className="space-y-6">
@@ -202,28 +202,6 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <p className="text-sm text-neutral-500">Secure access only.</p>
         </form>
-      </AuthShell>
-    );
-  }
-
-  if (!status.allowedEmail) {
-    return (
-      <AuthShell>
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Access denied</h1>
-            <p className="text-sm leading-6 text-neutral-600">This account does not have access to this workspace.</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
-          >
-            Back to sign in
-          </button>
-        </div>
       </AuthShell>
     );
   }

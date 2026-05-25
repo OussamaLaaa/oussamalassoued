@@ -13,12 +13,13 @@ export const customLogin = async (email: string, password: string) => {
       return {
         success: false,
         error: data.error || 'Login failed. Try again.',
+        status: response.status,
       };
     }
 
     return { success: true, email: data.email };
   } catch {
-    return { success: false, error: 'Login failed. Try again.' };
+    return { success: false, error: 'Login failed. Try again.', status: 0 };
   }
 };
 

@@ -204,8 +204,8 @@ export const requirePersonalAccess = async (req) => {
   };
 };
 
-export const createMainCookie = (req, { email, userId, ttlSeconds = MAIN_TTL_SECONDS }) => {
-  const token = signMainToken({ email, userId, ttlSeconds });
+export const createMainCookie = (req, { email, userId, displayName, ttlSeconds = MAIN_TTL_SECONDS }) => {
+  const token = signMainToken({ email, userId, displayName, ttlSeconds });
   return `${PERSONAL_OS_MAIN_COOKIE}=${token}; ${buildCookieAttributes(req, ttlSeconds)}`;
 };
 
