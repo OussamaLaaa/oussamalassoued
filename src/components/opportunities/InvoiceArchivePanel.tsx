@@ -369,7 +369,7 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
             const itemCount = itemsByInvoiceId[invoice.id] || 0;
             const isExpanded = openInvoiceId === invoice.id;
             const hasPdf = Boolean(invoice.pdfStoragePath);
-            const hasFin = hasFinanceIncome[invoice.invoiceNumber] || false;
+            const hasFin = hasFinanceIncome[invoice.invoiceNumber || invoice.id] || false;
 
             return (
               <div key={invoice.id} className="rounded-xl border border-neutral-200 bg-white">

@@ -220,7 +220,7 @@ const InvoiceStudioPanel: React.FC<{
   );
 
   const selectedGeneratedDocument = useMemo(
-    () => (selectedInvoice?.id ? generatedDocuments.find((doc) => doc.id === selectedInvoice.id) : null),
+    () => (selectedInvoice?.generatedDocumentId ? generatedDocuments.find((doc) => doc.id === selectedInvoice.generatedDocumentId) : null),
     [selectedInvoice, generatedDocuments],
   );
 

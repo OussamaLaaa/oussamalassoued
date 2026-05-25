@@ -124,6 +124,7 @@ const ContractStudioPanel: React.FC<{
   const selectedCompany = companies.find((company) => company.id === form.relatedCompanyId) ?? null;
   const selectedPerson = people.find((person) => person.id === form.relatedPersonId) ?? null;
   const selectedDeal = deals.find((deal) => deal.id === form.relatedDealId) ?? null;
+  const activeDoc = useMemo(() => contractDocuments.find((document) => document.id === activeDocumentId) ?? null, [contractDocuments, activeDocumentId]);
   const savedDocumentId = activeDocumentId || '';
 
   const updateField = (field: keyof ContractFormState, value: string) => setForm((current) => ({ ...current, [field]: value }));
@@ -330,7 +331,7 @@ const ContractStudioPanel: React.FC<{
               <SummaryLine label="Brand" value={brand?.brandName || 'Not set'} />
               <SummaryLine label="Owner" value={brand?.ownerName || 'Not set'} />
               <SummaryLine label="Contact" value={brand?.email || brand?.phone || 'Not set'} />
-              <SummaryLine label="PDF" value={storedPdfPath || activeDocumentId?.pdfStoragePath ? 'Stored' : 'Not stored yet'} />
+              <SummaryLine label="PDF" value={storedPdfPath || activeDoc?.pdfStoragePath ? 'Stored' : 'Not stored yet'} />
             </SummaryCard>
             <SummaryCard title="Related records">
               <SummaryLine label="Project" value={selectedProject?.name || 'None'} />
@@ -398,8 +399,8 @@ const ContractStudioPanel: React.FC<{
           <div className="rounded-xl border border-neutral-200 bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionHeader title="Preview" subtitle="Professional contract layout with brand identity" />
-              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${storedPdfPath || activeDocument?.pdfStoragePath ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500'}`}>
-                {storedPdfPath || activeDocument?.pdfStoragePath ? 'PDF Stored' : 'Live Draft'}
+              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${storedPdfPath || activeDoc?.pdfStoragePath ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500'}`}>
+                {storedPdfPath || activeDoc?.pdfStoragePath ? 'PDF Stored' : 'Live Draft'}
               </span>
             </div>
             <div className="mt-4 overflow-auto rounded-md border border-neutral-200 bg-neutral-50 p-4">
@@ -429,9 +430,9 @@ const ContractStudioPanel: React.FC<{
               <button type="button" onClick={() => void generateAndStorePdf()} disabled={generating || saving} className="rounded-md border border-neutral-200 bg-white px-5 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-60">
                 {generating ? 'Generating PDF...' : 'Generate & Store PDF'}
               </button>
-              {(storedPdfPath || activeDocument?.pdfStoragePath) ? (
+              {(storedPdfPath || activeDoc?.pdfStoragePath) ? (
                 <>
-                  <button type="button" onClick={() => void openStoredPdf(savedDocumentId || activeDocument?.id || '')} className="rounded-md border border-neutral-200 bg-white px-5 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                  <button type="button" onClick={() => void openStoredPdf(savedDocumentId || activeDoc?.id || '')} className="rounded-md border border-neutral-200 bg-white px-5 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
                     Open Stored PDF
                   </button>
                   <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-semibold text-neutral-700">PDF Stored</span>
