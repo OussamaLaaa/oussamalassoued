@@ -132,7 +132,7 @@ export const companyFromDb = (row: any): Company => ({
 });
 
 export const companyToDb = (input: CompanyInput) => ({
-  name: input.name.trim(),
+  name: safeString(input.name).trim(),
   database_type: normalizeDatabaseType(input.databaseType),
   category: input.category,
   industry: input.industry,

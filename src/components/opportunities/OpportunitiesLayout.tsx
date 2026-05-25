@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
@@ -598,14 +599,22 @@ const OpportunitiesLayout: React.FC<{
       ...(Array.isArray(result.questionsToReview) ? result.questionsToReview.map((q: string) => `- ${q}`) : ['- N/A']),
     ].join('\n');
 
-    const payload: any = {};
-    if (result.databaseType) payload.databaseType = result.databaseType;
-    if (result.industry) payload.industry = result.industry;
-    if (result.priority) payload.priority = result.priority;
-    if (typeof result.fitScore === 'number') payload.fitScore = result.fitScore;
-    if (result.ethicalFit) payload.ethicalFit = result.ethicalFit;
-    if (result.nextAction) payload.nextAction = result.nextAction;
-    payload.notes = (aiScoringCompany.notes || '') + aiNotes;
+    const payload: any = {
+      name: aiScoringCompany.name,
+      databaseType: result.databaseType || aiScoringCompany.databaseType,
+      category: aiScoringCompany.category,
+      industry: result.industry || aiScoringCompany.industry,
+      country: aiScoringCompany.country,
+      city: aiScoringCompany.city,
+      website: aiScoringCompany.website,
+      linkedin: aiScoringCompany.linkedin,
+      priority: result.priority || aiScoringCompany.priority,
+      fitScore: typeof result.fitScore === 'number' ? result.fitScore : aiScoringCompany.fitScore,
+      ethicalFit: result.ethicalFit || aiScoringCompany.ethicalFit,
+      status: aiScoringCompany.status,
+      nextAction: result.nextAction || aiScoringCompany.nextAction,
+      notes: (aiScoringCompany.notes || '') + aiNotes,
+    };
 
     try {
       await updateCompany(aiScoringCompany.id, payload as any);
@@ -640,35 +649,19 @@ const OpportunitiesLayout: React.FC<{
       tabs={getShellTabs()}
       activeTab={tab}
       onTabChange={handleShellTabChange}
+      rightActions={activeApp === 'crm' ? (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => setActiveModal('message')}>Log Message</Button>
+          <Button variant="secondary" size="sm" onClick={() => setActiveModal('person')}>Add Person</Button>
+          <Button variant="secondary" size="sm" onClick={() => setActiveModal('company')}>Add Company</Button>
+          <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}>Add Deal</Button>
+        </>
+      ) : undefined}
+      searchValue={activeApp === 'crm' ? globalSearch : undefined}
+      onSearchChange={activeApp === 'crm' ? handleGlobalSearchChange : undefined}
+      searchPlaceholder="Search companies, people, deals..."
     >
       <div className="space-y-4">
-        {/* Global Search Bar - CRM only */}
-        {activeApp === 'crm' && (
-          <div className="rounded-xl border border-neutral-200 bg-white p-3">
-            <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-neutral-500">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                type="text"
-                value={globalSearch}
-                onChange={(e) => handleGlobalSearchChange(e.target.value)}
-                placeholder="Search across companies, people, emails, LinkedIn..."
-                className="w-full border-none bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-              />
-              {globalSearch && (
-                <button
-                  type="button"
-                  onClick={() => handleGlobalSearchChange('')}
-                  className="rounded-md px-2 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         {tab === 'dashboard' && (
               <OpportunitiesDashboard
                 companies={companies}
@@ -681,8 +674,8 @@ const OpportunitiesLayout: React.FC<{
                 onAddCompany={() => setActiveModal('company')}
                 onAddPerson={() => setActiveModal('person')}
                 onAddMessage={() => setActiveModal('message')}
-                onAddDeal={() => setActiveModal('deal')}
                 onResetDemoData={handleResetDemoData}
+                onOpenCompaniesTab={() => setTab('companies')}
               />
             )}
 
