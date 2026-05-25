@@ -1,20 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import generatePdfHandler from '../server/lib/generatePdfHandler.js';
-import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
+import { requirePersonalAccess } from '../server/lib/personalAuth.js';
 
-const allowedEmails = parseAllowedEmails();
 const BUCKET_NAME = 'generated-documents';
 const MAX_BASE64_LENGTH = 15 * 1024 * 1024;
 const MAX_PDF_BYTES = 12 * 1024 * 1024;
 const VALID_SOURCE_TYPES = new Set(['generated_document', 'invoice']);
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-const isAuthenticated = (req) => {
-  const { googleGate, osGate } = getPersonalGateCookies(req);
-  if (!googleGate || !osGate) return false;
-  if (googleGate.email !== osGate.email) return false;
-  return isEmailAllowed(osGate.email, allowedEmails);
-};
 
 const readBody = (req) => {
   if (!req.body) return {};
@@ -336,18 +328,15 @@ const handleUploadPdf = async (req, res) => {
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
+  const access = await requirePersonalAccess(req);
+  if (!access.emailAuthenticated || !access.allowedEmail || !access.secondFactorPassed) {
+    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
+  }
+
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(200).end();
-  }
-
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
-  }
-
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized' });
   }
 
   const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();

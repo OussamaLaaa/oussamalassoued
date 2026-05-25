@@ -6,11 +6,10 @@ import aiRelationshipHandler from '../server/lib/aiRelationshipHandler.js';
 import { createClient } from '@supabase/supabase-js';
 import { encryptApiKey, decryptApiKey } from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
-import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
+import { requirePersonalAccess } from '../server/lib/personalAuth.js';
 
 const { testProviderConnection, checkAIUseCaseStatus } = aiProviderRouter;
 
-const allowedEmails = parseAllowedEmails();
 const ALLOWED_PROVIDERS = new Set(['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama']);
 
 const toSafeJson = (res, status, body) => res.status(status).json(body);
@@ -20,13 +19,6 @@ const cloneRequest = (req, overrides = {}) => ({
   query: { ...(req.query || {}), ...(overrides.query || {}) },
   body: overrides.body !== undefined ? overrides.body : req.body,
 });
-
-const isAuthenticated = (req) => {
-  const { googleGate, osGate } = getPersonalGateCookies(req);
-  if (!googleGate || !osGate) return false;
-  if (googleGate.email !== osGate.email) return false;
-  return isEmailAllowed(osGate.email, allowedEmails);
-};
 
 const readBody = (req) => {
   if (!req.body) return {};
@@ -919,7 +911,8 @@ const handleSocialMediaAction = async (req, res) => {
 export default async function handler(req, res) {
   const action = String(req.query?.action || req.body?.action || '').trim().toLowerCase();
 
-  if (!isAuthenticated(req)) {
+  const access = await requirePersonalAccess(req);
+  if (!access.emailAuthenticated || !access.allowedEmail || !access.secondFactorPassed) {
     return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
 

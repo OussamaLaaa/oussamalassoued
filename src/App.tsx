@@ -146,7 +146,7 @@ function App() {
     const path = window.location.pathname;
     const routeSource = hash && hash !== '/' ? hash : path;
     const firstSeg = routeSource.replace(/^\/+/, '').split('/')[0]?.toLowerCase();
-    if (firstSeg === 'opportunities' && path !== '/personal') {
+    if ((path === '/' || firstSeg === 'opportunities') && path !== '/personal') {
       window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
     }
   }
@@ -154,7 +154,7 @@ function App() {
   const [route, setRoute] = useState<AppRoute>(() => getRoute());
 
   useEffect(() => {
-    if (window.location.pathname === '/opportunities') {
+    if (window.location.pathname === '/' || window.location.pathname === '/opportunities') {
       window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
     }
 

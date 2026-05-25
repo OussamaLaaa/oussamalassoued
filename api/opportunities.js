@@ -1,15 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
-import { getPersonalGateCookies, isEmailAllowed, parseAllowedEmails } from '../server/lib/personalAuth.js';
-
-const allowedEmails = parseAllowedEmails();
-
-const isAuthenticated = (req) => {
-  const { googleGate, osGate } = getPersonalGateCookies(req);
-  if (!googleGate || !osGate) return false;
-  if (googleGate.email !== osGate.email) return false;
-  return isEmailAllowed(osGate.email, allowedEmails);
-};
+import { requirePersonalAccess } from '../server/lib/personalAuth.js';
 
 const allowedEntities = new Set([
   'companies',
@@ -1194,7 +1185,8 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (!isAuthenticated(req)) {
+  const access = await requirePersonalAccess(req);
+  if (!access.emailAuthenticated || !access.allowedEmail || !access.secondFactorPassed) {
     return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
 

@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPersonalAuthStatus, getPersonalSupabaseClient, personalLogout, startGooglePersonalLogin, verifyPersonalSecondFactor } from '../../utils/personalAuth';
+import { PERSONAL_AUTH_CONFIGURED } from '../../config/personalAuthConfig';
+import {
+  fetchPersonalAuthStatus,
+  getPersonalSupabaseClient,
+  installPersonalApiAuthBridge,
+  personalLogout,
+  signInPersonalWithPassword,
+  verifyPersonalSecondFactor,
+} from '../../utils/personalAuth';
 
 type PersonalAuthState = {
   success: boolean;
-  googleAuthenticated: boolean;
+  emailAuthenticated: boolean;
   allowedEmail: boolean;
   secondFactorPassed: boolean;
   email?: string;
@@ -12,15 +20,37 @@ type PersonalAuthState = {
 
 const initialState: PersonalAuthState = {
   success: true,
-  googleAuthenticated: false,
+  emailAuthenticated: false,
   allowedEmail: false,
   secondFactorPassed: false,
 };
 
+const getFriendlyLoginError = (error: unknown) => {
+  const message = String((error as { error?: string; message?: string })?.error || (error as { message?: string })?.message || '').toLowerCase();
+  if (message.includes('invalid login credentials') || message.includes('invalid') || message.includes('credentials')) {
+    return 'Invalid email or password.';
+  }
+
+  return 'Login failed. Try again.';
+};
+
+const AuthShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <main className="min-h-screen bg-[#fafafa] px-4 py-4 text-neutral-950 sm:px-6 sm:py-6">
+    <div className="flex min-h-[calc(100vh-2rem)] items-center justify-center sm:min-h-[calc(100vh-3rem)]">
+      <div className="w-full max-w-[420px] rounded-2xl border border-neutral-200 bg-white px-6 py-6 sm:px-8 sm:py-8">
+        {children}
+      </div>
+    </div>
+  </main>
+);
+
 const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [status, setStatus] = useState<PersonalAuthState>(initialState);
   const [isLoading, setIsLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
@@ -32,15 +62,24 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       const nextStatus = (await fetchPersonalAuthStatus()) as PersonalAuthState;
       setStatus({
         success: true,
-        googleAuthenticated: Boolean(nextStatus.googleAuthenticated),
+        emailAuthenticated: Boolean(nextStatus.emailAuthenticated),
         allowedEmail: Boolean(nextStatus.allowedEmail),
         secondFactorPassed: Boolean(nextStatus.secondFactorPassed),
         email: nextStatus.email,
       });
-      setAuthError('');
-      if (!nextStatus.googleAuthenticated && !nextStatus.allowedEmail) {
+      if (!nextStatus.emailAuthenticated) {
+        setLoginPassword('');
+        setPassword('');
+        setRememberDevice(false);
+      }
+      if (nextStatus.emailAuthenticated && !nextStatus.allowedEmail) {
+        setLoginPassword('');
         setPassword('');
       }
+      if (nextStatus.emailAuthenticated && nextStatus.allowedEmail && !nextStatus.secondFactorPassed) {
+        setPassword('');
+      }
+      setAuthError('');
     } catch {
       setStatus(initialState);
     } finally {
@@ -72,6 +111,15 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
   }, []);
 
   useEffect(() => {
+    if (!status.emailAuthenticated || !status.allowedEmail || !status.secondFactorPassed) {
+      return undefined;
+    }
+
+    const cleanup = installPersonalApiAuthBridge();
+    return () => cleanup();
+  }, [status.allowedEmail, status.emailAuthenticated, status.secondFactorPassed]);
+
+  useEffect(() => {
     const onFocus = () => {
       void refreshStatus();
     };
@@ -80,14 +128,19 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     return () => window.removeEventListener('focus', onFocus);
   }, []);
 
-  const handleGoogleSignIn = async () => {
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSigningIn(true);
     setAuthError('');
     try {
-      const result = await startGooglePersonalLogin();
+      const result = await signInPersonalWithPassword(email.trim(), loginPassword);
       if (!result.success) {
-        setAuthError(result.error || 'Unable to start Google sign-in.');
+        setAuthError(getFriendlyLoginError(result));
+        return;
       }
+
+      setLoginPassword('');
+      await refreshStatus();
     } finally {
       setIsSigningIn(false);
     }
@@ -105,11 +158,12 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       };
 
       if (!response.success) {
-        setAuthError(response.error || 'Invalid password.');
+        setAuthError('Invalid password.');
         return;
       }
 
       setPassword('');
+      setRememberDevice(false);
       await refreshStatus();
     } catch {
       setAuthError('Invalid password.');
@@ -123,7 +177,10 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     try {
       await personalLogout();
       setStatus(initialState);
+      setEmail('');
+      setLoginPassword('');
       setPassword('');
+      setRememberDevice(false);
       setAuthError('');
       await refreshStatus();
     } finally {
@@ -132,100 +189,132 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
   };
 
   if (isLoading) {
-    return (
-      <main className="min-h-screen bg-neutral-50 px-4 py-8 text-neutral-950">
-        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-2xl border border-neutral-200 bg-white px-6 py-8 text-sm text-neutral-600">
-            Checking Personal OS access...
-          </div>
-        </div>
-      </main>
-    );
+    return <AuthShell><div className="text-sm text-neutral-600">Checking access...</div></AuthShell>;
   }
 
-  if (!status.googleAuthenticated) {
+  if (!status.emailAuthenticated) {
     return (
-      <main className="min-h-screen bg-neutral-50 px-4 py-8 text-neutral-950">
-        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-2xl border border-neutral-200 bg-white px-6 py-8">
-            <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
-              <h1 className="text-2xl font-semibold tracking-tight text-neutral-950">Sign in with Google to continue.</h1>
-              <p className="text-sm text-neutral-600">Use an allowed account to access the internal workspace.</p>
-            </div>
-
-            {authError ? <p className="mt-4 text-sm text-red-600">{authError}</p> : null}
-
-            <button
-              type="button"
-              onClick={() => void handleGoogleSignIn()}
-              disabled={isSigningIn}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-xl border border-neutral-300 bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSigningIn ? 'Redirecting...' : 'Sign in with Google'}
-            </button>
+      <AuthShell>
+        <form onSubmit={handleSignIn} className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Welcome back</h1>
+            <p className="text-sm leading-6 text-neutral-600">Sign in to access your workspace.</p>
+            {!PERSONAL_AUTH_CONFIGURED ? (
+              <p className="text-sm text-neutral-500">Sign-in is not configured in this environment.</p>
+            ) : null}
           </div>
-        </div>
-      </main>
+
+          <div className="space-y-4">
+            <label className="block space-y-2">
+              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                required
+                className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
+                placeholder="you@example.com"
+              />
+            </label>
+
+            <label className="block space-y-2">
+              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Password</span>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+                className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
+                placeholder="Enter your password"
+              />
+            </label>
+          </div>
+
+          {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
+
+          <button
+            type="submit"
+            disabled={isSigningIn || !PERSONAL_AUTH_CONFIGURED}
+            className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSigningIn ? 'Signing in...' : 'Sign in'}
+          </button>
+
+          <p className="text-sm text-neutral-500">Secure access only.</p>
+        </form>
+      </AuthShell>
     );
   }
 
   if (!status.allowedEmail) {
     return (
-      <main className="min-h-screen bg-neutral-50 px-4 py-8 text-neutral-950">
-        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-2xl border border-neutral-200 bg-white px-6 py-8">
+      <AuthShell>
+        <div className="space-y-6">
+          <div className="space-y-3">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-neutral-950">Access denied.</h1>
-            <p className="mt-3 text-sm text-neutral-600">The signed-in Google account is not in the allowlist.</p>
-            <button
-              type="button"
-              onClick={() => void handleLogout()}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:bg-neutral-100"
-            >
-              Use another account
-            </button>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Access denied</h1>
+            <p className="text-sm leading-6 text-neutral-600">This account does not have access to this workspace.</p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+          >
+            Back to sign in
+          </button>
         </div>
-      </main>
+      </AuthShell>
     );
   }
 
   if (!status.secondFactorPassed) {
     return (
-      <main className="min-h-screen bg-neutral-50 px-4 py-8 text-neutral-950">
-        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <form onSubmit={handleSecondFactorSubmit} className="w-full rounded-2xl border border-neutral-200 bg-white px-6 py-8">
-            <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
-              <h1 className="text-2xl font-semibold tracking-tight text-neutral-950">Enter your second password.</h1>
-              <p className="text-sm text-neutral-600">Confirm access after Google sign-in.</p>
-            </div>
+      <AuthShell>
+        <form onSubmit={handleSecondFactorSubmit} className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Security check</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Unlock Personal OS</h1>
+            <p className="text-sm leading-6 text-neutral-600">Enter your second password to continue.</p>
+          </div>
 
-            <label className="mt-6 block">
-              <span className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Second password</span>
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
-                autoComplete="current-password"
-                autoFocus
-              />
-            </label>
+          <label className="block space-y-2">
+            <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Second password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
+              autoComplete="current-password"
+              autoFocus
+              required
+            />
+          </label>
 
-            {authError ? <p className="mt-4 text-sm text-red-600">{authError}</p> : null}
+          <label className="flex items-center gap-3 text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              checked={rememberDevice}
+              onChange={(event) => setRememberDevice(event.target.checked)}
+              className="h-4 w-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 focus:ring-offset-0"
+            />
+            <span>Remember this device for 30 days</span>
+          </label>
 
-            <button
-              type="submit"
-              disabled={isSubmittingPassword}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmittingPassword ? 'Verifying...' : 'Unlock Personal OS'}
-            </button>
-          </form>
-        </div>
-      </main>
+          {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
+
+          <button
+            type="submit"
+            disabled={isSubmittingPassword}
+            className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmittingPassword ? 'Unlocking...' : 'Unlock Personal OS'}
+          </button>
+        </form>
+      </AuthShell>
     );
   }
 

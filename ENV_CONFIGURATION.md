@@ -1,5 +1,22 @@
 # Environment Variables Configuration Template
 
+## Personal OS Access Variables
+
+The Personal OS authentication flow requires these Vercel environment variables:
+
+```env
+PERSONAL_ALLOWED_EMAILS=email1@example.com,email2@example.com
+PERSONAL_GATE_SECRET=your-long-random-signing-secret
+PERSONAL_SECOND_PASSWORD_HASH=scrypt:<salt>:<hash>
+```
+
+Notes:
+
+- `PERSONAL_ALLOWED_EMAILS` is checked server-side after Supabase email/password login.
+- `PERSONAL_GATE_SECRET` signs the `personal_os_gate` HttpOnly cookie.
+- `PERSONAL_SECOND_PASSWORD_HASH` must use the `scrypt:<salt>:<hash>` format.
+- Do not place real secrets in this file.
+
 ## ⚡ Copy One of These Configurations
 
 ### Option 1: Upstash Redis (Recommended)

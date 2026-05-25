@@ -1,6 +1,6 @@
 import {
   createPersonalGateCookie,
-  parseAllowedEmails,
+  PERSONAL_GATE_TTLS,
   requirePersonalAccess,
   verifyScryptPassword,
 } from '../../server/lib/personalAuth.js';
@@ -35,20 +35,16 @@ export default async function handler(req, res) {
 
   const gateSecret = String(process.env.PERSONAL_GATE_SECRET || '').trim();
   const secondFactorHash = String(process.env.PERSONAL_SECOND_PASSWORD_HASH || '').trim();
-  const allowedEmails = parseAllowedEmails();
   const access = await requirePersonalAccess(req);
   const body = readBody(req);
   const password = String(body?.password || '').trim();
+  const rememberDevice = Boolean(body?.rememberDevice);
 
   if (!gateSecret || !secondFactorHash) {
     return toSafeJson(res, 500, { success: false, error: 'Authentication is not configured.' });
   }
 
-  if (!access.googleAuthenticated || !access.allowedEmail || !access.email) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
-  }
-
-  if (!allowedEmails.has(access.email)) {
+  if (!access.emailAuthenticated || !access.allowedEmail || !access.email) {
     return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
   }
 
@@ -61,16 +57,10 @@ export default async function handler(req, res) {
     return toSafeJson(res, 401, { success: false, error: 'Invalid password.' });
   }
 
-  const googleTtlSeconds = access.googleGate ? Math.max(0, access.googleGate.expiresAt - access.googleGate.issuedAt) : (60 * 60 * 10);
   res.setHeader('Set-Cookie', [
     createPersonalGateCookie(req, {
       email: access.email,
-      purpose: 'personal_google',
-      ttlSeconds: googleTtlSeconds,
-    }),
-    createPersonalGateCookie(req, {
-      email: access.email,
-      purpose: 'personal_os',
+      ttlSeconds: rememberDevice ? PERSONAL_GATE_TTLS.rememberDeviceSeconds : PERSONAL_GATE_TTLS.defaultSeconds,
     }),
   ]);
 

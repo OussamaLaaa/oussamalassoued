@@ -1,8 +1,9 @@
 import crypto from 'crypto';
 
 const PERSONAL_OS_COOKIE = 'personal_os_gate';
-const PERSONAL_GOOGLE_COOKIE = 'personal_google_gate';
-const DEFAULT_GATE_TTL_SECONDS = 60 * 60 * 10;
+const LEGACY_PERSONAL_COOKIE = 'personal_google_gate';
+const DEFAULT_GATE_TTL_SECONDS = 60 * 60 * 24 * 7;
+const REMEMBER_DEVICE_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 const toSafeString = (value) => (value == null ? '' : String(value).trim());
 
@@ -171,11 +172,9 @@ export const verifyScryptPassword = async (password, storedHash) => {
 
 export const getPersonalGateCookies = (req) => {
   const cookies = parseCookies(req.headers?.cookie);
-  const googleGate = verifyGateToken(cookies[PERSONAL_GOOGLE_COOKIE], { purpose: 'personal_google' });
-  const osGate = verifyGateToken(cookies[PERSONAL_OS_COOKIE], { purpose: 'personal_os' });
+  const osGate = verifyGateToken(cookies[PERSONAL_OS_COOKIE]);
 
   return {
-    googleGate,
     osGate,
     cookies,
   };
@@ -220,44 +219,45 @@ export const extractBearerToken = (req) => {
 export const requirePersonalAccess = async (req) => {
   const allowedEmails = parseAllowedEmails();
   const cookies = parseCookies(req.headers?.cookie);
-  const googleGate = verifyGateToken(cookies[PERSONAL_GOOGLE_COOKIE], { purpose: 'personal_google' });
-  const osGate = verifyGateToken(cookies[PERSONAL_OS_COOKIE], { purpose: 'personal_os' });
   const accessToken = extractBearerToken(req);
 
-  let googleUser = null;
+  let supabaseUser = null;
   if (accessToken) {
-    googleUser = await verifySupabaseAccessToken(accessToken);
+    supabaseUser = await verifySupabaseAccessToken(accessToken);
   }
 
   const email = toSafeString(
-    googleUser?.email || googleGate?.email || osGate?.email,
+    supabaseUser?.email,
   ).toLowerCase();
   const allowedEmail = isEmailAllowed(email, allowedEmails);
-  const googleAuthenticated = Boolean(googleUser || googleGate);
-  const secondFactorPassed = Boolean(osGate);
+  const secondFactorPassed = Boolean(osGate && osGate.email === email);
+  const emailAuthenticated = Boolean(supabaseUser);
 
   return {
     allowedEmail,
-    googleAuthenticated,
+    emailAuthenticated,
     secondFactorPassed,
     email: email || undefined,
-    googleUser,
-    googleGate,
+    supabaseUser,
     osGate,
   };
 };
 
-export const createPersonalGateCookie = (req, { email, purpose, ttlSeconds = DEFAULT_GATE_TTL_SECONDS }) => {
-  const token = signGateToken({ email, ttlSeconds, purpose });
-  return `${purpose === 'personal_google' ? PERSONAL_GOOGLE_COOKIE : PERSONAL_OS_COOKIE}=${token}; ${buildGateCookieAttributes(req, ttlSeconds)}`;
+export const createPersonalGateCookie = (req, { email, ttlSeconds = DEFAULT_GATE_TTL_SECONDS }) => {
+  const token = signGateToken({ email, ttlSeconds });
+  return `${PERSONAL_OS_COOKIE}=${token}; ${buildGateCookieAttributes(req, ttlSeconds)}`;
 };
 
 export const clearPersonalGateCookies = (req) => [
-  `${PERSONAL_GOOGLE_COOKIE}=; ${buildClearedGateCookieAttributes(req)}`,
+  `${LEGACY_PERSONAL_COOKIE}=; ${buildClearedGateCookieAttributes(req)}`,
   `${PERSONAL_OS_COOKIE}=; ${buildClearedGateCookieAttributes(req)}`,
 ];
 
 export const PERSONAL_COOKIE_NAMES = {
-  google: PERSONAL_GOOGLE_COOKIE,
   os: PERSONAL_OS_COOKIE,
+};
+
+export const PERSONAL_GATE_TTLS = {
+  defaultSeconds: DEFAULT_GATE_TTL_SECONDS,
+  rememberDeviceSeconds: REMEMBER_DEVICE_TTL_SECONDS,
 };

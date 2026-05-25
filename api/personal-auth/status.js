@@ -1,7 +1,4 @@
 import {
-  createPersonalGateCookie,
-  isEmailAllowed,
-  parseAllowedEmails,
   requirePersonalAccess,
 } from '../../server/lib/personalAuth.js';
 
@@ -21,24 +18,14 @@ export default async function handler(req, res) {
     return toSafeJson(res, 405, { success: false, error: 'Method not allowed.' });
   }
 
-  const allowedEmails = parseAllowedEmails();
   const access = await requirePersonalAccess(req);
-  const googleAuthenticated = Boolean(access.googleAuthenticated);
-  const allowedEmail = Boolean(access.email && isEmailAllowed(access.email, allowedEmails));
+  const emailAuthenticated = Boolean(access.emailAuthenticated);
+  const allowedEmail = Boolean(access.allowedEmail);
   const secondFactorPassed = Boolean(access.secondFactorPassed);
-
-  if (googleAuthenticated && allowedEmail && access.email && !access.secondFactorPassed) {
-    const ttlSeconds = access.googleGate ? Math.max(0, access.googleGate.expiresAt - access.googleGate.issuedAt) : (60 * 60 * 10);
-    res.setHeader('Set-Cookie', createPersonalGateCookie(req, {
-      email: access.email,
-      purpose: 'personal_google',
-      ttlSeconds,
-    }));
-  }
 
   return toSafeJson(res, 200, {
     success: true,
-    googleAuthenticated,
+    emailAuthenticated,
     allowedEmail,
     secondFactorPassed,
     ...(access.email ? { email: access.email } : {}),
