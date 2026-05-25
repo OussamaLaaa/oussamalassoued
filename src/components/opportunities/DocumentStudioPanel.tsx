@@ -539,8 +539,8 @@ const DocumentStudioPanel: React.FC<{
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 -mb-px border-b border-neutral-200 pb-0">
+    <div className="space-y-8">
+      <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-3">
         {TABS.map((item) => (
           <button
             key={item.id}
