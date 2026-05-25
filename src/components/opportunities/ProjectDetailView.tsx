@@ -7,6 +7,8 @@ import type {
   ProjectDocument, ProjectDocumentInput,
   ProjectFinanceItem, ProjectFinanceItemInput,
 } from '../../types/opportunities';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
 
 type InternalTab = 'overview' | 'tasks' | 'milestones' | 'time' | 'meetings' | 'finance' | 'documents' | 'messages' | 'notes' | 'activity';
 
@@ -22,71 +24,43 @@ const INTERNAL_TABS: { id: InternalTab; label: string }[] = [
   { id: 'activity', label: 'Activity' },
 ];
 
-const stageColors: Record<string, string> = {
-  active: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
-  planned: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  paused: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
-  blocked: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
-  completed: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
-  archived: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+const stageBadgeVariant: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  active: 'success',
+  planned: 'neutral',
+  paused: 'warning',
+  blocked: 'danger',
+  completed: 'success',
+  archived: 'neutral',
 };
 
-const priorityColors: Record<string, string> = {
-  high: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
-  medium: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
-  low: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+const priorityBadgeVariant: Record<string, 'danger' | 'warning' | 'neutral'> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'neutral',
 };
 
-const typeColors: Record<string, string> = {
-  portfolio: 'bg-[#e0f2fe] text-[#075985]',
-  client: 'bg-[#dbeafe] text-[#1d4ed8]',
-  personal_product: 'bg-[#f0f9ff] text-[#1e40af]',
-  case_study: 'bg-[#f0fdf4] text-[#166534]',
-  learning: 'bg-[#fefce8] text-[#854d0e]',
-  experiment: 'bg-[#f3e8ff] text-[#7c3aed]',
+const taskStatusVariant: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  todo: 'neutral',
+  doing: 'warning',
+  done: 'success',
+  blocked: 'danger',
 };
 
-const phaseColors: Record<string, string> = {
-  idea: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
-  research: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  ux_audit: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  wireframes: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  ui_design: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  prototype: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  case_study: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  published: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  archived: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+const financeTypeBadgeVariant: Record<string, 'success' | 'danger' | 'warning' | 'neutral'> = {
+  income: 'success',
+  expense: 'danger',
+  invoice: 'neutral',
+  payment: 'neutral',
+  investment: 'neutral',
 };
 
-const taskStatusColors: Record<string, string> = {
-  todo: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
-  doing: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  done: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
-  blocked: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
-};
-
-const taskStatusBg: Record<string, string> = {
-  todo: 'bg-[#f8fafc]',
-  doing: 'bg-[#eff6ff]',
-  done: 'bg-[#f0fdf4]',
-  blocked: 'bg-[#fee2e2]',
-};
-
-const financeTypeColors: Record<string, string> = {
-  income: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
-  expense: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
-  invoice: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  payment: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  investment: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
-};
-
-const financeStatusColors: Record<string, string> = {
-  planned: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
-  sent: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]',
-  paid: 'bg-[#dcfce7] text-[#166534] border border-[#bbf7d0]',
-  unpaid: 'bg-[#fef3c7] text-[#92400e] border border-[#fde68a]',
-  overdue: 'bg-[#fee2e2] text-[#991b1b] border border-[#fecaca]',
-  cancelled: 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]',
+const financeStatusBadgeVariant: Record<string, 'success' | 'danger' | 'warning' | 'neutral'> = {
+  planned: 'neutral',
+  sent: 'neutral',
+  paid: 'success',
+  unpaid: 'warning',
+  overdue: 'danger',
+  cancelled: 'neutral',
 };
 
 const clampProgress = (value: unknown) => {
@@ -101,24 +75,24 @@ const docTypeLabels: Record<string, string> = {
 };
 
 const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
-  <div className="w-full bg-[#e5e7eb] rounded-full h-1.5 overflow-hidden">
-    <div className="h-full rounded-full bg-[#2563eb] transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+  <div className="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden">
+    <div className="h-full rounded-full bg-black transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
   </div>
 );
 
 const StatCard: React.FC<{ title: string; value: string | number; className?: string }> = ({ title, value, className }) => (
-  <div className={`rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm hover:shadow-md transition-shadow ${className || ''}`}>
-    <div className="text-xs font-mono uppercase tracking-wider text-[#64748b]">{title}</div>
-    <div className="mt-1 text-2xl font-semibold text-[#0f172a]">{value}</div>
+  <div className={`rounded-lg border border-neutral-200 bg-white p-3 ${className || ''}`}>
+    <div className="text-xs font-mono uppercase tracking-wider text-neutral-500">{title}</div>
+    <div className="mt-1 text-2xl font-semibold text-black">{value}</div>
   </div>
 );
 
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-    <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e5e7eb]">
-        <h3 className="font-semibold text-[#0f172a]">{title}</h3>
-        <button type="button" onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] text-xl leading-none p-1 rounded hover:bg-[#f1f5f9]">&times;</button>
+    <div className="bg-white rounded-xl border border-neutral-200 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-200">
+        <h3 className="font-semibold text-black">{title}</h3>
+        <button type="button" onClick={onClose} className="text-neutral-400 hover:text-black text-xl leading-none p-1 rounded hover:bg-neutral-100">&times;</button>
       </div>
       <div className="p-5">{children}</div>
     </div>
@@ -127,39 +101,26 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
 
 const FormField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="mb-3.5">
-    <label className="block text-xs font-medium text-[#475569] mb-1">{label}</label>
+    <label className="block text-xs font-medium text-neutral-600 mb-1">{label}</label>
     {children}
   </div>
 );
 
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-  <input {...props} className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm text-[#0f172a] bg-white focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe] transition-all" />
+  <input {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 transition-all" />
 );
 
 const FormTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => (
-  <textarea {...props} className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm text-[#0f172a] bg-white focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe] resize-none transition-all" />
+  <textarea {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 resize-none transition-all" />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }> = ({ options, ...props }) => (
-  <select {...props} className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm text-[#0f172a] bg-white focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#bfdbfe] transition-all">
+  <select {...props} className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300 transition-all">
     {options.map((opt) => (
       <option key={opt.value} value={opt.value}>{opt.label}</option>
     ))}
   </select>
 );
-
-const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }> = ({ variant = 'secondary', ...props }) => {
-  const base = 'text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-150';
-  const variants: Record<string, string> = {
-    primary: 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent shadow-sm',
-    secondary: 'border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc] shadow-sm',
-    danger: 'border border-[#fecaca] bg-white text-[#991b1b] hover:bg-[#fee2e2]',
-    ghost: 'border border-transparent bg-transparent text-[#475569] hover:bg-[#f1f5f9]',
-  };
-  return <button {...props} className={`${base} ${variants[variant]} ${props.className || ''}`} />;
-};
-
-// ── Task Kanban Card ──
 
 const priorityLabel = (p?: string) => {
   const labels: Record<string, string> = { high: 'High', medium: 'Medium', low: 'Low' };
@@ -187,17 +148,24 @@ type Activity = {
   source: string;
 };
 
+const activityDotBg: Record<string, string> = {
+  task: 'bg-neutral-500',
+  time: 'bg-neutral-400',
+  meeting: 'bg-neutral-600',
+  document: 'bg-neutral-500',
+  finance: 'bg-neutral-700',
+  message: 'bg-neutral-300',
+};
+
 const EmptyStateDisplay: React.FC<{ message: string; hint: string; actionLabel?: string; onAction?: () => void }> = ({ message, hint, actionLabel, onAction }) => (
   <div className="py-10 text-center">
-    <div className="text-sm font-medium text-[#64748b]">{message}</div>
-    <div className="mt-1 text-xs text-[#94a3b8]">{hint}</div>
+    <div className="text-sm font-medium text-neutral-500">{message}</div>
+    <div className="mt-1 text-xs text-neutral-400">{hint}</div>
     {actionLabel && onAction && (
       <Button variant="primary" onClick={onAction} className="mt-3">{actionLabel}</Button>
     )}
   </div>
 );
-
-// ── Task Drawer ──
 
 const TaskDrawer: React.FC<{
   task: ProjectTask;
@@ -212,22 +180,22 @@ const TaskDrawer: React.FC<{
   return (
     <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/20" />
-      <div className="relative w-full max-w-md bg-white border-l border-[#e5e7eb] shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e5e7eb]">
-          <h3 className="font-semibold text-[#0f172a]">Task Details</h3>
-          <button type="button" onClick={onClose} className="text-[#94a3b8] hover:text-[#0f172a] text-xl leading-none p-1 rounded hover:bg-[#f1f5f9]">&times;</button>
+      <div className="relative w-full max-w-md bg-white border-l border-neutral-200 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200">
+          <h3 className="font-semibold text-black">Task Details</h3>
+          <button type="button" onClick={onClose} className="text-neutral-400 hover:text-black text-xl leading-none p-1 rounded hover:bg-neutral-100">&times;</button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <h4 className="text-lg font-semibold text-[#0f172a]">{task.title}</h4>
-            {task.description && <p className="mt-1 text-sm text-[#64748b]">{task.description}</p>}
+            <h4 className="text-lg font-semibold text-black">{task.title}</h4>
+            {task.description && <p className="mt-1 text-sm text-neutral-500">{task.description}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Status</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Status</div>
               <select value={task.status} onChange={(e) => onUpdateStatus(task.id, e.target.value)}
-                className="mt-1 w-full rounded-lg border border-[#e5e7eb] px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-[#2563eb]"
+                className="mt-1 w-full rounded-lg border border-neutral-200 px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-neutral-900"
               >
                 <option value="todo">Todo</option>
                 <option value="doing">Doing</option>
@@ -236,36 +204,36 @@ const TaskDrawer: React.FC<{
               </select>
             </div>
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Priority</div>
-              <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[task.priority] || ''}`}>{priorityLabel(task.priority)}</span>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Priority</div>
+              <div className="mt-1"><Badge variant={priorityBadgeVariant[task.priority] || 'neutral'}>{priorityLabel(task.priority)}</Badge></div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Due Date</div>
-              <div className="mt-1 text-[#0f172a]">{formatDate(task.dueDate)}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Due Date</div>
+              <div className="mt-1 text-black">{formatDate(task.dueDate)}</div>
             </div>
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Assignee</div>
-              <div className="mt-1 text-[#0f172a]">{assigneeName}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Assignee</div>
+              <div className="mt-1 text-black">{assigneeName}</div>
             </div>
           </div>
 
           {task.createdAt && (
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Created</div>
-              <div className="mt-1 text-sm text-[#64748b]">{formatDateTime(task.createdAt)}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Created</div>
+              <div className="mt-1 text-sm text-neutral-500">{formatDateTime(task.createdAt)}</div>
             </div>
           )}
           {task.updatedAt && (
             <div>
-              <div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Updated</div>
-              <div className="mt-1 text-sm text-[#64748b]">{formatDateTime(task.updatedAt)}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Updated</div>
+              <div className="mt-1 text-sm text-neutral-500">{formatDateTime(task.updatedAt)}</div>
             </div>
           )}
 
-          <div className="flex gap-2 pt-2 border-t border-[#e5e7eb]">
+          <div className="flex gap-2 pt-2 border-t border-neutral-200">
             <Button variant="primary" onClick={onEdit}>Edit Task</Button>
             <Button variant="danger" onClick={() => { onDelete(task.id); onClose(); }}>Delete</Button>
           </div>
@@ -274,8 +242,6 @@ const TaskDrawer: React.FC<{
     </div>
   );
 };
-
-// ── Form sub-components ──
 
 const TaskForm: React.FC<{
   initial?: ProjectTask;
@@ -325,7 +291,7 @@ const TaskForm: React.FC<{
         ]} /></FormField>
       </div>
       <div className="flex gap-2 justify-end mt-5">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={!title.trim()}>{initial ? 'Update' : 'Add'} Task</Button>
       </div>
     </div>
@@ -354,7 +320,7 @@ const TimeLogForm: React.FC<{
         <FormField label="Date"><FormInput type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></FormField>
       </div>
       <div className="flex gap-2 justify-end mt-5">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={!title.trim() || !hours}>Log Time</Button>
       </div>
     </div>
@@ -389,7 +355,7 @@ const MeetingForm: React.FC<{
       <FormField label="Outcome"><FormTextarea value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Key outcomes" rows={2} /></FormField>
       <FormField label="Next Action"><FormInput value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="Next steps" /></FormField>
       <div className="flex gap-2 justify-end mt-5">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={!title.trim()}>Add Meeting</Button>
       </div>
     </div>
@@ -425,7 +391,7 @@ const DocumentForm: React.FC<{
       <FormField label="URL"><FormInput value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." /></FormField>
       <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
       <div className="flex gap-2 justify-end mt-5">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={!name.trim()}>Add Document</Button>
       </div>
     </div>
@@ -477,14 +443,12 @@ const FinanceItemForm: React.FC<{
       </div>
       <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
       <div className="flex gap-2 justify-end mt-5">
-        <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={handleSave} disabled={!title.trim() || !amount}>Add Finance Item</Button>
       </div>
     </div>
   );
 };
-
-// ── Main component ──
 
 const ProjectDetailView: React.FC<{
   project: Project;
@@ -660,7 +624,6 @@ const ProjectDetailView: React.FC<{
     return labels[phase || ''] || phase || '—';
   };
 
-  // ── Kanban columns ──
   const kanbanCols = useMemo(() => ({
     todo: projectTaskList.filter((t) => t.status === 'todo'),
     doing: projectTaskList.filter((t) => t.status === 'doing'),
@@ -668,80 +631,80 @@ const ProjectDetailView: React.FC<{
     blocked: projectTaskList.filter((t) => t.status === 'blocked'),
   }), [projectTaskList]);
 
-  const kanbanStatuses: { key: string; label: string; color: string }[] = [
-    { key: 'todo', label: 'Todo', color: 'bg-[#f1f5f9]' },
-    { key: 'doing', label: 'Doing', color: 'bg-[#eff6ff]' },
-    { key: 'done', label: 'Done', color: 'bg-[#f0fdf4]' },
-    { key: 'blocked', label: 'Blocked', color: 'bg-[#fee2e2]' },
+  const kanbanStatuses: { key: string; label: string }[] = [
+    { key: 'todo', label: 'Todo' },
+    { key: 'doing', label: 'Doing' },
+    { key: 'done', label: 'Done' },
+    { key: 'blocked', label: 'Blocked' },
   ];
 
   const allModals = ['task', 'time', 'meeting', 'document', 'finance'] as const;
 
   return (
-    <div className="relative min-h-screen bg-[#f8fafc]">
+    <div className="relative min-h-screen bg-neutral-50">
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-30 bg-[#f8fafc] border-b border-[#e5e7eb] shadow-sm">
+      <div className="sticky top-0 z-30 bg-neutral-50 border-b border-neutral-200">
         <div className="max-w-full px-4 py-3">
           <div className="flex items-center justify-between mb-2">
-            <button type="button" onClick={onBack} className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] bg-white text-[#64748b] hover:text-[#0f172a] hover:bg-[#f8fafc] flex items-center gap-1 transition-all">
+            <button type="button" onClick={onBack} className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 bg-white text-neutral-500 hover:text-black hover:bg-neutral-100 flex items-center gap-1 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               Back
             </button>
-            <Button variant="secondary" onClick={onEditProject}>Edit Project</Button>
+            <Button variant="outline" onClick={onEditProject}>Edit Project</Button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-xl font-bold text-[#0f172a]">{project.name}</h2>
+            <h2 className="text-xl font-bold text-black">{project.name}</h2>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${typeColors[project.type || ''] || 'bg-[#f1f5f9] text-[#475569]'}`}>{typeLabel(project.type)}</span>
+              <Badge variant="neutral">{typeLabel(project.type)}</Badge>
             </div>
           </div>
 
           {/* Inline editable fields */}
           <div className="flex flex-wrap items-center gap-3 mt-2">
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Status</span>
+              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Status</span>
               <select value={project.status || 'planned'} onChange={(e) => handleInlineUpdate('status', e.target.value)}
-                className="text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
+                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
               >
                 <option value="planned">Planned</option><option value="active">Active</option><option value="paused">Paused</option>
                 <option value="blocked">Blocked</option><option value="completed">Completed</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['status'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
+              {inlineSaving['status'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Phase</span>
+              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Phase</span>
               <select value={project.phase || 'idea'} onChange={(e) => handleInlineUpdate('phase', e.target.value)}
-                className="text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
+                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
               >
                 <option value="idea">Idea</option><option value="research">Research</option><option value="ux_audit">UX Audit</option>
                 <option value="wireframes">Wireframes</option><option value="ui_design">UI Design</option><option value="prototype">Prototype</option>
                 <option value="case_study">Case Study</option><option value="published">Published</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['phase'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
+              {inlineSaving['phase'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Priority</span>
+              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Priority</span>
               <select value={project.priority || 'medium'} onChange={(e) => handleInlineUpdate('priority', e.target.value)}
-                className="text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
+                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
               >
                 <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
               </select>
-              {inlineSaving['priority'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
+              {inlineSaving['priority'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Deadline</span>
+              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Deadline</span>
               <input type="date" value={project.deadline ? project.deadline.slice(0, 10) : ''} onChange={(e) => handleInlineUpdate('deadline', e.target.value || null)}
-                className="text-xs rounded-md border border-[#e5e7eb] px-2 py-1 bg-white text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#bfdbfe]"
+                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
               />
-              {inlineSaving['deadline'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
+              {inlineSaving['deadline'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-[#64748b] uppercase tracking-wider">Progress</span>
+              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Progress</span>
               <div className="flex items-center gap-1">
                 <input
                   type="range"
@@ -751,11 +714,11 @@ const ProjectDetailView: React.FC<{
                   onChange={(e) => {
                     void handleProgressChange(Number(e.target.value));
                   }}
-                  className="w-24 h-1.5 accent-[#2563eb] cursor-pointer"
+                  className="w-24 h-1.5 accent-black cursor-pointer"
                 />
-                <span className="text-xs font-medium text-[#0f172a] min-w-[90px]">Progress {progressDraft}%</span>
+                <span className="text-xs font-medium text-black min-w-[90px]">Progress {progressDraft}%</span>
               </div>
-              {inlineSaving['progress'] && <span className="text-[10px] text-[#94a3b8]">Saving...</span>}
+              {inlineSaving['progress'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
             </div>
           </div>
 
@@ -763,10 +726,10 @@ const ProjectDetailView: React.FC<{
             <ProgressBar value={progressDraft} />
           </div>
 
-          {inlineError ? <div className="mt-2 text-xs text-[#991b1b]">{inlineError}</div> : null}
+          {inlineError ? <div className="mt-2 text-xs text-red-700">{inlineError}</div> : null}
 
           {project.deadline && daysRemaining !== null && (
-            <div className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-[#991b1b] font-medium' : 'text-[#64748b]'}`}>
+            <div className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-red-700 font-medium' : 'text-neutral-500'}`}>
               {daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days remaining`}
             </div>
           )}
@@ -775,10 +738,10 @@ const ProjectDetailView: React.FC<{
         {/* Quick Action Bar */}
         <div className="px-4 pb-3 flex flex-wrap gap-1.5">
           <Button variant="primary" onClick={() => { setEditingTask(null); setShowModal('task'); }}>+ Add Task</Button>
-          <Button variant="secondary" onClick={() => setShowModal('time')}>+ Log Time</Button>
-          <Button variant="secondary" onClick={() => setShowModal('meeting')}>+ Add Meeting</Button>
-          <Button variant="secondary" onClick={() => setShowModal('document')}>+ Add Document</Button>
-          <Button variant="secondary" onClick={() => setShowModal('finance')}>+ Add Finance Item</Button>
+          <Button variant="outline" onClick={() => setShowModal('time')}>+ Log Time</Button>
+          <Button variant="outline" onClick={() => setShowModal('meeting')}>+ Add Meeting</Button>
+          <Button variant="outline" onClick={() => setShowModal('document')}>+ Add Document</Button>
+          <Button variant="outline" onClick={() => setShowModal('finance')}>+ Add Finance Item</Button>
           <Button variant="ghost" onClick={() => { setNoteText(project.notes || ''); setShowNoteInput(true); }}>+ Add Note</Button>
         </div>
 
@@ -789,8 +752,8 @@ const ProjectDetailView: React.FC<{
               <button key={t.id} type="button" onClick={() => setActiveTab(t.id)}
                 className={`px-3.5 py-2 text-xs font-medium border-b-2 transition-all ${
                   activeTab === t.id
-                    ? 'text-[#1d4ed8] border-[#1d4ed8]'
-                    : 'text-[#64748b] border-transparent hover:text-[#0f172a] hover:border-[#cbd5e1]'
+                    ? 'text-black border-black'
+                    : 'text-neutral-500 border-transparent hover:text-black hover:border-neutral-300'
                 }`}
               >{t.label}</button>
             ))}
@@ -807,37 +770,35 @@ const ProjectDetailView: React.FC<{
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-              <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Project Details</h3>
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-black mb-3">Project Details</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Current Phase</div><div className="mt-1 text-sm text-[#0f172a]">{phaseLabel(project.phase)}</div></div>
-                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Status</div><div className="mt-1 text-sm text-[#0f172a] capitalize">{project.status || '—'}</div></div>
-                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Next Action</div><div className="mt-1 text-sm text-[#0f172a]">{project.nextAction || '—'}</div></div>
-                <div><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium">Deadline</div><div className="mt-1 text-sm text-[#0f172a]">{formatDate(project.deadline)}</div></div>
+                <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Current Phase</div><div className="mt-1 text-sm text-black">{phaseLabel(project.phase)}</div></div>
+                <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Status</div><div className="mt-1 text-sm text-black capitalize">{project.status || '—'}</div></div>
+                <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Next Action</div><div className="mt-1 text-sm text-black">{project.nextAction || '—'}</div></div>
+                <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Deadline</div><div className="mt-1 text-sm text-black">{formatDate(project.deadline)}</div></div>
               </div>
               {project.notes && (
-                <div className="mt-4"><div className="text-xs text-[#94a3b8] uppercase tracking-wider font-medium mb-1">Notes</div><p className="text-sm text-[#64748b]">{project.notes}</p></div>
+                <div className="mt-4"><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium mb-1">Notes</div><p className="text-sm text-neutral-500">{project.notes}</p></div>
               )}
             </div>
 
             {/* Activity Feed in Overview */}
-            <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-              <h3 className="text-sm font-semibold text-[#0f172a] mb-3 flex items-center gap-2">
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Activity
               </h3>
               {activityFeed.length === 0 ? (
-                <div className="text-center py-6"><div className="text-sm text-[#64748b]">No activity yet.</div><div className="text-xs text-[#94a3b8] mt-1">Project activity will appear here as you work.</div></div>
+                <div className="text-center py-6"><div className="text-sm text-neutral-500">No activity yet.</div><div className="text-xs text-neutral-400 mt-1">Project activity will appear here as you work.</div></div>
               ) : (
                 <div className="space-y-1 max-h-[400px] overflow-y-auto">
                   {activityFeed.slice(0, 50).map((item) => (
-                    <div key={item.id} className="flex items-start gap-2 text-xs py-1.5 border-b border-[#f1f5f9] last:border-0">
-                      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
-                        item.type === 'task' ? 'bg-[#2563eb]' : item.type === 'time' ? 'bg-[#f59e0b]' : item.type === 'meeting' ? 'bg-[#8b5cf6]' : item.type === 'document' ? 'bg-[#10b981]' : item.type === 'finance' ? 'bg-[#ef4444]' : 'bg-[#94a3b8]'
-                      }`} />
+                    <div key={item.id} className="flex items-start gap-2 text-xs py-1.5 border-b border-neutral-100 last:border-0">
+                      <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${activityDotBg[item.type] || 'bg-neutral-300'}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[#0f172a] truncate">{item.title}</div>
-                        <div className="text-[#94a3b8] mt-0.5">{formatDateTime(item.date)}</div>
+                        <div className="text-black truncate">{item.title}</div>
+                        <div className="text-neutral-400 mt-0.5">{formatDateTime(item.date)}</div>
                       </div>
                     </div>
                   ))}
@@ -851,7 +812,7 @@ const ProjectDetailView: React.FC<{
         {activeTab === 'tasks' && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Tasks ({projectTaskList.length})</h3>
+              <h3 className="text-sm font-semibold text-black">Tasks ({projectTaskList.length})</h3>
               <div className="flex gap-2">
                 <Button variant="primary" onClick={() => { setEditingTask(null); setShowModal('task'); }}>+ Add Task</Button>
               </div>
@@ -864,30 +825,32 @@ const ProjectDetailView: React.FC<{
                 {kanbanStatuses.map((col) => {
                   const tasks = kanbanCols[col.key as keyof typeof kanbanCols] || [];
                   return (
-                    <div key={col.key} className={`rounded-lg border border-[#e5e7eb] bg-white shadow-sm`}>
-                      <div className={`px-3 py-2 border-b border-[#e5e7eb] ${col.color} rounded-t-lg`}>
+                    <div key={col.key} className="rounded-lg border border-neutral-200 bg-white">
+                      <div className="px-3 py-2 border-b border-neutral-200 bg-neutral-100 rounded-t-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-[#0f172a]">{col.label}</span>
-                          <span className="text-[11px] text-[#64748b] bg-white rounded-full px-1.5 py-0.5 border border-[#e5e7eb]">{tasks.length}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-black">{col.label}</span>
+                            <Badge variant="neutral">{tasks.length}</Badge>
+                          </div>
                         </div>
                       </div>
                       <div className="p-2 space-y-2 min-h-[100px]">
                         {tasks.length === 0 ? (
-                          <div className="text-[11px] text-[#94a3b8] text-center py-4">No tasks</div>
+                          <div className="text-[11px] text-neutral-400 text-center py-4">No tasks</div>
                         ) : (
                           tasks.map((task) => (
-                            <div key={task.id} className="rounded-lg border border-[#e5e7eb] bg-white p-2.5 shadow-sm hover:shadow-md cursor-pointer transition-all hover:border-[#cbd5e1]"
+                            <div key={task.id} className="rounded-lg border border-neutral-200 bg-white p-2.5 cursor-pointer hover:border-neutral-300 transition-all"
                               onClick={() => setSelectedTask(task)}
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <div className="text-xs font-medium text-[#0f172a] flex-1 min-w-0 leading-snug">{task.title}</div>
-                                <span className={`shrink-0 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${priorityColors[task.priority] || ''}`}>{priorityLabel(task.priority)}</span>
+                                <div className="text-xs font-medium text-black flex-1 min-w-0 leading-snug">{task.title}</div>
+                                <Badge variant={priorityBadgeVariant[task.priority] || 'neutral'}>{priorityLabel(task.priority)}</Badge>
                               </div>
                               {task.description && (
-                                <div className="text-[11px] text-[#64748b] mt-1 line-clamp-2">{task.description}</div>
+                                <div className="text-[11px] text-neutral-500 mt-1 line-clamp-2">{task.description}</div>
                               )}
                               <div className="flex items-center justify-between mt-1.5">
-                                <div className="text-[10px] text-[#94a3b8]">
+                                <div className="text-[10px] text-neutral-400">
                                   {task.dueDate ? formatDate(task.dueDate) : ''}
                                   {task.assignedToPersonName || task.assignedToPersonId ? ' · ' : ''}
                                   {task.assignedToPersonName || safePeople.find((p) => p.id === task.assignedToPersonId)?.fullName || ''}
@@ -895,32 +858,32 @@ const ProjectDetailView: React.FC<{
                                 <div className="flex gap-0.5">
                                   {col.key !== 'todo' && (
                                     <button type="button" onClick={(e) => { e.stopPropagation(); onUpdateTask(task.id, { status: 'todo' as any }); }}
-                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#e5e7eb] text-[#64748b] hover:bg-[#f1f5f9] transition-all"
+                                      className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-all"
                                     >← Todo</button>
                                   )}
                                   {col.key !== 'doing' && (
                                     <button type="button" onClick={(e) => { e.stopPropagation(); onUpdateTask(task.id, { status: 'doing' as any }); }}
-                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#bfdbfe] text-[#1d4ed8] hover:bg-[#eff6ff] transition-all"
+                                      className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all"
                                     >Doing</button>
                                   )}
                                   {col.key !== 'done' && (
                                     <button type="button" onClick={(e) => { e.stopPropagation(); onUpdateTask(task.id, { status: 'done' as any }); }}
-                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#bbf7d0] text-[#166534] hover:bg-[#f0fdf4] transition-all"
+                                      className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all"
                                     >Done</button>
                                   )}
                                   {col.key !== 'blocked' && (
                                     <button type="button" onClick={(e) => { e.stopPropagation(); onUpdateTask(task.id, { status: 'blocked' as any }); }}
-                                      className="px-1.5 py-0.5 text-[10px] rounded border border-[#fecaca] text-[#991b1b] hover:bg-[#fee2e2] transition-all"
+                                      className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all"
                                     >Blocked</button>
                                   )}
                                 </div>
                               </div>
-                              <div className="flex gap-1 mt-1.5 pt-1.5 border-t border-[#f1f5f9]">
+                              <div className="flex gap-1 mt-1.5 pt-1.5 border-t border-neutral-100">
                                 <button type="button" onClick={(e) => { e.stopPropagation(); setEditingTask(task); setShowModal('task'); }}
-                                  className="px-1.5 py-0.5 text-[10px] rounded border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all"
+                                  className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all"
                                 >Edit</button>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
-                                  className="px-1.5 py-0.5 text-[10px] rounded border border-[#fecaca] text-[#991b1b] hover:bg-[#fee2e2] transition-all"
+                                  className="px-1.5 py-0.5 text-[10px] rounded border border-neutral-200 text-red-700 hover:bg-red-50 transition-all"
                                 >Del</button>
                               </div>
                             </div>
@@ -937,9 +900,9 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Time Tab ── */}
         {activeTab === 'time' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Time Logs <span className="text-[#64748b] font-normal">({totalHours.toFixed(1)}h total)</span></h3>
+              <h3 className="text-sm font-semibold text-black">Time Logs <span className="text-neutral-500 font-normal">({totalHours.toFixed(1)}h total)</span></h3>
               <Button variant="primary" onClick={() => setShowModal('time')}>+ Log Time</Button>
             </div>
             {projectTimeLogList.length === 0 ? (
@@ -948,7 +911,7 @@ const ProjectDetailView: React.FC<{
               <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto">
                   <thead>
-                    <tr className="text-xs text-[#475569] bg-[#f8fafc]">
+                    <tr className="text-xs text-neutral-600 bg-neutral-50">
                       <th className="px-3 py-2 rounded-l-lg">Title</th>
                       <th className="px-3 py-2">Hours</th>
                       <th className="px-3 py-2">Date</th>
@@ -957,13 +920,13 @@ const ProjectDetailView: React.FC<{
                   </thead>
                   <tbody>
                     {projectTimeLogList.map((log) => (
-                      <tr key={log.id} className="border-t border-[#e5e7eb] hover:bg-[#f8fafc] transition-colors">
+                      <tr key={log.id} className="border-t border-neutral-200 hover:bg-neutral-50 transition-colors">
                         <td className="px-3 py-2.5">
-                          <div className="text-sm text-[#0f172a]">{log.title}</div>
-                          {log.description && <div className="text-xs text-[#64748b]">{log.description}</div>}
+                          <div className="text-sm text-black">{log.title}</div>
+                          {log.description && <div className="text-xs text-neutral-500">{log.description}</div>}
                         </td>
-                        <td className="px-3 py-2.5 text-sm font-medium text-[#0f172a]">{log.hours}h</td>
-                        <td className="px-3 py-2.5 text-sm text-[#64748b]">{formatDate(log.workDate)}</td>
+                        <td className="px-3 py-2.5 text-sm font-medium text-black">{log.hours}h</td>
+                        <td className="px-3 py-2.5 text-sm text-neutral-500">{formatDate(log.workDate)}</td>
                         <td className="px-3 py-2.5">
                           <Button variant="danger" onClick={() => onDeleteTimeLog(log.id)}>Delete</Button>
                         </td>
@@ -978,9 +941,9 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Meetings Tab ── */}
         {activeTab === 'meetings' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Meetings ({projectMeetingList.length})</h3>
+              <h3 className="text-sm font-semibold text-black">Meetings ({projectMeetingList.length})</h3>
               <Button variant="primary" onClick={() => setShowModal('meeting')}>+ Add Meeting</Button>
             </div>
             {projectMeetingList.length === 0 ? (
@@ -988,18 +951,18 @@ const ProjectDetailView: React.FC<{
             ) : (
               <div className="space-y-3">
                 {projectMeetingList.map((meeting) => (
-                  <div key={meeting.id} className="rounded-lg border border-[#e5e7eb] p-3.5 hover:shadow-sm transition-shadow">
+                  <div key={meeting.id} className="rounded-lg border border-neutral-200 p-3.5">
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="text-sm font-medium text-[#0f172a]">{meeting.title}</div>
-                        <div className="text-xs text-[#64748b] mt-0.5">{formatDate(meeting.meetingDate)}{meeting.attendees ? ` — ${meeting.attendees}` : ''}</div>
+                        <div className="text-sm font-medium text-black">{meeting.title}</div>
+                        <div className="text-xs text-neutral-500 mt-0.5">{formatDate(meeting.meetingDate)}{meeting.attendees ? ` — ${meeting.attendees}` : ''}</div>
                       </div>
                       <Button variant="danger" onClick={() => onDeleteMeeting(meeting.id)}>Delete</Button>
                     </div>
-                    {meeting.agenda && <div className="mt-2 text-xs text-[#64748b]"><span className="font-medium text-[#475569]">Agenda:</span> {meeting.agenda}</div>}
-                    {meeting.notes && <div className="mt-1 text-xs text-[#64748b]"><span className="font-medium text-[#475569]">Notes:</span> {meeting.notes}</div>}
-                    {meeting.outcome && <div className="mt-1 text-xs text-[#64748b]"><span className="font-medium text-[#475569]">Outcome:</span> {meeting.outcome}</div>}
-                    {meeting.nextAction && <div className="mt-1 text-xs text-[#64748b]"><span className="font-medium text-[#475569]">Next:</span> {meeting.nextAction}</div>}
+                    {meeting.agenda && <div className="mt-2 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Agenda:</span> {meeting.agenda}</div>}
+                    {meeting.notes && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Notes:</span> {meeting.notes}</div>}
+                    {meeting.outcome && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Outcome:</span> {meeting.outcome}</div>}
+                    {meeting.nextAction && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Next:</span> {meeting.nextAction}</div>}
                   </div>
                 ))}
               </div>
@@ -1009,15 +972,15 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Finance Tab ── */}
         {activeTab === 'finance' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               <StatCard title="Income" value={`${financeStats.income.toLocaleString()}`} />
               <StatCard title="Expenses" value={`${financeStats.expenses.toLocaleString()}`} />
-              <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-[#fee2e2] border-[#fecaca]' : ''} />
+              <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-red-50 border-red-200' : ''} />
               <StatCard title="Paid" value={`${financeStats.paid.toLocaleString()}`} />
             </div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Items ({projectFinanceList.length})</h3>
+              <h3 className="text-sm font-semibold text-black">Items ({projectFinanceList.length})</h3>
               <Button variant="primary" onClick={() => setShowModal('finance')}>+ Add Finance Item</Button>
             </div>
             {projectFinanceList.length === 0 ? (
@@ -1026,7 +989,7 @@ const ProjectDetailView: React.FC<{
               <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto">
                   <thead>
-                    <tr className="text-xs text-[#475569] bg-[#f8fafc]">
+                    <tr className="text-xs text-neutral-600 bg-neutral-50">
                       <th className="px-3 py-2 rounded-l-lg">Title</th>
                       <th className="px-3 py-2">Type</th>
                       <th className="px-3 py-2">Amount</th>
@@ -1038,13 +1001,13 @@ const ProjectDetailView: React.FC<{
                   </thead>
                   <tbody>
                     {projectFinanceList.map((item) => (
-                      <tr key={item.id} className="border-t border-[#e5e7eb] hover:bg-[#f8fafc] transition-colors">
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a] font-medium">{item.title}</td>
-                        <td className="px-3 py-2.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${financeTypeColors[item.type] || 'bg-[#f1f5f9] text-[#475569]'}`}>{item.type}</span></td>
-                        <td className="px-3 py-2.5 text-sm font-medium text-[#0f172a]">{item.amount.toLocaleString()} {item.currency || ''}</td>
-                        <td className="px-3 py-2.5"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${financeStatusColors[item.status] || 'bg-[#f1f5f9] text-[#475569]'}`}>{item.status}</span></td>
-                        <td className="px-3 py-2.5 text-sm text-[#64748b]">{formatDate(item.dueDate)}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#64748b]">{formatDate(item.paidDate)}</td>
+                      <tr key={item.id} className="border-t border-neutral-200 hover:bg-neutral-50 transition-colors">
+                        <td className="px-3 py-2.5 text-sm text-black font-medium">{item.title}</td>
+                        <td className="px-3 py-2.5"><Badge variant={financeTypeBadgeVariant[item.type] || 'neutral'}>{item.type}</Badge></td>
+                        <td className="px-3 py-2.5 text-sm font-medium text-black">{item.amount.toLocaleString()} {item.currency || ''}</td>
+                        <td className="px-3 py-2.5"><Badge variant={financeStatusBadgeVariant[item.status] || 'neutral'}>{item.status}</Badge></td>
+                        <td className="px-3 py-2.5 text-sm text-neutral-500">{formatDate(item.dueDate)}</td>
+                        <td className="px-3 py-2.5 text-sm text-neutral-500">{formatDate(item.paidDate)}</td>
                         <td className="px-3 py-2.5"><Button variant="danger" onClick={() => onDeleteFinanceItem(item.id)}>Delete</Button></td>
                       </tr>
                     ))}
@@ -1057,9 +1020,9 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Documents Tab ── */}
         {activeTab === 'documents' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Documents ({projectDocumentList.length})</h3>
+              <h3 className="text-sm font-semibold text-black">Documents ({projectDocumentList.length})</h3>
               <Button variant="primary" onClick={() => setShowModal('document')}>+ Add Document</Button>
             </div>
             {projectDocumentList.length === 0 ? (
@@ -1068,7 +1031,7 @@ const ProjectDetailView: React.FC<{
               <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto">
                   <thead>
-                    <tr className="text-xs text-[#475569] bg-[#f8fafc]">
+                    <tr className="text-xs text-neutral-600 bg-neutral-50">
                       <th className="px-3 py-2 rounded-l-lg">Name</th>
                       <th className="px-3 py-2">Type</th>
                       <th className="px-3 py-2">Status</th>
@@ -1078,14 +1041,14 @@ const ProjectDetailView: React.FC<{
                   </thead>
                   <tbody>
                     {projectDocumentList.map((doc) => (
-                      <tr key={doc.id} className="border-t border-[#e5e7eb] hover:bg-[#f8fafc] transition-colors">
+                      <tr key={doc.id} className="border-t border-neutral-200 hover:bg-neutral-50 transition-colors">
                         <td className="px-3 py-2.5">
-                          <div className="text-sm font-medium text-[#0f172a]">{doc.name}</div>
-                          {doc.notes && <div className="text-xs text-[#64748b]">{doc.notes}</div>}
+                          <div className="text-sm font-medium text-black">{doc.name}</div>
+                          {doc.notes && <div className="text-xs text-neutral-500">{doc.notes}</div>}
                         </td>
-                        <td className="px-3 py-2.5 text-sm text-[#64748b]">{docTypeLabels[doc.type] || doc.type}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#64748b]">{doc.status || '—'}</td>
-                        <td className="px-3 py-2.5">{doc.url ? <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#2563eb] hover:underline">Open ↗</a> : <span className="text-xs text-[#94a3b8]">—</span>}</td>
+                        <td className="px-3 py-2.5 text-sm text-neutral-500">{docTypeLabels[doc.type] || doc.type}</td>
+                        <td className="px-3 py-2.5 text-sm text-neutral-500">{doc.status || '—'}</td>
+                        <td className="px-3 py-2.5">{doc.url ? <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-neutral-700 hover:underline">Open ↗</a> : <span className="text-xs text-neutral-400">—</span>}</td>
                         <td className="px-3 py-2.5"><Button variant="danger" onClick={() => onDeleteDocument(doc.id)}>Delete</Button></td>
                       </tr>
                     ))}
@@ -1098,15 +1061,15 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Messages Tab ── */}
         {activeTab === 'messages' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Related Messages ({relatedMessages.length})</h3>
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-black mb-3">Related Messages ({relatedMessages.length})</h3>
             {relatedMessages.length === 0 ? (
               <EmptyStateDisplay message="No related messages yet." hint="Messages linked to this project's company or person will appear here." />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left table-auto">
                   <thead>
-                    <tr className="text-xs text-[#475569] bg-[#f8fafc]">
+                    <tr className="text-xs text-neutral-600 bg-neutral-50">
                       <th className="px-3 py-2 rounded-l-lg">Person</th>
                       <th className="px-3 py-2">Company</th>
                       <th className="px-3 py-2">Channel</th>
@@ -1117,13 +1080,13 @@ const ProjectDetailView: React.FC<{
                   </thead>
                   <tbody>
                     {relatedMessages.map((m) => (
-                      <tr key={m.id} className="border-t border-[#e5e7eb] hover:bg-[#f8fafc] transition-colors">
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.personName || '—'}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.companyName || '—'}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.channel || '—'}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.messageType || '—'}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.sentDate ? formatDate(m.sentDate) : '—'}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#0f172a]">{m.replyStatus || '—'}</td>
+                      <tr key={m.id} className="border-t border-neutral-200 hover:bg-neutral-50 transition-colors">
+                        <td className="px-3 py-2.5 text-sm text-black">{m.personName || '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-black">{m.companyName || '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-black">{m.channel || '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-black">{m.messageType || '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-black">{m.sentDate ? formatDate(m.sentDate) : '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-black">{m.replyStatus || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1135,10 +1098,10 @@ const ProjectDetailView: React.FC<{
 
         {/* ── Notes Tab ── */}
         {activeTab === 'notes' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-[#0f172a]">Project Notes</h3>
-              <Button variant="secondary" onClick={() => { setNoteText(project.notes || ''); setShowNoteInput(!showNoteInput); }}>
+              <h3 className="text-sm font-semibold text-black">Project Notes</h3>
+              <Button variant="outline" onClick={() => { setNoteText(project.notes || ''); setShowNoteInput(!showNoteInput); }}>
                 {showNoteInput ? 'Cancel' : project.notes ? 'Edit' : 'Add Note'}
               </Button>
             </div>
@@ -1148,36 +1111,34 @@ const ProjectDetailView: React.FC<{
                 <FormTextarea value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Write your notes here..." rows={4} />
                 <div className="flex gap-2">
                   <Button variant="primary" onClick={handleQuickNoteSave} disabled={!noteText.trim()}>Save Note</Button>
-                  <Button variant="secondary" onClick={() => setShowNoteInput(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => setShowNoteInput(false)}>Cancel</Button>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-[#64748b] whitespace-pre-wrap">{project.notes || 'No notes yet.'}</p>
+              <p className="text-sm text-neutral-500 whitespace-pre-wrap">{project.notes || 'No notes yet.'}</p>
             )}
 
-            <div className="mt-6 pt-4 border-t border-[#e5e7eb]">
-              <h4 className="text-sm font-semibold text-[#0f172a] mb-2">Next Action</h4>
-              <p className="text-sm text-[#64748b]">{project.nextAction || 'No next action set.'}</p>
+            <div className="mt-6 pt-4 border-t border-neutral-200">
+              <h4 className="text-sm font-semibold text-black mb-2">Next Action</h4>
+              <p className="text-sm text-neutral-500">{project.nextAction || 'No next action set.'}</p>
             </div>
           </div>
         )}
 
         {/* ── Activity Tab ── */}
         {activeTab === 'activity' && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-            <h3 className="text-sm font-semibold text-[#0f172a] mb-3">Activity Timeline</h3>
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-black mb-3">Activity Timeline</h3>
             {activityFeed.length === 0 ? (
               <EmptyStateDisplay message="No activity yet." hint="Project activity will appear here as you work." />
             ) : (
               <div className="space-y-2">
                 {activityFeed.map((item) => (
-                  <div key={item.id} className="flex items-start gap-3 py-2 border-b border-[#f1f5f9] last:border-0">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                      item.type === 'task' ? 'bg-[#2563eb]' : item.type === 'time' ? 'bg-[#f59e0b]' : item.type === 'meeting' ? 'bg-[#8b5cf6]' : item.type === 'document' ? 'bg-[#10b981]' : item.type === 'finance' ? 'bg-[#ef4444]' : 'bg-[#94a3b8]'
-                    }`} />
+                  <div key={item.id} className="flex items-start gap-3 py-2 border-b border-neutral-100 last:border-0">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${activityDotBg[item.type] || 'bg-neutral-300'}`} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[#0f172a]">{item.title}</div>
-                      <div className="text-xs text-[#94a3b8] mt-0.5 flex items-center gap-2">
+                      <div className="text-sm text-black">{item.title}</div>
+                      <div className="text-xs text-neutral-400 mt-0.5 flex items-center gap-2">
                         <span>{item.source}</span>
                         <span>·</span>
                         <span>{formatDateTime(item.date)}</span>
@@ -1193,19 +1154,19 @@ const ProjectDetailView: React.FC<{
 
       {/* ── Right Sidebar ── */}
       <div className="space-y-4">
-        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Project Summary</h3>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Project Summary</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-[#64748b]">Status</span><span className="font-medium text-[#0f172a] capitalize">{project.status || '—'}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Phase</span><span className="font-medium text-[#0f172a]">{phaseLabel(project.phase)}</span></div>
-            <div className="flex justify-between items-center"><span className="text-[#64748b]">Priority</span><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${priorityColors[project.priority || ''] || 'bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1]'}`}>{priorityLabel(project.priority)}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Progress</span><span className="font-medium text-[#0f172a]">{progressDraft}%</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Status</span><span className="font-medium text-black capitalize">{project.status || '—'}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Phase</span><span className="font-medium text-black">{phaseLabel(project.phase)}</span></div>
+            <div className="flex justify-between items-center"><span className="text-neutral-500">Priority</span><Badge variant={priorityBadgeVariant[project.priority || ''] || 'neutral'}>{priorityLabel(project.priority)}</Badge></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Progress</span><span className="font-medium text-black">{progressDraft}%</span></div>
           </div>
           <div className="mt-3"><ProgressBar value={progressDraft} /></div>
         </div>
 
-        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Quick Stats</h3>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Quick Stats</h3>
           <div className="grid grid-cols-2 gap-2">
             <StatCard title="Tasks" value={taskStats.open} />
             <StatCard title="Done" value={taskStats.completed} />
@@ -1214,54 +1175,54 @@ const ProjectDetailView: React.FC<{
           </div>
         </div>
 
-        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Finance</h3>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Finance</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-[#64748b]">Income</span><span className="font-medium text-[#0f172a]">{(financeStats.income || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Expenses</span><span className="font-medium text-[#0f172a]">{(financeStats.expenses || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Unpaid</span><span className={`font-medium ${financeStats.unpaid > 0 ? 'text-[#991b1b]' : 'text-[#0f172a]'}`}>{(financeStats.unpaid || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between"><span className="text-[#64748b]">Paid</span><span className="font-medium text-[#0f172a]">{(financeStats.paid || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Income</span><span className="font-medium text-black">{(financeStats.income || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Expenses</span><span className="font-medium text-black">{(financeStats.expenses || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Unpaid</span><span className={`font-medium ${financeStats.unpaid > 0 ? 'text-red-700' : 'text-black'}`}>{(financeStats.unpaid || 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-500">Paid</span><span className="font-medium text-black">{(financeStats.paid || 0).toLocaleString()}</span></div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-          <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-3">Linked</h3>
+        <div className="rounded-lg border border-neutral-200 bg-white p-4">
+          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Linked</h3>
           <div className="space-y-2 text-sm">
             {company ? (
               <div>
-                <div className="text-xs text-[#94a3b8] uppercase">Company</div>
-                <div className="font-medium text-[#0f172a]">{company.name}</div>
-                {company.industry && <div className="text-[#64748b] text-xs">{company.industry}</div>}
+                <div className="text-xs text-neutral-400 uppercase">Company</div>
+                <div className="font-medium text-black">{company.name}</div>
+                {company.industry && <div className="text-neutral-500 text-xs">{company.industry}</div>}
               </div>
             ) : (
-              <div><div className="text-xs text-[#94a3b8] uppercase">Company</div><div className="text-[#64748b]">No company linked</div></div>
+              <div><div className="text-xs text-neutral-400 uppercase">Company</div><div className="text-neutral-500">No company linked</div></div>
             )}
             {person1 ? (
               <div className="mt-2">
-                <div className="text-xs text-[#94a3b8] uppercase">Person</div>
-                <div className="font-medium text-[#0f172a]">{person1.fullName}</div>
-                {person1.role && <div className="text-[#64748b] text-xs">{person1.role}</div>}
+                <div className="text-xs text-neutral-400 uppercase">Person</div>
+                <div className="font-medium text-black">{person1.fullName}</div>
+                {person1.role && <div className="text-neutral-500 text-xs">{person1.role}</div>}
               </div>
             ) : (
-              <div className="mt-2"><div className="text-xs text-[#94a3b8] uppercase">Person</div><div className="text-[#64748b]">No person linked</div></div>
+              <div className="mt-2"><div className="text-xs text-neutral-400 uppercase">Person</div><div className="text-neutral-500">No person linked</div></div>
             )}
           </div>
         </div>
 
         {project.nextAction && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-            <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-1">Next Action</h3>
-            <p className="text-sm text-[#64748b]">{project.nextAction}</p>
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
+            <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-1">Next Action</h3>
+            <p className="text-sm text-neutral-500">{project.nextAction}</p>
           </div>
         )}
 
         {(project.portfolioUrl || project.figmaUrl || project.githubUrl) && (
-          <div className="rounded-lg border border-[#e5e7eb] bg-white shadow-sm p-4">
-            <h3 className="text-xs font-semibold text-[#0f172a] uppercase tracking-wider mb-2">Links</h3>
+          <div className="rounded-lg border border-neutral-200 bg-white p-4">
+            <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-2">Links</h3>
             <div className="flex flex-wrap gap-2">
-              {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Portfolio ↗</a>}
-              {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">Figma ↗</a>}
-              {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-[#e5e7eb] text-[#2563eb] hover:bg-[#eff6ff] transition-all">GitHub ↗</a>}
+              {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">Portfolio ↗</a>}
+              {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">Figma ↗</a>}
+              {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">GitHub ↗</a>}
             </div>
           </div>
         )}

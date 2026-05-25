@@ -9,13 +9,11 @@ import type {
 } from '../../types/opportunities';
 import ProjectDetailView from './ProjectDetailView';
 import Button from '../ui/Button';
-import { Card, CardContent } from '../ui/Card';
 import Badge from '../ui/Badge';
-import StatCard from '../ui/StatCard';
 
-const stageBadgeVariant: Record<string, 'success' | 'blue' | 'warning' | 'danger' | 'neutral'> = {
+const stageBadgeVariant: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
   active: 'success',
-  planned: 'blue',
+  planned: 'neutral',
   paused: 'warning',
   blocked: 'danger',
   completed: 'success',
@@ -36,10 +34,15 @@ const clampProgress = (value: unknown) => {
 
 const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
   <div className="w-full bg-neutral-200 rounded-full h-2 overflow-hidden">
-    <div
-      className="h-full rounded-full bg-black transition-all duration-300"
-      style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
-    />
+    <div className="h-full rounded-full bg-black transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+  </div>
+);
+
+const StatBox: React.FC<{ label: string; value: string | number; subtitle?: string }> = ({ label, value, subtitle }) => (
+  <div className="rounded-xl border border-neutral-200 bg-white p-3 min-w-0">
+    <div className="text-xs text-neutral-500 font-medium truncate">{label}</div>
+    <div className="mt-0.5 text-xl font-bold text-black leading-tight">{value}</div>
+    {subtitle && <div className="mt-0.5 text-xs text-neutral-400 truncate">{subtitle}</div>}
   </div>
 );
 
@@ -79,13 +82,41 @@ const ProjectsPanel: React.FC<{
   const stats = useMemo(() => ({
     total: projects.length,
     active: projects.filter((p) => p.status === 'active').length,
-    portfolio: projects.filter((p) => p.type === 'portfolio').length,
-    client: projects.filter((p) => p.type === 'client').length,
+    planned: projects.filter((p) => p.status === 'planned').length,
     completed: projects.filter((p) => p.status === 'completed').length,
-    blocked: projects.filter((p) => p.status === 'blocked').length,
+    highPriority: projects.filter((p) => p.priority === 'high').length,
+    avgProgress: projects.length > 0 ? Math.round(projects.reduce((s, p) => s + clampProgress(p.progress), 0) / projects.length) : 0,
   }), [projects]);
 
+  const totalHoursLogged = useMemo(
+    () => projectTimeLogs.reduce((s, l) => s + (l.hours || 0), 0),
+    [projectTimeLogs],
+  );
+
   const companyById = useMemo(() => new Map(companies.map((c) => [c.id, c])), [companies]);
+
+  const typeLabel = (type?: string) => {
+    const labels: Record<string, string> = {
+      portfolio: 'Portfolio', client: 'Client', personal_product: 'Personal',
+      case_study: 'Case Study', learning: 'Learning', experiment: 'Experiment',
+    };
+    return labels[type || ''] || type || '—';
+  };
+
+  const phaseLabel = (phase?: string) => {
+    const labels: Record<string, string> = {
+      idea: 'Idea', research: 'Research', ux_audit: 'UX Audit', wireframes: 'Wireframes',
+      ui_design: 'UI Design', prototype: 'Prototype', case_study: 'Case Study',
+      published: 'Published', archived: 'Archived',
+    };
+    return labels[phase || ''] || phase || '—';
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return '—';
+    try { return new Date(date).toLocaleDateString(); } catch { return '—'; }
+  };
+
   if (selectedProject) {
     return (
       <ProjectDetailView
@@ -120,140 +151,89 @@ const ProjectsPanel: React.FC<{
     );
   }
 
-  const typeLabel = (type?: string) => {
-    const labels: Record<string, string> = {
-      portfolio: 'Portfolio',
-      client: 'Client',
-      personal_product: 'Personal',
-      case_study: 'Case Study',
-      learning: 'Learning',
-      experiment: 'Experiment',
-    };
-    return labels[type || ''] || type || '—';
-  };
-
-  const phaseLabel = (phase?: string) => {
-    const labels: Record<string, string> = {
-      idea: 'Idea',
-      research: 'Research',
-      ux_audit: 'UX Audit',
-      wireframes: 'Wireframes',
-      ui_design: 'UI Design',
-      prototype: 'Prototype',
-      case_study: 'Case Study',
-      published: 'Published',
-      archived: 'Archived',
-    };
-    return labels[phase || ''] || phase || '—';
-  };
-
-  const formatDate = (date?: string) => {
-    if (!date) return '—';
-    try {
-      return new Date(date).toLocaleDateString();
-    } catch {
-      return '—';
-    }
-  };
-
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-black">Projects</h2>
-          <p className="mt-1 text-sm text-neutral-500">Track all your work — portfolio, client, case studies, and experiments.</p>
-        </div>
-        <Button variant="primary" size="sm" onClick={onAddProject}>Add Project</Button>
+    <div className="space-y-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <StatBox label="Total Projects" value={stats.total} subtitle="Current total" />
+        <StatBox label="Active" value={stats.active} />
+        <StatBox label="Planned" value={stats.planned} />
+        <StatBox label="Completed" value={stats.completed} />
+        <StatBox label="High Priority" value={stats.highPriority} />
+        <StatBox label="Avg Progress" value={stats.avgProgress ? `${stats.avgProgress}%` : '—'} />
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <StatCard label="Total" value={stats.total} />
-        <StatCard label="Active" value={stats.active} />
-        <StatCard label="Portfolio" value={stats.portfolio} />
-        <StatCard label="Client" value={stats.client} />
-        <StatCard label="Completed" value={stats.completed} />
-        <StatCard label="Blocked" value={stats.blocked} />
-      </div>
-
-      {/* Table */}
-      <Card>
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-lg text-black">All Projects</h3>
-            <span className="text-xs text-neutral-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</span>
+      {/* All Projects */}
+      <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
+          <div>
+            <h3 className="text-sm font-semibold text-black">All Projects</h3>
+            <p className="text-xs text-neutral-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
           </div>
-
-          {projects.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-neutral-200 bg-white p-8 text-center">
-              <div className="text-sm text-neutral-500">No projects yet. Add your first project.</div>
-              <div className="mt-2 text-xs text-neutral-400">Click "Add Project" to track portfolio work, client projects, or case studies.</div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left table-auto">
-                <thead>
-                  <tr className="text-xs text-neutral-600 bg-neutral-50">
-                    <th className="px-3 py-2">Name</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Phase</th>
-                    <th className="px-3 py-2">Priority</th>
-                    <th className="px-3 py-2">Progress</th>
-                    <th className="px-3 py-2">Deadline</th>
-                    <th className="px-3 py-2">Company</th>
-                    <th className="px-3 py-2">Next Action</th>
-                    <th className="px-3 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.map((p) => (
-                    <tr key={p.id} className="border-t border-neutral-200 hover:bg-neutral-50 cursor-pointer" onClick={() => setSelectedProjectId(p.id)}>
-                      <td className="px-3 py-3">
-                        <div className="font-semibold text-black hover:underline">{p.name}</div>
-                        {p.notes && <div className="text-xs text-neutral-500 truncate max-w-[200px]">{p.notes}</div>}
-                      </td>
-                      <td className="px-3 py-3 text-sm text-black">{typeLabel(p.type)}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant={stageBadgeVariant[p.status || ''] || 'neutral'}>{p.status || '—'}</Badge>
-                      </td>
-                      <td className="px-3 py-3 text-sm text-black">{phaseLabel(p.phase)}</td>
-                      <td className="px-3 py-3">
-                        <Badge variant={priorityBadgeVariant[p.priority || ''] || 'neutral'}>{p.priority || '—'}</Badge>
-                      </td>
-                      <td className="px-3 py-3 min-w-[100px]">
-                        <div className="flex items-center gap-2">
-                          <ProgressBar value={clampProgress(p.progress)} />
-                          <span className="text-xs text-neutral-500">{clampProgress(p.progress)}%</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-sm text-black">{formatDate(p.deadline)}</td>
-                      <td className="px-3 py-3 text-sm text-black">{p.relatedCompanyName || companyById.get(p.relatedCompanyId || '')?.name || '—'}</td>
-                      <td className="px-3 py-3 text-xs text-neutral-500 max-w-[120px] truncate">{p.nextAction || '—'}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-1">
-                          <Button type="button" variant="outline" size="sm" onClick={() => onEdit(p)}>Edit</Button>
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="sm"
-                            onClick={() => {
-                              if (window.confirm(`Delete project "${p.name}"?`)) onDelete(p.id);
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <Button variant="primary" size="sm" onClick={onAddProject}>+ Add Project</Button>
         </div>
-      </Card>
-    </section>
+
+        {projects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-xs text-neutral-400">
+            <span className="font-medium text-neutral-500">No projects yet</span>
+            <span className="mt-1">Add your first project to get started.</span>
+            <Button variant="primary" size="sm" className="mt-3" onClick={onAddProject}>+ Add Project</Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Name</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Type</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Status</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Phase</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Priority</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Progress</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Deadline</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Company</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Next Action</th>
+                  <th className="px-3 py-2 text-xs font-medium text-neutral-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((p) => (
+                  <tr key={p.id} className="border-t border-neutral-200 hover:bg-neutral-50 cursor-pointer" onClick={() => setSelectedProjectId(p.id)}>
+                    <td className="px-3 py-3">
+                      <div className="font-medium text-black text-sm hover:underline truncate max-w-[180px]">{p.name}</div>
+                      {p.notes && <div className="text-xs text-neutral-500 truncate max-w-[180px]">{p.notes}</div>}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-black">{typeLabel(p.type)}</td>
+                    <td className="px-3 py-3">
+                      <Badge variant={stageBadgeVariant[p.status || ''] || 'neutral'}>{p.status || '—'}</Badge>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-black">{phaseLabel(p.phase)}</td>
+                    <td className="px-3 py-3">
+                      {p.priority ? <Badge variant={priorityBadgeVariant[p.priority] || 'neutral'}>{p.priority}</Badge> : <span className="text-xs text-neutral-400">—</span>}
+                    </td>
+                    <td className="px-3 py-3 min-w-[100px]">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1"><ProgressBar value={clampProgress(p.progress)} /></div>
+                        <span className="text-xs text-neutral-500">{clampProgress(p.progress)}%</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-black whitespace-nowrap">{formatDate(p.deadline)}</td>
+                    <td className="px-3 py-3 text-xs text-black truncate max-w-[120px]">{p.relatedCompanyName || companyById.get(p.relatedCompanyId || '')?.name || '—'}</td>
+                    <td className="px-3 py-3 text-xs text-neutral-500 truncate max-w-[120px]">{p.nextAction || '—'}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => onEdit(p)}>Edit</Button>
+                        <Button type="button" variant="danger" size="sm" onClick={() => { if (window.confirm(`Delete project "${p.name}"?`)) onDelete(p.id); }}>Delete</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
