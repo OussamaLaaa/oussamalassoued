@@ -3,8 +3,6 @@ import type { OutreachMessage } from '../../types/opportunities';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
 import StatCard from '../ui/StatCard';
 
 export interface MessageFilters {
@@ -198,115 +196,185 @@ const MessagesTable: React.FC<{
 
   return (
     <div className="space-y-4">
-      <section className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Total Messages" value={total} hint="Current total" />
-        <StatCard label="Sent" value={sent} hint="Logged outreach" />
-        <StatCard label="Replies" value={replies} hint="Positive responses" />
+        <StatCard label="Sent" value={sent} hint="Last 30 days" />
+        <StatCard label="Replies" value={replies} hint="Last 30 days" />
         <StatCard label="Follow-ups Due" value={followUpsDue} hint="Today" />
         <StatCard label="No Reply" value={noReply} hint="Needs nudge" />
         <StatCard label="Response Rate" value={`${responseRate}%`} hint="Replied / Sent" />
       </section>
 
-      <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-        <div className="border-b border-neutral-200 px-5 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-neutral-900">Messages</h2>
-              <p className="mt-1 text-xs text-neutral-500">Outreach messages, replies, and follow-ups.</p>
-            </div>
-            <div className="text-xs text-neutral-500">
-              {filtered.length} / {messages.length}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2">
+        <div className="relative min-w-0 flex-1">
+          <svg
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            value={filters?.searchQuery || ''}
+            onChange={(event) => setFilter('searchQuery', event.target.value)}
+            placeholder="Search company, person, or summary..."
+            className="h-9 w-full rounded-md border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+          />
+        </div>
+        <select
+          value={filters?.replyStatus || ''}
+          onChange={(event) => setFilter('replyStatus', event.target.value)}
+          className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.replyStatus ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+        >
+          {replyStatusOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select
+          value={filters?.followUp || ''}
+          onChange={(event) => setFilter('followUp', event.target.value)}
+          className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.followUp ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+        >
+          {followUpOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select
+          value={filters?.channel || ''}
+          onChange={(event) => setFilter('channel', event.target.value)}
+          className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.channel ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+        >
+          {channelOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select
+          value={filters?.messageType || ''}
+          onChange={(event) => setFilter('messageType', event.target.value)}
+          className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.messageType ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+        >
+          {typeOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select
+          value={filters?.dateRange || ''}
+          onChange={(event) => setFilter('dateRange', event.target.value)}
+          className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.dateRange ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+        >
+          {dateRangeOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {hasActiveFilters ? (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear
+          </Button>
+        ) : null}
+      </div>
+
+      {filtered.length ? (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Date</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Company</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Person</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Channel</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Type</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Reply</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Follow-up</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap">Summary</th>
+                  <th className="px-4 py-2.5 font-medium whitespace-nowrap text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((message) => (
+                  <tr key={message.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors">
+                    <td className="px-4 py-3 align-middle whitespace-nowrap text-sm text-neutral-500">
+                      {formatDate(message.sentDate || message.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-sm text-neutral-900 max-w-[180px] truncate font-medium">
+                      {message.companyName || '—'}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-sm text-neutral-700 max-w-[160px] truncate">
+                      {message.personName || '—'}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="neutral">{message.channel || 'Other'}</Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant="neutral">{message.messageType || 'Other'}</Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <Badge variant={getReplyVariant(message.replyStatus)}>
+                        {message.replyStatus?.replace('_', ' ') || 'none'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      {message.nextFollowUpDate ? (
+                        <Badge variant={getFollowUpVariant(message.nextFollowUpDate)}>
+                          {formatFollowUp(message.nextFollowUpDate)}
+                        </Badge>
+                      ) : (
+                        <span className="text-neutral-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-middle text-sm text-neutral-600 max-w-[240px] truncate">
+                      {message.replySummary || message.messageText || '—'}
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex items-center justify-end gap-1">
+                        {onEdit ? (
+                          <button
+                            type="button"
+                            aria-label="Edit"
+                            onClick={() => onEdit(message)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            </svg>
+                          </button>
+                        ) : null}
+                        {onDelete ? (
+                          <button
+                            type="button"
+                            aria-label="Delete"
+                            onClick={() => onDelete(message.id)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            </svg>
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-neutral-200 bg-white">
+          <div className="px-5 py-8 text-center">
+            <div className="mx-auto max-w-sm">
+              <h4 className="text-sm font-semibold text-neutral-900">No messages match the current filters.</h4>
+              <p className="mt-1 text-sm text-neutral-500">Try changing filters or log a new outreach message.</p>
+              {onLogMessage ? (
+                <div className="mt-4 inline-flex">
+                  <Button variant="primary" size="sm" onClick={onLogMessage}>Log Message</Button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
-
-        <div className="space-y-4 p-5">
-          {filters ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-              <Input
-                value={filters.searchQuery}
-                onChange={(event) => setFilter('searchQuery', event.target.value)}
-                placeholder="Search company, person, or summary..."
-                className="min-w-[240px] flex-1"
-              />
-              <Select value={filters.replyStatus} onChange={(event) => setFilter('replyStatus', event.target.value)} options={replyStatusOptions} />
-              <Select value={filters.followUp} onChange={(event) => setFilter('followUp', event.target.value)} options={followUpOptions} />
-              <Select value={filters.channel} onChange={(event) => setFilter('channel', event.target.value)} options={channelOptions} />
-              <Select value={filters.messageType} onChange={(event) => setFilter('messageType', event.target.value)} options={typeOptions} />
-              <Select value={filters.dateRange} onChange={(event) => setFilter('dateRange', event.target.value)} options={dateRangeOptions} />
-              {hasActiveFilters ? (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-700 hover:text-neutral-900">
-                  Clear filters
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-
-          {filtered.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-[1280px] w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-                    <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Company</th>
-                    <th className="px-4 py-3 font-medium">Person</th>
-                    <th className="px-4 py-3 font-medium">Channel</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Reply</th>
-                    <th className="px-4 py-3 font-medium">Follow-up</th>
-                    <th className="px-4 py-3 font-medium">Summary</th>
-                    <th className="px-4 py-3 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((message) => (
-                    <tr key={message.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50">
-                      <td className="px-4 py-4 align-top whitespace-nowrap text-sm text-neutral-600">
-                        {formatDate(message.sentDate || message.createdAt)}
-                      </td>
-                      <td className="px-4 py-4 align-top font-semibold text-neutral-900">{message.companyName || '—'}</td>
-                      <td className="px-4 py-4 align-top text-neutral-700">{message.personName || '—'}</td>
-                      <td className="px-4 py-4 align-top"><Badge variant="neutral">{message.channel || 'Other'}</Badge></td>
-                      <td className="px-4 py-4 align-top"><Badge variant="neutral">{message.messageType || 'Other'}</Badge></td>
-                      <td className="px-4 py-4 align-top"><Badge variant={getReplyVariant(message.replyStatus)}>{message.replyStatus || 'none'}</Badge></td>
-                      <td className="px-4 py-4 align-top whitespace-nowrap text-sm text-neutral-700">
-                        {message.nextFollowUpDate ? (
-                          <Badge variant={getFollowUpVariant(message.nextFollowUpDate)}>{formatFollowUp(message.nextFollowUpDate)}</Badge>
-                        ) : (
-                          <span className="text-neutral-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 align-top text-neutral-600 max-w-[360px] truncate">
-                        {message.replySummary || message.messageText || '—'}
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {onEdit ? (
-                            <Button variant="ghost" size="sm" onClick={() => onEdit(message)} className="text-neutral-700 hover:text-neutral-900">
-                              Edit
-                            </Button>
-                          ) : null}
-                          {onDelete ? (
-                            <Button variant="ghost" size="sm" onClick={() => onDelete(message.id)} className="text-neutral-700 hover:text-neutral-900">
-                              Delete
-                            </Button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState
-              title="No messages match the current filters."
-              description="Try changing filters or log a new outreach message."
-              action={onLogMessage ? <Button variant="primary" size="sm" onClick={onLogMessage}>Log Message</Button> : undefined}
-            />
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
