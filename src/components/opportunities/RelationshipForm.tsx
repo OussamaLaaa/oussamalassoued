@@ -80,8 +80,9 @@ const createInitialState = (initialData?: Partial<RelationshipInput>): Relations
   notes: initialData?.notes,
 });
 
-const baseInput = 'w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15';
-const baseLabel = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#64748b]';
+const baseInput = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
+const baseTextarea = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
+const baseLabel = 'text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500';
 
 const RelationshipForm: React.FC<{
   people?: Person[];
@@ -143,9 +144,9 @@ const RelationshipForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-[#0f172a]">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Display Name</div>
           <input
             value={form.displayName}
@@ -155,7 +156,7 @@ const RelationshipForm: React.FC<{
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Linked Person</div>
           <select
             value={toInputValue(form.personId)}
@@ -169,7 +170,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Category</div>
           <select
             value={toInputValue(form.categoryId)}
@@ -190,7 +191,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Domain</div>
           <select
             value={toInputValue(form.domain)}
@@ -201,7 +202,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Relationship Type</div>
           <select
             value={toInputValue(form.relationshipType)}
@@ -212,7 +213,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Strength</div>
           <select
             value={toInputValue(form.relationshipStrength)}
@@ -223,7 +224,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Trust Level</div>
           <select
             value={toInputValue(form.trustLevel)}
@@ -234,7 +235,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Status</div>
           <select
             value={toInputValue(form.status)}
@@ -245,7 +246,7 @@ const RelationshipForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Last Contact Date</div>
           <input
             type="date"
@@ -255,7 +256,7 @@ const RelationshipForm: React.FC<{
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Next Contact Date</div>
           <input
             type="date"
@@ -265,107 +266,107 @@ const RelationshipForm: React.FC<{
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>How We Met</div>
           <textarea
             value={form.howWeMet || ''}
             onChange={(event) => setField('howWeMet', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>What They Need</div>
           <textarea
             value={form.whatTheyNeed || ''}
             onChange={(event) => setField('whatTheyNeed', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>How I Can Help</div>
           <textarea
             value={form.howICanHelp || ''}
             onChange={(event) => setField('howICanHelp', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>How They Can Help Me</div>
           <textarea
             value={form.howTheyCanHelpMe || ''}
             onChange={(event) => setField('howTheyCanHelpMe', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Shared Interests</div>
           <textarea
             value={form.sharedInterests || ''}
             onChange={(event) => setField('sharedInterests', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Next Action</div>
           <textarea
             value={form.nextAction || ''}
             onChange={(event) => setField('nextAction', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Problems / Friction</div>
           <textarea
             value={form.problems || ''}
             onChange={(event) => setField('problems', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Risk Notes</div>
           <textarea
             value={form.riskNotes || ''}
             onChange={(event) => setField('riskNotes', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Notes</div>
           <textarea
             value={form.notes || ''}
             onChange={(event) => setField('notes', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
       </div>
 
-      {error ? <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">{error}</div> : null}
+      {error ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {saving ? 'Saving...' : submitLabel}
         </button>

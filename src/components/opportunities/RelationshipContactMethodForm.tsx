@@ -15,8 +15,8 @@ const CONTACT_METHOD_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const baseInput = 'w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15';
-const baseLabel = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#64748b]';
+const baseInput = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
+const baseLabel = 'text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500';
 
 const createInitialState = (initialData?: Partial<RelationshipContactMethod>): RelationshipContactMethodInput => ({
   relationshipId: initialData?.relationshipId ?? '',
@@ -79,10 +79,10 @@ const RelationshipContactMethodForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-[#0f172a]">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
         {!relationshipId ? (
-          <label className="space-y-2 md:col-span-2">
+          <label className="space-y-1.5 md:col-span-2">
             <div className={baseLabel}>Relationship</div>
             <select value={toInputValue(form.relationshipId)} onChange={(event) => setField('relationshipId', event.target.value)} className={baseInput}>
               <option value="">Select a relationship</option>
@@ -98,41 +98,41 @@ const RelationshipContactMethodForm: React.FC<{
           </label>
         ) : null}
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Type</div>
           <select value={toInputValue(form.type)} onChange={(event) => setField('type', event.target.value as RelationshipContactMethodInput['type'])} className={baseInput}>
             {CONTACT_METHOD_TYPES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Label</div>
           <input value={form.label || ''} onChange={(event) => setField('label', event.target.value)} className={baseInput} placeholder="Primary email" />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Value</div>
           <input value={form.value || ''} onChange={(event) => setField('value', event.target.value)} className={baseInput} placeholder="maya@example.com" />
         </label>
 
-        <label className="flex items-center gap-3 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] px-3 py-2 md:col-span-2">
-          <input type="checkbox" checked={form.isPrimary ?? false} onChange={(event) => setField('isPrimary', event.target.checked)} />
-          <span className="text-sm text-[#0f172a]">Primary contact method</span>
+        <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 md:col-span-2">
+          <input type="checkbox" checked={form.isPrimary ?? false} onChange={(event) => setField('isPrimary', event.target.checked)} className="h-4 w-4" />
+          <span className="text-sm text-neutral-900">Primary contact method</span>
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Notes</div>
-          <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={3} className={baseInput} />
+          <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={3} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
         </label>
       </div>
 
-      {error ? <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">{error}</div> : null}
+      {error ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">
           Cancel
         </button>
-        <button type="submit" disabled={saving} className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70">
+        <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70">
           {saving ? 'Saving...' : submitLabel}
         </button>
       </div>

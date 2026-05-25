@@ -30,8 +30,6 @@ type RelationshipAssistantResult = {
   approvalNote: string;
 };
 
-const cardClass = 'rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]';
-
 const AIRelationshipAssistantPanel: React.FC<{
   relationship: Relationship;
   categoryName?: string;
@@ -176,48 +174,46 @@ const AIRelationshipAssistantPanel: React.FC<{
   }
 
   return (
-    <div className="space-y-5">
-      <section className={cardClass}>
+    <div className="space-y-7">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#64748b]">AI Assistant</p>
-            <h3 className="mt-2 text-2xl font-semibold text-[#0f172a]">Relationship analysis and follow-up drafting</h3>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#64748b]">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">AI Assistant</p>
+            <h3 className="mt-2 text-2xl font-semibold text-neutral-900">Relationship analysis and follow-up drafting</h3>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-500">
               This assistant reviews the relationship context, highlights what looks strong or uncertain, and drafts a respectful next step. Nothing is saved automatically.
             </p>
           </div>
-          <div className="rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-xs font-semibold text-[#1d4ed8]">
-            User-approved saves only
-          </div>
+          <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-600">User-approved saves only</span>
         </div>
       </section>
 
-      <section className={cardClass}>
+      <section className="rounded-xl border border-neutral-200 bg-white p-5">
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-4">
             <div>
-              <div className="text-sm font-semibold text-[#0f172a]">Analysis mode</div>
+              <div className="text-sm font-semibold text-neutral-900">Analysis mode</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {modeButtons.map((item) => (
                   <button
                     key={item.value}
                     type="button"
                     onClick={() => setMode(item.value)}
-                    className={`rounded-full border px-3 py-2 text-left text-xs font-semibold transition ${mode === item.value ? 'border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]' : 'border-[#e5e7eb] bg-[#f8fafc] text-[#475569] hover:bg-white'}`}
+                    className={`rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${mode === item.value ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'}`}
                   >
                     <span className="block">{item.label}</span>
-                    <span className="block font-normal text-[11px] text-[#64748b]">{item.hint}</span>
+                    <span className="block font-normal text-[11px] text-neutral-500">{item.hint}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <label className="block space-y-2 text-sm">
-              <span className="font-medium text-[#334155]">Optional guidance</span>
+              <span className="font-medium text-neutral-700">Optional guidance</span>
               <textarea
                 value={instructions}
                 onChange={(event) => setInstructions(event.target.value)}
-                className="min-h-[120px] w-full rounded-2xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-sm text-[#0f172a] outline-none transition focus:border-[#93c5fd]"
+                className="min-h-[120px] w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400"
                 placeholder="Example: focus on a respectful follow-up, mention the shared context, and keep the message low-pressure."
               />
             </label>
@@ -227,7 +223,7 @@ const AIRelationshipAssistantPanel: React.FC<{
                 type="button"
                 onClick={runAnalysis}
                 disabled={loading}
-                className="rounded-full bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#93c5fd]"
+                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? 'Analyzing...' : 'Analyze relationship'}
               </button>
@@ -235,7 +231,7 @@ const AIRelationshipAssistantPanel: React.FC<{
                 type="button"
                 onClick={handleCopyFollowUp}
                 disabled={!result?.followUpDraft}
-                className="rounded-full border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Copy follow-up
               </button>
@@ -243,7 +239,7 @@ const AIRelationshipAssistantPanel: React.FC<{
                 type="button"
                 onClick={handleSaveFollowUp}
                 disabled={!result}
-                className="rounded-full border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Save follow-up
               </button>
@@ -251,32 +247,32 @@ const AIRelationshipAssistantPanel: React.FC<{
                 type="button"
                 onClick={handleApplyNextAction}
                 disabled={!result?.suggestedLogEntry?.nextAction && !result?.nextSteps?.length}
-                className="rounded-full border border-[#e5e7eb] px-4 py-2 text-sm font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Apply next action
               </button>
             </div>
 
-            <div className="rounded-2xl border border-[#bfdbfe] bg-[#eff6ff] px-4 py-3 text-sm text-[#1d4ed8]">
+            <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
               AI assistant output is a draft. Review it before sharing or saving anything.
             </div>
 
-            {error ? <div className="rounded-2xl border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">{error}</div> : null}
-            {successMessage ? <div className="rounded-2xl border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-sm text-[#166534]">{successMessage}</div> : null}
+            {error ? <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+            {successMessage ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div> : null}
           </div>
 
-          <div className="space-y-3 text-sm text-[#334155]">
-            <div className="rounded-2xl bg-[#f8fafc] p-4">
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Current context</div>
+          <div className="space-y-3 text-sm text-neutral-700">
+            <div className="rounded-md bg-neutral-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Current context</div>
               <div className="mt-2 space-y-1">
-                <div><span className="font-medium text-[#0f172a]">Relationship:</span> {relationship.displayName}</div>
-                <div><span className="font-medium text-[#0f172a]">Category:</span> {categoryName || relationship.categoryName || relationship.categorySlug || relationship.domain || 'Uncategorized'}</div>
-                <div><span className="font-medium text-[#0f172a]">Person:</span> {linkedPerson?.fullName || relationship.personName || 'No linked person'}</div>
-                <div><span className="font-medium text-[#0f172a]">Next action:</span> {relationship.nextAction || '—'}</div>
+                <div><span className="font-medium text-neutral-900">Relationship:</span> {relationship.displayName}</div>
+                <div><span className="font-medium text-neutral-900">Category:</span> {categoryName || relationship.categoryName || relationship.categorySlug || relationship.domain || 'Uncategorized'}</div>
+                <div><span className="font-medium text-neutral-900">Person:</span> {linkedPerson?.fullName || relationship.personName || 'No linked person'}</div>
+                <div><span className="font-medium text-neutral-900">Next action:</span> {relationship.nextAction || '—'}</div>
               </div>
             </div>
-            <div className="rounded-2xl bg-[#f8fafc] p-4">
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Data included in the prompt</div>
+            <div className="rounded-md bg-neutral-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Data included in the prompt</div>
               <div className="mt-2 space-y-1">
                 <div>Contact methods: {recentContactMethods.length}</div>
                 <div>Interactions: {recentInteractions.length}</div>
@@ -290,64 +286,64 @@ const AIRelationshipAssistantPanel: React.FC<{
       {result ? (
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-4">
-            <div className={cardClass}>
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Summary</div>
-              <p className="mt-2 text-sm leading-6 text-[#0f172a]">{result.summary || 'No summary returned.'}</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</div>
+              <p className="mt-2 text-sm leading-6 text-neutral-900">{result.summary || 'No summary returned.'}</p>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <div className={cardClass}>
-                <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Strengths</div>
-                <div className="mt-3 space-y-2 text-sm text-[#0f172a]">
-                  {result.strengths.length > 0 ? result.strengths.map((item, index) => <div key={index} className="rounded-xl bg-[#f8fafc] px-3 py-2">{item}</div>) : <div className="rounded-xl bg-[#f8fafc] px-3 py-2 text-[#64748b]">No strengths returned.</div>}
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Strengths</div>
+                <div className="mt-3 space-y-2 text-sm text-neutral-900">
+                  {result.strengths.length > 0 ? result.strengths.map((item, index) => <div key={index} className="rounded-md bg-neutral-50 px-3 py-2">{item}</div>) : <div className="rounded-md bg-neutral-50 px-3 py-2 text-neutral-500">No strengths returned.</div>}
                 </div>
               </div>
 
-              <div className={cardClass}>
-                <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Concerns</div>
-                <div className="mt-3 space-y-2 text-sm text-[#0f172a]">
-                  {result.concerns.length > 0 ? result.concerns.map((item, index) => <div key={index} className="rounded-xl bg-[#f8fafc] px-3 py-2">{item}</div>) : <div className="rounded-xl bg-[#f8fafc] px-3 py-2 text-[#64748b]">No concerns returned.</div>}
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Concerns</div>
+                <div className="mt-3 space-y-2 text-sm text-neutral-900">
+                  {result.concerns.length > 0 ? result.concerns.map((item, index) => <div key={index} className="rounded-md bg-neutral-50 px-3 py-2">{item}</div>) : <div className="rounded-md bg-neutral-50 px-3 py-2 text-neutral-500">No concerns returned.</div>}
                 </div>
               </div>
             </div>
 
-            <div className={cardClass}>
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Next steps</div>
-              <div className="mt-3 space-y-2 text-sm text-[#0f172a]">
-                {result.nextSteps.length > 0 ? result.nextSteps.map((item, index) => <div key={index} className="rounded-xl bg-[#f8fafc] px-3 py-2">{item}</div>) : <div className="rounded-xl bg-[#f8fafc] px-3 py-2 text-[#64748b]">No next steps returned.</div>}
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next steps</div>
+              <div className="mt-3 space-y-2 text-sm text-neutral-900">
+                {result.nextSteps.length > 0 ? result.nextSteps.map((item, index) => <div key={index} className="rounded-md bg-neutral-50 px-3 py-2">{item}</div>) : <div className="rounded-md bg-neutral-50 px-3 py-2 text-neutral-500">No next steps returned.</div>}
               </div>
             </div>
           </div>
 
           <aside className="space-y-4">
-            <div className={cardClass}>
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Observations</div>
-              <div className="mt-3 space-y-2 text-sm text-[#0f172a]">
-                {result.observations.length > 0 ? result.observations.map((item, index) => <div key={index} className="rounded-xl bg-[#f8fafc] px-3 py-2">{item}</div>) : <div className="rounded-xl bg-[#f8fafc] px-3 py-2 text-[#64748b]">No observations returned.</div>}
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Observations</div>
+              <div className="mt-3 space-y-2 text-sm text-neutral-900">
+                {result.observations.length > 0 ? result.observations.map((item, index) => <div key={index} className="rounded-md bg-neutral-50 px-3 py-2">{item}</div>) : <div className="rounded-md bg-neutral-50 px-3 py-2 text-neutral-500">No observations returned.</div>}
               </div>
             </div>
 
-            <div className={cardClass}>
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Follow-up draft</div>
-              <div className="mt-3 whitespace-pre-wrap rounded-2xl bg-[#f8fafc] px-3 py-3 text-sm leading-6 text-[#0f172a]">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Follow-up draft</div>
+              <div className="mt-3 whitespace-pre-wrap rounded-md bg-neutral-50 px-3 py-3 text-sm leading-6 text-neutral-900">
                 {result.followUpDraft || 'No follow-up draft returned.'}
               </div>
             </div>
 
-            <div className={cardClass}>
-              <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Suggested save</div>
-              <div className="mt-3 space-y-2 text-sm text-[#0f172a]">
-                <div className="rounded-xl bg-[#f8fafc] px-3 py-2"><span className="font-medium text-[#334155]">Channel:</span> {result.suggestedLogEntry.channel}</div>
-                <div className="rounded-xl bg-[#f8fafc] px-3 py-2"><span className="font-medium text-[#334155]">Type:</span> {result.suggestedLogEntry.type}</div>
-                <div className="rounded-xl bg-[#f8fafc] px-3 py-2"><span className="font-medium text-[#334155]">Summary:</span> {result.suggestedLogEntry.summary || '—'}</div>
-                <div className="rounded-xl bg-[#f8fafc] px-3 py-2"><span className="font-medium text-[#334155]">Next action:</span> {result.suggestedLogEntry.nextAction || '—'}</div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Suggested save</div>
+              <div className="mt-3 space-y-2 text-sm text-neutral-900">
+                <div className="rounded-md bg-neutral-50 px-3 py-2"><span className="font-medium text-neutral-700">Channel:</span> {result.suggestedLogEntry.channel}</div>
+                <div className="rounded-md bg-neutral-50 px-3 py-2"><span className="font-medium text-neutral-700">Type:</span> {result.suggestedLogEntry.type}</div>
+                <div className="rounded-md bg-neutral-50 px-3 py-2"><span className="font-medium text-neutral-700">Summary:</span> {result.suggestedLogEntry.summary || '—'}</div>
+                <div className="rounded-md bg-neutral-50 px-3 py-2"><span className="font-medium text-neutral-700">Next action:</span> {result.suggestedLogEntry.nextAction || '—'}</div>
               </div>
             </div>
 
             {result.approvalNote ? (
-              <div className={cardClass}>
-                <div className="text-xs uppercase tracking-[0.16em] text-[#64748b]">Approval note</div>
-                <p className="mt-2 text-sm leading-6 text-[#0f172a]">{result.approvalNote}</p>
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Approval note</div>
+                <p className="mt-2 text-sm leading-6 text-neutral-900">{result.approvalNote}</p>
               </div>
             ) : null}
           </aside>

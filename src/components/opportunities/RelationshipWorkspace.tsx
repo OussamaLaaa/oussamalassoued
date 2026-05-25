@@ -34,11 +34,11 @@ const WORKSPACE_TABS = [
 
 const badgeClass = (kind?: string) => {
   const value = String(kind || '').toLowerCase();
-  if (['strong', 'high', 'active', 'warm', 'open', 'in_progress'].includes(value)) return 'border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]';
-  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-[#e2e8f0] bg-[#f8fafc] text-[#475569]';
-  if (['weak', 'low', 'cold'].includes(value)) return 'border-[#fde68a] bg-[#fffbeb] text-[#a16207]';
-  if (['avoid', 'archived', 'lost'].includes(value)) return 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]';
-  return 'border-[#dbeafe] bg-[#eff6ff] text-[#1d4ed8]';
+  if (['strong', 'high', 'active', 'warm', 'open', 'in_progress'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';
+  if (['weak', 'low', 'cold'].includes(value)) return 'border-amber-200 bg-amber-50 text-amber-700';
+  if (['avoid', 'archived', 'lost'].includes(value)) return 'border-red-200 bg-red-50 text-red-700';
+  return 'border-neutral-200 bg-neutral-50 text-neutral-600';
 };
 
 const formatDate = (value?: string) => {
@@ -147,16 +147,18 @@ const RelationshipWorkspace: React.FC<{
 
   if (!selectedRelationship) {
     return (
-      <section className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <div className="text-sm text-[#64748b]">Select a relationship to open the workspace.</div>
+      <section className="rounded-xl border border-neutral-200 bg-white p-6">
+        <div className="text-sm text-neutral-500">Select a relationship to open the workspace.</div>
       </section>
     );
   }
 
-  const workspaceButton = 'rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-sm text-[#0f172a] hover:bg-[#f8fafc]';
-  const primaryButton = 'rounded-md bg-[#2563eb] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1d4ed8]';
-  const sectionCard = 'rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]';
-  const statCard = 'rounded-xl border border-[#e5e7eb] bg-[#ffffff] p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]';
+  const relationshipFacts = [
+    { label: 'Category', value: selectedCategory?.name || selectedRelationship.domain || 'Uncategorized' },
+    { label: 'Person', value: linkedPerson?.fullName || 'No linked person' },
+    { label: 'Primary Contact', value: primaryContactMethod ? `${primaryContactMethod.label || primaryContactMethod.type || 'Method'} · ${primaryContactMethod.value || '—'}` : 'No contact methods yet' },
+    { label: 'Next Action', value: selectedRelationship.nextAction || '—' },
+  ];
 
   const handleQuickFollowUp = async () => {
     const defaultDate = selectedRelationship.nextContactDate ? toDateInputValue(selectedRelationship.nextContactDate) : '';
@@ -202,55 +204,48 @@ const RelationshipWorkspace: React.FC<{
     });
   };
 
-  const relationshipFacts = [
-    { label: 'Category', value: selectedCategory?.name || selectedRelationship.domain || 'Uncategorized' },
-    { label: 'Person', value: linkedPerson?.fullName || 'No linked person' },
-    { label: 'Primary Contact', value: primaryContactMethod ? `${primaryContactMethod.label || primaryContactMethod.type || 'Method'} · ${primaryContactMethod.value || '—'}` : 'No contact methods yet' },
-    { label: 'Next Action', value: selectedRelationship.nextAction || '—' },
-  ];
-
   const renderTopCards = () => (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Relationship Strength</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{selectedRelationship.relationshipStrength || '—'}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Trust Level</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{selectedRelationship.trustLevel || '—'}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Last Contact</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{formatDate(selectedRelationship.lastContactDate)}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Contact</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{formatDate(selectedRelationship.nextContactDate)}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Open Opportunities</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{openOpportunityCount}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Interaction Count</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{interactionCount}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Problems / Friction</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{frictionRecorded ? 'Yes' : 'No'}</div></div>
-      <div className={statCard}><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Follow-up</div><div className="mt-2 text-xl font-semibold text-[#0f172a]">{followUpOverdue ? 'Overdue' : 'On track'}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Relationship Strength</div><div className="mt-2 text-xl font-semibold text-neutral-900">{selectedRelationship.relationshipStrength || '—'}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Trust Level</div><div className="mt-2 text-xl font-semibold text-neutral-900">{selectedRelationship.trustLevel || '—'}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Last Contact</div><div className="mt-2 text-xl font-semibold text-neutral-900">{formatDate(selectedRelationship.lastContactDate)}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Contact</div><div className="mt-2 text-xl font-semibold text-neutral-900">{formatDate(selectedRelationship.nextContactDate)}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Open Opportunities</div><div className="mt-2 text-xl font-semibold text-neutral-900">{openOpportunityCount}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Interaction Count</div><div className="mt-2 text-xl font-semibold text-neutral-900">{interactionCount}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Problems / Friction</div><div className="mt-2 text-xl font-semibold text-neutral-900">{frictionRecorded ? 'Yes' : 'No'}</div></div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Follow-up</div><div className="mt-2 text-xl font-semibold text-neutral-900">{followUpOverdue ? 'Overdue' : 'On track'}</div></div>
     </div>
   );
 
   const renderSidebar = () => (
     <aside className="space-y-4 xl:sticky xl:top-4 xl:h-fit">
-      <div className={sectionCard}>
-        <h3 className="text-sm font-semibold text-[#0f172a]">Relationship Facts</h3>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-neutral-900">Relationship Facts</h3>
         <div className="mt-3 space-y-3">
           {relationshipFacts.map((item) => (
-            <div key={item.label} className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">{item.label}</div>
-              <div className="mt-1 text-sm font-medium text-[#0f172a]">{item.value}</div>
+            <div key={item.label} className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{item.label}</div>
+              <div className="mt-1 text-sm font-medium text-neutral-900">{item.value}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className={sectionCard}>
-        <h3 className="text-sm font-semibold text-[#0f172a]">Follow-up Status</h3>
-        <div className="mt-3 space-y-2 text-sm text-[#334155]">
-          <div className="rounded-lg bg-[#f8fafc] p-3">{followUpOverdue ? 'Follow-up overdue' : 'Follow-up on track'}</div>
-          <div className="rounded-lg bg-[#f8fafc] p-3">Next action: {selectedRelationship.nextAction || '—'}</div>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-neutral-900">Follow-up Status</h3>
+        <div className="mt-3 space-y-2 text-sm text-neutral-700">
+          <div className="rounded-md bg-neutral-50 p-3">{followUpOverdue ? 'Follow-up overdue' : 'Follow-up on track'}</div>
+          <div className="rounded-md bg-neutral-50 p-3">Next action: {selectedRelationship.nextAction || '—'}</div>
         </div>
       </div>
 
-      <div className={sectionCard}>
-        <h3 className="text-sm font-semibold text-[#0f172a]">Quick Actions</h3>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-neutral-900">Quick Actions</h3>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" className={primaryButton} onClick={() => setShowInteractionForm(true)}>Add Event</button>
-          <button type="button" className={workspaceButton} onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
-          <button type="button" className={workspaceButton} onClick={() => setShowOpportunityForm(true)}>Add Opportunity</button>
-          <button type="button" className={workspaceButton} onClick={() => void handleMarkFollowedUpToday()}>Mark Followed Up</button>
+          <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowInteractionForm(true)}>Add Event</button>
+          <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
+          <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setShowOpportunityForm(true)}>Add Opportunity</button>
+          <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => void handleMarkFollowedUpToday()}>Mark Followed Up</button>
         </div>
       </div>
     </aside>
@@ -259,59 +254,59 @@ const RelationshipWorkspace: React.FC<{
   const renderOverview = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-4">
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">Overview</h3>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Overview</h3>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">How We Met</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{selectedRelationship.howWeMet || '—'}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How We Met</div>
+              <div className="mt-1 text-sm text-neutral-900">{selectedRelationship.howWeMet || '—'}</div>
             </div>
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Linked Person</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{linkedPerson?.fullName || 'No linked person'}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Person</div>
+              <div className="mt-1 text-sm text-neutral-900">{linkedPerson?.fullName || 'No linked person'}</div>
             </div>
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Last Contact</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{formatDate(selectedRelationship.lastContactDate)}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Last Contact</div>
+              <div className="mt-1 text-sm text-neutral-900">{formatDate(selectedRelationship.lastContactDate)}</div>
             </div>
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Contact</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{formatDate(selectedRelationship.nextContactDate)}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Contact</div>
+              <div className="mt-1 text-sm text-neutral-900">{formatDate(selectedRelationship.nextContactDate)}</div>
             </div>
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{selectedRelationship.nextAction || '—'}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</div>
+              <div className="mt-1 text-sm text-neutral-900">{selectedRelationship.nextAction || '—'}</div>
             </div>
-            <div className="rounded-lg bg-[#f8fafc] p-3">
-              <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Status Summary</div>
-              <div className="mt-1 text-sm text-[#0f172a]">{selectedRelationship.status || '—'} · {selectedRelationship.relationshipStrength || '—'} · {selectedRelationship.trustLevel || '—'}</div>
+            <div className="rounded-md bg-neutral-50 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Status Summary</div>
+              <div className="mt-1 text-sm text-neutral-900">{selectedRelationship.status || '—'} · {selectedRelationship.relationshipStrength || '—'} · {selectedRelationship.trustLevel || '—'}</div>
             </div>
           </div>
         </div>
 
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">Relationship Health</h3>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Relationship Health</h3>
           <div className="mt-3 space-y-2 text-sm">
-            {followUpOverdue ? <div className="rounded-lg border border-[#fde68a] bg-[#fffbeb] px-3 py-2 text-[#a16207]">Follow-up overdue</div> : null}
-            {!interactionCount ? <div className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[#475569]">No interaction history yet</div> : null}
-            {frictionRecorded ? <div className="rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-[#b91c1c]">Friction recorded</div> : null}
-            {strongTrusted ? <div className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-[#166534]">Strong trusted relationship</div> : null}
+            {followUpOverdue ? <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-700">Follow-up overdue</div> : null}
+            {!interactionCount ? <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-600">No interaction history yet</div> : null}
+            {frictionRecorded ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-700">Friction recorded</div> : null}
+            {strongTrusted ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">Strong trusted relationship</div> : null}
           </div>
         </div>
 
-        <div className={sectionCard}>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-[#0f172a]">Relationship Notes</h3>
-              <p className="mt-1 text-sm text-[#64748b]">Edit the base relationship fields in one place.</p>
+              <h3 className="text-sm font-semibold text-neutral-900">Relationship Notes</h3>
+              <p className="mt-1 text-sm text-neutral-500">Edit the base relationship fields in one place.</p>
             </div>
-            <button type="button" className={primaryButton} onClick={() => setShowRelationshipForm(true)}>Edit Relationship</button>
+            <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowRelationshipForm(true)}>Edit Relationship</button>
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm text-[#334155]">
-            <div className="rounded-lg bg-[#f8fafc] p-3"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">What They Need</div><div className="mt-1">{selectedRelationship.whatTheyNeed || '—'}</div></div>
-            <div className="rounded-lg bg-[#f8fafc] p-3"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">How I Can Help</div><div className="mt-1">{selectedRelationship.howICanHelp || '—'}</div></div>
-            <div className="rounded-lg bg-[#f8fafc] p-3"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">How They Can Help Me</div><div className="mt-1">{selectedRelationship.howTheyCanHelpMe || '—'}</div></div>
-            <div className="rounded-lg bg-[#f8fafc] p-3"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Shared Interests</div><div className="mt-1">{selectedRelationship.sharedInterests || '—'}</div></div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm text-neutral-700">
+            <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What They Need</div><div className="mt-1">{selectedRelationship.whatTheyNeed || '—'}</div></div>
+            <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How I Can Help</div><div className="mt-1">{selectedRelationship.howICanHelp || '—'}</div></div>
+            <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How They Can Help Me</div><div className="mt-1">{selectedRelationship.howTheyCanHelpMe || '—'}</div></div>
+            <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Shared Interests</div><div className="mt-1">{selectedRelationship.sharedInterests || '—'}</div></div>
           </div>
         </div>
       </div>
@@ -321,38 +316,38 @@ const RelationshipWorkspace: React.FC<{
 
   const renderContact = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className={sectionCard}>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Contact Methods</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Add LinkedIn, phone, email, WhatsApp, or another channel.</p>
+            <h3 className="text-sm font-semibold text-neutral-900">Contact Methods</h3>
+            <p className="mt-1 text-sm text-neutral-500">Add LinkedIn, phone, email, WhatsApp, or another channel.</p>
           </div>
-          <button type="button" className={primaryButton} onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
+          <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowContactMethodForm(true)}>Add Contact Method</button>
         </div>
         <div className="mt-4 space-y-3">
           {contactMethodItems.length > 0 ? contactMethodItems.map((item) => (
-            <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3">
+            <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{item.label || item.type || 'Contact Method'}</div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-[#64748b]">
-                    <span className="rounded-full border border-[#e5e7eb] bg-white px-2 py-1">{item.type || 'unspecified'}</span>
-                    {item.isPrimary ? <span className={`rounded-full border px-2 py-1 ${badgeClass('strong')}`}>primary</span> : null}
+                  <div className="text-sm font-medium text-neutral-900">{item.label || item.type || 'Contact Method'}</div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                    <span className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs font-medium">{item.type || 'unspecified'}</span>
+                    {item.isPrimary ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass('strong')}`}>primary</span> : null}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className={workspaceButton} onClick={() => setEditingContactMethod(item)}>Edit</button>
-                  <button type="button" className={workspaceButton} onClick={async () => { await handleSetPrimary(item.id); }}>Set Primary</button>
-                  <button type="button" className={workspaceButton} onClick={async () => { await onDeleteRelationshipContactMethod(item.id); }}>Delete</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setEditingContactMethod(item)}>Edit</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={async () => { await handleSetPrimary(item.id); }}>Set Primary</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={async () => { await onDeleteRelationshipContactMethod(item.id); }}>Delete</button>
                 </div>
               </div>
-              <div className="mt-3 text-sm text-[#334155]">
-                <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Value</div>
+              <div className="mt-3 text-sm text-neutral-700">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Value</div>
                 <div className="mt-1">{item.value || '—'}</div>
               </div>
-              {item.notes ? <div className="mt-3 text-sm text-[#334155]"><div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Notes</div><div className="mt-1">{item.notes}</div></div> : null}
+              {item.notes ? <div className="mt-3 text-sm text-neutral-700"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div><div className="mt-1">{item.notes}</div></div> : null}
             </div>
-          )) : <div className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-4 text-sm text-[#64748b]">No contact methods yet. Add LinkedIn, phone, email, WhatsApp, or another channel.</div>}
+          )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No contact methods yet. Add LinkedIn, phone, email, WhatsApp, or another channel.</div>}
         </div>
       </div>
       {renderSidebar()}
@@ -361,37 +356,37 @@ const RelationshipWorkspace: React.FC<{
 
   const renderTimeline = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className={sectionCard}>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Events / Timeline</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Newest events first.</p>
+            <h3 className="text-sm font-semibold text-neutral-900">Events / Timeline</h3>
+            <p className="mt-1 text-sm text-neutral-500">Newest events first.</p>
           </div>
-          <button type="button" className={primaryButton} onClick={() => setShowInteractionForm(true)}>Add Event</button>
+          <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowInteractionForm(true)}>Add Event</button>
         </div>
         <div className="mt-4 space-y-3">
           {timelineItems.length > 0 ? timelineItems.map((item) => (
-            <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3">
+            <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{formatDate(item.interactionDate)}</div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-[#64748b]">
-                    <span className={`rounded-full border px-2 py-1 ${badgeClass(item.channel)}`}>{item.channel || 'channel unknown'}</span>
-                    <span className={`rounded-full border px-2 py-1 ${badgeClass(item.type)}`}>{item.type || 'event'}</span>
+                  <div className="text-sm font-medium text-neutral-900">{formatDate(item.interactionDate)}</div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.channel)}`}>{item.channel || 'channel unknown'}</span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.type)}`}>{item.type || 'event'}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className={workspaceButton} onClick={() => setEditingInteraction(item)}>Edit</button>
-                  <button type="button" className={workspaceButton} onClick={() => void onDeleteRelationshipInteraction(item.id)}>Delete</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setEditingInteraction(item)}>Edit</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => void onDeleteRelationshipInteraction(item.id)}>Delete</button>
                 </div>
               </div>
-              <div className="mt-3 grid gap-2 text-sm text-[#334155] md:grid-cols-2">
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Summary</span><div className="mt-1">{item.summary || '—'}</div></div>
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Outcome</span><div className="mt-1">{item.outcome || '—'}</div></div>
+              <div className="mt-3 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</span><div className="mt-1">{item.summary || '—'}</div></div>
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Outcome</span><div className="mt-1">{item.outcome || '—'}</div></div>
               </div>
-              <div className="mt-3 text-sm text-[#334155]"><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
+              <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
             </div>
-          )) : <div className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-4 text-sm text-[#64748b]">No interaction history yet.</div>}
+          )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No interaction history yet.</div>}
         </div>
       </div>
       {renderSidebar()}
@@ -401,25 +396,25 @@ const RelationshipWorkspace: React.FC<{
   const renderValue = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">What They Need</h3>
-          <p className="mt-3 text-sm text-[#64748b]">What does this person need?</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.whatTheyNeed || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">What They Need</h3>
+          <p className="mt-3 text-sm text-neutral-500">What does this person need?</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.whatTheyNeed || '—'}</p>
         </div>
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">How I Can Help</h3>
-          <p className="mt-3 text-sm text-[#64748b]">How can I help them?</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.howICanHelp || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">How I Can Help</h3>
+          <p className="mt-3 text-sm text-neutral-500">How can I help them?</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.howICanHelp || '—'}</p>
         </div>
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">How They Can Help Me</h3>
-          <p className="mt-3 text-sm text-[#64748b]">How can they help me?</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.howTheyCanHelpMe || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">How They Can Help Me</h3>
+          <p className="mt-3 text-sm text-neutral-500">How can they help me?</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.howTheyCanHelpMe || '—'}</p>
         </div>
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">Shared Interests</h3>
-          <p className="mt-3 text-sm text-[#64748b]">What do we share?</p>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.sharedInterests || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Shared Interests</h3>
+          <p className="mt-3 text-sm text-neutral-500">What do we share?</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.sharedInterests || '—'}</p>
         </div>
       </div>
       {renderSidebar()}
@@ -429,37 +424,37 @@ const RelationshipWorkspace: React.FC<{
   const renderProblems = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-4">
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">Problems / Friction</h3>
-          <p className="mt-3 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.problems || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Problems / Friction</h3>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.problems || '—'}</p>
         </div>
-        <div className={sectionCard}>
-          <h3 className="text-sm font-semibold text-[#0f172a]">Risk Notes</h3>
-          <p className="mt-3 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.riskNotes || '—'}</p>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Risk Notes</h3>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.riskNotes || '—'}</p>
         </div>
-        <div className={sectionCard}>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-[#0f172a]">Problem Events</h3>
-              <p className="mt-1 text-sm text-[#64748b]">RelationshipInteractions with type = problem.</p>
+              <h3 className="text-sm font-semibold text-neutral-900">Problem Events</h3>
+              <p className="mt-1 text-sm text-neutral-500">Interactions with type = problem.</p>
             </div>
-            <button type="button" className={primaryButton} onClick={() => setShowInteractionForm(true)}>Add Problem Event</button>
+            <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowInteractionForm(true)}>Add Problem Event</button>
           </div>
           <div className="mt-4 space-y-3">
             {timelineItems.filter((item) => String(item.type || '').toLowerCase() === 'problem').length > 0 ? timelineItems.filter((item) => String(item.type || '').toLowerCase() === 'problem').map((item) => (
-              <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3">
+              <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-sm font-medium text-[#0f172a]">{formatDate(item.interactionDate)}</div>
-                    <div className="mt-1 text-xs text-[#64748b]">{item.summary || 'Problem event'}</div>
+                    <div className="text-sm font-medium text-neutral-900">{formatDate(item.interactionDate)}</div>
+                    <div className="mt-1 text-xs text-neutral-500">{item.summary || 'Problem event'}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button type="button" className={workspaceButton} onClick={() => setEditingInteraction(item)}>Edit</button>
-                    <button type="button" className={workspaceButton} onClick={() => void onDeleteRelationshipInteraction(item.id)}>Delete</button>
+                    <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setEditingInteraction(item)}>Edit</button>
+                    <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => void onDeleteRelationshipInteraction(item.id)}>Delete</button>
                   </div>
                 </div>
               </div>
-            )) : <div className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-4 text-sm text-[#64748b]">No friction recorded.</div>}
+            )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No friction recorded.</div>}
           </div>
         </div>
       </div>
@@ -469,41 +464,41 @@ const RelationshipWorkspace: React.FC<{
 
   const renderOpportunities = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className={sectionCard}>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Opportunities</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Track collaboration, referrals, and deal momentum tied to this relationship.</p>
+            <h3 className="text-sm font-semibold text-neutral-900">Opportunities</h3>
+            <p className="mt-1 text-sm text-neutral-500">Track collaboration, referrals, and deal momentum tied to this relationship.</p>
           </div>
-          <button type="button" className={primaryButton} onClick={() => setShowOpportunityForm(true)}>Add Relationship Opportunity</button>
+          <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowOpportunityForm(true)}>Add Relationship Opportunity</button>
         </div>
         <div className="mt-4 space-y-3">
           {opportunityItems.length > 0 ? opportunityItems.map((item) => (
-            <div key={item.id} className="rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-3">
+            <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-sm font-medium text-[#0f172a]">{item.title}</div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-[#64748b]">
-                    <span className={`rounded-full border px-2 py-1 ${badgeClass(item.type)}`}>{item.type || 'opportunity'}</span>
-                    <span className={`rounded-full border px-2 py-1 ${badgeClass(item.status)}`}>{item.status || 'open'}</span>
-                    <span className={`rounded-full border px-2 py-1 ${badgeClass(item.priority)}`}>{item.priority || 'medium'}</span>
+                  <div className="text-sm font-medium text-neutral-900">{item.title}</div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.type)}`}>{item.type || 'opportunity'}</span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.status)}`}>{item.status || 'open'}</span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.priority)}`}>{item.priority || 'medium'}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" className={workspaceButton} onClick={() => setEditingOpportunity(item)}>Edit</button>
-                  <button type="button" className={workspaceButton} onClick={() => void onDeleteRelationshipOpportunity(item.id)}>Delete</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setEditingOpportunity(item)}>Edit</button>
+                  <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => void onDeleteRelationshipOpportunity(item.id)}>Delete</button>
                 </div>
               </div>
-              <div className="mt-3 grid gap-2 text-sm text-[#334155] md:grid-cols-2">
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Value</span><div className="mt-1">{item.valueDescription || '—'}</div></div>
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Due</span><div className="mt-1">{formatDate(item.dueDate)}</div></div>
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Linked Project</span><div className="mt-1">{item.linkedProjectName || '—'}</div></div>
-                <div><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Linked Company</span><div className="mt-1">{item.linkedCompanyName || '—'}</div></div>
+              <div className="mt-3 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Value</span><div className="mt-1">{item.valueDescription || '—'}</div></div>
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Due</span><div className="mt-1">{formatDate(item.dueDate)}</div></div>
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</span><div className="mt-1">{item.linkedProjectName || '—'}</div></div>
+                <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Company</span><div className="mt-1">{item.linkedCompanyName || '—'}</div></div>
               </div>
-              <div className="mt-3 text-sm text-[#334155]"><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
-              {item.notes ? <div className="mt-3 text-sm text-[#334155]"><span className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Notes</span><div className="mt-1">{item.notes}</div></div> : null}
+              <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
+              {item.notes ? <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</span><div className="mt-1">{item.notes}</div></div> : null}
             </div>
-          )) : <div className="rounded-lg border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-4 text-sm text-[#64748b]">No opportunities linked yet.</div>}
+          )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No opportunities linked yet.</div>}
         </div>
       </div>
       {renderSidebar()}
@@ -512,30 +507,30 @@ const RelationshipWorkspace: React.FC<{
 
   const renderFollowUps = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className={sectionCard}>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Follow-ups</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Keep the next contact visible and easy to update.</p>
+            <h3 className="text-sm font-semibold text-neutral-900">Follow-ups</h3>
+            <p className="mt-1 text-sm text-neutral-500">Keep the next contact visible and easy to update.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={primaryButton} onClick={() => void handleMarkFollowedUpToday()}>Mark Followed Up Today</button>
-            <button type="button" className={workspaceButton} onClick={() => setShowRelationshipForm(true)}>Set Next Follow-up</button>
-            <button type="button" className={workspaceButton} onClick={() => onUpdateRelationship(selectedRelationship.id, { nextContactDate: null, nextAction: '' })}>Clear Follow-up</button>
+            <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => void handleMarkFollowedUpToday()}>Mark Followed Up Today</button>
+            <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setShowRelationshipForm(true)}>Set Next Follow-up</button>
+            <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => onUpdateRelationship(selectedRelationship.id, { nextContactDate: null, nextAction: '' })}>Clear Follow-up</button>
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="rounded-lg bg-[#f8fafc] p-3">
-            <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Contact Date</div>
-            <div className="mt-1 text-sm text-[#0f172a]">{formatDate(selectedRelationship.nextContactDate)}</div>
+          <div className="rounded-md bg-neutral-50 p-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Contact Date</div>
+            <div className="mt-1 text-sm text-neutral-900">{formatDate(selectedRelationship.nextContactDate)}</div>
           </div>
-          <div className="rounded-lg bg-[#f8fafc] p-3">
-            <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Next Action</div>
-            <div className="mt-1 text-sm text-[#0f172a]">{selectedRelationship.nextAction || '—'}</div>
+          <div className="rounded-md bg-neutral-50 p-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</div>
+            <div className="mt-1 text-sm text-neutral-900">{selectedRelationship.nextAction || '—'}</div>
           </div>
-          <div className="rounded-lg bg-[#f8fafc] p-3 md:col-span-2">
-            <div className="text-xs uppercase tracking-[0.14em] text-[#64748b]">Follow-up Status</div>
-            <div className="mt-1 text-sm text-[#0f172a]">{followUpOverdue ? 'Follow-up overdue' : 'Follow-up on track'}</div>
+          <div className="rounded-md bg-neutral-50 p-3 md:col-span-2">
+            <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Follow-up Status</div>
+            <div className="mt-1 text-sm text-neutral-900">{followUpOverdue ? 'Follow-up overdue' : 'Follow-up on track'}</div>
           </div>
         </div>
       </div>
@@ -545,56 +540,69 @@ const RelationshipWorkspace: React.FC<{
 
   const renderNotes = () => (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className={sectionCard}>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Notes</h3>
-            <p className="mt-1 text-sm text-[#64748b]">Editable notes for the relationship.</p>
+            <h3 className="text-sm font-semibold text-neutral-900">Notes</h3>
+            <p className="mt-1 text-sm text-neutral-500">Editable notes for the relationship.</p>
           </div>
-          <button type="button" className={primaryButton} onClick={() => setShowRelationshipForm(true)}>Edit Notes</button>
+          <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowRelationshipForm(true)}>Edit Notes</button>
         </div>
-        <p className="mt-3 whitespace-pre-wrap text-sm text-[#334155]">{selectedRelationship.notes || '—'}</p>
+        <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.notes || '—'}</p>
       </div>
       {renderSidebar()}
     </div>
   );
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-xl border border-[#e5e7eb] bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
+    <section className="space-y-7">
+      <div className="rounded-xl border border-neutral-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={onBack} className={workspaceButton}>Back</button>
-              <h2 className="text-2xl font-semibold text-[#0f172a]">{selectedRelationship.displayName}</h2>
+              <button type="button" onClick={onBack} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Back</button>
+              <h2 className="text-2xl font-semibold text-neutral-900">{selectedRelationship.displayName}</h2>
             </div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium">
-              {selectedRelationship.domain ? <span className={`rounded-full border px-2.5 py-1 ${badgeClass(selectedRelationship.domain)}`}>{selectedRelationship.domain.replace('_', ' ')}</span> : null}
-              {selectedRelationship.relationshipType ? <span className={`rounded-full border px-2.5 py-1 ${badgeClass(selectedRelationship.relationshipType)}`}>{selectedRelationship.relationshipType}</span> : null}
-              {selectedRelationship.relationshipStrength ? <span className={`rounded-full border px-2.5 py-1 ${badgeClass(selectedRelationship.relationshipStrength)}`}>{selectedRelationship.relationshipStrength}</span> : null}
-              {selectedRelationship.trustLevel ? <span className={`rounded-full border px-2.5 py-1 ${badgeClass(selectedRelationship.trustLevel)}`}>{selectedRelationship.trustLevel}</span> : null}
-              {selectedRelationship.status ? <span className={`rounded-full border px-2.5 py-1 ${badgeClass(selectedRelationship.status)}`}>{selectedRelationship.status}</span> : null}
+              {selectedRelationship.domain ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.domain)}`}>{selectedRelationship.domain.replace('_', ' ')}</span> : null}
+              {selectedRelationship.relationshipType ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.relationshipType)}`}>{selectedRelationship.relationshipType}</span> : null}
+              {selectedRelationship.relationshipStrength ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.relationshipStrength)}`}>{selectedRelationship.relationshipStrength}</span> : null}
+              {selectedRelationship.trustLevel ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.trustLevel)}`}>{selectedRelationship.trustLevel}</span> : null}
+              {selectedRelationship.status ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.status)}`}>{selectedRelationship.status}</span> : null}
             </div>
-            <div className="mt-3 text-sm text-[#64748b]">
+            <div className="mt-3 text-sm text-neutral-500">
               {linkedPerson ? `Linked person: ${linkedPerson.fullName}` : 'No linked person'}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={workspaceButton} onClick={() => setShowRelationshipForm(true)}>Edit</button>
-            <button type="button" className={workspaceButton} onClick={() => void onDeleteRelationship(selectedRelationship.id)}>Delete</button>
+            <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => setShowRelationshipForm(true)}>Edit</button>
+            <button type="button" className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors" onClick={() => void onDeleteRelationship(selectedRelationship.id)}>Delete</button>
           </div>
         </div>
       </div>
 
       {renderTopCards()}
 
-      <div className="rounded-xl border border-[#e5e7eb] bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-        <div className="flex flex-wrap gap-2">
-          {WORKSPACE_TABS.map((tab) => (
-            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`rounded-full px-3 py-1.5 text-sm transition-colors ${activeTab === tab.id ? 'bg-[#eff6ff] text-[#1d4ed8]' : 'bg-[#f8fafc] text-[#475569] hover:bg-[#eef2ff]'}`}>
-              {tab.label}
-            </button>
-          ))}
+      <div className="border-b border-neutral-200">
+        <div className="flex flex-wrap gap-1">
+          {WORKSPACE_TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={
+                  'relative px-3 pb-3 pt-2 text-sm transition-colors border-b-2 ' +
+                  (isActive
+                    ? 'border-neutral-900 text-neutral-900'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-900')
+                }
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

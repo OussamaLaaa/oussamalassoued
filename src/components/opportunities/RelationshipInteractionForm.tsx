@@ -24,8 +24,9 @@ const TYPE_OPTIONS = [
   { value: 'note', label: 'Note' },
 ];
 
-const baseInput = 'w-full rounded-md border border-[#cbd5e1] bg-white px-3 py-2 text-sm text-[#0f172a] outline-none transition focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15';
-const baseLabel = 'text-xs font-semibold uppercase tracking-[0.14em] text-[#64748b]';
+const baseInput = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
+const baseTextarea = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
+const baseLabel = 'text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500';
 
 const toInputValue = (value?: string | null) => value ?? '';
 
@@ -89,9 +90,9 @@ const RelationshipInteractionForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-[#0f172a]">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Interaction Date</div>
           <input
             type="date"
@@ -101,7 +102,7 @@ const RelationshipInteractionForm: React.FC<{
           />
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Channel</div>
           <select
             value={toInputValue(form.channel)}
@@ -112,7 +113,7 @@ const RelationshipInteractionForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2">
+        <label className="space-y-1.5">
           <div className={baseLabel}>Type</div>
           <select
             value={toInputValue(form.type)}
@@ -123,47 +124,47 @@ const RelationshipInteractionForm: React.FC<{
           </select>
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Summary</div>
           <textarea
             value={form.summary || ''}
             onChange={(event) => setField('summary', event.target.value)}
             rows={4}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Outcome</div>
           <textarea
             value={form.outcome || ''}
             onChange={(event) => setField('outcome', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
 
-        <label className="space-y-2 md:col-span-2">
+        <label className="space-y-1.5 md:col-span-2">
           <div className={baseLabel}>Next Action</div>
           <textarea
             value={form.nextAction || ''}
             onChange={(event) => setField('nextAction', event.target.value)}
             rows={3}
-            className={baseInput}
+            className={baseTextarea}
           />
         </label>
       </div>
 
-      {error ? <div className="rounded-md border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">{error}</div> : null}
+      {error ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-md border border-[#e5e7eb] bg-white px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-[#2563eb] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {saving ? 'Saving...' : submitLabel}
         </button>
