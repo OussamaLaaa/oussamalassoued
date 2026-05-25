@@ -14,10 +14,10 @@ const STATUS_BADGE_VARIANT: Record<string, 'neutral' | 'blue' | 'success' | 'dan
   cancelled: 'neutral',
 };
 
-const PRIORITY_ICON: Record<string, string> = {
-  high: '🔴',
-  medium: '🟡',
-  low: '🟢',
+const PRIORITY_BADGE_VARIANT: Record<string, 'danger' | 'warning' | 'neutral'> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'neutral',
 };
 
 const formatHours = (minutes?: number | null): string => {
@@ -179,19 +179,21 @@ const TaskDetailWorkspace: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20">
-      <div className="w-full max-w-xl bg-white border-l border-neutral-200 shadow-lg overflow-y-auto">
+      <div className="w-full max-w-xl bg-white border-l border-neutral-200 overflow-y-auto">
         <div className="p-5">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant={STATUS_BADGE_VARIANT[task.status] || 'neutral'}>{task.status}</Badge>
-                {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
+                {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
                 {task.category && <Badge variant="neutral">{task.category}</Badge>}
               </div>
               <h2 className="text-base font-semibold text-black">{task.title}</h2>
             </div>
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </Button>
           </div>
 
           {/* Tabs */}
@@ -251,11 +253,9 @@ const TaskDetailWorkspace: React.FC<{
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-neutral-200">
                 {task.status !== 'todo' && <Button variant="outline" size="sm" onClick={() => handleStatusChange('todo')}>Todo</Button>}
-                {task.status !== 'doing' && (
-                  <button type="button" onClick={() => handleStatusChange('doing')} className="text-xs px-3 py-1.5 rounded-lg border border-blue-600 bg-blue-50 text-blue-700 hover:bg-blue-100">Doing</button>
-                )}
-                {task.status !== 'done' && <Button variant="success" size="sm" onClick={() => handleStatusChange('done')}>Mark Done</Button>}
-                {task.status !== 'blocked' && <Button variant="danger" size="sm" onClick={() => handleStatusChange('blocked')}>Block</Button>}
+                {task.status !== 'doing' && <Button variant="outline" size="sm" onClick={() => handleStatusChange('doing')}>Doing</Button>}
+                {task.status !== 'done' && <Button variant="primary" size="sm" onClick={() => handleStatusChange('done')}>Mark Done</Button>}
+                {task.status !== 'blocked' && <Button variant="outline" size="sm" onClick={() => handleStatusChange('blocked')}>Block</Button>}
                 <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Edit</Button>
                 <Button variant="danger" size="sm" onClick={() => { if (window.confirm('Delete this task?')) onDeleteTask(task.id); }}>Delete</Button>
                 <Button variant="primary" size="sm" onClick={() => setShowAddLog(true)}>+ Log Time</Button>
@@ -283,7 +283,7 @@ const TaskDetailWorkspace: React.FC<{
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-black">{formatDate(log.workDate)}</span>
-                            <Badge variant="blue">{formatHours(log.minutesSpent)}</Badge>
+                            <Badge variant="neutral">{formatHours(log.minutesSpent)}</Badge>
                           </div>
                           {log.summary && <div className="mt-0.5 text-xs text-black">{log.summary}</div>}
                           {log.notes && <div className="mt-0.5 text-xs text-neutral-500 italic">{log.notes}</div>}
@@ -369,7 +369,7 @@ const TaskDetailWorkspace: React.FC<{
           {/* Completion Modal */}
           {completing && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30">
-              <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-lg">
+              <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5">
                 <h3 className="text-sm font-medium text-black mb-3">Complete Task</h3>
                 <p className="text-xs text-neutral-500 mb-4">{task.title}</p>
                 <div className="space-y-3">
@@ -380,7 +380,7 @@ const TaskDetailWorkspace: React.FC<{
                 </div>
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-200">
                   <Button type="button" variant="secondary" onClick={() => setCompleting(false)}>Cancel</Button>
-                  <Button type="button" variant="success" onClick={handleComplete}>Mark Done</Button>
+                  <Button type="button" variant="primary" onClick={handleComplete}>Mark Done</Button>
                 </div>
               </div>
             </div>

@@ -26,26 +26,26 @@ const STATUS_BADGE_VARIANT: Record<TaskStatus, 'neutral' | 'blue' | 'success' | 
   cancelled: 'neutral',
 };
 
-const LINK_BADGE_VARIANT: Record<string, 'success' | 'warning' | 'purple' | 'blue' | 'neutral'> = {
-  project: 'success',
-  plan: 'warning',
-  strategyGoal: 'purple',
-  company: 'blue',
-  person: 'purple',
+const LINK_BADGE_VARIANT: Record<string, 'neutral'> = {
+  project: 'neutral',
+  plan: 'neutral',
+  strategyGoal: 'neutral',
+  company: 'neutral',
+  person: 'neutral',
   document: 'neutral',
 };
 
-const PRIORITY_ICON: Record<string, string> = {
-  high: '🔴',
-  medium: '🟡',
-  low: '🟢',
+const PRIORITY_BADGE_VARIANT: Record<string, 'danger' | 'warning' | 'neutral'> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'neutral',
 };
 
-const COLUMNS: { status: TaskStatus; label: string; color: string }[] = [
-  { status: 'todo', label: 'Todo', color: 'border-t-neutral-400' },
-  { status: 'doing', label: 'Doing', color: 'border-t-blue-600' },
-  { status: 'done', label: 'Done', color: 'border-t-green-600' },
-  { status: 'blocked', label: 'Blocked', color: 'border-t-red-600' },
+const COLUMNS: { status: TaskStatus; label: string }[] = [
+  { status: 'todo', label: 'Todo' },
+  { status: 'doing', label: 'Doing' },
+  { status: 'done', label: 'Done' },
+  { status: 'blocked', label: 'Blocked' },
 ];
 
 const todayStr = () => {
@@ -116,12 +116,12 @@ const TaskCard: React.FC<{
   const actions = getActionsForStatus(task.status);
 
   return (
-    <Card className="p-3 text-sm hover:shadow-sm transition-shadow relative cursor-pointer" onClick={() => onClick(task)}>
+    <Card className="p-3 text-sm relative cursor-pointer" onClick={() => onClick(task)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
-            {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
+            {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
             {task.category && <Badge variant="neutral">{task.category}</Badge>}
           </div>
           <div className="mt-1 font-medium text-black">{task.title}</div>
@@ -133,19 +133,19 @@ const TaskCard: React.FC<{
           </div>
           {(task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedStrategyGoalTitle || task.linkedDocumentTitle) && (
             <div className="mt-1 flex flex-wrap gap-1">
-              {task.linkedProjectName && <Badge variant={LINK_BADGE_VARIANT.project}>📁 {task.linkedProjectName}</Badge>}
-              {task.linkedPlanTitle && <Badge variant={LINK_BADGE_VARIANT.plan}>📋 {task.linkedPlanTitle}</Badge>}
-              {task.linkedStrategyGoalTitle && <Badge variant={LINK_BADGE_VARIANT.strategyGoal}>🎯 {task.linkedStrategyGoalTitle}</Badge>}
-              {task.linkedCompanyName && <Badge variant={LINK_BADGE_VARIANT.company}>🏢 {task.linkedCompanyName}</Badge>}
-              {task.linkedPersonName && <Badge variant={LINK_BADGE_VARIANT.person}>👤 {task.linkedPersonName}</Badge>}
-              {task.linkedDocumentTitle && <Badge variant={LINK_BADGE_VARIANT.document}>📄 {task.linkedDocumentTitle}</Badge>}
+              {task.linkedProjectName && <Badge variant={LINK_BADGE_VARIANT.project}>{task.linkedProjectName}</Badge>}
+              {task.linkedPlanTitle && <Badge variant={LINK_BADGE_VARIANT.plan}>{task.linkedPlanTitle}</Badge>}
+              {task.linkedStrategyGoalTitle && <Badge variant={LINK_BADGE_VARIANT.strategyGoal}>{task.linkedStrategyGoalTitle}</Badge>}
+              {task.linkedCompanyName && <Badge variant={LINK_BADGE_VARIANT.company}>{task.linkedCompanyName}</Badge>}
+              {task.linkedPersonName && <Badge variant={LINK_BADGE_VARIANT.person}>{task.linkedPersonName}</Badge>}
+              {task.linkedDocumentTitle && <Badge variant={LINK_BADGE_VARIANT.document}>{task.linkedDocumentTitle}</Badge>}
             </div>
           )}
         </div>
         <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
           <Button type="button" variant="ghost" size="sm" onClick={() => setMenuOpen(!menuOpen)}>•••</Button>
           {menuOpen && (
-            <div className="absolute right-0 top-8 z-10 w-36 rounded-lg border border-neutral-200 bg-white shadow-lg">
+            <div className="absolute right-0 top-8 z-10 w-36 rounded-lg border border-neutral-200 bg-white">
               {actions.map((a) => (
                 <Button
                   key={a.to}
@@ -386,10 +386,10 @@ const TasksPanel: React.FC<{
       {/* Stats */}
       <div className="grid grid-cols-8 gap-2">
         <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Total</div><div className="text-lg font-bold text-black">{weekStats.total}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Todo</div><div className="text-lg font-bold text-neutral-600">{weekStats.todo}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Doing</div><div className="text-lg font-bold text-blue-600">{weekStats.doing}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Done</div><div className="text-lg font-bold text-green-600">{weekStats.done}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Blocked</div><div className="text-lg font-bold text-red-600">{weekStats.blocked}</div></div>
+        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Todo</div><div className="text-lg font-bold text-black">{weekStats.todo}</div></div>
+        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Doing</div><div className="text-lg font-bold text-black">{weekStats.doing}</div></div>
+        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Done</div><div className="text-lg font-bold text-black">{weekStats.done}</div></div>
+        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Blocked</div><div className="text-lg font-bold text-black">{weekStats.blocked}</div></div>
         <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Est</div><div className="text-lg font-bold text-black">{formatHours(weekStats.estimated)}</div></div>
         <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Logged</div><div className="text-lg font-bold text-black">{formatHours(weekStats.actual)}</div></div>
         <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Rate</div><div className="text-lg font-bold text-black">{weekStats.rate}%</div></div>
@@ -398,7 +398,7 @@ const TasksPanel: React.FC<{
       {/* Status columns */}
       <div className="grid grid-cols-4 gap-3">
         {COLUMNS.map((col) => (
-          <div key={col.status} className={`rounded-lg border border-neutral-200 bg-white border-t-2 ${col.color}`}>
+          <div key={col.status} className="rounded-lg border border-neutral-200 bg-white">
             <div className="px-3 py-2 border-b border-neutral-200">
               <div className="text-xs font-medium text-black">{col.label}</div>
               <div className="text-xs text-neutral-500">{tasksByStatus[col.status].length}</div>
@@ -441,20 +441,20 @@ const TasksPanel: React.FC<{
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-block w-2 h-2 rounded-full ${doneToday ? 'bg-green-600' : skippedToday ? 'bg-amber-500' : 'bg-neutral-400'}`} />
+                      <span className={`inline-block w-2 h-2 rounded-full ${doneToday ? 'bg-neutral-900' : skippedToday ? 'bg-neutral-400' : 'bg-neutral-300'}`} />
                       <span className="font-medium text-black">{rule.title}</span>
-                      {rule.priority && <span className="text-xs">{PRIORITY_ICON[rule.priority]}</span>}
+                      {rule.priority && <Badge variant={PRIORITY_BADGE_VARIANT[rule.priority] || 'neutral'}>{rule.priority}</Badge>}
                       {rule.estimatedMinutes != null && <span className="text-xs text-neutral-500">{formatHours(rule.estimatedMinutes)}</span>}
                     </div>
                     <div className="mt-0.5 text-xs text-neutral-500">{rule.frequency}{rule.daysOfWeek ? ` (${rule.daysOfWeek})` : ''}</div>
-                    {doneToday && <div className="mt-0.5 text-xs text-green-600">✓ Done today</div>}
-                    {skippedToday && <div className="mt-0.5 text-xs text-amber-500">○ Skipped today</div>}
+                    {doneToday && <div className="mt-0.5 text-xs text-neutral-500">✓ Done today</div>}
+                    {skippedToday && <div className="mt-0.5 text-xs text-neutral-400">○ Skipped today</div>}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {!doneToday && !skippedToday && (
                       <>
-                        <Button type="button" variant="success" size="sm" onClick={() => handleMarkRecurringDone(rule.id)}>Done</Button>
-                        <button type="button" onClick={() => handleMarkRecurringSkipped(rule.id)} className="text-xs px-2 py-1 rounded-lg border border-amber-500 text-amber-500 hover:bg-amber-50">Skip</button>
+                        <Button type="button" variant="primary" size="sm" onClick={() => handleMarkRecurringDone(rule.id)}>Done</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => handleMarkRecurringSkipped(rule.id)}>Skip</Button>
                       </>
                     )}
                     {doneToday && <Button type="button" variant="ghost" size="sm" onClick={() => log && onDeleteRecurringTaskLog(log.id)}>Undo</Button>}
@@ -504,7 +504,7 @@ const TasksPanel: React.FC<{
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
-                    {task.priority && <span className="text-xs">{PRIORITY_ICON[task.priority]}</span>}
+                    {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
                     {task.category && <Badge variant="neutral">{task.category}</Badge>}
                   </div>
                   <div className="mt-1 font-medium text-black">{task.title}</div>
@@ -543,30 +543,23 @@ const TasksPanel: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-black">This Week Tasks</h2>
-          <p className="text-xs text-neutral-500">Plan tasks for the week. Record the day and time spent when you complete them.</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between border-b border-neutral-200">
+        <nav className="flex flex-wrap gap-1 -mb-px">
           {VIEWS.map((v) => (
             <button
               key={v.id}
               type="button"
               onClick={() => setView(v.id)}
-              className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
+              className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 ${
                 view === v.id
-                  ? 'bg-neutral-100 text-neutral-900 border border-neutral-200'
-                  : 'text-neutral-500 hover:bg-neutral-50 border border-transparent'
+                  ? 'border-neutral-900 text-neutral-900'
+                  : 'border-transparent text-neutral-500 hover:text-neutral-900'
               }`}
             >
               {v.label}
             </button>
           ))}
-        </div>
+        </nav>
         {view === 'weekly' && (
           <Button type="button" variant="primary" size="sm" onClick={() => setShowTaskForm(true)}>+ Add Task</Button>
         )}
@@ -577,7 +570,7 @@ const TasksPanel: React.FC<{
       {/* Task Form Modal */}
       {(showTaskForm || editingTask) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 shadow-lg">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6">
             <TaskForm
               initial={editingTask ? { ...editingTask, weekStart: editingTask.weekStart || selectedWeekStart } : undefined}
               projects={projects} plans={plans} strategyGoals={strategyGoals} companies={companies} people={people}
@@ -596,7 +589,7 @@ const TasksPanel: React.FC<{
       {/* Recurring Task Form Modal */}
       {(showRecurringForm || editingRecurring) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 shadow-lg">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6">
             <RecurringTaskForm
               initial={editingRecurring || undefined}
               projects={projects} plans={plans} strategyGoals={strategyGoals} companies={companies} people={people}
@@ -614,7 +607,7 @@ const TasksPanel: React.FC<{
       {/* Completion Modal */}
       {completingTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5 shadow-lg">
+          <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5">
             <h3 className="text-sm font-medium text-black mb-3">Complete Task</h3>
             <p className="text-xs text-neutral-500 mb-4">{completingTask.title}</p>
             <CompletionModalForm task={completingTask} onConfirm={handleComplete} onCancel={() => setCompletingTask(null)} />
@@ -663,7 +656,7 @@ const CompletionModalForm: React.FC<{
       <Textarea label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Completion notes..." />
       <div className="flex items-center justify-end gap-2 pt-2">
         <Button type="button" variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>
-        <Button type="button" variant="success" size="sm" onClick={handleConfirm}>Mark Done</Button>
+        <Button type="button" variant="primary" size="sm" onClick={handleConfirm}>Mark Done</Button>
       </div>
     </div>
   );
