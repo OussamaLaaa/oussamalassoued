@@ -992,16 +992,16 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
   return (
     <section className="space-y-7">
       {renderTabs()}
-      {activeTab === 'dashboard' && renderDashboard()}
-      {activeTab === 'strategy' && renderStrategy()}
-      {activeTab === 'platforms' && renderPlatforms()}
-      {activeTab === 'pillars' && renderPillars()}
-      {activeTab === 'ideas' && renderIdeas()}
-      {activeTab === 'weekly' && renderWeeklyPlan()}
-      {activeTab === 'production' && renderProductionBoard()}
-      {activeTab === 'calendar' && renderCalendar()}
-      {activeTab === 'performance' && renderPerformance()}
-      {activeTab === 'ai-assistant' && renderAIAssistant()}
+      <div className={activeTab === 'dashboard' ? '' : 'hidden'}>{renderDashboard()}</div>
+      <div className={activeTab === 'strategy' ? '' : 'hidden'}>{renderStrategy()}</div>
+      <div className={activeTab === 'platforms' ? '' : 'hidden'}>{renderPlatforms()}</div>
+      <div className={activeTab === 'pillars' ? '' : 'hidden'}>{renderPillars()}</div>
+      <div className={activeTab === 'ideas' ? '' : 'hidden'}>{renderIdeas()}</div>
+      <div className={activeTab === 'weekly' ? '' : 'hidden'}>{renderWeeklyPlan()}</div>
+      <div className={activeTab === 'production' ? '' : 'hidden'}>{renderProductionBoard()}</div>
+      <div className={activeTab === 'calendar' ? '' : 'hidden'}>{renderCalendar()}</div>
+      <div className={activeTab === 'performance' ? '' : 'hidden'}>{renderPerformance()}</div>
+      <div className={activeTab === 'ai-assistant' ? '' : 'hidden'}>{renderAIAssistant()}</div>
     </section>
   );
 }
