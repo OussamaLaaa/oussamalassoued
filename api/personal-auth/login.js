@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import {
+  PERSONAL_AUTH_TTLS,
   verifyScryptPassword,
   createMainCookie,
 } from '../../server/lib/personalAuth.js';
@@ -64,6 +65,7 @@ export default async function handler(req, res) {
     const body = readBody(req);
     const email = String(body?.email || '').trim().toLowerCase();
     const password = String(body?.password || '');
+    const rememberDevice = Boolean(body?.rememberDevice);
 
     if (!email || !password) {
       return toSafeJson(res, 400, { success: false, error: 'Email and password are required.' });
@@ -203,6 +205,7 @@ export default async function handler(req, res) {
       email: user.email,
       userId: user.id,
       displayName: user.display_name || undefined,
+      ttlSeconds: rememberDevice ? PERSONAL_AUTH_TTLS.mainRememberSeconds : undefined,
     });
     res.setHeader('Set-Cookie', setCookie);
 

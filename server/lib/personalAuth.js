@@ -5,6 +5,7 @@ const PERSONAL_OS_GATE_COOKIE = 'personal_os_gate';
 const LEGACY_PERSONAL_COOKIE = 'personal_google_gate';
 
 const MAIN_TTL_SECONDS = 60 * 60 * 12;
+const MAIN_REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
 const GATE_DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7;
 const GATE_REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
 
@@ -227,6 +228,7 @@ export const PERSONAL_COOKIE_NAMES = {
 
 export const PERSONAL_AUTH_TTLS = {
   mainSeconds: MAIN_TTL_SECONDS,
+  mainRememberSeconds: MAIN_REMEMBER_TTL_SECONDS,
   gateDefaultSeconds: GATE_DEFAULT_TTL_SECONDS,
   gateRememberSeconds: GATE_REMEMBER_TTL_SECONDS,
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import type { LucideIcon, LucideProps } from 'lucide-react';
 import {
   Bell,
@@ -18,6 +18,7 @@ import {
   StickyNote,
   Wallet,
 } from 'lucide-react';
+import { AuthContext } from '../personal/PersonalAuthGate';
 
 type AppId = 'desktop' | 'crm' | 'messages' | 'strategy' | 'plans' | 'tasks' | 'projects' | 'finance' | 'documents' | 'social' | 'relationships' | 'life' | 'notes' | 'ai_control';
 
@@ -76,6 +77,85 @@ function AppTile({ label, icon: Icon, onOpen }: AppShortcut & { onOpen?: () => v
   );
 }
 
+function ProfileDropdown() {
+  const auth = useContext(AuthContext);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const displayName = auth?.displayName || auth?.email || '';
+  const initials = (auth?.displayName || auth?.email || 'U')
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('')
+    || 'U';
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        type="button"
+        aria-label="User avatar"
+        onClick={() => setOpen(!open)}
+        className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+      >
+        {initials}
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 z-[9999] mt-1.5 w-56 rounded-xl border border-neutral-200 bg-white py-1"
+          onClick={() => setOpen(false)}
+        >
+          <div className="border-b border-neutral-100 px-3 py-2.5">
+            <div className="truncate text-sm font-medium text-neutral-950">
+              {auth?.displayName || 'Signed in'}
+            </div>
+            {auth?.email ? (
+              <div className="truncate text-xs text-neutral-500">{auth.email}</div>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 transition-colors hover:bg-neutral-50"
+          >
+            Account settings
+          </button>
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-neutral-700 transition-colors hover:bg-neutral-50"
+          >
+            Security
+          </button>
+
+          <div className="border-t border-neutral-100" />
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              auth?.handleLogout();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-neutral-50"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const DesktopLauncher: React.FC<{ onLaunchApp: (appId: AppId) => void }> = ({ onLaunchApp }) => {
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white text-neutral-900">
@@ -93,14 +173,7 @@ const DesktopLauncher: React.FC<{ onLaunchApp: (appId: AppId) => void }> = ({ on
           <div className="flex items-center gap-1">
             <TopBarButton icon={Bell} label="Notifications" />
             <TopBarButton icon={Settings} label="Settings" />
-            <TopBarButton icon={CircleUserRound} label="Account" />
-            <button
-              type="button"
-              aria-label="User avatar"
-              className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-xs font-semibold text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
-            >
-              OU
-            </button>
+            <ProfileDropdown />
           </div>
         </div>
       </header>
@@ -119,4 +192,3 @@ const DesktopLauncher: React.FC<{ onLaunchApp: (appId: AppId) => void }> = ({ on
 };
 
 export default DesktopLauncher;
-export type { AppId };

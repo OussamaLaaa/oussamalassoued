@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import {
   customLogin,
   fetchPersonalAuthStatus,
@@ -19,6 +19,14 @@ const initialState: PersonalAuthState = {
   mainPasswordPassed: false,
   secondFactorPassed: false,
 };
+
+type AuthContextValue = {
+  handleLogout: () => Promise<void>;
+  displayName?: string;
+  email?: string;
+};
+
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 const getStatusError = (status: number, fallback: string): string => {
   const statusMessages: Record<number, string> = {
@@ -49,7 +57,6 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
   const [authError, setAuthError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const refreshStatus = async () => {
     setIsLoading(true);
@@ -91,12 +98,27 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     return () => window.removeEventListener('focus', onFocus);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await personalLogout();
+      setStatus(initialState);
+      setEmail('');
+      setLoginPassword('');
+      setPassword('');
+      setRememberDevice(false);
+      setAuthError('');
+      await refreshStatus();
+    } catch {
+      setStatus(initialState);
+    }
+  };
+
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSigningIn(true);
     setAuthError('');
     try {
-      const result = await customLogin(email.trim(), loginPassword);
+      const result = await customLogin(email.trim(), loginPassword, rememberDevice);
       if (!result.success) {
         setAuthError(getStatusError(result.status || 0, result.error || 'Invalid email or password.'));
         return;
@@ -115,7 +137,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     setAuthError('');
 
     try {
-      const response = await verifyPersonalSecondFactor(password);
+      const response = await verifyPersonalSecondFactor(password, rememberDevice);
 
       if (!response.success) {
         setAuthError('Invalid password.');
@@ -129,22 +151,6 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       setAuthError('Invalid password.');
     } finally {
       setIsSubmittingPassword(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await personalLogout();
-      setStatus(initialState);
-      setEmail('');
-      setLoginPassword('');
-      setPassword('');
-      setRememberDevice(false);
-      setAuthError('');
-      await refreshStatus();
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 
@@ -189,6 +195,16 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
               />
             </label>
           </div>
+
+          <label className="flex items-center gap-3 text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              checked={rememberDevice}
+              onChange={(event) => setRememberDevice(event.target.checked)}
+              className="h-4 w-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 focus:ring-offset-0"
+            />
+            <span>Remember this browser for 30 days</span>
+          </label>
 
           {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
 
@@ -236,7 +252,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
               onChange={(event) => setRememberDevice(event.target.checked)}
               className="h-4 w-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 focus:ring-offset-0"
             />
-            <span>Remember this device for 30 days</span>
+            <span>Remember this browser for 30 days</span>
           </label>
 
           {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
@@ -253,18 +269,18 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     );
   }
 
+  const contextValue: AuthContextValue = {
+    handleLogout,
+    displayName: status.displayName,
+    email: status.email,
+  };
+
   return (
-    <div className="relative min-h-screen bg-neutral-50 text-neutral-950">
-      <button
-        type="button"
-        onClick={() => void handleLogout()}
-        disabled={isLoggingOut}
-        className="fixed right-4 top-4 z-[10001] rounded-full border border-neutral-300 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isLoggingOut ? 'Logging out...' : 'Logout'}
-      </button>
-      {children}
-    </div>
+    <AuthContext.Provider value={contextValue}>
+      <div className="relative min-h-screen bg-neutral-50 text-neutral-950">
+        {children}
+      </div>
+    </AuthContext.Provider>
   );
 };
 

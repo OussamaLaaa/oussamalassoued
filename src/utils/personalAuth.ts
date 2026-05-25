@@ -1,10 +1,10 @@
-export const customLogin = async (email: string, password: string) => {
+export const customLogin = async (email: string, password: string, rememberDevice = false) => {
   try {
     const response = await fetch('/api/personal-auth/login', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberDevice }),
     });
 
     const data = await response.json();
