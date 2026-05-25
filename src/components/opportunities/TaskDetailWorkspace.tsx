@@ -6,9 +6,9 @@ import Badge from '../ui/Badge';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 
-const STATUS_BADGE_VARIANT: Record<string, 'neutral' | 'blue' | 'success' | 'danger'> = {
+const STATUS_BADGE_VARIANT: Record<string, 'neutral' | 'success' | 'danger'> = {
   todo: 'neutral',
-  doing: 'blue',
+  doing: 'neutral',
   done: 'success',
   blocked: 'danger',
   cancelled: 'neutral',
@@ -124,7 +124,6 @@ const TaskDetailWorkspace: React.FC<{
     setEditingLog(null);
   };
 
-  // Work log form state
   const [logDate, setLogDate] = useState(today);
   const [logMinutes, setLogMinutes] = useState('');
   const [logSummary, setLogSummary] = useState('');
@@ -184,26 +183,26 @@ const TaskDetailWorkspace: React.FC<{
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Badge variant={STATUS_BADGE_VARIANT[task.status] || 'neutral'}>{task.status}</Badge>
                 {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
                 {task.category && <Badge variant="neutral">{task.category}</Badge>}
               </div>
-              <h2 className="text-base font-semibold text-black">{task.title}</h2>
+              <h2 className="text-base font-semibold text-black break-words">{task.title}</h2>
             </div>
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            <Button type="button" variant="ghost" size="sm" className="shrink-0 ml-2" onClick={onClose}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </Button>
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-neutral-200 mb-4">
+          <div className="flex items-center gap-1 border-b border-neutral-200 mb-4 overflow-x-auto">
             {(['overview', 'worklogs', 'links', 'notes'] as DetailTab[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`text-xs px-3 py-2 border-b-2 transition-all ${
+                className={`text-xs px-3 py-2 border-b-2 transition-all whitespace-nowrap ${
                   tab === t ? 'border-black text-black font-medium' : 'border-transparent text-neutral-500 hover:text-black'
                 }`}
               >
@@ -216,35 +215,35 @@ const TaskDetailWorkspace: React.FC<{
           {tab === 'overview' && (
             <div className="space-y-4">
               {task.description && (
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Description</label>
-                  <div className="text-sm text-black">{task.description}</div>
+                  <div className="text-sm text-black whitespace-pre-wrap break-words">{task.description}</div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Estimated</label>
-                  <div className="text-black">{formatHours(task.estimatedMinutes)}</div>
+                  <div className="text-sm font-medium text-black">{formatHours(task.estimatedMinutes)}</div>
                 </div>
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Actual (logged)</label>
-                  <div className="text-black">{formatHours(totalMinutesLogged)}</div>
+                  <div className="text-sm font-medium text-black">{formatHours(totalMinutesLogged)}</div>
                 </div>
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Completed</label>
-                  <div className="text-black">{task.completedAt ? dayName(task.completedAt) : '—'}</div>
+                  <div className="text-sm font-medium text-black">{task.completedAt ? dayName(task.completedAt) : '—'}</div>
                 </div>
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Completed At</label>
-                  <div className="text-black">{task.completedAt ? formatDate(task.completedAt) : '—'}</div>
+                  <div className="text-sm font-medium text-black">{task.completedAt ? formatDate(task.completedAt) : '—'}</div>
                 </div>
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Week</label>
-                  <div className="text-black">{task.weekStart || '—'}</div>
+                  <div className="text-sm font-medium text-black">{task.weekStart || '—'}</div>
                 </div>
-                <div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
                   <label className="text-xs font-medium text-neutral-600 mb-1 block">Linked Entities</label>
-                  <div className="text-black">
+                  <div className="text-sm font-medium text-black">
                     {task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedDocumentTitle ? 'Yes' : 'None'}
                   </div>
                 </div>
@@ -274,19 +273,22 @@ const TaskDetailWorkspace: React.FC<{
               </div>
 
               {logsForTask.length === 0 ? (
-                <div className="text-xs text-neutral-400 py-4 text-center">No work logs yet.</div>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+                  <span className="font-medium text-neutral-500">No work logs yet</span>
+                  <span className="mt-1">Log time to track progress on this task.</span>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {logsForTask.map((log) => (
-                    <div key={log.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm">
-                      <div className="flex items-start justify-between">
+                    <div key={log.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-black">{formatDate(log.workDate)}</span>
                             <Badge variant="neutral">{formatHours(log.minutesSpent)}</Badge>
                           </div>
-                          {log.summary && <div className="mt-0.5 text-xs text-black">{log.summary}</div>}
-                          {log.notes && <div className="mt-0.5 text-xs text-neutral-500 italic">{log.notes}</div>}
+                          {log.summary && <div className="mt-1 text-xs text-black">{log.summary}</div>}
+                          {log.notes && <div className="mt-0.5 text-xs text-neutral-400">{log.notes}</div>}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button variant="ghost" size="sm" onClick={() => startEditLog(log)}>Edit</Button>
@@ -304,15 +306,18 @@ const TaskDetailWorkspace: React.FC<{
             <div className="space-y-2">
               {(task.linkedProjectName || task.linkedPlanTitle || task.linkedStrategyGoalTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedDocumentTitle) ? (
                 <div className="flex flex-wrap gap-2">
-                  {task.linkedProjectName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Project:</span> <span className="text-black">{task.linkedProjectName}</span></div>}
-                  {task.linkedPlanTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Plan:</span> <span className="text-black">{task.linkedPlanTitle}</span></div>}
-                  {task.linkedStrategyGoalTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Strategy Goal:</span> <span className="text-black">{task.linkedStrategyGoalTitle}</span></div>}
-                  {task.linkedCompanyName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Company:</span> <span className="text-black">{task.linkedCompanyName}</span></div>}
-                  {task.linkedPersonName && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Person:</span> <span className="text-black">{task.linkedPersonName}</span></div>}
-                  {task.linkedDocumentTitle && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Document:</span> <span className="text-black">{task.linkedDocumentTitle}</span></div>}
+                  {task.linkedProjectName && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Project:</span> <span className="font-medium text-black ml-1">{task.linkedProjectName}</span></div>}
+                  {task.linkedPlanTitle && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Plan:</span> <span className="font-medium text-black ml-1">{task.linkedPlanTitle}</span></div>}
+                  {task.linkedStrategyGoalTitle && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Strategy Goal:</span> <span className="font-medium text-black ml-1">{task.linkedStrategyGoalTitle}</span></div>}
+                  {task.linkedCompanyName && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Company:</span> <span className="font-medium text-black ml-1">{task.linkedCompanyName}</span></div>}
+                  {task.linkedPersonName && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Person:</span> <span className="font-medium text-black ml-1">{task.linkedPersonName}</span></div>}
+                  {task.linkedDocumentTitle && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm w-full"><span className="text-xs text-neutral-500">Document:</span> <span className="font-medium text-black ml-1">{task.linkedDocumentTitle}</span></div>}
                 </div>
               ) : (
-                <div className="text-xs text-neutral-400 py-4 text-center">No linked entities.</div>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+                  <span className="font-medium text-neutral-500">No linked entities</span>
+                  <span className="mt-1">Link this task to a project, plan, or person.</span>
+                </div>
               )}
             </div>
           )}
@@ -320,9 +325,12 @@ const TaskDetailWorkspace: React.FC<{
           {tab === 'notes' && (
             <div>
               {task.notes ? (
-                <div className="rounded-lg border border-neutral-200 bg-white p-3 text-sm text-black whitespace-pre-wrap">{task.notes}</div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-black whitespace-pre-wrap break-words">{task.notes}</div>
               ) : (
-                <div className="text-xs text-neutral-400 py-4 text-center">No notes.</div>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+                  <span className="font-medium text-neutral-500">No notes</span>
+                  <span className="mt-1">Add notes to capture details about this task.</span>
+                </div>
               )}
             </div>
           )}
@@ -371,7 +379,7 @@ const TaskDetailWorkspace: React.FC<{
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30">
               <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5">
                 <h3 className="text-sm font-medium text-black mb-3">Complete Task</h3>
-                <p className="text-xs text-neutral-500 mb-4">{task.title}</p>
+                <p className="text-xs text-neutral-500 mb-4 break-words">{task.title}</p>
                 <div className="space-y-3">
                   <Input label="Completion Date" type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} />
                   <Input label="Hours Spent" type="number" min={0} step={0.5} value={completionHours} onChange={(e) => setCompletionHours(e.target.value)} placeholder="e.g. 2.5" />

@@ -9,18 +9,19 @@ import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import { Card } from '../ui/Card';
 
-type TasksView = 'weekly' | 'daily' | 'backlog' | 'review';
+type TasksView = 'weekly' | 'daily' | 'worklogs' | 'backlog' | 'review';
 
 const VIEWS: { id: TasksView; label: string }[] = [
   { id: 'weekly', label: 'This Week Tasks' },
   { id: 'daily', label: 'Daily Recurring' },
+  { id: 'worklogs', label: 'Work Logs' },
   { id: 'backlog', label: 'Backlog' },
   { id: 'review', label: 'Weekly Review' },
 ];
 
-const STATUS_BADGE_VARIANT: Record<TaskStatus, 'neutral' | 'blue' | 'success' | 'danger'> = {
+const STATUS_BADGE_VARIANT: Record<TaskStatus, 'neutral' | 'success' | 'danger'> = {
   todo: 'neutral',
-  doing: 'blue',
+  doing: 'neutral',
   done: 'success',
   blocked: 'danger',
   cancelled: 'neutral',
@@ -116,29 +117,29 @@ const TaskCard: React.FC<{
   const actions = getActionsForStatus(task.status);
 
   return (
-    <Card className="p-3 text-sm relative cursor-pointer" onClick={() => onClick(task)}>
+    <div className="rounded-lg border border-neutral-200 bg-white p-2.5 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => onClick(task)}>
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
             {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
             {task.category && <Badge variant="neutral">{task.category}</Badge>}
           </div>
-          <div className="mt-1 font-medium text-black">{task.title}</div>
-          {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-2">{task.description}</div>}
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-neutral-500">
-            {task.estimatedMinutes != null && <span>Est: {formatHours(task.estimatedMinutes)}</span>}
-            {task.actualMinutes != null && <span>Actual: {formatHours(task.actualMinutes)}</span>}
-            {task.completedAt && <span>Completed: {dayName(task.completedAt.slice(0, 10))}</span>}
+          <div className="mt-1 font-medium text-black truncate">{task.title}</div>
+          {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
+          <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-neutral-500">
+            {task.estimatedMinutes != null && <span>Est {formatHours(task.estimatedMinutes)}</span>}
+            {task.actualMinutes != null && <span>Act {formatHours(task.actualMinutes)}</span>}
+            {task.completedAt && <span>{dayName(task.completedAt.slice(0, 10))}</span>}
           </div>
           {(task.linkedProjectName || task.linkedPlanTitle || task.linkedCompanyName || task.linkedPersonName || task.linkedStrategyGoalTitle || task.linkedDocumentTitle) && (
             <div className="mt-1 flex flex-wrap gap-1">
-              {task.linkedProjectName && <Badge variant={LINK_BADGE_VARIANT.project}>{task.linkedProjectName}</Badge>}
-              {task.linkedPlanTitle && <Badge variant={LINK_BADGE_VARIANT.plan}>{task.linkedPlanTitle}</Badge>}
-              {task.linkedStrategyGoalTitle && <Badge variant={LINK_BADGE_VARIANT.strategyGoal}>{task.linkedStrategyGoalTitle}</Badge>}
-              {task.linkedCompanyName && <Badge variant={LINK_BADGE_VARIANT.company}>{task.linkedCompanyName}</Badge>}
-              {task.linkedPersonName && <Badge variant={LINK_BADGE_VARIANT.person}>{task.linkedPersonName}</Badge>}
-              {task.linkedDocumentTitle && <Badge variant={LINK_BADGE_VARIANT.document}>{task.linkedDocumentTitle}</Badge>}
+              {task.linkedProjectName && <Badge variant="neutral">{task.linkedProjectName}</Badge>}
+              {task.linkedPlanTitle && <Badge variant="neutral">{task.linkedPlanTitle}</Badge>}
+              {task.linkedStrategyGoalTitle && <Badge variant="neutral">{task.linkedStrategyGoalTitle}</Badge>}
+              {task.linkedCompanyName && <Badge variant="neutral">{task.linkedCompanyName}</Badge>}
+              {task.linkedPersonName && <Badge variant="neutral">{task.linkedPersonName}</Badge>}
+              {task.linkedDocumentTitle && <Badge variant="neutral">{task.linkedDocumentTitle}</Badge>}
             </div>
           )}
         </div>
@@ -180,9 +181,18 @@ const TaskCard: React.FC<{
           )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
+
+// ── Stat box ──
+const StatBox: React.FC<{ label: string; value: string | number; subtitle?: string }> = ({ label, value, subtitle }) => (
+  <div className="rounded-xl border border-neutral-200 bg-white p-3 min-w-0">
+    <div className="text-xs text-neutral-500 font-medium truncate">{label}</div>
+    <div className="mt-0.5 text-xl font-bold text-black leading-tight">{value}</div>
+    {subtitle && <div className="mt-0.5 text-xs text-neutral-400 truncate">{subtitle}</div>}
+  </div>
+);
 
 // ── Main Panel ──
 const TasksPanel: React.FC<{
@@ -278,6 +288,55 @@ const TasksPanel: React.FC<{
     [recurringTasks],
   );
 
+  const recurringDoneToday = useMemo(
+    () => Object.values(todayLogsByRuleId).filter((l) => l.status === 'done').length,
+    [todayLogsByRuleId],
+  );
+
+  // ── Work logs data ──
+  const thisWeekStart = useMemo(() => weekStartStr(), []);
+  const thisWeekEnd = useMemo(() => {
+    const d = new Date(thisWeekStart + 'T00:00:00');
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  }, [thisWeekStart]);
+
+  const workLogsThisWeek = useMemo(
+    () => taskWorkLogs.filter((l) => l.workDate >= thisWeekStart && l.workDate < thisWeekEnd),
+    [taskWorkLogs, thisWeekStart, thisWeekEnd],
+  );
+
+  const workLogMetrics = useMemo(() => {
+    const totalMinutes = workLogsThisWeek.reduce((s, l) => s + l.minutesSpent, 0);
+    const totalLogs = workLogsThisWeek.length;
+    const avgSession = totalLogs > 0 ? Math.round(totalMinutes / totalLogs) : 0;
+    const taskMinutes: Record<string, number> = {};
+    for (const log of workLogsThisWeek) {
+      taskMinutes[log.taskId] = (taskMinutes[log.taskId] || 0) + log.minutesSpent;
+    }
+    let mostWorkedTaskId = '';
+    let mostWorkedMinutes = 0;
+    for (const [tid, mins] of Object.entries(taskMinutes)) {
+      if (mins > mostWorkedMinutes) {
+        mostWorkedMinutes = mins;
+        mostWorkedTaskId = tid;
+      }
+    }
+    const mostWorkedTask = mostWorkedTaskId ? tasks.find((t) => t.id === mostWorkedTaskId) : null;
+    return { totalMinutes, totalLogs, avgSession, mostWorkedTaskTitle: mostWorkedTask?.title || '' };
+  }, [workLogsThisWeek, tasks]);
+
+  const taskMap = useMemo(() => {
+    const map: Record<string, Task> = {};
+    for (const t of tasks) map[t.id] = t;
+    return map;
+  }, [tasks]);
+
+  const sortedWorkLogs = useMemo(
+    () => [...taskWorkLogs].sort((a, b) => b.workDate.localeCompare(a.workDate)),
+    [taskWorkLogs],
+  );
+
   // ── Backlog ──
   const backlogTasks = useMemo(
     () => tasks.filter((t) => !t.weekStart && t.status !== 'cancelled'),
@@ -369,9 +428,13 @@ const TasksPanel: React.FC<{
   // ── Render weekly tasks ──
   const renderWeekly = () => (
     <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3">
-        <Button type="button" variant="outline" size="sm" onClick={() => handleWeekNav('prev')}>&lt; Prev</Button>
-        <div className="text-center">
+      {/* Week navigation */}
+      <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3">
+        <Button type="button" variant="outline" size="sm" onClick={() => handleWeekNav('prev')}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Prev
+        </Button>
+        <div className="text-center min-w-0 px-2">
           <div className="text-sm font-medium text-black">Week of {formatDate(selectedWeekStart)}</div>
           <div className="text-xs text-neutral-500">{formatWeekRange(selectedWeekStart)}</div>
         </div>
@@ -379,57 +442,81 @@ const TasksPanel: React.FC<{
           {selectedWeekStart !== weekStartStr() && (
             <Button type="button" variant="outline" size="sm" onClick={handleThisWeek}>This Week</Button>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={() => handleWeekNav('next')}>Next &gt;</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => handleWeekNav('next')}>
+            Next
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-8 gap-2">
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Total</div><div className="text-lg font-bold text-black">{weekStats.total}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Todo</div><div className="text-lg font-bold text-black">{weekStats.todo}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Doing</div><div className="text-lg font-bold text-black">{weekStats.doing}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Done</div><div className="text-lg font-bold text-black">{weekStats.done}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Blocked</div><div className="text-lg font-bold text-black">{weekStats.blocked}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Est</div><div className="text-lg font-bold text-black">{formatHours(weekStats.estimated)}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Logged</div><div className="text-lg font-bold text-black">{formatHours(weekStats.actual)}</div></div>
-        <div className="rounded-lg border border-neutral-200 bg-white p-2 text-center"><div className="text-xs text-neutral-500">Rate</div><div className="text-lg font-bold text-black">{weekStats.rate}%</div></div>
+      {/* Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <StatBox label="Total Tasks" value={weekStats.total} />
+        <StatBox label="Todo" value={weekStats.todo} />
+        <StatBox label="Doing" value={weekStats.doing} />
+        <StatBox label="Done" value={weekStats.done} />
+        <StatBox label="Blocked" value={weekStats.blocked} />
+        <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
+        <StatBox label="Logged" value={formatHours(weekStats.actual)} />
+        <StatBox label="Completion" value={weekStats.rate ? `${weekStats.rate}%` : '—'} subtitle={weekStats.total > 0 ? `${weekStats.done}/${weekStats.total}` : undefined} />
       </div>
 
       {/* Status columns */}
-      <div className="grid grid-cols-4 gap-3">
-        {COLUMNS.map((col) => (
-          <div key={col.status} className="rounded-lg border border-neutral-200 bg-white">
-            <div className="px-3 py-2 border-b border-neutral-200">
-              <div className="text-xs font-medium text-black">{col.label}</div>
-              <div className="text-xs text-neutral-500">{tasksByStatus[col.status].length}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {COLUMNS.map((col) => {
+          const tasks = tasksByStatus[col.status];
+          return (
+            <div key={col.status} className="rounded-xl border border-neutral-200 bg-white">
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-neutral-200">
+                <span className="text-xs font-semibold text-black">{col.label}</span>
+                <span className="text-xs text-neutral-500">{tasks.length}</span>
+              </div>
+              <div className="p-2 space-y-2 min-h-[100px]">
+                {tasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-xs text-neutral-400">
+                    <span className="font-medium">No {col.label.toLowerCase()} tasks</span>
+                    <span className="mt-0.5">Add a task to get started</span>
+                  </div>
+                ) : (
+                  tasks.map((task) => (
+                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={setEditingTask} onDelete={onDeleteTask} onClick={setSelectedTask} />
+                  ))
+                )}
+              </div>
             </div>
-            <div className="p-2 space-y-2 min-h-[120px]">
-              {tasksByStatus[col.status].length === 0 ? (
-                <div className="text-xs text-neutral-400 text-center py-4">—</div>
-              ) : (
-                tasksByStatus[col.status].map((task) => (
-                  <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={setEditingTask} onDelete={onDeleteTask} onClick={setSelectedTask} />
-                ))
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 
   // ── Render daily recurring ──
   const renderDailyRecurring = () => (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatBox label="Active Daily Tasks" value={activeRecurring.length} />
+        <StatBox label="Done Today" value={recurringDoneToday} subtitle={today} />
+        <StatBox label="Remaining Today" value={Math.max(0, activeRecurring.length - recurringDoneToday)} />
+        <StatBox label="Total Recurring" value={recurringTasks.length} subtitle={recurringTasks.length - activeRecurring.length > 0 ? `${recurringTasks.length - activeRecurring.length} inactive` : undefined} />
+      </div>
+
+      {/* Add button + header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-black">Daily Recurring Tasks</h3>
-          <p className="text-xs text-neutral-500">Track daily routines. These are separate from weekly tasks.</p>
+          <h3 className="text-sm font-semibold text-black">Daily Routines</h3>
+          <p className="text-xs text-neutral-500">Track daily recurring tasks separately from weekly work.</p>
         </div>
-        <Button type="button" variant="primary" size="sm" onClick={() => setShowRecurringForm(true)}>+ Add</Button>
+        <Button type="button" variant="primary" size="sm" onClick={() => setShowRecurringForm(true)}>+ Add Routine</Button>
       </div>
+
+      {/* Active recurring tasks */}
       {activeRecurring.length === 0 ? (
-        <div className="text-xs text-neutral-400 py-4 text-center">No daily recurring tasks.</div>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+          <span className="font-medium text-neutral-500">No daily recurring tasks</span>
+          <span className="mt-1">Add a daily routine to track consistency.</span>
+          <Button type="button" variant="primary" size="sm" className="mt-3" onClick={() => setShowRecurringForm(true)}>+ Add Routine</Button>
+        </div>
       ) : (
         <div className="space-y-2">
           {activeRecurring.map((rule) => {
@@ -437,28 +524,32 @@ const TasksPanel: React.FC<{
             const doneToday = log?.status === 'done';
             const skippedToday = log?.status === 'skipped';
             return (
-              <div key={rule.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm">
-                <div className="flex items-start justify-between gap-2">
+              <div key={rule.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-block w-2 h-2 rounded-full ${doneToday ? 'bg-neutral-900' : skippedToday ? 'bg-neutral-400' : 'bg-neutral-300'}`} />
-                      <span className="font-medium text-black">{rule.title}</span>
+                      <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${doneToday ? 'bg-emerald-500' : skippedToday ? 'bg-neutral-300' : 'bg-neutral-400'}`} />
+                      <span className="font-medium text-black truncate">{rule.title}</span>
                       {rule.priority && <Badge variant={PRIORITY_BADGE_VARIANT[rule.priority] || 'neutral'}>{rule.priority}</Badge>}
-                      {rule.estimatedMinutes != null && <span className="text-xs text-neutral-500">{formatHours(rule.estimatedMinutes)}</span>}
+                      {rule.category && <Badge variant="neutral">{rule.category}</Badge>}
                     </div>
-                    <div className="mt-0.5 text-xs text-neutral-500">{rule.frequency}{rule.daysOfWeek ? ` (${rule.daysOfWeek})` : ''}</div>
-                    {doneToday && <div className="mt-0.5 text-xs text-neutral-500">✓ Done today</div>}
-                    {skippedToday && <div className="mt-0.5 text-xs text-neutral-400">○ Skipped today</div>}
+                    <div className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
+                      <span className="capitalize">{rule.frequency}</span>
+                      {rule.daysOfWeek && <span>({rule.daysOfWeek})</span>}
+                      {rule.estimatedMinutes != null && <span>{formatHours(rule.estimatedMinutes)}</span>}
+                    </div>
+                    {doneToday && <div className="mt-1 text-xs text-emerald-600 font-medium">✓ Done today</div>}
+                    {skippedToday && <div className="mt-1 text-xs text-neutral-400">○ Skipped today</div>}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {!doneToday && !skippedToday && (
                       <>
-                        <Button type="button" variant="primary" size="sm" onClick={() => handleMarkRecurringDone(rule.id)}>Done</Button>
+                        <Button type="button" variant="primary" size="sm" onClick={() => handleMarkRecurringDone(rule.id)}>Done Today</Button>
                         <Button type="button" variant="outline" size="sm" onClick={() => handleMarkRecurringSkipped(rule.id)}>Skip</Button>
                       </>
                     )}
-                    {doneToday && <Button type="button" variant="ghost" size="sm" onClick={() => log && onDeleteRecurringTaskLog(log.id)}>Undo</Button>}
-                    {skippedToday && <Button type="button" variant="ghost" size="sm" onClick={() => log && onDeleteRecurringTaskLog(log.id)}>Undo</Button>}
+                    {doneToday && <Button type="button" variant="outline" size="sm" onClick={() => log && onDeleteRecurringTaskLog(log.id)}>Undo</Button>}
+                    {skippedToday && <Button type="button" variant="outline" size="sm" onClick={() => log && onDeleteRecurringTaskLog(log.id)}>Undo</Button>}
                     <Button type="button" variant="ghost" size="sm" onClick={() => setEditingRecurring(rule)}>Edit</Button>
                     <Button type="button" variant="danger" size="sm" onClick={() => onDeleteRecurringTask(rule.id)}>Del</Button>
                   </div>
@@ -468,15 +559,17 @@ const TasksPanel: React.FC<{
           })}
         </div>
       )}
+
+      {/* Inactive */}
       {recurringTasks.filter((r) => !r.isActive).length > 0 && (
         <div>
-          <h4 className="text-xs font-medium text-neutral-500 mb-2">Inactive</h4>
+          <h4 className="text-xs font-medium text-neutral-500 mb-2">Inactive Routines</h4>
           <div className="space-y-2">
             {recurringTasks.filter((r) => !r.isActive).map((rule) => (
-              <div key={rule.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm opacity-60">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-black">{rule.title}</span>
-                  <div className="flex items-center gap-1">
+              <div key={rule.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm opacity-60">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-black truncate">{rule.title}</span>
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button type="button" variant="ghost" size="sm" onClick={() => setEditingRecurring(rule)}>Edit</Button>
                     <Button type="button" variant="danger" size="sm" onClick={() => onDeleteRecurringTask(rule.id)}>Del</Button>
                   </div>
@@ -489,26 +582,90 @@ const TasksPanel: React.FC<{
     </div>
   );
 
+  // ── Render work logs ──
+  const renderWorkLogs = () => (
+    <div className="space-y-4">
+      {/* Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatBox label="Total Logged This Week" value={formatHours(workLogMetrics.totalMinutes)} />
+        <StatBox label="Number of Logs" value={workLogMetrics.totalLogs} subtitle="this week" />
+        <StatBox label="Average Session" value={formatHours(workLogMetrics.avgSession)} />
+        <StatBox label="Most Worked" value={workLogMetrics.mostWorkedTaskTitle || '—'} />
+      </div>
+
+      {/* All work logs */}
+      <div>
+        <h3 className="text-sm font-semibold text-black mb-1">Work Logs</h3>
+        <p className="text-xs text-neutral-500 mb-3">Time logged across all tasks.</p>
+        {sortedWorkLogs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+            <span className="font-medium text-neutral-500">No work logs</span>
+            <span className="mt-1">Open a task and log time to track your work.</span>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-neutral-500">Date</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-neutral-500">Task</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-neutral-500">Time</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-neutral-500">Summary</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-neutral-500">Notes</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-neutral-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedWorkLogs.map((log) => {
+                  const task = taskMap[log.taskId];
+                  return (
+                    <tr key={log.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
+                      <td className="px-3 py-2 text-xs text-black whitespace-nowrap">{formatDate(log.workDate)}</td>
+                      <td className="px-3 py-2 text-xs text-black max-w-[200px] truncate">{task?.title || 'Unknown task'}</td>
+                      <td className="px-3 py-2 text-xs"><Badge variant="neutral">{formatHours(log.minutesSpent)}</Badge></td>
+                      <td className="px-3 py-2 text-xs text-neutral-700 max-w-[200px] truncate">{log.summary || '—'}</td>
+                      <td className="px-3 py-2 text-xs text-neutral-400 max-w-[150px] truncate">{log.notes || '—'}</td>
+                      <td className="px-3 py-2 text-xs text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          {task && <Button variant="ghost" size="sm" onClick={() => setSelectedTask(task)}>View</Button>}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // ── Render backlog ──
   const renderBacklog = () => (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-black">Backlog</h3>
-      <p className="text-xs text-neutral-500">Tasks without a week assignment. Move them to the current week to plan them.</p>
+      <div>
+        <h3 className="text-sm font-semibold text-black">Backlog</h3>
+        <p className="text-xs text-neutral-500">Tasks without a week assignment. Move them to the current week to plan them.</p>
+      </div>
       {backlogTasks.length === 0 ? (
-        <div className="text-xs text-neutral-400 py-4 text-center">No backlog tasks.</div>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
+          <span className="font-medium text-neutral-500">No backlog tasks</span>
+          <span className="mt-1">Tasks without a week will appear here.</span>
+        </div>
       ) : (
         <div className="space-y-2">
           {backlogTasks.map((task) => (
-            <div key={task.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm cursor-pointer" onClick={() => setSelectedTask(task)}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+            <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => setSelectedTask(task)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
                     {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
                     {task.category && <Badge variant="neutral">{task.category}</Badge>}
                   </div>
-                  <div className="mt-1 font-medium text-black">{task.title}</div>
-                  {task.description && <div className="mt-0.5 text-xs text-neutral-500">{task.description}</div>}
+                  <div className="mt-1 font-medium text-black truncate">{task.title}</div>
+                  {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   {task.status !== 'done' && (
@@ -529,6 +686,7 @@ const TasksPanel: React.FC<{
     switch (view) {
       case 'weekly': return renderWeekly();
       case 'daily': return renderDailyRecurring();
+      case 'worklogs': return renderWorkLogs();
       case 'backlog': return renderBacklog();
       case 'review': return (
         <WeeklyReviewSection
@@ -536,6 +694,10 @@ const TasksPanel: React.FC<{
           selectedWeekStart={selectedWeekStart}
           weekStats={weekStats}
           onSave={handleSaveReview}
+          onWeekNav={handleWeekNav}
+          onThisWeek={handleThisWeek}
+          formatDate={formatDate}
+          formatWeekRange={formatWeekRange}
         />
       );
     }
@@ -544,13 +706,13 @@ const TasksPanel: React.FC<{
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between border-b border-neutral-200">
-        <nav className="flex flex-wrap gap-1 -mb-px">
+        <nav className="flex flex-wrap gap-1 -mb-px overflow-x-auto">
           {VIEWS.map((v) => (
             <button
               key={v.id}
               type="button"
               onClick={() => setView(v.id)}
-              className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 ${
+              className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 whitespace-nowrap ${
                 view === v.id
                   ? 'border-neutral-900 text-neutral-900'
                   : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -561,7 +723,7 @@ const TasksPanel: React.FC<{
           ))}
         </nav>
         {view === 'weekly' && (
-          <Button type="button" variant="primary" size="sm" onClick={() => setShowTaskForm(true)}>+ Add Task</Button>
+          <Button type="button" variant="primary" size="sm" className="shrink-0 ml-2" onClick={() => setShowTaskForm(true)}>+ Add Task</Button>
         )}
       </div>
 
@@ -609,7 +771,7 @@ const TasksPanel: React.FC<{
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5">
             <h3 className="text-sm font-medium text-black mb-3">Complete Task</h3>
-            <p className="text-xs text-neutral-500 mb-4">{completingTask.title}</p>
+            <p className="text-xs text-neutral-500 mb-4 break-words">{completingTask.title}</p>
             <CompletionModalForm task={completingTask} onConfirm={handleComplete} onCancel={() => setCompletingTask(null)} />
           </div>
         </div>
@@ -639,7 +801,7 @@ const TasksPanel: React.FC<{
   );
 };
 
-// ── Completion Modal Form (to avoid mutating state while open) ──
+// ── Completion Modal Form ──
 const CompletionModalForm: React.FC<{
   task: Task;
   onConfirm: (id: string, date: string, hours: number, notes: string) => void;
@@ -668,7 +830,11 @@ const WeeklyReviewSection: React.FC<{
   selectedWeekStart: string;
   weekStats: { done: number; total: number; rate: number; estimated: number; actual: number };
   onSave: (input: WeeklyTaskReviewInput) => Promise<void>;
-}> = ({ weekReview, selectedWeekStart, weekStats, onSave }) => {
+  onWeekNav: (direction: 'prev' | 'next') => void;
+  onThisWeek: () => void;
+  formatDate: (iso: string) => string;
+  formatWeekRange: (startStr: string) => string;
+}> = ({ weekReview, selectedWeekStart, weekStats, onSave, onWeekNav, onThisWeek, formatDate, formatWeekRange }) => {
   const [summary, setSummary] = useState(weekReview?.summary || '');
   const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
   const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');
@@ -677,6 +843,7 @@ const WeeklyReviewSection: React.FC<{
   const [nextFocus, setNextFocus] = useState(weekReview?.nextWeekFocus || '');
   const [score, setScore] = useState(weekReview?.score != null ? String(weekReview.score) : '');
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(!weekReview);
 
   const handleSave = async () => {
     setSaving(true);
@@ -691,52 +858,166 @@ const WeeklyReviewSection: React.FC<{
         nextWeekFocus: nextFocus || undefined,
         score: score ? Math.min(10, Math.max(0, parseInt(score) || 0)) : undefined,
       });
+      setEditing(false);
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium text-black">Weekly Review</h3>
-          <p className="text-xs text-neutral-500">Week of {formatDate(selectedWeekStart)}</p>
-        </div>
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : weekReview ? 'Update Review' : 'Save Review'}
-        </Button>
-      </div>
+  const handleEdit = () => setEditing(true);
 
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="p-4 space-y-3">
-          <h4 className="text-xs font-medium text-black">Execution</h4>
-          <div className="grid grid-cols-2 gap-2 text-xs text-neutral-500">
+  if (!weekReview && !editing) {
+    return (
+      <div className="space-y-4">
+        {/* Week nav */}
+        <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3">
+          <Button variant="outline" size="sm" onClick={() => onWeekNav('prev')}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            Prev
+          </Button>
+          <div className="text-center min-w-0 px-2">
+            <div className="text-sm font-medium text-black">Week of {formatDate(selectedWeekStart)}</div>
+            <div className="text-xs text-neutral-500">{formatWeekRange(selectedWeekStart)}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedWeekStart !== weekStartStr() && (
+              <Button variant="outline" size="sm" onClick={onThisWeek}>This Week</Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => onWeekNav('next')}>
+              Next
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </Button>
+          </div>
+        </div>
+
+        {/* Empty state */}
+        <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-10 text-xs text-neutral-400">
+          <span className="font-medium text-neutral-500 text-sm">No weekly review yet</span>
+          <span className="mt-2 text-center max-w-sm">Review this week to understand what worked, what failed, and what to focus on next.</span>
+          <Button type="button" variant="primary" size="sm" className="mt-4" onClick={() => setEditing(true)}>Create Weekly Review</Button>
+        </div>
+
+        {/* Execution stats */}
+        <Card className="p-4">
+          <h4 className="text-xs font-semibold text-black mb-2">This Week</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-neutral-500">
             <div><span className="font-medium text-black">Done:</span> {weekStats.done}/{weekStats.total}</div>
             <div><span className="font-medium text-black">Rate:</span> {weekStats.rate}%</div>
             <div><span className="font-medium text-black">Est:</span> {formatHours(weekStats.estimated)}</div>
             <div><span className="font-medium text-black">Logged:</span> {formatHours(weekStats.actual)}</div>
           </div>
         </Card>
-        <Input label="Score (0-10)" type="number" min={0} max={10} value={score} onChange={(e) => setScore(e.target.value)} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Week nav + status */}
+      <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3">
+        <Button variant="outline" size="sm" onClick={() => onWeekNav('prev')}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Prev
+        </Button>
+        <div className="text-center min-w-0 px-2">
+          <div className="text-sm font-medium text-black">Week of {formatDate(selectedWeekStart)}</div>
+          <div className="text-xs text-neutral-500">{weekReview ? 'Review saved' : 'Draft'}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedWeekStart !== weekStartStr() && (
+            <Button variant="outline" size="sm" onClick={onThisWeek}>This Week</Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => onWeekNav('next')}>
+            Next
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </Button>
+        </div>
       </div>
 
-      <Textarea label="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} />
-      <div className="grid grid-cols-2 gap-4">
-        <Textarea label="What Worked" value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} />
-        <Textarea label="What Failed" value={whatFailed} onChange={(e) => setWhatFailed(e.target.value)} rows={3} />
+      {/* Execution stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatBox label="Done" value={`${weekStats.done}/${weekStats.total}`} subtitle={`${weekStats.rate}% rate`} />
+        <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
+        <StatBox label="Logged" value={formatHours(weekStats.actual)} />
+        <StatBox label="Score" value={score || '—'} subtitle={score ? '/10' : undefined} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Textarea label="Blockers" value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={3} />
-        <Textarea label="Lessons" value={lessons} onChange={(e) => setLessons(e.target.value)} rows={3} />
-      </div>
-      <Textarea label="Next Week Focus" value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={3} />
+
+      {!editing ? (
+        /* Read-only review */
+        <div className="space-y-3">
+          {weekReview?.summary && (
+            <Card className="p-4">
+              <h4 className="text-xs font-semibold text-black mb-2">Summary</h4>
+              <p className="text-sm text-black whitespace-pre-wrap">{weekReview.summary}</p>
+            </Card>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {weekReview?.whatWorked && (
+              <Card className="p-4">
+                <h4 className="text-xs font-semibold text-black mb-2">What Worked</h4>
+                <p className="text-sm text-black whitespace-pre-wrap">{weekReview.whatWorked}</p>
+              </Card>
+            )}
+            {weekReview?.whatFailed && (
+              <Card className="p-4">
+                <h4 className="text-xs font-semibold text-black mb-2">What Failed</h4>
+                <p className="text-sm text-black whitespace-pre-wrap">{weekReview.whatFailed}</p>
+              </Card>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {weekReview?.blockers && (
+              <Card className="p-4">
+                <h4 className="text-xs font-semibold text-black mb-2">Blockers</h4>
+                <p className="text-sm text-black whitespace-pre-wrap">{weekReview.blockers}</p>
+              </Card>
+            )}
+            {weekReview?.lessons && (
+              <Card className="p-4">
+                <h4 className="text-xs font-semibold text-black mb-2">Lessons</h4>
+                <p className="text-sm text-black whitespace-pre-wrap">{weekReview.lessons}</p>
+              </Card>
+            )}
+          </div>
+          {weekReview?.nextWeekFocus && (
+            <Card className="p-4">
+              <h4 className="text-xs font-semibold text-black mb-2">Next Week Focus</h4>
+              <p className="text-sm text-black whitespace-pre-wrap">{weekReview.nextWeekFocus}</p>
+            </Card>
+          )}
+          <div className="flex justify-end">
+            <Button type="button" variant="primary" size="sm" onClick={handleEdit}>Edit Review</Button>
+          </div>
+        </div>
+      ) : (
+        /* Edit/create form */
+        <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
+          <h4 className="text-sm font-semibold text-black">{weekReview ? 'Edit Review' : 'New Weekly Review'}</h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input label="Score (0-10)" type="number" min={0} max={10} value={score} onChange={(e) => setScore(e.target.value)} />
+          </div>
+
+          <Textarea label="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="How did the week go overall?" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Textarea label="What Worked" value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} placeholder="What went well this week?" />
+            <Textarea label="What Failed" value={whatFailed} onChange={(e) => setWhatFailed(e.target.value)} rows={3} placeholder="What didn't go well?" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Textarea label="Blockers" value={blockers} onChange={(e) => setBlockers(e.target.value)} rows={3} placeholder="What blocked your progress?" />
+            <Textarea label="Lessons" value={lessons} onChange={(e) => setLessons(e.target.value)} rows={3} placeholder="What did you learn?" />
+          </div>
+
+          <Textarea label="Next Week Focus" value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} rows={3} placeholder="What are your priorities for next week?" />
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" size="sm" onClick={() => { if (weekReview) setEditing(false); else { setSummary(''); setWhatWorked(''); setWhatFailed(''); setBlockers(''); setLessons(''); setNextFocus(''); setScore(''); setEditing(false); } }}>Cancel</Button>
+            <Button type="button" variant="primary" size="sm" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : weekReview ? 'Update Review' : 'Save Review'}</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
