@@ -74,6 +74,24 @@ const docTypeLabels: Record<string, string> = {
   brief: 'Brief', receipt: 'Receipt', link: 'Link', document: 'Document', other: 'Other',
 };
 
+const badgeSelectVariant = (value: string, map: Record<string, string>): string => {
+  const variant = map[value] || 'neutral';
+  const variantClasses: Record<string, string> = {
+    success: 'bg-green-50 text-green-700 border-green-200',
+    warning: 'bg-amber-50 text-amber-700 border-amber-200',
+    danger: 'bg-red-50 text-red-700 border-red-200',
+    neutral: 'bg-neutral-100 text-neutral-700 border-neutral-200',
+  };
+  return variantClasses[variant] || variantClasses.neutral;
+};
+
+const SummaryCard: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({ label, children, className }) => (
+  <div className={`rounded-xl border border-neutral-200 bg-white p-3 ${className || ''}`}>
+    <div className="text-[11px] font-medium text-neutral-500 mb-1">{label}</div>
+    {children}
+  </div>
+);
+
 const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
   <div className="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden">
     <div className="h-full rounded-full bg-black transition-all duration-300" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
@@ -643,9 +661,10 @@ const ProjectDetailView: React.FC<{
   return (
     <div className="relative min-h-screen bg-neutral-50">
       {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-30 bg-neutral-50 border-b border-neutral-200">
-        <div className="max-w-full px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
+      <div className="sticky top-0 z-30 bg-white border-b border-neutral-200">
+        <div className="max-w-full px-4 pt-3 pb-0">
+          {/* Back + Edit row */}
+          <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={onBack} className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 bg-white text-neutral-500 hover:text-black hover:bg-neutral-100 flex items-center gap-1 transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               Back
@@ -653,86 +672,105 @@ const ProjectDetailView: React.FC<{
             <Button variant="outline" onClick={onEditProject}>Edit Project</Button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-xl font-bold text-black">{project.name}</h2>
+          {/* Title + badges row */}
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-black mb-2">{project.name}</h2>
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="neutral">{typeLabel(project.type)}</Badge>
-            </div>
-          </div>
-
-          {/* Inline editable fields */}
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Status</span>
               <select value={project.status || 'planned'} onChange={(e) => handleInlineUpdate('status', e.target.value)}
-                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border cursor-pointer ${badgeSelectVariant(project.status || 'planned', stageBadgeVariant)}`}
               >
                 <option value="planned">Planned</option><option value="active">Active</option><option value="paused">Paused</option>
                 <option value="blocked">Blocked</option><option value="completed">Completed</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['status'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Phase</span>
+              {inlineSaving['status'] && <span className="text-[10px] text-neutral-400 italic">saving...</span>}
               <select value={project.phase || 'idea'} onChange={(e) => handleInlineUpdate('phase', e.target.value)}
-                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
+                className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border cursor-pointer bg-neutral-100 text-neutral-700 border-neutral-200"
               >
                 <option value="idea">Idea</option><option value="research">Research</option><option value="ux_audit">UX Audit</option>
                 <option value="wireframes">Wireframes</option><option value="ui_design">UI Design</option><option value="prototype">Prototype</option>
                 <option value="case_study">Case Study</option><option value="published">Published</option><option value="archived">Archived</option>
               </select>
-              {inlineSaving['phase'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Priority</span>
+              {inlineSaving['phase'] && <span className="text-[10px] text-neutral-400 italic">saving...</span>}
               <select value={project.priority || 'medium'} onChange={(e) => handleInlineUpdate('priority', e.target.value)}
-                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border cursor-pointer ${badgeSelectVariant(project.priority || 'medium', priorityBadgeVariant)}`}
               >
                 <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option>
               </select>
-              {inlineSaving['priority'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
+              {inlineSaving['priority'] && <span className="text-[10px] text-neutral-400 italic">saving...</span>}
             </div>
+          </div>
 
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Deadline</span>
-              <input type="date" value={project.deadline ? project.deadline.slice(0, 10) : ''} onChange={(e) => handleInlineUpdate('deadline', e.target.value || null)}
-                className="text-xs rounded-md border border-neutral-200 px-2 py-1 bg-white text-black focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-300"
-              />
-              {inlineSaving['deadline'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Progress</span>
-              <div className="flex items-center gap-1">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progressDraft}
-                  onChange={(e) => {
-                    void handleProgressChange(Number(e.target.value));
-                  }}
-                  className="w-24 h-1.5 accent-black cursor-pointer"
-                />
-                <span className="text-xs font-medium text-black min-w-[90px]">Progress {progressDraft}%</span>
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-4">
+            {/* Progress card */}
+            <SummaryCard label="Progress">
+              <div className="flex items-center gap-2">
+                <div className="flex-1"><ProgressBar value={progressDraft} /></div>
+                <span className="text-sm font-semibold text-black">{progressDraft}%</span>
               </div>
+              <input type="range" min="0" max="100" value={progressDraft}
+                onChange={(e) => { void handleProgressChange(Number(e.target.value)); }}
+                className="mt-1.5 w-full h-1 accent-black cursor-pointer"
+              />
               {inlineSaving['progress'] && <span className="text-[10px] text-neutral-400">Saving...</span>}
-            </div>
+            </SummaryCard>
+
+            {/* Deadline card */}
+            <SummaryCard label="Deadline">
+              {project.deadline ? (
+                <>
+                  <div className="text-sm font-semibold text-black">{formatDate(project.deadline)}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {daysRemaining !== null && (
+                      <span className={`text-[11px] ${daysRemaining < 0 ? 'text-red-600 font-medium' : 'text-neutral-500'}`}>
+                        {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d left`}
+                      </span>
+                    )}
+                    {inlineSaving['deadline'] && <span className="text-[10px] text-neutral-400">saving...</span>}
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-neutral-400">No deadline</div>
+              )}
+            </SummaryCard>
+
+            {/* Start Date card */}
+            <SummaryCard label="Start Date">
+              <div className="text-sm font-semibold text-black">{project.startDate ? formatDate(project.startDate) : <span className="text-neutral-400 font-normal">Not set</span>}</div>
+            </SummaryCard>
+
+            {/* Related card */}
+            <SummaryCard label="Related">
+              {company ? (
+                <div className="text-sm font-semibold text-black truncate">{company.name}</div>
+              ) : person1 ? (
+                <div className="text-sm font-semibold text-black truncate">{person1.fullName}</div>
+              ) : (
+                <div className="text-sm text-neutral-400">No relation</div>
+              )}
+            </SummaryCard>
+
+            {/* Next Action card */}
+            <SummaryCard label="Next Action">
+              {project.nextAction ? (
+                <div className="text-sm font-semibold text-black truncate">{project.nextAction}</div>
+              ) : (
+                <div className="text-sm text-neutral-400">No next action</div>
+              )}
+            </SummaryCard>
           </div>
 
-          <div className="mt-2 max-w-md">
-            <ProgressBar value={progressDraft} />
-          </div>
-
-          {inlineError ? <div className="mt-2 text-xs text-red-700">{inlineError}</div> : null}
-
-          {project.deadline && daysRemaining !== null && (
-            <div className={`mt-1 text-xs ${daysRemaining < 0 ? 'text-red-700 font-medium' : 'text-neutral-500'}`}>
-              {daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days remaining`}
+          {/* Links section */}
+          {(project.portfolioUrl || project.figmaUrl || project.githubUrl) && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 transition-all">Portfolio ↗</a>}
+              {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 transition-all">Figma ↗</a>}
+              {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-600 hover:bg-neutral-100 transition-all">GitHub ↗</a>}
             </div>
           )}
+
+          {inlineError ? <div className="mb-2 text-xs text-red-700">{inlineError}</div> : null}
         </div>
 
         {/* Quick Action Bar */}
@@ -1155,17 +1193,6 @@ const ProjectDetailView: React.FC<{
       {/* ── Right Sidebar ── */}
       <div className="space-y-4">
         <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Project Summary</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-neutral-500">Status</span><span className="font-medium text-black capitalize">{project.status || '—'}</span></div>
-            <div className="flex justify-between"><span className="text-neutral-500">Phase</span><span className="font-medium text-black">{phaseLabel(project.phase)}</span></div>
-            <div className="flex justify-between items-center"><span className="text-neutral-500">Priority</span><Badge variant={priorityBadgeVariant[project.priority || ''] || 'neutral'}>{priorityLabel(project.priority)}</Badge></div>
-            <div className="flex justify-between"><span className="text-neutral-500">Progress</span><span className="font-medium text-black">{progressDraft}%</span></div>
-          </div>
-          <div className="mt-3"><ProgressBar value={progressDraft} /></div>
-        </div>
-
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
           <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Quick Stats</h3>
           <div className="grid grid-cols-2 gap-2">
             <StatCard title="Tasks" value={taskStats.open} />
@@ -1184,48 +1211,6 @@ const ProjectDetailView: React.FC<{
             <div className="flex justify-between"><span className="text-neutral-500">Paid</span><span className="font-medium text-black">{(financeStats.paid || 0).toLocaleString()}</span></div>
           </div>
         </div>
-
-        <div className="rounded-lg border border-neutral-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Linked</h3>
-          <div className="space-y-2 text-sm">
-            {company ? (
-              <div>
-                <div className="text-xs text-neutral-400 uppercase">Company</div>
-                <div className="font-medium text-black">{company.name}</div>
-                {company.industry && <div className="text-neutral-500 text-xs">{company.industry}</div>}
-              </div>
-            ) : (
-              <div><div className="text-xs text-neutral-400 uppercase">Company</div><div className="text-neutral-500">No company linked</div></div>
-            )}
-            {person1 ? (
-              <div className="mt-2">
-                <div className="text-xs text-neutral-400 uppercase">Person</div>
-                <div className="font-medium text-black">{person1.fullName}</div>
-                {person1.role && <div className="text-neutral-500 text-xs">{person1.role}</div>}
-              </div>
-            ) : (
-              <div className="mt-2"><div className="text-xs text-neutral-400 uppercase">Person</div><div className="text-neutral-500">No person linked</div></div>
-            )}
-          </div>
-        </div>
-
-        {project.nextAction && (
-          <div className="rounded-lg border border-neutral-200 bg-white p-4">
-            <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-1">Next Action</h3>
-            <p className="text-sm text-neutral-500">{project.nextAction}</p>
-          </div>
-        )}
-
-        {(project.portfolioUrl || project.figmaUrl || project.githubUrl) && (
-          <div className="rounded-lg border border-neutral-200 bg-white p-4">
-            <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-2">Links</h3>
-            <div className="flex flex-wrap gap-2">
-              {project.portfolioUrl && <a href={project.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">Portfolio ↗</a>}
-              {project.figmaUrl && <a href={project.figmaUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">Figma ↗</a>}
-              {project.githubUrl && <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-100 transition-all">GitHub ↗</a>}
-            </div>
-          </div>
-        )}
       </div> {/* end right sidebar */}
 
       </div> {/* end grid */}
