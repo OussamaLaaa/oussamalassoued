@@ -1313,3 +1313,160 @@ body.opportunities-page .opportunities-shell {
   min-height: 100vh;
   isolation: isolate;
 }
+
+/* ─── UI Kit Utility Classes ─── */
+
+.ui-page {
+  background: var(--opp-bg, #f8fafc);
+  min-height: 100vh;
+}
+
+.ui-card {
+  background: var(--opp-card, #ffffff);
+  border: 1px solid var(--opp-border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+}
+
+.ui-card-header {
+  padding: 20px 20px 0;
+}
+
+.ui-card-content {
+  padding: 20px;
+}
+
+.ui-text-primary {
+  color: var(--opp-primary, #0f172a);
+}
+
+.ui-text-secondary {
+  color: var(--opp-secondary, #64748b);
+}
+
+.ui-text-muted {
+  color: var(--opp-muted, #94a3b8);
+}
+
+/* Badge variant utilities */
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  line-height: 1.4;
+  white-space: nowrap;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.ui-badge-neutral {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+.ui-badge-blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.ui-badge-success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.ui-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.ui-badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.ui-badge-purple {
+  background: #f3f0ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+/* Typography utilities */
+.ui-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--opp-primary, #0f172a);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.ui-subheading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--opp-primary, #0f172a);
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
+
+.ui-body {
+  font-size: 13px;
+  color: var(--opp-secondary, #64748b);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.ui-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--opp-primary, #0f172a);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Spacing utilities */
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ui-stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ui-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ui-row-sm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Safe text overflow */
+.ui-text-wrap {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+/* Responsive page padding */
+.ui-page-padding {
+  padding: 24px;
+}
+@media (max-width: 640px) {
+  .ui-page-padding {
+    padding: 16px;
+  }
+}
+
+.ui-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
