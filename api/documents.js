@@ -164,10 +164,6 @@ const handleUploadPdf = async (req, res) => {
     return toSafeJson(res, 500, { success: false, error: 'Storage configuration is unavailable.' });
   }
 
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized' });
-  }
-
   const body = readBody(req);
   const debug = body?.debug === true;
 

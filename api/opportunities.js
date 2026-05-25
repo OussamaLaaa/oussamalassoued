@@ -1221,10 +1221,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    if (!isAuthenticated(req)) {
-      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
-    }
-
     const scope = req?.query?.scope || 'all';
     const entityTimingsMs = {};
 
@@ -1397,10 +1393,6 @@ export default async function handler(req, res) {
     const body = readBody(req);
     const { entity, action, data } = body || {};
 
-    if (!isAuthenticated(req)) {
-      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
-    }
-
     if (action !== 'insert' && action !== 'bulk_insert') {
       return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });
     }
@@ -1488,10 +1480,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PUT') {
-    if (!isAuthenticated(req)) {
-      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
-    }
-
     const body = readBody(req);
     const { entity, action, id, data } = body || {};
 
@@ -1607,10 +1595,6 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    if (!isAuthenticated(req)) {
-      return toSafeJson(res, 401, { success: false, error: 'Authentication required.' });
-    }
-
     const body = readBody(req);
     const { entity, action, id } = body || {};
 

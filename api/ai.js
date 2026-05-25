@@ -315,10 +315,6 @@ const buildInsertPayload = (body, existingRow = null) => {
 };
 
 const handleProviderKeyAction = async (req, res) => {
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
-  }
-
   const supabase = createSupabaseClient();
   const body = readBody(req);
   const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
@@ -514,10 +510,6 @@ const handleProviderKeyAction = async (req, res) => {
 };
 
 const handleUseCaseTest = async (req, res) => {
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
-  }
-
   const supabase = createSupabaseClient();
   const body = readBody(req);
   const useCase = toCleanString(body.useCase).toLowerCase();
@@ -561,10 +553,6 @@ const handleUseCaseTest = async (req, res) => {
 };
 
 const handleNotesAction = async (req, res) => {
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Unauthorized.' });
-  }
-
   const body = readBody(req);
   const mode = toCleanString(body.mode).toLowerCase();
   const note = body?.note && typeof body.note === 'object' ? body.note : {};
@@ -807,10 +795,6 @@ const mapSocialMediaAiError = (error) => {
 };
 
 const handleSocialMediaAction = async (req, res) => {
-  if (!isAuthenticated(req)) {
-    return toSafeJson(res, 401, { success: false, error: 'Authentication required. Please log in again.' });
-  }
-
   const body = readBody(req);
   const mode = toCleanString(body.mode).toLowerCase();
   const strategy = body?.strategy && typeof body.strategy === 'object' ? body.strategy : null;
