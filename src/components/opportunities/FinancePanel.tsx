@@ -1,52 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, FinanceRecurringRule, Project, Company } from '../../types/opportunities';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
 
 type FinanceTab = 'dashboard' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'review' | 'ai_assistant';
 type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'recurring_income_review' | 'next_actions';
 type InvestTab = 'overview' | 'ideas' | 'allocation' | 'rules' | 'risk_review' | 'ethical_review';
-
-interface FinancePanelProps {
-  financeIncome: FinanceIncome[];
-  financeExpenses: FinanceExpense[];
-  financeAllocationRules: FinanceAllocationRule[];
-  financePurchaseGoals: FinancePurchaseGoal[];
-  financeInvestmentIdeas: FinanceInvestmentIdea[];
-  financeInvestmentRules: FinanceInvestmentRule[];
-  financeInvestmentAllocations: FinanceInvestmentAllocation[];
-  projects: Project[];
-  companies: Company[];
-  onAddFinanceIncome: (input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
-  onUpdateFinanceIncome: (id: string, input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
-  onDeleteFinanceIncome: (id: string) => Promise<void>;
-  onAddFinanceExpense: (input: Partial<FinanceExpense>) => Promise<FinanceExpense>;
-  onUpdateFinanceExpense: (id: string, input: Partial<FinanceExpense>) => Promise<FinanceExpense>;
-  onDeleteFinanceExpense: (id: string) => Promise<void>;
-  onAddFinanceAllocationRule: (input: Partial<FinanceAllocationRule>) => Promise<FinanceAllocationRule>;
-  onUpdateFinanceAllocationRule: (id: string, input: Partial<FinanceAllocationRule>) => Promise<FinanceAllocationRule>;
-  onDeleteFinanceAllocationRule: (id: string) => Promise<void>;
-  onAddFinancePurchaseGoal: (input: Partial<FinancePurchaseGoal>) => Promise<FinancePurchaseGoal>;
-  onUpdateFinancePurchaseGoal: (id: string, input: Partial<FinancePurchaseGoal>) => Promise<FinancePurchaseGoal>;
-  onDeleteFinancePurchaseGoal: (id: string) => Promise<void>;
-  onAddFinanceInvestmentIdea: (input: Partial<FinanceInvestmentIdea>) => Promise<FinanceInvestmentIdea>;
-  onUpdateFinanceInvestmentIdea: (id: string, input: Partial<FinanceInvestmentIdea>) => Promise<FinanceInvestmentIdea>;
-  onDeleteFinanceInvestmentIdea: (id: string) => Promise<void>;
-  onAddFinanceInvestmentRule: (input: Partial<FinanceInvestmentRule>) => Promise<FinanceInvestmentRule>;
-  onUpdateFinanceInvestmentRule: (id: string, input: Partial<FinanceInvestmentRule>) => Promise<FinanceInvestmentRule>;
-  onDeleteFinanceInvestmentRule: (id: string) => Promise<void>;
-  onAddFinanceInvestmentAllocation: (input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
-  onUpdateFinanceInvestmentAllocation: (id: string, input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
-  onDeleteFinanceInvestmentAllocation: (id: string) => Promise<void>;
-  financePeriods: FinancePeriod[];
-  onAddFinancePeriod: (input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
-  onUpdateFinancePeriod: (id: string, input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
-  onDeleteFinancePeriod: (id: string) => Promise<void>;
-  financeRecurringRules: FinanceRecurringRule[];
-  onAddFinanceRecurringRule: (input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
-  onUpdateFinanceRecurringRule: (id: string, input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
-  onDeleteFinanceRecurringRule: (id: string) => Promise<void>;
-}
-
-
 
 const now = new Date();
 const cMonth = now.getMonth();
@@ -119,6 +78,89 @@ function expenseInPeriod(exp: FinanceExpense, periodId: string, period?: Finance
 
 type HorizonView = 'monthly' | 'six_months' | 'yearly' | 'five_years' | 'ten_years';
 
+const statusBadge: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  received: 'success',
+  paid: 'success',
+  bought: 'success',
+  invested: 'success',
+  expected: 'neutral',
+  planned: 'neutral',
+  saving: 'neutral',
+  researching: 'neutral',
+  delayed: 'warning',
+  paused: 'warning',
+  waiting: 'warning',
+  needs_review: 'warning',
+  cancelled: 'danger',
+  rejected: 'danger',
+  unpaid: 'danger',
+  blocked: 'danger',
+  overdue: 'danger',
+  avoid: 'danger',
+};
+
+const priorityBadge: Record<string, 'danger' | 'warning' | 'neutral'> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'neutral',
+};
+
+const riskBadge: Record<string, 'danger' | 'warning' | 'neutral'> = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'neutral',
+};
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 min-w-0">
+      <label className="text-xs font-medium text-neutral-600">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+interface FinancePanelProps {
+  financeIncome: FinanceIncome[];
+  financeExpenses: FinanceExpense[];
+  financeAllocationRules: FinanceAllocationRule[];
+  financePurchaseGoals: FinancePurchaseGoal[];
+  financeInvestmentIdeas: FinanceInvestmentIdea[];
+  financeInvestmentRules: FinanceInvestmentRule[];
+  financeInvestmentAllocations: FinanceInvestmentAllocation[];
+  projects: Project[];
+  companies: Company[];
+  onAddFinanceIncome: (input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
+  onUpdateFinanceIncome: (id: string, input: Partial<FinanceIncome>) => Promise<FinanceIncome>;
+  onDeleteFinanceIncome: (id: string) => Promise<void>;
+  onAddFinanceExpense: (input: Partial<FinanceExpense>) => Promise<FinanceExpense>;
+  onUpdateFinanceExpense: (id: string, input: Partial<FinanceExpense>) => Promise<FinanceExpense>;
+  onDeleteFinanceExpense: (id: string) => Promise<void>;
+  onAddFinanceAllocationRule: (input: Partial<FinanceAllocationRule>) => Promise<FinanceAllocationRule>;
+  onUpdateFinanceAllocationRule: (id: string, input: Partial<FinanceAllocationRule>) => Promise<FinanceAllocationRule>;
+  onDeleteFinanceAllocationRule: (id: string) => Promise<void>;
+  onAddFinancePurchaseGoal: (input: Partial<FinancePurchaseGoal>) => Promise<FinancePurchaseGoal>;
+  onUpdateFinancePurchaseGoal: (id: string, input: Partial<FinancePurchaseGoal>) => Promise<FinancePurchaseGoal>;
+  onDeleteFinancePurchaseGoal: (id: string) => Promise<void>;
+  onAddFinanceInvestmentIdea: (input: Partial<FinanceInvestmentIdea>) => Promise<FinanceInvestmentIdea>;
+  onUpdateFinanceInvestmentIdea: (id: string, input: Partial<FinanceInvestmentIdea>) => Promise<FinanceInvestmentIdea>;
+  onDeleteFinanceInvestmentIdea: (id: string) => Promise<void>;
+  onAddFinanceInvestmentRule: (input: Partial<FinanceInvestmentRule>) => Promise<FinanceInvestmentRule>;
+  onUpdateFinanceInvestmentRule: (id: string, input: Partial<FinanceInvestmentRule>) => Promise<FinanceInvestmentRule>;
+  onDeleteFinanceInvestmentRule: (id: string) => Promise<void>;
+  onAddFinanceInvestmentAllocation: (input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
+  onUpdateFinanceInvestmentAllocation: (id: string, input: Partial<FinanceInvestmentAllocation>) => Promise<FinanceInvestmentAllocation>;
+  onDeleteFinanceInvestmentAllocation: (id: string) => Promise<void>;
+  financePeriods: FinancePeriod[];
+  onAddFinancePeriod: (input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
+  onUpdateFinancePeriod: (id: string, input: Partial<FinancePeriod>) => Promise<FinancePeriod>;
+  onDeleteFinancePeriod: (id: string) => Promise<void>;
+  financeRecurringRules: FinanceRecurringRule[];
+  onAddFinanceRecurringRule: (input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
+  onUpdateFinanceRecurringRule: (id: string, input: Partial<FinanceRecurringRule>) => Promise<FinanceRecurringRule>;
+  onDeleteFinanceRecurringRule: (id: string) => Promise<void>;
+}
+
 function FinancePanel({
   financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
   financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
@@ -181,10 +223,6 @@ function FinancePanel({
 
   const filteredFinanceIncome = dashboardIncome;
   const filteredFinanceExpenses = dashboardExpenses;
-
-  function matchesPeriod(periodId: string): boolean {
-    return selectedPeriodId === periodId;
-  }
 
   const defaultIncome: Partial<FinanceIncome> = { incomeType: 'other', source: 'other', status: 'expected', currency: 'MYR', recurrence: 'once', amount: 0, isRecurring: false, financePeriodId: selectedPeriodId || undefined, incomeDate: selectedPeriod?.startDate || undefined, expectedDate: selectedPeriod?.startDate || undefined };
   const defaultExpense: Partial<FinanceExpense> = { category: 'other', status: 'planned', currency: 'MYR', amount: 0, financePeriodId: selectedPeriodId || undefined, expenseDate: selectedPeriod?.startDate || undefined };
@@ -335,153 +373,221 @@ function FinancePanel({
     setGenerating(false);
   }
 
+  function renderFormFields(
+    fields: { label: string; key: string; type: 'input' | 'number' | 'select' | 'date'; options?: { value: string; label: string }[] }[]
+  ) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {fields.map(f => (
+          <div key={f.key} className={f.key === 'notes' ? 'sm:col-span-2' : ''}>
+            <FormField label={f.label}>
+              {f.type === 'select' && f.options ? (
+                <select
+                  value={formData[f.key] ?? ''}
+                  onChange={e => handleModalChange(f.key, e.target.value)}
+                  className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 w-full cursor-pointer"
+                >
+                  {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              ) : (
+                <input
+                  type={f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'}
+                  value={formData[f.key] ?? ''}
+                  onChange={e => handleModalChange(f.key, f.type === 'number' ? Number(e.target.value) : e.target.value)}
+                  placeholder={f.label}
+                  className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors focus:border-neutral-400 w-full"
+                />
+              )}
+            </FormField>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   function renderIncomeForm(e?: FinanceIncome) {
     const d = e || defaultIncome;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Income title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Type</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.incomeType||'other'} onChange={e=>handleModalChange('incomeType',e.target.value)}>{INCOME_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Source</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'expected'} onChange={e=>handleModalChange('status',e.target.value)}>{INCOME_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Recurrence</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.recurrence||'once'} onChange={e=>handleModalChange('recurrence',e.target.value)}>{RECURRENCE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Income Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.incomeDate||''} onChange={e=>handleModalChange('incomeDate',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Expected Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.expectedDate||''} onChange={e=>handleModalChange('expectedDate',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Received Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).receivedDate||''} onChange={e=>handleModalChange('receivedDate',e.target.value)} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Finance Period</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Income Type', key: 'incomeType', type: 'select', options: INCOME_TYPES.map(t => ({ value: t, label: t })) },
+      { label: 'Source', key: 'source', type: 'select', options: INCOME_SOURCES.map(t => ({ value: t, label: t })) },
+      { label: 'Status', key: 'status', type: 'select', options: INCOME_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Amount', key: 'amount', type: 'number' },
+      { label: 'Currency', key: 'currency', type: 'input' },
+      { label: 'Recurrence', key: 'recurrence', type: 'select', options: RECURRENCE_OPTIONS.map(t => ({ value: t, label: t })) },
+      { label: 'Income Date', key: 'incomeDate', type: 'date' },
+      { label: 'Expected Date', key: 'expectedDate', type: 'date' },
+      { label: 'Received Date', key: 'receivedDate', type: 'date' },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
   }
 
   function renderExpenseForm(e?: FinanceExpense) {
     const d = e || defaultExpense;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Expense title" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{EXPENSE_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Expense Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={d.expenseDate||''} onChange={e=>handleModalChange('expenseDate',e.target.value)} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Finance Period</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.financePeriodId||selectedPeriodId||''} onChange={e=>handleModalChange('financePeriodId',e.target.value)}><option value="">-- None --</option>{allPeriods.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Category', key: 'category', type: 'select', options: EXPENSE_CATEGORIES.map(t => ({ value: t, label: t })) },
+      { label: 'Status', key: 'status', type: 'select', options: EXPENSE_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Amount', key: 'amount', type: 'number' },
+      { label: 'Currency', key: 'currency', type: 'input' },
+      { label: 'Expense Date', key: 'expenseDate', type: 'date' },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
   }
 
   function renderAllocationForm(e?: FinanceAllocationRule) {
     const d = e || defaultRule;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Name</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'needs'} onChange={e=>handleModalChange('category',e.target.value)}>{ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Percentage (%)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Priority</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.priority||0} onChange={e=>handleModalChange('priority',Number(e.target.value))} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Name', key: 'name', type: 'input' },
+      { label: 'Category', key: 'category', type: 'select', options: ALLOC_CATS.map(t => ({ value: t, label: t })) },
+      { label: 'Percentage (%)', key: 'percentage', type: 'number' },
+      { label: 'Priority', key: 'priority', type: 'number' },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
   }
 
   function renderGoalForm(e?: FinancePurchaseGoal) {
     const d = e || defaultGoal;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="What to buy" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'planned'} onChange={e=>handleModalChange('status',e.target.value)}>{GOAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Priority</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.priority||'medium'} onChange={e=>handleModalChange('priority',e.target.value)}>{GOAL_PRIORITIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Target Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.targetAmount||0} onChange={e=>handleModalChange('targetAmount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Saved Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.savedAmount||0} onChange={e=>handleModalChange('savedAmount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Target Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).targetDate||''} onChange={e=>handleModalChange('targetDate',e.target.value)} /></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Status', key: 'status', type: 'select', options: GOAL_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Priority', key: 'priority', type: 'select', options: GOAL_PRIORITIES.map(t => ({ value: t, label: t })) },
+      { label: 'Target Amount', key: 'targetAmount', type: 'number' },
+      { label: 'Saved Amount', key: 'savedAmount', type: 'number' },
+      { label: 'Currency', key: 'currency', type: 'input' },
+      { label: 'Target Date', key: 'targetDate', type: 'date' },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
   }
 
   function renderIdeaForm(e?: FinanceInvestmentIdea) {
     const d = e || defaultIdea;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="Investment idea" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Type</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.type||'stocks'} onChange={e=>handleModalChange('type',e.target.value)}>{INVESTMENT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Risk Level</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.riskLevel||'medium'} onChange={e=>handleModalChange('riskLevel',e.target.value)}>{RISK_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Ethical Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.ethicalStatus||'good'} onChange={e=>handleModalChange('ethicalStatus',e.target.value)}>{ETHICAL_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Status</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.status||'researching'} onChange={e=>handleModalChange('status',e.target.value)}>{INVESTMENT_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Planned Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.plannedAmount||0} onChange={e=>handleModalChange('plannedAmount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Decision</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).decision||'researching'} onChange={e=>handleModalChange('decision',e.target.value)}>{INVEST_DECISION_STATUSES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Type', key: 'type', type: 'select', options: INVESTMENT_TYPES.map(t => ({ value: t, label: t })) },
+      { label: 'Risk Level', key: 'riskLevel', type: 'select', options: RISK_LEVELS.map(t => ({ value: t, label: t })) },
+      { label: 'Ethical Status', key: 'ethicalStatus', type: 'select', options: ETHICAL_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Status', key: 'status', type: 'select', options: INVESTMENT_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Planned Amount', key: 'plannedAmount', type: 'number' },
+      { label: 'Currency', key: 'currency', type: 'input' },
+      { label: 'Decision Status', key: 'decisionStatus', type: 'select', options: INVEST_DECISION_STATUSES.map(t => ({ value: t, label: t })) },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
   }
 
   function renderAllocForm(e?: FinanceInvestmentAllocation) {
     const d = e || defaultInvAlloc;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Name</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).name||''} onChange={e=>handleModalChange('name',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'crypto'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_ALLOC_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Percentage (%)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.percentage||0} onChange={e=>handleModalChange('percentage',Number(e.target.value))} /></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Name', key: 'name', type: 'input' },
+      { label: 'Category', key: 'category', type: 'select', options: INV_ALLOC_CATS.map(t => ({ value: t, label: t })) },
+      { label: 'Percentage (%)', key: 'percentage', type: 'number' },
+    ]);
   }
 
   function renderInvRuleForm(e?: FinanceInvestmentRule) {
     const d = e || defaultInvRule;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="e.g. No gambling stocks" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.category||'risk'} onChange={e=>handleModalChange('category',e.target.value)}>{INV_RULE_CATS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Category', key: 'category', type: 'select', options: INV_RULE_CATS.map(t => ({ value: t, label: t })) },
+    ]);
   }
 
   function renderRecurringForm(e?: FinanceRecurringRule) {
     const d = e || defaultRecurring;
-    return <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 mb-2">
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Title</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).title||''} placeholder="e.g. Salary" onChange={e=>handleModalChange('title',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Kind</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.kind||'income'} onChange={e=>handleModalChange('kind',e.target.value)}>{RECURRING_KINDS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Amount (MYR)</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="number" defaultValue={d.amount||0} onChange={e=>handleModalChange('amount',Number(e.target.value))} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Currency</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.currency||'MYR'} onChange={e=>handleModalChange('currency',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Frequency</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.frequency||'monthly'} onChange={e=>handleModalChange('frequency',e.target.value)}>{RECURRING_FREQUENCIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Confidence</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={d.confidence||'medium'} onChange={e=>handleModalChange('confidence',e.target.value)}>{CONFIDENCE_LEVELS.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Start Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).startDate||''} onChange={e=>handleModalChange('startDate',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">End Date</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" type="date" defaultValue={(d as any).endDate||''} onChange={e=>handleModalChange('endDate',e.target.value)} /></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Source</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).source||'other'} onChange={e=>handleModalChange('source',e.target.value)}>{INCOME_SOURCES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div><label className="text-xs text-neutral-500 mb-1 font-medium">Category</label><select className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).category||'other'} onChange={e=>handleModalChange('category',e.target.value)}>{EXPENSE_CATEGORIES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      <div className="col-span-full"><label className="text-xs text-neutral-500 mb-1 font-medium">Notes</label><input className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" defaultValue={(d as any).notes||''} onChange={e=>handleModalChange('notes',e.target.value)} /></div>
-    </div>;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Kind', key: 'kind', type: 'select', options: RECURRING_KINDS.map(t => ({ value: t, label: t })) },
+      { label: 'Amount', key: 'amount', type: 'number' },
+      { label: 'Currency', key: 'currency', type: 'input' },
+      { label: 'Frequency', key: 'frequency', type: 'select', options: RECURRING_FREQUENCIES.map(t => ({ value: t, label: t })) },
+      { label: 'Confidence', key: 'confidence', type: 'select', options: CONFIDENCE_LEVELS.map(t => ({ value: t, label: t })) },
+      { label: 'Start Date', key: 'startDate', type: 'date' },
+      { label: 'End Date', key: 'endDate', type: 'date' },
+      { label: 'Source', key: 'source', type: 'select', options: INCOME_SOURCES.map(t => ({ value: t, label: t })) },
+      { label: 'Category', key: 'category', type: 'select', options: EXPENSE_CATEGORIES.map(t => ({ value: t, label: t })) },
+      { label: 'Notes', key: 'notes', type: 'input' },
+    ]);
+  }
+
+  function renderPeriodForm(e?: FinancePeriod) {
+    const d = e || defaultPeriod;
+    return renderFormFields([
+      { label: 'Title', key: 'title', type: 'input' },
+      { label: 'Start Date', key: 'startDate', type: 'date' },
+      { label: 'End Date', key: 'endDate', type: 'date' },
+    ]);
   }
 
   function renderModal() {
     if (!modal) return null;
     const item = getEditItem(modal.type);
-    const title = modal.id ? 'Edit' : 'New';
-    return <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[1000]" onClick={closeModal}>
-      <div className="bg-white rounded-xl p-6 w-[90%] max-w-[680px] max-h-[85vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-        <h3 className="text-lg font-bold text-black m-0 mb-4">{title} {modal.type.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</h3>
-        {modal.type === 'income' && renderIncomeForm(item)}
-        {modal.type === 'expenses' && renderExpenseForm(item)}
-        {modal.type === 'allocation' && renderAllocationForm(item)}
-        {modal.type === 'purchase_goals' && renderGoalForm(item)}
-        {modal.type === 'investments' && renderIdeaForm(item)}
-        {modal.type === 'recurring' && renderRecurringForm(item)}
-        <div className="flex gap-2 justify-end mt-4 pt-3 border-t border-neutral-200">
-          <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer" onClick={closeModal}>Cancel</button>
-          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={handleSave}>Save</button>
+    const titleLabel = modal.id ? 'Edit' : 'New';
+    const typeLabel = modal.type.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/30" onClick={closeModal}>
+        <div className="bg-white rounded-2xl border border-neutral-200 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200">
+            <h3 className="text-sm font-semibold text-black">{titleLabel} {typeLabel}</h3>
+            <button type="button" onClick={closeModal} className="text-neutral-400 hover:text-black text-xl leading-none p-1 rounded hover:bg-neutral-100">&times;</button>
+          </div>
+          <div className="p-5">
+            {modal.type === 'income' && renderIncomeForm(item)}
+            {modal.type === 'expenses' && renderExpenseForm(item)}
+            {modal.type === 'allocation' && renderAllocationForm(item)}
+            {modal.type === 'purchase_goals' && renderGoalForm(item)}
+            {modal.type === 'investments' && renderIdeaForm(item)}
+            {modal.type === 'recurring' && renderRecurringForm(item)}
+          </div>
+          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 rounded-b-2xl">
+            <Button variant="outline" size="sm" onClick={closeModal}>Cancel</Button>
+            <Button variant="primary" size="sm" onClick={handleSave}>Save</Button>
+          </div>
         </div>
       </div>
-    </div>;
+    );
   }
 
   function renderPeriodSelector() {
-    return <div className="flex gap-2 items-center flex-wrap">
-      <select className="w-auto min-w-[180px] px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" value={selectedPeriodId} onChange={e=>setSelectedPeriodId(e.target.value)}>
-        <option value="">-- Select Period --</option>
-        {sortedPeriods.map(p => <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>)}
-      </select>
-      <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer" onClick={() => {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        onAddFinancePeriod({ title: `${MONTHS[now.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`, status: 'open' });
-      }}>+ Current Month</button>
-      <select className="w-auto min-w-[110px] px-3 py-2 text-sm border border-neutral-200 rounded-md text-black bg-white outline-none" value={horizonView} onChange={e=>setHorizonView(e.target.value as HorizonView)}>
-        <option value="monthly">Monthly</option>
-        <option value="six_months">6 Months</option>
-        <option value="yearly">Yearly</option>
-        <option value="five_years">5 Years</option>
-        <option value="ten_years">10 Years</option>
-      </select>
-    </div>;
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={selectedPeriodId}
+          onChange={e => setSelectedPeriodId(e.target.value)}
+          className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[200px] cursor-pointer"
+        >
+          <option value="">All Records</option>
+          {sortedPeriods.map(p => (
+            <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>
+          ))}
+        </select>
+        <Button variant="outline" size="sm" onClick={() => {
+          const n = new Date();
+          const y = n.getFullYear();
+          const m = String(n.getMonth() + 1).padStart(2, '0');
+          onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
+        }}>+ Current Month</Button>
+        <select
+          value={horizonView}
+          onChange={e => setHorizonView(e.target.value as HorizonView)}
+          className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 cursor-pointer"
+        >
+          <option value="monthly">Monthly</option>
+          <option value="six_months">6 Months</option>
+          <option value="yearly">Yearly</option>
+          <option value="five_years">5 Years</option>
+          <option value="ten_years">10 Years</option>
+        </select>
+      </div>
+    );
+  }
+
+  function MetricCard({ label, value, className }: { label: string; value: string; className?: string }) {
+    return (
+      <div className={`rounded-xl border border-neutral-200 bg-white p-3.5 ${className || ''}`}>
+        <div className="text-xs text-neutral-500 mb-1 font-medium">{label}</div>
+        <div className="text-xl font-bold text-black">{value}</div>
+      </div>
+    );
   }
 
   function renderDashboard() {
@@ -496,299 +602,447 @@ function FinancePanel({
     const netProjected = expectedIncome - totalExpenses;
     const needsTotal = dashboardExpenses.filter(e => e.category === 'needs' || e.category === 'family').reduce((s,e) => s + e.amount, 0);
 
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Dashboard</h2>
-        <div className="text-xs text-neutral-500">{selectedPeriod?.name || 'No period selected — showing all records'}</div>
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <MetricCard label="Expected Income" value={toCur(expectedIncome)} />
+          <MetricCard label="Received Income" value={toCur(receivedIncome)} />
+          <MetricCard label="Total Expenses" value={toCur(totalExpenses)} />
+          <MetricCard label="Paid Expenses" value={toCur(paidExpenses)} />
+          <MetricCard label="Unpaid / Planned" value={toCur(unpaidExpenses + plannedExpenses)} />
+          <MetricCard label="Net Cash" value={toCur(netCash)} />
+          <MetricCard label="Net Projected" value={toCur(netProjected)} />
+          <MetricCard label="Needs Ratio" value={totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'} />
+        </div>
+        <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
+          {selectedPeriodId
+            ? 'Showing records linked to this period or dated within this month. Incomes/expenses from other months are hidden.'
+            : 'Select a period above to focus on a specific month.'}
+          <span className="ml-2">Variable income (expected/delayed) is estimated; actual net cash may differ.</span>
+        </div>
       </div>
-      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
-        Monthly view shows only records linked to this period or dated inside this month. Incomes/expenses from other months are hidden.
-      </div>}
-      {!selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-amber-50 border border-amber-300 text-amber-800 text-xs">
-        Select a period above to focus on a specific month.
-      </div>}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Expected Income</div><div className="text-2xl font-bold text-black">{toCur(expectedIncome)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Received Income</div><div className="text-2xl font-bold text-black">{toCur(receivedIncome)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(totalExpenses)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Paid</div><div className="text-2xl font-bold text-emerald-600">{toCur(paidExpenses)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Unpaid / Planned</div><div className="text-2xl font-bold text-orange-600">{toCur(unpaidExpenses + plannedExpenses)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Net Cash (Received - Paid)</div><div className={`text-2xl font-bold ${netCash >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(netCash)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Net Projected (Expected - All)</div><div className={`text-2xl font-bold ${netProjected >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(netProjected)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Needs Ratio</div><div className="text-2xl font-bold text-black">{totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'}</div></div>
-      </div>
-      <div className="mb-4 p-3 bg-orange-50 rounded-lg border border-orange-200 text-xs text-orange-700">
-        Variable income (expected/delayed) is estimated; actual net cash may differ.
-      </div>
-    </div>;
+    );
   }
 
   function renderIncomeTab() {
     const list = filteredFinanceIncome;
     const received = list.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
     const expected = list.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
-    const badgeColor = (status: string) => status === 'received' ? 'bg-emerald-100 text-emerald-700' : status === 'delayed' ? 'bg-amber-100 text-amber-700' : status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Income</h2>
-        <div className="flex gap-2 items-center">
-          <span className="text-xs text-neutral-500">Received: {toCur(received)} | Expected: {toCur(expected)}</span>
-          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('income')}>+ Add</button>
-        </div>
-      </div>
-      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
-        Showing income linked to this period or dated within this month.
-      </div>}
-      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No income records for this period.</div> :
-        list.map(i => <div key={i.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-xs font-semibold text-black mb-1.5">{i.title || i.incomeType} {i.isRecurring && <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">Recurring</span>}</div>
-              <div className="text-xs text-neutral-500 leading-relaxed">
-                <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(i.status)}`}>{i.status}</span>
-                {' '}{i.source} — {i.recurrence}
-                {i.incomeDate && <> — Date: {new Date(i.incomeDate).toLocaleDateString()}</>}
-                {i.expectedDate && <> — Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
-                {i.receivedDate && <> — Received: {new Date(i.receivedDate).toLocaleDateString()}</>}
-                {i.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===i.financePeriodId)?.title || i.financePeriodId}</>}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-base font-bold text-emerald-600">{toCur(i.amount, i.currency)}</div>
-              <div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('income', i.id)}>Edit</button>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('income', i.id)}>Del</button>
-              </div>
-            </div>
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-black">Income ({list.length})</h3>
+            <span className="text-xs text-neutral-500">Received: {toCur(received)}</span>
+            <span className="text-xs text-neutral-500">Expected: {toCur(expected)}</span>
           </div>
-          {(i as any).notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{(i as any).notes}</div>}
-        </div>)
-      }
-    </div>;
+          <Button variant="primary" size="sm" onClick={() => openModal('income')}>+ Add Income</Button>
+        </div>
+        {list.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No income records yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {list.map(i => (
+              <div key={i.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-black">{i.title || i.incomeType}</span>
+                      <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+                      {i.isRecurring && <Badge variant="neutral">Recurring</Badge>}
+                    </div>
+                    <div className="mt-0.5 text-xs text-neutral-500">
+                      {i.source} &middot; {i.recurrence}
+                      {i.incomeDate && <> &middot; {new Date(i.incomeDate).toLocaleDateString()}</>}
+                      {i.expectedDate && <> &middot; Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
+                      {i.receivedDate && <> &middot; Received: {new Date(i.receivedDate).toLocaleDateString()}</>}
+                    </div>
+                    {(i as any).notes && <div className="mt-1 text-xs text-neutral-400">{(i as any).notes}</div>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold text-black">{toCur(i.amount, i.currency)}</div>
+                    <div className="mt-0.5 flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => openModal('income', i.id)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete('income', i.id)}>Del</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   function renderExpensesTab() {
     const list = filteredFinanceExpenses;
     const total = list.reduce((s,e) => s + e.amount, 0);
-    const badgeColor = (status: string) => status === 'paid' ? 'bg-emerald-100 text-emerald-700' : status === 'unpaid' ? 'bg-red-100 text-red-700' : status === 'cancelled' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700';
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Expenses</h2>
-        <div className="flex gap-2 items-center">
-          <span className="text-xs text-neutral-500">Total: {toCur(total)}</span>
-          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('expenses')}>+ Add</button>
-        </div>
-      </div>
-      {selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
-        Showing expenses linked to this period or dated within this month.
-      </div>}
-      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No expenses for this period.</div> :
-        list.map(e => <div key={e.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-xs font-semibold text-black mb-1.5">{e.title || e.category}</div>
-              <div className="text-xs text-neutral-500 leading-relaxed">
-                <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(e.status)}`}>{e.status}</span>
-                {' '}{e.category}
-                {e.expenseDate && <> — Date: {new Date(e.expenseDate).toLocaleDateString()}</>}
-                {e.financePeriodId && <> — Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-base font-bold text-red-600">{toCur(e.amount, e.currency)}</div>
-              <div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('expenses', e.id)}>Edit</button>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('expenses', e.id)}>Del</button>
-              </div>
-            </div>
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-black">Expenses ({list.length})</h3>
+            <span className="text-xs text-neutral-500">Total: {toCur(total)}</span>
           </div>
-          {(e as any).notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{(e as any).notes}</div>}
-        </div>)
-      }
-    </div>;
+          <Button variant="primary" size="sm" onClick={() => openModal('expenses')}>+ Add Expense</Button>
+        </div>
+        {list.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No expenses yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {list.map(e => (
+              <div key={e.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-black">{e.title || e.category}</span>
+                      <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
+                      <Badge variant="neutral">{e.category}</Badge>
+                    </div>
+                    <div className="mt-0.5 text-xs text-neutral-500">
+                      {e.expenseDate && <>{new Date(e.expenseDate).toLocaleDateString()}</>}
+                      {e.financePeriodId && <> &middot; Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
+                    </div>
+                    {(e as any).notes && <div className="mt-1 text-xs text-neutral-400">{(e as any).notes}</div>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold text-black">{toCur(e.amount, e.currency)}</div>
+                    <div className="mt-0.5 flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => openModal('expenses', e.id)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete('expenses', e.id)}>Del</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   function renderAllocationTab() {
     const list = allRules;
     const totalPct = list.reduce((s,r) => s + r.percentage, 0);
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Allocation Rules</h2>
-        <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('allocation')}>+ Add</button>
-      </div>
-      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No allocation rules. Add rules to distribute income across categories.</div> :
-        <div className="grid gap-2.5">
-          {list.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-xs font-semibold text-black mb-1.5">{r.name || r.category} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>{r.isActive ? 'Active' : 'Inactive'}</span></div>
-                <div className="text-xs text-neutral-500 leading-relaxed">{r.category} — {r.percentage}% — Priority: {r.priority}</div>
-              </div>
-              <div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('allocation', r.id)}>Edit</button>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('allocation', r.id)}>Del</button>
-              </div>
-            </div>
-          </div>)}
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-black">Allocation Rules ({list.length})</h3>
+          <Button variant="primary" size="sm" onClick={() => openModal('allocation')}>+ Add Rule</Button>
         </div>
-      }
-      {totalPct > 0 && <div className="mt-3 p-2.5 bg-blue-50 rounded-lg border border-sky-200 text-xs text-sky-700">
-        Total allocated: {totalPct}% {totalPct !== 100 && <>({100 - totalPct}% unallocated — will be treated as remainder)</>}
-      </div>}
-    </div>;
+        {list.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No allocation rules yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {list.map(r => (
+              <div key={r.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-black">{r.name || r.category}</span>
+                      <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
+                      <span className="text-xs text-neutral-500">{r.category} &middot; {r.percentage}% &middot; Priority {r.priority}</span>
+                    </div>
+                    {(r as any).notes && <div className="mt-1 text-xs text-neutral-400">{(r as any).notes}</div>}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => openModal('allocation', r.id)}>Edit</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete('allocation', r.id)}>Del</Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {totalPct > 0 && (
+          <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-600">
+            Total allocated: {totalPct}% {totalPct !== 100 && <>({100 - totalPct}% unallocated — treated as remainder)</>}
+          </div>
+        )}
+      </div>
+    );
   }
 
   function renderPurchaseGoalsTab() {
     const list = allGoals;
-    const badgeColor = (status: string) => status === 'bought' ? 'bg-emerald-100 text-emerald-700' : status === 'saving' ? 'bg-blue-100 text-blue-700' : status === 'paused' ? 'bg-amber-100 text-amber-700' : status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700';
-    const priorityColor = (p: string) => p === 'high' ? 'bg-red-100 text-red-700' : p === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Purchase Goals</h2>
-        <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('purchase_goals')}>+ Add</button>
-      </div>
-      {list.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No purchase goals. Track big purchases here.</div> :
-        <div className="grid gap-2.5">
-          {list.map(g => {
-            const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
-            const barColor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 25 ? '#f59e0b' : '#ef4444';
-            return <div key={g.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-xs font-semibold text-black mb-1.5">{g.title || 'Unnamed'} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${badgeColor(g.status)}`}>{g.status}</span>
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${priorityColor(g.priority)}`}>{g.priority}</span></div>
-                  <div className="text-xs text-neutral-500 leading-relaxed">Target: {toCur(g.targetAmount, g.currency)} — Saved: {toCur(g.savedAmount, g.currency)} — {pct}%</div>
-                </div>
-                <div>
-                  <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('purchase_goals', g.id)}>Edit</button>
-                  <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('purchase_goals', g.id)}>Del</button>
-                </div>
-              </div>
-              <div className="h-2 bg-neutral-200 rounded-full overflow-hidden mt-2"><div className="h-full rounded-full transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`, background:barColor}} /></div>
-            </div>;
-          })}
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-black">Purchase Goals ({list.length})</h3>
+          <Button variant="primary" size="sm" onClick={() => openModal('purchase_goals')}>+ Add Goal</Button>
         </div>
-      }
-    </div>;
+        {list.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No purchase goals yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {list.map(g => {
+              const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+              return (
+                <div key={g.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-sm font-medium text-black">{g.title || 'Unnamed'}</span>
+                        <Badge variant={statusBadge[g.status] || 'neutral'}>{g.status}</Badge>
+                        <Badge variant={priorityBadge[g.priority] || 'neutral'}>{g.priority}</Badge>
+                      </div>
+                      <div className="mt-1 text-xs text-neutral-500">
+                        Target: {toCur(g.targetAmount, g.currency)} &middot; Saved: {toCur(g.savedAmount, g.currency)} &middot; {pct}%
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
+                        <div className="h-full rounded-full bg-black transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`}} />
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => openModal('purchase_goals', g.id)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete('purchase_goals', g.id)}>Del</Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   }
 
   function renderRecurringRulesTab() {
-    return <div>
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-black m-0">Recurring Rules</h2>
-        <div className="flex gap-2">
-          {selectedPeriodId && <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50" disabled={generating || !selectedPeriodId} onClick={generateRecurringItemsForPeriod}>
-            {generating ? 'Generating...' : 'Generate recurring items for this month'}
-          </button>}
-          <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('recurring')}>+ Add Rule</button>
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="text-sm font-semibold text-black">Recurring Rules ({allRecurring.length})</h3>
+          <div className="flex gap-2">
+            {selectedPeriodId && (
+              <Button variant="outline" size="sm" disabled={generating || !selectedPeriodId} onClick={generateRecurringItemsForPeriod}>
+                {generating ? 'Generating...' : 'Generate for this month'}
+              </Button>
+            )}
+            <Button variant="primary" size="sm" onClick={() => openModal('recurring')}>+ Add Rule</Button>
+          </div>
         </div>
+        {generateResult && (
+          <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50 text-xs text-emerald-800">{generateResult}</div>
+        )}
+        {!selectedPeriodId && (
+          <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
+            Select a Finance Period before generating recurring items.
+          </div>
+        )}
+        {allRecurring.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No recurring rules yet.</div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+            {allRecurring.map(r => (
+              <div key={r.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-sm font-medium text-black">{r.title}</span>
+                      <Badge variant={r.kind === 'income' ? 'success' : 'danger'}>{r.kind}</Badge>
+                      <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
+                      <Badge variant="neutral">{r.frequency}</Badge>
+                    </div>
+                    <div className="mt-0.5 text-xs text-neutral-500">
+                      Confidence: {r.confidence}
+                      {r.startDate && <> &middot; Start: {new Date(r.startDate).toLocaleDateString()}</>}
+                      {r.endDate && <> &middot; End: {new Date(r.endDate).toLocaleDateString()}</>}
+                      {r.source && <> &middot; Source: {r.source}</>}
+                    </div>
+                    {r.notes && <div className="mt-1 text-xs text-neutral-400">{r.notes}</div>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-semibold text-black">{toCur(r.amount, r.currency)}</div>
+                    <div className="mt-0.5 flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => openModal('recurring', r.id)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete('recurring', r.id)}>Del</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {generateResult && <div className="px-4 py-3 rounded-lg text-sm mb-3 bg-emerald-50 border border-emerald-200 text-emerald-800">{generateResult}</div>}
-      {!selectedPeriodId && <div className="px-4 py-3 rounded-lg text-sm bg-amber-50 border border-amber-300 text-amber-800 text-xs">
-        Select a Finance Period before generating recurring items.
-      </div>}
-      {allRecurring.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No recurring rules. Add rules for regular income/expenses (salary, rent, subscriptions).</div> :
-        <div className="grid gap-2.5">
-          {allRecurring.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-xs font-semibold text-black mb-1.5">
-                  {r.title}
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.kind === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{r.kind}</span>
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.isActive ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{r.isActive ? 'Active' : 'Inactive'}</span>
-                  <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">{r.frequency}</span>
-                </div>
-                <div className="text-xs text-neutral-500 leading-relaxed">
-                  {toCur(r.amount, r.currency)} — Confidence: {r.confidence}
-                  {r.startDate && <> — Start: {new Date(r.startDate).toLocaleDateString()}</>}
-                  {r.endDate && <> — End: {new Date(r.endDate).toLocaleDateString()}</>}
-                  {r.source && <> — Source: {r.source}</>}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`text-base font-bold ${r.kind === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(r.amount, r.currency)}</div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('recurring', r.id)}>Edit</button>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('recurring', r.id)}>Del</button>
-              </div>
-            </div>
-            {r.notes && <div className="text-xs text-neutral-500 leading-relaxed mt-1.5 pt-1.5 border-t border-neutral-100">{r.notes}</div>}
-          </div>)}
-        </div>
-      }
-    </div>;
+    );
   }
 
   function renderInvestmentsTab() {
-    const badgeColor = (c: string) => {
-      const map: Record<string,string> = {green:'bg-emerald-100 text-emerald-700',red:'bg-red-100 text-red-700',yellow:'bg-amber-100 text-amber-700',blue:'bg-blue-100 text-blue-700',purple:'bg-purple-100 text-purple-700',orange:'bg-orange-100 text-orange-700'};
-      return map[c] || 'bg-neutral-100 text-neutral-700';
-    };
-    return <div>
-      <div className="flex gap-1.5 flex-wrap mb-5 pb-2.5 border-b border-neutral-200">
-        {(['overview','ideas','allocation','rules','risk_review','ethical_review'] as InvestTab[]).map(t => <button key={t} className={`px-3.5 py-1.5 text-xs font-medium rounded-md cursor-pointer ${investTab === t ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>setInvestTab(t)}>{t.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
-      </div>
-      {investTab === 'overview' && <div>
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Overview</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add Idea</button></div>
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Ideas</div><div className="text-2xl font-bold text-black">{allIdeas.length}</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Rules</div><div className="text-2xl font-bold text-black">{allInvRules.length}</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Allocations</div><div className="text-2xl font-bold text-black">{allInvAllocs.length}</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Invested</div><div className="text-2xl font-bold text-black">{allIdeas.filter(i=>i.status==='invested').length}</div></div>
+    const subTabs: {key: InvestTab; label: string}[] = [
+      {key:'overview', label:'Overview'},
+      {key:'ideas', label:'Ideas'},
+      {key:'allocation', label:'Allocation'},
+      {key:'rules', label:'Rules'},
+      {key:'risk_review', label:'Risk'},
+      {key:'ethical_review', label:'Ethics'},
+    ];
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-0 min-w-max border-b border-neutral-200">
+          {subTabs.map(t => (
+            <button key={t.key} onClick={() => setInvestTab(t.key)}
+              className={`px-3.5 py-2 text-xs font-medium border-b-2 transition-all whitespace-nowrap ${
+                investTab === t.key
+                  ? 'text-black border-black'
+                  : 'text-neutral-500 border-transparent hover:text-black hover:border-neutral-300'
+              }`}
+            >{t.label}</button>
+          ))}
         </div>
-      </div>}
-      {investTab === 'ideas' && <div>
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Ideas</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allIdeas.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No investment ideas.</div> :
-          allIdeas.map(i => <div key={i.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-xs font-semibold text-black mb-1.5">{i.title || 'Unnamed'} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.type === 'sukuk' ? badgeColor('green') : i.type === 'gold' ? badgeColor('yellow') : i.type === 'real_estate' ? badgeColor('blue') : i.type === 'stocks' ? badgeColor('purple') : i.type === 'business' ? badgeColor('orange') : i.type === 'crypto' ? badgeColor('red') : badgeColor('slate')}`}>{i.type}</span></div>
-                <div className="text-xs text-neutral-500 leading-relaxed">
-                  Risk: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.riskLevel === 'low' ? badgeColor('green') : i.riskLevel === 'medium' ? badgeColor('yellow') : badgeColor('red')}`}>{i.riskLevel}</span>
-                  Ethics: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.ethicalStatus === 'good' ? badgeColor('green') : i.ethicalStatus === 'needs_review' ? badgeColor('yellow') : badgeColor('red')}`}>{i.ethicalStatus}</span>
-                  Status: <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${i.status === 'invested' ? badgeColor('green') : i.status === 'planned' ? badgeColor('blue') : i.status === 'waiting' ? badgeColor('yellow') : badgeColor('orange')}`}>{i.status}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-base font-bold text-black">{toCur(i.plannedAmount, i.currency)}</div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>openModal('investments', i.id)}>Edit</button>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', i.id)}>Del</button>
-              </div>
+
+        {investTab === 'overview' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">Investment Overview</h3>
+              <Button variant="primary" size="sm" onClick={() => openModal('investments')}>+ Add Idea</Button>
             </div>
-          </div>)
-        }
-      </div>}
-      {investTab === 'allocation' && <div>
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Allocation</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allInvAllocs.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No allocation targets.</div> :
-          <div className="grid gap-2.5">
-            {allInvAllocs.map(a => <div key={a.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-              <div className="flex justify-between">
-                <div><div className="text-xs font-semibold text-black mb-1.5">{a.name || a.category}</div><div className="text-xs text-neutral-500 leading-relaxed">Target: {a.percentage}% | Category: {a.category}</div></div>
-                <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', a.id)}>Del</button>
-              </div>
-            </div>)}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <MetricCard label="Ideas" value={String(allIdeas.length)} />
+              <MetricCard label="Rules" value={String(allInvRules.length)} />
+              <MetricCard label="Allocations" value={String(allInvAllocs.length)} />
+              <MetricCard label="Invested" value={String(allIdeas.filter(i=>i.status==='invested').length)} />
+            </div>
           </div>
-        }
-      </div>}
-      {investTab === 'rules' && <div>
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2"><h2 className="text-lg font-bold text-black m-0">Investment Rules</h2><button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700" onClick={()=>openModal('investments')}>+ Add</button></div>
-        {allInvRules.length === 0 ? <div className="text-center py-12 px-6 text-neutral-500 text-sm">No investment rules.</div> :
-          allInvRules.map(r => <div key={r.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-2.5">
-            <div className="text-xs font-semibold text-black mb-1.5">{r.title} <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${r.category === 'risk' ? badgeColor('red') : r.category === 'ethics' ? badgeColor('purple') : r.category === 'strategy' ? badgeColor('blue') : r.category === 'process' ? badgeColor('orange') : badgeColor('slate')}`}>{r.category}</span></div>
-            <button className="p-1 text-xs border-none rounded cursor-pointer bg-transparent text-neutral-500" onClick={()=>handleDelete('investments', r.id)}>Del</button>
-          </div>)
-        }
-      </div>}
-      {investTab === 'risk_review' && <div>
-        <h2 className="text-lg font-bold text-black m-0">Risk Review</h2>
-        <div className="text-center py-12 px-6 text-neutral-500 text-sm">Review your investment risk profile here. Coming soon.</div>
-      </div>}
-      {investTab === 'ethical_review' && <div>
-        <h2 className="text-lg font-bold text-black m-0">Ethical Review</h2>
-        <div className="text-center py-12 px-6 text-neutral-500 text-sm">Review your investments against ethical rules. Coming soon.</div>
-      </div>}
-    </div>;
+        )}
+
+        {investTab === 'ideas' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">Investment Ideas ({allIdeas.length})</h3>
+              <Button variant="primary" size="sm" onClick={() => openModal('investments')}>+ Add</Button>
+            </div>
+            {allIdeas.length === 0 ? (
+              <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No investment ideas yet.</div>
+            ) : (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                {allIdeas.map(i => (
+                  <div key={i.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-medium text-black">{i.title || 'Unnamed'}</span>
+                          <Badge variant="neutral">{i.type}</Badge>
+                          <Badge variant={riskBadge[i.riskLevel] || 'neutral'}>{i.riskLevel}</Badge>
+                          <Badge variant={statusBadge[i.ethicalStatus] || 'neutral'}>{i.ethicalStatus}</Badge>
+                          <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+                        </div>
+                        <div className="mt-0.5 text-xs text-neutral-500">
+                          {i.decisionStatus && <>Decision: {i.decisionStatus}</>}
+                          {i.fundingStatus && <> &middot; Funding: {i.fundingStatus}</>}
+                          {i.reviewDate && <> &middot; Review: {new Date(i.reviewDate).toLocaleDateString()}</>}
+                          {i.maxAllocation && <> &middot; Max: {i.maxAllocation}%</>}
+                        </div>
+                        {(i as any).notes && <div className="mt-1 text-xs text-neutral-400">{(i as any).notes}</div>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-semibold text-black">{toCur(i.plannedAmount, i.currency)}</div>
+                        <div className="mt-0.5 flex gap-1">
+                          <Button variant="outline" size="sm" onClick={() => openModal('investments', i.id)}>Edit</Button>
+                          <Button variant="danger" size="sm" onClick={() => handleDelete('investments', i.id)}>Del</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {investTab === 'allocation' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">Investment Allocation ({allInvAllocs.length})</h3>
+            </div>
+            {allInvAllocs.length === 0 ? (
+              <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No allocation targets.</div>
+            ) : (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                {allInvAllocs.map(a => (
+                  <div key={a.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium text-black">{a.name || a.category}</span>
+                        <span className="ml-2 text-xs text-neutral-500">{a.category} &middot; {a.percentage}%</span>
+                      </div>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete('investments', a.id)}>Del</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {investTab === 'rules' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-black">Investment Rules ({allInvRules.length})</h3>
+            </div>
+            {allInvRules.length === 0 ? (
+              <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No investment rules.</div>
+            ) : (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                {allInvRules.map(r => (
+                  <div key={r.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-black">{r.title}</span>
+                      <Badge variant="neutral">{r.category}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {investTab === 'risk_review' && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">Risk review coming soon.</div>
+        )}
+
+        {investTab === 'ethical_review' && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">Ethical review coming soon.</div>
+        )}
+      </div>
+    );
+  }
+
+  function renderReviewTab() {
+    const needsTotal = allExpenses.filter(e => e.category === 'needs').reduce((s,e) => s + e.amount, 0);
+    const familyTotal = allExpenses.filter(e => e.category === 'family').reduce((s,e) => s + e.amount, 0);
+    const totalAllExp = allExpenses.reduce((s,e) => s + e.amount, 0);
+    const needsPct = totalAllExp > 0 ? Math.round((needsTotal + familyTotal) / totalAllExp * 100) : 0;
+    const highPriorityGoals = allGoals.filter(g => g.priority === 'high' && g.status !== 'bought' && g.status !== 'cancelled');
+    const gaps: string[] = [];
+    if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
+    if (highPriorityGoals.length > 0) gaps.push(`You have ${highPriorityGoals.length} high-priority purchase goals not yet completed.`);
+    if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
+    if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
+    const activeRecurring = allRecurring.filter(r => r.isActive);
+    if (activeRecurring.length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-black">Review & Gaps</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <MetricCard label="Needs Ratio" value={`${needsPct}%`} />
+          <MetricCard label="Allocation Rules" value={String(allRules.length)} />
+          <MetricCard label="Active Recurring" value={String(activeRecurring.length)} />
+          <MetricCard label="Open Goals" value={String(allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length)} />
+        </div>
+        {gaps.length > 0 ? (
+          <div className="space-y-1.5">
+            <h4 className="text-xs font-semibold text-black">Identified Gaps</h4>
+            {gaps.map((g,i) => (
+              <div key={i} className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-xs text-amber-800">{g}</div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No major gaps detected.</div>
+        )}
+      </div>
+    );
   }
 
   function renderHorizonSummary() {
@@ -796,11 +1050,13 @@ function FinancePanel({
       const inc = filteredFinanceIncome.reduce((s,i) => s + i.amount, 0);
       const exp = filteredFinanceExpenses.reduce((s,e) => s + e.amount, 0);
       const net = inc - exp;
-      return <div className="bg-white border border-neutral-200 rounded-xl p-3.5 mb-4">
-        <div className="text-xs text-neutral-500 mb-1 font-medium">Current Period Summary</div>
-        <div className={`text-2xl font-bold mt-1 ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(net)}</div>
-        <div className="text-xs text-neutral-500 mt-1">Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
-      </div>;
+      return (
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs text-neutral-500 mb-1 font-medium">Current Period Summary</div>
+          <div className="text-2xl font-bold text-black">{toCur(net)}</div>
+          <div className="text-xs text-neutral-500 mt-1">Income: {toCur(inc)} | Expenses: {toCur(exp)} | Items: {filteredFinanceIncome.length + filteredFinanceExpenses.length}</div>
+        </div>
+      );
     }
 
     const allPeriodIncomeMap: Record<string, {income: number; expenses: number; count: number}> = {};
@@ -825,7 +1081,7 @@ function FinancePanel({
     });
     months.sort((a,b) => a.key.localeCompare(b.key));
 
-    const now = new Date();
+    const n = new Date();
     let horizonMonths: number;
     if (horizonView === 'six_months') horizonMonths = 6;
     else if (horizonView === 'yearly') horizonMonths = 12;
@@ -833,7 +1089,7 @@ function FinancePanel({
     else if (horizonView === 'ten_years') horizonMonths = 120;
     else horizonMonths = 1;
 
-    const cutoff = new Date(now.getFullYear(), now.getMonth() - horizonMonths + 1, 1);
+    const cutoff = new Date(n.getFullYear(), n.getMonth() - horizonMonths + 1, 1);
     const filteredMonths = months.filter(m => {
       const [y,mo] = m.key.split('-').map(Number);
       const d = new Date(y, mo-1);
@@ -854,88 +1110,68 @@ function FinancePanel({
       yearGroups[year].months++;
     });
 
-    return <div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 mb-5">
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Income</div><div className="text-2xl font-bold text-black">{toCur(totalInc)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Total Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(totalExp)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Monthly Income</div><div className="text-2xl font-bold text-black">{toCur(avgMonthlyInc)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Monthly Expenses</div><div className="text-2xl font-bold text-red-600">{toCur(avgMonthlyExp)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Avg Net/Month</div><div className={`text-2xl font-bold ${avgMonthlyInc - avgMonthlyExp >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{toCur(avgMonthlyInc - avgMonthlyExp)}</div></div>
-        <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Months</div><div className="text-2xl font-bold text-black">{filteredMonths.length}</div></div>
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <MetricCard label="Total Income" value={toCur(totalInc)} />
+          <MetricCard label="Total Expenses" value={toCur(totalExp)} />
+          <MetricCard label="Avg Monthly Income" value={toCur(avgMonthlyInc)} />
+          <MetricCard label="Avg Monthly Expenses" value={toCur(avgMonthlyExp)} />
+          <MetricCard label="Avg Net/Month" value={toCur(avgMonthlyInc - avgMonthlyExp)} />
+          <MetricCard label="Months" value={String(filteredMonths.length)} />
+        </div>
+
+        {filteredMonths.length > 0 && (
+          <div className="space-y-1">
+            <h4 className="text-xs font-semibold text-black">Monthly Breakdown</h4>
+            <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+              {filteredMonths.map(m => {
+                const net = m.income - m.expenses;
+                return (
+                  <div key={m.key} className="px-4 py-2 flex items-center justify-between text-xs hover:bg-neutral-50 transition-colors">
+                    <span className="font-semibold text-black min-w-[70px]">{m.key}</span>
+                    <div className="flex gap-4">
+                      <span className="text-emerald-600">+{toCur(m.income)}</span>
+                      <span className="text-red-600">-{toCur(m.expenses)}</span>
+                      <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+                    </div>
+                    <span className="text-neutral-400">{m.count} items</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {(horizonView === 'five_years' || horizonView === 'ten_years') && (
+          <div className="space-y-1">
+            <h4 className="text-xs font-semibold text-black">Yearly Rollup</h4>
+            <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+              {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).map(([year, data]) => {
+                const net = data.income - data.expenses;
+                return (
+                  <div key={year} className="px-4 py-2 flex items-center justify-between text-xs hover:bg-neutral-50 transition-colors">
+                    <span className="font-semibold text-black">{year}</span>
+                    <div className="flex gap-4">
+                      <span className="text-emerald-600">+{toCur(data.income)}</span>
+                      <span className="text-red-600">-{toCur(data.expenses)}</span>
+                      <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
+                    </div>
+                    <span className="text-neutral-400">{data.months} months</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {horizonView === 'ten_years' && filteredMonths.length === 0 && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">
+            Not enough data for 10-year projection.
+          </div>
+        )}
       </div>
-
-      {filteredMonths.length > 0 && <div>
-        <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Monthly Breakdown</h3>
-        <div className="grid gap-1.5">
-          {filteredMonths.map(m => {
-            const net = m.income - m.expenses;
-            return <div key={m.key} className="flex justify-between items-center px-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg">
-              <div className="text-xs font-semibold text-black min-w-[70px]">{m.key}</div>
-              <div className="flex gap-5 text-xs">
-                <span className="text-emerald-600">+{toCur(m.income)}</span>
-                <span className="text-red-600">-{toCur(m.expenses)}</span>
-                <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
-              </div>
-              <div className="text-[11px] text-neutral-400">{m.count} items</div>
-            </div>;
-          })}
-        </div>
-      </div>}
-
-      {(horizonView === 'five_years' || horizonView === 'ten_years') && <div className="mt-6">
-        <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Yearly Rollup</h3>
-        <div className="grid gap-1.5">
-          {Object.entries(yearGroups).sort(([a],[b]) => a.localeCompare(b)).map(([year, data]) => {
-            const net = data.income - data.expenses;
-            return <div key={year} className="flex justify-between items-center px-3.5 py-2.5 bg-white border border-neutral-200 rounded-lg">
-              <div className="text-xs font-semibold text-black">{year}</div>
-              <div className="flex gap-5 text-xs">
-                <span className="text-emerald-600">+{toCur(data.income)}</span>
-                <span className="text-red-600">-{toCur(data.expenses)}</span>
-                <span className={`font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{net >= 0 ? '+' : ''}{toCur(net)}</span>
-              </div>
-              <div className="text-[11px] text-neutral-400">{data.months} months</div>
-            </div>;
-          })}
-        </div>
-      </div>}
-
-      {horizonView === 'ten_years' && filteredMonths.length === 0 && <div className="text-center py-12 px-6 text-neutral-500 text-sm">
-        Not enough data for 10-year projection. Add more income/expense records.
-      </div>}
-    </div>;
-  }
-
-  function renderReviewTab() {
-    const needsTotal = allExpenses.filter(e => e.category === 'needs').reduce((s,e) => s + e.amount, 0);
-    const familyTotal = allExpenses.filter(e => e.category === 'family').reduce((s,e) => s + e.amount, 0);
-    const totalAllExp = allExpenses.reduce((s,e) => s + e.amount, 0);
-    const needsPct = totalAllExp > 0 ? Math.round((needsTotal + familyTotal) / totalAllExp * 100) : 0;
-    const highPriorityGoals = allGoals.filter(g => g.priority === 'high' && g.status !== 'bought' && g.status !== 'cancelled');
-    const gaps: string[] = [];
-    if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
-    if (highPriorityGoals.length > 0) gaps.push(`You have ${highPriorityGoals.length} high-priority purchase goals not yet completed.`);
-    if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
-    if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
-    const activeRecurring = allRecurring.filter(r => r.isActive);
-    if (activeRecurring.length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
-
-    return <div>
-      <h2 className="text-lg font-bold text-black m-0">Review & Gaps</h2>
-      <div className="mt-4">
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3.5 mb-6">
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Needs Ratio</div><div className="text-2xl font-bold text-black">{needsPct}%</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Allocation Rules</div><div className="text-2xl font-bold text-black">{allRules.length}</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Active Recurring</div><div className="text-2xl font-bold text-black">{activeRecurring.length}</div></div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3.5"><div className="text-xs text-neutral-500 mb-1 font-medium">Open Goals</div><div className="text-2xl font-bold text-black">{allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled').length}</div></div>
-        </div>
-        {gaps.length > 0 && <div className="mt-4">
-          <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-2">Identified Gaps</h3>
-          {gaps.map((g,i) => <div key={i} className="px-3.5 py-2.5 mb-1.5 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">{g}</div>)}
-        </div>}
-        {gaps.length === 0 && <div className="p-6 text-center text-neutral-500 text-sm">No major gaps detected.</div>}
-      </div>
-    </div>;
+    );
   }
 
   function buildFinanceSummary() {
@@ -1083,93 +1319,146 @@ function FinancePanel({
     const aiModes: AiMode[] = ['monthly_review', 'allocation_review', 'purchase_review', 'investment_review', 'recurring_income_review', 'next_actions'];
     const hasData = dashboardIncome.length > 0 || dashboardExpenses.length > 0;
 
-    return <div>
-      <h2 className="text-lg font-bold text-black m-0">AI Finance Assistant</h2>
-      <div className="px-4 py-3 rounded-lg text-sm mb-4 bg-blue-50 border border-sky-200 text-sky-700 text-xs">
-        AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-black">AI Finance Assistant</h3>
+        <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
+          AI Finance Assistant provides organization, risk review, and scenario analysis only. It is not financial, legal, tax, or investment advice. Always review AI output manually before acting.
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {aiModes.map(m => (
+            <button key={m}
+              onClick={() => { setAiMode(m); setAiResult(null); setAiError(null); }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                aiMode === m
+                  ? 'border-neutral-900 bg-neutral-900 text-white'
+                  : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
+            {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
+          </Button>
+          {!hasData && <span className="text-xs text-neutral-400">Add income or expenses first.</span>}
+        </div>
+        {aiError && <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-xs text-red-700">{aiError}</div>}
+        {aiLoading && <div className="p-8 text-center text-sm text-neutral-400">Generating analysis...</div>}
+        {aiResult && (
+          <div className="space-y-3">
+            {aiResult.summary && (
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="text-xs text-neutral-500 mb-1 font-medium">Summary</div>
+                <div className="text-sm text-black mt-1 leading-relaxed">{aiResult.summary}</div>
+              </div>
+            )}
+            {aiResult.incomeAnalysis?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Income Analysis</div>
+                {aiResult.incomeAnalysis.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.expenseAnalysis?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Expense Analysis</div>
+                {aiResult.expenseAnalysis.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.allocationReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Allocation Review</div>
+                {aiResult.allocationReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.purchaseGoalReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Purchase Goals</div>
+                {aiResult.purchaseGoalReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.investmentRiskReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Investment Risks</div>
+                {aiResult.investmentRiskReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.recurringIncomeReview?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Recurring Income Review</div>
+                {aiResult.recurringIncomeReview.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.ethicalReviewQuestions?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Ethical Review Questions</div>
+                {aiResult.ethicalReviewQuestions.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.warnings?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Warnings</div>
+                {aiResult.warnings.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-red-700 leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+            {aiResult.nextActions?.length > 0 && (
+              <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+                <div className="px-4 py-2 text-xs font-medium text-neutral-500">Next Actions</div>
+                {aiResult.nextActions.map((item: string, i: number) => (
+                  <div key={i} className="px-4 py-2 text-xs text-black leading-relaxed">{item}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <div className="mt-3 flex gap-2 flex-wrap mb-4">
-        {aiModes.map(m => <button key={m} className={`px-3.5 py-1.5 text-xs font-medium rounded-md cursor-pointer ${aiMode === m ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>{setAiMode(m); setAiResult(null); setAiError(null);}}>{m.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>)}
-      </div>
-      <button className="px-4 py-1.5 text-xs font-semibold rounded-md text-white border-none cursor-pointer bg-blue-600 hover:bg-blue-700 disabled:opacity-50" disabled={aiLoading || !hasData} onClick={callAiAnalysis}>
-        {aiLoading ? 'Analyzing...' : 'Analyze with AI'}
-      </button>
-      {!hasData && <div className="px-4 py-3 rounded-lg text-sm bg-amber-50 border border-amber-300 text-amber-800 mt-3 text-xs">
-        Add income or expenses before using the AI Assistant.
-      </div>}
-      {aiError && <div className="px-4 py-3 rounded-lg text-sm bg-red-50 border border-red-200 text-red-800 mt-4">{aiError}</div>}
-      {aiLoading && <div className="text-center py-12 px-6 text-neutral-500 text-sm">Generating analysis...</div>}
-      {aiResult && <div className="mt-5 flex flex-col gap-3.5">
-        {aiResult.summary && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Summary</div>
-          <div className="text-sm text-black mt-1 leading-relaxed">{aiResult.summary}</div>
-        </div>}
-        {aiResult.incomeAnalysis?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Income Analysis</div>
-          {aiResult.incomeAnalysis.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.incomeAnalysis.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.expenseAnalysis?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Expense Analysis</div>
-          {aiResult.expenseAnalysis.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.expenseAnalysis.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.allocationReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Allocation Review</div>
-          {aiResult.allocationReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.allocationReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.purchaseGoalReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Purchase Goals</div>
-          {aiResult.purchaseGoalReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.purchaseGoalReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.investmentRiskReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Investment Risks</div>
-          {aiResult.investmentRiskReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.investmentRiskReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.recurringIncomeReview?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Recurring Income Review</div>
-          {aiResult.recurringIncomeReview.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.recurringIncomeReview.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.ethicalReviewQuestions?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Ethical Review Questions</div>
-          {aiResult.ethicalReviewQuestions.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.ethicalReviewQuestions.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.warnings?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Warnings</div>
-          {aiResult.warnings.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-red-700 leading-relaxed ${i<aiResult.warnings.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-        {aiResult.nextActions?.length > 0 && <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="text-xs text-neutral-500 mb-1 font-medium">Next Actions</div>
-          {aiResult.nextActions.map((item: string, i: number) => <div key={i} className={`py-1.5 text-xs text-black leading-relaxed ${i<aiResult.nextActions.length-1?'border-b border-neutral-100':''}`}>{item}</div>)}
-        </div>}
-      </div>}
-    </div>;
+    );
   }
 
   function renderSidebar() {
     const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
     const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
     const netAll = totalInc - totalExp;
-    return <div className="flex flex-col gap-3">
-      <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-        <div className="text-xs text-neutral-500 mb-1 font-medium">All-time Totals</div>
-        <div className="text-xs mt-1">
-          <div className="flex justify-between py-0.5"><span>Income</span><span className="text-emerald-600 font-semibold">{toCur(totalInc)}</span></div>
-          <div className="flex justify-between py-0.5"><span>Expenses</span><span className="text-red-600 font-semibold">{toCur(totalExp)}</span></div>
-          <div className={`flex justify-between py-0.5 border-t border-neutral-200 mt-1 pt-1 font-bold ${netAll >= 0 ? 'text-emerald-600' : 'text-red-600'}`}><span>Net</span><span>{toCur(netAll)}</span></div>
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs font-medium text-neutral-500 mb-2">All-time Totals</div>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between"><span>Income</span><span className="font-semibold text-black">{toCur(totalInc)}</span></div>
+            <div className="flex justify-between"><span>Expenses</span><span className="font-semibold text-black">{toCur(totalExp)}</span></div>
+            <div className="flex justify-between pt-1 mt-1 border-t border-neutral-200 font-bold text-black"><span>Net</span><span>{toCur(netAll)}</span></div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="text-xs font-medium text-neutral-500 mb-2">Quick Stats</div>
+          <div className="space-y-1 text-xs text-neutral-500">
+            <div>{allIncome.length} income records</div>
+            <div>{allExpenses.length} expense records</div>
+            <div>{allPeriods.length} periods</div>
+            <div>{allRecurring.length} recurring rules</div>
+            <div>{allGoals.length} purchase goals</div>
+            <div>{allIdeas.length} investment ideas</div>
+            <div>{allRules.length} allocation rules</div>
+          </div>
         </div>
       </div>
-      <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
-        <div className="text-xs text-neutral-500 mb-1 font-medium">Quick Stats</div>
-        <div className="text-xs text-neutral-500 mt-1.5 flex flex-col gap-1">
-          <div>{allIncome.length} income records</div>
-          <div>{allExpenses.length} expense records</div>
-          <div>{allPeriods.length} periods</div>
-          <div>{allRecurring.length} recurring rules</div>
-          <div>{allGoals.length} purchase goals</div>
-          <div>{allIdeas.length} investment ideas</div>
-          <div>{allRules.length} allocation rules</div>
-        </div>
-      </div>
-    </div>;
+    );
   }
 
   const tabs: {key: FinanceTab; label: string}[] = [
@@ -1184,40 +1473,82 @@ function FinancePanel({
     {key:'ai_assistant', label:'AI'},
   ];
 
-  return <div className="min-h-screen bg-neutral-50">
-    <div className="flex gap-6 p-6 max-w-7xl mx-auto items-start">
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-          <div className="flex gap-2 items-center flex-wrap">
-            {tabs.map(t => <button key={t.key} className={`px-4 py-2 text-sm font-medium rounded-md cursor-pointer ${tab === t.key ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-transparent text-neutral-500 border border-transparent hover:bg-neutral-50'}`} onClick={()=>setTab(t.key)}>{t.label}</button>)}
-            <button className="px-2.5 py-1 text-xs font-medium rounded-[5px] border border-neutral-200 bg-white text-neutral-500 cursor-pointer ml-2" onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</button>
+  return (
+    <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
+      {/* Header */}
+      <div className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto max-w-[1400px] px-6 pt-5 pb-0">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Finance</h1>
+              <p className="mt-1 text-sm text-neutral-500">Income, expenses, allocation, investments, and financial review.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="primary" size="sm" onClick={() => openModal('income')}>+ Add Income</Button>
+              <Button variant="outline" size="sm" onClick={() => openModal('expenses')}>+ Add Expense</Button>
+              <Button variant="outline" size="sm" onClick={() => openModal('purchase_goals')}>+ Add Goal</Button>
+              <Button variant="outline" size="sm" onClick={() => openModal('investments')}>+ Add Investment</Button>
+            </div>
           </div>
         </div>
-        <div className="mb-4">{renderPeriodSelector()}</div>
-        {tab !== 'monthly' && tab !== 'six_months' && tab !== 'yearly' && <div className="mb-4">
-          {tab === 'dashboard' && renderDashboard()}
-          {tab === 'income' && renderIncomeTab()}
-          {tab === 'expenses' && renderExpensesTab()}
-          {tab === 'allocation' && renderAllocationTab()}
-          {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
-          {tab === 'investments' && renderInvestmentsTab()}
-          {tab === 'recurring' && renderRecurringRulesTab()}
-          {tab === 'review' && renderReviewTab()}
-          {tab === 'ai_assistant' && renderAiAssistant()}
-        </div>}
-        <div className="mt-6">
-          <h3 className="text-lg font-bold text-black m-0 text-[15px] mb-3">Horizon View —{' '}
-            {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
-          </h3>
-          {renderHorizonSummary()}
+
+        {/* Tabs */}
+        <div className="mx-auto max-w-[1400px] px-6 mt-3 overflow-x-auto">
+          <div className="flex gap-0 min-w-max border-b border-neutral-200">
+            {tabs.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`px-3.5 py-2 text-xs font-medium border-b-2 transition-all whitespace-nowrap ${
+                  tab === t.key
+                    ? 'text-black border-black'
+                    : 'text-neutral-500 border-transparent hover:text-black hover:border-neutral-300'
+                }`}
+              >{t.label}</button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="w-[260px] shrink-0 sticky top-6">
-        {renderSidebar()}
+
+      {/* Main content */}
+      <div className="mx-auto max-w-[1400px] px-6 py-6">
+        <div className="flex gap-6 items-start">
+          <div className="flex-1 min-w-0 space-y-6">
+            {/* Period selector */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {renderPeriodSelector()}
+              <Button variant="outline" size="sm" onClick={() => { setTab('dashboard'); setSelectedPeriodId(''); }}>Clear Period</Button>
+            </div>
+
+            {/* Tab content */}
+            {tab === 'dashboard' && renderDashboard()}
+            {tab === 'income' && renderIncomeTab()}
+            {tab === 'expenses' && renderExpensesTab()}
+            {tab === 'allocation' && renderAllocationTab()}
+            {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
+            {tab === 'investments' && renderInvestmentsTab()}
+            {tab === 'recurring' && renderRecurringRulesTab()}
+            {tab === 'review' && renderReviewTab()}
+            {tab === 'ai_assistant' && renderAiAssistant()}
+
+            {/* Horizon view */}
+            <div className="pt-2">
+              <h3 className="text-sm font-semibold text-black mb-3">
+                Horizon View &mdash;{' '}
+                {horizonView === 'monthly' ? 'Current Month' : horizonView === 'six_months' ? 'Last 6 Months' : horizonView === 'yearly' ? 'Last 12 Months' : horizonView === 'five_years' ? 'Last 5 Years' : 'Last 10 Years'}
+              </h3>
+              {renderHorizonSummary()}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-[240px] shrink-0 sticky top-6 hidden lg:block">
+            {renderSidebar()}
+          </div>
+        </div>
       </div>
+
+      {renderModal()}
     </div>
-    {renderModal()}
-  </div>;
+  );
 }
 
 export default FinancePanel;
