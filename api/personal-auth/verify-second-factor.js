@@ -1,6 +1,6 @@
 import {
   createPersonalGateCookie,
-  PERSONAL_GATE_TTLS,
+  PERSONAL_AUTH_TTLS,
   requirePersonalAccess,
   verifyScryptPassword,
 } from '../../server/lib/personalAuth.js';
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
   res.setHeader('Set-Cookie', [
     createPersonalGateCookie(req, {
       email: access.email,
-      ttlSeconds: rememberDevice ? PERSONAL_GATE_TTLS.rememberDeviceSeconds : PERSONAL_GATE_TTLS.defaultSeconds,
+      ttlSeconds: rememberDevice ? PERSONAL_AUTH_TTLS.gateRememberSeconds : PERSONAL_AUTH_TTLS.gateDefaultSeconds,
     }),
   ]);
 

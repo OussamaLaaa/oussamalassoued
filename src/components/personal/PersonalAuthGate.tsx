@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { PERSONAL_AUTH_CONFIGURED } from '../../config/personalAuthConfig';
 import {
+  customLogin,
   fetchPersonalAuthStatus,
-  getPersonalSupabaseClient,
-  installPersonalApiAuthBridge,
   personalLogout,
-  signInPersonalWithPassword,
   verifyPersonalSecondFactor,
 } from '../../utils/personalAuth';
 
@@ -23,15 +20,6 @@ const initialState: PersonalAuthState = {
   emailAuthenticated: false,
   allowedEmail: false,
   secondFactorPassed: false,
-};
-
-const getFriendlyLoginError = (error: unknown) => {
-  const message = String((error as { error?: string; message?: string })?.error || (error as { message?: string })?.message || '').toLowerCase();
-  if (message.includes('invalid login credentials') || message.includes('invalid') || message.includes('credentials')) {
-    return 'Invalid email or password.';
-  }
-
-  return 'Login failed. Try again.';
 };
 
 const AuthShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -89,35 +77,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
 
   useEffect(() => {
     void refreshStatus();
-
-    const timer = window.setTimeout(() => {
-      void refreshStatus();
-    }, 400);
-
-    const supabase = getPersonalSupabaseClient();
-    let subscription: { unsubscribe: () => void } | undefined;
-
-    if (supabase) {
-      const { data } = supabase.auth.onAuthStateChange(() => {
-        void refreshStatus();
-      });
-      subscription = data.subscription;
-    }
-
-    return () => {
-      window.clearTimeout(timer);
-      subscription?.unsubscribe();
-    };
   }, []);
-
-  useEffect(() => {
-    if (!status.emailAuthenticated || !status.allowedEmail || !status.secondFactorPassed) {
-      return undefined;
-    }
-
-    const cleanup = installPersonalApiAuthBridge();
-    return () => cleanup();
-  }, [status.allowedEmail, status.emailAuthenticated, status.secondFactorPassed]);
 
   useEffect(() => {
     const onFocus = () => {
@@ -133,9 +93,9 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     setIsSigningIn(true);
     setAuthError('');
     try {
-      const result = await signInPersonalWithPassword(email.trim(), loginPassword);
+      const result = await customLogin(email.trim(), loginPassword);
       if (!result.success) {
-        setAuthError(getFriendlyLoginError(result));
+        setAuthError(result.error || 'Login failed. Try again.');
         return;
       }
 
@@ -200,9 +160,6 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
             <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Welcome back</h1>
             <p className="text-sm leading-6 text-neutral-600">Sign in to access your workspace.</p>
-            {!PERSONAL_AUTH_CONFIGURED ? (
-              <p className="text-sm text-neutral-500">Sign-in is not configured in this environment.</p>
-            ) : null}
           </div>
 
           <div className="space-y-4">
@@ -237,7 +194,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <button
             type="submit"
-            disabled={isSigningIn || !PERSONAL_AUTH_CONFIGURED}
+            disabled={isSigningIn}
             className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSigningIn ? 'Signing in...' : 'Sign in'}

@@ -1,25 +1,14 @@
 import crypto from 'crypto';
 
-const PERSONAL_OS_COOKIE = 'personal_os_gate';
+const PERSONAL_OS_MAIN_COOKIE = 'personal_os_main';
+const PERSONAL_OS_GATE_COOKIE = 'personal_os_gate';
 const LEGACY_PERSONAL_COOKIE = 'personal_google_gate';
-const DEFAULT_GATE_TTL_SECONDS = 60 * 60 * 24 * 7;
-const REMEMBER_DEVICE_TTL_SECONDS = 60 * 60 * 24 * 30;
+
+const MAIN_TTL_SECONDS = 60 * 60 * 12;
+const GATE_DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7;
+const GATE_REMEMBER_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 const toSafeString = (value) => (value == null ? '' : String(value).trim());
-
-export const parseAllowedEmails = (value = process.env.PERSONAL_ALLOWED_EMAILS || '') => {
-  const emails = new Set();
-  for (const entry of String(value).split(/[\s,;]+/)) {
-    const email = entry.trim().toLowerCase();
-    if (email) emails.add(email);
-  }
-  return emails;
-};
-
-export const isEmailAllowed = (email, allowedEmails = parseAllowedEmails()) => {
-  const normalized = toSafeString(email).toLowerCase();
-  return Boolean(normalized) && allowedEmails.has(normalized);
-};
 
 export const parseCookies = (cookieHeader) => {
   if (!cookieHeader || typeof cookieHeader !== 'string') return {};
@@ -56,17 +45,17 @@ const getCookieDomainPrefix = (req) => {
   return '';
 };
 
-export const buildGateCookieAttributes = (req, maxAgeSeconds = DEFAULT_GATE_TTL_SECONDS) => {
+const buildCookieAttributes = (req, maxAgeSeconds) => {
   const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   return `${getCookieDomainPrefix(req)}Path=/; HttpOnly; SameSite=Strict${secureFlag}; Max-Age=${maxAgeSeconds}`;
 };
 
-export const buildClearedGateCookieAttributes = (req) => {
+const buildClearedCookieAttributes = (req) => {
   const secureFlag = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   return `${getCookieDomainPrefix(req)}Path=/; HttpOnly; SameSite=Strict${secureFlag}; Max-Age=0`;
 };
 
-export const signGateToken = ({ email, secret = process.env.PERSONAL_GATE_SECRET, ttlSeconds = DEFAULT_GATE_TTL_SECONDS, purpose = 'personal_os' }) => {
+const signToken = ({ email, secret = process.env.PERSONAL_GATE_SECRET, ttlSeconds, purpose, ...extra }) => {
   const normalizedSecret = toSafeString(secret);
   if (!normalizedSecret) {
     throw new Error('Missing PERSONAL_GATE_SECRET');
@@ -74,7 +63,7 @@ export const signGateToken = ({ email, secret = process.env.PERSONAL_GATE_SECRET
 
   const issuedAt = Math.floor(Date.now() / 1000);
   const expiresAt = issuedAt + ttlSeconds;
-  const payload = { email: toSafeString(email).toLowerCase(), issuedAt, expiresAt, purpose };
+  const payload = { email: toSafeString(email).toLowerCase(), issuedAt, expiresAt, purpose, ...extra };
   const payloadJson = JSON.stringify(payload);
   const payloadPart = base64UrlEncode(Buffer.from(payloadJson, 'utf8'));
   const signature = crypto.createHmac('sha256', normalizedSecret).update(payloadPart).digest();
@@ -82,7 +71,7 @@ export const signGateToken = ({ email, secret = process.env.PERSONAL_GATE_SECRET
   return `${payloadPart}.${signaturePart}`;
 };
 
-export const verifyGateToken = (token, { secret = process.env.PERSONAL_GATE_SECRET, purpose, now = Math.floor(Date.now() / 1000) } = {}) => {
+const verifyToken = (token, { secret = process.env.PERSONAL_GATE_SECRET, purpose, now = Math.floor(Date.now() / 1000) } = {}) => {
   const normalizedSecret = toSafeString(secret);
   if (!normalizedSecret || !token || typeof token !== 'string') return null;
 
@@ -119,12 +108,7 @@ export const verifyGateToken = (token, { secret = process.env.PERSONAL_GATE_SECR
   if (!Number.isFinite(payload.issuedAt) || !Number.isFinite(payload.expiresAt)) return null;
   if (payload.expiresAt <= now) return null;
 
-  return {
-    email: toSafeString(payload.email).toLowerCase(),
-    issuedAt: Number(payload.issuedAt),
-    expiresAt: Number(payload.expiresAt),
-    purpose: toSafeString(payload.purpose),
-  };
+  return payload;
 };
 
 export const parseScryptHash = (value) => {
@@ -170,94 +154,79 @@ export const verifyScryptPassword = async (password, storedHash) => {
   return crypto.timingSafeEqual(derived, parsed.hashBuffer);
 };
 
+export const signMainToken = ({ email, userId, secret, ttlSeconds = MAIN_TTL_SECONDS }) => {
+  return signToken({ email, secret, ttlSeconds, purpose: 'personal_os_main', userId });
+};
+
+export const signGateToken = ({ email, secret, ttlSeconds = GATE_DEFAULT_TTL_SECONDS, purpose = 'personal_os' }) => {
+  return signToken({ email, secret, ttlSeconds, purpose });
+};
+
+export const verifyMainToken = (token, { secret, now } = {}) => {
+  return verifyToken(token, { secret, purpose: 'personal_os_main', now });
+};
+
+export const verifyGateToken = (token, { secret, purpose = 'personal_os', now } = {}) => {
+  return verifyToken(token, { secret, purpose, now });
+};
+
 export const getPersonalGateCookies = (req) => {
   const cookies = parseCookies(req.headers?.cookie);
-  const osGate = verifyGateToken(cookies[PERSONAL_OS_COOKIE]);
+  const mainToken = verifyMainToken(cookies[PERSONAL_OS_MAIN_COOKIE]);
+  const gateToken = verifyGateToken(cookies[PERSONAL_OS_GATE_COOKIE]);
 
   return {
-    osGate,
+    mainToken,
+    gateToken,
     cookies,
   };
 };
 
-const getSupabaseUrl = () => toSafeString(process.env.SUPABASE_URL);
-
-const getSupabaseApiKey = () => toSafeString(
-  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY,
-);
-
-export const verifySupabaseAccessToken = async (accessToken) => {
-  const supabaseUrl = getSupabaseUrl();
-  const apiKey = getSupabaseApiKey();
-  const token = toSafeString(accessToken);
-
-  if (!supabaseUrl || !apiKey || !token) return null;
-
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: 'GET',
-    headers: {
-      apikey: apiKey,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) return null;
-
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
-};
-
-export const extractBearerToken = (req) => {
-  const header = String(req.headers?.authorization || req.headers?.Authorization || '').trim();
-  if (!header.toLowerCase().startsWith('bearer ')) return '';
-  return header.slice(7).trim();
-};
-
 export const requirePersonalAccess = async (req) => {
-  const allowedEmails = parseAllowedEmails();
   const cookies = parseCookies(req.headers?.cookie);
-  const accessToken = extractBearerToken(req);
 
-  let supabaseUser = null;
-  if (accessToken) {
-    supabaseUser = await verifySupabaseAccessToken(accessToken);
-  }
+  const mainToken = verifyMainToken(cookies[PERSONAL_OS_MAIN_COOKIE]);
+  const gateToken = verifyGateToken(cookies[PERSONAL_OS_GATE_COOKIE]);
 
-  const email = toSafeString(
-    supabaseUser?.email,
-  ).toLowerCase();
-  const allowedEmail = isEmailAllowed(email, allowedEmails);
-  const secondFactorPassed = Boolean(osGate && osGate.email === email);
-  const emailAuthenticated = Boolean(supabaseUser);
+  const email = mainToken?.email || '';
+  const emailAuthenticated = Boolean(mainToken?.email);
+  const allowedEmail = emailAuthenticated;
+  const secondFactorPassed = Boolean(gateToken?.email && gateToken.email === email);
 
   return {
     allowedEmail,
     emailAuthenticated,
     secondFactorPassed,
     email: email || undefined,
-    supabaseUser,
-    osGate,
+    userId: mainToken?.userId || undefined,
+    mainToken,
+    osGate: gateToken,
   };
 };
 
-export const createPersonalGateCookie = (req, { email, ttlSeconds = DEFAULT_GATE_TTL_SECONDS }) => {
-  const token = signGateToken({ email, ttlSeconds });
-  return `${PERSONAL_OS_COOKIE}=${token}; ${buildGateCookieAttributes(req, ttlSeconds)}`;
+export const createMainCookie = (req, { email, userId, ttlSeconds = MAIN_TTL_SECONDS }) => {
+  const token = signMainToken({ email, userId, ttlSeconds });
+  return `${PERSONAL_OS_MAIN_COOKIE}=${token}; ${buildCookieAttributes(req, ttlSeconds)}`;
 };
 
-export const clearPersonalGateCookies = (req) => [
-  `${LEGACY_PERSONAL_COOKIE}=; ${buildClearedGateCookieAttributes(req)}`,
-  `${PERSONAL_OS_COOKIE}=; ${buildClearedGateCookieAttributes(req)}`,
+export const createPersonalGateCookie = (req, { email, ttlSeconds = GATE_DEFAULT_TTL_SECONDS }) => {
+  const token = signGateToken({ email, ttlSeconds });
+  return `${PERSONAL_OS_GATE_COOKIE}=${token}; ${buildCookieAttributes(req, ttlSeconds)}`;
+};
+
+export const clearPersonalAuthCookies = (req) => [
+  `${LEGACY_PERSONAL_COOKIE}=; ${buildClearedCookieAttributes(req)}`,
+  `${PERSONAL_OS_MAIN_COOKIE}=; ${buildClearedCookieAttributes(req)}`,
+  `${PERSONAL_OS_GATE_COOKIE}=; ${buildClearedCookieAttributes(req)}`,
 ];
 
 export const PERSONAL_COOKIE_NAMES = {
-  os: PERSONAL_OS_COOKIE,
+  main: PERSONAL_OS_MAIN_COOKIE,
+  gate: PERSONAL_OS_GATE_COOKIE,
 };
 
-export const PERSONAL_GATE_TTLS = {
-  defaultSeconds: DEFAULT_GATE_TTL_SECONDS,
-  rememberDeviceSeconds: REMEMBER_DEVICE_TTL_SECONDS,
+export const PERSONAL_AUTH_TTLS = {
+  mainSeconds: MAIN_TTL_SECONDS,
+  gateDefaultSeconds: GATE_DEFAULT_TTL_SECONDS,
+  gateRememberSeconds: GATE_REMEMBER_TTL_SECONDS,
 };
