@@ -66,15 +66,27 @@ export const searchWeb = async (query, options = {}) => {
       body: JSON.stringify({ q: cleanQuery, num: maxResults }),
     });
 
+    const rawText = await response.text().catch(() => '');
+
     if (!response.ok) {
       return {
         results: [],
         providerUsed: 'serper',
         warning: 'Live AI web research failed. Results may be incomplete.',
+        debug: {
+          status: response.status,
+          statusText: response.statusText,
+          bodySnippet: rawText.slice(0, 500),
+        },
       };
     }
 
-    const data = await response.json().catch(() => null);
+    let data = null;
+    try {
+      data = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      data = null;
+    }
     const organicResults = normalizeResults(data?.organic, 'serper');
     const knowledgeGraphResults = normalizeResults(data?.knowledgeGraph ? [data.knowledgeGraph] : [], 'serper');
     const relatedResults = normalizeResults(data?.relatedSearches, 'serper');
@@ -91,6 +103,11 @@ export const searchWeb = async (query, options = {}) => {
       results: [],
       providerUsed: 'serper',
       warning: 'Live AI web research failed. Results may be incomplete.',
+      debug: {
+        status: null,
+        statusText: 'network_error',
+        bodySnippet: '',
+      },
     };
   }
 };

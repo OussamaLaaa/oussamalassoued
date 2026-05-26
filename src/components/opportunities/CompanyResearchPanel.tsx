@@ -190,8 +190,14 @@ const CompanyResearchPanel: React.FC<{
         if (response.status === 401) {
           throw new Error('Authentication required. Please log in again.');
         }
-        if (response.status === 503 && /company research/i.test(String(data?.error || ''))) {
+        if (/AI company research is not configured/i.test(String(data?.error || ''))) {
           throw new Error('AI provider is not configured for company research.');
+        }
+        if (/AI returned an unreadable response/i.test(String(data?.error || ''))) {
+          throw new Error('AI returned an unreadable response. Try again.');
+        }
+        if (response.status >= 500) {
+          throw new Error('AI company research failed. Check configuration or try again.');
         }
         throw new Error(String(data?.error || 'Unable to research company.'));
       }

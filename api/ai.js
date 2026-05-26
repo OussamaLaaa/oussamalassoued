@@ -405,114 +405,126 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
   'Respect Islamic and ethical principles. Avoid manipulative sales language.',
   'Return strict JSON only. No markdown fences. No commentary.',
   'Use this exact shape:',
-  '{"company":{"name":null,"legalName":null,"description":null,"databaseType":null,"category":null,"industry":null,"country":null,"city":null,"website":null,"linkedin":null,"facebook":null,"instagram":null,"twitter":null,"youtube":null,"phone":null,"email":null,"priority":null,"fitScore":null,"ethicalFit":null,"status":null,"nextAction":null,"notes":null},"contactMethods":[{"type":null,"label":null,"value":null,"isPrimary":false,"notes":null,"sourceUrl":null,"confidence":"low"}],"problemProfile":{"problemTitle":null,"problemDescription":null,"currentSituation":null,"businessImpact":null,"proposedSolution":null,"serviceAngle":null,"valueProposition":null,"urgency":null,"confidence":null,"status":"draft","notes":null},"outreachScript":{"name":null,"channel":null,"language":null,"audience":null,"goal":null,"hook":null,"messageBody":null,"callScript":null,"objectionHandling":null,"followUpMessage":null,"status":"draft","isActive":true,"notes":null},"sources":[{"title":null,"url":null,"usedFor":null,"confidence":"low"}],"warnings":[],"confidence":"low","researchMeta":{"mode":"serper_plus_gemini","searchProvider":"serper","reasoningProvider":"gemini","queriesRun":[],"resultCount":0}}',
-  'Allowed company.databaseType values: big_company, sme, freelance, other.',
-  'Allowed company.priority values: high, medium, low.',
-  'Allowed company.ethicalFit values: good, needs_review, avoid.',
-  'Set company.fitScore to an integer from 0 to 10 when supported; otherwise null.',
-  'For contacts, keep sourceUrl and confidence when possible.',
-  'For sources, include only public results from the supplied list.',
-  '',
-  `Language: ${language || 'auto'}`,
-  `Company name: ${companyName}`,
-  `Country hint: ${countryHint || 'none'}`,
-  `City hint: ${cityHint || 'none'}`,
-  `Industry hint: ${industryHint || 'none'}`,
-  `Website hint: ${websiteHint || 'none'}`,
-  `Search provider: ${searchProvider || 'none'}`,
-  `Reasoning provider: ${reasoningProvider || 'gemini'}`,
-  `Result count: ${resultCount || 0}`,
-  `Queries run: ${JSON.stringify(queriesRun || [])}`,
-  `Detected official/social links: ${JSON.stringify(detectedLinks || [], null, 2)}`,
-  `Search results: ${JSON.stringify(Array.isArray(searchResults) ? searchResults : [], null, 2)}`,
-].join('\n');
-
-const handleCompanyResearchAction = async (req, res) => {
-  const body = readBody(req);
-  const companyName = toCleanString(body.companyName);
-  const countryHint = toCleanString(body.countryHint);
-  const cityHint = toCleanString(body.cityHint);
-  const industryHint = toCleanString(body.industryHint);
-  const websiteHint = toCleanString(body.websiteHint);
-  const language = ['auto', 'english', 'french', 'arabic'].includes(toCleanString(body.language).toLowerCase()) ? toCleanString(body.language).toLowerCase() : 'auto';
   const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
 
-  if (!companyName) {
-    return toSafeJson(res, 400, { success: false, error: 'Company name is required.' });
-  }
+  let stage = 'validate_input';
+  const debugRequested = Boolean(req?.query?.debug === '1' || req?.query?.debug === 1 || req?.body?.debug === true || req?.body?.debug === 'true' || req?.body?.debug === 1);
+  const debugState = {
+    hasSerperKey: Boolean(process.env.SERPER_API_KEY),
+    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+    providerRoutingAvailable: false,
+    queriesBuilt: [],
+    serperRequestsAttempted: 0,
+    serperResultsCount: 0,
+    normalizedResultsCount: 0,
+    aiCalled: false,
+    aiRawTextLength: 0,
+    jsonParseOk: false,
+    failureStage: null,
+    serperStatus: null,
+    serperStatusText: null,
+    serperErrorSnippet: null,
+  };
 
-  if (companyName.length > 160 || countryHint.length > 120 || cityHint.length > 120 || industryHint.length > 120 || websiteHint.length > 240) {
-    return toSafeJson(res, 400, { success: false, error: 'Company research input is too long.' });
-  }
+    if (!parsed) {
+    stage = 'build_queries';
+    const body = readBody(req);
+    const companyName = toCleanString(body.companyName).slice(0, 120);
+    const countryHint = toCleanString(body.countryHint);
+    const cityHint = toCleanString(body.cityHint);
+    const industryHint = toCleanString(body.industryHint);
+    const websiteHint = toCleanString(body.websiteHint);
+    const language = ['auto', 'english', 'french', 'arabic'].includes(toCleanString(body.language).toLowerCase()) ? toCleanString(body.language).toLowerCase() : 'auto';
 
-  let supabase = null;
-  try {
-    supabase = createSupabaseClient();
-  } catch {
-    supabase = null;
-  }
+    if (!companyName || toCleanString(body.companyName).length > 120) {
+      return toSafeJson(res, 400, { success: false, error: 'Company name is required.' });
+    }
 
-  const routing = await resolveCompanyResearchExecutionConfig({ supabase });
-  if (routing?.disabled) {
-    return toSafeJson(res, 503, { success: false, error: 'AI provider is not configured for company research.' });
-  }
+    const queriesRun = buildCompanyResearchQueries({ companyName, countryHint, cityHint, industryHint, websiteHint });
+    debugState.queriesBuilt = queriesRun;
 
-  if (!routing?.executionConfig) {
-    return toSafeJson(res, 503, { success: false, error: 'AI provider is not configured for company research.' });
-  }
+    let supabase = null;
+    try {
+      supabase = createSupabaseClient();
+    } catch {
+      supabase = null;
+    }
 
-  const queriesRun = buildCompanyResearchQueries({ companyName, countryHint, cityHint, industryHint, websiteHint });
-  const searchProviderWarning = [];
-  let providerUsed = null;
-  const collected = [];
+    stage = 'build_queries';
+    const routing = await resolveCompanyResearchExecutionConfig({ supabase });
+    debugState.providerRoutingAvailable = Boolean(routing?.executionConfig);
 
-  if (!process.env.SERPER_API_KEY) {
-    searchProviderWarning.push('Live AI web research is not configured.');
-  } else {
-    for (const query of queriesRun) {
-      const search = await searchWeb(query, { maxResults: 10 });
-      if (search?.warning) searchProviderWarning.push(search.warning);
-      if (search?.providerUsed) providerUsed = search.providerUsed;
-      for (const item of search?.results || []) {
-        collected.push(normalizeSearchResult(item, collected.length + 1));
+    if (routing?.disabled || !routing?.executionConfig) {
+      return toSafeJson(res, 500, {
+        success: false,
+        error: 'AI company research is not configured.',
+        ...(debugRequested ? { debug: { ...debugState, failureStage: 'build_queries' } } : {}),
+      });
+    }
+
+    stage = 'serper_search';
+    const searchProviderWarning = [];
+    let providerUsed = null;
+    const collected = [];
+    const serperKey = process.env.SERPER_API_KEY;
+
+    if (!serperKey) {
+      searchProviderWarning.push('Live AI web research is not configured.');
+    } else {
+      for (const query of queriesRun) {
+        debugState.serperRequestsAttempted += 1;
+        const search = await searchWeb(query, { maxResults: 10 });
+        if (search?.warning) searchProviderWarning.push(search.warning);
+        if (search?.debug && !debugState.serperStatus) {
+          debugState.serperStatus = search.debug.status;
+          debugState.serperStatusText = search.debug.statusText;
+          debugState.serperErrorSnippet = search.debug.bodySnippet ? String(search.debug.bodySnippet).slice(0, 500) : null;
+        }
+        if (search?.providerUsed) providerUsed = search.providerUsed;
+        for (const item of search?.results || []) {
+          collected.push(normalizeSearchResult(item, collected.length + 1));
+        }
       }
     }
-  }
 
-  const searchResults = dedupeSearchResults(collected);
-  const resultCount = searchResults.length;
-  const officialWebsite = detectOfficialWebsite(searchResults, companyName);
-  const socialLinks = searchResults.filter((item) => {
-    const kind = classifySourceUrl(item.url);
-    return kind.type === 'linkedin' || kind.type === 'facebook' || kind.type === 'instagram' || kind.type === 'twitter' || kind.type === 'youtube';
-  }).slice(0, 6);
+    stage = 'normalize_results';
+    const searchResults = dedupeSearchResults(collected);
+    debugState.serperResultsCount = collected.length;
+    debugState.normalizedResultsCount = searchResults.length;
 
-  const detectedLinks = [];
-  if (officialWebsite?.url) detectedLinks.push({ type: 'official_website', url: officialWebsite.url, title: officialWebsite.title || null });
-  for (const item of socialLinks) {
-    const kind = classifySourceUrl(item.url);
-    detectedLinks.push({ type: kind.type, url: item.url, title: item.title || null });
-  }
+    const officialWebsite = detectOfficialWebsite(searchResults, companyName);
+    const socialLinks = searchResults.filter((item) => {
+      const kind = classifySourceUrl(item.url);
+      return kind.type === 'linkedin' || kind.type === 'facebook' || kind.type === 'instagram' || kind.type === 'twitter' || kind.type === 'youtube';
+    }).slice(0, 6);
 
-  const searchProviderLabel = getSearchProviderLabel(providerUsed);
-  const reasoningProviderLabel = 'Gemini';
+    const detectedLinks = [];
+    if (officialWebsite?.url) detectedLinks.push({ type: 'official_website', url: officialWebsite.url, title: officialWebsite.title || null });
+    for (const item of socialLinks) {
+      const kind = classifySourceUrl(item.url);
+      detectedLinks.push({ type: kind.type, url: item.url, title: item.title || null });
+    }
 
-  const prompt = buildCompanyResearchPrompt({
-    companyName,
-    countryHint,
-    cityHint,
-    industryHint,
-    websiteHint,
-    language,
-    searchResults,
-    queriesRun,
-    searchProvider: searchProviderLabel,
-    reasoningProvider: reasoningProviderLabel,
-    resultCount,
-    detectedLinks,
-  });
+    const searchProviderLabel = getSearchProviderLabel(providerUsed);
+    const reasoningProviderLabel = routing?.executionConfig?.provider === 'gemini' ? 'gemini' : routing?.executionConfig?.provider || 'gemini';
 
-  try {
+    stage = 'ai_reasoning';
+    debugState.aiCalled = true;
+    const prompt = buildCompanyResearchPrompt({
+      companyName,
+      countryHint,
+      cityHint,
+      industryHint,
+      websiteHint,
+      language,
+      searchResults,
+      queriesRun,
+      searchProvider: searchProviderLabel,
+      reasoningProvider: reasoningProviderLabel,
+      resultCount: searchResults.length,
+      detectedLinks,
+    });
+
     const rawResponse = await aiProviderRouter.requestProviderCompletion({
       ...routing.executionConfig,
       prompt,
@@ -520,12 +532,17 @@ const handleCompanyResearchAction = async (req, res) => {
       maxOutputTokens: 2200,
     });
 
+    debugState.aiRawTextLength = toCleanString(rawResponse).length;
+
+    stage = 'parse_ai_json';
     const parsed = parseJsonSafely(rawResponse);
+    debugState.jsonParseOk = Boolean(parsed);
+
     if (!parsed) {
       return toSafeJson(res, 500, {
         success: false,
         error: 'AI returned an unreadable response. Try again.',
-        ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
+        ...(debugRequested ? { debug: { ...debugState, failureStage: 'parse_ai_json' } } : {}),
       });
     }
 
@@ -533,58 +550,77 @@ const handleCompanyResearchAction = async (req, res) => {
     const warnings = [...new Set([
       ...result.warnings,
       ...searchProviderWarning,
-      !process.env.SERPER_API_KEY ? 'Live AI web research is not configured.' : null,
+      !serperKey ? 'Live AI web research is not configured.' : null,
+      searchResults.length === 0 && serperKey ? 'AI research ran, but no reliable public sources were found.' : null,
     ].filter(Boolean))];
 
-    const searchProvider = providerUsed ? searchProviderLabel : null;
-    const confidence = resultCount === 0 || warnings.some((warning) => /not configured|failed|incomplete|no reliable public sources/i.test(warning))
-      ? 'low'
-      : result.confidence;
+    const confidence = result.confidence === 'high' && (warnings.length > 0 || searchResults.length === 0) ? 'medium' : (searchResults.length === 0 ? 'low' : result.confidence);
+
+    stage = 'build_response';
+    const finalResult = {
+      company: result.company || {
+        name: null,
+        legalName: null,
+        description: null,
+        databaseType: null,
+        category: null,
+        industry: null,
+        country: null,
+        city: null,
+        website: null,
+        linkedin: null,
+        facebook: null,
+        instagram: null,
+        twitter: null,
+        youtube: null,
+        phone: null,
+        email: null,
+        priority: null,
+        fitScore: null,
+        ethicalFit: null,
+        status: null,
+        nextAction: null,
+        notes: null,
+      },
+      contactMethods: Array.isArray(result.contactMethods) ? result.contactMethods : [],
+      problemProfile: result.problemProfile || null,
+      outreachScript: result.outreachScript || null,
+      sources: searchResults.map((item) => ({
+        title: item.title || item.url || 'Source',
+        url: item.url || null,
+        usedFor: item.snippet || 'Public web research source',
+        confidence: classifySourceUrl(item.url).confidence,
+      })),
+      warnings,
+      confidence,
+      researchMeta: {
+        mode: serperKey ? 'serper_plus_gemini' : 'ai_only_fallback',
+        searchProvider: serperKey ? 'serper' : null,
+        reasoningProvider: reasoningProviderLabel,
+        queriesRun,
+        resultCount: searchResults.length,
+      },
+    };
 
     return toSafeJson(res, 200, {
       success: true,
-      result: {
-        ...result,
-        sources: dedupeSearchResults(searchResults).map((item) => ({
-          title: item.title || item.url || 'Source',
-          url: item.url,
-          usedFor: item.snippet || 'Public web research source',
-          confidence: classifySourceUrl(item.url).confidence,
-        })),
-        warnings,
-        confidence,
-        researchMeta: {
-          mode: process.env.SERPER_API_KEY ? 'serper_plus_gemini' : 'ai_only_fallback',
-          searchProvider,
-          reasoningProvider: reasoningProviderLabel,
-          queriesRun,
-          resultCount,
-        },
-      },
-      ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
+      result: finalResult,
+      ...(debugRequested ? { debug: { ...debugState, failureStage: null } } : {}),
     });
-  } catch (error) {
-    const errorMessage = error?.providerStatus === 401 ? 'Authentication required. Please log in again.' : 'Unable to research company.';
-    return toSafeJson(res, error?.providerStatus === 401 ? 401 : 500, {
-      success: false,
-      error: errorMessage,
-      ...(debugRequested ? {
-        debug: {
-          sourceUseCase: routing.sourceUseCase,
-          providerStatus: error?.providerStatus ?? null,
           providerErrorStatus: error?.providerErrorStatus ?? null,
-          providerErrorReason: error?.providerErrorReason ?? null,
+    const errorMessage = error?.providerStatus === 401 ? 'Authentication required.' : 'Unable to research company.';
         },
       } : {}),
     });
-  }
-};
-
-const parseNotesTaskLine = (line) => {
-  const cleaned = toCleanString(line).replace(/^[-*]\s*/, '');
-  if (!cleaned) return null;
-
-  try {
+      ...(debugRequested ? {
+        debug: {
+          ...debugState,
+          message: error?.message || 'Unknown error',
+          name: error?.name || 'Error',
+          stage,
+          failureStage: stage,
+        },
+      } : {}),
     const parsed = JSON.parse(cleaned);
     if (parsed && typeof parsed === 'object') {
       return {
