@@ -828,6 +828,10 @@ const OpportunitiesLayout: React.FC<{
     await deleteProject(id);
   };
 
+  const handleCompanyClick = useCallback((companyId: string) => {
+    setSelectedCompanyId(companyId);
+  }, []);
+
   if (activeApp === 'desktop') {
     return <DesktopLauncher onLaunchApp={handleLaunchApp} />;
   }
@@ -837,10 +841,6 @@ const OpportunitiesLayout: React.FC<{
     setSelectedCompanyId(null);
     setGlobalSearch('');
   };
-
-  const handleCompanyClick = useCallback((companyId: string) => {
-    setSelectedCompanyId(companyId);
-  }, []);
 
   return (
     <FullPageAppShell
