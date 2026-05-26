@@ -405,8 +405,33 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
   'Respect Islamic and ethical principles. Avoid manipulative sales language.',
   'Return strict JSON only. No markdown fences. No commentary.',
   'Use this exact shape:',
-  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
+  '{"company":{...},"contactMethods":[...],"problemProfile":{...}|null,"outreachScript":{...}|null,"sources":[...],"warnings":[...],"confidence":"low|medium|high"}',
+  'Required company fields: name, legalName, description, databaseType, category, industry, country, city, website, linkedin, facebook, instagram, twitter, youtube, phone, email, priority, fitScore, ethicalFit, status, nextAction, notes.',
+  'Allowed databaseType values: big_company, sme, freelance, other.',
+  'Allowed priority values: high, medium, low.',
+  'Allowed ethicalFit values: good, needs_review, avoid.',
+  'Allowed confidence values: low, medium, high.',
+  'If multiple companies match, choose the best match and add a warning.',
+  'For company type, infer one of: big_company, sme, freelance, other.',
+  'For fitScore, use an integer from 0 to 10.',
+  'For contactMethods, only include public company contact methods and include sourceUrl when possible.',
+  'For problemProfile and outreachScript, keep them concise, professional, and reviewable.',
+  '',
+  `Language: ${language || 'auto'}`,
+  `Company name: ${companyName}`,
+  `Country hint: ${countryHint || 'none'}`,
+  `City hint: ${cityHint || 'none'}`,
+  `Industry hint: ${industryHint || 'none'}`,
+  `Website hint: ${websiteHint || 'none'}`,
+  `Search provider: ${searchProvider || 'unknown'}`,
+  `Reasoning provider: ${reasoningProvider || 'unknown'}`,
+  `Result count: ${resultCount || 0}`,
+  `Detected links: ${JSON.stringify(detectedLinks || [])}`,
+  `Search results: ${JSON.stringify(searchResults || [])}`,
+  `Queries run: ${JSON.stringify(queriesRun || [])}`,
+].join('\n');
 
+const handleCompanyResearchAction = async (req, res) => {
   let stage = 'validate_input';
   const debugRequested = Boolean(req?.query?.debug === '1' || req?.query?.debug === 1 || req?.body?.debug === true || req?.body?.debug === 'true' || req?.body?.debug === 1);
   const debugState = {
@@ -426,18 +451,23 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
     serperErrorSnippet: null,
   };
 
-    if (!parsed) {
+  try {
     stage = 'build_queries';
     const body = readBody(req);
-    const companyName = toCleanString(body.companyName).slice(0, 120);
-    const countryHint = toCleanString(body.countryHint);
-    const cityHint = toCleanString(body.cityHint);
-    const industryHint = toCleanString(body.industryHint);
-    const websiteHint = toCleanString(body.websiteHint);
+    const companyNameRaw = toCleanString(body.companyName);
+    const companyName = companyNameRaw.slice(0, 120);
+    const countryHint = toCleanString(body.countryHint).slice(0, 120);
+    const cityHint = toCleanString(body.cityHint).slice(0, 120);
+    const industryHint = toCleanString(body.industryHint).slice(0, 120);
+    const websiteHint = toCleanString(body.websiteHint).slice(0, 240);
     const language = ['auto', 'english', 'french', 'arabic'].includes(toCleanString(body.language).toLowerCase()) ? toCleanString(body.language).toLowerCase() : 'auto';
 
-    if (!companyName || toCleanString(body.companyName).length > 120) {
+    if (!companyNameRaw) {
       return toSafeJson(res, 400, { success: false, error: 'Company name is required.' });
+    }
+
+    if (companyNameRaw.length > 120) {
+      return toSafeJson(res, 400, { success: false, error: 'Company name is too long.' });
     }
 
     const queriesRun = buildCompanyResearchQueries({ companyName, countryHint, cityHint, industryHint, websiteHint });
@@ -450,7 +480,6 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
       supabase = null;
     }
 
-    stage = 'build_queries';
     const routing = await resolveCompanyResearchExecutionConfig({ supabase });
     debugState.providerRoutingAvailable = Boolean(routing?.executionConfig);
 
@@ -607,33 +636,32 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
       result: finalResult,
       ...(debugRequested ? { debug: { ...debugState, failureStage: null } } : {}),
     });
-          providerErrorStatus: error?.providerErrorStatus ?? null,
-    const errorMessage = error?.providerStatus === 401 ? 'Authentication required.' : 'Unable to research company.';
-        },
-      } : {}),
+  } catch (error) {
+    console.error('[api/ai] company-research failed', {
+      message: error?.message,
+      name: error?.name,
+      stage,
     });
+
+    return toSafeJson(res, error?.providerStatus === 401 ? 401 : 500, {
+      success: false,
+      error: error?.providerStatus === 401 ? 'Authentication required.' : 'AI service failed.',
       ...(debugRequested ? {
         debug: {
           ...debugState,
-          message: error?.message || 'Unknown error',
-          name: error?.name || 'Error',
           stage,
           failureStage: stage,
+          message: error?.message || 'Unknown error',
+          name: error?.name || 'Error',
         },
       } : {}),
-    const parsed = JSON.parse(cleaned);
-    if (parsed && typeof parsed === 'object') {
-      return {
-        title: toCleanString(parsed.title || parsed.task || parsed.name),
-        priority: toCleanString(parsed.priority),
-        category: toCleanString(parsed.category),
-        suggestedDueDate: toCleanString(parsed.suggestedDueDate || parsed.due || parsed.dueDate),
-        notes: toCleanString(parsed.notes),
-      };
-    }
-  } catch {
-    // fall through to line parsing
+    });
   }
+};
+
+const parseNotesTaskLine = (rawText) => {
+  const cleaned = toCleanString(rawText);
+  if (!cleaned) return null;
 
   const task = {
     title: '',
