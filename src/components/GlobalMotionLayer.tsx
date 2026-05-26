@@ -59,11 +59,16 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
       const h1 = hero.querySelector<HTMLElement>('h1');
       if (h1 && !isMobile) {
         splitToChars(h1);
-        gsap.fromTo(
-          h1.querySelectorAll('span'),
-          { y: 70, opacity: 0, rotationX: -45, transformPerspective: 700 },
-          { y: 0, opacity: 1, rotationX: 0, duration: 0.75, ease: 'back.out(1.3)', stagger: 0.022 },
-        );
+        const h1Spans = Array.from(h1.querySelectorAll('span'));
+        if (h1Spans.length > 0) {
+          gsap.fromTo(
+            h1Spans,
+            { y: 70, opacity: 0, rotationX: -45, transformPerspective: 700 },
+            { y: 0, opacity: 1, rotationX: 0, duration: 0.75, ease: 'back.out(1.3)', stagger: 0.022 },
+          );
+        } else {
+          gsap.fromTo(h1, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' });
+        }
       } else if (h1) {
         gsap.fromTo(h1, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' });
       }
@@ -71,11 +76,16 @@ const GlobalMotionLayer: React.FC<GlobalMotionLayerProps> = () => {
       const sub = hero.querySelector<HTMLElement>('p.text-lg, p.text-xl');
       if (sub) {
         splitToWords(sub);
-        gsap.fromTo(
-          sub.querySelectorAll('span'),
-          { y: 25, opacity: 0, scale: 0.94 },
-          { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: 'power3.out', stagger: 0.035, delay: 0.45 },
-        );
+        const subWords = Array.from(sub.querySelectorAll('span'));
+        if (subWords.length > 0) {
+          gsap.fromTo(
+            subWords,
+            { y: 25, opacity: 0, scale: 0.94 },
+            { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: 'power3.out', stagger: 0.035, delay: 0.45 },
+          );
+        } else {
+          gsap.fromTo(sub, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: 'power3.out', delay: 0.45 });
+        }
       }
 
       const btns = hero.querySelectorAll<HTMLElement>('.mt-10 a');
