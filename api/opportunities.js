@@ -147,9 +147,18 @@ const getEnvPresence = () => ({
 const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
 
 const buildMutationFailurePayload = ({ entity, action, error, payloadKeys }) => {
+  const isDelete = action === 'delete';
+  const isCompanyDeleteFkConstraint = isDelete && entity === 'companies' && error?.code === '23503';
+
   const result = {
     success: false,
-    error: action === 'update' ? 'Unable to update Opportunities data.' : action === 'delete' ? 'Unable to delete Opportunities data.' : 'Unable to save Opportunities data.',
+    error: action === 'update'
+      ? 'Unable to update Opportunities data.'
+      : isCompanyDeleteFkConstraint
+        ? 'Company cannot be deleted because related records exist.'
+        : action === 'delete'
+          ? 'Unable to delete Opportunities data.'
+          : 'Unable to save Opportunities data.',
     entity,
     action,
     errorCode: error?.code ?? null,

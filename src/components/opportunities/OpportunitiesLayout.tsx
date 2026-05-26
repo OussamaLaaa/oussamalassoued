@@ -560,8 +560,22 @@ const OpportunitiesLayout: React.FC<{
     setEditingCompany(company);
   };
 
-  const handleDeleteCompany = (id: string) => {
-    deleteCompany(id);
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      if (import.meta.env.DEV) {
+        console.log('[CRM] deleting company', id);
+      }
+
+      await deleteCompany(id);
+
+      if (import.meta.env.DEV) {
+        console.log('[CRM] delete company success', id);
+      }
+    } catch (error) {
+      console.error('[CRM] delete company failed', error);
+      const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
+      window.alert(message);
+    }
   };
 
   const handleEditPerson = (person: Person) => {

@@ -214,17 +214,47 @@ const CompaniesTable: React.FC<{
                   <td className="px-4 py-4 align-top">
                     <div className="flex flex-wrap justify-end gap-1.5">
                       {onEdit && (
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(company)} className="text-neutral-700 hover:text-neutral-900">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            onEdit(company);
+                          }}
+                          className="text-neutral-700 hover:text-neutral-900"
+                        >
                           Edit
                         </Button>
                       )}
                       {onAIScore && (
-                        <Button variant="ghost" size="sm" onClick={() => onAIScore(company)} className="text-neutral-700 hover:text-neutral-900">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            onAIScore(company);
+                          }}
+                          className="text-neutral-700 hover:text-neutral-900"
+                        >
                           AI Score
                         </Button>
                       )}
                       {onDelete && (
-                        <Button variant="ghost" size="sm" onClick={() => onDelete(company.id)} className="text-neutral-700 hover:text-neutral-900">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            onDelete(company.id);
+                          }}
+                          className="text-neutral-700 hover:text-neutral-900"
+                        >
                           Delete
                         </Button>
                       )}
