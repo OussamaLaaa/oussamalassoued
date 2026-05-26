@@ -2746,8 +2746,6 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const deleteCompany = async (id: string) => {
-    const confirmed = window.confirm('This may leave related people/messages/deals without a company. Continue?');
-    if (!confirmed) return;
     await syncDelete('companies', id);
     setCompanies((current) => current.filter((c) => c.id !== id));
   };

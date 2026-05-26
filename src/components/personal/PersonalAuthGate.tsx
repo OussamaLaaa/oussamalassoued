@@ -60,8 +60,8 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
-  const refreshStatus = async () => {
-    setIsLoading(true);
+  const refreshStatus = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const nextStatus = await fetchPersonalAuthStatus();
       setStatus({
@@ -83,17 +83,17 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     } catch {
       setStatus(initialState);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    void refreshStatus();
+    void refreshStatus(true);
   }, []);
 
   useEffect(() => {
     const onFocus = () => {
-      void refreshStatus();
+      void refreshStatus(false);
     };
 
     window.addEventListener('focus', onFocus);

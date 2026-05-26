@@ -488,6 +488,8 @@ const OpportunitiesLayout: React.FC<{
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
@@ -734,21 +736,36 @@ const OpportunitiesLayout: React.FC<{
   };
 
   const handleDeleteCompany = async (id: string) => {
-    try {
-      if (import.meta.env.DEV) {
-        console.log('[CRM] deleting company', id);
-      }
-
-      await deleteCompany(id);
-
-      if (import.meta.env.DEV) {
-        console.log('[CRM] delete company success', id);
-      }
-    } catch (error) {
-      console.error('[CRM] delete company failed', error);
-      const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
-      window.alert(message);
+    if (import.meta.env.DEV) {
+      console.log('[CRM] deleting company', id);
     }
+    await deleteCompany(id);
+    if (import.meta.env.DEV) {
+      console.log('[CRM] delete company success', id);
+    }
+  };
+
+  const handleRequestDelete = (id: string) => {
+    setConfirmDeleteCompanyId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    const id = confirmDeleteCompanyId;
+    setConfirmDeleteCompanyId(null);
+    if (!id) return;
+    try {
+      await handleDeleteCompany(id);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('[CRM] delete company failed', error);
+      }
+      const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
+      setDeleteError(message);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteCompanyId(null);
   };
 
   const handleEditPerson = (person: Person) => {
@@ -951,7 +968,7 @@ const OpportunitiesLayout: React.FC<{
                 deals={deals}
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
-                onDelete={handleDeleteCompany}
+                onDelete={handleRequestDelete}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
                 onCompanyClick={handleCompanyClick}
@@ -969,7 +986,7 @@ const OpportunitiesLayout: React.FC<{
                 deals={deals}
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
-                onDelete={handleDeleteCompany}
+                onDelete={handleRequestDelete}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
                 onCompanyClick={handleCompanyClick}
@@ -987,7 +1004,7 @@ const OpportunitiesLayout: React.FC<{
                 deals={deals}
                 onAddCompany={() => setActiveModal('company')}
                 onEdit={handleEditCompany}
-                onDelete={handleDeleteCompany}
+                onDelete={handleRequestDelete}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
                 onCompanyClick={handleCompanyClick}
@@ -1058,7 +1075,7 @@ const OpportunitiesLayout: React.FC<{
                 <CompaniesTable
                   companies={companies}
                   onEdit={handleEditCompany}
-                  onDelete={handleDeleteCompany}
+                  onDelete={handleRequestDelete}
                   onAIScore={handleAIScore}
                   onCompanyClick={handleCompanyClick}
                   filters={companyFilters}
@@ -1692,6 +1709,25 @@ const OpportunitiesLayout: React.FC<{
           onClose={() => setAiScoringCompany(null)}
           onApply={handleApplyAIScore}
         />
+      ) : null}
+
+      {confirmDeleteCompanyId ? (
+        <OpportunityModal title="Confirm Delete" onClose={handleCancelDelete}>
+          <p className="text-sm leading-6 text-neutral-700">This may leave related people, messages, and deals without a company. Continue?</p>
+          <div className="mt-6 flex items-center gap-3">
+            <Button variant="primary" size="md" onClick={handleConfirmDelete}>Delete</Button>
+            <Button variant="secondary" size="md" onClick={handleCancelDelete}>Cancel</Button>
+          </div>
+        </OpportunityModal>
+      ) : null}
+
+      {deleteError ? (
+        <OpportunityModal title="Error" onClose={() => setDeleteError(null)}>
+          <p className="text-sm leading-6 text-neutral-700">{deleteError}</p>
+          <div className="mt-6">
+            <Button variant="primary" size="md" onClick={() => setDeleteError(null)}>OK</Button>
+          </div>
+        </OpportunityModal>
       ) : null}
     </FullPageAppShell>
   );
