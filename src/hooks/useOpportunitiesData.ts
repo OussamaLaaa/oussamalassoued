@@ -44,6 +44,12 @@ import {
 } from '../utils/opportunitiesMappers';
 import type {
   OpportunitiesData,
+  CompanyContactMethod,
+  CompanyContactMethodInput,
+  CompanyProblemProfile,
+  CompanyProblemProfileInput,
+  CompanyOutreachScript,
+  CompanyOutreachScriptInput,
   CompanyInput,
   PersonInput,
   MessageInput,
@@ -212,6 +218,9 @@ const cloneSeedData = (): OpportunitiesData => ({
   lifeDeenLogs: [],
   lifeFamilyActions: [],
   lifeWeeklyReviews: [],
+  companyContactMethods: [],
+  companyProblemProfiles: [],
+  companyOutreachScripts: [],
 });
 
 
@@ -273,6 +282,9 @@ type OpportunitiesApiResponse = {
   content_strategy?: any[];
   content_items?: any[];
   weekly_content_plans?: any[];
+  company_contact_methods?: any[];
+  company_problem_profiles?: any[];
+  company_outreach_scripts?: any[];
 };
 
 type ApiError = Error & {
@@ -1490,6 +1502,109 @@ const lifeWeeklyReviewToDb = (input: Partial<LifeWeeklyReviewInput>) => {
   return payload;
 };
 
+// ── Company Contact Methods ──
+
+const companyContactMethodFromDb = (row: any): CompanyContactMethod => ({
+  id: String(row?.id ?? ''),
+  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  type: row?.type ?? 'other',
+  label: row?.label ?? undefined,
+  value: row?.value ?? undefined,
+  isPrimary: row?.is_primary == null ? false : Boolean(row.is_primary),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const companyContactMethodToDb = (input: Partial<CompanyContactMethodInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.companyId !== undefined) payload.company_id = String(input.companyId);
+  if (input.type !== undefined) payload.type = String(input.type || 'other');
+  if (input.label !== undefined) payload.label = toNullableString(input.label);
+  if (input.value !== undefined) payload.value = toNullableString(input.value);
+  if (input.isPrimary !== undefined) payload.is_primary = Boolean(input.isPrimary);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+// ── Company Problem Profiles ──
+
+const companyProblemProfileFromDb = (row: any): CompanyProblemProfile => ({
+  id: String(row?.id ?? ''),
+  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  problemTitle: row?.problem_title ?? row?.problemTitle ?? undefined,
+  problemDescription: row?.problem_description ?? row?.problemDescription ?? undefined,
+  currentSituation: row?.current_situation ?? row?.currentSituation ?? undefined,
+  businessImpact: row?.business_impact ?? row?.businessImpact ?? undefined,
+  proposedSolution: row?.proposed_solution ?? row?.proposedSolution ?? undefined,
+  serviceAngle: row?.service_angle ?? row?.serviceAngle ?? undefined,
+  valueProposition: row?.value_proposition ?? row?.valueProposition ?? undefined,
+  urgency: row?.urgency ?? 'medium',
+  confidence: row?.confidence ?? 'medium',
+  status: row?.status ?? 'draft',
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const companyProblemProfileToDb = (input: Partial<CompanyProblemProfileInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.companyId !== undefined) payload.company_id = String(input.companyId);
+  if (input.problemTitle !== undefined) payload.problem_title = toNullableString(input.problemTitle);
+  if (input.problemDescription !== undefined) payload.problem_description = toNullableString(input.problemDescription);
+  if (input.currentSituation !== undefined) payload.current_situation = toNullableString(input.currentSituation);
+  if (input.businessImpact !== undefined) payload.business_impact = toNullableString(input.businessImpact);
+  if (input.proposedSolution !== undefined) payload.proposed_solution = toNullableString(input.proposedSolution);
+  if (input.serviceAngle !== undefined) payload.service_angle = toNullableString(input.serviceAngle);
+  if (input.valueProposition !== undefined) payload.value_proposition = toNullableString(input.valueProposition);
+  if (input.urgency !== undefined) payload.urgency = String(input.urgency || 'medium');
+  if (input.confidence !== undefined) payload.confidence = String(input.confidence || 'medium');
+  if (input.status !== undefined) payload.status = String(input.status || 'draft');
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
+// ── Company Outreach Scripts ──
+
+const companyOutreachScriptFromDb = (row: any): CompanyOutreachScript => ({
+  id: String(row?.id ?? ''),
+  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  name: row?.name ?? 'Outreach Script',
+  channel: row?.channel ?? 'email',
+  language: row?.language ?? 'english',
+  audience: row?.audience ?? undefined,
+  goal: row?.goal ?? undefined,
+  hook: row?.hook ?? undefined,
+  messageBody: row?.message_body ?? row?.messageBody ?? undefined,
+  callScript: row?.call_script ?? row?.callScript ?? undefined,
+  objectionHandling: row?.objection_handling ?? row?.objectionHandling ?? undefined,
+  followUpMessage: row?.follow_up_message ?? row?.followUpMessage ?? undefined,
+  status: row?.status ?? 'draft',
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const companyOutreachScriptToDb = (input: Partial<CompanyOutreachScriptInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.companyId !== undefined) payload.company_id = String(input.companyId);
+  if (input.name !== undefined) payload.name = String(input.name || 'Outreach Script');
+  if (input.channel !== undefined) payload.channel = String(input.channel || 'email');
+  if (input.language !== undefined) payload.language = String(input.language || 'english');
+  if (input.audience !== undefined) payload.audience = toNullableString(input.audience);
+  if (input.goal !== undefined) payload.goal = toNullableString(input.goal);
+  if (input.hook !== undefined) payload.hook = toNullableString(input.hook);
+  if (input.messageBody !== undefined) payload.message_body = toNullableString(input.messageBody);
+  if (input.callScript !== undefined) payload.call_script = toNullableString(input.callScript);
+  if (input.objectionHandling !== undefined) payload.objection_handling = toNullableString(input.objectionHandling);
+  if (input.followUpMessage !== undefined) payload.follow_up_message = toNullableString(input.followUpMessage);
+  if (input.status !== undefined) payload.status = String(input.status || 'draft');
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
 const socialPlatformFromDb = (row: any): SocialPlatform => ({
   id: String(row?.id ?? ''),
   name: String(row?.name ?? ''),
@@ -1872,6 +1987,9 @@ export const useOpportunitiesData = (enabled = true) => {
   const [lifeDeenLogs, setLifeDeenLogs] = useState<LifeDeenLog[]>([]);
   const [lifeFamilyActions, setLifeFamilyActions] = useState<LifeFamilyAction[]>([]);
   const [lifeWeeklyReviews, setLifeWeeklyReviews] = useState<LifeWeeklyReview[]>([]);
+  const [companyContactMethods, setCompanyContactMethods] = useState<CompanyContactMethod[]>([]);
+  const [companyProblemProfiles, setCompanyProblemProfiles] = useState<CompanyProblemProfile[]>([]);
+  const [companyOutreachScripts, setCompanyOutreachScripts] = useState<CompanyOutreachScript[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -2133,6 +2251,10 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('life_deen_logs')) setLifeDeenLogs((raw('life_deen_logs') || []).map((row: any) => lifeDeenLogFromDb(row)));
     if (has('life_family_actions')) setLifeFamilyActions((raw('life_family_actions') || []).map((row: any) => lifeFamilyActionFromDb(row)));
     if (has('life_weekly_reviews')) setLifeWeeklyReviews((raw('life_weekly_reviews') || []).map((row: any) => lifeWeeklyReviewFromDb(row)));
+    // ── Company CRM ──
+    if (has('company_contact_methods')) setCompanyContactMethods((raw('company_contact_methods') || []).map((row: any) => companyContactMethodFromDb(row)));
+    if (has('company_problem_profiles')) setCompanyProblemProfiles((raw('company_problem_profiles') || []).map((row: any) => companyProblemProfileFromDb(row)));
+    if (has('company_outreach_scripts')) setCompanyOutreachScripts((raw('company_outreach_scripts') || []).map((row: any) => companyOutreachScriptFromDb(row)));
 
     if (has('content_items')) {
       setContentItems(attachContentItemLinkNames(
@@ -2240,6 +2362,9 @@ export const useOpportunitiesData = (enabled = true) => {
           setFinancePeriods([]);
           setFinanceRecurringRules([]);
           setStrategyItems([]);
+          setCompanyContactMethods([]);
+          setCompanyProblemProfiles([]);
+          setCompanyOutreachScripts([]);
           return;
         }
 
@@ -2276,6 +2401,9 @@ export const useOpportunitiesData = (enabled = true) => {
         setFinancePeriods([]);
         setFinanceRecurringRules([]);
         setStrategyItems(fallback.strategyItems);
+        setCompanyContactMethods(fallback.companyContactMethods);
+        setCompanyProblemProfiles(fallback.companyProblemProfiles);
+        setCompanyOutreachScripts(fallback.companyOutreachScripts);
         setError('Using seed data fallback.');
       } finally {
         if (mounted) {
@@ -2464,7 +2592,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans' | 'life_nutrition_logs' | 'life_fitness_logs' | 'life_deen_logs' | 'life_family_actions' | 'life_weekly_reviews', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans' | 'life_nutrition_logs' | 'life_fitness_logs' | 'life_deen_logs' | 'life_family_actions' | 'life_weekly_reviews' | 'company_contact_methods' | 'company_problem_profiles' | 'company_outreach_scripts', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -4381,6 +4509,75 @@ export const useOpportunitiesData = (enabled = true) => {
     setLifeWeeklyReviews((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Company Contact Methods CRUD ──
+
+  const addCompanyContactMethod = async (input: CompanyContactMethodInput) => {
+    if (!input.companyId) throw new Error('Company is required.');
+    if (!input.value?.trim()) throw new Error('Value is required.');
+    const row = await syncInsert('company_contact_methods', companyContactMethodToDb(input));
+    const next = companyContactMethodFromDb(row);
+    setCompanyContactMethods((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateCompanyContactMethod = async (id: string, input: Partial<CompanyContactMethodInput>) => {
+    const row = await syncUpdate('company_contact_methods', id, companyContactMethodToDb(input));
+    const next = companyContactMethodFromDb(row);
+    setCompanyContactMethods((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteCompanyContactMethod = async (id: string) => {
+    await syncDelete('company_contact_methods' as any, id);
+    setCompanyContactMethods((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Company Problem Profiles CRUD ──
+
+  const addCompanyProblemProfile = async (input: CompanyProblemProfileInput) => {
+    if (!input.companyId) throw new Error('Company is required.');
+    if (!input.problemTitle?.trim()) throw new Error('Problem title is required.');
+    const row = await syncInsert('company_problem_profiles', companyProblemProfileToDb(input));
+    const next = companyProblemProfileFromDb(row);
+    setCompanyProblemProfiles((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateCompanyProblemProfile = async (id: string, input: Partial<CompanyProblemProfileInput>) => {
+    const row = await syncUpdate('company_problem_profiles', id, companyProblemProfileToDb(input));
+    const next = companyProblemProfileFromDb(row);
+    setCompanyProblemProfiles((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteCompanyProblemProfile = async (id: string) => {
+    await syncDelete('company_problem_profiles' as any, id);
+    setCompanyProblemProfiles((current) => current.filter((item) => item.id !== id));
+  };
+
+  // ── Company Outreach Scripts CRUD ──
+
+  const addCompanyOutreachScript = async (input: CompanyOutreachScriptInput) => {
+    if (!input.companyId) throw new Error('Company is required.');
+    if (!input.name?.trim()) throw new Error('Name is required.');
+    const row = await syncInsert('company_outreach_scripts', companyOutreachScriptToDb(input));
+    const next = companyOutreachScriptFromDb(row);
+    setCompanyOutreachScripts((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateCompanyOutreachScript = async (id: string, input: Partial<CompanyOutreachScriptInput>) => {
+    const row = await syncUpdate('company_outreach_scripts', id, companyOutreachScriptToDb(input));
+    const next = companyOutreachScriptFromDb(row);
+    setCompanyOutreachScripts((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteCompanyOutreachScript = async (id: string) => {
+    await syncDelete('company_outreach_scripts' as any, id);
+    setCompanyOutreachScripts((current) => current.filter((item) => item.id !== id));
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -4425,6 +4622,9 @@ export const useOpportunitiesData = (enabled = true) => {
     setLifeDeenLogs(fallback.lifeDeenLogs);
     setLifeFamilyActions(fallback.lifeFamilyActions);
     setLifeWeeklyReviews(fallback.lifeWeeklyReviews);
+    setCompanyContactMethods(fallback.companyContactMethods);
+    setCompanyProblemProfiles(fallback.companyProblemProfiles);
+    setCompanyOutreachScripts(fallback.companyOutreachScripts);
   };
 
   return {
@@ -4672,6 +4872,18 @@ export const useOpportunitiesData = (enabled = true) => {
     addLifeWeeklyReview,
     updateLifeWeeklyReview,
     deleteLifeWeeklyReview,
+    companyContactMethods,
+    addCompanyContactMethod,
+    updateCompanyContactMethod,
+    deleteCompanyContactMethod,
+    companyProblemProfiles,
+    addCompanyProblemProfile,
+    updateCompanyProblemProfile,
+    deleteCompanyProblemProfile,
+    companyOutreachScripts,
+    addCompanyOutreachScript,
+    updateCompanyOutreachScript,
+    deleteCompanyOutreachScript,
   };
 };
 

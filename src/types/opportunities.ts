@@ -903,11 +903,105 @@ export interface NoteBlockInput {
   sortOrder?: number;
 }
 
+export interface CompanyContactMethod {
+  id: string;
+  companyId: string;
+  type: string;
+  label?: string;
+  value: string;
+  isPrimary?: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CompanyContactMethodInput {
+  companyId: string;
+  type?: string;
+  label?: string;
+  value: string;
+  isPrimary?: boolean;
+  notes?: string;
+}
+
+export interface CompanyProblemProfile {
+  id: string;
+  companyId: string;
+  problemTitle?: string;
+  problemDescription?: string;
+  currentSituation?: string;
+  businessImpact?: string;
+  proposedSolution?: string;
+  serviceAngle?: string;
+  valueProposition?: string;
+  urgency?: string;
+  confidence?: string;
+  status?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CompanyProblemProfileInput {
+  companyId: string;
+  problemTitle?: string;
+  problemDescription?: string;
+  currentSituation?: string;
+  businessImpact?: string;
+  proposedSolution?: string;
+  serviceAngle?: string;
+  valueProposition?: string;
+  urgency?: string;
+  confidence?: string;
+  status?: string;
+  notes?: string;
+}
+
+export interface CompanyOutreachScript {
+  id: string;
+  companyId: string;
+  name: string;
+  channel?: string;
+  language?: string;
+  audience?: string;
+  goal?: string;
+  hook?: string;
+  messageBody?: string;
+  callScript?: string;
+  objectionHandling?: string;
+  followUpMessage?: string;
+  status?: string;
+  isActive?: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CompanyOutreachScriptInput {
+  companyId: string;
+  name?: string;
+  channel?: string;
+  language?: string;
+  audience?: string;
+  goal?: string;
+  hook?: string;
+  messageBody?: string;
+  callScript?: string;
+  objectionHandling?: string;
+  followUpMessage?: string;
+  status?: string;
+  isActive?: boolean;
+  notes?: string;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
+  companyContactMethods: CompanyContactMethod[];
+  companyProblemProfiles: CompanyProblemProfile[];
+  companyOutreachScripts: CompanyOutreachScript[];
   relationships: Relationship[];
   relationshipInteractions: RelationshipInteraction[];
   relationshipOpportunities: RelationshipOpportunity[];

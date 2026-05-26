@@ -8,6 +8,9 @@ const allowedEntities = new Set([
   'messages',
   'deals',
   'projects',
+  'company_contact_methods',
+  'company_problem_profiles',
+  'company_outreach_scripts',
   'message_templates',
   'project_tasks',
   'project_time_logs',
@@ -70,6 +73,9 @@ const tablesAttempted = [
   'messages',
   'deals',
   'projects',
+  'company_contact_methods',
+  'company_problem_profiles',
+  'company_outreach_scripts',
   'message_templates',
   'project_tasks',
   'project_time_logs',
@@ -1060,6 +1066,53 @@ const normalizeLifeWeeklyReviewRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeCompanyContactMethodRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.companyId !== undefined || row?.company_id !== undefined) payload.company_id = toRequiredString(row?.company_id ?? row?.companyId);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'other';
+  if (!forUpdate || row?.label !== undefined) payload.label = toNullableString(row?.label);
+  if (!forUpdate || row?.value !== undefined) payload.value = toNullableString(row?.value);
+  if (!forUpdate || row?.isPrimary !== undefined || row?.is_primary !== undefined) payload.is_primary = row?.is_primary == null ? Boolean(row?.isPrimary ?? false) : Boolean(row.is_primary);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeCompanyProblemProfileRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.companyId !== undefined || row?.company_id !== undefined) payload.company_id = toRequiredString(row?.company_id ?? row?.companyId);
+  if (!forUpdate || row?.problemTitle !== undefined || row?.problem_title !== undefined) payload.problem_title = toNullableString(row?.problem_title ?? row?.problemTitle);
+  if (!forUpdate || row?.problemDescription !== undefined || row?.problem_description !== undefined) payload.problem_description = toNullableString(row?.problem_description ?? row?.problemDescription);
+  if (!forUpdate || row?.currentSituation !== undefined || row?.current_situation !== undefined) payload.current_situation = toNullableString(row?.current_situation ?? row?.currentSituation);
+  if (!forUpdate || row?.businessImpact !== undefined || row?.business_impact !== undefined) payload.business_impact = toNullableString(row?.business_impact ?? row?.businessImpact);
+  if (!forUpdate || row?.proposedSolution !== undefined || row?.proposed_solution !== undefined) payload.proposed_solution = toNullableString(row?.proposed_solution ?? row?.proposedSolution);
+  if (!forUpdate || row?.serviceAngle !== undefined || row?.service_angle !== undefined) payload.service_angle = toNullableString(row?.service_angle ?? row?.serviceAngle);
+  if (!forUpdate || row?.valueProposition !== undefined || row?.value_proposition !== undefined) payload.value_proposition = toNullableString(row?.value_proposition ?? row?.valueProposition);
+  if (!forUpdate || row?.urgency !== undefined) payload.urgency = toNullableString(row?.urgency) || 'medium';
+  if (!forUpdate || row?.confidence !== undefined) payload.confidence = toNullableString(row?.confidence) || 'medium';
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'draft';
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
+const normalizeCompanyOutreachScriptRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.companyId !== undefined || row?.company_id !== undefined) payload.company_id = toRequiredString(row?.company_id ?? row?.companyId);
+  if (!forUpdate || row?.name !== undefined) payload.name = toNullableString(row?.name) || 'Outreach Script';
+  if (!forUpdate || row?.channel !== undefined) payload.channel = toNullableString(row?.channel) || 'email';
+  if (!forUpdate || row?.language !== undefined) payload.language = toNullableString(row?.language) || 'english';
+  if (!forUpdate || row?.audience !== undefined) payload.audience = toNullableString(row?.audience);
+  if (!forUpdate || row?.goal !== undefined) payload.goal = toNullableString(row?.goal);
+  if (!forUpdate || row?.hook !== undefined) payload.hook = toNullableString(row?.hook);
+  if (!forUpdate || row?.messageBody !== undefined || row?.message_body !== undefined) payload.message_body = toNullableString(row?.message_body ?? row?.messageBody);
+  if (!forUpdate || row?.callScript !== undefined || row?.call_script !== undefined) payload.call_script = toNullableString(row?.call_script ?? row?.callScript);
+  if (!forUpdate || row?.objectionHandling !== undefined || row?.objection_handling !== undefined) payload.objection_handling = toNullableString(row?.objection_handling ?? row?.objectionHandling);
+  if (!forUpdate || row?.followUpMessage !== undefined || row?.follow_up_message !== undefined) payload.follow_up_message = toNullableString(row?.follow_up_message ?? row?.followUpMessage);
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'draft';
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? Boolean(row?.isActive ?? true) : Boolean(row.is_active);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
@@ -1105,6 +1158,9 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'life_deen_logs') return normalizeLifeDeenLogRow(row);
   if (entity === 'life_family_actions') return normalizeLifeFamilyActionRow(row);
   if (entity === 'life_weekly_reviews') return normalizeLifeWeeklyReviewRow(row);
+  if (entity === 'company_contact_methods') return normalizeCompanyContactMethodRow(row);
+  if (entity === 'company_problem_profiles') return normalizeCompanyProblemProfileRow(row);
+  if (entity === 'company_outreach_scripts') return normalizeCompanyOutreachScriptRow(row);
   return row;
 };
 
@@ -1119,6 +1175,9 @@ const CRITICAL_TABLES = new Set([
 ]);
 
 const OPTIONAL_TABLES = new Set([
+  'company_contact_methods',
+  'company_problem_profiles',
+  'company_outreach_scripts',
   'life_nutrition_logs',
   'life_fitness_logs',
   'life_deen_logs',
@@ -1319,7 +1378,7 @@ export default async function handler(req, res) {
 
       // Build response with only the keys relevant to the current scope
       const scopeKeys = {
-        core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
+  core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
         relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
         notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
@@ -1556,6 +1615,12 @@ export default async function handler(req, res) {
                         ? normalizeLifeFamilyActionRow(data, { forUpdate: true })
                       : entity === 'life_weekly_reviews'
                         ? normalizeLifeWeeklyReviewRow(data, { forUpdate: true })
+                      : entity === 'company_contact_methods'
+                        ? normalizeCompanyContactMethodRow(data, { forUpdate: true })
+                      : entity === 'company_problem_profiles'
+                        ? normalizeCompanyProblemProfileRow(data, { forUpdate: true })
+                      : entity === 'company_outreach_scripts'
+                        ? normalizeCompanyOutreachScriptRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       if (entity === 'relationships') {
