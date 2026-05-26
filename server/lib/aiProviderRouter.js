@@ -136,7 +136,7 @@ const extractText = async (response, provider) => {
   }
 };
 
-export const requestProviderCompletion = async ({ provider, apiKey, model, prompt, temperature = 0.2, maxOutputTokens = 900, baseUrl, endpoint, deploymentName, apiVersion }) => {
+export const requestProviderCompletion = async ({ provider, apiKey, model, prompt, temperature = 0.2, maxOutputTokens = 900, baseUrl, endpoint, deploymentName, apiVersion, responseMimeType, responseSchema }) => {
   if (!AI_PROVIDERS.has(provider)) {
     throw new Error(`Unsupported AI provider: ${provider}`);
   }
@@ -164,6 +164,14 @@ export const requestProviderCompletion = async ({ provider, apiKey, model, promp
         maxOutputTokens,
       },
     };
+
+    if (responseMimeType) {
+      body.generationConfig.responseMimeType = responseMimeType;
+    }
+
+    if (responseSchema) {
+      body.generationConfig.responseSchema = responseSchema;
+    }
   } else if (provider === 'anthropic') {
     body = {
       model: model || 'claude-3-5-sonnet-20240620',

@@ -113,12 +113,47 @@ const extractJsonCandidate = (source) => {
   return trimmed;
 };
 
-const parseJsonSafely = (source) => {
-  const candidate = extractJsonCandidate(source);
-  if (!candidate) return null;
-
+const extractJsonObject = (source) => {
   try {
-    return JSON.parse(candidate);
+    let text = toCleanString(source).replace(/\uFEFF/g, '').trim();
+    if (!text) return null;
+
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    const tryParse = (input) => {
+      try {
+        return JSON.parse(input);
+      } catch {
+        return null;
+      }
+    };
+
+    if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+      const direct = tryParse(text);
+      if (direct) return direct;
+    }
+
+    const firstBrace = text.indexOf('{');
+    const firstBracket = text.indexOf('[');
+    const start = firstBrace === -1 ? firstBracket : firstBracket === -1 ? firstBrace : Math.min(firstBrace, firstBracket);
+    const lastBrace = text.lastIndexOf('}');
+    const lastBracket = text.lastIndexOf(']');
+    const end = Math.max(lastBrace, lastBracket);
+
+    if (start === -1 || end === -1 || end <= start) {
+      return null;
+    }
+
+    const candidate = text.slice(start, end + 1);
+    const repaired = candidate
+      .replace(/,\s*([}\]])/g, '$1')
+      .replace(/\bundefined\b/g, 'null');
+
+    const parsed = tryParse(repaired);
+    if (parsed) return parsed;
+
+    const cleaned = repaired.replace(/[\u200B-\u200D\uFEFF]/g, '');
+    return tryParse(cleaned);
   } catch {
     return null;
   }
@@ -259,38 +294,141 @@ const detectOfficialWebsite = (results, companyName) => {
 
 const getSearchProviderLabel = (providerUsed) => (providerUsed === 'serper' ? 'Serper' : null);
 
-const normalizeCompanyResearchResult = (raw) => {
-  const safe = raw && typeof raw === 'object' ? raw : {};
-  const company = safe.company && typeof safe.company === 'object' ? safe.company : {};
+const COMPANY_RESEARCH_COMPANY_KEYS = ['name', 'legalName', 'description', 'databaseType', 'category', 'industry', 'country', 'city', 'website', 'linkedin', 'facebook', 'instagram', 'twitter', 'youtube', 'phone', 'email', 'priority', 'fitScore', 'ethicalFit', 'status', 'nextAction', 'notes'];
+const COMPANY_RESEARCH_PROBLEM_KEYS = ['problemTitle', 'problemDescription', 'currentSituation', 'businessImpact', 'proposedSolution', 'serviceAngle', 'valueProposition', 'urgency', 'confidence', 'status', 'notes'];
+const COMPANY_RESEARCH_OUTREACH_KEYS = ['name', 'channel', 'language', 'audience', 'goal', 'hook', 'messageBody', 'callScript', 'objectionHandling', 'followUpMessage', 'status', 'isActive', 'notes'];
 
+const createDefaultCompanyResearchCompany = () => ({
+  name: null,
+  legalName: null,
+  description: null,
+  databaseType: null,
+  category: null,
+  industry: null,
+  country: null,
+  city: null,
+  website: null,
+  linkedin: null,
+  facebook: null,
+  instagram: null,
+  twitter: null,
+  youtube: null,
+  phone: null,
+  email: null,
+  priority: null,
+  fitScore: null,
+  ethicalFit: null,
+  status: null,
+  nextAction: null,
+  notes: null,
+});
+
+const createDefaultCompanyResearchProblemProfile = () => ({
+  problemTitle: null,
+  problemDescription: null,
+  currentSituation: null,
+  businessImpact: null,
+  proposedSolution: null,
+  serviceAngle: null,
+  valueProposition: null,
+  urgency: null,
+  confidence: null,
+  status: 'draft',
+  notes: null,
+});
+
+const createDefaultCompanyResearchOutreachScript = () => ({
+  name: null,
+  channel: null,
+  language: null,
+  audience: null,
+  goal: null,
+  hook: null,
+  messageBody: null,
+  callScript: null,
+  objectionHandling: null,
+  followUpMessage: null,
+  status: 'draft',
+  isActive: true,
+  notes: null,
+});
+
+const createDefaultCompanyResearchMeta = (fallbackContext = {}) => ({
+  mode: fallbackContext.serperKey ? 'serper_plus_gemini' : 'ai_only_fallback',
+  searchProvider: fallbackContext.serperKey ? 'serper' : null,
+  reasoningProvider: 'gemini',
+  queriesRun: Array.isArray(fallbackContext.queriesRun) ? fallbackContext.queriesRun : [],
+  resultCount: Number.isFinite(Number(fallbackContext.resultCount)) ? Number(fallbackContext.resultCount) : 0,
+});
+
+const buildFallbackCompanyResearchSources = (searchResults) => (Array.isArray(searchResults) ? searchResults.slice(0, 10).map((item) => ({
+  title: toCleanString(item?.title) || toCleanString(item?.url) || 'Source',
+  url: toCleanString(item?.url),
+  usedFor: 'web_search_result',
+  confidence: 'medium',
+})) : []);
+
+const normalizeCompanyResearchResult = (raw, fallbackContext = {}) => {
+  const safe = raw && typeof raw === 'object' ? raw : {};
+  const fallback = fallbackContext && typeof fallbackContext === 'object' ? fallbackContext : {};
+  const searchResults = Array.isArray(fallback.searchResults) ? fallback.searchResults : [];
+  const fallbackMeta = createDefaultCompanyResearchMeta(fallback);
+  const warnings = Array.isArray(safe.warnings)
+    ? safe.warnings.map((item) => toCleanString(item)).filter(Boolean)
+    : [];
+  const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
   const toNullableString = (value) => {
     const cleaned = toCleanString(value);
     return cleaned ? cleaned : null;
   };
-
   const normalizeDatabaseType = (value) => {
     const cleaned = toCleanString(value).toLowerCase();
     if (cleaned === 'big_company' || cleaned === 'sme' || cleaned === 'freelance' || cleaned === 'other') return cleaned;
     return null;
   };
-
   const normalizePriority = (value) => {
     const cleaned = toCleanString(value).toLowerCase();
     if (cleaned === 'high' || cleaned === 'medium' || cleaned === 'low') return cleaned;
     return null;
   };
-
   const normalizeEthicalFit = (value) => {
     const cleaned = toCleanString(value).toLowerCase();
     if (cleaned === 'good' || cleaned === 'needs_review' || cleaned === 'avoid') return cleaned;
     return null;
   };
-
   const normalizeScore = (value) => {
     const score = Number(value);
-    if (!Number.isFinite(score)) return null;
-    return Math.max(0, Math.min(10, Math.round(score)));
+    if (!Number.isFinite(score) || score < 0 || score > 10) return null;
+    return Math.round(score);
   };
+  const normalizeConfidence = (value) => {
+    const cleaned = toCleanString(value).toLowerCase();
+    if (cleaned === 'high' || cleaned === 'medium' || cleaned === 'low') return cleaned;
+    return 'low';
+  };
+
+  let wasNormalized = false;
+
+  const companySource = safe.company && typeof safe.company === 'object' ? safe.company : null;
+  if (!companySource) wasNormalized = true;
+  const company = createDefaultCompanyResearchCompany();
+  for (const key of COMPANY_RESEARCH_COMPANY_KEYS) {
+    if (companySource && hasOwn(companySource, key)) {
+      const value = companySource[key];
+      if (key === 'databaseType') company.databaseType = normalizeDatabaseType(value);
+      else if (key === 'priority') company.priority = normalizePriority(value);
+      else if (key === 'ethicalFit') company.ethicalFit = normalizeEthicalFit(value);
+      else if (key === 'fitScore') company.fitScore = normalizeScore(value);
+      else company[key] = toNullableString(value);
+
+      if (key === 'databaseType' && value != null && company.databaseType == null) wasNormalized = true;
+      if (key === 'priority' && value != null && company.priority == null) wasNormalized = true;
+      if (key === 'ethicalFit' && value != null && company.ethicalFit == null) wasNormalized = true;
+      if (key === 'fitScore' && value != null && company.fitScore == null) wasNormalized = true;
+    } else {
+      wasNormalized = true;
+    }
+  }
 
   const contactMethods = Array.isArray(safe.contactMethods)
     ? safe.contactMethods
@@ -299,103 +437,232 @@ const normalizeCompanyResearchResult = (raw) => {
         type: toNullableString(item.type),
         label: toNullableString(item.label),
         value: toNullableString(item.value),
-        isPrimary: item.isPrimary == null ? null : Boolean(item.isPrimary),
+        isPrimary: typeof item.isPrimary === 'boolean' ? item.isPrimary : true,
         notes: toNullableString(item.notes),
         sourceUrl: toNullableString(item.sourceUrl),
-        confidence: normalizeCompanyResearchConfidence(item.confidence),
+        confidence: normalizeConfidence(item.confidence),
       }))
       .filter((item) => item.value)
     : [];
+  if (!Array.isArray(safe.contactMethods)) wasNormalized = true;
 
-  const problemProfile = safe.problemProfile && typeof safe.problemProfile === 'object'
-    ? {
-        problemTitle: toNullableString(safe.problemProfile.problemTitle),
-        problemDescription: toNullableString(safe.problemProfile.problemDescription),
-        currentSituation: toNullableString(safe.problemProfile.currentSituation),
-        businessImpact: toNullableString(safe.problemProfile.businessImpact),
-        proposedSolution: toNullableString(safe.problemProfile.proposedSolution),
-        serviceAngle: toNullableString(safe.problemProfile.serviceAngle),
-        valueProposition: toNullableString(safe.problemProfile.valueProposition),
-        urgency: toNullableString(safe.problemProfile.urgency),
-        confidence: normalizeCompanyResearchConfidence(safe.problemProfile.confidence),
-        status: toNullableString(safe.problemProfile.status),
-        notes: toNullableString(safe.problemProfile.notes),
-      }
-    : null;
+  const problemSource = safe.problemProfile && typeof safe.problemProfile === 'object' ? safe.problemProfile : null;
+  if (!problemSource) wasNormalized = true;
+  const problemProfile = createDefaultCompanyResearchProblemProfile();
+  for (const key of COMPANY_RESEARCH_PROBLEM_KEYS) {
+    if (problemSource && hasOwn(problemSource, key)) {
+      const value = problemSource[key];
+      if (key === 'confidence') problemProfile.confidence = normalizeConfidence(value);
+      else if (key === 'status') problemProfile.status = toNullableString(value) || 'draft';
+      else problemProfile[key] = toNullableString(value);
+    } else {
+      wasNormalized = true;
+    }
+  }
 
-  const outreachScript = safe.outreachScript && typeof safe.outreachScript === 'object'
-    ? {
-        name: toNullableString(safe.outreachScript.name),
-        channel: toNullableString(safe.outreachScript.channel),
-        language: toNullableString(safe.outreachScript.language),
-        audience: toNullableString(safe.outreachScript.audience),
-        goal: toNullableString(safe.outreachScript.goal),
-        hook: toNullableString(safe.outreachScript.hook),
-        messageBody: toNullableString(safe.outreachScript.messageBody),
-        callScript: toNullableString(safe.outreachScript.callScript),
-        objectionHandling: toNullableString(safe.outreachScript.objectionHandling),
-        followUpMessage: toNullableString(safe.outreachScript.followUpMessage),
-        status: toNullableString(safe.outreachScript.status),
-        isActive: safe.outreachScript.isActive == null ? null : Boolean(safe.outreachScript.isActive),
-        notes: toNullableString(safe.outreachScript.notes),
-      }
-    : null;
+  const outreachSource = safe.outreachScript && typeof safe.outreachScript === 'object' ? safe.outreachScript : null;
+  if (!outreachSource) wasNormalized = true;
+  const outreachScript = createDefaultCompanyResearchOutreachScript();
+  for (const key of COMPANY_RESEARCH_OUTREACH_KEYS) {
+    if (outreachSource && hasOwn(outreachSource, key)) {
+      const value = outreachSource[key];
+      if (key === 'isActive') outreachScript.isActive = typeof value === 'boolean' ? value : true;
+      else if (key === 'status') outreachScript.status = toNullableString(value) || 'draft';
+      else outreachScript[key] = toNullableString(value);
+    } else {
+      wasNormalized = true;
+    }
+  }
 
-  const sources = Array.isArray(safe.sources)
+  const parsedSources = Array.isArray(safe.sources)
     ? safe.sources
       .filter((item) => item && typeof item === 'object')
       .map((item) => ({
         title: toNullableString(item.title),
         url: toNullableString(item.url),
         usedFor: toNullableString(item.usedFor),
-        confidence: normalizeCompanyResearchConfidence(item.confidence),
+        confidence: normalizeConfidence(item.confidence),
       }))
       .filter((item) => item.title || item.url)
     : [];
+  if (!Array.isArray(safe.sources)) wasNormalized = true;
+  const sources = parsedSources.length > 0 ? parsedSources : buildFallbackCompanyResearchSources(searchResults);
+  if (parsedSources.length === 0 && searchResults.length > 0) wasNormalized = true;
 
-  const warnings = Array.isArray(safe.warnings)
-    ? safe.warnings.map((item) => toNullableString(item)).filter(Boolean)
-    : [];
+  const normalizedWarnings = warnings.filter(Boolean);
+  const confidence = normalizeConfidence(safe.confidence);
+  if (!['low', 'medium', 'high'].includes(confidence)) wasNormalized = true;
 
-  const confidence = normalizeCompanyResearchConfidence(safe.confidence);
+  const researchMeta = safe.researchMeta && typeof safe.researchMeta === 'object' ? {
+    mode: toNullableString(safe.researchMeta.mode) || fallbackMeta.mode,
+    searchProvider: toNullableString(safe.researchMeta.searchProvider) || fallbackMeta.searchProvider,
+    reasoningProvider: toNullableString(safe.researchMeta.reasoningProvider) || fallbackMeta.reasoningProvider,
+    queriesRun: Array.isArray(safe.researchMeta.queriesRun) ? safe.researchMeta.queriesRun.map((item) => toCleanString(item)).filter(Boolean) : fallbackMeta.queriesRun,
+    resultCount: Number.isFinite(Number(safe.researchMeta.resultCount)) ? Number(safe.researchMeta.resultCount) : fallbackMeta.resultCount,
+  } : fallbackMeta;
+  if (!safe.researchMeta || typeof safe.researchMeta !== 'object') wasNormalized = true;
 
   return {
-    company: {
-      name: toNullableString(company.name),
-      legalName: toNullableString(company.legalName),
-      description: toNullableString(company.description),
-      databaseType: normalizeDatabaseType(company.databaseType),
-      category: toNullableString(company.category),
-      industry: toNullableString(company.industry),
-      country: toNullableString(company.country),
-      city: toNullableString(company.city),
-      website: toNullableString(company.website),
-      linkedin: toNullableString(company.linkedin),
-      facebook: toNullableString(company.facebook),
-      instagram: toNullableString(company.instagram),
-      twitter: toNullableString(company.twitter),
-      youtube: toNullableString(company.youtube),
-      phone: toNullableString(company.phone),
-      email: toNullableString(company.email),
-      priority: normalizePriority(company.priority),
-      fitScore: normalizeScore(company.fitScore),
-      ethicalFit: normalizeEthicalFit(company.ethicalFit),
-      status: toNullableString(company.status),
-      nextAction: toNullableString(company.nextAction),
-      notes: toNullableString(company.notes),
-    },
+    company,
     contactMethods,
     problemProfile,
     outreachScript,
     sources,
-    warnings,
+    warnings: wasNormalized ? [...new Set([...normalizedWarnings, 'AI response was incomplete and was normalized.'])] : normalizedWarnings,
     confidence,
+    researchMeta,
+    wasNormalized,
   };
+};
+
+const COMPANY_RESEARCH_RESPONSE_TEMPLATE = {
+  company: {
+    name: null,
+    legalName: null,
+    description: null,
+    databaseType: null,
+    category: null,
+    industry: null,
+    country: null,
+    city: null,
+    website: null,
+    linkedin: null,
+    facebook: null,
+    instagram: null,
+    twitter: null,
+    youtube: null,
+    phone: null,
+    email: null,
+    priority: null,
+    fitScore: null,
+    ethicalFit: null,
+    status: null,
+    nextAction: null,
+    notes: null,
+  },
+  contactMethods: [],
+  problemProfile: {
+    problemTitle: null,
+    problemDescription: null,
+    currentSituation: null,
+    businessImpact: null,
+    proposedSolution: null,
+    serviceAngle: null,
+    valueProposition: null,
+    urgency: null,
+    confidence: null,
+    status: 'draft',
+    notes: null,
+  },
+  outreachScript: {
+    name: null,
+    channel: null,
+    language: null,
+    audience: null,
+    goal: null,
+    hook: null,
+    messageBody: null,
+    callScript: null,
+    objectionHandling: null,
+    followUpMessage: null,
+    status: 'draft',
+    isActive: true,
+    notes: null,
+  },
+  sources: [],
+  warnings: [],
+  confidence: 'low',
+  researchMeta: {
+    mode: 'serper_plus_gemini',
+    searchProvider: 'serper',
+    reasoningProvider: 'gemini',
+    queriesRun: [],
+    resultCount: 0,
+  },
+};
+
+const COMPANY_RESEARCH_GEMINI_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['company', 'contactMethods', 'problemProfile', 'outreachScript', 'sources', 'warnings', 'confidence', 'researchMeta'],
+  properties: {
+    company: {
+      type: 'object',
+      additionalProperties: false,
+      required: Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.company),
+      properties: Object.fromEntries(Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.company).map((key) => [key, key === 'fitScore' ? { type: ['number', 'null'] } : { type: ['string', 'null'] }])) ,
+    },
+    contactMethods: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          type: { type: ['string', 'null'] },
+          label: { type: ['string', 'null'] },
+          value: { type: ['string', 'null'] },
+          isPrimary: { type: ['boolean', 'null'] },
+          notes: { type: ['string', 'null'] },
+          sourceUrl: { type: ['string', 'null'] },
+          confidence: { type: ['string', 'null'] },
+        },
+      },
+    },
+    problemProfile: {
+      type: 'object',
+      additionalProperties: false,
+      required: Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.problemProfile),
+      properties: Object.fromEntries(Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.problemProfile).map((key) => [key, key === 'status' ? { type: ['string', 'null'] } : key === 'confidence' ? { type: ['string', 'null'] } : { type: ['string', 'null'] }])),
+    },
+    outreachScript: {
+      type: 'object',
+      additionalProperties: false,
+      required: Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.outreachScript),
+      properties: Object.fromEntries(Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.outreachScript).map((key) => [key, key === 'isActive' ? { type: ['boolean', 'null'] } : { type: ['string', 'null'] }])),
+    },
+    sources: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          title: { type: ['string', 'null'] },
+          url: { type: ['string', 'null'] },
+          usedFor: { type: ['string', 'null'] },
+          confidence: { type: ['string', 'null'] },
+        },
+      },
+    },
+    warnings: { type: 'array', items: { type: 'string' } },
+    confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+    researchMeta: {
+      type: 'object',
+      additionalProperties: false,
+      required: Object.keys(COMPANY_RESEARCH_RESPONSE_TEMPLATE.researchMeta),
+      properties: {
+        mode: { type: ['string', 'null'] },
+        searchProvider: { type: ['string', 'null'] },
+        reasoningProvider: { type: ['string', 'null'] },
+        queriesRun: { type: 'array', items: { type: 'string' } },
+        resultCount: { type: 'number' },
+      },
+    },
+  },
 };
 
 const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, industryHint, websiteHint, language, searchResults, queriesRun, searchProvider, reasoningProvider, resultCount, detectedLinks }) => [
   'You are a Company Research Analyst for a CRM.',
-  'Your job is to read live public web search results and turn them into cautious CRM enrichment suggestions.',
+  'Return ONLY valid JSON.',
+  'Do not include markdown.',
+  'Do not include markdown code fences.',
+  'Do not include explanations.',
+  'Do not include comments.',
+  'Do not include trailing commas.',
+  'Do not include undefined.',
+  'Use null for unknown fields.',
+  'The response must start with { and end with }.',
+  'The JSON must match exactly this schema:',
+  JSON.stringify(COMPANY_RESEARCH_RESPONSE_TEMPLATE, null, 2),
   'Use only the provided web results and user hints for factual fields.',
   'Do not invent facts. If a field is not supported by sources, return null.',
   'If sources are weak, confidence must be low.',
@@ -403,20 +670,7 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
   'Do not invent websites, social links, phone numbers, or emails.',
   'Extract contact methods only if they are public and supported by sources.',
   'Respect Islamic and ethical principles. Avoid manipulative sales language.',
-  'Return strict JSON only. No markdown fences. No commentary.',
-  'Use this exact shape:',
-  '{"company":{...},"contactMethods":[...],"problemProfile":{...}|null,"outreachScript":{...}|null,"sources":[...],"warnings":[...],"confidence":"low|medium|high"}',
-  'Required company fields: name, legalName, description, databaseType, category, industry, country, city, website, linkedin, facebook, instagram, twitter, youtube, phone, email, priority, fitScore, ethicalFit, status, nextAction, notes.',
-  'Allowed databaseType values: big_company, sme, freelance, other.',
-  'Allowed priority values: high, medium, low.',
-  'Allowed ethicalFit values: good, needs_review, avoid.',
-  'Allowed confidence values: low, medium, high.',
-  'If multiple companies match, choose the best match and add a warning.',
-  'For company type, infer one of: big_company, sme, freelance, other.',
-  'For fitScore, use an integer from 0 to 10.',
-  'For contactMethods, only include public company contact methods and include sourceUrl when possible.',
-  'For problemProfile and outreachScript, keep them concise, professional, and reviewable.',
-  '',
+  'Use this search context carefully:',
   `Language: ${language || 'auto'}`,
   `Company name: ${companyName}`,
   `Country hint: ${countryHint || 'none'}`,
@@ -431,20 +685,39 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
   `Queries run: ${JSON.stringify(queriesRun || [])}`,
 ].join('\n');
 
+const buildCompanyResearchRetryPrompt = ({ originalPrompt, previousResponse }) => [
+  'The previous response was not valid JSON.',
+  'Convert the response into valid JSON using the required schema.',
+  'Return JSON only.',
+  'No markdown.',
+  'No explanation.',
+  'No code fences.',
+  'Start with { and end with }.',
+  '',
+  'Original prompt:',
+  originalPrompt,
+  '',
+  'Previous response:',
+  previousResponse,
+].join('\n');
+
+const buildSafePreview = (value, limit = 500) => toCleanString(value).replace(/\uFEFF/g, '').slice(0, limit);
+
 const handleCompanyResearchAction = async (req, res) => {
   let stage = 'validate_input';
   const debugRequested = Boolean(req?.query?.debug === '1' || req?.query?.debug === 1 || req?.body?.debug === true || req?.body?.debug === 'true' || req?.body?.debug === 1);
   const debugState = {
     hasSerperKey: Boolean(process.env.SERPER_API_KEY),
-    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
-    providerRoutingAvailable: false,
     queriesBuilt: [],
     serperRequestsAttempted: 0,
+    serperRequestsSucceeded: 0,
     serperResultsCount: 0,
     normalizedResultsCount: 0,
     aiCalled: false,
     aiRawTextLength: 0,
+    aiPreview: '',
     jsonParseOk: false,
+    normalizedOk: false,
     failureStage: null,
     serperStatus: null,
     serperStatusText: null,
@@ -481,7 +754,6 @@ const handleCompanyResearchAction = async (req, res) => {
     }
 
     const routing = await resolveCompanyResearchExecutionConfig({ supabase });
-    debugState.providerRoutingAvailable = Boolean(routing?.executionConfig);
 
     if (routing?.disabled || !routing?.executionConfig) {
       return toSafeJson(res, 500, {
@@ -503,12 +775,15 @@ const handleCompanyResearchAction = async (req, res) => {
       for (const query of queriesRun) {
         debugState.serperRequestsAttempted += 1;
         const search = await searchWeb(query, { maxResults: 10 });
-        if (search?.warning) searchProviderWarning.push(search.warning);
         if (search?.debug && !debugState.serperStatus) {
           debugState.serperStatus = search.debug.status;
           debugState.serperStatusText = search.debug.statusText;
           debugState.serperErrorSnippet = search.debug.bodySnippet ? String(search.debug.bodySnippet).slice(0, 500) : null;
         }
+        if (search?.results?.length || (!search?.debug && Array.isArray(search?.results))) {
+          debugState.serperRequestsSucceeded += 1;
+        }
+        if (search?.warning) searchProviderWarning.push(search.warning);
         if (search?.providerUsed) providerUsed = search.providerUsed;
         for (const item of search?.results || []) {
           collected.push(normalizeSearchResult(item, collected.length + 1));
@@ -536,6 +811,11 @@ const handleCompanyResearchAction = async (req, res) => {
 
     const searchProviderLabel = getSearchProviderLabel(providerUsed);
     const reasoningProviderLabel = routing?.executionConfig?.provider === 'gemini' ? 'gemini' : routing?.executionConfig?.provider || 'gemini';
+    const aiOptions = {
+      ...routing.executionConfig,
+      responseMimeType: 'application/json',
+      responseSchema: COMPANY_RESEARCH_GEMINI_SCHEMA,
+    };
 
     stage = 'ai_reasoning';
     debugState.aiCalled = true;
@@ -554,75 +834,82 @@ const handleCompanyResearchAction = async (req, res) => {
       detectedLinks,
     });
 
-    const rawResponse = await aiProviderRouter.requestProviderCompletion({
-      ...routing.executionConfig,
+    let rawResponse = await aiProviderRouter.requestProviderCompletion({
+      ...aiOptions,
       prompt,
       temperature: 0.2,
       maxOutputTokens: 2200,
     });
 
     debugState.aiRawTextLength = toCleanString(rawResponse).length;
+    debugState.aiPreview = buildSafePreview(rawResponse, 500);
 
     stage = 'parse_ai_json';
-    const parsed = parseJsonSafely(rawResponse);
+    let parsed = extractJsonObject(rawResponse);
     debugState.jsonParseOk = Boolean(parsed);
 
     if (!parsed) {
-      return toSafeJson(res, 500, {
-        success: false,
-        error: 'AI returned an unreadable response. Try again.',
-        ...(debugRequested ? { debug: { ...debugState, failureStage: 'parse_ai_json' } } : {}),
+      const retryPrompt = buildCompanyResearchRetryPrompt({ originalPrompt: prompt, previousResponse: toCleanString(rawResponse) });
+      rawResponse = await aiProviderRouter.requestProviderCompletion({
+        ...aiOptions,
+        prompt: retryPrompt,
+        temperature: 0,
+        maxOutputTokens: 2200,
       });
+
+      debugState.aiRawTextLength = toCleanString(rawResponse).length;
+      debugState.aiPreview = buildSafePreview(rawResponse, 500);
+      parsed = extractJsonObject(rawResponse);
+      debugState.jsonParseOk = Boolean(parsed);
+
+      if (!parsed) {
+        return toSafeJson(res, 500, {
+          success: false,
+          error: 'AI returned an unreadable response. Try again.',
+          ...(debugRequested ? {
+            debug: {
+              ...debugState,
+              stage: 'parse_ai_json',
+              failureStage: 'parse_ai_json',
+            },
+          } : {}),
+        });
+      }
     }
 
-    const result = normalizeCompanyResearchResult(parsed);
-    const warnings = [...new Set([
-      ...result.warnings,
+    const normalized = normalizeCompanyResearchResult(parsed, {
+      searchResults,
+      queriesRun,
+      serperKey,
+      resultCount: searchResults.length,
+      researchMeta: {
+        mode: serperKey ? 'serper_plus_gemini' : 'ai_only_fallback',
+        searchProvider: serperKey ? 'serper' : null,
+        reasoningProvider: reasoningProviderLabel,
+        queriesRun,
+        resultCount: searchResults.length,
+      },
+    });
+
+    debugState.normalizedOk = !normalized.wasNormalized;
+
+    const resultWarnings = [...new Set([
+      ...(Array.isArray(normalized.warnings) ? normalized.warnings : []),
       ...searchProviderWarning,
       !serperKey ? 'Live AI web research is not configured.' : null,
-      searchResults.length === 0 && serperKey ? 'AI research ran, but no reliable public sources were found.' : null,
+      normalized.wasNormalized ? 'AI response was incomplete and was normalized.' : null,
+      !serperKey && searchResults.length === 0 ? 'AI research ran without live search results.' : null,
     ].filter(Boolean))];
 
-    const confidence = result.confidence === 'high' && (warnings.length > 0 || searchResults.length === 0) ? 'medium' : (searchResults.length === 0 ? 'low' : result.confidence);
-
-    stage = 'build_response';
-    const finalResult = {
-      company: result.company || {
-        name: null,
-        legalName: null,
-        description: null,
-        databaseType: null,
-        category: null,
-        industry: null,
-        country: null,
-        city: null,
-        website: null,
-        linkedin: null,
-        facebook: null,
-        instagram: null,
-        twitter: null,
-        youtube: null,
-        phone: null,
-        email: null,
-        priority: null,
-        fitScore: null,
-        ethicalFit: null,
-        status: null,
-        nextAction: null,
-        notes: null,
-      },
-      contactMethods: Array.isArray(result.contactMethods) ? result.contactMethods : [],
-      problemProfile: result.problemProfile || null,
-      outreachScript: result.outreachScript || null,
-      sources: searchResults.map((item) => ({
-        title: item.title || item.url || 'Source',
-        url: item.url || null,
-        usedFor: item.snippet || 'Public web research source',
-        confidence: classifySourceUrl(item.url).confidence,
-      })),
-      warnings,
-      confidence,
-      researchMeta: {
+    const result = {
+      company: normalized.company,
+      contactMethods: normalized.contactMethods,
+      problemProfile: normalized.problemProfile,
+      outreachScript: normalized.outreachScript,
+      sources: normalized.sources.length > 0 ? normalized.sources : buildFallbackCompanyResearchSources(searchResults),
+      warnings: resultWarnings,
+      confidence: normalized.confidence,
+      researchMeta: normalized.researchMeta || {
         mode: serperKey ? 'serper_plus_gemini' : 'ai_only_fallback',
         searchProvider: serperKey ? 'serper' : null,
         reasoningProvider: reasoningProviderLabel,
@@ -631,10 +918,11 @@ const handleCompanyResearchAction = async (req, res) => {
       },
     };
 
+    stage = 'build_response';
     return toSafeJson(res, 200, {
       success: true,
-      result: finalResult,
-      ...(debugRequested ? { debug: { ...debugState, failureStage: null } } : {}),
+      result,
+      ...(debugRequested ? { debug: { ...debugState, stage, failureStage: null } } : {}),
     });
   } catch (error) {
     console.error('[api/ai] company-research failed', {
@@ -651,6 +939,7 @@ const handleCompanyResearchAction = async (req, res) => {
           ...debugState,
           stage,
           failureStage: stage,
+          aiPreview: buildSafePreview(debugState.aiPreview || ''),
           message: error?.message || 'Unknown error',
           name: error?.name || 'Error',
         },
