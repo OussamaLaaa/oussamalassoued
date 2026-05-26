@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
+import CompanyWorkspace from './CompanyWorkspace';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
 import MessagesTable, { type MessageFilters } from './MessagesTable';
 import DealsTable, { type DealFilters } from './DealsTable';
@@ -451,6 +452,18 @@ const OpportunitiesLayout: React.FC<{
     addLifeWeeklyReview: (input: LifeWeeklyReviewInput) => Promise<LifeWeeklyReview>;
     updateLifeWeeklyReview: (id: string, input: Partial<LifeWeeklyReviewInput>) => Promise<LifeWeeklyReview>;
     deleteLifeWeeklyReview: (id: string) => Promise<void>;
+    companyContactMethods: CompanyContactMethod[];
+    companyProblemProfiles: CompanyProblemProfile[];
+    companyOutreachScripts: CompanyOutreachScript[];
+    addCompanyContactMethod: (input: CompanyContactMethodInput) => Promise<CompanyContactMethod>;
+    updateCompanyContactMethod: (id: string, input: Partial<CompanyContactMethodInput>) => Promise<CompanyContactMethod>;
+    deleteCompanyContactMethod: (id: string) => Promise<void>;
+    addCompanyProblemProfile: (input: CompanyProblemProfileInput) => Promise<CompanyProblemProfile>;
+    updateCompanyProblemProfile: (id: string, input: Partial<CompanyProblemProfileInput>) => Promise<CompanyProblemProfile>;
+    deleteCompanyProblemProfile: (id: string) => Promise<void>;
+    addCompanyOutreachScript: (input: CompanyOutreachScriptInput) => Promise<CompanyOutreachScript>;
+    updateCompanyOutreachScript: (id: string, input: Partial<CompanyOutreachScriptInput>) => Promise<CompanyOutreachScript>;
+    deleteCompanyOutreachScript: (id: string) => Promise<void>;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
   const [tab, setTab] = useState<OpportunitiesTab>(resolveInitialTab);
@@ -475,6 +488,7 @@ const OpportunitiesLayout: React.FC<{
   const [dealFilters, setDealFilters] = useState<DealFilters>(resolveInitialDealFilters);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
@@ -691,6 +705,10 @@ const OpportunitiesLayout: React.FC<{
     addLifeDeenLog, updateLifeDeenLog, deleteLifeDeenLog,
     addLifeFamilyAction, updateLifeFamilyAction, deleteLifeFamilyAction,
     addLifeWeeklyReview, updateLifeWeeklyReview, deleteLifeWeeklyReview,
+    companyContactMethods, companyProblemProfiles, companyOutreachScripts,
+    addCompanyContactMethod, updateCompanyContactMethod, deleteCompanyContactMethod,
+    addCompanyProblemProfile, updateCompanyProblemProfile, deleteCompanyProblemProfile,
+    addCompanyOutreachScript, updateCompanyOutreachScript, deleteCompanyOutreachScript,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -817,8 +835,13 @@ const OpportunitiesLayout: React.FC<{
 
   const handleShellTabChange = (tabId: string) => {
     setTab(tabId as OpportunitiesTab);
+    setSelectedCompanyId(null);
     setGlobalSearch('');
   };
+
+  const handleCompanyClick = useCallback((companyId: string) => {
+    setSelectedCompanyId(companyId);
+  }, []);
 
   return (
     <FullPageAppShell
@@ -865,6 +888,42 @@ const OpportunitiesLayout: React.FC<{
       searchPlaceholder="Search companies, people, deals..."
     >
       <div className="space-y-4">
+        {selectedCompanyId ? (
+          <CompanyWorkspace
+            companyId={selectedCompanyId}
+            companies={companies}
+            people={people}
+            messages={messages}
+            deals={deals}
+            companyContactMethods={companyContactMethods}
+            companyProblemProfiles={companyProblemProfiles}
+            companyOutreachScripts={companyOutreachScripts}
+            onBack={() => setSelectedCompanyId(null)}
+            onEditCompany={handleEditCompany}
+            onAIScoreCompany={handleAIScore}
+            addCompanyContactMethod={addCompanyContactMethod}
+            updateCompanyContactMethod={updateCompanyContactMethod}
+            deleteCompanyContactMethod={deleteCompanyContactMethod}
+            addCompanyProblemProfile={addCompanyProblemProfile}
+            updateCompanyProblemProfile={updateCompanyProblemProfile}
+            deleteCompanyProblemProfile={deleteCompanyProblemProfile}
+            addCompanyOutreachScript={addCompanyOutreachScript}
+            updateCompanyOutreachScript={updateCompanyOutreachScript}
+            deleteCompanyOutreachScript={deleteCompanyOutreachScript}
+            addPerson={addPerson}
+            updatePerson={updatePerson}
+            deletePerson={deletePerson}
+            addMessage={addMessage}
+            updateMessage={updateMessage}
+            deleteMessage={deleteMessage}
+            addDeal={addDeal}
+            updateDeal={updateDeal}
+            deleteDeal={deleteDeal}
+            updateCompany={updateCompany}
+            deleteCompany={handleDeleteCompany}
+          />
+        ) : (
+        <>
         {tab === 'dashboard' && (
               <OpportunitiesDashboard
                 companies={companies}
@@ -896,6 +955,7 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteCompany}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
+                onCompanyClick={handleCompanyClick}
               />
             )}
 
@@ -913,6 +973,7 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteCompany}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
+                onCompanyClick={handleCompanyClick}
               />
             )}
 
@@ -930,6 +991,7 @@ const OpportunitiesLayout: React.FC<{
                 onDelete={handleDeleteCompany}
                 onAIScore={handleAIScore}
                 onImportCompaniesBatch={importCompaniesBatch}
+                onCompanyClick={handleCompanyClick}
               />
             )}
 
@@ -999,6 +1061,7 @@ const OpportunitiesLayout: React.FC<{
                   onEdit={handleEditCompany}
                   onDelete={handleDeleteCompany}
                   onAIScore={handleAIScore}
+                  onCompanyClick={handleCompanyClick}
                   filters={companyFilters}
                   onFilterChange={setCompanyFilters}
                 />
@@ -1370,6 +1433,7 @@ const OpportunitiesLayout: React.FC<{
                 onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
               />
             )}
+          </>)}
           </div>
 
       {/* Add Company Modal */}

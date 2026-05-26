@@ -67,9 +67,10 @@ const CompaniesTable: React.FC<{
   onEdit?: (company: Company) => void;
   onDelete?: (id: string) => void;
   onAIScore?: (company: Company) => void;
+  onCompanyClick?: (companyId: string) => void;
   filters?: CompanyFilters;
   onFilterChange?: (filters: CompanyFilters) => void;
-}> = ({ companies, onEdit, onDelete, onAIScore, filters, onFilterChange }) => {
+}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, filters, onFilterChange }) => {
   const filtered = useMemo(() => {
     if (!filters) return companies;
     return companies.filter((company) => {
@@ -178,7 +179,11 @@ const CompaniesTable: React.FC<{
             </thead>
             <tbody>
               {filtered.map((company) => (
-                <tr key={company.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50">
+                <tr
+                  key={company.id}
+                  className="border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer"
+                  onClick={() => onCompanyClick?.(company.id)}
+                >
                   <td className="px-4 py-4 align-top">
                     <div className="min-w-0">
                       <div className="font-semibold text-neutral-900">{company.name}</div>
@@ -213,6 +218,21 @@ const CompaniesTable: React.FC<{
                   </td>
                   <td className="px-4 py-4 align-top">
                     <div className="flex flex-wrap justify-end gap-1.5">
+                      {onCompanyClick && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            onCompanyClick(company.id);
+                          }}
+                          className="text-neutral-700 hover:text-neutral-900"
+                        >
+                          Open
+                        </Button>
+                      )}
                       {onEdit && (
                         <Button
                           type="button"
