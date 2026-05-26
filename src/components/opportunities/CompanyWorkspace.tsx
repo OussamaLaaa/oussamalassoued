@@ -140,6 +140,13 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   const company = companies.find((c) => c.id === companyId);
 
+  useEffect(() => {
+    if (!company) return;
+
+    setNotesDraft(company.notes || '');
+    setNotesSaved(false);
+  }, [company?.id, company?.notes]);
+
   if (!company) {
     return (
       <div className="space-y-4">
@@ -153,11 +160,6 @@ const CompanyWorkspace: React.FC<Props> = ({
   const companyMessages = messages.filter((m) => m.companyId === company.id);
   const companyDeals = deals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
-
-  useEffect(() => {
-    setNotesDraft(company.notes || '');
-    setNotesSaved(false);
-  }, [company.id, company.notes]);
 
   const normalizeDatabaseType = (dbType?: string): string => {
     if (!dbType) return '';
