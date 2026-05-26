@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
@@ -144,6 +144,142 @@ const defaultDealFilters: DealFilters = {
   stage: '',
   probabilityMin: '',
   probabilityMax: '',
+};
+
+const NAV_STATE_STORAGE_KEY = 'personalOS.navigationState';
+
+type PersistedNavState = {
+  activeApp?: AppId;
+  tab?: OpportunitiesTab;
+  globalSearch?: string;
+  companyFilters?: CompanyFilters;
+  personFilters?: PersonFilters;
+  messageFilters?: MessageFilters;
+  dealFilters?: DealFilters;
+};
+
+const VALID_APP_IDS: AppId[] = [
+  'desktop',
+  'crm',
+  'messages',
+  'strategy',
+  'plans',
+  'tasks',
+  'projects',
+  'finance',
+  'documents',
+  'social',
+  'relationships',
+  'life',
+  'notes',
+  'ai_control',
+];
+
+const VALID_TABS: OpportunitiesTab[] = [
+  'dashboard',
+  'big_companies',
+  'sme_companies',
+  'freelance_leads',
+  'companies',
+  'people',
+  'deals',
+  'queue',
+  'messages',
+  'templates',
+  'strategy',
+  'plans',
+  'tasks',
+  'projects',
+  'finance',
+  'documents',
+  'social',
+  'relationships',
+  'life',
+  'notes',
+  'ai-control',
+];
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const readPersistedNavState = (): PersistedNavState => {
+  if (typeof window === 'undefined') return {};
+
+  try {
+    const raw = window.sessionStorage.getItem(NAV_STATE_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!isObjectRecord(parsed)) return {};
+    return parsed as PersistedNavState;
+  } catch {
+    return {};
+  }
+};
+
+const resolveInitialApp = (): AppId => {
+  const next = readPersistedNavState().activeApp;
+  return next && VALID_APP_IDS.includes(next) ? next : 'desktop';
+};
+
+const resolveInitialTab = (): OpportunitiesTab => {
+  const next = readPersistedNavState().tab;
+  return next && VALID_TABS.includes(next) ? next : 'dashboard';
+};
+
+const resolveInitialGlobalSearch = (): string => {
+  const next = readPersistedNavState().globalSearch;
+  return typeof next === 'string' ? next : '';
+};
+
+const resolveInitialCompanyFilters = (): CompanyFilters => {
+  const next = readPersistedNavState().companyFilters;
+  return next && isObjectRecord(next)
+    ? {
+        searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
+        priority: typeof next.priority === 'string' ? next.priority : '',
+        status: typeof next.status === 'string' ? next.status : '',
+        databaseType: typeof next.databaseType === 'string' ? next.databaseType : '',
+        country: typeof next.country === 'string' ? next.country : '',
+      }
+    : defaultCompanyFilters;
+};
+
+const resolveInitialPersonFilters = (): PersonFilters => {
+  const next = readPersistedNavState().personFilters;
+  return next && isObjectRecord(next)
+    ? {
+        searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
+        decisionPower: typeof next.decisionPower === 'string' ? next.decisionPower : '',
+        relevance: typeof next.relevance === 'string' ? next.relevance : '',
+        relationshipStatus: typeof next.relationshipStatus === 'string' ? next.relationshipStatus : '',
+      }
+    : defaultPersonFilters;
+};
+
+const resolveInitialMessageFilters = (): MessageFilters => {
+  const next = readPersistedNavState().messageFilters;
+  return next && isObjectRecord(next)
+    ? {
+        searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
+        replyStatus: typeof next.replyStatus === 'string' ? next.replyStatus : '',
+        followUp: typeof next.followUp === 'string' ? next.followUp : '',
+        channel: typeof next.channel === 'string' ? next.channel : '',
+        messageType: typeof next.messageType === 'string' ? next.messageType : '',
+        dateRange: typeof next.dateRange === 'string' ? next.dateRange : '',
+      }
+    : defaultMessageFilters;
+};
+
+const resolveInitialDealFilters = (): DealFilters => {
+  const next = readPersistedNavState().dealFilters;
+  return next && isObjectRecord(next)
+    ? {
+        searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
+        stage: typeof next.stage === 'string' ? next.stage : '',
+        probabilityMin: typeof next.probabilityMin === 'string' ? next.probabilityMin : '',
+        probabilityMax: typeof next.probabilityMax === 'string' ? next.probabilityMax : '',
+      }
+    : defaultDealFilters;
 };
 
 type LifeQuickTab = 'dashboard' | 'nutrition' | 'fitness' | 'deen' | 'family' | 'weekly-review';
@@ -317,7 +453,7 @@ const OpportunitiesLayout: React.FC<{
     deleteLifeWeeklyReview: (id: string) => Promise<void>;
   };
 }> = ({ theme = 'light', setTheme, data }) => {
-  const [tab, setTab] = useState<OpportunitiesTab>('dashboard');
+  const [tab, setTab] = useState<OpportunitiesTab>(resolveInitialTab);
   const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | 'project' | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -330,19 +466,39 @@ const OpportunitiesLayout: React.FC<{
   const [messageDraft, setMessageDraft] = useState<MessageInput | null>(null);
 
   // Global search state
-  const [globalSearch, setGlobalSearch] = useState('');
+  const [globalSearch, setGlobalSearch] = useState(resolveInitialGlobalSearch);
 
   // Per-table filter states
-  const [companyFilters, setCompanyFilters] = useState<CompanyFilters>(defaultCompanyFilters);
-  const [personFilters, setPersonFilters] = useState<PersonFilters>(defaultPersonFilters);
-  const [messageFilters, setMessageFilters] = useState<MessageFilters>(defaultMessageFilters);
-  const [dealFilters, setDealFilters] = useState<DealFilters>(defaultDealFilters);
+  const [companyFilters, setCompanyFilters] = useState<CompanyFilters>(resolveInitialCompanyFilters);
+  const [personFilters, setPersonFilters] = useState<PersonFilters>(resolveInitialPersonFilters);
+  const [messageFilters, setMessageFilters] = useState<MessageFilters>(resolveInitialMessageFilters);
+  const [dealFilters, setDealFilters] = useState<DealFilters>(resolveInitialDealFilters);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
   const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
-  const [activeApp, setActiveApp] = useState<AppId>('desktop');
+  const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const nextState: PersistedNavState = {
+      activeApp,
+      tab,
+      globalSearch,
+      companyFilters,
+      personFilters,
+      messageFilters,
+      dealFilters,
+    };
+
+    try {
+      window.sessionStorage.setItem(NAV_STATE_STORAGE_KEY, JSON.stringify(nextState));
+    } catch {
+      // Ignore storage write failures.
+    }
+  }, [activeApp, tab, globalSearch, companyFilters, personFilters, messageFilters, dealFilters]);
 
   const handleLaunchApp = (appId: AppId) => {
     setActiveApp(appId);
