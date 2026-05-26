@@ -20,6 +20,7 @@ import AddDealForm from './AddDealForm';
 import CompanyContactMethodForm from './CompanyContactMethodForm';
 import CompanyProblemProfileForm from './CompanyProblemProfileForm';
 import CompanyOutreachScriptForm from './CompanyOutreachScriptForm';
+import CompanyResearchPanel from './CompanyResearchPanel';
 
 interface Props {
   companyId: string;
@@ -133,6 +134,8 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   const [showOutreachScriptForm, setShowOutreachScriptForm] = useState(false);
   const [editingOutreachScript, setEditingOutreachScript] = useState<CompanyOutreachScript | null>(null);
+
+  const [showResearchPanel, setShowResearchPanel] = useState(false);
 
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -250,6 +253,57 @@ const CompanyWorkspace: React.FC<Props> = ({
     if (!ok) return;
     await deleteCompany(id);
     onBack();
+  };
+
+  const handleCreateResearchContactMethods = async (items: any[]) => {
+    if (!items?.length) return;
+    for (const item of items) {
+      if (!item?.value) continue;
+      await addCompanyContactMethod({
+        companyId: company.id,
+        type: item.type || 'other',
+        label: item.label || undefined,
+        value: item.value,
+        isPrimary: Boolean(item.isPrimary),
+        notes: item.notes || undefined,
+      });
+    }
+  };
+
+  const handleCreateResearchProblemProfile = async (item: any) => {
+    await addCompanyProblemProfile({
+      companyId: company.id,
+      problemTitle: item.problemTitle || undefined,
+      problemDescription: item.problemDescription || undefined,
+      currentSituation: item.currentSituation || undefined,
+      businessImpact: item.businessImpact || undefined,
+      proposedSolution: item.proposedSolution || undefined,
+      serviceAngle: item.serviceAngle || undefined,
+      valueProposition: item.valueProposition || undefined,
+      urgency: item.urgency || undefined,
+      confidence: item.confidence || undefined,
+      status: item.status || undefined,
+      notes: item.notes || undefined,
+    });
+  };
+
+  const handleCreateResearchOutreachScript = async (item: any) => {
+    await addCompanyOutreachScript({
+      companyId: company.id,
+      name: item.name || `${company.name} AI Research Script`,
+      channel: item.channel || undefined,
+      language: item.language || undefined,
+      audience: item.audience || undefined,
+      goal: item.goal || undefined,
+      hook: item.hook || undefined,
+      messageBody: item.messageBody || undefined,
+      callScript: item.callScript || undefined,
+      objectionHandling: item.objectionHandling || undefined,
+      followUpMessage: item.followUpMessage || undefined,
+      status: item.status || undefined,
+      isActive: item.isActive ?? undefined,
+      notes: item.notes || undefined,
+    });
   };
 
   // ── Contact Method Handlers ──
@@ -924,6 +978,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         <div className="flex shrink-0 flex-wrap gap-2">
             <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
             <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
+          <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(() => setShowResearchPanel(true))}>Research / Refresh AI</Button>
             <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
             <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddContactMethod)}>Add Contact Method</Button>
             <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddProblemProfile)}>Add Problem Profile</Button>
@@ -1050,6 +1105,28 @@ const CompanyWorkspace: React.FC<Props> = ({
           )}
         </OpportunityModal>
       )}
+
+      {showResearchPanel ? (
+        <OpportunityModal title="AI Company Research" onClose={() => setShowResearchPanel(false)}>
+          <CompanyResearchPanel
+            title="Research / Refresh AI"
+            companyName={company.name}
+            countryHint={company.country || undefined}
+            cityHint={company.city || undefined}
+            industryHint={company.industry || undefined}
+            websiteHint={company.website || undefined}
+            currentCompany={company}
+            showRelatedActions
+            debug={import.meta.env.DEV}
+            onApplyCompanyPatch={async (patch) => {
+              await updateCompany(company.id, patch);
+            }}
+            onCreateContactMethods={handleCreateResearchContactMethods}
+            onCreateProblemProfile={handleCreateResearchProblemProfile}
+            onCreateOutreachScript={handleCreateResearchOutreachScript}
+          />
+        </OpportunityModal>
+      ) : null}
 
       {/* ── Modal: Person Form ── */}
       {showPersonForm && (

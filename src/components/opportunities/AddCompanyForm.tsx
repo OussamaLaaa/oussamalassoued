@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { CompanyInput } from '../../types/opportunities';
+import type { CompanyInput, CompanyResearchResult } from '../../types/opportunities';
+import CompanyResearchPanel from './CompanyResearchPanel';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/15';
 
@@ -7,7 +8,8 @@ const AddCompanyForm: React.FC<{
   onSubmit: (data: CompanyInput) => void;
   onCancel: () => void;
   initialData?: CompanyInput;
-}> = ({ onSubmit, onCancel, initialData }) => {
+  onResearchResultChange?: (result: CompanyResearchResult | null) => void;
+}> = ({ onSubmit, onCancel, initialData, onResearchResultChange }) => {
   const [form, setForm] = useState<CompanyInput>(initialData || {
     name: '',
     databaseType: 'sme',
@@ -24,9 +26,15 @@ const AddCompanyForm: React.FC<{
     nextAction: '',
     notes: '',
   });
-
   const setField = <K extends keyof CompanyInput>(key: K, value: CompanyInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const applyResearchPatch = (patch: Partial<CompanyInput>) => {
+    setForm((current) => ({
+      ...current,
+      ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),
+    }));
   };
 
   return (
@@ -37,7 +45,25 @@ const AddCompanyForm: React.FC<{
         onSubmit(form);
       }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CompanyResearchPanel
+        title="AI Research"
+        companyName={form.name}
+        countryHint={form.country || undefined}
+        cityHint={form.city || undefined}
+        industryHint={form.industry || undefined}
+        websiteHint={form.website || undefined}
+        language="auto"
+        currentCompany={form}
+        debug={import.meta.env.DEV}
+        onResultChange={(result) => {
+          onResearchResultChange?.(result);
+        }}
+        onApplyCompanyPatch={(patch) => {
+          applyResearchPatch(patch);
+        }}
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Name</span>
           <input className={baseInput} value={form.name} onChange={(e) => setField('name', e.target.value)} required />
@@ -84,7 +110,7 @@ const AddCompanyForm: React.FC<{
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Fit Score</span>
-          <input type="number" min="1" max="10" className={baseInput} value={form.fitScore ?? ''} onChange={(e) => setField('fitScore', e.target.value === '' ? undefined : Number(e.target.value))} />
+          <input type="number" min="0" max="10" className={baseInput} value={form.fitScore ?? ''} onChange={(e) => setField('fitScore', e.target.value === '' ? undefined : Number(e.target.value))} />
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Ethical Fit</span>

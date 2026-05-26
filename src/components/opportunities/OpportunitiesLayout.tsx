@@ -36,6 +36,7 @@ import LifeManagementPanel from './LifeManagementPanel';
 import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
 import FullPageAppShell from './FullPageAppShell';
+import type { CompanyResearchResult } from '../../types/opportunities';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
   name: c.name,
@@ -497,6 +498,7 @@ const OpportunitiesLayout: React.FC<{
   const [dealFilters, setDealFilters] = useState<DealFilters>(resolveInitialDealFilters);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
+  const [companyResearchDraft, setCompanyResearchDraft] = useState<CompanyResearchResult | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -808,6 +810,69 @@ const OpportunitiesLayout: React.FC<{
 
   const handleAIScore = (company: Company) => {
     setAiScoringCompany(company);
+  };
+
+  const createResearchFollowUpRecords = async (company: Company, research: CompanyResearchResult | null) => {
+    if (!research) return;
+
+    if (research.contactMethods?.length > 0) {
+      const shouldCreateContactMethods = window.confirm(`Create ${research.contactMethods.length} suggested contact method(s) for ${company.name}?`);
+      if (shouldCreateContactMethods) {
+        for (const method of research.contactMethods) {
+          if (!method.value) continue;
+          await addCompanyContactMethod({
+            companyId: company.id,
+            type: method.type || 'other',
+            label: method.label || undefined,
+            value: method.value,
+            isPrimary: Boolean(method.isPrimary),
+            notes: method.notes || undefined,
+          });
+        }
+      }
+    }
+
+    if (research.problemProfile) {
+      const shouldCreateProblemProfile = window.confirm(`Create the suggested problem profile for ${company.name}?`);
+      if (shouldCreateProblemProfile) {
+        await addCompanyProblemProfile({
+          companyId: company.id,
+          problemTitle: research.problemProfile.problemTitle || undefined,
+          problemDescription: research.problemProfile.problemDescription || undefined,
+          currentSituation: research.problemProfile.currentSituation || undefined,
+          businessImpact: research.problemProfile.businessImpact || undefined,
+          proposedSolution: research.problemProfile.proposedSolution || undefined,
+          serviceAngle: research.problemProfile.serviceAngle || undefined,
+          valueProposition: research.problemProfile.valueProposition || undefined,
+          urgency: research.problemProfile.urgency || undefined,
+          confidence: research.problemProfile.confidence || undefined,
+          status: research.problemProfile.status || undefined,
+          notes: research.problemProfile.notes || undefined,
+        });
+      }
+    }
+
+    if (research.outreachScript) {
+      const shouldCreateOutreachScript = window.confirm(`Create the suggested outreach script for ${company.name}?`);
+      if (shouldCreateOutreachScript) {
+        await addCompanyOutreachScript({
+          companyId: company.id,
+          name: research.outreachScript.name || `${company.name} AI Research Script`,
+          channel: research.outreachScript.channel || undefined,
+          language: research.outreachScript.language || undefined,
+          audience: research.outreachScript.audience || undefined,
+          goal: research.outreachScript.goal || undefined,
+          hook: research.outreachScript.hook || undefined,
+          messageBody: research.outreachScript.messageBody || undefined,
+          callScript: research.outreachScript.callScript || undefined,
+          objectionHandling: research.outreachScript.objectionHandling || undefined,
+          followUpMessage: research.outreachScript.followUpMessage || undefined,
+          status: research.outreachScript.status || undefined,
+          isActive: research.outreachScript.isActive ?? undefined,
+          notes: research.outreachScript.notes || undefined,
+        });
+      }
+    }
   };
 
   const handleApplyAIScore = async (result: any) => {
@@ -1484,35 +1549,47 @@ const OpportunitiesLayout: React.FC<{
 
       {/* Add Company Modal */}
       {activeModal === 'company' ? (
-        <OpportunityModal title="Add Company" onClose={() => setActiveModal(null)}>
+        <OpportunityModal title="Add Company" onClose={() => { setActiveModal(null); setCompanyResearchDraft(null); }}>
           <AddCompanyForm
+            onResearchResultChange={setCompanyResearchDraft}
             onSubmit={async (input) => {
               try {
-                await addCompany(input);
+                const savedCompany = await addCompany(input);
+                await createResearchFollowUpRecords(savedCompany, companyResearchDraft);
                 setActiveModal(null);
+                setCompanyResearchDraft(null);
               } catch (error) {
                 console.error('[Opportunities] Failed to add company.', error);
               }
             }}
-            onCancel={() => setActiveModal(null)}
+            onCancel={() => {
+              setActiveModal(null);
+              setCompanyResearchDraft(null);
+            }}
           />
         </OpportunityModal>
       ) : null}
 
       {/* Edit Company Modal */}
       {editingCompany ? (
-        <OpportunityModal title="Edit Company" onClose={() => setEditingCompany(null)}>
+        <OpportunityModal title="Edit Company" onClose={() => { setEditingCompany(null); setCompanyResearchDraft(null); }}>
           <AddCompanyForm
             initialData={toCompanyInput(editingCompany)}
+            onResearchResultChange={setCompanyResearchDraft}
             onSubmit={async (input) => {
               try {
-                await updateCompany(editingCompany.id, input);
+                const savedCompany = await updateCompany(editingCompany.id, input);
+                await createResearchFollowUpRecords(savedCompany, companyResearchDraft);
                 setEditingCompany(null);
+                setCompanyResearchDraft(null);
               } catch (error) {
                 console.error('[Opportunities] Failed to update company.', error);
               }
             }}
-            onCancel={() => setEditingCompany(null)}
+            onCancel={() => {
+              setEditingCompany(null);
+              setCompanyResearchDraft(null);
+            }}
           />
         </OpportunityModal>
       ) : null}

@@ -62,6 +62,362 @@ const normalizeTaggedList = (source, tag) => {
     .filter(Boolean);
 };
 
+const extractJsonCandidate = (source) => {
+  const text = toCleanString(source);
+  if (!text) return '';
+
+  const fencedMatch = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
+  const candidate = fencedMatch ? fencedMatch[1].trim() : text;
+  const firstBrace = candidate.indexOf('{');
+  const firstBracket = candidate.indexOf('[');
+  const start = firstBrace === -1 ? firstBracket : firstBracket === -1 ? firstBrace : Math.min(firstBrace, firstBracket);
+
+  if (start === -1) return candidate.trim();
+
+  const trimmed = candidate.slice(start).trim();
+  const openChar = trimmed[0];
+  const closeChar = openChar === '[' ? ']' : '}';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const char = trimmed[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === openChar) depth += 1;
+    if (char === closeChar) {
+      depth -= 1;
+      if (depth === 0) {
+        return trimmed.slice(0, index + 1);
+      }
+    }
+  }
+
+  return trimmed;
+};
+
+const parseJsonSafely = (source) => {
+  const candidate = extractJsonCandidate(source);
+  if (!candidate) return null;
+
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return null;
+  }
+};
+
+const toCompanyResearchExecutionConfig = () => {
+  const apiKey = toCleanString(process.env.GEMINI_API_KEY);
+  if (!apiKey) return null;
+
+  return {
+    disabled: false,
+    provider: 'gemini',
+    apiKey,
+    model: toCleanString(process.env.GEMINI_MODEL) || 'gemini-2.5-flash',
+    baseUrl: '',
+    endpoint: '',
+    deploymentName: '',
+    apiVersion: '',
+    temperature: 0.2,
+    maxOutputTokens: 2200,
+  };
+};
+
+const resolveCompanyResearchExecutionConfig = async ({ supabase }) => {
+  if (supabase) {
+    const companyResearchConfig = await aiProviderRouter.resolveAIExecutionConfig({ supabase, useCase: 'company_research', fallbackEnvGemini: false });
+    if (companyResearchConfig?.disabled) return { disabled: true };
+    if (companyResearchConfig) return { executionConfig: companyResearchConfig, sourceUseCase: 'company_research' };
+
+    const researchConfig = await aiProviderRouter.resolveAIExecutionConfig({ supabase, useCase: 'research', fallbackEnvGemini: false });
+    if (researchConfig?.disabled) return { disabled: true };
+    if (researchConfig) return { executionConfig: researchConfig, sourceUseCase: 'research' };
+
+    const strategyConfig = await aiProviderRouter.resolveAIExecutionConfig({ supabase, useCase: 'strategy', fallbackEnvGemini: false });
+    if (strategyConfig?.disabled) return { disabled: true };
+    if (strategyConfig) return { executionConfig: strategyConfig, sourceUseCase: 'strategy' };
+  }
+
+  const envExecution = toCompanyResearchExecutionConfig();
+  return envExecution ? { executionConfig: envExecution, sourceUseCase: 'env' } : { disabled: true };
+};
+
+const normalizeCompanyResearchConfidence = (value) => {
+  const cleaned = toCleanString(value).toLowerCase();
+  if (cleaned === 'high' || cleaned === 'medium' || cleaned === 'low') return cleaned;
+  return 'low';
+};
+
+const normalizeCompanyResearchResult = (raw) => {
+  const safe = raw && typeof raw === 'object' ? raw : {};
+  const company = safe.company && typeof safe.company === 'object' ? safe.company : {};
+
+  const toNullableString = (value) => {
+    const cleaned = toCleanString(value);
+    return cleaned ? cleaned : null;
+  };
+
+  const normalizeDatabaseType = (value) => {
+    const cleaned = toCleanString(value).toLowerCase();
+    if (cleaned === 'big_company' || cleaned === 'sme' || cleaned === 'freelance' || cleaned === 'other') return cleaned;
+    return null;
+  };
+
+  const normalizePriority = (value) => {
+    const cleaned = toCleanString(value).toLowerCase();
+    if (cleaned === 'high' || cleaned === 'medium' || cleaned === 'low') return cleaned;
+    return null;
+  };
+
+  const normalizeEthicalFit = (value) => {
+    const cleaned = toCleanString(value).toLowerCase();
+    if (cleaned === 'good' || cleaned === 'needs_review' || cleaned === 'avoid') return cleaned;
+    return null;
+  };
+
+  const normalizeScore = (value) => {
+    const score = Number(value);
+    if (!Number.isFinite(score)) return null;
+    return Math.max(0, Math.min(10, Math.round(score)));
+  };
+
+  const contactMethods = Array.isArray(safe.contactMethods)
+    ? safe.contactMethods
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => ({
+        type: toNullableString(item.type),
+        label: toNullableString(item.label),
+        value: toNullableString(item.value),
+        isPrimary: item.isPrimary == null ? null : Boolean(item.isPrimary),
+        notes: toNullableString(item.notes),
+        sourceUrl: toNullableString(item.sourceUrl),
+        confidence: normalizeCompanyResearchConfidence(item.confidence),
+      }))
+      .filter((item) => item.value)
+    : [];
+
+  const problemProfile = safe.problemProfile && typeof safe.problemProfile === 'object'
+    ? {
+        problemTitle: toNullableString(safe.problemProfile.problemTitle),
+        problemDescription: toNullableString(safe.problemProfile.problemDescription),
+        currentSituation: toNullableString(safe.problemProfile.currentSituation),
+        businessImpact: toNullableString(safe.problemProfile.businessImpact),
+        proposedSolution: toNullableString(safe.problemProfile.proposedSolution),
+        serviceAngle: toNullableString(safe.problemProfile.serviceAngle),
+        valueProposition: toNullableString(safe.problemProfile.valueProposition),
+        urgency: toNullableString(safe.problemProfile.urgency),
+        confidence: normalizeCompanyResearchConfidence(safe.problemProfile.confidence),
+        status: toNullableString(safe.problemProfile.status),
+        notes: toNullableString(safe.problemProfile.notes),
+      }
+    : null;
+
+  const outreachScript = safe.outreachScript && typeof safe.outreachScript === 'object'
+    ? {
+        name: toNullableString(safe.outreachScript.name),
+        channel: toNullableString(safe.outreachScript.channel),
+        language: toNullableString(safe.outreachScript.language),
+        audience: toNullableString(safe.outreachScript.audience),
+        goal: toNullableString(safe.outreachScript.goal),
+        hook: toNullableString(safe.outreachScript.hook),
+        messageBody: toNullableString(safe.outreachScript.messageBody),
+        callScript: toNullableString(safe.outreachScript.callScript),
+        objectionHandling: toNullableString(safe.outreachScript.objectionHandling),
+        followUpMessage: toNullableString(safe.outreachScript.followUpMessage),
+        status: toNullableString(safe.outreachScript.status),
+        isActive: safe.outreachScript.isActive == null ? null : Boolean(safe.outreachScript.isActive),
+        notes: toNullableString(safe.outreachScript.notes),
+      }
+    : null;
+
+  const sources = Array.isArray(safe.sources)
+    ? safe.sources
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => ({
+        title: toNullableString(item.title),
+        url: toNullableString(item.url),
+        usedFor: toNullableString(item.usedFor),
+        confidence: normalizeCompanyResearchConfidence(item.confidence),
+      }))
+      .filter((item) => item.title || item.url)
+    : [];
+
+  const warnings = Array.isArray(safe.warnings)
+    ? safe.warnings.map((item) => toNullableString(item)).filter(Boolean)
+    : [];
+
+  const confidence = normalizeCompanyResearchConfidence(safe.confidence);
+
+  return {
+    company: {
+      name: toNullableString(company.name),
+      legalName: toNullableString(company.legalName),
+      description: toNullableString(company.description),
+      databaseType: normalizeDatabaseType(company.databaseType),
+      category: toNullableString(company.category),
+      industry: toNullableString(company.industry),
+      country: toNullableString(company.country),
+      city: toNullableString(company.city),
+      website: toNullableString(company.website),
+      linkedin: toNullableString(company.linkedin),
+      facebook: toNullableString(company.facebook),
+      instagram: toNullableString(company.instagram),
+      twitter: toNullableString(company.twitter),
+      youtube: toNullableString(company.youtube),
+      phone: toNullableString(company.phone),
+      email: toNullableString(company.email),
+      priority: normalizePriority(company.priority),
+      fitScore: normalizeScore(company.fitScore),
+      ethicalFit: normalizeEthicalFit(company.ethicalFit),
+      status: toNullableString(company.status),
+      nextAction: toNullableString(company.nextAction),
+      notes: toNullableString(company.notes),
+    },
+    contactMethods,
+    problemProfile,
+    outreachScript,
+    sources,
+    warnings,
+    confidence,
+  };
+};
+
+const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, industryHint, websiteHint, language }) => [
+  'You are researching a company using only public business information.',
+  'Do not invent facts. If uncertain, use null and low confidence.',
+  'Prefer official websites and verified public profiles when available.',
+  'Do not claim you searched the live web if you did not.',
+  'If live web search is unavailable, say so in warnings and keep results conservative.',
+  'Avoid personal emails unless they are clearly public business contact details.',
+  'Respect Islamic and ethical principles. Avoid manipulative wording.',
+  'Return strict JSON only. No markdown fences. No commentary.',
+  'The JSON shape must be:',
+  '{"company":{...},"contactMethods":[...],"problemProfile":{...}|null,"outreachScript":{...}|null,"sources":[...],"warnings":[...],"confidence":"low|medium|high"}',
+  'Required company fields: name, legalName, description, databaseType, category, industry, country, city, website, linkedin, facebook, instagram, twitter, youtube, phone, email, priority, fitScore, ethicalFit, status, nextAction, notes.',
+  'Allowed databaseType values: big_company, sme, freelance, other.',
+  'Allowed priority values: high, medium, low.',
+  'Allowed ethicalFit values: good, needs_review, avoid.',
+  'Allowed confidence values: low, medium, high.',
+  'If multiple companies match, choose the best match and add a warning.',
+  'For company type, infer one of: big_company, sme, freelance, other.',
+  'For fitScore, use an integer from 0 to 10.',
+  'For contactMethods, only include public company contact methods and include sourceUrl when possible.',
+  'For problemProfile and outreachScript, keep them concise, professional, and reviewable.',
+  '',
+  `Language: ${language || 'auto'}`,
+  `Company name: ${companyName}`,
+  `Country hint: ${countryHint || 'none'}`,
+  `City hint: ${cityHint || 'none'}`,
+  `Industry hint: ${industryHint || 'none'}`,
+  `Website hint: ${websiteHint || 'none'}`,
+].join('\n');
+
+const handleCompanyResearchAction = async (req, res) => {
+  const body = readBody(req);
+  const companyName = toCleanString(body.companyName);
+  const countryHint = toCleanString(body.countryHint);
+  const cityHint = toCleanString(body.cityHint);
+  const industryHint = toCleanString(body.industryHint);
+  const websiteHint = toCleanString(body.websiteHint);
+  const language = ['auto', 'english', 'french', 'arabic'].includes(toCleanString(body.language).toLowerCase()) ? toCleanString(body.language).toLowerCase() : 'auto';
+  const debugRequested = body?.debug === true || body?.debug === 'true' || body?.debug === 1;
+
+  if (!companyName) {
+    return toSafeJson(res, 400, { success: false, error: 'Company name is required.' });
+  }
+
+  if (companyName.length > 160 || countryHint.length > 120 || cityHint.length > 120 || industryHint.length > 120 || websiteHint.length > 240) {
+    return toSafeJson(res, 400, { success: false, error: 'Company research input is too long.' });
+  }
+
+  let supabase = null;
+  try {
+    supabase = createSupabaseClient();
+  } catch {
+    supabase = null;
+  }
+
+  const routing = await resolveCompanyResearchExecutionConfig({ supabase });
+  if (routing?.disabled) {
+    return toSafeJson(res, 503, { success: false, error: 'AI provider is not configured for company research.' });
+  }
+
+  if (!routing?.executionConfig) {
+    return toSafeJson(res, 503, { success: false, error: 'AI provider is not configured for company research.' });
+  }
+
+  const prompt = buildCompanyResearchPrompt({
+    companyName,
+    countryHint,
+    cityHint,
+    industryHint,
+    websiteHint,
+    language,
+  });
+
+  try {
+    const rawResponse = await aiProviderRouter.requestProviderCompletion({
+      ...routing.executionConfig,
+      prompt,
+      temperature: 0.2,
+      maxOutputTokens: 2200,
+    });
+
+    const parsed = parseJsonSafely(rawResponse);
+    if (!parsed) {
+      return toSafeJson(res, 500, {
+        success: false,
+        error: 'AI returned an unreadable response. Try again.',
+        ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
+      });
+    }
+
+    const result = normalizeCompanyResearchResult(parsed);
+    const warnings = [...result.warnings, 'Live web search is not configured. Results may be incomplete.'];
+
+    return toSafeJson(res, 200, {
+      success: true,
+      result: {
+        ...result,
+        warnings,
+      },
+      ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
+    });
+  } catch (error) {
+    const errorMessage = error?.providerStatus === 401 ? 'Authentication required. Please log in again.' : 'Unable to research company.';
+    return toSafeJson(res, error?.providerStatus === 401 ? 401 : 500, {
+      success: false,
+      error: errorMessage,
+      ...(debugRequested ? {
+        debug: {
+          sourceUseCase: routing.sourceUseCase,
+          providerStatus: error?.providerStatus ?? null,
+          providerErrorStatus: error?.providerErrorStatus ?? null,
+          providerErrorReason: error?.providerErrorReason ?? null,
+        },
+      } : {}),
+    });
+  }
+};
+
 const parseNotesTaskLine = (line) => {
   const cleaned = toCleanString(line).replace(/^[-*]\s*/, '');
   if (!cleaned) return null;
@@ -920,7 +1276,7 @@ export default async function handler(req, res) {
         try { return createSupabaseClient(); } catch { return null; }
       })();
       const useCaseStatuses = {};
-      for (const uc of ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes', 'social_media']) {
+      for (const uc of ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'company_research', 'cleanup', 'strategy', 'notes', 'social_media']) {
         useCaseStatuses[uc] = supabase ? await checkAIUseCaseStatus({ supabase, useCase: uc }) : { configured: false, source: 'none' };
       }
       return toSafeJson(res, 200, {
@@ -929,7 +1285,7 @@ export default async function handler(req, res) {
         aiControl: true,
         encryptionConfigured,
         supportedProviders: ['gemini', 'openai', 'anthropic', 'openrouter', 'nvidia', 'azure_openai', 'ollama'],
-        supportedUseCases: ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'cleanup', 'strategy', 'notes', 'social_media'],
+        supportedUseCases: ['message', 'finance', 'document', 'lead_scoring', 'relationship', 'research', 'company_research', 'cleanup', 'strategy', 'notes', 'social_media'],
         envGeminiConfigured: Boolean(process.env.GEMINI_API_KEY),
         useCaseStatuses,
       });
@@ -959,6 +1315,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST' && action === 'relationship') {
     return aiRelationshipHandler(req, res);
+  }
+
+  if (req.method === 'POST' && action === 'company-research') {
+    return handleCompanyResearchAction(req, res);
   }
 
   if (req.method === 'POST' && action === 'notes') {

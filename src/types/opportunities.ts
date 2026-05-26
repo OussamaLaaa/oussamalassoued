@@ -497,7 +497,7 @@ export interface DocumentBrandSettingsInput {
 }
 
 export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'nvidia' | 'azure_openai' | 'ollama';
-export type AIUseCase = 'message' | 'finance' | 'document' | 'lead_scoring' | 'relationship' | 'research' | 'cleanup' | 'strategy' | 'notes' | 'social_media';
+export type AIUseCase = 'message' | 'finance' | 'document' | 'lead_scoring' | 'relationship' | 'research' | 'company_research' | 'cleanup' | 'strategy' | 'notes' | 'social_media';
 
 export interface AIProviderKey {
   id: string;
@@ -551,6 +551,90 @@ export interface AIUseCaseSettingInput {
   maxOutputTokens?: number;
   isEnabled?: boolean;
   notes?: string;
+}
+
+export type CompanyResearchConfidence = 'low' | 'medium' | 'high';
+
+export interface CompanyResearchSuggestionCompany {
+  name?: string | null;
+  legalName?: string | null;
+  description?: string | null;
+  databaseType?: 'big_company' | 'sme' | 'freelance' | 'other' | null;
+  category?: string | null;
+  industry?: string | null;
+  country?: string | null;
+  city?: string | null;
+  website?: string | null;
+  linkedin?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  youtube?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  priority?: 'low' | 'medium' | 'high' | null;
+  fitScore?: number | null;
+  ethicalFit?: 'good' | 'needs_review' | 'avoid' | null;
+  status?: Company['status'] | null;
+  nextAction?: string | null;
+  notes?: string | null;
+}
+
+export interface CompanyResearchContactMethodSuggestion {
+  type?: string | null;
+  label?: string | null;
+  value?: string | null;
+  isPrimary?: boolean | null;
+  notes?: string | null;
+  sourceUrl?: string | null;
+  confidence?: CompanyResearchConfidence | null;
+}
+
+export interface CompanyResearchProblemProfileSuggestion {
+  problemTitle?: string | null;
+  problemDescription?: string | null;
+  currentSituation?: string | null;
+  businessImpact?: string | null;
+  proposedSolution?: string | null;
+  serviceAngle?: string | null;
+  valueProposition?: string | null;
+  urgency?: string | null;
+  confidence?: CompanyResearchConfidence | null;
+  status?: string | null;
+  notes?: string | null;
+}
+
+export interface CompanyResearchOutreachScriptSuggestion {
+  name?: string | null;
+  channel?: string | null;
+  language?: string | null;
+  audience?: string | null;
+  goal?: string | null;
+  hook?: string | null;
+  messageBody?: string | null;
+  callScript?: string | null;
+  objectionHandling?: string | null;
+  followUpMessage?: string | null;
+  status?: string | null;
+  isActive?: boolean | null;
+  notes?: string | null;
+}
+
+export interface CompanyResearchSource {
+  title?: string | null;
+  url?: string | null;
+  usedFor?: string | null;
+  confidence?: CompanyResearchConfidence | null;
+}
+
+export interface CompanyResearchResult {
+  company: CompanyResearchSuggestionCompany;
+  contactMethods: CompanyResearchContactMethodSuggestion[];
+  problemProfile: CompanyResearchProblemProfileSuggestion | null;
+  outreachScript: CompanyResearchOutreachScriptSuggestion | null;
+  sources: CompanyResearchSource[];
+  warnings: string[];
+  confidence: CompanyResearchConfidence;
 }
 
 export interface GeneratedDocument {

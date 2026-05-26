@@ -39,6 +39,7 @@ const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }>
   { value: 'lead_scoring', label: 'Lead Scoring', hint: 'Rank people and companies' },
   { value: 'relationship', label: 'Relationship', hint: 'Respectful follow-ups and relationship analysis' },
   { value: 'research', label: 'Research', hint: 'Briefs, summaries, and analysis' },
+  { value: 'company_research', label: 'Company Research', hint: 'Public company discovery and CRM enrichment' },
   { value: 'cleanup', label: 'Cleanup', hint: 'Normalization and content cleanup' },
   { value: 'strategy', label: 'Strategy', hint: 'Plans, goals, and decision support' },
   { value: 'notes', label: 'Notes', hint: 'Organize, summarize, and improve notes' },
@@ -355,6 +356,7 @@ const AIControlPanel: React.FC<{
   const notesStatus = getUseCaseStatus(healthData, 'notes');
   const socialStatus = getUseCaseStatus(healthData, 'social_media');
   const documentStatus = getUseCaseStatus(healthData, 'document');
+  const companyResearchStatus = getUseCaseStatus(healthData, 'company_research');
 
   const selectedTestKey = aiProviderKeys.find((item) => item.id === selectedTestProviderKeyId);
 
@@ -419,7 +421,7 @@ const AIControlPanel: React.FC<{
                 <p className="mt-1 text-xs text-neutral-500">Use-case routing state from the health endpoint.</p>
               </div>
               <div className="grid gap-3 p-5 sm:grid-cols-2">
-                {[{ label: 'Relationship AI Status', status: relationshipStatus }, { label: 'Notes AI Status', status: notesStatus }, { label: 'Social Media AI Status', status: socialStatus }, { label: 'Document AI Status', status: documentStatus }].map((item) => (
+                {[{ label: 'Relationship AI Status', status: relationshipStatus }, { label: 'Notes AI Status', status: notesStatus }, { label: 'Social Media AI Status', status: socialStatus }, { label: 'Document AI Status', status: documentStatus }, { label: 'Company Research AI Status', status: companyResearchStatus }].map((item) => (
                   <div key={item.label} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                     <p className="text-xs text-neutral-500">{item.label}</p>
                     <div className="mt-2 flex items-center gap-2">
