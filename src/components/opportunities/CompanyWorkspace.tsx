@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type {
   Company, Person, OutreachMessage, Deal,
   CompanyContactMethod, CompanyContactMethodInput,
@@ -119,9 +119,11 @@ const CompanyWorkspace: React.FC<Props> = ({
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
   const [showMessageForm, setShowMessageForm] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
   const [messagePersonId, setMessagePersonId] = useState<string | undefined>(undefined);
 
   const [showDealForm, setShowDealForm] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
 
   const [showContactMethodForm, setShowContactMethodForm] = useState(false);
   const [editingContactMethod, setEditingContactMethod] = useState<CompanyContactMethod | null>(null);
@@ -134,6 +136,7 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   const company = companies.find((c) => c.id === companyId);
 
@@ -150,6 +153,11 @@ const CompanyWorkspace: React.FC<Props> = ({
   const companyMessages = messages.filter((m) => m.companyId === company.id);
   const companyDeals = deals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
+
+  useEffect(() => {
+    setNotesDraft(company.notes || '');
+    setNotesSaved(false);
+  }, [company.id, company.notes]);
 
   const normalizeDatabaseType = (dbType?: string): string => {
     if (!dbType) return '';
@@ -171,6 +179,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   const handleCopyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
+      setCopyFeedback('Copied to clipboard.');
     } catch {
       const ta = document.createElement('textarea');
       ta.value = text;
@@ -180,7 +189,16 @@ const CompanyWorkspace: React.FC<Props> = ({
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
+      setCopyFeedback('Copied to clipboard.');
     }
+
+    window.setTimeout(() => setCopyFeedback(null), 1400);
+  };
+
+  const handleActionClick = (handler: () => void | Promise<void>) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    void handler();
   };
 
   const wrapSave = async <T,>(fn: () => Promise<T>) => {
@@ -326,10 +344,21 @@ const CompanyWorkspace: React.FC<Props> = ({
   };
 
   const handleMarkActive = async (script: CompanyOutreachScript) => {
+    const nextIsActive = !script.isActive;
     await updateCompanyOutreachScript(script.id, {
       companyId: script.companyId,
-      isActive: !script.isActive,
+      isActive: nextIsActive,
     });
+
+    if (nextIsActive) {
+      const otherActiveScripts = companyOutreachScripts.filter((item) => item.companyId === company.id && item.id !== script.id && item.isActive);
+      for (const other of otherActiveScripts) {
+        await updateCompanyOutreachScript(other.id, {
+          companyId: other.companyId,
+          isActive: false,
+        });
+      }
+    }
   };
 
   // ── Person Handlers ──
@@ -365,16 +394,29 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   // ── Message Handlers ──
   const openAddMessage = (personId?: string) => {
+    setEditingMessage(null);
     setMessagePersonId(personId);
+    setFormError(null);
+    setShowMessageForm(true);
+  };
+
+  const openEditMessage = (message: OutreachMessage) => {
+    setEditingMessage(message);
+    setMessagePersonId(message.personId);
     setFormError(null);
     setShowMessageForm(true);
   };
 
   const handleSaveMessage = async (data: MessageInput) => {
     await wrapSave(async () => {
-      await addMessage(data);
+      if (editingMessage) {
+        await updateMessage(editingMessage.id, data);
+      } else {
+        await addMessage(data);
+      }
     });
     setShowMessageForm(false);
+    setEditingMessage(null);
     setMessagePersonId(undefined);
   };
 
@@ -386,15 +428,27 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   // ── Deal Handlers ──
   const openAddDeal = () => {
+    setEditingDeal(null);
+    setFormError(null);
+    setShowDealForm(true);
+  };
+
+  const openEditDeal = (deal: Deal) => {
+    setEditingDeal(deal);
     setFormError(null);
     setShowDealForm(true);
   };
 
   const handleSaveDeal = async (data: DealInput) => {
     await wrapSave(async () => {
-      await addDeal(data);
+      if (editingDeal) {
+        await updateDeal(editingDeal.id, data);
+      } else {
+        await addDeal(data);
+      }
     });
     setShowDealForm(false);
+    setEditingDeal(null);
   };
 
   const handleDeleteDeal = async (id: string) => {
@@ -466,7 +520,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={openAddContactMethod}>Add Contact Method</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddContactMethod)}>Add Contact Method</Button>
             </div>
             {methods.length === 0 ? (
               <EmptyState
@@ -488,10 +542,10 @@ const CompanyWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="flex shrink-0 gap-1">
                       {!method.isPrimary && (
-                        <Button variant="ghost" size="sm" onClick={() => handleSetPrimaryContactMethod(method)} className="text-neutral-600">Set Primary</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleSetPrimaryContactMethod(method))} className="text-neutral-600">Set Primary</Button>
                       )}
-                      <Button variant="ghost" size="sm" onClick={() => openEditContactMethod(method)} className="text-neutral-600">Edit</Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteContactMethod(method.id)} className="text-neutral-600">Delete</Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditContactMethod(method))} className="text-neutral-600">Edit</Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteContactMethod(method.id))} className="text-neutral-600">Delete</Button>
                     </div>
                   </div>
                 ))}
@@ -505,7 +559,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={openAddPerson}>Add Person</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
             </div>
             {companyPeople.length === 0 ? (
               <EmptyState
@@ -539,9 +593,9 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <td className="px-3 py-3 text-neutral-700">{person.nextFollowUpDate || '—'}</td>
                         <td className="px-3 py-3">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEditPerson(person)} className="text-neutral-600">Edit</Button>
-                            <Button variant="ghost" size="sm" onClick={() => openAddMessage(person.id)} className="text-neutral-600">Message</Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeletePerson(person.id)} className="text-neutral-600">Delete</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditPerson(person))} className="text-neutral-600">Edit</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openAddMessage(person.id))} className="text-neutral-600">Message</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeletePerson(person.id))} className="text-neutral-600">Delete</Button>
                           </div>
                         </td>
                       </tr>
@@ -559,7 +613,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={openAddProblemProfile}>Add Problem Profile</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddProblemProfile)}>Add Problem Profile</Button>
             </div>
             {profiles.length === 0 ? (
               <EmptyState
@@ -580,8 +634,8 @@ const CompanyWorkspace: React.FC<Props> = ({
                         </div>
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEditProblemProfile(profile)} className="text-neutral-600">Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteProblemProfile(profile.id)} className="text-neutral-600">Delete</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditProblemProfile(profile))} className="text-neutral-600">Edit</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteProblemProfile(profile.id))} className="text-neutral-600">Delete</Button>
                       </div>
                     </div>
 
@@ -631,7 +685,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={openAddOutreachScript}>Add Outreach Script</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddOutreachScript)}>Add Outreach Script</Button>
             </div>
             {scripts.length === 0 ? (
               <EmptyState
@@ -654,9 +708,9 @@ const CompanyWorkspace: React.FC<Props> = ({
                         {script.audience && <p className="mt-1 text-xs text-neutral-500">Audience: {script.audience}</p>}
                       </div>
                       <div className="flex shrink-0 gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleMarkActive(script)} className="text-neutral-600">{script.isActive ? 'Deactivate' : 'Activate'}</Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEditOutreachScript(script)} className="text-neutral-600">Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteOutreachScript(script.id)} className="text-neutral-600">Delete</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleMarkActive(script))} className="text-neutral-600">{script.isActive ? 'Deactivate' : 'Activate'}</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditOutreachScript(script))} className="text-neutral-600">Edit</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteOutreachScript(script.id))} className="text-neutral-600">Delete</Button>
                       </div>
                     </div>
 
@@ -677,7 +731,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Message Body</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.messageBody!)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.messageBody!))} className="text-neutral-500 text-xs">Copy Message Body</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.messageBody}</p>
                         </div>
@@ -686,7 +740,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Call Script</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.callScript!)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.callScript!))} className="text-neutral-500 text-xs">Copy Call Script</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.callScript}</p>
                         </div>
@@ -701,7 +755,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Follow-up Message</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.followUpMessage!)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.followUpMessage!))} className="text-neutral-500 text-xs">Copy Follow-up Message</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.followUpMessage}</p>
                         </div>
@@ -726,7 +780,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={() => openAddMessage()}>Log Message</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => openAddMessage())}>Log Message</Button>
             </div>
             {companyMessages.length === 0 ? (
               <EmptyState title="No messages logged for this company yet." description="Start logging outreach messages." />
@@ -750,17 +804,17 @@ const CompanyWorkspace: React.FC<Props> = ({
                       const person = people.find((p) => p.id === msg.personId);
                       return (
                         <tr key={msg.id} className="border-b border-neutral-100 text-sm">
-                          <td className="px-3 py-3 text-neutral-700">{msg.date || msg.createdAt || '—'}</td>
+                          <td className="px-3 py-3 text-neutral-700">{msg.sentDate || msg.createdAt || '—'}</td>
                           <td className="px-3 py-3 text-neutral-900">{person?.fullName || '—'}</td>
                           <td className="px-3 py-3"><Badge variant="neutral">{msg.channel || '—'}</Badge></td>
                           <td className="px-3 py-3 text-neutral-700">{msg.messageType || '—'}</td>
                           <td className="px-3 py-3"><StatusBadge status={msg.replyStatus} /></td>
                           <td className="px-3 py-3 text-neutral-700">{msg.nextFollowUpDate || '—'}</td>
-                          <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.summary || '—'}</td>
+                          <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.messageText || msg.replySummary || '—'}</td>
                           <td className="px-3 py-3">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => { /* edit message via form */ }} className="text-neutral-600">Edit</Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)} className="text-neutral-600">Delete</Button>
+                              <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditMessage(msg))} className="text-neutral-600">Edit</Button>
+                              <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteMessage(msg.id))} className="text-neutral-600">Delete</Button>
                             </div>
                           </td>
                         </tr>
@@ -777,7 +831,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={openAddDeal}>Add Deal</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddDeal)}>Add Deal</Button>
             </div>
             {companyDeals.length === 0 ? (
               <EmptyState title="No deals linked to this company yet." description="Add a deal to track progress." />
@@ -806,8 +860,8 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <td className="px-3 py-3 text-neutral-700">{deal.nextAction || '—'}</td>
                         <td className="px-3 py-3">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => { /* edit deal via form */ }} className="text-neutral-600">Edit</Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeleteDeal(deal.id)} className="text-neutral-600">Delete</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditDeal(deal))} className="text-neutral-600">Edit</Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteDeal(deal.id))} className="text-neutral-600">Delete</Button>
                           </div>
                         </td>
                       </tr>
@@ -834,7 +888,7 @@ const CompanyWorkspace: React.FC<Props> = ({
               />
               <div className="mt-3 flex items-center justify-end gap-3">
                 {notesSaved && <span className="text-xs text-emerald-600">Saved</span>}
-                <Button variant="primary" size="sm" onClick={handleSaveNotes} disabled={notesSaving}>
+                <Button type="button" variant="primary" size="sm" onClick={handleActionClick(handleSaveNotes)} disabled={notesSaving}>
                   {notesSaving ? 'Saving...' : 'Save Notes'}
                 </Button>
               </div>
@@ -866,15 +920,21 @@ const CompanyWorkspace: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Button variant="primary" size="sm" onClick={() => onEditCompany(company)}>Edit Company</Button>
-          <Button variant="secondary" size="sm" onClick={() => onAIScoreCompany(company)}>AI Score</Button>
-          <Button variant="secondary" size="sm" onClick={openAddPerson}>Add Person</Button>
-          <Button variant="secondary" size="sm" onClick={openAddContactMethod}>Add Contact</Button>
-          <Button variant="secondary" size="sm" onClick={openAddProblemProfile}>Add Problem</Button>
-          <Button variant="secondary" size="sm" onClick={openAddOutreachScript}>Add Script</Button>
-          <Button variant="danger" size="sm" onClick={() => handleDeleteAndBack(company.id)}>Delete</Button>
+            <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddContactMethod)}>Add Contact Method</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddProblemProfile)}>Add Problem Profile</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddOutreachScript)}>Add Outreach Script</Button>
+            <Button type="button" variant="danger" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))}>Delete</Button>
         </div>
       </div>
+
+        {copyFeedback ? (
+          <div className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700">
+            {copyFeedback}
+          </div>
+        ) : null}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -1036,23 +1096,36 @@ const CompanyWorkspace: React.FC<Props> = ({
 
       {/* ── Modal: Message Form ── */}
       {showMessageForm && (
-        <OpportunityModal title="Log Message" onClose={() => { setShowMessageForm(false); setMessagePersonId(undefined); setFormError(null); }}>
+        <OpportunityModal title={editingMessage ? 'Edit Message' : 'Log Message'} onClose={() => { setShowMessageForm(false); setEditingMessage(null); setMessagePersonId(undefined); setFormError(null); }}>
           <LogMessageForm
             companies={companies}
             people={people}
             onSubmit={handleSaveMessage}
-            onCancel={() => { setShowMessageForm(false); setMessagePersonId(undefined); setFormError(null); }}
-            initialData={{
+            onCancel={() => { setShowMessageForm(false); setEditingMessage(null); setMessagePersonId(undefined); setFormError(null); }}
+            initialData={editingMessage ? {
+              companyId: editingMessage.companyId || company.id,
+              personId: editingMessage.personId || messagePersonId || '',
+              channel: editingMessage.channel || 'Email',
+              language: editingMessage.language || 'English',
+              messageType: editingMessage.messageType || 'outreach',
+              messageText: editingMessage.messageText || '',
+              sentDate: editingMessage.sentDate || '',
+              replyStatus: editingMessage.replyStatus || 'no_reply',
+              replySummary: editingMessage.replySummary || '',
+              nextFollowUpDate: editingMessage.nextFollowUpDate || '',
+              status: editingMessage.status || 'draft',
+            } : {
               companyId: company.id,
               personId: messagePersonId || '',
               channel: 'Email',
               language: 'English',
               messageType: 'outreach',
-              date: '',
-              summary: '',
+              messageText: '',
+              sentDate: new Date().toISOString(),
+              replyStatus: 'no_reply',
+              replySummary: '',
               nextFollowUpDate: '',
-              replyStatus: '',
-              notes: '',
+              status: 'sent',
             }}
           />
           {formError && (
@@ -1063,24 +1136,33 @@ const CompanyWorkspace: React.FC<Props> = ({
 
       {/* ── Modal: Deal Form ── */}
       {showDealForm && (
-        <OpportunityModal title="Add Deal" onClose={() => { setShowDealForm(false); setFormError(null); }}>
+        <OpportunityModal title={editingDeal ? 'Edit Deal' : 'Add Deal'} onClose={() => { setShowDealForm(false); setEditingDeal(null); setFormError(null); }}>
           <AddDealForm
             companies={companies}
             people={people}
             onSubmit={handleSaveDeal}
-            onCancel={() => { setShowDealForm(false); setFormError(null); }}
-            initialData={{
+            onCancel={() => { setShowDealForm(false); setEditingDeal(null); setFormError(null); }}
+            initialData={editingDeal ? {
+              companyId: editingDeal.companyId || company.id,
+              personId: editingDeal.personId || '',
+              servicePackage: editingDeal.servicePackage || '',
+              problem: editingDeal.problem || '',
+              proposedSolution: editingDeal.proposedSolution || '',
+              value: editingDeal.value,
+              currency: (editingDeal.currency as DealInput['currency']) || 'USD',
+              stage: editingDeal.stage || 'discovery',
+              probability: editingDeal.probability,
+              notes: editingDeal.notes || '',
+            } : {
               companyId: company.id,
               personId: '',
               servicePackage: '',
-              stage: 'prospect',
-              probability: 0,
-              value: 0,
-              currency: 'USD',
               problem: '',
               proposedSolution: '',
-              nextAction: '',
-              nextActionDate: '',
+              value: 0,
+              currency: 'USD',
+              stage: 'discovery',
+              probability: 50,
               notes: '',
             }}
           />
