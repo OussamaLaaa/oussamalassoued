@@ -994,6 +994,58 @@ export interface CompanyOutreachScriptInput {
   notes?: string;
 }
 
+export type AllowedShortcutKind = 'website';
+
+export type AllowedBackgroundType = 'solid' | 'gradient' | 'image';
+
+export type AllowedIconSize = 'small' | 'medium' | 'large';
+
+export type AllowedLayoutDensity = 'compact' | 'comfortable' | 'spacious';
+
+export interface DesktopShortcut {
+  id: string;
+  kind: AllowedShortcutKind;
+  appId?: string;
+  name: string;
+  url: string;
+  iconUrl?: string;
+  faviconSource?: string;
+  groupId?: string;
+  sortOrder?: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DesktopShortcutInput {
+  kind: AllowedShortcutKind;
+  name: string;
+  url: string;
+  iconUrl?: string;
+  faviconSource?: string;
+  notes?: string;
+}
+
+export interface DesktopSettings {
+  id: string;
+  backgroundType: AllowedBackgroundType;
+  backgroundValue?: string;
+  backgroundImageUrl?: string;
+  iconSize: AllowedIconSize;
+  layoutDensity: AllowedLayoutDensity;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DesktopSettingsInput {
+  backgroundType: AllowedBackgroundType;
+  backgroundValue?: string;
+  backgroundImageUrl?: string;
+  iconSize: AllowedIconSize;
+  layoutDensity: AllowedLayoutDensity;
+}
+
 export interface OpportunitiesData {
   companies: Company[];
   people: Person[];
@@ -1054,6 +1106,8 @@ export interface OpportunitiesData {
   contentStrategies: ContentStrategy[];
   contentItems: ContentItem[];
   weeklyContentPlans: WeeklyContentPlan[];
+  desktopShortcuts: DesktopShortcut[];
+  desktopSettings: DesktopSettings | null;
 }
 
 export type StrategySection =

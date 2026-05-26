@@ -66,6 +66,8 @@ const allowedEntities = new Set([
   'life_deen_logs',
   'life_family_actions',
   'life_weekly_reviews',
+  'desktop_shortcuts',
+  'desktop_settings',
 ]);
 const tablesAttempted = [
   'companies',
@@ -131,6 +133,8 @@ const tablesAttempted = [
   'life_deen_logs',
   'life_family_actions',
   'life_weekly_reviews',
+  'desktop_shortcuts',
+  'desktop_settings',
 ];
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -1161,6 +1165,29 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'company_contact_methods') return normalizeCompanyContactMethodRow(row);
   if (entity === 'company_problem_profiles') return normalizeCompanyProblemProfileRow(row);
   if (entity === 'company_outreach_scripts') return normalizeCompanyOutreachScriptRow(row);
+  if (entity === 'desktop_shortcuts') {
+    return {
+      kind: toRequiredString(row?.kind) || 'website',
+      app_id: toNullableString(row?.app_id ?? row?.appId),
+      name: toRequiredString(row?.name),
+      url: toRequiredString(row?.url),
+      icon_url: toNullableString(row?.icon_url ?? row?.iconUrl),
+      favicon_source: toNullableString(row?.favicon_source ?? row?.faviconSource),
+      group_id: toNullableString(row?.group_id ?? row?.groupId),
+      sort_order: row?.sort_order != null ? Number(row.sort_order) : (row?.sortOrder != null ? Number(row?.sortOrder) : null),
+      is_active: row?.is_active == null ? true : Boolean(row.is_active),
+      notes: toNullableString(row?.notes),
+    };
+  }
+  if (entity === 'desktop_settings') {
+    return {
+      background_type: toRequiredString(row?.background_type ?? row?.backgroundType) || 'solid',
+      background_value: toNullableString(row?.background_value ?? row?.backgroundValue),
+      background_image_url: toNullableString(row?.background_image_url ?? row?.backgroundImageUrl),
+      icon_size: toRequiredString(row?.icon_size ?? row?.iconSize) || 'medium',
+      layout_density: toRequiredString(row?.layout_density ?? row?.layoutDensity) || 'comfortable',
+    };
+  }
   return row;
 };
 
@@ -1241,6 +1268,7 @@ const SCOPES = {
   projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
   ai: ['ai_provider_keys', 'ai_use_case_settings'],
   social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
+  desktop: ['desktop_shortcuts', 'desktop_settings'],
 };
 
 export default async function handler(req, res) {
@@ -1389,6 +1417,7 @@ export default async function handler(req, res) {
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
         social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
+        desktop: ['desktop_shortcuts', 'desktop_settings'],
         life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
       };
 

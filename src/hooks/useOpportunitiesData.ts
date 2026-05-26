@@ -155,6 +155,10 @@ import type {
   LifeFamilyActionInput,
   LifeWeeklyReview,
   LifeWeeklyReviewInput,
+  DesktopShortcut,
+  DesktopShortcutInput,
+  DesktopSettings,
+  DesktopSettingsInput,
 } from '../types/opportunities';
 
 const API_ENDPOINT = '/api/opportunities';
@@ -221,6 +225,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   companyContactMethods: [],
   companyProblemProfiles: [],
   companyOutreachScripts: [],
+  desktopShortcuts: [],
+  desktopSettings: null,
 });
 
 
@@ -285,6 +291,8 @@ type OpportunitiesApiResponse = {
   company_contact_methods?: any[];
   company_problem_profiles?: any[];
   company_outreach_scripts?: any[];
+  desktop_shortcuts?: any[];
+  desktop_settings?: any;
 };
 
 type ApiError = Error & {
@@ -1605,6 +1613,52 @@ const companyOutreachScriptToDb = (input: Partial<CompanyOutreachScriptInput>) =
   return payload;
 };
 
+// ── Desktop ──
+
+const desktopShortcutFromDb = (row: any): DesktopShortcut => ({
+  id: String(row?.id ?? ''),
+  kind: row?.kind ?? 'website',
+  appId: row?.app_id ?? row?.appId ?? undefined,
+  name: String(row?.name ?? ''),
+  url: String(row?.url ?? ''),
+  iconUrl: row?.icon_url ?? row?.iconUrl ?? undefined,
+  faviconSource: row?.favicon_source ?? row?.faviconSource ?? undefined,
+  groupId: row?.group_id ?? row?.groupId ?? undefined,
+  sortOrder: row?.sort_order ?? row?.sortOrder ?? 0,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const desktopShortcutToDb = (input: DesktopShortcutInput) => ({
+  kind: input.kind,
+  name: input.name,
+  url: input.url,
+  icon_url: toNullableString(input.iconUrl),
+  favicon_source: toNullableString(input.faviconSource),
+  notes: toNullableString(input.notes),
+});
+
+const desktopSettingsFromDb = (row: any): DesktopSettings => ({
+  id: String(row?.id ?? ''),
+  backgroundType: row?.background_type ?? row?.backgroundType ?? 'solid',
+  backgroundValue: row?.background_value ?? row?.backgroundValue ?? undefined,
+  backgroundImageUrl: row?.background_image_url ?? row?.backgroundImageUrl ?? undefined,
+  iconSize: row?.icon_size ?? row?.iconSize ?? 'medium',
+  layoutDensity: row?.layout_density ?? row?.layoutDensity ?? 'comfortable',
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const desktopSettingsToDb = (input: DesktopSettingsInput) => ({
+  background_type: input.backgroundType,
+  background_value: toNullableString(input.backgroundValue),
+  background_image_url: toNullableString(input.backgroundImageUrl),
+  icon_size: input.iconSize,
+  layout_density: input.layoutDensity,
+});
+
 const socialPlatformFromDb = (row: any): SocialPlatform => ({
   id: String(row?.id ?? ''),
   name: String(row?.name ?? ''),
@@ -1990,6 +2044,8 @@ export const useOpportunitiesData = (enabled = true) => {
   const [companyContactMethods, setCompanyContactMethods] = useState<CompanyContactMethod[]>([]);
   const [companyProblemProfiles, setCompanyProblemProfiles] = useState<CompanyProblemProfile[]>([]);
   const [companyOutreachScripts, setCompanyOutreachScripts] = useState<CompanyOutreachScript[]>([]);
+  const [desktopShortcuts, setDesktopShortcuts] = useState<DesktopShortcut[]>([]);
+  const [desktopSettings, setDesktopSettings] = useState<DesktopSettings | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -2256,6 +2312,17 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('company_problem_profiles')) setCompanyProblemProfiles((raw('company_problem_profiles') || []).map((row: any) => companyProblemProfileFromDb(row)));
     if (has('company_outreach_scripts')) setCompanyOutreachScripts((raw('company_outreach_scripts') || []).map((row: any) => companyOutreachScriptFromDb(row)));
 
+    // ── Desktop ──
+    if (has('desktop_shortcuts')) setDesktopShortcuts((raw('desktop_shortcuts') || []).map((row: any) => desktopShortcutFromDb(row)));
+    if (has('desktop_settings')) {
+      const rawArr = raw('desktop_settings');
+      if (rawArr && rawArr.length > 0) {
+        setDesktopSettings(desktopSettingsFromDb(rawArr[0]));
+      } else if (has('desktop_settings')) {
+        setDesktopSettings(null);
+      }
+    }
+
     if (has('content_items')) {
       setContentItems(attachContentItemLinkNames(
         (raw('content_items') || []).map((row: any) => contentItemFromDb(row)),
@@ -2306,7 +2373,7 @@ export const useOpportunitiesData = (enabled = true) => {
         applyPayload(corePayload);
 
         // Stage 2: Load secondary scopes in parallel
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social', 'life'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social', 'life', 'desktop'];
         const secondaryResults = await Promise.allSettled(
           secondaryScopes.map((s) => fetchScope(s))
         );
@@ -4576,6 +4643,41 @@ export const useOpportunitiesData = (enabled = true) => {
     setCompanyOutreachScripts((current) => current.filter((item) => item.id !== id));
   };
 
+  // ── Desktop ──
+
+  const addDesktopShortcut = async (input: DesktopShortcutInput) => {
+    const row = await syncInsert('desktop_shortcuts', desktopShortcutToDb(input));
+    const next = desktopShortcutFromDb(row);
+    setDesktopShortcuts((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateDesktopShortcut = async (id: string, input: Partial<DesktopShortcutInput>) => {
+    const row = await syncUpdate('desktop_shortcuts', id, desktopShortcutToDb(input as DesktopShortcutInput));
+    const next = desktopShortcutFromDb(row);
+    setDesktopShortcuts((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteDesktopShortcut = async (id: string) => {
+    await syncDelete('desktop_shortcuts' as any, id);
+    setDesktopShortcuts((current) => current.filter((item) => item.id !== id));
+  };
+
+  const updateDesktopSettings = async (input: DesktopSettingsInput) => {
+    const existing = desktopSettings;
+    if (existing?.id) {
+      const row = await syncUpdate('desktop_settings', existing.id, desktopSettingsToDb(input));
+      const next = desktopSettingsFromDb(row);
+      setDesktopSettings(next);
+      return next;
+    }
+    const row = await syncInsert('desktop_settings', desktopSettingsToDb(input));
+    const next = desktopSettingsFromDb(row);
+    setDesktopSettings(next);
+    return next;
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -4882,6 +4984,12 @@ export const useOpportunitiesData = (enabled = true) => {
     addCompanyOutreachScript,
     updateCompanyOutreachScript,
     deleteCompanyOutreachScript,
+    desktopShortcuts,
+    desktopSettings,
+    addDesktopShortcut,
+    updateDesktopShortcut,
+    deleteDesktopShortcut,
+    updateDesktopSettings,
   };
 };
 
