@@ -6,6 +6,7 @@ import {
   CheckSquare,
   Compass,
   FileText,
+  Folder,
   FolderKanban,
   Heart,
   LayoutGrid,
@@ -21,8 +22,10 @@ import {
   X,
 } from 'lucide-react';
 import { AuthContext } from '../personal/PersonalAuthGate';
-import type { DesktopShortcut, DesktopShortcutInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
+import type { DesktopGroup, DesktopGroupInput, DesktopShortcut, DesktopShortcutInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import AddDesktopShortcutDialog from './AddDesktopShortcutDialog';
+import CreateGroupDialog from './CreateGroupDialog';
+import DesktopGroupPanel from './DesktopGroupPanel';
 
 type AppId = 'desktop' | 'crm' | 'messages' | 'strategy' | 'plans' | 'tasks' | 'projects' | 'finance' | 'documents' | 'social' | 'relationships' | 'life' | 'notes' | 'ai_control';
 
@@ -436,10 +439,19 @@ const DesktopLauncher: React.FC<{
   updateDesktopShortcut?: (id: string, input: Partial<DesktopShortcutInput>) => Promise<any>;
   deleteDesktopShortcut?: (id: string) => Promise<void>;
   updateDesktopSettings?: (input: DesktopSettingsInput) => Promise<any>;
-}> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings }) => {
+  desktopGroups?: DesktopGroup[];
+  addDesktopGroup?: (input: DesktopGroupInput) => Promise<any>;
+  updateDesktopGroup?: (id: string, input: Partial<DesktopGroupInput>) => Promise<any>;
+  deleteDesktopGroup?: (id: string) => Promise<void>;
+}> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings, desktopGroups = [], addDesktopGroup, updateDesktopGroup, deleteDesktopGroup }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
   const [editingShortcut, setEditingShortcut] = useState<DesktopShortcut | null>(null);
+  const [editingGroup, setEditingGroup] = useState<DesktopGroup | null>(null);
+  const [activeGroup, setActiveGroup] = useState<DesktopGroup | null>(null);
+  const [moveGroupId, setMoveGroupId] = useState<string | null>(null);
+  const [moveShortcutId, setMoveShortcutId] = useState<string | null>(null);
 
   const bgStyle = useMemo(() => {
     if (!desktopSettings) return { backgroundColor: '#fafafa' };
@@ -495,6 +507,120 @@ const DesktopLauncher: React.FC<{
     }
   };
 
+  const handleAddGroup = async (input: DesktopGroupInput) => {
+    await addDesktopGroup?.(input);
+  };
+
+  const handleEditGroup = async (input: DesktopGroupInput) => {
+    if (editingGroup && updateDesktopGroup) {
+      await updateDesktopGroup(editingGroup.id, input);
+    }
+  };
+
+  const handleDeleteGroup = (group: DesktopGroup) => {
+    if (window.confirm(`Delete group "${group.name}"? Shortcuts in this group will be ungrouped.`)) {
+      const shortcutsInGroup = desktopShortcuts.filter((s) => s.groupId === group.id);
+      Promise.all(
+        shortcutsInGroup.map((s) => updateDesktopShortcut?.(s.id, { groupId: null }))
+      ).then(() => {
+        deleteDesktopGroup?.(group.id);
+        if (activeGroup?.id === group.id) setActiveGroup(null);
+      });
+    }
+  };
+
+  const handleMoveToGroup = (shortcutId: string, targetGroupId: string | null) => {
+    updateDesktopShortcut?.(shortcutId, { groupId: targetGroupId });
+    setMoveGroupId(null);
+    setMoveShortcutId(null);
+  };
+
+  const handleRemoveFromGroup = (shortcut: DesktopShortcut) => {
+    updateDesktopShortcut?.(shortcut.id, { groupId: null });
+  };
+
+  const ungroupedShortcuts = useMemo(
+    () => desktopShortcuts.filter((s) => s.isActive !== false && !s.groupId),
+    [desktopShortcuts]
+  );
+
+  const activeGroupShortcuts = useMemo(
+    () => desktopShortcuts.filter((s) => s.isActive !== false && s.groupId === activeGroup?.id),
+    [desktopShortcuts, activeGroup]
+  );
+
+  if (activeGroup) {
+    return (
+      <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
+        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
+          <div className="mx-auto flex h-11 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 bg-black text-white">
+                <span className="block h-1.5 w-1.5 rounded-[2px] bg-white" />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-tight text-neutral-900">Personal OS</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <TopBarButton icon={Bell} label="Notifications" />
+              <TopBarButton icon={Palette} label="Desktop Settings" onClick={() => setShowSettingsDialog(true)} />
+              <ProfileDropdown />
+            </div>
+          </div>
+        </header>
+
+        <main className={`mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 ${itemPadding} sm:px-6`}>
+          <DesktopGroupPanel
+            group={activeGroup}
+            shortcuts={activeGroupShortcuts}
+            onBack={() => setActiveGroup(null)}
+            onEditGroup={(g) => { setEditingGroup(g); setShowCreateGroupDialog(true); }}
+            onDeleteGroup={handleDeleteGroup}
+            onAddShortcut={(gid) => { setEditingShortcut(null); setMoveGroupId(gid ?? null); setShowAddDialog(true); }}
+            onEditShortcut={(s) => { setEditingShortcut(s); setMoveGroupId(s.groupId ?? null); setShowAddDialog(true); }}
+            onDeleteShortcut={handleDeleteShortcut}
+            onRemoveFromGroup={(s) => {
+              if (window.confirm(`Remove "${s.name}" from this group?`)) {
+                handleRemoveFromGroup(s);
+              }
+            }}
+            iconSizeClass={iconSizeClass}
+            iconInnerSize={iconInnerSize}
+          />
+        </main>
+
+        {showAddDialog && (
+          <AddDesktopShortcutDialog
+            editing={editingShortcut}
+            groupId={moveGroupId ?? activeGroup.id}
+            onSave={handleAddSave}
+            onClose={() => { setShowAddDialog(false); setEditingShortcut(null); setMoveGroupId(null); }}
+          />
+        )}
+
+        {showSettingsDialog && (
+          <DesktopSettingsDialog
+            settings={desktopSettings}
+            onSave={async (input) => {
+              await updateDesktopSettings?.(input);
+              setShowSettingsDialog(false);
+            }}
+            onClose={() => setShowSettingsDialog(false)}
+          />
+        )}
+
+        {showCreateGroupDialog && (
+          <CreateGroupDialog
+            editing={editingGroup}
+            onSave={handleEditGroup}
+            onClose={() => { setShowCreateGroupDialog(false); setEditingGroup(null); }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
@@ -523,7 +649,30 @@ const DesktopLauncher: React.FC<{
               <AppTile key={app.id} {...app} onOpen={() => onLaunchApp(app.id)} />
             ))}
 
-            {desktopShortcuts.filter((s) => s.isActive !== false).map((shortcut) => (
+            {desktopGroups.filter((g) => g.isActive !== false).map((group) => {
+              const count = desktopShortcuts.filter((s) => s.groupId === group.id && s.isActive !== false).length;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => setActiveGroup(group)}
+                  className="group flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+                >
+                  <span
+                    className={`flex h-16 w-16 items-center justify-center rounded-2xl border bg-white text-neutral-900 transition-colors group-hover:bg-neutral-50 ${iconSizeClass}`}
+                    style={group.color ? { borderColor: group.color } : { borderColor: '#e5e5e5' }}
+                  >
+                    <Folder className="h-7 w-7" style={group.color ? { color: group.color } : undefined} strokeWidth={1.5} />
+                  </span>
+                  <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
+                    {group.name}
+                  </span>
+                  <span className="text-[10px] text-neutral-400">{count} item{count !== 1 ? 's' : ''}</span>
+                </button>
+              );
+            })}
+
+            {ungroupedShortcuts.map((shortcut) => (
               <WebsiteTile
                 key={shortcut.id}
                 shortcut={shortcut}
@@ -532,7 +681,6 @@ const DesktopLauncher: React.FC<{
               />
             ))}
 
-            {/* Phase 2: groups/drag-drop */}
             <button
               type="button"
               onClick={() => { setEditingShortcut(null); setShowAddDialog(true); }}
@@ -545,6 +693,19 @@ const DesktopLauncher: React.FC<{
                 Add
               </span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => { setEditingGroup(null); setShowCreateGroupDialog(true); }}
+              className="group flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+            >
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white text-neutral-400 transition-colors group-hover:border-neutral-400 group-hover:bg-neutral-50">
+                <Folder className="h-7 w-7" strokeWidth={1.5} />
+              </span>
+              <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-500 transition-colors group-hover:text-neutral-700">
+                New Group
+              </span>
+            </button>
           </div>
         </div>
       </main>
@@ -554,6 +715,14 @@ const DesktopLauncher: React.FC<{
           editing={editingShortcut}
           onSave={handleAddSave}
           onClose={() => { setShowAddDialog(false); setEditingShortcut(null); }}
+        />
+      )}
+
+      {showCreateGroupDialog && (
+        <CreateGroupDialog
+          editing={editingGroup}
+          onSave={editingGroup ? handleEditGroup : handleAddGroup}
+          onClose={() => { setShowCreateGroupDialog(false); setEditingGroup(null); }}
         />
       )}
 

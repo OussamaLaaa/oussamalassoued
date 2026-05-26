@@ -1018,6 +1018,24 @@ export interface DesktopShortcut {
   updatedAt?: string;
 }
 
+export interface DesktopGroup {
+  id: string;
+  name: string;
+  color?: string;
+  sortOrder?: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DesktopGroupInput {
+  name: string;
+  color?: string;
+  sortOrder?: number;
+  notes?: string;
+}
+
 export interface DesktopShortcutInput {
   kind: AllowedShortcutKind;
   name: string;
@@ -1025,6 +1043,7 @@ export interface DesktopShortcutInput {
   iconUrl?: string;
   faviconSource?: string;
   notes?: string;
+  groupId?: string | null;
 }
 
 export interface DesktopSettings {
@@ -1108,6 +1127,7 @@ export interface OpportunitiesData {
   weeklyContentPlans: WeeklyContentPlan[];
   desktopShortcuts: DesktopShortcut[];
   desktopSettings: DesktopSettings | null;
+  desktopGroups: DesktopGroup[];
 }
 
 export type StrategySection =

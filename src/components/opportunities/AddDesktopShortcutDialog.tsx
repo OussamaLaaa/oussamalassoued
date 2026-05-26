@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Globe, X } from 'lucide-react';
-import type { DesktopShortcut, DesktopShortcutInput } from '../../types/opportunities';
+import { Folder, Globe, X } from 'lucide-react';
+import type { DesktopGroup, DesktopShortcut, DesktopShortcutInput } from '../../types/opportunities';
 
 const isValidUrl = (url: string) => {
   try {
@@ -36,12 +36,16 @@ interface Props {
   onSave: (input: DesktopShortcutInput) => Promise<void>;
   onClose: () => void;
   editing?: DesktopShortcut | null;
+  groupId?: string;
+  allowGroupSelect?: boolean;
+  desktopGroups?: DesktopGroup[];
 }
 
-const AddDesktopShortcutDialog: React.FC<Props> = ({ onSave, onClose, editing }) => {
+const AddDesktopShortcutDialog: React.FC<Props> = ({ onSave, onClose, editing, groupId, allowGroupSelect, desktopGroups = [] }) => {
   const [name, setName] = useState(editing?.name ?? '');
   const [url, setUrl] = useState(editing?.url ?? '');
   const [notes, setNotes] = useState(editing?.notes ?? '');
+  const [selectedGroupId, setSelectedGroupId] = useState(groupId ?? editing?.groupId ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,6 +103,7 @@ const AddDesktopShortcutDialog: React.FC<Props> = ({ onSave, onClose, editing })
         iconUrl: faviconUrl || undefined,
         faviconSource: faviconUrl ? 'google_s2' : undefined,
         notes: notes.trim() || undefined,
+        groupId: selectedGroupId || null,
       });
       onClose();
     } catch (err) {
@@ -169,6 +174,25 @@ const AddDesktopShortcutDialog: React.FC<Props> = ({ onSave, onClose, editing })
               className="w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-300"
             />
           </div>
+
+          {allowGroupSelect && desktopGroups.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-neutral-700">Group <span className="text-neutral-400">(optional)</span></label>
+              <div className="relative">
+                <select
+                  value={selectedGroupId}
+                  onChange={(e) => setSelectedGroupId(e.target.value)}
+                  className="w-full appearance-none rounded-lg border border-neutral-200 bg-white px-3 py-2 pr-8 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-300"
+                >
+                  <option value="">No group</option>
+                  {desktopGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+                <Folder className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">

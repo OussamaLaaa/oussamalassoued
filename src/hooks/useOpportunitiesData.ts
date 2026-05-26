@@ -157,6 +157,8 @@ import type {
   LifeWeeklyReviewInput,
   DesktopShortcut,
   DesktopShortcutInput,
+  DesktopGroup,
+  DesktopGroupInput,
   DesktopSettings,
   DesktopSettingsInput,
 } from '../types/opportunities';
@@ -227,6 +229,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   companyOutreachScripts: [],
   desktopShortcuts: [],
   desktopSettings: null,
+  desktopGroups: [],
 });
 
 
@@ -1638,6 +1641,7 @@ const desktopShortcutToDb = (input: DesktopShortcutInput) => ({
   icon_url: toNullableString(input.iconUrl),
   favicon_source: toNullableString(input.faviconSource),
   notes: toNullableString(input.notes),
+  group_id: input.groupId !== undefined ? toNullableString(input.groupId) : undefined,
 });
 
 const desktopSettingsFromDb = (row: any): DesktopSettings => ({
@@ -1657,6 +1661,24 @@ const desktopSettingsToDb = (input: DesktopSettingsInput) => ({
   background_image_url: toNullableString(input.backgroundImageUrl),
   icon_size: input.iconSize,
   layout_density: input.layoutDensity,
+});
+
+const desktopGroupFromDb = (row: any): DesktopGroup => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  color: row?.color ?? undefined,
+  sortOrder: row?.sort_order ?? row?.sortOrder ?? 0,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const desktopGroupToDb = (input: DesktopGroupInput) => ({
+  name: input.name,
+  color: toNullableString(input.color),
+  sort_order: input.sortOrder,
+  notes: toNullableString(input.notes),
 });
 
 const socialPlatformFromDb = (row: any): SocialPlatform => ({
@@ -2046,6 +2068,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [companyOutreachScripts, setCompanyOutreachScripts] = useState<CompanyOutreachScript[]>([]);
   const [desktopShortcuts, setDesktopShortcuts] = useState<DesktopShortcut[]>([]);
   const [desktopSettings, setDesktopSettings] = useState<DesktopSettings | null>(null);
+  const [desktopGroups, setDesktopGroups] = useState<DesktopGroup[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -2322,6 +2345,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setDesktopSettings(null);
       }
     }
+    if (has('desktop_groups')) setDesktopGroups((raw('desktop_groups') || []).map((row: any) => desktopGroupFromDb(row)));
 
     if (has('content_items')) {
       setContentItems(attachContentItemLinkNames(
@@ -4678,6 +4702,25 @@ export const useOpportunitiesData = (enabled = true) => {
     return next;
   };
 
+  const addDesktopGroup = async (input: DesktopGroupInput) => {
+    const row = await syncInsert('desktop_groups', desktopGroupToDb(input));
+    const next = desktopGroupFromDb(row);
+    setDesktopGroups((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateDesktopGroup = async (id: string, input: Partial<DesktopGroupInput>) => {
+    const row = await syncUpdate('desktop_groups', id, desktopGroupToDb(input as DesktopGroupInput));
+    const next = desktopGroupFromDb(row);
+    setDesktopGroups((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteDesktopGroup = async (id: string) => {
+    await syncDelete('desktop_groups' as any, id);
+    setDesktopGroups((current) => current.filter((item) => item.id !== id));
+  };
+
   const resetToSeedData = () => {
     console.warn('Database reset is not implemented yet.');
     const fallback = cloneSeedData();
@@ -4986,10 +5029,14 @@ export const useOpportunitiesData = (enabled = true) => {
     deleteCompanyOutreachScript,
     desktopShortcuts,
     desktopSettings,
+    desktopGroups,
     addDesktopShortcut,
     updateDesktopShortcut,
     deleteDesktopShortcut,
     updateDesktopSettings,
+    addDesktopGroup,
+    updateDesktopGroup,
+    deleteDesktopGroup,
   };
 };
 

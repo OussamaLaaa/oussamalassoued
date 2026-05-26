@@ -68,6 +68,7 @@ const allowedEntities = new Set([
   'life_weekly_reviews',
   'desktop_shortcuts',
   'desktop_settings',
+  'desktop_groups',
 ]);
 const tablesAttempted = [
   'companies',
@@ -135,6 +136,7 @@ const tablesAttempted = [
   'life_weekly_reviews',
   'desktop_shortcuts',
   'desktop_settings',
+  'desktop_groups',
 ];
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -1188,6 +1190,15 @@ const normalizeEntityRow = (entity, row) => {
       layout_density: toRequiredString(row?.layout_density ?? row?.layoutDensity) || 'comfortable',
     };
   }
+  if (entity === 'desktop_groups') {
+    return {
+      name: toRequiredString(row?.name),
+      color: toNullableString(row?.color),
+      sort_order: row?.sort_order != null ? Number(row.sort_order) : (row?.sortOrder != null ? Number(row?.sortOrder) : null),
+      is_active: row?.is_active == null ? true : Boolean(row.is_active),
+      notes: toNullableString(row?.notes),
+    };
+  }
   return row;
 };
 
@@ -1268,7 +1279,7 @@ const SCOPES = {
   projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
   ai: ['ai_provider_keys', 'ai_use_case_settings'],
   social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
-  desktop: ['desktop_shortcuts', 'desktop_settings'],
+  desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
 };
 
 export default async function handler(req, res) {
@@ -1417,7 +1428,7 @@ export default async function handler(req, res) {
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
         social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
-        desktop: ['desktop_shortcuts', 'desktop_settings'],
+        desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
         life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
       };
 
