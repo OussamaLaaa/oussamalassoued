@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Edit3, Folder, MoreHorizontal, Plus, Trash2, X } from 'lucide-react';
-import type { DesktopGroup, DesktopShortcut } from '../../types/opportunities';
+import type { DesktopGroup, DesktopShortcut, DesktopShortcutInput } from '../../types/opportunities';
 
 interface Props {
   group: DesktopGroup;
@@ -14,7 +14,15 @@ interface Props {
   onRemoveFromGroup: (shortcut: DesktopShortcut) => void;
   iconSizeClass: string;
   iconInnerSize: string;
+  updateDesktopShortcut?: (id: string, input: Partial<DesktopShortcutInput>) => Promise<any>;
+  ungroupedShortcuts?: DesktopShortcut[];
 }
+
+type DragItem = {
+  type: 'group_shortcut';
+  id: string;
+  sourceGroupId: string;
+};
 
 function GroupShortcutTile({
   shortcut,
@@ -23,6 +31,7 @@ function GroupShortcutTile({
   onEdit,
   onDelete,
   onRemoveFromGroup,
+  isDragging,
 }: {
   shortcut: DesktopShortcut;
   iconSizeClass: string;
@@ -30,10 +39,11 @@ function GroupShortcutTile({
   onEdit: (s: DesktopShortcut) => void;
   onDelete: (s: DesktopShortcut) => void;
   onRemoveFromGroup: (s: DesktopShortcut) => void;
+  isDragging?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -46,6 +56,7 @@ function GroupShortcutTile({
   }, [menuOpen]);
 
   const handleOpen = () => {
+    if (isDragging) return;
     if (!shortcut.url) return;
     const u = shortcut.url.startsWith('http://') || shortcut.url.startsWith('https://') ? shortcut.url : `https://${shortcut.url}`;
     window.open(u, '_blank', 'noopener,noreferrer');
@@ -54,7 +65,7 @@ function GroupShortcutTile({
   const displayChar = shortcut.name.charAt(0).toUpperCase();
 
   return (
-    <div className="relative flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2">
+    <div className={`relative flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 ${isDragging ? 'opacity-40' : ''}`}>
       <button
         type="button"
         onClick={handleOpen}
@@ -122,7 +133,76 @@ const DesktopGroupPanel: React.FC<Props> = ({
   onRemoveFromGroup,
   iconSizeClass,
   iconInnerSize,
+  updateDesktopShortcut,
+  ungroupedShortcuts = [],
 }) => {
+  // ── Drag state ──
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [justDragged, setJustDragged] = useState(false);
+  const [dragOverDesktopZone, setDragOverDesktopZone] = useState(false);
+
+  const sortedShortcuts = [...shortcuts].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'group_shortcut', id, sourceGroupId: group.id }));
+    e.dataTransfer.effectAllowed = 'move';
+    setDragItem({ type: 'group_shortcut', id, sourceGroupId: group.id });
+    setIsDragging(true);
+    setJustDragged(false);
+  };
+
+  const handleDragEnd = () => {
+    setDragItem(null);
+    setDragOverId(null);
+    setIsDragging(false);
+    setDragOverDesktopZone(false);
+    setJustDragged(true);
+    setTimeout(() => setJustDragged(false), 150);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverId(id);
+  };
+
+  const handleDragOverDesktopZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDesktopZone(true);
+  };
+
+  const handleDropOnShortcut = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!dragItem || dragItem.id === targetId) return;
+    const sourceIndex = sortedShortcuts.findIndex((s) => s.id === dragItem.id);
+    const targetIndex = sortedShortcuts.findIndex((s) => s.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+    const reordered = [...sortedShortcuts];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+    const updates = reordered.map((s, i) => updateDesktopShortcut?.(s.id, { sortOrder: i }));
+    Promise.all(updates).catch(() => {});
+    setDragItem(null);
+    setDragOverId(null);
+    setIsDragging(false);
+  };
+
+  const handleDropOnDesktopZone = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!dragItem || !updateDesktopShortcut) return;
+    const targetShortcut = sortedShortcuts.find((s) => s.id === dragItem.id);
+    if (!targetShortcut) return;
+    const maxSortOrder = Math.max(0, ...ungroupedShortcuts.map((s) => s.sortOrder ?? 0));
+    updateDesktopShortcut(targetShortcut.id, { groupId: null, sortOrder: maxSortOrder + 1 }).catch(() => {});
+    setDragItem(null);
+    setDragOverId(null);
+    setIsDragging(false);
+    setDragOverDesktopZone(false);
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center py-6 sm:py-10">
       <div className="w-full max-w-5xl">
@@ -167,17 +247,32 @@ const DesktopGroupPanel: React.FC<Props> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
-          {shortcuts.map((shortcut) => (
-            <GroupShortcutTile
-              key={shortcut.id}
-              shortcut={shortcut}
-              iconSizeClass={iconSizeClass}
-              iconInnerSize={iconInnerSize}
-              onEdit={onEditShortcut}
-              onDelete={onDeleteShortcut}
-              onRemoveFromGroup={onRemoveFromGroup}
-            />
-          ))}
+          {sortedShortcuts.map((shortcut) => {
+            const over = dragOverId === shortcut.id;
+            const isThisDragging = dragItem?.id === shortcut.id;
+            return (
+              <div
+                key={shortcut.id}
+                draggable={!isDragging || isThisDragging}
+                onDragStart={(e) => handleDragStart(e, shortcut.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, shortcut.id)}
+                onDragLeave={() => setDragOverId(null)}
+                onDrop={(e) => handleDropOnShortcut(e, shortcut.id)}
+                className={`cursor-grab active:cursor-grabbing ${over ? 'rounded-xl border-2 border-neutral-900 bg-neutral-50' : ''}`}
+              >
+                <GroupShortcutTile
+                  shortcut={shortcut}
+                  iconSizeClass={iconSizeClass}
+                  iconInnerSize={iconInnerSize}
+                  onEdit={onEditShortcut}
+                  onDelete={onDeleteShortcut}
+                  onRemoveFromGroup={onRemoveFromGroup}
+                  isDragging={isThisDragging}
+                />
+              </div>
+            );
+          })}
 
           <button
             type="button"
@@ -198,6 +293,21 @@ const DesktopGroupPanel: React.FC<Props> = ({
             <Folder className="h-8 w-8 text-neutral-300" />
             <p className="text-sm font-medium text-neutral-500">This group is empty</p>
             <p className="text-xs text-neutral-400">Add shortcuts to this group to get started</p>
+          </div>
+        )}
+
+        {isDragging && updateDesktopShortcut && (
+          <div
+            onDragOver={handleDragOverDesktopZone}
+            onDragLeave={() => setDragOverDesktopZone(false)}
+            onDrop={handleDropOnDesktopZone}
+            className={`mt-8 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+              dragOverDesktopZone ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-300'
+            }`}
+          >
+            <p className="text-sm font-medium text-neutral-500">
+              {dragOverDesktopZone ? 'Release to move to Desktop' : 'Drag a shortcut here to move it to Desktop'}
+            </p>
           </div>
         )}
       </div>

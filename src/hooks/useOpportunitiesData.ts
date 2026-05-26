@@ -1642,6 +1642,7 @@ const desktopShortcutToDb = (input: DesktopShortcutInput) => ({
   favicon_source: toNullableString(input.faviconSource),
   notes: toNullableString(input.notes),
   group_id: input.groupId !== undefined ? toNullableString(input.groupId) : undefined,
+  sort_order: input.sortOrder !== undefined ? Number(input.sortOrder) : undefined,
 });
 
 const desktopSettingsFromDb = (row: any): DesktopSettings => ({

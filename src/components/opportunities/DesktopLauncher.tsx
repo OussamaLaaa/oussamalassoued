@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { LucideIcon, LucideProps } from 'lucide-react';
 import {
   Bell,
@@ -55,6 +55,12 @@ const APPS: AppShortcut[] = [
   { id: 'ai_control', label: 'AI Control', icon: Sparkles },
 ];
 
+type DragItem = {
+  type: 'shortcut' | 'group';
+  id: string;
+  sourceGroupId?: string | null;
+};
+
 function TopBarButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label: string; onClick?: () => void }) {
   return (
     <button
@@ -85,7 +91,7 @@ function AppTile({ label, icon: Icon, onOpen, className }: AppShortcut & { onOpe
   );
 }
 
-function WebsiteTile({ shortcut, onEdit, onDelete }: { shortcut: DesktopShortcut; onEdit: (s: DesktopShortcut) => void; onDelete: (s: DesktopShortcut) => void }) {
+function WebsiteTile({ shortcut, onEdit, onDelete, isDragging }: { shortcut: DesktopShortcut; onEdit: (s: DesktopShortcut) => void; onDelete: (s: DesktopShortcut) => void; isDragging?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -101,16 +107,17 @@ function WebsiteTile({ shortcut, onEdit, onDelete }: { shortcut: DesktopShortcut
 
   const [imgError, setImgError] = useState(false);
 
-  const handleOpen = () => {
+  const handleOpen = useCallback(() => {
+    if (isDragging) return;
     if (!shortcut.url) return;
     const u = shortcut.url.startsWith('http://') || shortcut.url.startsWith('https://') ? shortcut.url : `https://${shortcut.url}`;
     window.open(u, '_blank', 'noopener,noreferrer');
-  };
+  }, [shortcut.url, isDragging]);
 
   const displayChar = shortcut.name.charAt(0).toUpperCase();
 
   return (
-    <div className="relative flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2">
+    <div className={`relative flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 ${isDragging ? 'opacity-40' : ''}`}>
       <button
         type="button"
         onClick={handleOpen}
@@ -453,6 +460,13 @@ const DesktopLauncher: React.FC<{
   const [moveGroupId, setMoveGroupId] = useState<string | null>(null);
   const [moveShortcutId, setMoveShortcutId] = useState<string | null>(null);
 
+  // ── Drag state ──
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<DragItem | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [justDragged, setJustDragged] = useState(false);
+  const [createGroupFromDrag, setCreateGroupFromDrag] = useState<{ shortcut1: DesktopShortcut; shortcut2: DesktopShortcut } | null>(null);
+
   const bgStyle = useMemo(() => {
     if (!desktopSettings) return { backgroundColor: '#fafafa' };
     if (desktopSettings.backgroundType === 'solid') {
@@ -493,6 +507,131 @@ const DesktopLauncher: React.FC<{
     return 'h-7 w-7';
   }, [desktopSettings]);
 
+  // ── Sort helpers ──
+  const sortedUngroupedShortcuts = useMemo(
+    () => desktopShortcuts.filter((s) => s.isActive !== false && !s.groupId).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [desktopShortcuts]
+  );
+
+  const sortedGroups = useMemo(
+    () => desktopGroups.filter((g) => g.isActive !== false).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [desktopGroups]
+  );
+
+  const ungroupedShortcuts = useMemo(
+    () => desktopShortcuts.filter((s) => s.isActive !== false && !s.groupId),
+    [desktopShortcuts]
+  );
+
+  const activeGroupShortcuts = useMemo(
+    () => desktopShortcuts.filter((s) => s.isActive !== false && s.groupId === activeGroup?.id).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [desktopShortcuts, activeGroup]
+  );
+
+  // ── Drag handlers ──
+  const resetDragState = useCallback(() => {
+    setDragItem(null);
+    setDragOverItem(null);
+    setIsDragging(false);
+  }, []);
+
+  const handleDragStart = useCallback((e: React.DragEvent, type: DragItem['type'], id: string, sourceGroupId?: string | null) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type, id, sourceGroupId }));
+    e.dataTransfer.effectAllowed = 'move';
+    setDragItem({ type, id, sourceGroupId });
+    setIsDragging(true);
+    setJustDragged(false);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    resetDragState();
+    setJustDragged(true);
+    setTimeout(() => setJustDragged(false), 150);
+  }, [resetDragState]);
+
+  const handleDragOver = useCallback((e: React.DragEvent, type: DragItem['type'], id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverItem({ type, id });
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverItem(null);
+  }, []);
+
+  const normalizeSortOrder = useCallback((items: Array<{ id: string; sortOrder?: number }>, startIndex = 0) => {
+    return items.map((item, i) => ({
+      id: item.id,
+      sortOrder: startIndex + i,
+    }));
+  }, []);
+
+  const handleReorderShortcuts = useCallback(async (sourceId: string, targetId: string, items: DesktopShortcut[]) => {
+    const sourceIndex = items.findIndex((s) => s.id === sourceId);
+    const targetIndex = items.findIndex((s) => s.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+    const reordered = [...items];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+    const updates = normalizeSortOrder(reordered);
+    await Promise.all(updates.map((u) => updateDesktopShortcut?.(u.id, { sortOrder: u.sortOrder })));
+  }, [normalizeSortOrder, updateDesktopShortcut]);
+
+  const handleReorderGroups = useCallback(async (sourceId: string, targetId: string) => {
+    const sourceIndex = sortedGroups.findIndex((g) => g.id === sourceId);
+    const targetIndex = sortedGroups.findIndex((g) => g.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+    const reordered = [...sortedGroups];
+    const [removed] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, removed);
+    const updates = normalizeSortOrder(reordered);
+    await Promise.all(updates.map((u) => updateDesktopGroup?.(u.id, { sortOrder: u.sortOrder })));
+  }, [sortedGroups, normalizeSortOrder, updateDesktopGroup]);
+
+  const handleMoveToGroup = useCallback(async (shortcutId: string, groupId: string) => {
+    const groupShortcuts = desktopShortcuts.filter((s) => s.groupId === groupId && s.isActive !== false);
+    const maxSortOrder = Math.max(0, ...groupShortcuts.map((s) => s.sortOrder ?? 0));
+    await updateDesktopShortcut?.(shortcutId, { groupId, sortOrder: maxSortOrder + 1 });
+  }, [desktopShortcuts, updateDesktopShortcut]);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetType: DragItem['type'], targetId: string) => {
+    e.preventDefault();
+    if (!dragItem) return;
+    if (dragItem.type === 'shortcut' && targetType === 'group') {
+      handleMoveToGroup(dragItem.id, targetId);
+    } else if (dragItem.type === 'shortcut' && targetType === 'shortcut' && dragItem.id !== targetId) {
+      const s1 = desktopShortcuts.find((s) => s.id === dragItem.id);
+      const s2 = desktopShortcuts.find((s) => s.id === targetId);
+      if (s1 && s2) {
+        setCreateGroupFromDrag({ shortcut1: s1, shortcut2: s2 });
+      }
+    } else if (dragItem.type === 'group' && targetType === 'group' && dragItem.id !== targetId) {
+      handleReorderGroups(dragItem.id, targetId);
+    }
+    resetDragState();
+  }, [dragItem, desktopShortcuts, handleMoveToGroup, handleReorderGroups, resetDragState]);
+
+  const handleConfirmCreateGroup = useCallback(async () => {
+    if (!createGroupFromDrag) return;
+    const { shortcut1, shortcut2 } = createGroupFromDrag;
+    try {
+      const newGroupRow = await addDesktopGroup?.({ name: 'New Group' });
+      if (!newGroupRow) return;
+      await Promise.all([
+        updateDesktopShortcut?.(shortcut1.id, { groupId: newGroupRow.id, sortOrder: 0 }),
+        updateDesktopShortcut?.(shortcut2.id, { groupId: newGroupRow.id, sortOrder: 1 }),
+      ]);
+    } catch {
+      // silent fail
+    }
+    setCreateGroupFromDrag(null);
+  }, [createGroupFromDrag, addDesktopGroup, updateDesktopShortcut]);
+
+  const isDragOver = useCallback((type: DragItem['type'], id: string) => {
+    return dragOverItem?.type === type && dragOverItem?.id === id;
+  }, [dragOverItem]);
+
+  // ── Existing handlers ──
   const handleAddSave = async (input: DesktopShortcutInput) => {
     if (editingShortcut && updateDesktopShortcut) {
       await updateDesktopShortcut(editingShortcut.id, input);
@@ -529,26 +668,11 @@ const DesktopLauncher: React.FC<{
     }
   };
 
-  const handleMoveToGroup = (shortcutId: string, targetGroupId: string | null) => {
-    updateDesktopShortcut?.(shortcutId, { groupId: targetGroupId });
-    setMoveGroupId(null);
-    setMoveShortcutId(null);
-  };
-
   const handleRemoveFromGroup = (shortcut: DesktopShortcut) => {
     updateDesktopShortcut?.(shortcut.id, { groupId: null });
   };
 
-  const ungroupedShortcuts = useMemo(
-    () => desktopShortcuts.filter((s) => s.isActive !== false && !s.groupId),
-    [desktopShortcuts]
-  );
-
-  const activeGroupShortcuts = useMemo(
-    () => desktopShortcuts.filter((s) => s.isActive !== false && s.groupId === activeGroup?.id),
-    [desktopShortcuts, activeGroup]
-  );
-
+  // ── Active Group View ──
   if (activeGroup) {
     return (
       <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
@@ -587,6 +711,8 @@ const DesktopLauncher: React.FC<{
             }}
             iconSizeClass={iconSizeClass}
             iconInnerSize={iconInnerSize}
+            updateDesktopShortcut={updateDesktopShortcut as (id: string, input: Partial<DesktopShortcutInput>) => Promise<any>}
+            ungroupedShortcuts={ungroupedShortcuts}
           />
         </main>
 
@@ -621,6 +747,7 @@ const DesktopLauncher: React.FC<{
     );
   }
 
+  // ── Main Desktop View ──
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
@@ -646,40 +773,72 @@ const DesktopLauncher: React.FC<{
         <div className="flex-1 flex items-center justify-center py-6 sm:py-10">
           <div className="grid w-full max-w-5xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
             {APPS.map((app) => (
-              <AppTile key={app.id} {...app} onOpen={() => onLaunchApp(app.id)} />
+              <AppTile key={app.id} {...app} onOpen={() => { if (!justDragged && !isDragging) onLaunchApp(app.id); }} />
             ))}
 
-            {desktopGroups.filter((g) => g.isActive !== false).map((group) => {
+            {sortedGroups.map((group) => {
               const count = desktopShortcuts.filter((s) => s.groupId === group.id && s.isActive !== false).length;
+              const over = isDragOver('group', group.id);
+              const isThisDragging = dragItem?.type === 'group' && dragItem.id === group.id;
               return (
-                <button
+                <div
                   key={group.id}
-                  type="button"
-                  onClick={() => setActiveGroup(group)}
-                  className="group flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+                  draggable={!isDragging || isThisDragging}
+                  onDragStart={(e) => handleDragStart(e, 'group', group.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, 'group', group.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, 'group', group.id)}
+                  className={`relative flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors cursor-grab active:cursor-grabbing ${isThisDragging ? 'opacity-40' : ''} ${over ? 'bg-neutral-50' : ''}`}
                 >
-                  <span
-                    className={`flex h-16 w-16 items-center justify-center rounded-2xl border bg-white text-neutral-900 transition-colors group-hover:bg-neutral-50 ${iconSizeClass}`}
-                    style={group.color ? { borderColor: group.color } : { borderColor: '#e5e5e5' }}
+                  <button
+                    type="button"
+                    onClick={() => { if (!justDragged && !isDragging) setActiveGroup(group); }}
+                    className="group flex min-w-0 flex-col items-center justify-start gap-2 rounded-xl px-2 py-2 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-900/10"
                   >
-                    <Folder className="h-7 w-7" style={group.color ? { color: group.color } : undefined} strokeWidth={1.5} />
-                  </span>
-                  <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
-                    {group.name}
-                  </span>
-                  <span className="text-[10px] text-neutral-400">{count} item{count !== 1 ? 's' : ''}</span>
-                </button>
+                    <span
+                      className={`flex h-16 w-16 items-center justify-center rounded-2xl border bg-white text-neutral-900 transition-colors group-hover:bg-neutral-50 ${iconSizeClass} ${over ? 'border-neutral-900' : ''}`}
+                      style={group.color && !over ? { borderColor: group.color } : over ? undefined : { borderColor: '#e5e5e5' }}
+                    >
+                      <Folder className="h-7 w-7" style={group.color && !over ? { color: group.color } : over ? { color: '#171717' } : undefined} strokeWidth={1.5} />
+                    </span>
+                    {over && dragItem?.type === 'shortcut' && (
+                      <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-neutral-900/5 text-[10px] font-medium text-neutral-600">
+                        Drop to add
+                      </span>
+                    )}
+                    <span className="w-full max-w-[6.5rem] truncate text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
+                      {group.name}
+                    </span>
+                    <span className="text-[10px] text-neutral-400">{count} item{count !== 1 ? 's' : ''}</span>
+                  </button>
+                </div>
               );
             })}
 
-            {ungroupedShortcuts.map((shortcut) => (
-              <WebsiteTile
-                key={shortcut.id}
-                shortcut={shortcut}
-                onEdit={(s) => { setEditingShortcut(s); setShowAddDialog(true); }}
-                onDelete={handleDeleteShortcut}
-              />
-            ))}
+            {sortedUngroupedShortcuts.map((shortcut) => {
+              const over = isDragOver('shortcut', shortcut.id);
+              const isThisDragging = dragItem?.type === 'shortcut' && dragItem.id === shortcut.id;
+              return (
+                <div
+                  key={shortcut.id}
+                  draggable={!isDragging || isThisDragging}
+                  onDragStart={(e) => handleDragStart(e, 'shortcut', shortcut.id, null)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, 'shortcut', shortcut.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, 'shortcut', shortcut.id)}
+                  className={`cursor-grab active:cursor-grabbing ${over ? 'rounded-xl border-2 border-neutral-900 bg-neutral-50' : ''}`}
+                >
+                  <WebsiteTile
+                    shortcut={shortcut}
+                    onEdit={(s) => { setEditingShortcut(s); setShowAddDialog(true); }}
+                    onDelete={handleDeleteShortcut}
+                    isDragging={isThisDragging}
+                  />
+                </div>
+              );
+            })}
 
             <button
               type="button"
@@ -735,6 +894,33 @@ const DesktopLauncher: React.FC<{
           }}
           onClose={() => setShowSettingsDialog(false)}
         />
+      )}
+
+      {createGroupFromDrag && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/20">
+          <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-5">
+            <h3 className="text-sm font-semibold text-neutral-900">Create group with these shortcuts?</h3>
+            <p className="mt-1.5 text-xs text-neutral-500">
+              "{createGroupFromDrag.shortcut1.name}" and "{createGroupFromDrag.shortcut2.name}" will be grouped together.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setCreateGroupFromDrag(null)}
+                className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCreateGroup}
+                className="rounded-lg border border-transparent bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+              >
+                Create Group
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

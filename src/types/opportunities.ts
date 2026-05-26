@@ -1044,6 +1044,7 @@ export interface DesktopShortcutInput {
   faviconSource?: string;
   notes?: string;
   groupId?: string | null;
+  sortOrder?: number;
 }
 
 export interface DesktopSettings {
