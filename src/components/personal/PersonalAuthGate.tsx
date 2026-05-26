@@ -6,6 +6,8 @@ import {
   verifyPersonalSecondFactor,
 } from '../../utils/personalAuth';
 
+const NAV_STATE_STORAGE_KEY = 'personalOS.navigationState';
+
 type PersonalAuthState = {
   success: boolean;
   mainPasswordPassed: boolean;
@@ -125,6 +127,11 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       }
 
       setLoginPassword('');
+      try {
+        window.sessionStorage.removeItem(NAV_STATE_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
       await refreshStatus();
     } finally {
       setIsSigningIn(false);
@@ -146,6 +153,11 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
 
       setPassword('');
       setRememberDevice(false);
+      try {
+        window.sessionStorage.removeItem(NAV_STATE_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
       await refreshStatus();
     } catch {
       setAuthError('Invalid password.');
