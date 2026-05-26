@@ -2072,6 +2072,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [desktopGroups, setDesktopGroups] = useState<DesktopGroup[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  const [loadedScopes, setLoadedScopes] = useState<Record<string, boolean>>({});
 
   const applyPayload = useCallback((payload: any) => {
     if (!payload) return;
@@ -2397,22 +2398,22 @@ export const useOpportunitiesData = (enabled = true) => {
         if (!mounted) return;
         applyPayload(corePayload);
 
-        // Stage 2: Load secondary scopes in parallel
+        // Stage 2: Load secondary scopes in parallel, process each as it resolves
         const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social', 'life', 'desktop'];
-        const secondaryResults = await Promise.allSettled(
-          secondaryScopes.map((s) => fetchScope(s))
-        );
-        if (!mounted) return;
-
-        for (const result of secondaryResults) {
-          if (result.status === 'fulfilled' && result.value) {
-            applyPayload(result.value);
-          } else if (result.status === 'rejected') {
+        const secondaryPromises = secondaryScopes.map(async (scope) => {
+          try {
+            const payload = await fetchScope(scope);
+            if (!mounted) return;
+            applyPayload(payload);
+            setLoadedScopes((prev) => ({ ...prev, [scope]: true }));
+          } catch (err) {
+            if (!mounted) return;
             if (import.meta.env.DEV) {
-              console.warn('[Opportunities] Scope load failed (non-critical, continuing):', result.reason);
+              console.warn(`[Opportunities] Scope ${scope} failed (non-critical, continuing):`, err);
             }
           }
-        }
+        });
+        await Promise.allSettled(secondaryPromises);
       } catch (apiError) {
         if (!mounted) return;
 
@@ -4976,6 +4977,7 @@ export const useOpportunitiesData = (enabled = true) => {
     resetToSeedData,
     loading,
     error,
+    loadedScopes,
     socialPlatforms,
     contentPillars,
     contentStrategies,

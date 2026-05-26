@@ -450,10 +450,13 @@ const DesktopLauncher: React.FC<{
   addDesktopGroup?: (input: DesktopGroupInput) => Promise<any>;
   updateDesktopGroup?: (id: string, input: Partial<DesktopGroupInput>) => Promise<any>;
   deleteDesktopGroup?: (id: string) => Promise<void>;
-}> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings, desktopGroups = [], addDesktopGroup, updateDesktopGroup, deleteDesktopGroup }) => {
+  isDesktopLoading?: boolean;
+  desktopLoadError?: boolean;
+}> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings, desktopGroups = [], addDesktopGroup, updateDesktopGroup, deleteDesktopGroup, isDesktopLoading, desktopLoadError }) => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
+  const [showBuiltInFallback, setShowBuiltInFallback] = useState(false);
   const [editingShortcut, setEditingShortcut] = useState<DesktopShortcut | null>(null);
   const [editingGroup, setEditingGroup] = useState<DesktopGroup | null>(null);
   const [activeGroup, setActiveGroup] = useState<DesktopGroup | null>(null);
@@ -743,6 +746,88 @@ const DesktopLauncher: React.FC<{
             onClose={() => { setShowCreateGroupDialog(false); setEditingGroup(null); }}
           />
         )}
+      </div>
+    );
+  }
+
+  // ── Loading State ──
+  if (!showBuiltInFallback && isDesktopLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
+        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
+          <div className="mx-auto flex h-11 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 bg-black text-white">
+                <span className="block h-1.5 w-1.5 rounded-[2px] bg-white" />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-tight text-neutral-900">Personal OS</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <TopBarButton icon={Bell} label="Notifications" />
+              <TopBarButton icon={Palette} label="Desktop Settings" />
+              <ProfileDropdown />
+            </div>
+          </div>
+        </header>
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6">
+          <div className="flex flex-1 flex-col items-center justify-center gap-6">
+            <div className="text-sm text-neutral-400">Loading your desktop...</div>
+            <div className="grid w-full max-w-5xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className="h-16 w-16 rounded-2xl border border-neutral-200 bg-neutral-50" />
+                  <div className="h-3 w-14 rounded border border-neutral-200 bg-neutral-50" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── Error Fallback ──
+  if (!showBuiltInFallback && desktopLoadError) {
+    return (
+      <div className="flex min-h-screen w-full flex-col overflow-x-hidden text-neutral-900" style={bgStyle}>
+        <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm">
+          <div className="mx-auto flex h-11 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-200 bg-black text-white">
+                <span className="block h-1.5 w-1.5 rounded-[2px] bg-white" />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-tight text-neutral-900">Personal OS</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <ProfileDropdown />
+            </div>
+          </div>
+        </header>
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="text-sm font-medium text-neutral-900">Desktop items could not be loaded.</div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBuiltInFallback(true)}
+                className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
+              >
+                Continue with built-in apps
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

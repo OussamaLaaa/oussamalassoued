@@ -723,6 +723,7 @@ const OpportunitiesLayout: React.FC<{
     desktopShortcuts, desktopSettings, desktopGroups,
     addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings,
     addDesktopGroup, updateDesktopGroup, deleteDesktopGroup,
+    loading, loadedScopes,
   } = data;
 
   const bigCompaniesCount = useMemo(
@@ -876,6 +877,8 @@ const OpportunitiesLayout: React.FC<{
         addDesktopGroup={addDesktopGroup}
         updateDesktopGroup={updateDesktopGroup}
         deleteDesktopGroup={deleteDesktopGroup}
+        isDesktopLoading={!loadedScopes?.desktop && (loading ?? true)}
+        desktopLoadError={!loadedScopes?.desktop && !loading}
       />
     );
   }

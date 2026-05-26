@@ -1129,6 +1129,8 @@ export interface OpportunitiesData {
   desktopShortcuts: DesktopShortcut[];
   desktopSettings: DesktopSettings | null;
   desktopGroups: DesktopGroup[];
+  loading: boolean;
+  loadedScopes: Record<string, boolean>;
 }
 
 export type StrategySection =
