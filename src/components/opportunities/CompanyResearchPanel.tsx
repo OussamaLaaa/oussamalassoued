@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type {
   CompanyInput,
   CompanyResearchConfidence,
@@ -8,15 +8,11 @@ import type {
   CompanyResearchResult,
   CompanyResearchSource,
   CompanyResearchSuggestionCompany,
-  CompanyContactMethodInput,
-  CompanyProblemProfileInput,
-  CompanyOutreachScriptInput,
 } from '../../types/opportunities';
 
 type ResearchFieldKey = keyof Pick<CompanyInput, 'name' | 'databaseType' | 'category' | 'industry' | 'country' | 'city' | 'website' | 'linkedin' | 'priority' | 'fitScore' | 'ethicalFit' | 'status' | 'nextAction' | 'notes'>;
 
 const panelClass = 'rounded-xl border border-neutral-200 bg-white';
-const inputClass = 'w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400';
 
 const FIELD_LABELS: Record<ResearchFieldKey, string> = {
   name: 'Company Name',
@@ -94,17 +90,6 @@ const buildSelectedPatch = (
   return patch;
 };
 
-const buildConflictFields = (currentCompany: Partial<CompanyInput> | undefined, suggestion: CompanyResearchSuggestionCompany) => {
-  const conflicts: ResearchFieldKey[] = [];
-  (Object.keys(FIELD_LABELS) as ResearchFieldKey[]).forEach((field) => {
-    const suggestionValue = mapSuggestionToPatch(field, suggestion);
-    const currentValue = getFieldValue(currentCompany, field);
-    if (!hasText(suggestionValue) || !hasText(currentValue)) return;
-    if (String(currentValue).trim() !== String(suggestionValue).trim()) conflicts.push(field);
-  });
-  return conflicts;
-};
-
 const formatFieldValue = (value: unknown) => {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'number') return String(value);
@@ -174,8 +159,6 @@ const CompanyResearchPanel: React.FC<{
     });
     setSelectedFields(nextSelected);
   }, [result, currentCompany]);
-
-  const conflictFields = useMemo(() => (result ? buildConflictFields(currentCompany, result.company) : []), [currentCompany, result]);
 
   const canRun = normalizedCompanyName.length > 0 && !loading;
 
@@ -294,7 +277,7 @@ const CompanyResearchPanel: React.FC<{
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">{title}</p>
             <h3 className="text-base font-semibold text-neutral-900">{normalizedCompanyName || 'Company research'}</h3>
-            <p className="text-xs text-neutral-500">Review the AI output before applying anything. Nothing is saved automatically.</p>
+            <p className="text-xs text-neutral-500">AI analyzed public web sources and prepared suggestions. Nothing is saved automatically.</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={handleResearch} disabled={!canRun} className="inline-flex items-center rounded-lg bg-black px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
@@ -333,6 +316,20 @@ const CompanyResearchPanel: React.FC<{
                 {result.confidence} confidence
               </span>
             </div>
+
+            <div className="mt-4 grid gap-2 text-xs text-neutral-600 sm:grid-cols-3">
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">Search provider: {result.researchMeta?.searchProvider ? String(result.researchMeta.searchProvider).replace(/^serper$/i, 'Serper') : 'Live AI web research is not configured'}</div>
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">Reasoning model: {result.researchMeta?.reasoningProvider ? String(result.researchMeta.reasoningProvider).replace(/^gemini$/i, 'Gemini') : 'Gemini'}</div>
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">Result count: {result.researchMeta?.resultCount ?? result.sources?.length ?? 0}</div>
+            </div>
+
+            {result.researchMeta?.searchProvider ? (
+              <p className="mt-3 text-xs text-neutral-500">Search provider: {String(result.researchMeta.searchProvider).replace(/^serper$/i, 'Serper')}. Reasoning model: {String(result.researchMeta.reasoningProvider || 'Gemini').replace(/^gemini$/i, 'Gemini')}.</p>
+            ) : null}
+
+            {result.researchMeta?.resultCount === 0 ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">AI research ran, but no reliable public sources were found.</div>
+            ) : null}
 
             {result.warnings?.length ? (
               <div className="mt-4 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">

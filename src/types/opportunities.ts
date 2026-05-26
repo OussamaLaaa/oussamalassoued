@@ -635,6 +635,13 @@ export interface CompanyResearchResult {
   sources: CompanyResearchSource[];
   warnings: string[];
   confidence: CompanyResearchConfidence;
+  researchMeta?: {
+    mode?: string | null;
+    searchProvider?: string | null;
+    reasoningProvider?: string | null;
+    queriesRun?: string[];
+    resultCount?: number;
+  };
 }
 
 export interface GeneratedDocument {

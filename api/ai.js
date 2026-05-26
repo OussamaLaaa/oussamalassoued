@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { encryptApiKey, decryptApiKey } from '../server/lib/aiKeyCrypto.js';
 import aiProviderRouter from '../server/lib/aiProviderRouter.js';
 import { requirePersonalAccess } from '../server/lib/personalAuth.js';
+import { searchWeb, normalizeHostname } from '../server/lib/webSearch.js';
 
 const { testProviderConnection, checkAIUseCaseStatus } = aiProviderRouter;
 
@@ -166,6 +167,98 @@ const normalizeCompanyResearchConfidence = (value) => {
   return 'low';
 };
 
+const normalizeSearchResult = (item, fallbackScore = 1) => ({
+  title: toCleanString(item?.title),
+  url: toCleanString(item?.url),
+  snippet: toCleanString(item?.snippet),
+  sourceProvider: toCleanString(item?.sourceProvider) || 'serper',
+  score: Number.isFinite(Number(item?.score)) ? Number(item.score) : fallbackScore,
+});
+
+const dedupeSearchResults = (results) => {
+  const seen = new Set();
+  const deduped = [];
+
+  for (const item of Array.isArray(results) ? results : []) {
+    const url = toCleanString(item?.url);
+    if (!url) continue;
+    const normalizedUrl = url.replace(/#.*$/, '').replace(/\/$/, '').toLowerCase();
+    if (seen.has(normalizedUrl)) continue;
+    seen.add(normalizedUrl);
+    deduped.push(item);
+  }
+
+  return deduped;
+};
+
+const normalizeCompanyTokens = (companyName) => toCleanString(companyName)
+  .toLowerCase()
+  .split(/[^a-z0-9]+/i)
+  .map((token) => token.trim())
+  .filter((token) => token.length > 2)
+  .slice(0, 4);
+
+const buildCompanyResearchQueries = ({ companyName, countryHint, cityHint, industryHint, websiteHint }) => {
+  const base = toCleanString(companyName);
+  const queries = [];
+  const hintText = [cityHint, countryHint, industryHint].map(toCleanString).filter(Boolean).join(' ');
+
+  const push = (query) => {
+    const cleaned = toCleanString(query);
+    if (!cleaned || queries.includes(cleaned)) return;
+    queries.push(cleaned);
+  };
+
+  if (!base) return queries;
+
+  push(hintText ? `"${base}" ${hintText}` : `"${base}"`);
+  push(hintText ? `${base} ${hintText} company` : `${base} company`);
+  push(`"${base}" official website`);
+  push(`"${base}" LinkedIn`);
+  push(`"${base}" Facebook`);
+  push(`"${base}" Instagram`);
+  push(`"${base}" contact`);
+  push(`"${base}" services`);
+
+  const websiteHost = normalizeHostname(websiteHint);
+  if (websiteHost) {
+    push(`site:${websiteHost} "${base}"`);
+  } else if (countryHint) {
+    const countryCode = toCleanString(countryHint).toLowerCase();
+    if (countryCode === 'tunisia' || countryCode === 'tn') {
+      push(`site:tn "${base}"`);
+    }
+  }
+
+  return queries.slice(0, 8);
+};
+
+const classifySourceUrl = (url) => {
+  const hostname = normalizeHostname(url);
+  if (!hostname) return { type: 'other', confidence: 'low' };
+  if (hostname.includes('linkedin.com')) return { type: 'linkedin', confidence: 'high' };
+  if (hostname.includes('facebook.com')) return { type: 'facebook', confidence: 'high' };
+  if (hostname.includes('instagram.com')) return { type: 'instagram', confidence: 'high' };
+  if (hostname.includes('x.com') || hostname.includes('twitter.com')) return { type: 'twitter', confidence: 'high' };
+  if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) return { type: 'youtube', confidence: 'high' };
+  return { type: 'website', confidence: 'medium' };
+};
+
+const detectOfficialWebsite = (results, companyName) => {
+  const tokens = normalizeCompanyTokens(companyName);
+  const tokenMatch = (hostname) => tokens.some((token) => hostname.includes(token.replace(/[^a-z0-9]/g, '')));
+
+  const candidates = (results || []).filter((item) => {
+    const hostname = normalizeHostname(item.url);
+    return hostname && !hostname.includes('linkedin.com') && !hostname.includes('facebook.com') && !hostname.includes('instagram.com') && !hostname.includes('x.com') && !hostname.includes('twitter.com') && !hostname.includes('youtube.com') && !hostname.includes('directory') && !hostname.includes('crunchbase.com');
+  });
+
+  const exact = candidates.find((item) => tokenMatch(normalizeHostname(item.url)));
+  return exact || candidates[0] || null;
+};
+
+const getSearchProviderLabel = (providerUsed) => (providerUsed === 'serper' ? 'Serper' : null);
+
 const normalizeCompanyResearchResult = (raw) => {
   const safe = raw && typeof raw === 'object' ? raw : {};
   const company = safe.company && typeof safe.company === 'object' ? safe.company : {};
@@ -300,27 +393,25 @@ const normalizeCompanyResearchResult = (raw) => {
   };
 };
 
-const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, industryHint, websiteHint, language }) => [
-  'You are researching a company using only public business information.',
-  'Do not invent facts. If uncertain, use null and low confidence.',
-  'Prefer official websites and verified public profiles when available.',
-  'Do not claim you searched the live web if you did not.',
-  'If live web search is unavailable, say so in warnings and keep results conservative.',
-  'Avoid personal emails unless they are clearly public business contact details.',
-  'Respect Islamic and ethical principles. Avoid manipulative wording.',
+const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, industryHint, websiteHint, language, searchResults, queriesRun, searchProvider, reasoningProvider, resultCount, detectedLinks }) => [
+  'You are a Company Research Analyst for a CRM.',
+  'Your job is to read live public web search results and turn them into cautious CRM enrichment suggestions.',
+  'Use only the provided web results and user hints for factual fields.',
+  'Do not invent facts. If a field is not supported by sources, return null.',
+  'If sources are weak, confidence must be low.',
+  'If multiple companies may match, add a warning and choose the best fit based on the hints.',
+  'Do not invent websites, social links, phone numbers, or emails.',
+  'Extract contact methods only if they are public and supported by sources.',
+  'Respect Islamic and ethical principles. Avoid manipulative sales language.',
   'Return strict JSON only. No markdown fences. No commentary.',
-  'The JSON shape must be:',
-  '{"company":{...},"contactMethods":[...],"problemProfile":{...}|null,"outreachScript":{...}|null,"sources":[...],"warnings":[...],"confidence":"low|medium|high"}',
-  'Required company fields: name, legalName, description, databaseType, category, industry, country, city, website, linkedin, facebook, instagram, twitter, youtube, phone, email, priority, fitScore, ethicalFit, status, nextAction, notes.',
-  'Allowed databaseType values: big_company, sme, freelance, other.',
-  'Allowed priority values: high, medium, low.',
-  'Allowed ethicalFit values: good, needs_review, avoid.',
-  'Allowed confidence values: low, medium, high.',
-  'If multiple companies match, choose the best match and add a warning.',
-  'For company type, infer one of: big_company, sme, freelance, other.',
-  'For fitScore, use an integer from 0 to 10.',
-  'For contactMethods, only include public company contact methods and include sourceUrl when possible.',
-  'For problemProfile and outreachScript, keep them concise, professional, and reviewable.',
+  'Use this exact shape:',
+  '{"company":{"name":null,"legalName":null,"description":null,"databaseType":null,"category":null,"industry":null,"country":null,"city":null,"website":null,"linkedin":null,"facebook":null,"instagram":null,"twitter":null,"youtube":null,"phone":null,"email":null,"priority":null,"fitScore":null,"ethicalFit":null,"status":null,"nextAction":null,"notes":null},"contactMethods":[{"type":null,"label":null,"value":null,"isPrimary":false,"notes":null,"sourceUrl":null,"confidence":"low"}],"problemProfile":{"problemTitle":null,"problemDescription":null,"currentSituation":null,"businessImpact":null,"proposedSolution":null,"serviceAngle":null,"valueProposition":null,"urgency":null,"confidence":null,"status":"draft","notes":null},"outreachScript":{"name":null,"channel":null,"language":null,"audience":null,"goal":null,"hook":null,"messageBody":null,"callScript":null,"objectionHandling":null,"followUpMessage":null,"status":"draft","isActive":true,"notes":null},"sources":[{"title":null,"url":null,"usedFor":null,"confidence":"low"}],"warnings":[],"confidence":"low","researchMeta":{"mode":"serper_plus_gemini","searchProvider":"serper","reasoningProvider":"gemini","queriesRun":[],"resultCount":0}}',
+  'Allowed company.databaseType values: big_company, sme, freelance, other.',
+  'Allowed company.priority values: high, medium, low.',
+  'Allowed company.ethicalFit values: good, needs_review, avoid.',
+  'Set company.fitScore to an integer from 0 to 10 when supported; otherwise null.',
+  'For contacts, keep sourceUrl and confidence when possible.',
+  'For sources, include only public results from the supplied list.',
   '',
   `Language: ${language || 'auto'}`,
   `Company name: ${companyName}`,
@@ -328,6 +419,12 @@ const buildCompanyResearchPrompt = ({ companyName, countryHint, cityHint, indust
   `City hint: ${cityHint || 'none'}`,
   `Industry hint: ${industryHint || 'none'}`,
   `Website hint: ${websiteHint || 'none'}`,
+  `Search provider: ${searchProvider || 'none'}`,
+  `Reasoning provider: ${reasoningProvider || 'gemini'}`,
+  `Result count: ${resultCount || 0}`,
+  `Queries run: ${JSON.stringify(queriesRun || [])}`,
+  `Detected official/social links: ${JSON.stringify(detectedLinks || [], null, 2)}`,
+  `Search results: ${JSON.stringify(Array.isArray(searchResults) ? searchResults : [], null, 2)}`,
 ].join('\n');
 
 const handleCompanyResearchAction = async (req, res) => {
@@ -364,6 +461,42 @@ const handleCompanyResearchAction = async (req, res) => {
     return toSafeJson(res, 503, { success: false, error: 'AI provider is not configured for company research.' });
   }
 
+  const queriesRun = buildCompanyResearchQueries({ companyName, countryHint, cityHint, industryHint, websiteHint });
+  const searchProviderWarning = [];
+  let providerUsed = null;
+  const collected = [];
+
+  if (!process.env.SERPER_API_KEY) {
+    searchProviderWarning.push('Live AI web research is not configured.');
+  } else {
+    for (const query of queriesRun) {
+      const search = await searchWeb(query, { maxResults: 10 });
+      if (search?.warning) searchProviderWarning.push(search.warning);
+      if (search?.providerUsed) providerUsed = search.providerUsed;
+      for (const item of search?.results || []) {
+        collected.push(normalizeSearchResult(item, collected.length + 1));
+      }
+    }
+  }
+
+  const searchResults = dedupeSearchResults(collected);
+  const resultCount = searchResults.length;
+  const officialWebsite = detectOfficialWebsite(searchResults, companyName);
+  const socialLinks = searchResults.filter((item) => {
+    const kind = classifySourceUrl(item.url);
+    return kind.type === 'linkedin' || kind.type === 'facebook' || kind.type === 'instagram' || kind.type === 'twitter' || kind.type === 'youtube';
+  }).slice(0, 6);
+
+  const detectedLinks = [];
+  if (officialWebsite?.url) detectedLinks.push({ type: 'official_website', url: officialWebsite.url, title: officialWebsite.title || null });
+  for (const item of socialLinks) {
+    const kind = classifySourceUrl(item.url);
+    detectedLinks.push({ type: kind.type, url: item.url, title: item.title || null });
+  }
+
+  const searchProviderLabel = getSearchProviderLabel(providerUsed);
+  const reasoningProviderLabel = 'Gemini';
+
   const prompt = buildCompanyResearchPrompt({
     companyName,
     countryHint,
@@ -371,6 +504,12 @@ const handleCompanyResearchAction = async (req, res) => {
     industryHint,
     websiteHint,
     language,
+    searchResults,
+    queriesRun,
+    searchProvider: searchProviderLabel,
+    reasoningProvider: reasoningProviderLabel,
+    resultCount,
+    detectedLinks,
   });
 
   try {
@@ -391,13 +530,36 @@ const handleCompanyResearchAction = async (req, res) => {
     }
 
     const result = normalizeCompanyResearchResult(parsed);
-    const warnings = [...result.warnings, 'Live web search is not configured. Results may be incomplete.'];
+    const warnings = [...new Set([
+      ...result.warnings,
+      ...searchProviderWarning,
+      !process.env.SERPER_API_KEY ? 'Live AI web research is not configured.' : null,
+    ].filter(Boolean))];
+
+    const searchProvider = providerUsed ? searchProviderLabel : null;
+    const confidence = resultCount === 0 || warnings.some((warning) => /not configured|failed|incomplete|no reliable public sources/i.test(warning))
+      ? 'low'
+      : result.confidence;
 
     return toSafeJson(res, 200, {
       success: true,
       result: {
         ...result,
+        sources: dedupeSearchResults(searchResults).map((item) => ({
+          title: item.title || item.url || 'Source',
+          url: item.url,
+          usedFor: item.snippet || 'Public web research source',
+          confidence: classifySourceUrl(item.url).confidence,
+        })),
         warnings,
+        confidence,
+        researchMeta: {
+          mode: process.env.SERPER_API_KEY ? 'serper_plus_gemini' : 'ai_only_fallback',
+          searchProvider,
+          reasoningProvider: reasoningProviderLabel,
+          queriesRun,
+          resultCount,
+        },
       },
       ...(debugRequested ? { debug: { sourceUseCase: routing.sourceUseCase, rawResponse } } : {}),
     });
