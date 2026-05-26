@@ -4,6 +4,7 @@ import type {
   CompanyContactMethod, CompanyContactMethodInput,
   CompanyProblemProfile, CompanyProblemProfileInput,
   CompanyOutreachScript, CompanyOutreachScriptInput,
+  PersonInput, MessageInput, DealInput,
 } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -11,6 +12,14 @@ import StatCard from '../ui/StatCard';
 import EmptyState from '../ui/EmptyState';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
+import OpportunityModal from './OpportunityModal';
+import Modal from '../ui/Modal';
+import AddPersonForm from './AddPersonForm';
+import LogMessageForm from './LogMessageForm';
+import AddDealForm from './AddDealForm';
+import CompanyContactMethodForm from './CompanyContactMethodForm';
+import CompanyProblemProfileForm from './CompanyProblemProfileForm';
+import CompanyOutreachScriptForm from './CompanyOutreachScriptForm';
 
 interface Props {
   companyId: string;
@@ -33,14 +42,14 @@ interface Props {
   addCompanyOutreachScript: (input: CompanyOutreachScriptInput) => Promise<CompanyOutreachScript>;
   updateCompanyOutreachScript: (id: string, input: Partial<CompanyOutreachScriptInput>) => Promise<CompanyOutreachScript>;
   deleteCompanyOutreachScript: (id: string) => Promise<void>;
-  addPerson: (input: any) => Promise<Person>;
-  updatePerson: (id: string, input: any) => Promise<Person>;
+  addPerson: (input: PersonInput) => Promise<Person>;
+  updatePerson: (id: string, input: Partial<PersonInput>) => Promise<Person>;
   deletePerson: (id: string) => Promise<void>;
-  addMessage: (input: any) => Promise<OutreachMessage>;
-  updateMessage: (id: string, input: any) => Promise<OutreachMessage>;
+  addMessage: (input: MessageInput) => Promise<OutreachMessage>;
+  updateMessage: (id: string, input: Partial<MessageInput>) => Promise<OutreachMessage>;
   deleteMessage: (id: string) => Promise<void>;
-  addDeal: (input: any) => Promise<Deal>;
-  updateDeal: (id: string, input: any) => Promise<Deal>;
+  addDeal: (input: DealInput) => Promise<Deal>;
+  updateDeal: (id: string, input: Partial<DealInput>) => Promise<Deal>;
   deleteDeal: (id: string) => Promise<void>;
   updateCompany: (id: string, input: any) => Promise<Company>;
   deleteCompany: (id: string) => Promise<void>;
@@ -88,8 +97,6 @@ const CHANNEL_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
-const NOTABLE_VALUE = (v: any) => v ?? '—';
-
 const CompanyWorkspace: React.FC<Props> = ({
   companyId, companies, people, messages, deals,
   companyContactMethods, companyProblemProfiles, companyOutreachScripts,
@@ -105,6 +112,28 @@ const CompanyWorkspace: React.FC<Props> = ({
   const [tab, setTab] = useState<WorkspaceTab>('overview');
   const [notesDraft, setNotesDraft] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  // Modal state
+  const [showPersonForm, setShowPersonForm] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+
+  const [showMessageForm, setShowMessageForm] = useState(false);
+  const [messagePersonId, setMessagePersonId] = useState<string | undefined>(undefined);
+
+  const [showDealForm, setShowDealForm] = useState(false);
+
+  const [showContactMethodForm, setShowContactMethodForm] = useState(false);
+  const [editingContactMethod, setEditingContactMethod] = useState<CompanyContactMethod | null>(null);
+
+  const [showProblemProfileForm, setShowProblemProfileForm] = useState(false);
+  const [editingProblemProfile, setEditingProblemProfile] = useState<CompanyProblemProfile | null>(null);
+
+  const [showOutreachScriptForm, setShowOutreachScriptForm] = useState(false);
+  const [editingOutreachScript, setEditingOutreachScript] = useState<CompanyOutreachScript | null>(null);
+
+  const [formSaving, setFormSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const company = companies.find((c) => c.id === companyId);
 
@@ -117,25 +146,67 @@ const CompanyWorkspace: React.FC<Props> = ({
     );
   }
 
-  // Derived data
   const companyPeople = people.filter((p) => p.companyId === company.id);
   const companyMessages = messages.filter((m) => m.companyId === company.id);
   const companyDeals = deals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
 
+  const normalizeDatabaseType = (dbType?: string): string => {
+    if (!dbType) return '';
+    const val = dbType.toLowerCase().replace(/\s+/g, '_');
+    if (val.includes('big') || val === 'big_company') return 'big_company';
+    if (val.includes('sme') || val === 'sme') return 'sme';
+    if (val.includes('freelance') || val === 'freelance') return 'freelance';
+    return val;
+  };
+
+  const ethicalFitColor = (ethicalFit?: string) => {
+    if (ethicalFit === 'good') return 'success';
+    if (ethicalFit === 'neutral') return 'neutral';
+    if (ethicalFit === 'needs_review') return 'warning';
+    if (ethicalFit === 'avoid') return 'danger';
+    return 'neutral';
+  };
+
   const handleCopyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // silently fail
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  };
+
+  const wrapSave = async <T,>(fn: () => Promise<T>) => {
+    setFormSaving(true);
+    setFormError(null);
+    try {
+      const result = await fn();
+      return result;
+    } catch (err: any) {
+      setFormError(err?.message || 'Save failed. Please try again.');
+      throw err;
+    } finally {
+      setFormSaving(false);
     }
   };
 
   const handleSaveNotes = async () => {
     if (!company) return;
     setNotesSaving(true);
+    setNotesSaved(false);
     try {
       await updateCompany(company.id, { notes: notesDraft });
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2000);
+    } catch {
+      setFormError('Unable to save notes.');
     } finally {
       setNotesSaving(false);
     }
@@ -154,14 +225,36 @@ const CompanyWorkspace: React.FC<Props> = ({
     }
   };
 
-  const handleEditContactMethod = async (method: CompanyContactMethod) => {
-    const label = window.prompt('Label:', method.label || '');
-    if (label === null) return;
-    const value = window.prompt('Value:', method.value || '');
-    if (value === null) return;
-    const type = window.prompt('Type (email/phone/linkedin/whatsapp/twitter/other):', method.type || 'other');
-    if (type === null) return;
-    await updateCompanyContactMethod(method.id, { companyId: method.companyId, label, value, type, isPrimary: method.isPrimary });
+  const handleDeleteAndBack = async (id: string) => {
+    const ok = window.confirm(`Delete "${company.name}"? This cannot be undone.`);
+    if (!ok) return;
+    await deleteCompany(id);
+    onBack();
+  };
+
+  // ── Contact Method Handlers ──
+  const openAddContactMethod = () => {
+    setEditingContactMethod(null);
+    setFormError(null);
+    setShowContactMethodForm(true);
+  };
+
+  const openEditContactMethod = (method: CompanyContactMethod) => {
+    setEditingContactMethod(method);
+    setFormError(null);
+    setShowContactMethodForm(true);
+  };
+
+  const handleSaveContactMethod = async (data: CompanyContactMethodInput) => {
+    await wrapSave(async () => {
+      if (editingContactMethod) {
+        await updateCompanyContactMethod(editingContactMethod.id, data);
+      } else {
+        await addCompanyContactMethod(data);
+      }
+    });
+    setShowContactMethodForm(false);
+    setEditingContactMethod(null);
   };
 
   const handleDeleteContactMethod = async (id: string) => {
@@ -170,47 +263,66 @@ const CompanyWorkspace: React.FC<Props> = ({
     await deleteCompanyContactMethod(id);
   };
 
-  const handleAddContactMethod = async () => {
-    const type = window.prompt('Type (email/phone/linkedin/whatsapp/twitter/other):', 'email');
-    if (!type) return;
-    const label = window.prompt('Label (e.g. Work Email):');
-    if (label === null) return;
-    const value = window.prompt('Value:');
-    if (!value) return;
-    await addCompanyContactMethod({ companyId: company.id, type, label: label || undefined, value, isPrimary: false });
+  // ── Problem Profile Handlers ──
+  const openAddProblemProfile = () => {
+    setEditingProblemProfile(null);
+    setFormError(null);
+    setShowProblemProfileForm(true);
   };
 
-  const handleAddProblemProfile = async () => {
-    const title = window.prompt('Problem title:');
-    if (!title) return;
-    const desc = window.prompt('Problem description:');
-    if (desc === null) return;
-    await addCompanyProblemProfile({ companyId: company.id, problemTitle: title, problemDescription: desc || undefined });
+  const openEditProblemProfile = (profile: CompanyProblemProfile) => {
+    setEditingProblemProfile(profile);
+    setFormError(null);
+    setShowProblemProfileForm(true);
   };
 
-  const handleEditProblemProfile = async (profile: CompanyProblemProfile) => {
-    const title = window.prompt('Problem title:', profile.problemTitle || '');
-    if (!title) return;
-    const desc = window.prompt('Problem description:', profile.problemDescription || '');
-    if (desc === null) return;
-    await updateCompanyProblemProfile(profile.id, {
-      companyId: profile.companyId,
-      problemTitle: title,
-      problemDescription: desc || undefined,
-      urgency: profile.urgency,
-      confidence: profile.confidence,
-      status: profile.status,
+  const handleSaveProblemProfile = async (data: CompanyProblemProfileInput) => {
+    await wrapSave(async () => {
+      if (editingProblemProfile) {
+        await updateCompanyProblemProfile(editingProblemProfile.id, data);
+      } else {
+        await addCompanyProblemProfile(data);
+      }
     });
+    setShowProblemProfileForm(false);
+    setEditingProblemProfile(null);
   };
 
-  const handleAddOutreachScript = async () => {
-    const name = window.prompt('Script name:');
-    if (!name) return;
-    await addCompanyOutreachScript({ companyId: company.id, name });
+  const handleDeleteProblemProfile = async (id: string) => {
+    const ok = window.confirm('Delete this problem profile?');
+    if (!ok) return;
+    await deleteCompanyProblemProfile(id);
   };
 
-  const handleCopyScript = async (field: string | undefined) => {
-    if (field) await handleCopyToClipboard(field);
+  // ── Outreach Script Handlers ──
+  const openAddOutreachScript = () => {
+    setEditingOutreachScript(null);
+    setFormError(null);
+    setShowOutreachScriptForm(true);
+  };
+
+  const openEditOutreachScript = (script: CompanyOutreachScript) => {
+    setEditingOutreachScript(script);
+    setFormError(null);
+    setShowOutreachScriptForm(true);
+  };
+
+  const handleSaveOutreachScript = async (data: CompanyOutreachScriptInput) => {
+    await wrapSave(async () => {
+      if (editingOutreachScript) {
+        await updateCompanyOutreachScript(editingOutreachScript.id, data);
+      } else {
+        await addCompanyOutreachScript(data);
+      }
+    });
+    setShowOutreachScriptForm(false);
+    setEditingOutreachScript(null);
+  };
+
+  const handleDeleteOutreachScript = async (id: string) => {
+    const ok = window.confirm('Delete this script?');
+    if (!ok) return;
+    await deleteCompanyOutreachScript(id);
   };
 
   const handleMarkActive = async (script: CompanyOutreachScript) => {
@@ -220,16 +332,75 @@ const CompanyWorkspace: React.FC<Props> = ({
     });
   };
 
-  const handleAddPerson = () => {
-    addPerson({ companyId: company.id, fullName: '' });
+  // ── Person Handlers ──
+  const openAddPerson = () => {
+    setEditingPerson(null);
+    setFormError(null);
+    setShowPersonForm(true);
   };
 
-  const handleLogMessage = (personId?: string) => {
-    addMessage({ companyId: company.id, personId: personId || '', channel: 'Email', messageType: 'outreach' });
+  const openEditPerson = (person: Person) => {
+    setEditingPerson(person);
+    setFormError(null);
+    setShowPersonForm(true);
   };
 
-  const handleAddDeal = () => {
-    addDeal({ companyId: company.id, servicePackage: '' });
+  const handleSavePerson = async (data: PersonInput) => {
+    await wrapSave(async () => {
+      if (editingPerson) {
+        await updatePerson(editingPerson.id, data);
+      } else {
+        await addPerson(data);
+      }
+    });
+    setShowPersonForm(false);
+    setEditingPerson(null);
+  };
+
+  const handleDeletePerson = async (id: string) => {
+    const ok = window.confirm('Delete this person?');
+    if (!ok) return;
+    await deletePerson(id);
+  };
+
+  // ── Message Handlers ──
+  const openAddMessage = (personId?: string) => {
+    setMessagePersonId(personId);
+    setFormError(null);
+    setShowMessageForm(true);
+  };
+
+  const handleSaveMessage = async (data: MessageInput) => {
+    await wrapSave(async () => {
+      await addMessage(data);
+    });
+    setShowMessageForm(false);
+    setMessagePersonId(undefined);
+  };
+
+  const handleDeleteMessage = async (id: string) => {
+    const ok = window.confirm('Delete this message?');
+    if (!ok) return;
+    await deleteMessage(id);
+  };
+
+  // ── Deal Handlers ──
+  const openAddDeal = () => {
+    setFormError(null);
+    setShowDealForm(true);
+  };
+
+  const handleSaveDeal = async (data: DealInput) => {
+    await wrapSave(async () => {
+      await addDeal(data);
+    });
+    setShowDealForm(false);
+  };
+
+  const handleDeleteDeal = async (id: string) => {
+    const ok = window.confirm('Delete this deal?');
+    if (!ok) return;
+    await deleteDeal(id);
   };
 
   const tabContent = () => {
@@ -273,7 +444,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                 <div className="text-neutral-500">Fit Score</div>
                 <div className="text-neutral-900 font-medium">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</div>
                 <div className="text-neutral-500">Ethical Fit</div>
-                <div className="text-neutral-900"><Badge variant="neutral">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge></div>
+                <div className="text-neutral-900"><Badge variant={ethicalFitColor(company.ethicalFit) as any}>{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge></div>
                 <div className="text-neutral-500">Status</div>
                 <div className="text-neutral-900"><StatusBadge status={company.status} /></div>
                 <div className="text-neutral-500">Next Action</div>
@@ -295,7 +466,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={handleAddContactMethod}>Add Contact Method</Button>
+              <Button variant="primary" size="sm" onClick={openAddContactMethod}>Add Contact Method</Button>
             </div>
             {methods.length === 0 ? (
               <EmptyState
@@ -308,7 +479,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                   <div key={method.id} className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-neutral-900">{NOTABLE_VALUE(method.label)}</span>
+                        <span className="text-sm font-medium text-neutral-900">{method.label || method.type}</span>
                         <Badge variant="neutral">{CHANNEL_LABELS[method.type] || method.type}</Badge>
                         {method.isPrimary && <Badge variant="blue">Primary</Badge>}
                       </div>
@@ -319,7 +490,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                       {!method.isPrimary && (
                         <Button variant="ghost" size="sm" onClick={() => handleSetPrimaryContactMethod(method)} className="text-neutral-600">Set Primary</Button>
                       )}
-                      <Button variant="ghost" size="sm" onClick={() => handleEditContactMethod(method)} className="text-neutral-600">Edit</Button>
+                      <Button variant="ghost" size="sm" onClick={() => openEditContactMethod(method)} className="text-neutral-600">Edit</Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteContactMethod(method.id)} className="text-neutral-600">Delete</Button>
                     </div>
                   </div>
@@ -334,7 +505,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={handleAddPerson}>Add Person</Button>
+              <Button variant="primary" size="sm" onClick={openAddPerson}>Add Person</Button>
             </div>
             {companyPeople.length === 0 ? (
               <EmptyState
@@ -368,9 +539,9 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <td className="px-3 py-3 text-neutral-700">{person.nextFollowUpDate || '—'}</td>
                         <td className="px-3 py-3">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => updatePerson(person.id, person)} className="text-neutral-600">Edit</Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleLogMessage(person.id)} className="text-neutral-600">Message</Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this person?')) deletePerson(person.id); }} className="text-neutral-600">Delete</Button>
+                            <Button variant="ghost" size="sm" onClick={() => openEditPerson(person)} className="text-neutral-600">Edit</Button>
+                            <Button variant="ghost" size="sm" onClick={() => openAddMessage(person.id)} className="text-neutral-600">Message</Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeletePerson(person.id)} className="text-neutral-600">Delete</Button>
                           </div>
                         </td>
                       </tr>
@@ -388,7 +559,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={handleAddProblemProfile}>Add Problem Profile</Button>
+              <Button variant="primary" size="sm" onClick={openAddProblemProfile}>Add Problem Profile</Button>
             </div>
             {profiles.length === 0 ? (
               <EmptyState
@@ -408,7 +579,10 @@ const CompanyWorkspace: React.FC<Props> = ({
                           <StatusBadge status={profile.status} />
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => handleEditProblemProfile(profile)} className="text-neutral-600">Edit</Button>
+                      <div className="flex shrink-0 gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEditProblemProfile(profile)} className="text-neutral-600">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteProblemProfile(profile.id)} className="text-neutral-600">Delete</Button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -457,7 +631,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={handleAddOutreachScript}>Add Outreach Script</Button>
+              <Button variant="primary" size="sm" onClick={openAddOutreachScript}>Add Outreach Script</Button>
             </div>
             {scripts.length === 0 ? (
               <EmptyState
@@ -481,14 +655,8 @@ const CompanyWorkspace: React.FC<Props> = ({
                       </div>
                       <div className="flex shrink-0 gap-1">
                         <Button variant="ghost" size="sm" onClick={() => handleMarkActive(script)} className="text-neutral-600">{script.isActive ? 'Deactivate' : 'Activate'}</Button>
-                        <Button variant="ghost" size="sm" onClick={() => {
-                          const name = window.prompt('Name:', script.name);
-                          if (!name) return;
-                          const channel = window.prompt('Channel (email/phone/linkedin):', script.channel);
-                          if (!channel) return;
-                          updateCompanyOutreachScript(script.id, { companyId: script.companyId, name, channel });
-                        }} className="text-neutral-600">Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this script?')) deleteCompanyOutreachScript(script.id); }} className="text-neutral-600">Delete</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEditOutreachScript(script)} className="text-neutral-600">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteOutreachScript(script.id)} className="text-neutral-600">Delete</Button>
                       </div>
                     </div>
 
@@ -509,7 +677,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Message Body</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyScript(script.messageBody)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.messageBody!)} className="text-neutral-500 text-xs">Copy</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.messageBody}</p>
                         </div>
@@ -518,7 +686,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Call Script</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyScript(script.callScript)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.callScript!)} className="text-neutral-500 text-xs">Copy</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.callScript}</p>
                         </div>
@@ -533,7 +701,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <div>
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium text-neutral-500">Follow-up Message</p>
-                            <Button variant="ghost" size="sm" onClick={() => handleCopyScript(script.followUpMessage)} className="text-neutral-500 text-xs">Copy</Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleCopyToClipboard(script.followUpMessage!)} className="text-neutral-500 text-xs">Copy</Button>
                           </div>
                           <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.followUpMessage}</p>
                         </div>
@@ -558,7 +726,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={() => handleLogMessage()}>Log Message</Button>
+              <Button variant="primary" size="sm" onClick={() => openAddMessage()}>Log Message</Button>
             </div>
             {companyMessages.length === 0 ? (
               <EmptyState title="No messages logged for this company yet." description="Start logging outreach messages." />
@@ -591,8 +759,8 @@ const CompanyWorkspace: React.FC<Props> = ({
                           <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.summary || '—'}</td>
                           <td className="px-3 py-3">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => updateMessage(msg.id, msg)} className="text-neutral-600">Edit</Button>
-                              <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this message?')) deleteMessage(msg.id); }} className="text-neutral-600">Delete</Button>
+                              <Button variant="ghost" size="sm" onClick={() => { /* edit message via form */ }} className="text-neutral-600">Edit</Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)} className="text-neutral-600">Delete</Button>
                             </div>
                           </td>
                         </tr>
@@ -609,7 +777,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button variant="primary" size="sm" onClick={handleAddDeal}>Add Deal</Button>
+              <Button variant="primary" size="sm" onClick={openAddDeal}>Add Deal</Button>
             </div>
             {companyDeals.length === 0 ? (
               <EmptyState title="No deals linked to this company yet." description="Add a deal to track progress." />
@@ -638,8 +806,8 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <td className="px-3 py-3 text-neutral-700">{deal.nextAction || '—'}</td>
                         <td className="px-3 py-3">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => updateDeal(deal.id, deal)} className="text-neutral-600">Edit</Button>
-                            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('Delete this deal?')) deleteDeal(deal.id); }} className="text-neutral-600">Delete</Button>
+                            <Button variant="ghost" size="sm" onClick={() => { /* edit deal via form */ }} className="text-neutral-600">Edit</Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteDeal(deal.id)} className="text-neutral-600">Delete</Button>
                           </div>
                         </td>
                       </tr>
@@ -654,14 +822,18 @@ const CompanyWorkspace: React.FC<Props> = ({
       case 'notes':
         return (
           <div className="space-y-4">
+            {formError && (
+              <div className="rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+            )}
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <textarea
                 className="w-full min-h-[200px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none focus:ring-1 focus:ring-neutral-400"
                 value={notesDraft}
-                onChange={(e) => setNotesDraft(e.target.value)}
+                onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
                 placeholder="Write notes about this company..."
               />
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex items-center justify-end gap-3">
+                {notesSaved && <span className="text-xs text-emerald-600">Saved</span>}
                 <Button variant="primary" size="sm" onClick={handleSaveNotes} disabled={notesSaving}>
                   {notesSaving ? 'Saving...' : 'Save Notes'}
                 </Button>
@@ -673,35 +845,6 @@ const CompanyWorkspace: React.FC<Props> = ({
       default:
         return null;
     }
-  };
-
-  const stageLabel = (stage?: string) => {
-    if (!stage) return '—';
-    return stage.replace(/_/g, ' ');
-  };
-
-  const normalizeDatabaseType = (dbType?: string): string => {
-    if (!dbType) return '';
-    const val = dbType.toLowerCase().replace(/\s+/g, '_');
-    if (val.includes('big') || val === 'big_company') return 'big_company';
-    if (val.includes('sme') || val === 'sme') return 'sme';
-    if (val.includes('freelance') || val === 'freelance') return 'freelance';
-    return val;
-  };
-
-  const ethicalFitColor = (ethicalFit?: string) => {
-    if (ethicalFit === 'good') return 'success';
-    if (ethicalFit === 'neutral') return 'neutral';
-    if (ethicalFit === 'needs_review') return 'warning';
-    if (ethicalFit === 'avoid') return 'danger';
-    return 'neutral';
-  };
-
-  const handleDeleteAndBack = async (id: string) => {
-    const ok = window.confirm(`Delete "${company.name}"? This cannot be undone.`);
-    if (!ok) return;
-    await deleteCompany(id);
-    onBack();
   };
 
   return (
@@ -725,10 +868,10 @@ const CompanyWorkspace: React.FC<Props> = ({
         <div className="flex shrink-0 flex-wrap gap-2">
           <Button variant="primary" size="sm" onClick={() => onEditCompany(company)}>Edit Company</Button>
           <Button variant="secondary" size="sm" onClick={() => onAIScoreCompany(company)}>AI Score</Button>
-          <Button variant="secondary" size="sm" onClick={() => handleAddPerson()}>Add Person</Button>
-          <Button variant="secondary" size="sm" onClick={() => handleAddContactMethod()}>Add Contact</Button>
-          <Button variant="secondary" size="sm" onClick={() => handleAddProblemProfile()}>Add Problem</Button>
-          <Button variant="secondary" size="sm" onClick={() => handleAddOutreachScript()}>Add Script</Button>
+          <Button variant="secondary" size="sm" onClick={openAddPerson}>Add Person</Button>
+          <Button variant="secondary" size="sm" onClick={openAddContactMethod}>Add Contact</Button>
+          <Button variant="secondary" size="sm" onClick={openAddProblemProfile}>Add Problem</Button>
+          <Button variant="secondary" size="sm" onClick={openAddOutreachScript}>Add Script</Button>
           <Button variant="danger" size="sm" onClick={() => handleDeleteAndBack(company.id)}>Delete</Button>
         </div>
       </div>
@@ -765,6 +908,187 @@ const CompanyWorkspace: React.FC<Props> = ({
 
       {/* Tab Content */}
       {tabContent()}
+
+      {/* ── Modal: Contact Method Form ── */}
+      {showContactMethodForm && (
+        <OpportunityModal title={editingContactMethod ? 'Edit Contact Method' : 'Add Contact Method'} onClose={() => { setShowContactMethodForm(false); setEditingContactMethod(null); setFormError(null); }}>
+          <CompanyContactMethodForm
+            companyId={company.id}
+            onSubmit={handleSaveContactMethod}
+            onCancel={() => { setShowContactMethodForm(false); setEditingContactMethod(null); setFormError(null); }}
+            initialData={editingContactMethod ? {
+              companyId: editingContactMethod.companyId,
+              type: editingContactMethod.type,
+              label: editingContactMethod.label,
+              value: editingContactMethod.value,
+              isPrimary: editingContactMethod.isPrimary,
+              notes: editingContactMethod.notes,
+            } : undefined}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
+
+      {/* ── Modal: Problem Profile Form ── */}
+      {showProblemProfileForm && (
+        <OpportunityModal title={editingProblemProfile ? 'Edit Problem Profile' : 'Add Problem Profile'} onClose={() => { setShowProblemProfileForm(false); setEditingProblemProfile(null); setFormError(null); }}>
+          <CompanyProblemProfileForm
+            companyId={company.id}
+            onSubmit={handleSaveProblemProfile}
+            onCancel={() => { setShowProblemProfileForm(false); setEditingProblemProfile(null); setFormError(null); }}
+            initialData={editingProblemProfile ? {
+              companyId: editingProblemProfile.companyId,
+              problemTitle: editingProblemProfile.problemTitle,
+              problemDescription: editingProblemProfile.problemDescription,
+              currentSituation: editingProblemProfile.currentSituation,
+              businessImpact: editingProblemProfile.businessImpact,
+              proposedSolution: editingProblemProfile.proposedSolution,
+              serviceAngle: editingProblemProfile.serviceAngle,
+              valueProposition: editingProblemProfile.valueProposition,
+              urgency: editingProblemProfile.urgency,
+              confidence: editingProblemProfile.confidence,
+              status: editingProblemProfile.status,
+              notes: editingProblemProfile.notes,
+            } : undefined}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
+
+      {/* ── Modal: Outreach Script Form ── */}
+      {showOutreachScriptForm && (
+        <OpportunityModal title={editingOutreachScript ? 'Edit Outreach Script' : 'Add Outreach Script'} onClose={() => { setShowOutreachScriptForm(false); setEditingOutreachScript(null); setFormError(null); }}>
+          <CompanyOutreachScriptForm
+            companyId={company.id}
+            onSubmit={handleSaveOutreachScript}
+            onCancel={() => { setShowOutreachScriptForm(false); setEditingOutreachScript(null); setFormError(null); }}
+            initialData={editingOutreachScript ? {
+              companyId: editingOutreachScript.companyId,
+              name: editingOutreachScript.name,
+              channel: editingOutreachScript.channel,
+              language: editingOutreachScript.language,
+              audience: editingOutreachScript.audience,
+              goal: editingOutreachScript.goal,
+              hook: editingOutreachScript.hook,
+              messageBody: editingOutreachScript.messageBody,
+              callScript: editingOutreachScript.callScript,
+              objectionHandling: editingOutreachScript.objectionHandling,
+              followUpMessage: editingOutreachScript.followUpMessage,
+              status: editingOutreachScript.status,
+              isActive: editingOutreachScript.isActive,
+              notes: editingOutreachScript.notes,
+            } : undefined}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
+
+      {/* ── Modal: Person Form ── */}
+      {showPersonForm && (
+        <OpportunityModal title={editingPerson ? 'Edit Person' : 'Add Person'} onClose={() => { setShowPersonForm(false); setEditingPerson(null); setFormError(null); }}>
+          <AddPersonForm
+            companies={companies}
+            onSubmit={handleSavePerson}
+            onCancel={() => { setShowPersonForm(false); setEditingPerson(null); setFormError(null); }}
+            initialData={editingPerson ? {
+              companyId: editingPerson.companyId,
+              fullName: editingPerson.fullName,
+              role: editingPerson.role,
+              department: editingPerson.department,
+              seniority: editingPerson.seniority,
+              decisionPower: editingPerson.decisionPower,
+              influencePower: editingPerson.influencePower,
+              relevance: editingPerson.relevance,
+              linkedin: editingPerson.linkedin,
+              emailPublic: editingPerson.emailPublic,
+              contactChannel: editingPerson.contactChannel,
+              relationshipStatus: editingPerson.relationshipStatus,
+              nextFollowUpDate: editingPerson.nextFollowUpDate,
+              notes: editingPerson.notes,
+            } : {
+              companyId: company.id,
+              fullName: '',
+              role: '',
+              department: '',
+              seniority: '',
+              decisionPower: 'unknown',
+              influencePower: 'unknown',
+              relevance: 'medium',
+              linkedin: '',
+              emailPublic: '',
+              contactChannel: 'email',
+              relationshipStatus: '',
+              nextFollowUpDate: '',
+              notes: '',
+            }}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
+
+      {/* ── Modal: Message Form ── */}
+      {showMessageForm && (
+        <OpportunityModal title="Log Message" onClose={() => { setShowMessageForm(false); setMessagePersonId(undefined); setFormError(null); }}>
+          <LogMessageForm
+            companies={companies}
+            people={people}
+            onSubmit={handleSaveMessage}
+            onCancel={() => { setShowMessageForm(false); setMessagePersonId(undefined); setFormError(null); }}
+            initialData={{
+              companyId: company.id,
+              personId: messagePersonId || '',
+              channel: 'Email',
+              language: 'English',
+              messageType: 'outreach',
+              date: '',
+              summary: '',
+              nextFollowUpDate: '',
+              replyStatus: '',
+              notes: '',
+            }}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
+
+      {/* ── Modal: Deal Form ── */}
+      {showDealForm && (
+        <OpportunityModal title="Add Deal" onClose={() => { setShowDealForm(false); setFormError(null); }}>
+          <AddDealForm
+            companies={companies}
+            people={people}
+            onSubmit={handleSaveDeal}
+            onCancel={() => { setShowDealForm(false); setFormError(null); }}
+            initialData={{
+              companyId: company.id,
+              personId: '',
+              servicePackage: '',
+              stage: 'prospect',
+              probability: 0,
+              value: 0,
+              currency: 'USD',
+              problem: '',
+              proposedSolution: '',
+              nextAction: '',
+              nextActionDate: '',
+              notes: '',
+            }}
+          />
+          {formError && (
+            <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
+          )}
+        </OpportunityModal>
+      )}
     </div>
   );
 };
