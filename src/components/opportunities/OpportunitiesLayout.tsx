@@ -218,8 +218,7 @@ const readPersistedNavState = (): PersistedNavState => {
 };
 
 const resolveInitialApp = (): AppId => {
-  const next = readPersistedNavState().activeApp;
-  return next && VALID_APP_IDS.includes(next) ? next : 'desktop';
+  return 'desktop';
 };
 
 const resolveInitialTab = (): OpportunitiesTab => {
