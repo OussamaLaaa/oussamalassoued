@@ -144,6 +144,21 @@ const CompanyWorkspace: React.FC<Props> = ({
   const company = companies.find((c) => c.id === companyId);
 
   useEffect(() => {
+    if (!import.meta.env.DEV || !company) return;
+
+    const contactMethodsForCompany = companyContactMethods.filter((item) => String(item.companyId) === String(company.id));
+    const problemProfilesForCompany = companyProblemProfiles.filter((item) => String(item.companyId) === String(company.id));
+    const outreachScriptsForCompany = companyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
+
+    console.log('[CompanyWorkspace] companyId', companyId);
+    console.log('[CompanyWorkspace] contact methods total', companyContactMethods.length);
+    console.log('[CompanyWorkspace] contact methods for company', contactMethodsForCompany.length);
+    console.log('[CompanyWorkspace] first contact method', companyContactMethods[0] || null);
+    console.log('[CompanyWorkspace] problem profiles for company', problemProfilesForCompany.length);
+    console.log('[CompanyWorkspace] outreach scripts for company', outreachScriptsForCompany.length);
+  }, [company, companyId, companyContactMethods, companyProblemProfiles, companyOutreachScripts]);
+
+  useEffect(() => {
     if (!company) return;
 
     setNotesDraft(company.notes || '');
@@ -572,7 +587,7 @@ const CompanyWorkspace: React.FC<Props> = ({
         );
 
       case 'contact_methods': {
-        const methods = companyContactMethods.filter((m) => m.companyId === company.id);
+        const methods = companyContactMethods.filter((m) => String(m.companyId) === String(company.id));
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
@@ -665,7 +680,7 @@ const CompanyWorkspace: React.FC<Props> = ({
       }
 
       case 'problem': {
-        const profiles = companyProblemProfiles.filter((p) => p.companyId === company.id);
+        const profiles = companyProblemProfiles.filter((p) => String(p.companyId) === String(company.id));
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
@@ -737,7 +752,7 @@ const CompanyWorkspace: React.FC<Props> = ({
       }
 
       case 'outreach_script': {
-        const scripts = companyOutreachScripts.filter((s) => s.companyId === company.id);
+        const scripts = companyOutreachScripts.filter((s) => String(s.companyId) === String(company.id));
         return (
           <div className="space-y-4">
             <div className="flex justify-end">

@@ -1269,6 +1269,7 @@ const OPTIONAL_TABLES = new Set([
 
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
+  crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
   life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
   relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
   notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
@@ -1418,6 +1419,7 @@ export default async function handler(req, res) {
       // Build response with only the keys relevant to the current scope
       const scopeKeys = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
+        crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
         relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
         notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
@@ -1436,6 +1438,7 @@ export default async function handler(req, res) {
       if (scope === 'all') {
         responseKeys = [
           'companies', 'people', 'messages', 'deals', 'projects', 'message_templates',
+          'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts',
           'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items',
           'documents', 'document_templates', 'document_brand_settings', 'generated_documents',
           'invoices', 'invoice_items',

@@ -4,6 +4,7 @@ import { messageTemplates as staticMessageTemplates } from '../data/messageTempl
 import { isValidUuid } from '../utils/securityUtils';
 import {
   toNullableString, toNullableNumber, normalizeDatabaseType,
+  toIso,
   companyFromDb as mapCompanyRow, companyToDb as toCompanyDb,
   personFromDb as mapPersonRow, personToDb as toPersonDb,
   messageFromDb as mapMessageRow, messageToDb as toMessageDb,
@@ -1517,14 +1518,14 @@ const lifeWeeklyReviewToDb = (input: Partial<LifeWeeklyReviewInput>) => {
 
 const companyContactMethodFromDb = (row: any): CompanyContactMethod => ({
   id: String(row?.id ?? ''),
-  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  companyId: row?.company_id ?? row?.companyId ?? undefined,
   type: row?.type ?? 'other',
   label: row?.label ?? undefined,
   value: row?.value ?? undefined,
   isPrimary: row?.is_primary == null ? false : Boolean(row.is_primary),
   notes: row?.notes ?? undefined,
-  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
-  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
 });
 
 const companyContactMethodToDb = (input: Partial<CompanyContactMethodInput>) => {
@@ -1542,7 +1543,7 @@ const companyContactMethodToDb = (input: Partial<CompanyContactMethodInput>) => 
 
 const companyProblemProfileFromDb = (row: any): CompanyProblemProfile => ({
   id: String(row?.id ?? ''),
-  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  companyId: row?.company_id ?? row?.companyId ?? undefined,
   problemTitle: row?.problem_title ?? row?.problemTitle ?? undefined,
   problemDescription: row?.problem_description ?? row?.problemDescription ?? undefined,
   currentSituation: row?.current_situation ?? row?.currentSituation ?? undefined,
@@ -1554,8 +1555,8 @@ const companyProblemProfileFromDb = (row: any): CompanyProblemProfile => ({
   confidence: row?.confidence ?? 'medium',
   status: row?.status ?? 'draft',
   notes: row?.notes ?? undefined,
-  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
-  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
 });
 
 const companyProblemProfileToDb = (input: Partial<CompanyProblemProfileInput>) => {
@@ -1579,7 +1580,7 @@ const companyProblemProfileToDb = (input: Partial<CompanyProblemProfileInput>) =
 
 const companyOutreachScriptFromDb = (row: any): CompanyOutreachScript => ({
   id: String(row?.id ?? ''),
-  companyId: String(row?.company_id ?? row?.companyId ?? ''),
+  companyId: row?.company_id ?? row?.companyId ?? undefined,
   name: row?.name ?? 'Outreach Script',
   channel: row?.channel ?? 'email',
   language: row?.language ?? 'english',
@@ -1593,8 +1594,8 @@ const companyOutreachScriptFromDb = (row: any): CompanyOutreachScript => ({
   status: row?.status ?? 'draft',
   isActive: row?.is_active == null ? true : Boolean(row.is_active),
   notes: row?.notes ?? undefined,
-  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
-  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
 });
 
 const companyOutreachScriptToDb = (input: Partial<CompanyOutreachScriptInput>) => {
@@ -2394,12 +2395,12 @@ export const useOpportunitiesData = (enabled = true) => {
 
       try {
         // Stage 1: Load core data first
-        const corePayload = await fetchScope('core');
+        const crmPayload = await fetchScope('crm');
         if (!mounted) return;
-        applyPayload(corePayload);
+        applyPayload(crmPayload);
 
         // Stage 2: Load secondary scopes in parallel, process each as it resolves
-        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'projects', 'relationships', 'notes', 'ai', 'social', 'life', 'desktop'];
+        const secondaryScopes = ['tasks', 'finance', 'documents', 'strategy', 'relationships', 'notes', 'ai', 'social', 'life', 'desktop'];
         const secondaryPromises = secondaryScopes.map(async (scope) => {
           try {
             const payload = await fetchScope(scope);
