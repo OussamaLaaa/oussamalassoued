@@ -188,9 +188,9 @@ const CompanyWorkspace: React.FC<Props> = ({
     const outreachScriptsForCompany = safeCompanyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
 
     console.log('[CompanyWorkspace] companyId', companyId);
-    console.log('[CompanyWorkspace] contact methods total', companyContactMethods.length);
+    console.log('[CompanyWorkspace] contact methods total', safeCompanyContactMethods.length);
     console.log('[CompanyWorkspace] contact methods for company', contactMethodsForCompany.length);
-    console.log('[CompanyWorkspace] first contact method', companyContactMethods[0] || null);
+    console.log('[CompanyWorkspace] first contact method', safeCompanyContactMethods[0] || null);
     console.log('[CompanyWorkspace] problem profiles for company', problemProfilesForCompany.length);
     console.log('[CompanyWorkspace] outreach scripts for company', outreachScriptsForCompany.length);
   }, [company, companyId, safeCompanyContactMethods, safeCompanyProblemProfiles, safeCompanyOutreachScripts]);
@@ -237,7 +237,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   const companyMessages = safeMessages.filter((m) => m.companyId === company.id);
   const companyDeals = safeDeals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
-  const selectedPerson = selectedPersonId ? people.find((person) => person.id === selectedPersonId) || null : null;
+  const selectedPerson = selectedPersonId ? safePeople.find((person) => person.id === selectedPersonId) || null : null;
 
   const normalizeDatabaseType = (dbType?: string): string => {
     if (!dbType) return '';
@@ -1169,9 +1169,9 @@ const CompanyWorkspace: React.FC<Props> = ({
         <PersonWorkspace
           company={company}
           person={selectedPerson}
-          people={people}
-          messages={messages}
-          deals={deals}
+          people={safePeople}
+          messages={safeMessages}
+          deals={safeDeals}
           personContactMethods={safePersonContactMethods}
           autoOpenAddContactMethod={personWorkspaceActionPersonId === selectedPerson.id}
           onBack={() => { setSelectedPersonId(null); setPersonWorkspaceActionPersonId(null); setTab('people'); }}
