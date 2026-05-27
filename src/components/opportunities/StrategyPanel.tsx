@@ -90,8 +90,15 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   const [planProgressDraft, setPlanProgressDraft] = useState<Record<string, number>>({});
   const [planStatusDraft, setPlanStatusDraft] = useState<Record<string, StrategyStatus>>({});
 
+  const safeStrategyItems = strategyItems ?? [];
+  const safeStrategyGoals = strategyGoals ?? [];
+  const safeStrategyPlans = strategyPlans ?? [];
+  const safeStrategyTactics = strategyTactics ?? [];
+  const safeStrategyExperiments = strategyExperiments ?? [];
+  const safeStrategyDecisions = strategyDecisions ?? [];
+
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
-  const selectedGoal = selectedGoalId ? strategyGoals.find(g => g.id === selectedGoalId) ?? null : null;
+  const selectedGoal = selectedGoalId ? safeStrategyGoals.find(g => g.id === selectedGoalId) ?? null : null;
 
   const [goalForm, setGoalForm] = useState<StrategyGoalInput>(emptyGoalForm());
   const [planForm, setPlanForm] = useState<StrategyPlanInput>(emptyPlanForm());
@@ -108,26 +115,26 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
 
   const today = todayKey();
 
-  const starterVisible = strategyGoals.length === 0 && strategyPlans.length === 0;
+  const starterVisible = safeStrategyGoals.length === 0 && safeStrategyPlans.length === 0;
 
-  const activeGoalsCount = strategyGoals.filter((g) => g.status === 'active').length;
-  const activePlansCount = strategyPlans.filter((p) => p.status === 'active' || p.status === 'planned').length;
-  const runningExperimentsCount = strategyExperiments.filter((e) => e.status === 'active').length;
-  const decisionsToReviewCount = strategyDecisions.filter((d) => d.reviewDate && d.reviewDate.slice(0, 10) <= today).length;
+  const activeGoalsCount = safeStrategyGoals.filter((g) => g.status === 'active').length;
+  const activePlansCount = safeStrategyPlans.filter((p) => p.status === 'active' || p.status === 'planned').length;
+  const runningExperimentsCount = safeStrategyExperiments.filter((e) => e.status === 'active').length;
+  const decisionsToReviewCount = safeStrategyDecisions.filter((d) => d.reviewDate && d.reviewDate.slice(0, 10) <= today).length;
   const highPriorityItemsCount =
-    strategyGoals.filter((g) => g.priority === 'high').length +
-    strategyPlans.filter((p) => p.priority === 'high').length +
-    strategyTactics.filter((t) => t.priority === 'high').length +
-    strategyExperiments.filter((e) => e.priority === 'high').length +
-    strategyDecisions.filter((d) => d.priority === 'high').length;
+    safeStrategyGoals.filter((g) => g.priority === 'high').length +
+    safeStrategyPlans.filter((p) => p.priority === 'high').length +
+    safeStrategyTactics.filter((t) => t.priority === 'high').length +
+    safeStrategyExperiments.filter((e) => e.priority === 'high').length +
+    safeStrategyDecisions.filter((d) => d.priority === 'high').length;
   const averageProgress = React.useMemo(() => {
-    const values = [...strategyGoals, ...strategyPlans]
+    const values = [...safeStrategyGoals, ...safeStrategyPlans]
       .map((item) => Number(item.progress ?? 0))
       .filter((v) => Number.isFinite(v));
     return values.length === 0 ? 0 : Math.round(values.reduce((a, v) => a + v, 0) / values.length);
-  }, [strategyGoals, strategyPlans]);
-  const completedExperimentsCount = strategyExperiments.filter((e) => e.status === 'completed').length;
-  const failedExperimentsCount = strategyExperiments.filter((e) => e.status === 'failed').length;
+  }, [safeStrategyGoals, safeStrategyPlans]);
+  const completedExperimentsCount = safeStrategyExperiments.filter((e) => e.status === 'completed').length;
+  const failedExperimentsCount = safeStrategyExperiments.filter((e) => e.status === 'failed').length;
 
   const openModal = (state: ModalState) => {
     setFormError(null);
@@ -464,7 +471,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   };
 
   const renderEthicalFilter = () => {
-    const ethicalItems = strategyItems.filter((item) => item.section === 'ethical_filter');
+    const ethicalItems = safeStrategyItems.filter((item) => item.section === 'ethical_filter');
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-neutral-200 bg-white p-5">
@@ -509,9 +516,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   };
 
   const renderReview = () => {
-    const dueGoals = strategyGoals.filter((g) => g.targetDate && g.targetDate.slice(0, 10) <= today && g.status !== 'completed');
-    const dueDecisions = strategyDecisions.filter((d) => d.reviewDate && d.reviewDate.slice(0, 10) <= today);
-    const dueExperiments = strategyExperiments.filter((e) => e.endDate && e.endDate.slice(0, 10) <= today && e.status !== 'completed' && e.status !== 'failed');
+    const dueGoals = safeStrategyGoals.filter((g) => g.targetDate && g.targetDate.slice(0, 10) <= today && g.status !== 'completed');
+    const dueDecisions = safeStrategyDecisions.filter((d) => d.reviewDate && d.reviewDate.slice(0, 10) <= today);
+    const dueExperiments = safeStrategyExperiments.filter((e) => e.endDate && e.endDate.slice(0, 10) <= today && e.status !== 'completed' && e.status !== 'failed');
 
     return (
       <div className="space-y-4">
@@ -575,7 +582,6 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
           strategyExperiments={strategyExperiments}
           strategyDecisions={strategyDecisions}
           strategyItems={strategyItems}
-          strategyNotes={strategyNotes}
           projects={projects}
           companies={companies}
           onBack={() => setSelectedGoalId(null)}
@@ -619,12 +625,12 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
             </div>
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">High priority</div>
-              <div className="mt-2 text-2xl font-semibold text-neutral-900">{strategyGoals.filter((goal) => goal.priority === 'high').length}</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{safeStrategyGoals.filter((goal) => goal.priority === 'high').length}</div>
               <div className="mt-1 text-xs text-neutral-500">Goals only</div>
             </div>
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">With linked work</div>
-              <div className="mt-2 text-2xl font-semibold text-neutral-900">{strategyGoals.filter((goal) => Boolean(goal.linkedProjectId || goal.linkedCompanyId)).length}</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{safeStrategyGoals.filter((goal) => Boolean(goal.linkedProjectId || goal.linkedCompanyId)).length}</div>
               <div className="mt-1 text-xs text-neutral-500">Project or company</div>
             </div>
             <div className="rounded-xl border border-neutral-200 bg-white p-4">

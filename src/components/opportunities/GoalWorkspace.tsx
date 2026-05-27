@@ -7,8 +7,8 @@ import type {
   StrategyExperiment,
   StrategyExperimentInput,
   StrategyGoal,
+  StrategyGoalInput,
   StrategyItem,
-  StrategyNote,
   StrategyPlan,
   StrategyPlanInput,
   StrategyStatus,
@@ -107,14 +107,13 @@ const getStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'n
 };
 
 type Props = {
-  goal: StrategyGoal;
+  goal: StrategyGoal | null | undefined;
   strategyGoals: StrategyGoal[];
   strategyPlans: StrategyPlan[];
   strategyTactics: StrategyTactic[];
   strategyExperiments: StrategyExperiment[];
   strategyDecisions: StrategyDecision[];
   strategyItems: StrategyItem[];
-  strategyNotes: StrategyNote[];
   projects: Project[];
   companies: Company[];
   onBack: () => void;
@@ -142,7 +141,6 @@ const GoalWorkspace: React.FC<Props> = ({
   strategyExperiments,
   strategyDecisions,
   strategyItems,
-  strategyNotes,
   projects,
   companies,
   onBack,
@@ -170,17 +168,28 @@ const GoalWorkspace: React.FC<Props> = ({
   const [experimentForm, setExperimentForm] = useState<StrategyExperimentInput>(emptyExperimentForm());
   const [decisionForm, setDecisionForm] = useState<StrategyDecisionInput>(emptyDecisionForm());
 
+  const selectedGoal = goal ?? null;
+  const selectedGoalId = selectedGoal?.id ?? '';
+  const safePlans = strategyPlans ?? [];
+  const safeTactics = strategyTactics ?? [];
+  const safeExperiments = strategyExperiments ?? [];
+  const safeDecisions = strategyDecisions ?? [];
+  const safeItems = strategyItems ?? [];
+
   const today = new Date().toISOString().slice(0, 10);
 
-  const filteredPlans = useMemo(() => strategyPlans.filter((plan) => plan.linkedGoalId === goal.id), [strategyPlans, goal.id]);
-  const filteredTactics = useMemo(() => strategyTactics.filter((tactic) => tactic.linkedGoalId === goal.id), [strategyTactics, goal.id]);
-  const filteredExperiments = useMemo(() => strategyExperiments.filter((experiment) => experiment.linkedGoalId === goal.id), [strategyExperiments, goal.id]);
-  const filteredDecisions = useMemo(() => strategyDecisions.filter((decision) => decision.linkedGoalId === goal.id), [strategyDecisions, goal.id]);
-  const ethicalItems = useMemo(() => strategyItems.filter((item) => item.section === 'ethical_filter'), [strategyItems]);
-  const relevantNotes = useMemo(() => strategyNotes.filter((note) => note.section === 'strategy' || note.section === goal.category || note.section === goal.id), [goal.category, goal.id, strategyNotes]);
+  const filteredPlans = useMemo(() => safePlans.filter((plan) => plan.linkedGoalId === selectedGoalId), [safePlans, selectedGoalId]);
+  const filteredTactics = useMemo(() => safeTactics.filter((tactic) => tactic.linkedGoalId === selectedGoalId), [safeTactics, selectedGoalId]);
+  const filteredExperiments = useMemo(() => safeExperiments.filter((experiment) => experiment.linkedGoalId === selectedGoalId), [safeExperiments, selectedGoalId]);
+  const filteredDecisions = useMemo(() => safeDecisions.filter((decision) => decision.linkedGoalId === selectedGoalId), [safeDecisions, selectedGoalId]);
+  const ethicalItems = useMemo(() => safeItems.filter((item) => item.section === 'ethical_filter'), [safeItems]);
 
-  const linkedProject = projects.find((project) => project.id === goal.linkedProjectId);
-  const linkedCompany = companies.find((company) => company.id === goal.linkedCompanyId);
+  const linkedProject = projects.find((project) => project.id === selectedGoal?.linkedProjectId);
+  const linkedCompany = companies.find((company) => company.id === selectedGoal?.linkedCompanyId);
+
+  if (!selectedGoal) {
+    return <EmptyState title="Goal not found" description="Select a goal from Strategy to open its workspace." />;
+  }
 
   const decisionsDue = filteredDecisions.filter((decision) => decision.reviewDate && decision.reviewDate.slice(0, 10) <= today);
   const plansByLabel = {
@@ -207,9 +216,9 @@ const GoalWorkspace: React.FC<Props> = ({
         nextAction: plan.nextAction || '',
         targetDate: plan.targetDate ? plan.targetDate.slice(0, 10) : '',
         progress: plan.progress ?? 0,
-        linkedGoalId: plan.linkedGoalId || goal.id,
+        linkedGoalId: plan.linkedGoalId || selectedGoal.id,
         linkedProjectId: plan.linkedProjectId || '',
-      } : { ...emptyPlanForm(), linkedGoalId: goal.id });
+      } : { ...emptyPlanForm(), linkedGoalId: selectedGoal.id });
       setModalState(plan ? { type: 'plan', item: plan } : { type: 'plan' });
       return;
     }
@@ -225,10 +234,10 @@ const GoalWorkspace: React.FC<Props> = ({
         frequency: tactic.frequency || '',
         metric: tactic.metric || '',
         nextAction: tactic.nextAction || '',
-        linkedGoalId: tactic.linkedGoalId || goal.id,
+        linkedGoalId: tactic.linkedGoalId || selectedGoal.id,
         linkedPlanId: tactic.linkedPlanId || '',
         linkedProjectId: tactic.linkedProjectId || '',
-      } : { ...emptyTacticForm(), linkedGoalId: goal.id });
+      } : { ...emptyTacticForm(), linkedGoalId: selectedGoal.id });
       setModalState(tactic ? { type: 'tactic', item: tactic } : { type: 'tactic' });
       return;
     }
@@ -246,10 +255,10 @@ const GoalWorkspace: React.FC<Props> = ({
         priority: experiment.priority,
         startDate: experiment.startDate ? experiment.startDate.slice(0, 10) : '',
         endDate: experiment.endDate ? experiment.endDate.slice(0, 10) : '',
-        linkedGoalId: experiment.linkedGoalId || goal.id,
+        linkedGoalId: experiment.linkedGoalId || selectedGoal.id,
         linkedPlanId: experiment.linkedPlanId || '',
         linkedProjectId: experiment.linkedProjectId || '',
-      } : { ...emptyExperimentForm(), linkedGoalId: goal.id });
+      } : { ...emptyExperimentForm(), linkedGoalId: selectedGoal.id });
       setModalState(experiment ? { type: 'experiment', item: experiment } : { type: 'experiment' });
       return;
     }
@@ -264,10 +273,10 @@ const GoalWorkspace: React.FC<Props> = ({
       reviewDate: decision.reviewDate ? decision.reviewDate.slice(0, 10) : '',
       status: decision.status,
       priority: decision.priority,
-      linkedGoalId: decision.linkedGoalId || goal.id,
+      linkedGoalId: decision.linkedGoalId || selectedGoal.id,
       linkedPlanId: decision.linkedPlanId || '',
       linkedProjectId: decision.linkedProjectId || '',
-    } : { ...emptyDecisionForm(), linkedGoalId: goal.id });
+    } : { ...emptyDecisionForm(), linkedGoalId: selectedGoal.id });
     setModalState(decision ? { type: 'decision', item: decision } : { type: 'decision' });
   };
 
@@ -287,7 +296,7 @@ const GoalWorkspace: React.FC<Props> = ({
     setIsBusy(true);
     setFormError(null);
     try {
-      const payload = { ...planForm, name: planForm.name.trim(), linkedGoalId: planForm.linkedGoalId || goal.id };
+      const payload = { ...planForm, name: planForm.name.trim(), linkedGoalId: planForm.linkedGoalId || selectedGoal.id };
       if (modalState?.type === 'plan' && modalState.item) {
         await onUpdateStrategyPlan(modalState.item.id, payload);
       } else {
@@ -311,7 +320,7 @@ const GoalWorkspace: React.FC<Props> = ({
     setIsBusy(true);
     setFormError(null);
     try {
-      const payload = { ...tacticForm, title: tacticForm.title.trim(), linkedGoalId: tacticForm.linkedGoalId || goal.id };
+      const payload = { ...tacticForm, title: tacticForm.title.trim(), linkedGoalId: tacticForm.linkedGoalId || selectedGoal.id };
       if (modalState?.type === 'tactic' && modalState.item) {
         await onUpdateStrategyTactic(modalState.item.id, payload);
       } else {
@@ -335,7 +344,7 @@ const GoalWorkspace: React.FC<Props> = ({
     setIsBusy(true);
     setFormError(null);
     try {
-      const payload = { ...experimentForm, title: experimentForm.title.trim(), linkedGoalId: experimentForm.linkedGoalId || goal.id };
+      const payload = { ...experimentForm, title: experimentForm.title.trim(), linkedGoalId: experimentForm.linkedGoalId || selectedGoal.id };
       if (modalState?.type === 'experiment' && modalState.item) {
         await onUpdateStrategyExperiment(modalState.item.id, payload);
       } else {
@@ -359,7 +368,7 @@ const GoalWorkspace: React.FC<Props> = ({
     setIsBusy(true);
     setFormError(null);
     try {
-      const payload = { ...decisionForm, title: decisionForm.title.trim(), linkedGoalId: decisionForm.linkedGoalId || goal.id };
+      const payload = { ...decisionForm, title: decisionForm.title.trim(), linkedGoalId: decisionForm.linkedGoalId || selectedGoal.id };
       if (modalState?.type === 'decision' && modalState.item) {
         await onUpdateStrategyDecision(modalState.item.id, payload);
       } else {
@@ -723,27 +732,13 @@ const GoalWorkspace: React.FC<Props> = ({
       <div className="rounded-xl border border-neutral-200 bg-white p-5">
         <h4 className="text-sm font-semibold text-neutral-900">Working Notes</h4>
         <div className="mt-3 space-y-2 text-sm text-neutral-600">
-          <p><span className="text-neutral-400">Current focus:</span> {goal.title}</p>
-          <p><span className="text-neutral-400">Success metric:</span> {goal.successMetric || '—'}</p>
+          <p><span className="text-neutral-400">Current focus:</span> {selectedGoal.title}</p>
+          <p><span className="text-neutral-400">Success metric:</span> {selectedGoal.successMetric || '—'}</p>
           <p><span className="text-neutral-400">Linked work:</span> {linkedProject?.name || linkedCompany?.name || '—'}</p>
         </div>
       </div>
 
-      {relevantNotes.length === 0 ? (
-        <EmptyState title="No strategy notes yet." description="Notes are kept in the shared strategy notes collection." />
-      ) : (
-        <div className="space-y-3">
-          {relevantNotes.map((note) => (
-            <div key={note.id} className="rounded-xl border border-neutral-200 bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-semibold text-neutral-900">{note.title}</div>
-                <Badge variant="neutral">{note.section}</Badge>
-              </div>
-              <p className="mt-2 text-sm text-neutral-600">{note.content}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <EmptyState title="No notes field is available for this goal." description="The current strategy model does not expose a notes field here, so this tab stays read-only and safe." />
     </div>
   );
 
