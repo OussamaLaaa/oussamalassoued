@@ -6,21 +6,18 @@ import type {
   StrategyExperiment, StrategyExperimentInput,
   StrategyGoal, StrategyGoalInput,
   StrategyItem, StrategyItemInput,
+  StrategyNote,
   StrategyPlan, StrategyPlanInput,
   StrategyStatus,
   StrategyTactic, StrategyTacticInput,
 } from '../../types/opportunities';
-import CommandCenter from './StrategyCommandCenter';
 import GoalsPanel from './StrategyGoalsPanel';
-import PlansPanel from './StrategyPlansPanel';
-import TacticsPanel from './StrategyTacticsPanel';
-import ExperimentsPanel from './StrategyExperimentsPanel';
-import DecisionsPanel from './StrategyDecisionsPanel';
-import GoalDetailView from './StrategyGoalDetailView';
+import GoalWorkspace from './GoalWorkspace';
 import ItemModal, { type ModalState } from './StrategyItemModal';
 
 type StrategyPanelProps = {
   strategyItems: StrategyItem[];
+  strategyNotes: StrategyNote[];
   strategyGoals: StrategyGoal[];
   strategyPlans: StrategyPlan[];
   strategyTactics: StrategyTactic[];
@@ -29,6 +26,7 @@ type StrategyPanelProps = {
   projects: Project[];
   companies: Company[];
   people: Person[];
+  onBackToDesktop?: () => void;
   onAddStrategyItem: (input: StrategyItemInput) => Promise<StrategyItem>;
   onUpdateStrategyItem: (id: string, input: Partial<StrategyItemInput>) => Promise<StrategyItem>;
   onDeleteStrategyItem: (id: string) => Promise<void>;
@@ -71,8 +69,9 @@ const emptyDecisionForm = (): StrategyDecisionInput => ({ title: '', context: ''
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
 const StrategyPanel: React.FC<StrategyPanelProps> = ({
-  strategyItems, strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
+  strategyItems, strategyNotes, strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
   projects, companies, people,
+  onBackToDesktop,
   onAddStrategyItem, onDeleteStrategyItem,
   onAddStrategyGoal, onUpdateStrategyGoal, onDeleteStrategyGoal,
   onAddStrategyPlan, onUpdateStrategyPlan, onDeleteStrategyPlan,
@@ -568,76 +567,104 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
   return (
     <div className="space-y-4">
       {selectedGoal ? (
-        <GoalDetailView
+        <GoalWorkspace
           goal={selectedGoal}
-          allGoals={strategyGoals}
+          strategyGoals={strategyGoals}
           strategyPlans={strategyPlans}
           strategyTactics={strategyTactics}
           strategyExperiments={strategyExperiments}
           strategyDecisions={strategyDecisions}
+          strategyItems={strategyItems}
+          strategyNotes={strategyNotes}
           projects={projects}
           companies={companies}
-          onUpdateGoal={onUpdateStrategyGoal}
-          onAddPlan={onAddStrategyPlan}
-          onUpdatePlan={onUpdateStrategyPlan}
-          onDeletePlan={onDeleteStrategyPlan}
-          onAddTactic={onAddStrategyTactic}
-          onUpdateTactic={onUpdateStrategyTactic}
-          onDeleteTactic={onDeleteStrategyTactic}
-          onAddExperiment={onAddStrategyExperiment}
-          onUpdateExperiment={onUpdateStrategyExperiment}
-          onDeleteExperiment={onDeleteStrategyExperiment}
-          onAddDecision={onAddStrategyDecision}
-          onUpdateDecision={onUpdateStrategyDecision}
-          onDeleteDecision={onDeleteStrategyDecision}
-          onEditGoal={() => openModal({ type: 'goal', item: selectedGoal })}
-          onQuickAction={openQuickAction}
           onBack={() => setSelectedGoalId(null)}
+          onEditGoal={(goal) => openModal({ type: 'goal', item: goal })}
+          onDeleteGoal={onDeleteStrategyGoal}
+          onAddStrategyPlan={onAddStrategyPlan}
+          onUpdateStrategyPlan={onUpdateStrategyPlan}
+          onDeleteStrategyPlan={onDeleteStrategyPlan}
+          onAddStrategyTactic={onAddStrategyTactic}
+          onUpdateStrategyTactic={onUpdateStrategyTactic}
+          onDeleteStrategyTactic={onDeleteStrategyTactic}
+          onAddStrategyExperiment={onAddStrategyExperiment}
+          onUpdateStrategyExperiment={onUpdateStrategyExperiment}
+          onDeleteStrategyExperiment={onDeleteStrategyExperiment}
+          onAddStrategyDecision={onAddStrategyDecision}
+          onUpdateStrategyDecision={onUpdateStrategyDecision}
+          onDeleteStrategyDecision={onDeleteStrategyDecision}
         />
       ) : (
-        <>
-          {starterVisible ? (
-            <div className="rounded-xl border border-neutral-200 bg-white p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-semibold text-neutral-900">Create Starter Strategy System</h3>
-                  <p className="mt-1 text-sm text-neutral-600">Bootstrap goals, plans A/B/C, tactics, experiments, and one initial decision in one click.</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="lg"
-                  onClick={handleCreateStarterSystem}
-                  disabled={isBusy}
-                >
-                  {isBusy ? 'Creating...' : 'Create Starter Strategy'}
-                </Button>
+        <div className="space-y-4">
+          <div className="rounded-xl border border-neutral-200 bg-white px-5 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <button type="button" onClick={onBackToDesktop} className="text-xs font-medium text-neutral-500 hover:text-neutral-900">
+                  ← Back to Desktop
+                </button>
+                <h2 className="mt-2 text-xl font-semibold text-neutral-900">Strategy</h2>
+                <p className="mt-1 text-sm text-neutral-600">Goals, plans, tactics, experiments, and decisions organized by goal.</p>
               </div>
-              {formError ? <p className="mt-3 text-sm text-red-600">{formError}</p> : null}
+              <Button type="button" variant="primary" size="md" onClick={() => openModal({ type: 'goal' })}>
+                Add Goal
+              </Button>
             </div>
-          ) : null}
-
-          <div className="flex flex-wrap gap-1.5 border-b border-neutral-200 pb-2">
-            {SECTIONS.map((section) => (
-              <button
-                key={section.value}
-                type="button"
-                onClick={() => setActiveSection(section.value)}
-                className={`px-4 py-2 text-sm font-medium transition-all ${
-                  activeSection === section.value
-                    ? 'text-neutral-900 border-b-2 border-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-700 border-b-2 border-transparent'
-                }`}
-              >
-                {section.label}
-              </button>
-            ))}
           </div>
 
-          <div>
-            {renderMainSection()}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">Active goals</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{activeGoalsCount}</div>
+              <div className="mt-1 text-xs text-neutral-500">Currently active</div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">High priority</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{strategyGoals.filter((goal) => goal.priority === 'high').length}</div>
+              <div className="mt-1 text-xs text-neutral-500">Goals only</div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">With linked work</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{strategyGoals.filter((goal) => Boolean(goal.linkedProjectId || goal.linkedCompanyId)).length}</div>
+              <div className="mt-1 text-xs text-neutral-500">Project or company</div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">Average progress</div>
+              <div className="mt-2 text-2xl font-semibold text-neutral-900">{averageProgress}%</div>
+              <div className="mt-1 text-xs text-neutral-500">Across goals</div>
+            </div>
           </div>
-        </>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-900">Goals Dashboard</h3>
+                <p className="mt-0.5 text-xs text-neutral-500">Open one goal to enter the full workspace.</p>
+              </div>
+              <Badge variant="neutral">Top level only</Badge>
+            </div>
+          </div>
+
+          <GoalsPanel
+            goals={strategyGoals}
+            goalForm={goalForm}
+            setGoalForm={setGoalForm}
+            onAdd={onAddStrategyGoal}
+            onUpdate={onUpdateStrategyGoal}
+            onDelete={onDeleteStrategyGoal}
+            onEdit={(goal) => openModal({ type: 'goal', item: goal })}
+            onSelect={(goal) => setSelectedGoalId(goal.id)}
+            onOpenNew={() => openModal({ type: 'goal' })}
+            filterCategory={goalFilterCategory}
+            setFilterCategory={setGoalFilterCategory}
+            filterStatus={goalFilterStatus}
+            setFilterStatus={setGoalFilterStatus}
+            filterPriority={goalFilterPriority}
+            setFilterPriority={setGoalFilterPriority}
+            progressDraft={goalProgressDraft}
+            setProgressDraft={setGoalProgressDraft}
+            showCreateButton={false}
+          />
+        </div>
       )}
 
       <ItemModal

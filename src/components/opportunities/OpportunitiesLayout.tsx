@@ -1326,6 +1326,7 @@ const OpportunitiesLayout: React.FC<{
             {tab === 'strategy' && (
               <StrategyPanel
                 strategyItems={strategyItems}
+                strategyNotes={strategyNotes}
                 strategyGoals={strategyGoals}
                 strategyPlans={strategyPlans}
                 strategyTactics={strategyTactics}
@@ -1334,6 +1335,7 @@ const OpportunitiesLayout: React.FC<{
                 projects={projects}
                 companies={companies}
                 people={people}
+                onBackToDesktop={handleBackToDesktop}
                 onAddStrategyItem={addStrategyItem}
                 onUpdateStrategyItem={updateStrategyItem}
                 onDeleteStrategyItem={deleteStrategyItem}

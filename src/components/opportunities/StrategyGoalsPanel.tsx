@@ -53,11 +53,13 @@ type Props = {
   setFilterPriority: (v: string) => void;
   progressDraft: Record<string, number>;
   setProgressDraft: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  showCreateButton?: boolean;
 };
 
 const GoalsPanel: React.FC<Props> = ({
   goals, onEdit, onDelete, onSelect, onOpenNew,
   filterCategory, setFilterCategory, filterStatus, setFilterStatus, filterPriority, setFilterPriority,
+  showCreateButton = true,
 }) => {
   const filtered = goals.filter((g) => {
     if (filterCategory && g.category !== filterCategory) return false;
@@ -86,12 +88,16 @@ const GoalsPanel: React.FC<Props> = ({
             {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </div>
-        <Button variant="primary" size="sm" onClick={onOpenNew}>Add Goal</Button>
+        {showCreateButton ? <Button variant="primary" size="sm" onClick={onOpenNew}>Add Goal</Button> : null}
       </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-neutral-200 bg-white">
-          <EmptyState title="No strategic goals yet." description="Start with one outcome that matters." action={<Button variant="primary" size="sm" onClick={onOpenNew}>Add Goal</Button>} />
+          <EmptyState
+            title="No strategic goals yet."
+            description="Start with one outcome that matters."
+            action={showCreateButton ? <Button variant="primary" size="sm" onClick={onOpenNew}>Add Goal</Button> : undefined}
+          />
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
