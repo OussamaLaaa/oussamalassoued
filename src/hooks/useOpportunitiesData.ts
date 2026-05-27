@@ -204,8 +204,6 @@ const cloneSeedData = (): OpportunitiesData => ({
   strategyPlans: [],
   strategyTactics: [],
   strategyExperiments: [],
-  PersonContactMethod,
-  PersonContactMethodInput,
   plans: [],
   planItems: [],
   financeIncome: [],
