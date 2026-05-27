@@ -11,8 +11,13 @@ import type {
   StrategyStatus,
   StrategyTactic, StrategyTacticInput,
 } from '../../types/opportunities';
+import CommandCenter from './StrategyCommandCenter';
 import GoalsPanel from './StrategyGoalsPanel';
 import GoalWorkspace from './GoalWorkspace';
+import PlansPanel from './StrategyPlansPanel';
+import TacticsPanel from './StrategyTacticsPanel';
+import ExperimentsPanel from './StrategyExperimentsPanel';
+import DecisionsPanel from './StrategyDecisionsPanel';
 import ItemModal, { type ModalState } from './StrategyItemModal';
 
 type StrategyPanelProps = {

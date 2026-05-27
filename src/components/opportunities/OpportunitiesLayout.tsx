@@ -624,7 +624,7 @@ const OpportunitiesLayout: React.FC<{
     companies, people, messages, deals, projects, templates, strategyItems,
     relationships, relationshipInteractions, relationshipOpportunities,
     noteCategories, smartNotes, noteAttachments, noteBlocks,
-    strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
+    strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions, strategyNotes,
     documents,
     documentTemplates,
     documentBrandSettings,
