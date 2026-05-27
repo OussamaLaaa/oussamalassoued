@@ -32,7 +32,7 @@ interface Props {
   messages: OutreachMessage[];
   deals: Deal[];
   companyContactMethods: CompanyContactMethod[];
-  personContactMethods: PersonContactMethod[];
+  personContactMethods?: PersonContactMethod[];
   companyProblemProfiles: CompanyProblemProfile[];
   companyOutreachScripts: CompanyOutreachScript[];
   onBack: () => void;
@@ -170,14 +170,22 @@ const CompanyWorkspace: React.FC<Props> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
+  const safePeople = people || [];
+  const safeMessages = messages || [];
+  const safeDeals = deals || [];
+  const safeCompanyContactMethods = companyContactMethods || [];
+  const safePersonContactMethods = personContactMethods || [];
+  const safeCompanyProblemProfiles = companyProblemProfiles || [];
+  const safeCompanyOutreachScripts = companyOutreachScripts || [];
+
   const company = companies.find((c) => c.id === companyId);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !company) return;
 
-    const contactMethodsForCompany = companyContactMethods.filter((item) => String(item.companyId) === String(company.id));
-    const problemProfilesForCompany = companyProblemProfiles.filter((item) => String(item.companyId) === String(company.id));
-    const outreachScriptsForCompany = companyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
+    const contactMethodsForCompany = safeCompanyContactMethods.filter((item) => String(item.companyId) === String(company.id));
+    const problemProfilesForCompany = safeCompanyProblemProfiles.filter((item) => String(item.companyId) === String(company.id));
+    const outreachScriptsForCompany = safeCompanyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
 
     console.log('[CompanyWorkspace] companyId', companyId);
     console.log('[CompanyWorkspace] contact methods total', companyContactMethods.length);
@@ -185,7 +193,7 @@ const CompanyWorkspace: React.FC<Props> = ({
     console.log('[CompanyWorkspace] first contact method', companyContactMethods[0] || null);
     console.log('[CompanyWorkspace] problem profiles for company', problemProfilesForCompany.length);
     console.log('[CompanyWorkspace] outreach scripts for company', outreachScriptsForCompany.length);
-  }, [company, companyId, companyContactMethods, companyProblemProfiles, companyOutreachScripts]);
+  }, [company, companyId, safeCompanyContactMethods, safeCompanyProblemProfiles, safeCompanyOutreachScripts]);
 
   useEffect(() => {
     if (!company) return;
@@ -225,9 +233,9 @@ const CompanyWorkspace: React.FC<Props> = ({
     );
   }
 
-  const companyPeople = people.filter((p) => p.companyId === company.id);
-  const companyMessages = messages.filter((m) => m.companyId === company.id);
-  const companyDeals = deals.filter((d) => d.companyId === company.id);
+  const companyPeople = safePeople.filter((p) => p.companyId === company.id);
+  const companyMessages = safeMessages.filter((m) => m.companyId === company.id);
+  const companyDeals = safeDeals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
   const selectedPerson = selectedPersonId ? people.find((person) => person.id === selectedPersonId) || null : null;
 
@@ -307,7 +315,7 @@ const CompanyWorkspace: React.FC<Props> = ({
       companyId: method.companyId,
       isPrimary: true,
     });
-    for (const other of companyContactMethods.filter((m) => m.companyId === company.id && m.id !== method.id && m.isPrimary)) {
+    for (const other of safeCompanyContactMethods.filter((m) => m.companyId === company.id && m.id !== method.id && m.isPrimary)) {
       await updateCompanyContactMethod(other.id, {
         companyId: other.companyId,
         isPrimary: false,
@@ -715,9 +723,9 @@ const CompanyWorkspace: React.FC<Props> = ({
 
       case 'people': {
         const personMethodsById = new Map<string, PersonContactMethod[]>(
-          people.map((person) => [
+          companyPeople.map((person) => [
             person.id,
-            personContactMethods.filter((method) => String(method.personId) === String(person.id)),
+            safePersonContactMethods.filter((method) => String(method.personId) === String(person.id)),
           ] as const),
         );
 
@@ -1164,7 +1172,7 @@ const CompanyWorkspace: React.FC<Props> = ({
           people={people}
           messages={messages}
           deals={deals}
-          personContactMethods={personContactMethods}
+          personContactMethods={safePersonContactMethods}
           autoOpenAddContactMethod={personWorkspaceActionPersonId === selectedPerson.id}
           onBack={() => { setSelectedPersonId(null); setPersonWorkspaceActionPersonId(null); setTab('people'); }}
           onEditPerson={openEditPerson}

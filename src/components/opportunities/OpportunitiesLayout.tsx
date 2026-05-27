@@ -1008,7 +1008,7 @@ const OpportunitiesLayout: React.FC<{
             messages={messages}
             deals={deals}
             companyContactMethods={companyContactMethods}
-            personContactMethods={personContactMethods}
+            personContactMethods={personContactMethods || []}
             companyProblemProfiles={companyProblemProfiles}
             companyOutreachScripts={companyOutreachScripts}
             onBack={() => setSelectedCompanyId(null)}

@@ -44,7 +44,7 @@ interface Props {
   people: Person[];
   messages: OutreachMessage[];
   deals: Deal[];
-  personContactMethods: PersonContactMethod[];
+  personContactMethods?: PersonContactMethod[];
   autoOpenAddContactMethod?: boolean;
   onBack: () => void;
   onEditPerson: (person: Person) => void;
@@ -93,6 +93,11 @@ const PersonWorkspace: React.FC<Props> = ({
   const [editingContactMethod, setEditingContactMethod] = useState<PersonContactMethod | null>(null);
   const [contactMethodError, setContactMethodError] = useState('');
 
+  const safePeople = people || [];
+  const safeMessages = messages || [];
+  const safeDeals = deals || [];
+  const safePersonContactMethods = personContactMethods || [];
+
   useEffect(() => {
     setTab('overview');
     setNotesDraft(person.notes || '');
@@ -109,8 +114,8 @@ const PersonWorkspace: React.FC<Props> = ({
   }, [autoOpenAddContactMethod]);
 
   const personMethods = useMemo(
-    () => personContactMethods.filter((method) => String(method.personId) === String(person.id)),
-    [person.id, personContactMethods],
+    () => safePersonContactMethods.filter((method) => String(method.personId) === String(person.id)),
+    [person.id, safePersonContactMethods],
   );
 
   const primaryMethod = useMemo(
@@ -119,13 +124,13 @@ const PersonWorkspace: React.FC<Props> = ({
   );
 
   const personMessages = useMemo(
-    () => messages.filter((message) => String(message.personId) === String(person.id)),
-    [messages, person.id],
+    () => safeMessages.filter((message) => String(message.personId) === String(person.id)),
+    [safeMessages, person.id],
   );
 
   const personDeals = useMemo(
-    () => deals.filter((deal) => String(deal.personId) === String(person.id)),
-    [deals, person.id],
+    () => safeDeals.filter((deal) => String(deal.personId) === String(person.id)),
+    [safeDeals, person.id],
   );
 
   const latestMessage = useMemo(
