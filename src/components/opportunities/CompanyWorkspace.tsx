@@ -123,16 +123,38 @@ const toPersonInput = (person: Person, overrides: Partial<PersonInput> = {}): Pe
 });
 
 const CompanyWorkspace: React.FC<Props> = ({
-  companyId, companies, people, messages, deals,
-  companyContactMethods, companyProblemProfiles, companyOutreachScripts,
-  onBack, onEditCompany, onAIScoreCompany,
-  addCompanyContactMethod, updateCompanyContactMethod, deleteCompanyContactMethod,
-  addCompanyProblemProfile, updateCompanyProblemProfile, deleteCompanyProblemProfile,
-  addCompanyOutreachScript, updateCompanyOutreachScript, deleteCompanyOutreachScript,
-  addPerson, updatePerson, deletePerson,
-  addMessage, updateMessage, deleteMessage,
-  addDeal, updateDeal, deleteDeal,
-  updateCompany, deleteCompany,
+  companyId,
+  companies,
+  people,
+  messages,
+  deals,
+  companyContactMethods,
+  personContactMethods = [],
+  companyProblemProfiles,
+  companyOutreachScripts,
+  onBack,
+  onEditCompany,
+  onAIScoreCompany,
+  addCompanyContactMethod,
+  updateCompanyContactMethod,
+  deleteCompanyContactMethod,
+  addCompanyProblemProfile,
+  updateCompanyProblemProfile,
+  deleteCompanyProblemProfile,
+  addCompanyOutreachScript,
+  updateCompanyOutreachScript,
+  deleteCompanyOutreachScript,
+  addPerson,
+  updatePerson,
+  deletePerson,
+  addMessage,
+  updateMessage,
+  deleteMessage,
+  addDeal,
+  updateDeal,
+  deleteDeal,
+  updateCompany,
+  deleteCompany,
 }) => {
   const [tab, setTab] = useState<WorkspaceTab>('overview');
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
@@ -170,15 +192,23 @@ const CompanyWorkspace: React.FC<Props> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-  const safePeople = people || [];
-  const safeMessages = messages || [];
-  const safeDeals = deals || [];
-  const safeCompanyContactMethods = companyContactMethods || [];
-  const safePersonContactMethods = personContactMethods || [];
-  const safeCompanyProblemProfiles = companyProblemProfiles || [];
-  const safeCompanyOutreachScripts = companyOutreachScripts || [];
+  const safeCompanies = companies ?? [];
+  const safePeople = people ?? [];
+  const safeMessages = messages ?? [];
+  const safeDeals = deals ?? [];
+  const safeCompanyContactMethods = companyContactMethods ?? [];
+  const safePersonContactMethods = personContactMethods ?? [];
+  const safeCompanyProblemProfiles = companyProblemProfiles ?? [];
+  const safeCompanyOutreachScripts = companyOutreachScripts ?? [];
 
-  const company = companies.find((c) => c.id === companyId);
+  if (import.meta.env.DEV) {
+    if (typeof safePersonContactMethods === 'undefined') {
+      console.error('[CompanyWorkspace] safePersonContactMethods is undefined');
+    }
+    console.log('[CompanyWorkspace] person contact methods count', safePersonContactMethods.length);
+  }
+
+  const company = safeCompanies.find((c) => c.id === companyId);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !company) return;
@@ -207,11 +237,11 @@ const CompanyWorkspace: React.FC<Props> = ({
   }, [company.id]);
 
   useEffect(() => {
-    if (selectedPersonId && !people.some((person) => person.id === selectedPersonId)) {
+    if (selectedPersonId && !safePeople.some((person) => person.id === selectedPersonId)) {
       setSelectedPersonId(null);
       setTab('people');
     }
-  }, [people, selectedPersonId]);
+  }, [safePeople, selectedPersonId]);
 
   useEffect(() => {
     if (!selectedPersonId) return;

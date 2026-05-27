@@ -93,10 +93,10 @@ const PersonWorkspace: React.FC<Props> = ({
   const [editingContactMethod, setEditingContactMethod] = useState<PersonContactMethod | null>(null);
   const [contactMethodError, setContactMethodError] = useState('');
 
-  const safePeople = people || [];
-  const safeMessages = messages || [];
-  const safeDeals = deals || [];
-  const safePersonContactMethods = personContactMethods || [];
+  const safePeople = people ?? [];
+  const safeMessages = messages ?? [];
+  const safeDeals = deals ?? [];
+  const safePersonContactMethods = personContactMethods ?? [];
 
   useEffect(() => {
     setTab('overview');
