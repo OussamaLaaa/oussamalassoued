@@ -9,10 +9,10 @@ const AddPersonForm: React.FC<{
   onCancel: () => void;
   initialData?: PersonInput;
 }> = ({ companies, onSubmit, onCancel, initialData }) => {
-  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
+  const [companyId, setCompanyId] = useState(initialData?.companyId || '');
   const [error, setError] = useState('');
   const [form, setForm] = useState<PersonInput>(initialData || {
-    companyId: companies[0]?.id,
+    companyId: undefined,
     fullName: '',
     role: '',
     department: '',
@@ -40,18 +40,14 @@ const AddPersonForm: React.FC<{
       className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!companyId) {
-          setError('Please select a company before adding a person.');
-          return;
-        }
-        onSubmit({ ...form, companyId });
+        onSubmit({ ...form, companyId: companyId || undefined });
       }}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Company</span>
+          <span className="text-sm font-medium text-[#0f172a]">Company (optional)</span>
           <select className={baseInput} value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-            <option value="">Select a company</option>
+            <option value="">No company</option>
             {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
           </select>
         </label>

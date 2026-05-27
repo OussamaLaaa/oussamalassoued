@@ -37,6 +37,29 @@ export interface Person {
   createdAt?: string;
 }
 
+export type PersonContactMethodType = 'email' | 'phone' | 'linkedin' | 'whatsapp' | 'telegram' | 'website' | 'instagram' | 'facebook' | 'x' | 'other';
+
+export interface PersonContactMethod {
+  id: string;
+  personId: string;
+  type: PersonContactMethodType | string;
+  label?: string;
+  value: string;
+  isPrimary?: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PersonContactMethodInput {
+  personId: string;
+  type?: PersonContactMethodType | string;
+  label?: string;
+  value: string;
+  isPrimary?: boolean;
+  notes?: string;
+}
+
 export interface OutreachMessage {
   id: string;
   companyId?: string;
@@ -1163,6 +1186,7 @@ export interface OpportunitiesData {
   messages: OutreachMessage[];
   deals: Deal[];
   companyContactMethods: CompanyContactMethod[];
+  personContactMethods: PersonContactMethod[];
   companyProblemProfiles: CompanyProblemProfile[];
   companyOutreachScripts: CompanyOutreachScript[];
   relationships: Relationship[];

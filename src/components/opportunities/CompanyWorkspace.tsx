@@ -5,6 +5,7 @@ import type {
   CompanyProblemProfile, CompanyProblemProfileInput,
   CompanyOutreachScript, CompanyOutreachScriptInput,
   PersonInput, MessageInput, DealInput,
+  PersonContactMethod, PersonContactMethodInput,
 } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -13,7 +14,6 @@ import EmptyState from '../ui/EmptyState';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import OpportunityModal from './OpportunityModal';
-import Modal from '../ui/Modal';
 import AddPersonForm from './AddPersonForm';
 import LogMessageForm from './LogMessageForm';
 import AddDealForm from './AddDealForm';
@@ -21,6 +21,9 @@ import CompanyContactMethodForm from './CompanyContactMethodForm';
 import CompanyProblemProfileForm from './CompanyProblemProfileForm';
 import CompanyOutreachScriptForm from './CompanyOutreachScriptForm';
 import CompanyResearchPanel from './CompanyResearchPanel';
+import PersonWorkspace from './PersonWorkspace';
+import LinkExistingPersonDialog from './LinkExistingPersonDialog';
+import { ContactLink, getContactHref } from './contactHelpers';
 
 interface Props {
   companyId: string;
@@ -29,6 +32,7 @@ interface Props {
   messages: OutreachMessage[];
   deals: Deal[];
   companyContactMethods: CompanyContactMethod[];
+  personContactMethods: PersonContactMethod[];
   companyProblemProfiles: CompanyProblemProfile[];
   companyOutreachScripts: CompanyOutreachScript[];
   onBack: () => void;
@@ -46,6 +50,9 @@ interface Props {
   addPerson: (input: PersonInput) => Promise<Person>;
   updatePerson: (id: string, input: Partial<PersonInput>) => Promise<Person>;
   deletePerson: (id: string) => Promise<void>;
+  addPersonContactMethod: (input: PersonContactMethodInput) => Promise<PersonContactMethod>;
+  updatePersonContactMethod: (id: string, input: Partial<PersonContactMethodInput>) => Promise<PersonContactMethod>;
+  deletePersonContactMethod: (id: string) => Promise<void>;
   addMessage: (input: MessageInput) => Promise<OutreachMessage>;
   updateMessage: (id: string, input: Partial<MessageInput>) => Promise<OutreachMessage>;
   deleteMessage: (id: string) => Promise<void>;
@@ -98,6 +105,23 @@ const CHANNEL_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
+const toPersonInput = (person: Person, overrides: Partial<PersonInput> = {}): PersonInput => ({
+  companyId: overrides.companyId !== undefined ? overrides.companyId : person.companyId,
+  fullName: overrides.fullName ?? person.fullName,
+  role: overrides.role !== undefined ? overrides.role : person.role,
+  department: overrides.department !== undefined ? overrides.department : person.department,
+  seniority: overrides.seniority !== undefined ? overrides.seniority : person.seniority,
+  decisionPower: overrides.decisionPower !== undefined ? overrides.decisionPower : (person.decisionPower ? String(person.decisionPower) as PersonInput['decisionPower'] : undefined),
+  influencePower: overrides.influencePower !== undefined ? overrides.influencePower : (person.influencePower ? String(person.influencePower) as PersonInput['influencePower'] : undefined),
+  relevance: overrides.relevance !== undefined ? overrides.relevance : (person.relevance ? String(person.relevance) as PersonInput['relevance'] : undefined),
+  linkedin: overrides.linkedin !== undefined ? overrides.linkedin : person.linkedin,
+  emailPublic: overrides.emailPublic !== undefined ? overrides.emailPublic : person.emailPublic,
+  contactChannel: overrides.contactChannel !== undefined ? overrides.contactChannel : person.contactChannel,
+  relationshipStatus: overrides.relationshipStatus !== undefined ? overrides.relationshipStatus : person.relationshipStatus,
+  nextFollowUpDate: overrides.nextFollowUpDate !== undefined ? overrides.nextFollowUpDate : person.nextFollowUpDate,
+  notes: overrides.notes !== undefined ? overrides.notes : person.notes,
+});
+
 const CompanyWorkspace: React.FC<Props> = ({
   companyId, companies, people, messages, deals,
   companyContactMethods, companyProblemProfiles, companyOutreachScripts,
@@ -111,6 +135,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   updateCompany, deleteCompany,
 }) => {
   const [tab, setTab] = useState<WorkspaceTab>('overview');
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
@@ -125,6 +150,7 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   const [showDealForm, setShowDealForm] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
+  const [dealPersonId, setDealPersonId] = useState<string | undefined>(undefined);
 
   const [showContactMethodForm, setShowContactMethodForm] = useState(false);
   const [editingContactMethod, setEditingContactMethod] = useState<CompanyContactMethod | null>(null);
@@ -136,6 +162,9 @@ const CompanyWorkspace: React.FC<Props> = ({
   const [editingOutreachScript, setEditingOutreachScript] = useState<CompanyOutreachScript | null>(null);
 
   const [showResearchPanel, setShowResearchPanel] = useState(false);
+  const [showPersonChoiceModal, setShowPersonChoiceModal] = useState(false);
+  const [showLinkExistingPersonDialog, setShowLinkExistingPersonDialog] = useState(false);
+  const [personWorkspaceActionPersonId, setPersonWorkspaceActionPersonId] = useState<string | null>(null);
 
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -165,6 +194,28 @@ const CompanyWorkspace: React.FC<Props> = ({
     setNotesSaved(false);
   }, [company?.id, company?.notes]);
 
+  useEffect(() => {
+    setSelectedPersonId(null);
+  }, [company.id]);
+
+  useEffect(() => {
+    if (selectedPersonId && !people.some((person) => person.id === selectedPersonId)) {
+      setSelectedPersonId(null);
+      setTab('people');
+    }
+  }, [people, selectedPersonId]);
+
+  useEffect(() => {
+    if (!selectedPersonId) return;
+    if (personWorkspaceActionPersonId !== selectedPersonId) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setPersonWorkspaceActionPersonId(null);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [personWorkspaceActionPersonId, selectedPersonId]);
+
   if (!company) {
     return (
       <div className="space-y-4">
@@ -178,6 +229,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   const companyMessages = messages.filter((m) => m.companyId === company.id);
   const companyDeals = deals.filter((d) => d.companyId === company.id);
   const openDeals = companyDeals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
+  const selectedPerson = selectedPersonId ? people.find((person) => person.id === selectedPersonId) || null : null;
 
   const normalizeDatabaseType = (dbType?: string): string => {
     if (!dbType) return '';
@@ -434,9 +486,23 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   // ── Person Handlers ──
   const openAddPerson = () => {
+    setFormError(null);
+    setShowPersonChoiceModal(true);
+  };
+
+  const openCreatePersonForm = () => {
     setEditingPerson(null);
     setFormError(null);
+    setShowPersonChoiceModal(false);
+    setShowLinkExistingPersonDialog(false);
     setShowPersonForm(true);
+  };
+
+  const openLinkExistingPersonFlow = () => {
+    setFormError(null);
+    setShowPersonChoiceModal(false);
+    setShowPersonForm(false);
+    setShowLinkExistingPersonDialog(true);
   };
 
   const openEditPerson = (person: Person) => {
@@ -450,11 +516,30 @@ const CompanyWorkspace: React.FC<Props> = ({
       if (editingPerson) {
         await updatePerson(editingPerson.id, data);
       } else {
-        await addPerson(data);
+        const created = await addPerson(data);
+        setSelectedPersonId(created.id);
+        setTab('people');
       }
     });
     setShowPersonForm(false);
     setEditingPerson(null);
+    setShowPersonChoiceModal(false);
+  };
+
+  const handleLinkExistingPerson = async (person: Person) => {
+    await wrapSave(async () => {
+      await updatePerson(person.id, toPersonInput(person, { companyId: company.id }));
+      setSelectedPersonId(person.id);
+      setTab('people');
+    });
+    setShowLinkExistingPersonDialog(false);
+    setShowPersonChoiceModal(false);
+  };
+
+  const openPersonContactMethodFlow = (personId: string) => {
+    setSelectedPersonId(personId);
+    setPersonWorkspaceActionPersonId(personId);
+    setTab('people');
   };
 
   const handleDeletePerson = async (id: string) => {
@@ -498,8 +583,9 @@ const CompanyWorkspace: React.FC<Props> = ({
   };
 
   // ── Deal Handlers ──
-  const openAddDeal = () => {
+  const openAddDeal = (personId?: string) => {
     setEditingDeal(null);
+    setDealPersonId(personId);
     setFormError(null);
     setShowDealForm(true);
   };
@@ -520,6 +606,7 @@ const CompanyWorkspace: React.FC<Props> = ({
     });
     setShowDealForm(false);
     setEditingDeal(null);
+    setDealPersonId(undefined);
   };
 
   const handleDeleteDeal = async (id: string) => {
@@ -555,9 +642,9 @@ const CompanyWorkspace: React.FC<Props> = ({
               <h3 className="mb-3 text-sm font-semibold text-neutral-900">Web Presence</h3>
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <div className="text-neutral-500">Website</div>
-                <div className="text-neutral-900 break-words">{company.website || '—'}</div>
+                <div className="text-neutral-900 break-words">{company.website ? <ContactLink type="website" value={company.website} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}</div>
                 <div className="text-neutral-500">LinkedIn</div>
-                <div className="text-neutral-900 break-words">{company.linkedin || '—'}</div>
+                <div className="text-neutral-900 break-words">{company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}</div>
               </div>
             </div>
 
@@ -608,7 +695,7 @@ const CompanyWorkspace: React.FC<Props> = ({
                         <Badge variant="neutral">{CHANNEL_LABELS[method.type] || method.type}</Badge>
                         {method.isPrimary && <Badge variant="blue">Primary</Badge>}
                       </div>
-                      <div className="mt-0.5 text-sm text-neutral-700 break-words">{method.value}</div>
+                      <div className="mt-0.5 text-sm text-neutral-700 break-words"><ContactLink type={method.type} value={method.value} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /></div>
                       {method.notes && <div className="mt-1 text-xs text-neutral-500">{method.notes}</div>}
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -627,6 +714,13 @@ const CompanyWorkspace: React.FC<Props> = ({
       }
 
       case 'people': {
+        const personMethodsById = new Map<string, PersonContactMethod[]>(
+          people.map((person) => [
+            person.id,
+            personContactMethods.filter((method) => String(method.personId) === String(person.id)),
+          ] as const),
+        );
+
         return (
           <div className="space-y-4">
             <div className="flex justify-end">
@@ -638,41 +732,84 @@ const CompanyWorkspace: React.FC<Props> = ({
                 description="Add decision makers, influencers, or relevant contacts."
               />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-                      <th className="px-3 py-2 font-medium">Name</th>
-                      <th className="px-3 py-2 font-medium">Role</th>
-                      <th className="px-3 py-2 font-medium">Department</th>
-                      <th className="px-3 py-2 font-medium">Decision Power</th>
-                      <th className="px-3 py-2 font-medium">Influence</th>
-                      <th className="px-3 py-2 font-medium">Status</th>
-                      <th className="px-3 py-2 font-medium">Next Follow-up</th>
-                      <th className="px-3 py-2 text-right font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {companyPeople.map((person) => (
-                      <tr key={person.id} className="border-b border-neutral-100 text-sm">
-                        <td className="px-3 py-3 font-medium text-neutral-900">{person.fullName}</td>
-                        <td className="px-3 py-3 text-neutral-700">{person.role || '—'}</td>
-                        <td className="px-3 py-3 text-neutral-700">{person.department || '—'}</td>
-                        <td className="px-3 py-3 text-neutral-700">{person.decisionPower || '—'}</td>
-                        <td className="px-3 py-3 text-neutral-700">{person.influencePower || '—'}</td>
-                        <td className="px-3 py-3"><StatusBadge status={person.relationshipStatus} /></td>
-                        <td className="px-3 py-3 text-neutral-700">{person.nextFollowUpDate || '—'}</td>
-                        <td className="px-3 py-3">
-                          <div className="flex justify-end gap-1">
-                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditPerson(person))} className="text-neutral-600">Edit</Button>
-                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openAddMessage(person.id))} className="text-neutral-600">Message</Button>
-                            <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeletePerson(person.id))} className="text-neutral-600">Delete</Button>
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                {companyPeople.map((person) => {
+                  const methods = personMethodsById.get(person.id) || [];
+                  const primaryMethod = methods.find((method) => method.isPrimary) || methods[0] || null;
+                  const quickTypes = ['email', 'linkedin', 'phone', 'whatsapp'] as const;
+
+                  const openContact = (method: PersonContactMethod) => {
+                    const href = getContactHref(method.type, method.value);
+                    if (href) {
+                      window.open(href, '_blank', 'noopener,noreferrer');
+                      return;
+                    }
+                    void navigator.clipboard.writeText(method.value).catch(() => undefined);
+                  };
+
+                  return (
+                    <div
+                      key={person.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedPersonId(person.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          setSelectedPersonId(person.id);
+                        }
+                      }}
+                      className="rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:bg-neutral-50 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-neutral-900">{person.fullName}</div>
+                            {person.relationshipStatus ? <Badge variant="neutral">{person.relationshipStatus}</Badge> : null}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <div className="text-sm text-neutral-700">
+                            {[person.role, person.department, person.seniority].filter(Boolean).join(' · ') || '—'}
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs text-neutral-500">
+                            <span>Decision: {person.decisionPower || '—'}</span>
+                            <span>Influence: {person.influencePower || '—'}</span>
+                            <span>Relevance: {person.relevance || '—'}</span>
+                            <span>Next follow-up: {person.nextFollowUpDate || '—'}</span>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                          <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => setSelectedPersonId(person.id))} className="text-neutral-600">Open Person</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditPerson(person))} className="text-neutral-600">Edit</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openPersonContactMethodFlow(person.id))} className="text-neutral-600">Add Contact Method</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeletePerson(person.id))} className="text-neutral-600">Delete</Button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Primary Contact</div>
+                          <div className="text-sm text-neutral-900">
+                            {primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Contact</div>
+                          <div className="flex flex-wrap gap-2">
+                            {quickTypes.map((type) => {
+                              const method = methods.find((item) => String(item.type).toLowerCase() === type) || null;
+                              if (!method) return null;
+                              return (
+                                <Button key={`${person.id}-${type}`} type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openContact(method))} className="text-neutral-600">
+                                  {type === 'linkedin' ? 'LinkedIn' : type === 'whatsapp' ? 'WhatsApp' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -986,8 +1123,10 @@ const CompanyWorkspace: React.FC<Props> = ({
             <StatusBadge status={company.status} />
             {typeof company.fitScore === 'number' && <Badge variant="neutral">Fit: {company.fitScore}</Badge>}
           </div>
-          <div className="mt-1 text-xs text-neutral-500">
-            {[company.website, company.linkedin].filter(Boolean).join(' · ') || '—'}
+          <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-500">
+            {company.website ? <ContactLink type="website" value={company.website} className="text-xs font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900" /> : null}
+            {company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-xs font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900" /> : null}
+            {!company.website && !company.linkedin ? <span>—</span> : null}
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -1018,28 +1157,56 @@ const CompanyWorkspace: React.FC<Props> = ({
         <StatCard label="Next Action" value={company.nextAction || '—'} hint={company.nextActionDate || undefined} />
       </div>
 
-      {/* Tabs */}
-      <div className="overflow-x-auto">
-        <div className="flex gap-0 border-b border-neutral-200 min-w-max">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                tab === t.id
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {selectedPerson ? (
+        <PersonWorkspace
+          company={company}
+          person={selectedPerson}
+          people={people}
+          messages={messages}
+          deals={deals}
+          personContactMethods={personContactMethods}
+          autoOpenAddContactMethod={personWorkspaceActionPersonId === selectedPerson.id}
+          onBack={() => { setSelectedPersonId(null); setPersonWorkspaceActionPersonId(null); setTab('people'); }}
+          onEditPerson={openEditPerson}
+          onAddMessage={(personId) => openAddMessage(personId)}
+          onAddDeal={(personId) => openAddDeal(personId)}
+          addPersonContactMethod={addPersonContactMethod}
+          updatePersonContactMethod={updatePersonContactMethod}
+          deletePersonContactMethod={deletePersonContactMethod}
+          updatePerson={updatePerson}
+          addMessage={addMessage}
+          updateMessage={updateMessage}
+          deleteMessage={deleteMessage}
+          addDeal={addDeal}
+          updateDeal={updateDeal}
+          deleteDeal={deleteDeal}
+        />
+      ) : (
+        <>
+          {/* Tabs */}
+          <div className="overflow-x-auto">
+            <div className="flex gap-0 border-b border-neutral-200 min-w-max">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                    tab === t.id
+                      ? 'border-neutral-900 text-neutral-900'
+                      : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Tab Content */}
-      {tabContent()}
+          {/* Tab Content */}
+          {tabContent()}
+        </>
+      )}
 
       {/* ── Modal: Contact Method Form ── */}
       {showContactMethodForm && (
@@ -1143,6 +1310,38 @@ const CompanyWorkspace: React.FC<Props> = ({
         </OpportunityModal>
       ) : null}
 
+      {showPersonChoiceModal ? (
+        <OpportunityModal title="Add Person" onClose={() => setShowPersonChoiceModal(false)}>
+          <div className="space-y-3">
+            <p className="text-sm text-neutral-600">Choose how you want to add a person to this company.</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button type="button" onClick={openCreatePersonForm} className="rounded-xl border border-neutral-200 bg-white p-4 text-left hover:bg-neutral-50">
+                <div className="text-sm font-semibold text-neutral-900">Create New Person</div>
+                <div className="mt-1 text-sm text-neutral-600">Start a new person profile with this company already filled in.</div>
+              </button>
+              <button type="button" onClick={openLinkExistingPersonFlow} className="rounded-xl border border-neutral-200 bg-white p-4 text-left hover:bg-neutral-50">
+                <div className="text-sm font-semibold text-neutral-900">Link Existing Person</div>
+                <div className="mt-1 text-sm text-neutral-600">Attach an existing person from the CRM to this company.</div>
+              </button>
+            </div>
+            <div className="flex items-center justify-end">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowPersonChoiceModal(false)}>Cancel</Button>
+            </div>
+          </div>
+        </OpportunityModal>
+      ) : null}
+
+      {showLinkExistingPersonDialog ? (
+        <OpportunityModal title="Link Existing Person" onClose={() => setShowLinkExistingPersonDialog(false)}>
+          <LinkExistingPersonDialog
+            company={company}
+            people={people}
+            onSelect={handleLinkExistingPerson}
+            onCancel={() => setShowLinkExistingPersonDialog(false)}
+          />
+        </OpportunityModal>
+      ) : null}
+
       {/* ── Modal: Person Form ── */}
       {showPersonForm && (
         <OpportunityModal title={editingPerson ? 'Edit Person' : 'Add Person'} onClose={() => { setShowPersonForm(false); setEditingPerson(null); setFormError(null); }}>
@@ -1150,37 +1349,7 @@ const CompanyWorkspace: React.FC<Props> = ({
             companies={companies}
             onSubmit={handleSavePerson}
             onCancel={() => { setShowPersonForm(false); setEditingPerson(null); setFormError(null); }}
-            initialData={editingPerson ? {
-              companyId: editingPerson.companyId,
-              fullName: editingPerson.fullName,
-              role: editingPerson.role,
-              department: editingPerson.department,
-              seniority: editingPerson.seniority,
-              decisionPower: editingPerson.decisionPower,
-              influencePower: editingPerson.influencePower,
-              relevance: editingPerson.relevance,
-              linkedin: editingPerson.linkedin,
-              emailPublic: editingPerson.emailPublic,
-              contactChannel: editingPerson.contactChannel,
-              relationshipStatus: editingPerson.relationshipStatus,
-              nextFollowUpDate: editingPerson.nextFollowUpDate,
-              notes: editingPerson.notes,
-            } : {
-              companyId: company.id,
-              fullName: '',
-              role: '',
-              department: '',
-              seniority: '',
-              decisionPower: 'unknown',
-              influencePower: 'unknown',
-              relevance: 'medium',
-              linkedin: '',
-              emailPublic: '',
-              contactChannel: 'email',
-              relationshipStatus: '',
-              nextFollowUpDate: '',
-              notes: '',
-            }}
+            initialData={editingPerson ? toPersonInput(editingPerson) : { companyId: company.id, fullName: '', role: '', department: '', seniority: '', decisionPower: 'unknown', influencePower: 'unknown', relevance: 'medium', linkedin: '', emailPublic: '', contactChannel: 'email', relationshipStatus: '', nextFollowUpDate: '', notes: '' }}
           />
           {formError && (
             <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
@@ -1230,12 +1399,12 @@ const CompanyWorkspace: React.FC<Props> = ({
 
       {/* ── Modal: Deal Form ── */}
       {showDealForm && (
-        <OpportunityModal title={editingDeal ? 'Edit Deal' : 'Add Deal'} onClose={() => { setShowDealForm(false); setEditingDeal(null); setFormError(null); }}>
+        <OpportunityModal title={editingDeal ? 'Edit Deal' : 'Add Deal'} onClose={() => { setShowDealForm(false); setEditingDeal(null); setDealPersonId(undefined); setFormError(null); }}>
           <AddDealForm
             companies={companies}
             people={people}
             onSubmit={handleSaveDeal}
-            onCancel={() => { setShowDealForm(false); setEditingDeal(null); setFormError(null); }}
+            onCancel={() => { setShowDealForm(false); setEditingDeal(null); setDealPersonId(undefined); setFormError(null); }}
             initialData={editingDeal ? {
               companyId: editingDeal.companyId || company.id,
               personId: editingDeal.personId || '',
@@ -1249,7 +1418,7 @@ const CompanyWorkspace: React.FC<Props> = ({
               notes: editingDeal.notes || '',
             } : {
               companyId: company.id,
-              personId: '',
+              personId: dealPersonId || '',
               servicePackage: '',
               problem: '',
               proposedSolution: '',

@@ -3,6 +3,8 @@ import type {
   CompanyInput,
   Person,
   PersonInput,
+  PersonContactMethod,
+  PersonContactMethodInput,
   OutreachMessage,
   MessageInput,
   Deal,
@@ -186,6 +188,32 @@ export const personToDb = (input: PersonInput) => ({
   next_followup_date: toNullableDate(input.nextFollowUpDate),
   notes: input.notes,
 });
+
+export const personContactMethodFromDb = (row: any): PersonContactMethod => ({
+  id: safeString(row?.id),
+  personId: row?.person_id ?? row?.personId ?? '',
+  type: row?.type ?? 'other',
+  label: row?.label ?? undefined,
+  value: safeString(row?.value),
+  isPrimary: row?.is_primary == null ? false : Boolean(row.is_primary),
+  notes: row?.notes ?? undefined,
+  createdAt: toIso(row?.created_at ?? row?.createdAt),
+  updatedAt: toIso(row?.updated_at ?? row?.updatedAt),
+});
+
+export const personContactMethodToDb = (input: Partial<PersonContactMethodInput>, options: { forUpdate?: boolean } = {}) => {
+  const forUpdate = options.forUpdate ?? false;
+  const payload: Record<string, unknown> = {};
+
+  if (!forUpdate || input.personId !== undefined) payload.person_id = toNullableString(input.personId);
+  if (!forUpdate || input.type !== undefined) payload.type = toNullableString(input.type) || 'other';
+  if (!forUpdate || input.label !== undefined) payload.label = toNullableString(input.label);
+  if (!forUpdate || input.value !== undefined) payload.value = toNullableString(input.value);
+  if (!forUpdate || input.isPrimary !== undefined) payload.is_primary = input.isPrimary == null ? false : Boolean(input.isPrimary);
+  if (!forUpdate || input.notes !== undefined) payload.notes = toNullableString(input.notes);
+
+  return payload;
+};
 
 // ── Message mappers ──
 

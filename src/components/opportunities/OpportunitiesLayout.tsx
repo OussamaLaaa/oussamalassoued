@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import CompanyWorkspace from './CompanyWorkspace';
@@ -718,8 +718,9 @@ const OpportunitiesLayout: React.FC<{
     addLifeDeenLog, updateLifeDeenLog, deleteLifeDeenLog,
     addLifeFamilyAction, updateLifeFamilyAction, deleteLifeFamilyAction,
     addLifeWeeklyReview, updateLifeWeeklyReview, deleteLifeWeeklyReview,
-    companyContactMethods, companyProblemProfiles, companyOutreachScripts,
+    companyContactMethods, personContactMethods, companyProblemProfiles, companyOutreachScripts,
     addCompanyContactMethod, updateCompanyContactMethod, deleteCompanyContactMethod,
+    addPersonContactMethod, updatePersonContactMethod, deletePersonContactMethod,
     addCompanyProblemProfile, updateCompanyProblemProfile, deleteCompanyProblemProfile,
     addCompanyOutreachScript, updateCompanyOutreachScript, deleteCompanyOutreachScript,
     desktopShortcuts, desktopSettings, desktopGroups,
@@ -1007,6 +1008,7 @@ const OpportunitiesLayout: React.FC<{
             messages={messages}
             deals={deals}
             companyContactMethods={companyContactMethods}
+            personContactMethods={personContactMethods}
             companyProblemProfiles={companyProblemProfiles}
             companyOutreachScripts={companyOutreachScripts}
             onBack={() => setSelectedCompanyId(null)}
@@ -1015,6 +1017,9 @@ const OpportunitiesLayout: React.FC<{
             addCompanyContactMethod={addCompanyContactMethod}
             updateCompanyContactMethod={updateCompanyContactMethod}
             deleteCompanyContactMethod={deleteCompanyContactMethod}
+            addPersonContactMethod={addPersonContactMethod}
+            updatePersonContactMethod={updatePersonContactMethod}
+            deletePersonContactMethod={deletePersonContactMethod}
             addCompanyProblemProfile={addCompanyProblemProfile}
             updateCompanyProblemProfile={updateCompanyProblemProfile}
             deleteCompanyProblemProfile={deleteCompanyProblemProfile}

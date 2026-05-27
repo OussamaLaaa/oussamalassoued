@@ -32,6 +32,8 @@ import {
   relationshipCategoryToDb as toRelationshipCategoryDb,
   relationshipContactMethodFromDb as mapRelationshipContactMethodRow,
   relationshipContactMethodToDb as toRelationshipContactMethodDb,
+  personContactMethodFromDb,
+  personContactMethodToDb as toPersonContactMethodDb,
   relationshipOpportunityFromDb as mapRelationshipOpportunityRow,
   relationshipOpportunityToDb as toRelationshipOpportunityDb,
   noteCategoryFromDb as mapNoteCategoryRow,
@@ -47,6 +49,8 @@ import type {
   OpportunitiesData,
   CompanyContactMethod,
   CompanyContactMethodInput,
+  PersonContactMethod,
+  PersonContactMethodInput,
   CompanyProblemProfile,
   CompanyProblemProfileInput,
   CompanyOutreachScript,
@@ -200,8 +204,8 @@ const cloneSeedData = (): OpportunitiesData => ({
   strategyPlans: [],
   strategyTactics: [],
   strategyExperiments: [],
-  strategyDecisions: [],
-  strategyNotes: seedData.strategyNotes.map((item) => ({ ...item })),
+  PersonContactMethod,
+  PersonContactMethodInput,
   plans: [],
   planItems: [],
   financeIncome: [],
@@ -231,6 +235,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   desktopShortcuts: [],
   desktopSettings: null,
   desktopGroups: [],
+  personContactMethods: [],
 });
 
 
@@ -297,6 +302,7 @@ type OpportunitiesApiResponse = {
   company_outreach_scripts?: any[];
   desktop_shortcuts?: any[];
   desktop_settings?: any;
+  person_contact_methods?: any[];
 };
 
 type ApiError = Error & {
@@ -2066,6 +2072,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [lifeFamilyActions, setLifeFamilyActions] = useState<LifeFamilyAction[]>([]);
   const [lifeWeeklyReviews, setLifeWeeklyReviews] = useState<LifeWeeklyReview[]>([]);
   const [companyContactMethods, setCompanyContactMethods] = useState<CompanyContactMethod[]>([]);
+  const [personContactMethods, setPersonContactMethods] = useState<PersonContactMethod[]>([]);
   const [companyProblemProfiles, setCompanyProblemProfiles] = useState<CompanyProblemProfile[]>([]);
   const [companyOutreachScripts, setCompanyOutreachScripts] = useState<CompanyOutreachScript[]>([]);
   const [desktopShortcuts, setDesktopShortcuts] = useState<DesktopShortcut[]>([]);
@@ -2335,6 +2342,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('life_weekly_reviews')) setLifeWeeklyReviews((raw('life_weekly_reviews') || []).map((row: any) => lifeWeeklyReviewFromDb(row)));
     // ── Company CRM ──
     if (has('company_contact_methods')) setCompanyContactMethods((raw('company_contact_methods') || []).map((row: any) => companyContactMethodFromDb(row)));
+    if (has('person_contact_methods')) setPersonContactMethods((raw('person_contact_methods') || []).map((row: any) => personContactMethodFromDb(row)));
     if (has('company_problem_profiles')) setCompanyProblemProfiles((raw('company_problem_profiles') || []).map((row: any) => companyProblemProfileFromDb(row)));
     if (has('company_outreach_scripts')) setCompanyOutreachScripts((raw('company_outreach_scripts') || []).map((row: any) => companyOutreachScriptFromDb(row)));
 
@@ -2457,6 +2465,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setFinanceRecurringRules([]);
           setStrategyItems([]);
           setCompanyContactMethods([]);
+          setPersonContactMethods([]);
           setCompanyProblemProfiles([]);
           setCompanyOutreachScripts([]);
           return;
@@ -2496,6 +2505,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setFinanceRecurringRules([]);
         setStrategyItems(fallback.strategyItems);
         setCompanyContactMethods(fallback.companyContactMethods);
+        setPersonContactMethods(fallback.personContactMethods || []);
         setCompanyProblemProfiles(fallback.companyProblemProfiles);
         setCompanyOutreachScripts(fallback.companyOutreachScripts);
         setError('Using seed data fallback.');
@@ -2587,10 +2597,6 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const addPerson = async (input: PersonInput) => {
-    if (!String(input.companyId || '').trim()) {
-      throw new Error('Please select a company before adding a person.');
-    }
-
     if (!String(input.fullName || '').trim()) {
       throw new Error('Please enter a full name before adding a person.');
     }
@@ -2686,7 +2692,7 @@ export const useOpportunitiesData = (enabled = true) => {
     return result?.row || result?.data;
   };
 
-  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'relationship_categories' | 'relationship_contact_methods' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans' | 'life_nutrition_logs' | 'life_fitness_logs' | 'life_deen_logs' | 'life_family_actions' | 'life_weekly_reviews' | 'company_contact_methods' | 'company_problem_profiles' | 'company_outreach_scripts', id: string) => {
+  const syncDelete = async (entity: 'companies' | 'people' | 'messages' | 'deals' | 'relationships' | 'relationship_interactions' | 'relationship_opportunities' | 'relationship_categories' | 'relationship_contact_methods' | 'projects' | 'message_templates' | 'project_tasks' | 'project_time_logs' | 'project_meetings' | 'project_documents' | 'project_finance_items' | 'documents' | 'document_templates' | 'document_brand_settings' | 'generated_documents' | 'invoices' | 'invoice_items' | 'strategy_items' | 'strategy_goals' | 'strategy_plans' | 'strategy_tactics' | 'strategy_experiments' | 'strategy_decisions' | 'plans' | 'plan_items' | 'note_categories' | 'smart_notes' | 'note_attachments' | 'note_blocks' | 'finance_income' | 'finance_expenses' | 'finance_allocation_rules' | 'finance_purchase_goals' | 'finance_investment_ideas' | 'finance_investment_rules' | 'finance_investment_allocations' | 'finance_periods' | 'finance_recurring_rules' | 'ai_use_case_settings' | 'tasks' | 'recurring_tasks' | 'recurring_task_logs' | 'task_work_logs' | 'weekly_task_reviews' | 'social_platforms' | 'content_pillars' | 'content_strategy' | 'content_items' | 'weekly_content_plans' | 'life_nutrition_logs' | 'life_fitness_logs' | 'life_deen_logs' | 'life_family_actions' | 'life_weekly_reviews' | 'company_contact_methods' | 'person_contact_methods' | 'company_problem_profiles' | 'company_outreach_scripts', id: string) => {
     const result = await requestOpportunities({
       method: 'DELETE',
       body: JSON.stringify({ entity, action: 'delete', id }),
@@ -2858,6 +2864,36 @@ export const useOpportunitiesData = (enabled = true) => {
     if (!confirmed) return;
     await syncDelete('people', id);
     setPeople((current) => current.filter((p) => p.id !== id));
+    setPersonContactMethods((current) => current.filter((item) => item.personId !== id));
+  };
+
+  const addPersonContactMethod = async (input: PersonContactMethodInput) => {
+    if (!String(input.personId || '').trim()) {
+      throw new Error('Please select a person before adding a contact method.');
+    }
+
+    if (!String(input.value || '').trim()) {
+      throw new Error('Please enter a contact value before saving.');
+    }
+
+    const row = await syncInsert('person_contact_methods', toPersonContactMethodDb(input));
+    const next = personContactMethodFromDb(row);
+    setPersonContactMethods((current) => [next, ...current]);
+    return next;
+  };
+
+  const updatePersonContactMethod = async (id: string, input: Partial<PersonContactMethodInput>) => {
+    const row = await syncUpdate('person_contact_methods', id, toPersonContactMethodDb(input, { forUpdate: true }));
+    const next = personContactMethodFromDb(row);
+    setPersonContactMethods((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deletePersonContactMethod = async (id: string) => {
+    const confirmed = window.confirm('Delete this contact method?');
+    if (!confirmed) return;
+    await syncDelete('person_contact_methods', id);
+    setPersonContactMethods((current) => current.filter((item) => item.id !== id));
   };
 
   const updateMessage = async (id: string, input: MessageInput) => {
@@ -5023,6 +5059,10 @@ export const useOpportunitiesData = (enabled = true) => {
     addCompanyContactMethod,
     updateCompanyContactMethod,
     deleteCompanyContactMethod,
+    personContactMethods,
+    addPersonContactMethod,
+    updatePersonContactMethod,
+    deletePersonContactMethod,
     companyProblemProfiles,
     addCompanyProblemProfile,
     updateCompanyProblemProfile,

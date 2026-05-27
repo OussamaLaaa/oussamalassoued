@@ -9,6 +9,7 @@ const allowedEntities = new Set([
   'deals',
   'projects',
   'company_contact_methods',
+  'person_contact_methods',
   'company_problem_profiles',
   'company_outreach_scripts',
   'message_templates',
@@ -77,6 +78,7 @@ const tablesAttempted = [
   'deals',
   'projects',
   'company_contact_methods',
+  'person_contact_methods',
   'company_problem_profiles',
   'company_outreach_scripts',
   'message_templates',
@@ -1083,6 +1085,17 @@ const normalizeCompanyContactMethodRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizePersonContactMethodRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.personId !== undefined || row?.person_id !== undefined) payload.person_id = toRequiredString(row?.person_id ?? row?.personId);
+  if (!forUpdate || row?.type !== undefined) payload.type = toNullableString(row?.type) || 'other';
+  if (!forUpdate || row?.label !== undefined) payload.label = toNullableString(row?.label);
+  if (!forUpdate || row?.value !== undefined) payload.value = toNullableString(row?.value);
+  if (!forUpdate || row?.isPrimary !== undefined || row?.is_primary !== undefined) payload.is_primary = row?.is_primary == null ? Boolean(row?.isPrimary ?? false) : Boolean(row.is_primary);
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
 const normalizeCompanyProblemProfileRow = (row, { forUpdate = false } = {}) => {
   const payload = {};
   if (!forUpdate || row?.companyId !== undefined || row?.company_id !== undefined) payload.company_id = toRequiredString(row?.company_id ?? row?.companyId);
@@ -1165,6 +1178,7 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'life_family_actions') return normalizeLifeFamilyActionRow(row);
   if (entity === 'life_weekly_reviews') return normalizeLifeWeeklyReviewRow(row);
   if (entity === 'company_contact_methods') return normalizeCompanyContactMethodRow(row);
+  if (entity === 'person_contact_methods') return normalizePersonContactMethodRow(row);
   if (entity === 'company_problem_profiles') return normalizeCompanyProblemProfileRow(row);
   if (entity === 'company_outreach_scripts') return normalizeCompanyOutreachScriptRow(row);
   if (entity === 'desktop_shortcuts') {
@@ -1214,6 +1228,7 @@ const CRITICAL_TABLES = new Set([
 
 const OPTIONAL_TABLES = new Set([
   'company_contact_methods',
+  'person_contact_methods',
   'company_problem_profiles',
   'company_outreach_scripts',
   'life_nutrition_logs',
@@ -1269,7 +1284,7 @@ const OPTIONAL_TABLES = new Set([
 
 const SCOPES = {
   core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates'],
-  crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
+  crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'person_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
   life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
   relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
   notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
@@ -1418,8 +1433,8 @@ export default async function handler(req, res) {
 
       // Build response with only the keys relevant to the current scope
       const scopeKeys = {
-  core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
-        crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
+  core: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'person_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
+  crm: ['companies', 'people', 'messages', 'deals', 'projects', 'message_templates', 'company_contact_methods', 'person_contact_methods', 'company_problem_profiles', 'company_outreach_scripts'],
         relationships: ['relationships', 'relationship_interactions', 'relationship_opportunities', 'relationship_categories', 'relationship_contact_methods'],
         notes: ['note_categories', 'smart_notes', 'note_attachments', 'note_blocks'],
         tasks: ['tasks', 'recurring_tasks', 'recurring_task_logs', 'task_work_logs', 'weekly_task_reviews'],
@@ -1438,7 +1453,7 @@ export default async function handler(req, res) {
       if (scope === 'all') {
         responseKeys = [
           'companies', 'people', 'messages', 'deals', 'projects', 'message_templates',
-          'company_contact_methods', 'company_problem_profiles', 'company_outreach_scripts',
+          'company_contact_methods', 'person_contact_methods', 'company_problem_profiles', 'company_outreach_scripts',
           'project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items',
           'documents', 'document_templates', 'document_brand_settings', 'generated_documents',
           'invoices', 'invoice_items',
@@ -1660,6 +1675,8 @@ export default async function handler(req, res) {
                         ? normalizeLifeWeeklyReviewRow(data, { forUpdate: true })
                       : entity === 'company_contact_methods'
                         ? normalizeCompanyContactMethodRow(data, { forUpdate: true })
+                      : entity === 'person_contact_methods'
+                        ? normalizePersonContactMethodRow(data, { forUpdate: true })
                       : entity === 'company_problem_profiles'
                         ? normalizeCompanyProblemProfileRow(data, { forUpdate: true })
                       : entity === 'company_outreach_scripts'
@@ -1703,6 +1720,8 @@ export default async function handler(req, res) {
           ? normalizeAIUseCaseSettingRow(updatedRow)
           : entity === 'relationships' || entity === 'relationship_interactions' || entity === 'relationship_opportunities' || entity === 'relationship_categories' || entity === 'relationship_contact_methods'
             ? updatedRow
+            : entity === 'person_contact_methods'
+              ? updatedRow
           : normalizeEntityRow(entity, updatedRow),
       });
     } catch (error) {
