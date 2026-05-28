@@ -8,6 +8,7 @@ import {
   Key, Route, TestTube, Lock,
 } from 'lucide-react';
 import Button from '../ui/Button';
+import SectionHeader from '../ui/SectionHeader';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
@@ -291,7 +292,6 @@ const resolveInitialDealFilters = (): DealFilters => {
  : defaultDealFilters;
 };
 
-type LifeQuickTab = 'dashboard' | 'nutrition' | 'fitness' | 'deen' | 'family' | 'weekly-review';
 type AIControlQuickAction = 'add-provider-key' | 'test-provider' | 'save-routing';
 
 const toDayKey = (value?: string) => {
@@ -510,8 +510,7 @@ const OpportunitiesLayout: React.FC<{
  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
  const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
- const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
- const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
+  const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
   const [appSection, setAppSection] = useState<string>('');
@@ -697,16 +696,7 @@ const OpportunitiesLayout: React.FC<{
   }
   };
 
-  // Sync global search to all table filters
- const handleGlobalSearchChange = (value: string) => {
- setGlobalSearch(value);
- setCompanyFilters((prev) => ({ ...prev, searchQuery: value }));
- setPersonFilters((prev) => ({ ...prev, searchQuery: value }));
- setMessageFilters((prev) => ({ ...prev, searchQuery: value }));
- setDealFilters((prev) => ({ ...prev, searchQuery: value }));
- };
-
- const {
+  const {
  companies, people, messages, deals, projects, templates, strategyItems,
  relationships, relationshipInteractions, relationshipOpportunities,
  noteCategories, smartNotes, noteAttachments, noteBlocks,
@@ -1035,51 +1025,15 @@ const OpportunitiesLayout: React.FC<{
  );
  }
 
-  return (
-  <AppDashboardShell
-  appName={getShellTitle()}
-  appSubtitle={getShellSubtitle()}
-  sidebarItems={getSidebarItems()}
-   activeSection={activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
-  onSectionChange={handleSectionChange}
-  showSearch={activeApp === 'crm'}
-  onBackToDesktop={handleBackToDesktop}
-   topActions={activeApp === 'crm' ? (
-  <>
-  <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
-  <Button variant="outline" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
-  <Button variant="outline" size="md" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
-  <Button variant="ghost" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
-  </>
-  ) : activeApp === 'life' ? (
- <>
- <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('nutrition')}>Add Meal</Button>
- <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('fitness')}>Add Workout</Button>
- <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('family')}>Add Family Action</Button>
- <Button variant="primary" size="md" onClick={() => setLifeQuickTab('weekly-review')}>Create Review</Button>
- </>
- ) : activeApp === 'messages' ? (
- <>
- <Button variant="secondary" size="md" onClick={() => {
- const firstPerson = people[0];
- if (firstPerson) {
- setTemplatePerson(firstPerson);
- }
- }}><Sparkles className="h-4 w-4" />AI Personalize</Button>
- <Button variant="secondary" size="md" onClick={() => setTab('templates')}><FileText className="h-4 w-4" />New Template</Button>
- <Button variant="primary" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
- </>
- ) : activeApp === 'ai_control' ? (
- <>
- <Button variant="primary" size="md" onClick={() => setAiControlQuickAction('add-provider-key')}>Add Provider Key</Button>
- <Button variant="secondary" size="md" onClick={() => setAiControlQuickAction('test-provider')}>Test Provider</Button>
- <Button variant="secondary" size="md" onClick={() => setAiControlQuickAction('save-routing')}>Save Routing</Button>
- </>
- ) : undefined}
- searchValue={activeApp === 'crm' ? globalSearch : undefined}
- onSearchChange={activeApp === 'crm' ? handleGlobalSearchChange : undefined}
- searchPlaceholder="Search companies, people, deals..."
- >
+   return (
+   <AppDashboardShell
+   appName={getShellTitle()}
+   appSubtitle={getShellSubtitle()}
+   sidebarItems={getSidebarItems()}
+    activeSection={activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
+   onSectionChange={handleSectionChange}
+   onBackToDesktop={handleBackToDesktop}
+   >
  <div className="space-y-4">
  {selectedCompanyId ? (
  <CompanyWorkspace
@@ -1121,8 +1075,19 @@ const OpportunitiesLayout: React.FC<{
  />
  ) : (
  <>
- {tab === 'dashboard' && (
- <OpportunitiesDashboard
+  {tab === 'dashboard' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Dashboard"
+  description="CRM overview and pipeline health."
+  actions={
+  <>
+  <Button variant="ghost" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+  <Button variant="outline" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  </>
+  }
+  />
+  <OpportunitiesDashboard
  companies={companies}
  people={people}
  messages={messages}
@@ -1134,66 +1099,102 @@ const OpportunitiesLayout: React.FC<{
  onAddPerson={() => setActiveModal('person')}
  onAddMessage={() => setActiveModal('message')}
  onResetDemoData={handleResetDemoData}
- onOpenCompaniesTab={() => setTab('companies')}
- />
- )}
+  onOpenCompaniesTab={() => setTab('companies')}
+  />
+  </div>
+  )}
 
- {tab === 'big_companies' && (
- <CompanySegmentView
- segmentType="big_company"
- title="Big Companies"
- subtitle="Enterprise-level targets — internships, junior roles, recruiter relationships."
- companies={companies}
- people={people}
- messages={messages}
- deals={deals}
- onAddCompany={() => setActiveModal('company')}
- onEdit={handleEditCompany}
- onDelete={handleRequestDelete}
- onAIScore={handleAIScore}
- onImportCompaniesBatch={importCompaniesBatch}
- onCompanyClick={handleCompanyClick}
- />
- )}
+  {tab === 'big_companies' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Big Companies"
+  description="Enterprise-level targets — internships, junior roles, recruiter relationships."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  }
+  />
+  <CompanySegmentView
+  segmentType="big_company"
+  title="Big Companies"
+  subtitle="Enterprise-level targets — internships, junior roles, recruiter relationships."
+  companies={companies}
+  people={people}
+  messages={messages}
+  deals={deals}
+  onAddCompany={() => setActiveModal('company')}
+  onEdit={handleEditCompany}
+  onDelete={handleRequestDelete}
+  onAIScore={handleAIScore}
+  onImportCompaniesBatch={importCompaniesBatch}
+  onCompanyClick={handleCompanyClick}
+  />
+  </div>
+  )}
 
- {tab === 'sme_companies' && (
- <CompanySegmentView
- segmentType="sme"
- title="SME Companies"
- subtitle="Small & medium businesses — faster decisions, partnership potential, agency work."
- companies={companies}
- people={people}
- messages={messages}
- deals={deals}
- onAddCompany={() => setActiveModal('company')}
- onEdit={handleEditCompany}
- onDelete={handleRequestDelete}
- onAIScore={handleAIScore}
- onImportCompaniesBatch={importCompaniesBatch}
- onCompanyClick={handleCompanyClick}
- />
- )}
+  {tab === 'sme_companies' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="SME Companies"
+  description="Small & medium businesses — faster decisions, partnership potential, agency work."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  }
+  />
+  <CompanySegmentView
+  segmentType="sme"
+  title="SME Companies"
+  subtitle="Small & medium businesses — faster decisions, partnership potential, agency work."
+  companies={companies}
+  people={people}
+  messages={messages}
+  deals={deals}
+  onAddCompany={() => setActiveModal('company')}
+  onEdit={handleEditCompany}
+  onDelete={handleRequestDelete}
+  onAIScore={handleAIScore}
+  onImportCompaniesBatch={importCompaniesBatch}
+  onCompanyClick={handleCompanyClick}
+  />
+  </div>
+  )}
 
- {tab === 'freelance_leads' && (
- <CompanySegmentView
- segmentType="freelance"
- title="Freelance Leads"
- subtitle="Independent professionals — paid UX/UI work, audits, recurring clients."
- companies={companies}
- people={people}
- messages={messages}
- deals={deals}
- onAddCompany={() => setActiveModal('company')}
- onEdit={handleEditCompany}
- onDelete={handleRequestDelete}
- onAIScore={handleAIScore}
- onImportCompaniesBatch={importCompaniesBatch}
- onCompanyClick={handleCompanyClick}
- />
- )}
+  {tab === 'freelance_leads' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Freelance Leads"
+  description="Independent professionals — paid UX/UI work, audits, recurring clients."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  }
+  />
+  <CompanySegmentView
+  segmentType="freelance"
+  title="Freelance Leads"
+  subtitle="Independent professionals — paid UX/UI work, audits, recurring clients."
+  companies={companies}
+  people={people}
+  messages={messages}
+  deals={deals}
+  onAddCompany={() => setActiveModal('company')}
+  onEdit={handleEditCompany}
+  onDelete={handleRequestDelete}
+  onAIScore={handleAIScore}
+  onImportCompaniesBatch={importCompaniesBatch}
+  onCompanyClick={handleCompanyClick}
+  />
+  </div>
+  )}
 
- {tab === 'queue' && (
- <OutreachQueuePanel
+  {tab === 'queue' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Outreach Queue"
+  description="Messages, follow-ups, and communication priorities."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+  }
+  />
+  <OutreachQueuePanel
  companies={companies}
  people={people}
  messages={messages}
@@ -1235,81 +1236,122 @@ const OpportunitiesLayout: React.FC<{
  nextFollowUpDate,
  });
  }}
- onOpenLinkedIn={(person) => {
- if (!person.linkedin) return;
- window.open(person.linkedin, '_blank', 'noopener,noreferrer');
- }}
- />
- )}
+  onOpenLinkedIn={(person) => {
+  if (!person.linkedin) return;
+  window.open(person.linkedin, '_blank', 'noopener,noreferrer');
+  }}
+  />
+  </div>
+  )}
 
- {tab === 'companies' && (
- <>
- <div className="flex items-center justify-end">
- <button
- type="button"
- onClick={() => setShowCsvImport(true)}
- className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
- >
- Import CSV
- </button>
- </div>
- <CompaniesTable
+  {tab === 'companies' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="All Companies"
+  description="All tracked companies, filters, and bulk actions."
+  actions={
+  <>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  <button
+  type="button"
+  onClick={() => setShowCsvImport(true)}
+  className="text-xs px-3 py-1.5 rounded border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50"
+  >
+  Import CSV
+  </button>
+  </>
+  }
+  />
+  <CompaniesTable
  companies={companies}
  onEdit={handleEditCompany}
  onDelete={handleRequestDelete}
  onAIScore={handleAIScore}
  onCompanyClick={handleCompanyClick}
  filters={companyFilters}
- onFilterChange={setCompanyFilters}
- />
- </>
- )}
+  onFilterChange={setCompanyFilters}
+  />
+  </div>
+  )}
 
- {tab === 'people' && (
- <>
- <div className="flex items-center justify-end">
- <button
- type="button"
- onClick={() => setShowPeopleImport(true)}
- className="text-xs px-3 py-1.5 rounded border border-[#e5e7eb] bg-white text-[#0f172a] hover:bg-[#f8fafc]"
- >
- Import CSV
- </button>
- </div>
- <PeopleTable
+  {tab === 'people' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="People"
+  description="Contacts, decision makers, and relationship context."
+  actions={
+  <>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
+  <button
+  type="button"
+  onClick={() => setShowPeopleImport(true)}
+  className="text-xs px-3 py-1.5 rounded border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50"
+  >
+  Import CSV
+  </button>
+  </>
+  }
+  />
+  <PeopleTable
  people={people}
  onEdit={handleEditPerson}
  onDelete={handleDeletePerson}
  onUseTemplate={(person) => setTemplatePerson(person)}
  filters={personFilters}
- onFilterChange={setPersonFilters}
- />
- </>
- )}
+  onFilterChange={setPersonFilters}
+  />
+  </div>
+  )}
 
- {tab === 'messages' && (
- <MessagesTable
- messages={messages}
- onEdit={handleEditMessage}
- onDelete={handleDeleteMessage}
- filters={messageFilters}
- onFilterChange={setMessageFilters}
- onLogMessage={() => setActiveModal('message')}
- />
- )}
+  {tab === 'messages' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Messages"
+  description="All logged outreach, follow-ups, and communication history."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+  }
+  />
+  <MessagesTable
+  messages={messages}
+  onEdit={handleEditMessage}
+  onDelete={handleDeleteMessage}
+  filters={messageFilters}
+  onFilterChange={setMessageFilters}
+  onLogMessage={() => setActiveModal('message')}
+  />
+  </div>
+  )}
 
- {tab === 'deals' && (
- <DealsTable
- deals={deals}
- onEdit={handleEditDeal}
- onDelete={handleDeleteDeal}
- filters={dealFilters}
- onFilterChange={setDealFilters}
- />
- )}
+  {tab === 'deals' && (
+  <div className="space-y-5">
+  <SectionHeader
+  title="Deals"
+  description="Opportunities, stages, value, and next actions."
+  actions={
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
+  }
+  />
+  <DealsTable
+  deals={deals}
+  onEdit={handleEditDeal}
+  onDelete={handleDeleteDeal}
+  filters={dealFilters}
+  onFilterChange={setDealFilters}
+  />
+  </div>
+  )}
 
  {tab === 'relationships' && (
- <RelationshipsPanel
+  <div className="space-y-5">
+   <SectionHeader
+    title="Relationships"
+    description="Professional connections, interactions, and relationship management."
+    actions={
+     <Button variant="primary" size="sm" onClick={() => addRelationship()}><Heart className="h-4 w-4" />Add Relationship</Button>
+    }
+   />
+   <RelationshipsPanel
  relationships={relationships}
  relationshipInteractions={relationshipInteractions}
  relationshipOpportunities={relationshipOpportunities}
@@ -1332,12 +1374,21 @@ const OpportunitiesLayout: React.FC<{
  onDeleteRelationshipCategory={deleteRelationshipCategory}
  onAddRelationshipContactMethod={addRelationshipContactMethod}
  onUpdateRelationshipContactMethod={updateRelationshipContactMethod}
- onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
- />
- )}
+onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
+  />
+  </div>
+  )}
 
- {tab === 'notes' && (
- <SmartNotesPanel
+  {tab === 'notes' && (
+  <div className="space-y-5">
+   <SectionHeader
+    title="Notes"
+    description="Smart notes, knowledge management, and insights."
+    actions={
+     <Button variant="primary" size="sm" onClick={() => addSmartNote()}><FileText className="h-4 w-4" />New Note</Button>
+    }
+   />
+   <SmartNotesPanel
  noteCategories={noteCategories}
  smartNotes={smartNotes}
  noteAttachments={noteAttachments}
@@ -1358,14 +1409,21 @@ const OpportunitiesLayout: React.FC<{
  onAddNoteAttachment={addNoteAttachment}
  onUpdateNoteAttachment={updateNoteAttachment}
  onDeleteNoteAttachment={deleteNoteAttachment}
- onAddNoteBlock={addNoteBlock}
- onUpdateNoteBlock={updateNoteBlock}
- onDeleteNoteBlock={deleteNoteBlock}
- />
- )}
+onAddNoteBlock={addNoteBlock}
+  />
+  </div>
+  )}
 
- {tab === 'projects' && (
- <ProjectsPanel
+  {tab === 'projects' && (
+  <div className="space-y-5">
+   <SectionHeader
+    title="Projects"
+    description="Project management, tracking, and deliverables."
+    actions={
+     <Button variant="primary" size="sm" onClick={() => setActiveModal('project')}><Target className="h-4 w-4" />Add Project</Button>
+    }
+   />
+   <ProjectsPanel
  projects={projects}
  companies={companies}
  people={people}
@@ -1390,22 +1448,40 @@ const OpportunitiesLayout: React.FC<{
  onAddDocument={addProjectDocument}
  onDeleteDocument={deleteProjectDocument}
  onAddFinanceItem={addProjectFinanceItem}
- onDeleteFinanceItem={deleteProjectFinanceItem}
- />
- )}
+onDeleteFinanceItem={deleteProjectFinanceItem}
+  />
+  </div>
+  )}
 
- {tab === 'templates' && (
- <TemplatesPanel
+  {tab === 'templates' && (
+  <div className="space-y-5">
+   <SectionHeader
+    title="Templates"
+    description="Message templates, personalization, and reuse."
+    actions={
+     <Button variant="primary" size="sm" onClick={() => addTemplate()}><FileText className="h-4 w-4" />New Template</Button>
+    }
+   />
+   <TemplatesPanel
  templates={templates}
  onAddTemplate={addTemplate}
  onUpdateTemplate={updateTemplate}
  onDeleteTemplate={deleteTemplate}
- onSeedDefaults={seedDefaultTemplates}
- />
- )}
+onSeedDefaults={seedDefaultTemplates}
+  />
+  </div>
+  )}
 
- {tab === 'strategy' && (
-  <StrategyPanel
+  {tab === 'strategy' && (
+   <div className="space-y-5">
+    <SectionHeader
+     title="Strategy"
+     description="Strategic goals, objectives, and progress tracking."
+     actions={
+      <Button variant="primary" size="sm" onClick={() => addStrategyGoal()}><Target className="h-4 w-4" />Add Goal</Button>
+     }
+    />
+    <StrategyPanel
   section={appSection}
   strategyItems={strategyItems}
  strategyNotes={strategyNotes}
@@ -1435,12 +1511,21 @@ const OpportunitiesLayout: React.FC<{
  onDeleteStrategyExperiment={deleteStrategyExperiment}
  onAddStrategyDecision={addStrategyDecision}
  onUpdateStrategyDecision={updateStrategyDecision}
- onDeleteStrategyDecision={deleteStrategyDecision}
- />
- )}
+onDeleteStrategyDecision={deleteStrategyDecision}
+  />
+  </div>
+  )}
 
- {tab === 'plans' && (
-  <PlansPanel
+  {tab === 'plans' && (
+   <div className="space-y-5">
+    <SectionHeader
+     title="Plans"
+     description="Yearly, monthly, weekly planning and execution structure."
+     actions={
+      <Button variant="primary" size="sm" onClick={() => addPlan()}><Calendar className="h-4 w-4" />Add Plan</Button>
+     }
+    />
+    <PlansPanel
   plans={plans}
   planItems={planItems}
   projects={projects}
@@ -1449,14 +1534,18 @@ const OpportunitiesLayout: React.FC<{
   onAddPlan={addPlan}
   onUpdatePlan={updatePlan}
   onDeletePlan={deletePlan}
-  onAddPlanItem={addPlanItem}
-  onUpdatePlanItem={updatePlanItem}
-  onDeletePlanItem={deletePlanItem}
+onAddPlanItem={addPlanItem}
   />
+  </div>
   )}
 
   {tab === 'tasks' && (
-  <TasksPanel
+  <div className="space-y-5">
+   <SectionHeader
+    title="Tasks"
+    description="Task management, tracking, and weekly reviews."
+   />
+   <TasksPanel
   tasks={tasks}
   recurringTasks={recurringTasks}
   projects={projects}
@@ -1485,11 +1574,17 @@ const OpportunitiesLayout: React.FC<{
   onUpdateWeeklyTaskReview={updateWeeklyTaskReview}
   onDeleteWeeklyTaskReview={deleteWeeklyTaskReview}
   />
+  </div>
   )}
 
 
  {tab === 'finance' && (
-  <FinancePanel
+   <div className="space-y-5">
+    <SectionHeader
+     title="Finance"
+     description="Income, expenses, investments, and financial planning."
+    />
+    <FinancePanel
   section={appSection}
   onBackToDesktop={handleBackToDesktop}
  financeIncome={financeIncome}
@@ -1529,12 +1624,18 @@ const OpportunitiesLayout: React.FC<{
  financeRecurringRules={financeRecurringRules}
  onAddFinanceRecurringRule={addFinanceRecurringRule}
  onUpdateFinanceRecurringRule={updateFinanceRecurringRule}
- onDeleteFinanceRecurringRule={deleteFinanceRecurringRule}
- />
- )}
+onDeleteFinanceRecurringRule={deleteFinanceRecurringRule}
+  />
+  </div>
+  )}
 
  {tab === 'documents' && (
-  <DocumentStudioPanel
+   <div className="space-y-5">
+    <SectionHeader
+     title="Documents"
+     description="Document generation, templates, branding, and invoices."
+    />
+    <DocumentStudioPanel
   section={appSection}
   onBackToDesktop={handleBackToDesktop}
  documentTemplates={documentTemplates}
@@ -1565,12 +1666,18 @@ const OpportunitiesLayout: React.FC<{
  onDeleteInvoiceItem={deleteInvoiceItem}
  financeIncome={financeIncome}
  financePeriods={financePeriods}
- onAddFinanceIncome={addFinanceIncome}
- />
- )}
+onAddFinanceIncome={addFinanceIncome}
+  />
+  </div>
+  )}
 
  {tab === 'ai-control' && (
-  <AIControlPanel
+   <div className="space-y-5">
+    <SectionHeader
+     title="AI Control"
+     description="AI provider keys, use case settings, and model configuration."
+    />
+    <AIControlPanel
   section={appSection}
   aiProviderKeys={aiProviderKeys}
   aiUseCaseSettings={aiUseCaseSettings}
@@ -1582,12 +1689,18 @@ const OpportunitiesLayout: React.FC<{
  onTestAIProviderKey={testAIProviderKey}
  onAddAIUseCaseSetting={addAIUseCaseSetting}
  onUpdateAIUseCaseSetting={updateAIUseCaseSetting}
- onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
- />
- )}
+onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
+  />
+  </div>
+  )}
 
  {tab === 'social' && (
-  <SocialMediaPanel
+   <div className="space-y-5">
+    <SectionHeader
+     title="Social Media"
+     description="Content strategy, planning, and social platform management."
+    />
+    <SocialMediaPanel
   section={appSection}
   socialPlatforms={socialPlatforms}
  contentPillars={contentPillars}
@@ -1611,12 +1724,18 @@ const OpportunitiesLayout: React.FC<{
  onDeleteContentItem={deleteContentItem}
  onAddWeeklyContentPlan={addWeeklyContentPlan}
  onUpdateWeeklyContentPlan={updateWeeklyContentPlan}
- onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
- />
- )}
+onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
+  />
+  </div>
+  )}
 
  {tab === 'life' && (
-  <LifeManagementPanel
+   <div className="space-y-5">
+    <SectionHeader
+     title="Life Management"
+     description="Nutrition, fitness, deen, family, and weekly reviews."
+    />
+    <LifeManagementPanel
   section={appSection}
   lifeNutritionLogs={lifeNutritionLogs}
   lifeFitnessLogs={lifeFitnessLogs}
@@ -1637,9 +1756,10 @@ const OpportunitiesLayout: React.FC<{
  onDeleteLifeFamilyAction={deleteLifeFamilyAction}
  onAddLifeWeeklyReview={addLifeWeeklyReview}
  onUpdateLifeWeeklyReview={updateLifeWeeklyReview}
- onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
- />
- )}
+onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
+  />
+  </div>
+  )}
  </>)}
  </div>
 

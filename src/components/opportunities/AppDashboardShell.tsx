@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export interface SidebarItem {
   id: string;
@@ -14,11 +14,6 @@ interface AppDashboardShellProps {
   sidebarItems: SidebarItem[];
   activeSection: string;
   onSectionChange: (id: string) => void;
-  topActions?: React.ReactNode;
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  searchPlaceholder?: string;
-  showSearch?: boolean;
   onBackToDesktop: () => void;
   children: React.ReactNode;
 }
@@ -29,11 +24,6 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
   sidebarItems,
   activeSection,
   onSectionChange,
-  topActions,
-  searchValue,
-  onSearchChange,
-  searchPlaceholder,
-  showSearch,
   onBackToDesktop,
   children,
 }) => {
@@ -92,27 +82,9 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
 
       {/* Right area: topbar + main content */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Topbar */}
-        <header className="h-14 shrink-0 border-b border-neutral-200 bg-white flex items-center gap-4 px-5">
-          {showSearch ? (
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
-              <Search className="h-4 w-4 text-neutral-400 shrink-0" />
-              <input
-                type="text"
-                value={searchValue || ''}
-                onChange={(e) => onSearchChange?.(e.target.value)}
-                placeholder={searchPlaceholder || 'Search...'}
-                className="flex-1 text-sm bg-transparent border-none outline-none text-neutral-900 placeholder-neutral-400"
-              />
-            </div>
-          ) : (
-            <div className="flex-1" />
-          )}
-          {topActions ? (
-            <div className="flex items-center gap-2 shrink-0">
-              {topActions}
-            </div>
-          ) : null}
+        {/* Topbar — simple centered app name */}
+        <header className="h-14 shrink-0 border-b border-neutral-200 bg-white flex items-center justify-center px-5">
+          <span className="text-sm font-semibold text-neutral-900">{appName}</span>
         </header>
 
         {/* Main content */}
