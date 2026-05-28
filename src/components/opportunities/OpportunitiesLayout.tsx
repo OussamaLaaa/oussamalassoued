@@ -1195,25 +1195,67 @@ const OpportunitiesLayout: React.FC<{
   )}
 
   {tab === 'companies' && (
-  <div className="space-y-4">
-  <div className="flex items-center justify-end">
-  <button
-  type="button"
-  onClick={() => setShowCsvImport(true)}
-  className="text-xs px-3 py-1.5 rounded border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50"
-  >
-  Import CSV
-  </button>
+  <div className="space-y-5">
+  {(() => {
+  const totalCompanies = companies.length;
+  const scoredCompanies = companies.filter(c => c.fitScore != null);
+  const avgFitScore = scoredCompanies.length > 0
+  ? (scoredCompanies.reduce((sum, c) => sum + (c.fitScore || 0), 0) / scoredCompanies.length).toFixed(1)
+  : '—';
+  const highPriority = companies.filter(c => c.priority === 'high').length;
+  const cIds = companies.map(c => c.id);
+  const peopleConnected = people.filter(p => p.companyId && cIds.includes(p.companyId)).length;
+  const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost' && cIds.includes(d.companyId)).length;
+  const messagesSent = messages.filter(m => m.companyId && cIds.includes(m.companyId)).length;
+  const primaryStats = [
+  { label: 'Total', value: totalCompanies, color: '' },
+  { label: 'Avg Fit Score', value: avgFitScore, color: 'text-blue-600' },
+  { label: 'High Priority', value: highPriority, color: 'text-amber-600' },
+  { label: 'People Connected', value: peopleConnected, color: '' },
+  { label: 'Open Deals', value: openDeals, color: 'text-emerald-600' },
+  { label: 'Messages Sent', value: messagesSent, color: 'text-indigo-500' },
+  ];
+  return (
+  <>
+  <div>
+  <h2 className="text-xl font-semibold text-neutral-900">All Companies</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Every company record across your CRM pipeline.</p>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
+  <div className="mt-0.5 shrink-0 text-blue-600">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+  </svg>
+  </div>
+  <div className="min-w-0">
+  <div className="text-sm font-semibold text-neutral-900">Full CRM pipeline view</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Review all companies, compare segments, and decide the next best action.</div>
+  </div>
+  </div>
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  {primaryStats.map(stat => (
+  <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">{stat.label}</p>
+  <p className={`mt-1.5 text-xl font-bold tabular-nums ${stat.color || 'text-neutral-900'}`}>{stat.value}</p>
+  </div>
+  ))}
+  </div>
+  <div className="flex flex-wrap justify-end gap-2">
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  <Button variant="secondary" size="sm" onClick={() => setShowCsvImport(true)}>Import CSV</Button>
   </div>
   <CompaniesTable
- companies={companies}
- onEdit={handleEditCompany}
- onDelete={handleRequestDelete}
- onAIScore={handleAIScore}
- onCompanyClick={handleCompanyClick}
- filters={companyFilters}
+  companies={companies}
+  onEdit={handleEditCompany}
+  onDelete={handleRequestDelete}
+  onAIScore={handleAIScore}
+  onCompanyClick={handleCompanyClick}
+  filters={companyFilters}
   onFilterChange={setCompanyFilters}
   />
+  </>
+  );
+  })()}
   </div>
   )}
 
