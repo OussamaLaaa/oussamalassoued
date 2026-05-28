@@ -90,42 +90,6 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
   </div>
   ) : null}
 
-  {/* Layer 4 — Search / Quick Filter Toolbar */}
-  <div className="py-3">
-  <div className="relative w-full max-w-md">
-  <svg
-  width="15"
-  height="15"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="2"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-  aria-hidden="true"
-  >
-  <circle cx="11" cy="11" r="8" />
-  <path d="m21 21-4.35-4.35" />
-  </svg>
-  <input
-  type="text"
-  value={searchValue ?? ''}
-  onChange={(event) => onSearchChange?.(event.target.value)}
-  placeholder={searchPlaceholder ?? 'Search companies, people, deals...'}
-  className="h-9 w-full rounded-lg border border-neutral-200 bg-white pl-8 pr-8 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
-  />
-  {searchValue ? (
-  <button
-  type="button"
-  onClick={() => onSearchChange?.('')}
-  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-xs text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
-  >
-  Clear
-  </button>
-  ) : null}
-  </div>
-  </div>
   </div>
   </header>
 
