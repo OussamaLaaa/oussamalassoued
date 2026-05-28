@@ -63,7 +63,7 @@ interface Props {
  deleteCompany: (id: string) => Promise<void>;
 }
 
-type WorkspaceTab = 'overview' | 'contact_methods' | 'people' | 'problem' | 'outreach_script' | 'messages' | 'deals' | 'notes';
+type WorkspaceTab = 'overview' | 'contact_methods' | 'people' | 'problem' | 'outreach_script' | 'messages' | 'deals' | 'notes' | 'ai_score' | 'research';
 
 const TABS: { id: WorkspaceTab; label: string }[] = [
  { id: 'overview', label: 'Overview' },
@@ -74,6 +74,8 @@ const TABS: { id: WorkspaceTab; label: string }[] = [
  { id: 'messages', label: 'Messages' },
  { id: 'deals', label: 'Deals' },
  { id: 'notes', label: 'Notes' },
+ { id: 'ai_score', label: 'AI Score' },
+ { id: 'research', label: 'Research' },
 ];
 
 const DATABASE_TYPE_LABELS: Record<string, string> = {
@@ -186,7 +188,6 @@ const CompanyWorkspace: React.FC<Props> = ({
  const [showOutreachScriptForm, setShowOutreachScriptForm] = useState(false);
  const [editingOutreachScript, setEditingOutreachScript] = useState<CompanyOutreachScript | null>(null);
 
- const [showResearchPanel, setShowResearchPanel] = useState(false);
  const [showPersonChoiceModal, setShowPersonChoiceModal] = useState(false);
  const [showLinkExistingPersonDialog, setShowLinkExistingPersonDialog] = useState(false);
  const [personWorkspaceActionPersonId, setPersonWorkspaceActionPersonId] = useState<string | null>(null);
@@ -1158,32 +1159,72 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  );
 
- default:
- return null;
- }
+  case 'ai_score':
+  return (
+  <div className="space-y-4">
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Fit Score</p>
+  <p className="mt-1 text-2xl font-bold text-indigo-600 tabular-nums">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Priority</p>
+  <p className="mt-1 text-2xl font-bold text-neutral-900">{company.priority || '—'}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Ethical Fit</p>
+  <p className="mt-1 text-2xl font-bold text-neutral-900">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</p>
+  </div>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="flex items-center justify-between">
+  <h3 className="text-sm font-semibold text-neutral-900">AI Scoring</h3>
+  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>Run AI Score</Button>
+  </div>
+  <p className="mt-2 text-sm text-neutral-500">Run an AI-powered analysis to evaluate fit score, priority, ethical fit, and industry classification for this company.</p>
+  </div>
+  </div>
+  );
+
+  case 'research':
+  return (
+  <CompanyResearchPanel
+  title="Research / Refresh AI"
+  companyName={company.name}
+  countryHint={company.country || undefined}
+  cityHint={company.city || undefined}
+  industryHint={company.industry || undefined}
+  websiteHint={company.website || undefined}
+  currentCompany={company}
+  showRelatedActions
+  debug={import.meta.env.DEV}
+  onApplyCompanyPatch={async (patch) => {
+  await updateCompany(company.id, patch);
+  }}
+  onCreateContactMethods={handleCreateResearchContactMethods}
+  onCreateProblemProfile={handleCreateResearchProblemProfile}
+  onCreateOutreachScript={handleCreateResearchOutreachScript}
+  />
+  );
+
+  default:
+  return null;
+  }
  };
 
   return (
   <div className="space-y-6">
   {/* Header */}
-  <div className="flex flex-col gap-4">
   <div className="flex items-center justify-between">
   <Button variant="ghost" size="sm" onClick={onBack} className="-ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
   <ArrowLeft className="h-3 w-3" />
   Back to CRM
   </Button>
+  <div className="flex items-center gap-2">
+  <h2 className="text-xl font-semibold text-neutral-900">{company.name}</h2>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => onEditCompany(company))} className="text-neutral-400 hover:text-neutral-900">Edit Company</Button>
+  </div>
   <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))} className="text-neutral-300 hover:text-red-500">Delete</Button>
-  </div>
-  <h2 className="text-xl font-semibold text-neutral-900 text-center">{company.name}</h2>
-  <div className="flex flex-wrap justify-center gap-2">
-  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => setShowResearchPanel(true))}>Research</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddContactMethod)}>+ Contact</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddProblemProfile)}>+ Problem</Button>
-  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddOutreachScript)}>+ Script</Button>
-  </div>
   </div>
 
   {copyFeedback ? (
@@ -1351,27 +1392,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </OpportunityModal>
  )}
 
- {showResearchPanel ? (
- <OpportunityModal title="AI Company Research" onClose={() => setShowResearchPanel(false)}>
- <CompanyResearchPanel
- title="Research / Refresh AI"
- companyName={company.name}
- countryHint={company.country || undefined}
- cityHint={company.city || undefined}
- industryHint={company.industry || undefined}
- websiteHint={company.website || undefined}
- currentCompany={company}
- showRelatedActions
- debug={import.meta.env.DEV}
- onApplyCompanyPatch={async (patch) => {
- await updateCompany(company.id, patch);
- }}
- onCreateContactMethods={handleCreateResearchContactMethods}
- onCreateProblemProfile={handleCreateResearchProblemProfile}
- onCreateOutreachScript={handleCreateResearchOutreachScript}
- />
- </OpportunityModal>
- ) : null}
+
 
  {showPersonChoiceModal ? (
  <OpportunityModal title="Add Person" onClose={() => setShowPersonChoiceModal(false)}>
