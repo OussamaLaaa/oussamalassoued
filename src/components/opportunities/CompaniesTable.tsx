@@ -4,9 +4,7 @@ import type { Company } from '../../types/opportunities';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
 import Button from '../ui/Button';
-import Input from '../ui/Input';
 import Select from '../ui/Select';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
 
@@ -113,192 +111,229 @@ const CompaniesTable: React.FC<{
  filters && (filters.priority || filters.status || filters.databaseType || filters.country),
  );
 
- return (
- <Card>
- <CardHeader>
- <div className="flex flex-wrap items-center justify-between gap-2">
- <CardTitle className="text-sm">Companies</CardTitle>
- <span className="text-xs text-neutral-500">{filtered.length} / {companies.length}</span>
- </div>
- </CardHeader>
- <CardContent className="space-y-4">
- {filters && (
- <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
- <Input
- type="text"
- value={filters.searchQuery}
- onChange={(event) => setFilter('searchQuery', event.target.value)}
- placeholder="Search companies"
- className="min-w-[220px] flex-1"
- />
- <Select
- value={filters.priority}
- onChange={(event) => setFilter('priority', event.target.value)}
- options={priorityOptions}
- />
- <Select
- value={filters.status}
- onChange={(event) => setFilter('status', event.target.value)}
- options={statusOptions}
- />
- <Select
- value={filters.databaseType}
- onChange={(event) => setFilter('databaseType', event.target.value)}
- options={databaseTypeOptions}
- />
- <Input
- type="text"
- value={filters.country}
- onChange={(event) => setFilter('country', event.target.value)}
- placeholder="Country"
- className="min-w-[160px]"
- />
- {hasActiveFilters && (
- <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-700 hover:text-neutral-900">
- Clear filters
- </Button>
- )}
- </div>
- )}
+  return (
+  <div>
+  {filters && (
+  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-3 mb-4">
+  <div className="relative flex-1 min-w-[200px]">
+  <svg
+  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+  >
+  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+  </svg>
+  <input
+  type="text"
+  value={filters.searchQuery}
+  onChange={(event) => setFilter('searchQuery', event.target.value)}
+  placeholder="Search companies"
+  className="h-8 w-full rounded-lg border border-neutral-200 bg-white pl-8 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+  />
+  </div>
+  <Select
+  value={filters.priority}
+  onChange={(event) => setFilter('priority', event.target.value)}
+  options={priorityOptions}
+  className="h-8 min-w-[110px] text-xs"
+  />
+  <Select
+  value={filters.status}
+  onChange={(event) => setFilter('status', event.target.value)}
+  options={statusOptions}
+  className="h-8 min-w-[110px] text-xs"
+  />
+  <Select
+  value={filters.databaseType}
+  onChange={(event) => setFilter('databaseType', event.target.value)}
+  options={databaseTypeOptions}
+  className="h-8 min-w-[120px] text-xs"
+  />
+  <input
+  type="text"
+  value={filters.country}
+  onChange={(event) => setFilter('country', event.target.value)}
+  placeholder="Country"
+  className="h-8 min-w-[110px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+  />
+  {hasActiveFilters && (
+  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-400 hover:text-neutral-900 text-xs whitespace-nowrap">
+  Clear
+  </Button>
+  )}
+  <span className="text-xs text-neutral-400 tabular-nums whitespace-nowrap">{filtered.length} companies</span>
+  </div>
+  )}
 
- <div className="overflow-x-auto">
- <table className="min-w-[1160px] w-full border-collapse text-left">
- <thead>
- <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
- <th className="px-4 py-3 font-medium">Company</th>
- <th className="px-4 py-3 font-medium">Type</th>
- <th className="px-4 py-3 font-medium">Category / Industry</th>
- <th className="px-4 py-3 font-medium">Location</th>
- <th className="px-4 py-3 font-medium">Priority</th>
- <th className="px-4 py-3 font-medium">Fit</th>
- <th className="px-4 py-3 font-medium">Ethical</th>
- <th className="px-4 py-3 font-medium">Status</th>
- <th className="px-4 py-3 font-medium">Next action</th>
- <th className="px-4 py-3 text-right font-medium">Actions</th>
- </tr>
- </thead>
- <tbody>
- {filtered.map((company) => (
- <tr
- key={company.id}
- className="border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer"
- onClick={() => onCompanyClick?.(company.id)}
- >
- <td className="px-4 py-4 align-top">
- <div className="min-w-0">
- <div className="font-semibold text-neutral-900">{company.name}</div>
- <div className="mt-1 text-xs text-neutral-500 break-words">
- {company.website || company.linkedin || '—'}
- </div>
- </div>
- </td>
- <td className="px-4 py-4 align-top">
- <Badge variant="neutral">{databaseTypeLabel(company.databaseType)}</Badge>
- </td>
- <td className="px-4 py-4 align-top text-sm text-neutral-700">
- <div className="max-w-[180px] truncate">{categoryLabel(company)}</div>
- </td>
- <td className="px-4 py-4 align-top text-sm text-neutral-700">
- <div className="max-w-[160px] truncate">{locationLabel(company)}</div>
- </td>
- <td className="px-4 py-4 align-top">
- <PriorityBadge priority={company.priority} />
- </td>
- <td className="px-4 py-4 align-top text-sm font-medium text-neutral-900 tabular-nums">
- {typeof company.fitScore === 'number' ? company.fitScore : '—'}
- </td>
- <td className="px-4 py-4 align-top">
- <Badge variant="neutral">{ethicalLabel(company.ethicalFit)}</Badge>
- </td>
- <td className="px-4 py-4 align-top">
- <StatusBadge status={company.status} />
- </td>
- <td className="px-4 py-4 align-top text-sm text-neutral-700">
- <div className="max-w-[200px] truncate">{company.nextAction || '—'}</div>
- </td>
- <td className="px-4 py-4 align-top">
- <div className="flex flex-wrap justify-end gap-1.5">
- {onCompanyClick && (
- <Button
- type="button"
- variant="ghost"
- size="sm"
- onClick={(event) => {
- event.stopPropagation();
- event.preventDefault();
- onCompanyClick(company.id);
- }}
- className="text-neutral-700 hover:text-neutral-900"
- >
- Open
- </Button>
- )}
- {onEdit && (
- <Button
- type="button"
- variant="ghost"
- size="sm"
- onClick={(event) => {
- event.stopPropagation();
- event.preventDefault();
- onEdit(company);
- }}
- className="text-neutral-700 hover:text-neutral-900"
- >
- Edit
- </Button>
- )}
- {onAIScore && (
- <Button
- type="button"
- variant="ghost"
- size="sm"
- onClick={(event) => {
- event.stopPropagation();
- event.preventDefault();
- onAIScore(company);
- }}
- className="text-neutral-700 hover:text-neutral-900"
- >
- AI Score
- </Button>
- )}
- {onDelete && (
- <Button
- type="button"
- variant="ghost"
- size="sm"
- onClick={(event) => {
- event.stopPropagation();
- event.preventDefault();
- onDelete(company.id);
- }}
- className="text-neutral-700 hover:text-neutral-900"
- >
- Delete
- </Button>
- )}
- </div>
- </td>
- </tr>
- ))}
- {filtered.length === 0 && (
- <tr>
- <td colSpan={10} className="px-4 py-8 text-center">
- <EmptyState
- title="No companies match the current filters."
- description="Clear the filters or add a company to continue."
- action={hasActiveFilters ? <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button> : undefined}
- />
- </td>
- </tr>
- )}
- </tbody>
- </table>
- </div>
- </CardContent>
- </Card>
- );
+  <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
+  <table className="min-w-[1160px] w-full border-collapse text-left">
+  <thead>
+  <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
+  <th className="px-4 py-3 font-medium">Company</th>
+  <th className="px-4 py-3 font-medium">Type</th>
+  <th className="px-4 py-3 font-medium">Category</th>
+  <th className="px-4 py-3 font-medium">Location</th>
+  <th className="px-4 py-3 font-medium">Priority</th>
+  <th className="px-4 py-3 font-medium">Fit</th>
+  <th className="px-4 py-3 font-medium">Ethical</th>
+  <th className="px-4 py-3 font-medium">Status</th>
+  <th className="px-4 py-3 font-medium">Next action</th>
+  <th className="px-4 py-3 text-right font-medium">Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  {filtered.map((company) => (
+  <tr
+  key={company.id}
+  className="border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer"
+  onClick={() => onCompanyClick?.(company.id)}
+  >
+  <td className="px-4 py-3.5 align-top">
+  <div className="min-w-0">
+  <div className="font-medium text-neutral-900">{company.name}</div>
+  {(company.website || company.linkedin) ? (
+  <a
+  href={company.website || company.linkedin}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={(e) => e.stopPropagation()}
+  className="mt-0.5 block max-w-[200px] truncate text-xs text-blue-600 hover:text-blue-700 hover:underline"
+  >
+  {company.website || 'LinkedIn'}
+  </a>
+  ) : (
+  <div className="mt-0.5 text-xs text-neutral-300">—</div>
+  )}
+  </div>
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{databaseTypeLabel(company.databaseType)}</Badge>
+  </td>
+  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+  <div className="max-w-[160px] truncate">{categoryLabel(company)}</div>
+  </td>
+  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+  <div className="max-w-[140px] truncate">{locationLabel(company)}</div>
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  <PriorityBadge priority={company.priority} />
+  </td>
+  <td className="px-4 py-3.5 align-top text-sm font-semibold text-neutral-900 tabular-nums">
+  {typeof company.fitScore === 'number' ? company.fitScore : '—'}
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  {!company.ethicalFit || company.ethicalFit === 'good' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">
+  {ethicalLabel(company.ethicalFit)}
+  </span>
+  ) : company.ethicalFit === 'needs_review' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">
+  {ethicalLabel(company.ethicalFit)}
+  </span>
+  ) : company.ethicalFit === 'avoid' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">
+  {ethicalLabel(company.ethicalFit)}
+  </span>
+  ) : (
+  <Badge variant="neutral">{ethicalLabel(company.ethicalFit)}</Badge>
+  )}
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  <StatusBadge status={company.status} />
+  </td>
+  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+  <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  <div className="flex items-center justify-end gap-1">
+  {onCompanyClick && (
+  <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  onClick={(event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  onCompanyClick(company.id);
+  }}
+  className="text-neutral-600 hover:text-neutral-900 px-2"
+  >
+  Open
+  </Button>
+  )}
+  {onEdit && (
+  <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  onClick={(event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  onEdit(company);
+  }}
+  className="text-neutral-400 hover:text-neutral-900 px-1.5"
+  title="Edit"
+  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+  </svg>
+  </Button>
+  )}
+  {onAIScore && (
+  <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  onClick={(event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  onAIScore(company);
+  }}
+  className="text-indigo-500 hover:text-indigo-700 px-1.5"
+  title="AI Score"
+  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M12 2a4 4 0 0 1 4 4c0 2-2 4-2 6"/><path d="M12 18v4"/><path d="M16 22H8"/>
+  </svg>
+  </Button>
+  )}
+  {onDelete && (
+  <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  onClick={(event) => {
+  event.stopPropagation();
+  event.preventDefault();
+  onDelete(company.id);
+  }}
+  className="text-neutral-300 hover:text-red-500 px-1.5"
+  title="Delete"
+  >
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+  </svg>
+  </Button>
+  )}
+  </div>
+  </td>
+  </tr>
+  ))}
+  {filtered.length === 0 && (
+  <tr>
+  <td colSpan={10} className="px-4 py-8 text-center">
+  <EmptyState
+  title="No companies match the current filters."
+  description="Clear the filters or add a company to continue."
+  action={hasActiveFilters ? <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button> : undefined}
+  />
+  </td>
+  </tr>
+  )}
+  </tbody>
+  </table>
+  </div>
+  </div>
+  );
 };
 
 export default CompaniesTable;

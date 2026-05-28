@@ -963,14 +963,14 @@ const OpportunitiesLayout: React.FC<{
  tabs={getShellTabs()}
  activeTab={tab}
  onTabChange={handleShellTabChange}
- rightActions={activeApp === 'crm' ? (
- <>
- <Button variant="secondary" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
- <Button variant="secondary" size="md" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
- <Button variant="secondary" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
- <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
- </>
- ) : activeApp === 'life' ? (
+  rightActions={activeApp === 'crm' ? (
+  <>
+  <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
+  <Button variant="outline" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  <Button variant="outline" size="md" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
+  <Button variant="ghost" size="md" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+  </>
+  ) : activeApp === 'life' ? (
  <>
  <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('nutrition')}>Add Meal</Button>
  <Button variant="secondary" size="md" onClick={() => setLifeQuickTab('fitness')}>Add Workout</Button>

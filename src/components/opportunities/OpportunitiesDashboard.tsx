@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import type { Company, Deal, OutreachMessage, Person, PersonInput, MessageInput } from '../../types/opportunities';
-import StatCard from '../ui/StatCard';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
@@ -387,18 +386,42 @@ const OpportunitiesDashboard: React.FC<{
  </div>
  );
 
- return (
- <div className="space-y-4">
- <section>
- <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
- <StatCard label="Total Companies" value={totalCompanies} hint="Current total" />
- <StatCard label="Total People" value={totalPeople} hint="Current total" />
- <StatCard label="Messages Sent" value={sentInLast30Days} hint="Last 30 days" />
- <StatCard label="Follow-ups Due" value={followUpsDueToday} hint="Today" />
- <StatCard label="Open Deals" value={openDeals} hint="Current total" />
- <StatCard label="High Priority Leads" value={highPriorityLeadCount} hint="Score ≥ 80" />
- </div>
- </section>
+  return (
+  <div className="space-y-5">
+  <section>
+  <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Total Companies</p>
+  <p className="mt-1.5 text-2xl font-bold text-neutral-900 tabular-nums">{totalCompanies}</p>
+  <p className="mt-1 text-xs text-neutral-400">Current total</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Total People</p>
+  <p className="mt-1.5 text-2xl font-bold text-neutral-900 tabular-nums">{totalPeople}</p>
+  <p className="mt-1 text-xs text-neutral-400">Current total</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Messages Sent</p>
+  <p className="mt-1.5 text-2xl font-bold text-indigo-600 tabular-nums">{sentInLast30Days}</p>
+  <p className="mt-1 text-xs text-neutral-400">Last 30 days</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Follow-ups Due</p>
+  <p className="mt-1.5 text-2xl font-bold text-amber-600 tabular-nums">{followUpsDueToday}</p>
+  <p className="mt-1 text-xs text-neutral-400">Today</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">Open Deals</p>
+  <p className="mt-1.5 text-2xl font-bold text-emerald-600 tabular-nums">{openDeals}</p>
+  <p className="mt-1 text-xs text-neutral-400">Current total</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">High Priority Leads</p>
+  <p className="mt-1.5 text-2xl font-bold text-amber-600 tabular-nums">{highPriorityLeadCount}</p>
+  <p className="mt-1 text-xs text-neutral-400">Score ≥ 80</p>
+  </div>
+  </div>
+  </section>
 
  <section className="grid gap-4 lg:grid-cols-2">
  <SectionCard
@@ -458,14 +481,26 @@ const OpportunitiesDashboard: React.FC<{
  )}
  </SectionCard>
 
- <SectionCard title="Quick Stats" subtitle="This week" count={4}>
- <div className="grid grid-cols-2 divide-x divide-y divide-neutral-100">
- <MiniStat label="New leads" value={newLeadsCount} />
- <MiniStat label="Replies" value={repliesCount} />
- <MiniStat label="Meetings" value={meetingsCount} />
- <MiniStat label="Closed" value={closedCount} />
- </div>
- </SectionCard>
+  <SectionCard title="Quick Stats" subtitle="This period">
+  <div className="grid grid-cols-2 divide-x divide-y divide-neutral-100">
+  <div className="px-4 py-4">
+  <p className="text-xs text-blue-600">New leads</p>
+  <p className="mt-1.5 text-lg font-bold text-neutral-900 tabular-nums">{newLeadsCount}</p>
+  </div>
+  <div className="px-4 py-4">
+  <p className="text-xs text-emerald-600">Replies</p>
+  <p className="mt-1.5 text-lg font-bold text-neutral-900 tabular-nums">{repliesCount}</p>
+  </div>
+  <div className="px-4 py-4">
+  <p className="text-xs text-amber-600">Meetings</p>
+  <p className="mt-1.5 text-lg font-bold text-neutral-900 tabular-nums">{meetingsCount}</p>
+  </div>
+  <div className="px-4 py-4">
+  <p className="text-xs text-violet-600">Closed</p>
+  <p className="mt-1.5 text-lg font-bold text-neutral-900 tabular-nums">{closedCount}</p>
+  </div>
+  </div>
+  </SectionCard>
  </section>
 
  <section className="grid gap-4 lg:grid-cols-2">
@@ -503,14 +538,5 @@ const OpportunitiesDashboard: React.FC<{
  </div>
  );
 };
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
- return (
- <div className="px-4 py-4">
- <div className="text-xs text-neutral-500">{label}</div>
- <div className="mt-2 text-lg font-semibold text-black tabular-nums">{value}</div>
- </div>
- );
-}
 
 export default OpportunitiesDashboard;

@@ -32,106 +32,107 @@ const FullPageAppShell: React.FC<FullPageAppShellProps> = ({
  onSearchChange,
  searchPlaceholder,
 }) => {
- if (title === 'CRM') {
- return (
- <div className="min-h-screen w-full overflow-x-hidden bg-neutral-50 text-neutral-900">
- <header className="border-b border-neutral-200 bg-white">
- <div className="mx-auto max-w-[1400px] px-4 py-5 md:px-8 md:py-6">
- <div className="flex flex-col gap-5">
- <div>
- <Button
- type="button"
- variant="ghost"
- size="sm"
- onClick={onBackToDesktop}
- className="h-9 px-2 text-neutral-500 hover:text-neutral-900"
- >
- <ArrowLeft className="h-4 w-4" />
- Back to Desktop
- </Button>
- </div>
+  if (title === 'CRM') {
+  return (
+  <div className="min-h-screen w-full overflow-x-hidden bg-neutral-50 text-neutral-900">
+  <header className="border-b border-neutral-200 bg-white">
+  <div className="mx-auto max-w-[1400px] px-6">
+  {/* Layer 1 — Utility row */}
+  <div className="flex items-center justify-between py-3">
+  <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  onClick={onBackToDesktop}
+  className="h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900"
+  >
+  <ArrowLeft className="h-3 w-3" />
+  Desktop
+  </Button>
+  </div>
 
- <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
- <div className="min-w-0">
- <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 md:text-[28px]">CRM</h1>
- <p className="mt-1.5 text-sm leading-6 text-neutral-500">Companies, people, deals, and outreach pipeline.</p>
- </div>
+  {/* Layer 2 — Title + Primary Actions */}
+  <div className="flex flex-col gap-4 pb-5 md:flex-row md:items-start md:justify-between md:gap-6">
+  <div className="min-w-0">
+  <h1 className="text-xl font-semibold tracking-tight text-neutral-900 md:text-2xl">CRM</h1>
+  <p className="mt-0.5 text-sm text-neutral-500">Companies, people, deals, and outreach pipeline.</p>
+  </div>
+  {rightActions ? (
+  <div className="flex flex-wrap items-center gap-2">
+  {rightActions}
+  </div>
+  ) : null}
+  </div>
 
- {rightActions ? (
- <div className="flex flex-wrap items-center gap-2 md:justify-end md:self-start">
- {rightActions}
- </div>
- ) : null}
- </div>
+  {/* Layer 3 — Section Navigation / Tabs */}
+  {tabs && tabs.length > 0 && activeTab !== undefined && onTabChange ? (
+  <div className="overflow-x-auto -mx-6 px-6">
+  <nav className="flex min-w-max items-end gap-5 border-b border-neutral-200">
+  {tabs.map((tab) => {
+  const isActive = activeTab === tab.id;
+  return (
+  <button
+  key={tab.id}
+  type="button"
+  onClick={() => onTabChange(tab.id)}
+  className={
+  'relative flex-shrink-0 pb-2.5 text-sm transition-colors ' +
+  (isActive
+  ? 'text-neutral-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-neutral-900'
+  : 'text-neutral-500 hover:text-neutral-900')
+  }
+  >
+  {tab.label}
+  </button>
+  );
+  })}
+  </nav>
+  </div>
+  ) : null}
 
- {tabs && tabs.length > 0 && activeTab !== undefined && onTabChange ? (
- <div className="overflow-x-auto -mx-4 px-4 md:-mx-8 md:px-8">
- <nav className="flex min-w-max items-end gap-7 border-b border-neutral-200">
- {tabs.map((tab) => {
- const isActive = activeTab === tab.id;
- return (
- <button
- key={tab.id}
- type="button"
- onClick={() => onTabChange(tab.id)}
- className={
- 'relative flex-shrink-0 border-b-2 px-0 pb-3.5 pt-0 text-sm transition-colors ' +
- (isActive
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900')
- }
- >
- {tab.label}
- </button>
- );
- })}
- </nav>
- </div>
- ) : null}
+  {/* Layer 4 — Search / Quick Filter Toolbar */}
+  <div className="py-3">
+  <div className="relative w-full max-w-md">
+  <svg
+  width="15"
+  height="15"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="2"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+  aria-hidden="true"
+  >
+  <circle cx="11" cy="11" r="8" />
+  <path d="m21 21-4.35-4.35" />
+  </svg>
+  <input
+  type="text"
+  value={searchValue ?? ''}
+  onChange={(event) => onSearchChange?.(event.target.value)}
+  placeholder={searchPlaceholder ?? 'Search companies, people, deals...'}
+  className="h-9 w-full rounded-lg border border-neutral-200 bg-white pl-8 pr-8 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+  />
+  {searchValue ? (
+  <button
+  type="button"
+  onClick={() => onSearchChange?.('')}
+  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-xs text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+  >
+  Clear
+  </button>
+  ) : null}
+  </div>
+  </div>
+  </div>
+  </header>
 
- <div className="pt-1">
- <div className="relative w-full max-w-xl">
- <svg
- width="16"
- height="16"
- viewBox="0 0 24 24"
- fill="none"
- stroke="currentColor"
- strokeWidth="2"
- strokeLinecap="round"
- strokeLinejoin="round"
- className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
- aria-hidden="true"
- >
- <circle cx="11" cy="11" r="8" />
- <path d="m21 21-4.35-4.35" />
- </svg>
- <input
- type="text"
- value={searchValue ?? ''}
- onChange={(event) => onSearchChange?.(event.target.value)}
- placeholder={searchPlaceholder ?? 'Search companies, people, deals...'}
- className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-10 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
- />
- {searchValue ? (
- <button
- type="button"
- onClick={() => onSearchChange?.('')}
- className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
- >
- Clear
- </button>
- ) : null}
- </div>
- </div>
- </div>
- </div>
- </header>
-
- <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
- </div>
- );
- }
+  <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
+  </div>
+  );
+  }
 
  if (title === 'Messages') {
  return (
