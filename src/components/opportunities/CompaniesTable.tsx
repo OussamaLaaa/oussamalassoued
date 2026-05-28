@@ -7,7 +7,7 @@ import Button from '../ui/Button';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
-import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton } from './Toolbar';
+import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
 
 export interface CompanyFilters {
  searchQuery: string;
