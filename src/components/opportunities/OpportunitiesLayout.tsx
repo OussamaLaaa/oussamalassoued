@@ -35,6 +35,7 @@ import ImportPeopleModal from './ImportPeopleModal';
 import OutreachTemplateModal from './OutreachTemplateModal';
 import TemplatesPanel from './TemplatesPanel';
 import CompanySegmentView from './CompanySegmentView';
+import PersonWorkspace from './PersonWorkspace';
 import AICompanyScoringModal from './AICompanyScoringModal';
 import TasksPanel from './TasksPanel';
 import RelationshipsPanel from './RelationshipsPanel';
@@ -507,8 +508,10 @@ const OpportunitiesLayout: React.FC<{
  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
  const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
  const [companyResearchDraft, setCompanyResearchDraft] = useState<CompanyResearchResult | null>(null);
- const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
- const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [personWorkspaceContext, setPersonWorkspaceContext] = useState<'global' | 'company'>('global');
+  const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
@@ -979,9 +982,18 @@ const OpportunitiesLayout: React.FC<{
  await deleteProject(id);
  };
 
- const handleCompanyClick = useCallback((companyId: string) => {
- setSelectedCompanyId(companyId);
- }, []);
+  const handleCompanyClick = useCallback((companyId: string) => {
+  setSelectedCompanyId(companyId);
+  }, []);
+
+  const handlePersonClick = useCallback((personId: string) => {
+  setSelectedPersonId(personId);
+  setPersonWorkspaceContext('global');
+  }, []);
+
+  const handleBackFromPersonWorkspace = useCallback(() => {
+  setSelectedPersonId(null);
+  }, []);
 
  if (activeApp === 'desktop') {
  return (
@@ -1012,45 +1024,89 @@ const OpportunitiesLayout: React.FC<{
    onBackToDesktop={handleBackToDesktop}
    >
  <div className="space-y-4">
- {selectedCompanyId ? (
- <CompanyWorkspace
- companyId={selectedCompanyId}
- companies={companies}
- people={people}
- messages={messages}
- deals={deals}
- companyContactMethods={companyContactMethods}
- personContactMethods={personContactMethods || []}
- companyProblemProfiles={companyProblemProfiles}
- companyOutreachScripts={companyOutreachScripts}
- onBack={() => setSelectedCompanyId(null)}
- onEditCompany={handleEditCompany}
- onAIScoreCompany={handleAIScore}
- addCompanyContactMethod={addCompanyContactMethod}
- updateCompanyContactMethod={updateCompanyContactMethod}
- deleteCompanyContactMethod={deleteCompanyContactMethod}
- addPersonContactMethod={addPersonContactMethod}
- updatePersonContactMethod={updatePersonContactMethod}
- deletePersonContactMethod={deletePersonContactMethod}
- addCompanyProblemProfile={addCompanyProblemProfile}
- updateCompanyProblemProfile={updateCompanyProblemProfile}
- deleteCompanyProblemProfile={deleteCompanyProblemProfile}
- addCompanyOutreachScript={addCompanyOutreachScript}
- updateCompanyOutreachScript={updateCompanyOutreachScript}
- deleteCompanyOutreachScript={deleteCompanyOutreachScript}
- addPerson={addPerson}
- updatePerson={updatePerson}
- deletePerson={deletePerson}
- addMessage={addMessage}
- updateMessage={updateMessage}
- deleteMessage={deleteMessage}
- addDeal={addDeal}
- updateDeal={updateDeal}
- deleteDeal={deleteDeal}
- updateCompany={updateCompany}
- deleteCompany={handleDeleteCompany}
- />
- ) : (
+  {selectedCompanyId ? (
+  <CompanyWorkspace
+  companyId={selectedCompanyId}
+  companies={companies}
+  people={people}
+  messages={messages}
+  deals={deals}
+  companyContactMethods={companyContactMethods}
+  personContactMethods={personContactMethods || []}
+  companyProblemProfiles={companyProblemProfiles}
+  companyOutreachScripts={companyOutreachScripts}
+  onBack={() => setSelectedCompanyId(null)}
+  onEditCompany={handleEditCompany}
+  onAIScoreCompany={handleAIScore}
+  addCompanyContactMethod={addCompanyContactMethod}
+  updateCompanyContactMethod={updateCompanyContactMethod}
+  deleteCompanyContactMethod={deleteCompanyContactMethod}
+  addPersonContactMethod={addPersonContactMethod}
+  updatePersonContactMethod={updatePersonContactMethod}
+  deletePersonContactMethod={deletePersonContactMethod}
+  addCompanyProblemProfile={addCompanyProblemProfile}
+  updateCompanyProblemProfile={updateCompanyProblemProfile}
+  deleteCompanyProblemProfile={deleteCompanyProblemProfile}
+  addCompanyOutreachScript={addCompanyOutreachScript}
+  updateCompanyOutreachScript={updateCompanyOutreachScript}
+  deleteCompanyOutreachScript={deleteCompanyOutreachScript}
+  addPerson={addPerson}
+  updatePerson={updatePerson}
+  deletePerson={deletePerson}
+  addMessage={addMessage}
+  updateMessage={updateMessage}
+  deleteMessage={deleteMessage}
+  addDeal={addDeal}
+  updateDeal={updateDeal}
+  deleteDeal={deleteDeal}
+  updateCompany={updateCompany}
+  deleteCompany={handleDeleteCompany}
+  />
+  ) : selectedPersonId && personWorkspaceContext === 'global' ? (
+  (() => {
+  const person = people.find((p) => p.id === selectedPersonId);
+  if (!person) return null;
+  return (
+  <PersonWorkspace
+  companies={companies}
+  person={person}
+  people={people}
+  messages={messages}
+  deals={deals}
+  personContactMethods={personContactMethods}
+  onBack={handleBackFromPersonWorkspace}
+  onEditPerson={handleEditPerson}
+  onAddMessage={(personId) => {
+  setMessageDraft({
+  companyId: person.companyId || '',
+  personId: personId || person.id,
+  channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
+  language: 'English',
+  messageType: 'outreach',
+  messageText: '',
+  sentDate: new Date().toISOString().slice(0, 16),
+  replyStatus: 'no_reply',
+  replySummary: '',
+  nextFollowUpDate: '',
+  status: 'sent',
+  });
+  setActiveModal('message');
+  }}
+  onAddDeal={() => setActiveModal('deal')}
+  addPersonContactMethod={addPersonContactMethod}
+  updatePersonContactMethod={updatePersonContactMethod}
+  deletePersonContactMethod={deletePersonContactMethod}
+  updatePerson={updatePerson}
+  addMessage={addMessage}
+  updateMessage={updateMessage}
+  deleteMessage={deleteMessage}
+  addDeal={addDeal}
+  updateDeal={updateDeal}
+  deleteDeal={deleteDeal}
+  />
+  );
+  })()
+  ) : (
  <>
   {tab === 'dashboard' && (
   <div className="space-y-5">
@@ -1261,30 +1317,70 @@ const OpportunitiesLayout: React.FC<{
 
   {tab === 'people' && (
   <div className="space-y-5">
-  <SectionHeader
-  title="People"
-  description="Contacts, decision makers, and relationship context."
-  actions={
+  {(() => {
+  const totalPeople = people.length;
+  const decisionMakers = people.filter(p => (p.decisionPower ?? 0) >= 3).length;
+  const highRelevance = people.filter(p => (p.relevance ?? 0) >= 3).length;
+  const withContactMethod = people.filter(p => p.emailPublic || p.linkedin || p.contactChannel).length;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const followUpsDue = people.filter(p => {
+  if (!p.nextFollowUpDate) return false;
+  const d = new Date(p.nextFollowUpDate);
+  d.setHours(0, 0, 0, 0);
+  return d <= now;
+  }).length;
+  const companiesConnected = new Set(people.map(p => p.companyId).filter(Boolean)).size;
+  const peopleStats = [
+  { label: 'Total People', value: totalPeople, color: '' },
+  { label: 'Decision Makers', value: decisionMakers, color: 'text-violet-600' },
+  { label: 'High Relevance', value: highRelevance, color: 'text-blue-600' },
+  { label: 'With Contact', value: withContactMethod, color: 'text-emerald-600' },
+  { label: 'Follow-ups Due', value: followUpsDue, color: 'text-amber-600' },
+  { label: 'Companies', value: companiesConnected, color: '' },
+  ];
+  return (
   <>
+  <div>
+  <h2 className="text-xl font-semibold text-neutral-900">People</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Contacts, decision makers, and relationship context.</p>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
+  <div className="mt-0.5 shrink-0 text-blue-600">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+  </svg>
+  </div>
+  <div className="min-w-0">
+  <div className="text-sm font-semibold text-neutral-900">Relationship intelligence</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Track decision makers, contact options, follow-ups, and outreach context.</div>
+  </div>
+  </div>
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  {peopleStats.map(stat => (
+  <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">{stat.label}</p>
+  <p className={`mt-1.5 text-xl font-bold tabular-nums ${stat.color || 'text-neutral-900'}`}>{stat.value}</p>
+  </div>
+  ))}
+  </div>
+  <div className="flex flex-wrap justify-end gap-2">
   <Button variant="primary" size="sm" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
-  <button
-  type="button"
-  onClick={() => setShowPeopleImport(true)}
-  className="text-xs px-3 py-1.5 rounded border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50"
-  >
-  Import CSV
-  </button>
-  </>
-  }
-  />
+  <Button variant="secondary" size="sm" onClick={() => setShowPeopleImport(true)}>Import CSV</Button>
+  </div>
   <PeopleTable
- people={people}
- onEdit={handleEditPerson}
- onDelete={handleDeletePerson}
- onUseTemplate={(person) => setTemplatePerson(person)}
- filters={personFilters}
+  people={people}
+  onEdit={handleEditPerson}
+  onDelete={handleDeletePerson}
+  onPersonClick={handlePersonClick}
+  personContactMethods={personContactMethods}
+  onUseTemplate={(person) => setTemplatePerson(person)}
+  filters={personFilters}
   onFilterChange={setPersonFilters}
   />
+  </>
+  );
+  })()}
   </div>
   )}
 
@@ -1310,13 +1406,51 @@ const OpportunitiesLayout: React.FC<{
 
   {tab === 'deals' && (
   <div className="space-y-5">
-  <SectionHeader
-  title="Deals"
-  description="Opportunities, stages, value, and next actions."
-  actions={
+  {(() => {
+  const totalDeals = deals.length;
+  const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost').length;
+  const wonDeals = deals.filter(d => d.stage === 'won').length;
+  const pipelineValue = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost').reduce((sum, d) => sum + (d.value || 0), 0);
+  const avgProbability = deals.length > 0
+  ? Math.round(deals.reduce((sum, d) => sum + (d.probability ?? 0), 0) / deals.length * 100)
+  : 0;
+  const needsAction = deals.filter(d => !d.nextAction || d.nextAction.trim() === '').length;
+  const dealStats = [
+  { label: 'Total Deals', value: totalDeals, color: '' },
+  { label: 'Open Deals', value: openDeals, color: 'text-blue-600' },
+  { label: 'Won Deals', value: wonDeals, color: 'text-emerald-600' },
+  { label: 'Pipeline Value', value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
+  { label: 'Avg Probability', value: `${avgProbability}%`, color: '' },
+  { label: 'Needs Action', value: needsAction, color: 'text-violet-600' },
+  ];
+  return (
+  <>
+  <div>
+  <h2 className="text-xl font-semibold text-neutral-900">Deals</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Opportunities, stages, value, and next actions.</p>
+  </div>
+  <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
+  <div className="mt-0.5 shrink-0 text-blue-600">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+  </svg>
+  </div>
+  <div className="min-w-0">
+  <div className="text-sm font-semibold text-neutral-900">Revenue pipeline</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Track deal stages, value, probability, and the next action needed to move forward.</div>
+  </div>
+  </div>
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  {dealStats.map(stat => (
+  <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white p-4">
+  <p className="text-xs text-neutral-500">{stat.label}</p>
+  <p className={`mt-1.5 text-xl font-bold tabular-nums ${stat.color || 'text-neutral-900'}`}>{stat.value}</p>
+  </div>
+  ))}
+  </div>
+  <div className="flex flex-wrap justify-end gap-2">
   <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
-  }
-  />
+  </div>
   <DealsTable
   deals={deals}
   onEdit={handleEditDeal}
@@ -1324,6 +1458,9 @@ const OpportunitiesLayout: React.FC<{
   filters={dealFilters}
   onFilterChange={setDealFilters}
   />
+  </>
+  );
+  })()}
   </div>
   )}
 

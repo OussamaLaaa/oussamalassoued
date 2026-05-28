@@ -40,64 +40,68 @@ const formatDate = (value?: string) => {
 };
 
 interface Props {
- company: Company;
- person: Person;
- people: Person[];
- messages: OutreachMessage[];
- deals: Deal[];
- personContactMethods?: PersonContactMethod[];
- autoOpenAddContactMethod?: boolean;
- onBack: () => void;
- onEditPerson: (person: Person) => void;
- onAddMessage: (personId?: string) => void;
- onAddDeal: (personId?: string) => void;
- addPersonContactMethod: (input: PersonContactMethodInput) => Promise<PersonContactMethod>;
- updatePersonContactMethod: (id: string, input: Partial<PersonContactMethodInput>) => Promise<PersonContactMethod>;
- deletePersonContactMethod: (id: string) => Promise<void>;
- updatePerson: (id: string, input: PersonInput) => Promise<Person>;
- addMessage: (input: MessageInput) => Promise<OutreachMessage>;
- updateMessage: (id: string, input: Partial<MessageInput>) => Promise<OutreachMessage>;
- deleteMessage: (id: string) => Promise<void>;
- addDeal: (input: DealInput) => Promise<Deal>;
- updateDeal: (id: string, input: Partial<DealInput>) => Promise<Deal>;
- deleteDeal: (id: string) => Promise<void>;
+  company?: Company;
+  companies?: Company[];
+  person: Person;
+  people: Person[];
+  messages: OutreachMessage[];
+  deals: Deal[];
+  personContactMethods?: PersonContactMethod[];
+  autoOpenAddContactMethod?: boolean;
+  onBack: () => void;
+  onEditPerson: (person: Person) => void;
+  onAddMessage: (personId?: string) => void;
+  onAddDeal: (personId?: string) => void;
+  addPersonContactMethod: (input: PersonContactMethodInput) => Promise<PersonContactMethod>;
+  updatePersonContactMethod: (id: string, input: Partial<PersonContactMethodInput>) => Promise<PersonContactMethod>;
+  deletePersonContactMethod: (id: string) => Promise<void>;
+  updatePerson: (id: string, input: PersonInput) => Promise<Person>;
+  addMessage: (input: MessageInput) => Promise<OutreachMessage>;
+  updateMessage: (id: string, input: Partial<MessageInput>) => Promise<OutreachMessage>;
+  deleteMessage: (id: string) => Promise<void>;
+  addDeal: (input: DealInput) => Promise<Deal>;
+  updateDeal: (id: string, input: Partial<DealInput>) => Promise<Deal>;
+  deleteDeal: (id: string) => Promise<void>;
 }
 
 const PersonWorkspace: React.FC<Props> = ({
- company,
- person,
- people,
- messages,
- deals,
- personContactMethods,
- autoOpenAddContactMethod,
- onBack,
- onEditPerson,
- onAddMessage,
- onAddDeal,
- addPersonContactMethod,
- updatePersonContactMethod,
- deletePersonContactMethod,
- updatePerson,
- addMessage,
- updateMessage,
- deleteMessage,
- addDeal,
- updateDeal,
- deleteDeal,
+  company: directCompany,
+  companies,
+  person,
+  people,
+  messages,
+  deals,
+  personContactMethods,
+  autoOpenAddContactMethod,
+  onBack,
+  onEditPerson,
+  onAddMessage,
+  onAddDeal,
+  addPersonContactMethod,
+  updatePersonContactMethod,
+  deletePersonContactMethod,
+  updatePerson,
+  addMessage,
+  updateMessage,
+  deleteMessage,
+  addDeal,
+  updateDeal,
+  deleteDeal,
 }) => {
- const [tab, setTab] = useState<PersonWorkspaceTab>('overview');
- const [notesDraft, setNotesDraft] = useState(person.notes || '');
- const [notesSaving, setNotesSaving] = useState(false);
- const [notesError, setNotesError] = useState('');
- const [showContactMethodForm, setShowContactMethodForm] = useState(false);
- const [editingContactMethod, setEditingContactMethod] = useState<PersonContactMethod | null>(null);
- const [contactMethodError, setContactMethodError] = useState('');
+  const [tab, setTab] = useState<PersonWorkspaceTab>('overview');
+  const [notesDraft, setNotesDraft] = useState(person.notes || '');
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesError, setNotesError] = useState('');
+  const [showContactMethodForm, setShowContactMethodForm] = useState(false);
+  const [editingContactMethod, setEditingContactMethod] = useState<PersonContactMethod | null>(null);
+  const [contactMethodError, setContactMethodError] = useState('');
 
- const safePeople = people ?? [];
- const safeMessages = messages ?? [];
- const safeDeals = deals ?? [];
- const safePersonContactMethods = personContactMethods ?? [];
+  const safePeople = people ?? [];
+  const safeMessages = messages ?? [];
+  const safeDeals = deals ?? [];
+  const safePersonContactMethods = personContactMethods ?? [];
+  const safeCompanies = companies ?? [];
+  const company = directCompany ?? safeCompanies.find((c) => c.id === person.companyId) ?? null;
 
  useEffect(() => {
  setTab('overview');
@@ -210,16 +214,20 @@ const PersonWorkspace: React.FC<Props> = ({
  void navigator.clipboard.writeText(method.value).catch(() => undefined);
  };
 
- const companyMessages = personMessages.filter((message) => String(message.companyId || '') === String(company.id) || !message.companyId);
- const companyDeals = personDeals.filter((deal) => String(deal.companyId || '') === String(company.id) || !deal.companyId);
+  const companyMessages = company
+  ? personMessages.filter((message) => String(message.companyId || '') === String(company.id) || !message.companyId)
+  : personMessages;
+  const companyDeals = company
+  ? personDeals.filter((deal) => String(deal.companyId || '') === String(company.id) || !deal.companyId)
+  : personDeals;
 
   return (
   <div className="space-y-6">
   <div className="flex flex-col gap-4">
-  <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
-  <ArrowLeft className="h-3 w-3" />
-  Back to Company
-  </Button>
+        <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
+          <ArrowLeft className="h-3 w-3" />
+          {directCompany ? 'Back to Company' : 'Back to People'}
+        </Button>
   <div className="flex flex-wrap items-start justify-between gap-4">
   <div className="min-w-0 flex-1">
   <h2 className="text-xl font-semibold text-neutral-900 break-words">{person.fullName}</h2>
@@ -236,7 +244,7 @@ const PersonWorkspace: React.FC<Props> = ({
   <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{person.relationshipStatus}</span>
   ) : null}
   </div>
-  <p className="mt-1 text-xs text-neutral-500">{company.name}</p>
+  <p className="mt-1 text-xs text-neutral-500">{company ? company.name : (person.companyName || '—')}</p>
   </div>
   <div className="flex shrink-0 flex-wrap gap-1.5">
   <Button type="button" variant="primary" size="sm" onClick={() => onEditPerson(person)}>Edit Person</Button>
@@ -250,7 +258,7 @@ const PersonWorkspace: React.FC<Props> = ({
   <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
   <div className={cardClass}>
   <div className={sectionLabelClass}>Company</div>
-  <div className={`mt-2 ${valueClass} text-neutral-900 font-medium`}>{company.name}</div>
+  <div className={`mt-2 ${valueClass} text-neutral-900 font-medium`}>{company ? company.name : (person.companyName || '—')}</div>
   </div>
   <div className={cardClass}>
   <div className={sectionLabelClass}>Primary Contact</div>
@@ -300,7 +308,7 @@ const PersonWorkspace: React.FC<Props> = ({
  </div>
  <div>
  <div className={sectionLabelClass}>Company</div>
- <div className={`mt-1 ${valueClass}`}>{company.name}</div>
+  <div className={`mt-1 ${valueClass}`}>{company ? company.name : (person.companyName || '—')}</div>
  </div>
  <div>
  <div className={sectionLabelClass}>Role</div>
@@ -333,7 +341,7 @@ const PersonWorkspace: React.FC<Props> = ({
  <div className="mt-4 space-y-3 text-sm text-neutral-700">
  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
  <span className="text-neutral-500">Company</span>
- <span className="font-medium text-neutral-900">{company.name}</span>
+  <span className="font-medium text-neutral-900">{company ? company.name : (person.companyName || '—')}</span>
  </div>
  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
  <span className="text-neutral-500">Primary Contact</span>
