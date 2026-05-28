@@ -259,35 +259,35 @@ const RelationshipsPanel: React.FC<{
  <Button type="button" variant="outline" size="md" onClick={() => setIsAddingCategory(true)}>Edit Categories</Button>
  </div>
  </div>
- <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
- <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" placeholder="Search relationships" />
- <select value={strengthFilter} onChange={(event) => setStrengthFilter(event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All strengths</option>
- <option value="weak">Weak</option>
- <option value="medium">Medium</option>
- <option value="strong">Strong</option>
- </select>
- <select value={trustFilter} onChange={(event) => setTrustFilter(event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All trust levels</option>
- <option value="unknown">Unknown</option>
- <option value="low">Low</option>
- <option value="medium">Medium</option>
- <option value="high">High</option>
- </select>
- <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All statuses</option>
- <option value="active">Active</option>
- <option value="warm">Warm</option>
- <option value="cold">Cold</option>
- <option value="paused">Paused</option>
- <option value="avoid">Avoid</option>
- <option value="archived">Archived</option>
- </select>
- <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All follow-up states</option>
- <option value="due">Follow-up due</option>
- </select>
- </div>
+  <div className="mt-4 flex flex-wrap items-center gap-3">
+  <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-10 min-w-[220px] flex-1 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" placeholder="Search relationships" />
+  <select value={strengthFilter} onChange={(event) => setStrengthFilter(event.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All strengths</option>
+  <option value="weak">Weak</option>
+  <option value="medium">Medium</option>
+  <option value="strong">Strong</option>
+  </select>
+  <select value={trustFilter} onChange={(event) => setTrustFilter(event.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All trust levels</option>
+  <option value="unknown">Unknown</option>
+  <option value="low">Low</option>
+  <option value="medium">Medium</option>
+  <option value="high">High</option>
+  </select>
+  <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All statuses</option>
+  <option value="active">Active</option>
+  <option value="warm">Warm</option>
+  <option value="cold">Cold</option>
+  <option value="paused">Paused</option>
+  <option value="avoid">Avoid</option>
+  <option value="archived">Archived</option>
+  </select>
+  <select value={followUpFilter} onChange={(event) => setFollowUpFilter(event.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All follow-up states</option>
+  <option value="due">Follow-up due</option>
+  </select>
+  </div>
  </div>
 
  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

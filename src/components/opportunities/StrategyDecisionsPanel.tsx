@@ -46,9 +46,9 @@ const DecisionsPanel: React.FC<Props> = ({
  return (
  <div className="space-y-4">
  <div className="flex flex-wrap items-center justify-between gap-3">
- <div className="flex flex-wrap gap-2">
- <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+  <div className="flex flex-wrap gap-2">
+  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
  <option value="">All statuses</option>
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>

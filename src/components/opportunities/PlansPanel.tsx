@@ -367,14 +367,14 @@ const PlansPanel: React.FC<Props> = ({
  </div>
  )}
 
- <div className="flex flex-wrap gap-2">
- <select value={planFilterStatus} onChange={(e) => setPlanFilterStatus(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
- <option value="">All statuses</option>
- {['planned', 'active', 'completed', 'archived'].map(v => <option key={v} value={v}>{v}</option>)}
- </select>
- <select value={planFilterPriority} onChange={(e) => setPlanFilterPriority(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+  <div className="flex flex-wrap gap-2">
+  <select value={planFilterStatus} onChange={(e) => setPlanFilterStatus(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All statuses</option>
+  {['planned', 'active', 'completed', 'archived'].map(v => <option key={v} value={v}>{v}</option>)}
+  </select>
+  <select value={planFilterPriority} onChange={(e) => setPlanFilterPriority(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
  <option value="">All priorities</option>
  {['high', 'medium', 'low'].map(v => <option key={v} value={v}>{v}</option>)}
  </select>
@@ -451,14 +451,14 @@ const PlansPanel: React.FC<Props> = ({
  {activeSection === 'plan_items' && (
  <div className="space-y-4">
  <div className="flex flex-wrap items-center justify-between gap-3">
- <div className="flex flex-wrap gap-2">
- <select value={itemFilterStatus} onChange={(e) => setItemFilterStatus(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
- <option value="">All statuses</option>
- {['todo', 'doing', 'done', 'blocked', 'cancelled'].map(v => <option key={v} value={v}>{v}</option>)}
- </select>
- <select value={itemFilterPriority} onChange={(e) => setItemFilterPriority(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+  <div className="flex flex-wrap gap-2">
+  <select value={itemFilterStatus} onChange={(e) => setItemFilterStatus(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All statuses</option>
+  {['todo', 'doing', 'done', 'blocked', 'cancelled'].map(v => <option key={v} value={v}>{v}</option>)}
+  </select>
+  <select value={itemFilterPriority} onChange={(e) => setItemFilterPriority(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
  <option value="">All priorities</option>
  {['high', 'medium', 'low'].map(v => <option key={v} value={v}>{v}</option>)}
  </select>

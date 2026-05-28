@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
+import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
 
 export interface PersonFilters {
   searchQuery: string;
@@ -111,11 +112,11 @@ const PeopleTable: React.FC<{
   return (
     <div>
       {filters && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-3 mb-4">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 mb-4">
+          <div className={toolbarSearch}>
             <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={toolbarSearchIcon}
             >
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
@@ -124,33 +125,33 @@ const PeopleTable: React.FC<{
               value={filters.searchQuery}
               onChange={(event) => setFilter('searchQuery', event.target.value)}
               placeholder="Search people"
-              className="h-8 w-full rounded-lg border border-neutral-200 bg-white pl-8 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+              className={toolbarSearchInput}
             />
           </div>
           <Select
             value={filters.decisionPower}
             onChange={(e) => setFilter('decisionPower', e.target.value)}
             options={decisionPowerOptions}
-            className="h-8 min-w-[110px] text-xs"
+            className={`${toolbarSelect} min-w-[140px]`}
           />
           <Select
             value={filters.relevance}
             onChange={(e) => setFilter('relevance', e.target.value)}
             options={relevanceOptions}
-            className="h-8 min-w-[110px] text-xs"
+            className={`${toolbarSelect} min-w-[120px]`}
           />
           <Select
             value={filters.relationshipStatus}
             onChange={(e) => setFilter('relationshipStatus', e.target.value)}
             options={[{ value: '', label: 'Relationship Status' }, ...statusOptions]}
-            className="h-8 min-w-[130px] text-xs"
+            className={`${toolbarSelect} min-w-[160px]`}
           />
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-400 hover:text-neutral-900 text-xs whitespace-nowrap">
+            <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
               Clear
             </Button>
           )}
-          <span className="text-xs text-neutral-400 tabular-nums whitespace-nowrap">{filtered.length} people</span>
+          <span className={toolbarCount}>{filtered.length} people</span>
         </div>
       )}
 

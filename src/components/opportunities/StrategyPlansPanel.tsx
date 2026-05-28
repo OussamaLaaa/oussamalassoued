@@ -63,19 +63,19 @@ const PlansPanel: React.FC<Props> = ({
  return (
  <div className="space-y-4">
  <div className="flex flex-wrap items-center justify-between gap-3">
- <div className="flex flex-wrap gap-2">
- <select value={filterVariant} onChange={(e) => setFilterVariant(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
- <option value="">All variants</option>
- {['a', 'b', 'c'].map((v) => <option key={v} value={v}>Plan {v.toUpperCase()}</option>)}
- </select>
- <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
- <option value="">All statuses</option>
- {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
- </select>
- <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
- className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-700 outline-none hover:border-neutral-300">
+  <div className="flex flex-wrap gap-2">
+  <select value={filterVariant} onChange={(e) => setFilterVariant(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All variants</option>
+  {['a', 'b', 'c'].map((v) => <option key={v} value={v}>Plan {v.toUpperCase()}</option>)}
+  </select>
+  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All statuses</option>
+  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+  </select>
+  <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
+  className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
  <option value="">All priorities</option>
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>

@@ -4,9 +4,10 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
 import StatCard from '../ui/StatCard';
+import { toolbarButton, toolbarCount } from './Toolbar';
 
 export interface MessageFilters {
- searchQuery: string;
+  searchQuery: string;
  replyStatus: string;
  followUp: string;
  channel: string;
@@ -205,73 +206,73 @@ const MessagesTable: React.FC<{
  <StatCard label="Response Rate" value={`${responseRate}%`} hint="Replied / Sent" />
  </section>
 
- <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2">
- <div className="relative min-w-0 flex-1">
- <svg
- className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
- width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
- >
- <circle cx="11" cy="11" r="8" />
- <path d="m21 21-4.35-4.35" />
- </svg>
- <input
- type="text"
- value={filters?.searchQuery || ''}
- onChange={(event) => setFilter('searchQuery', event.target.value)}
- placeholder="Search company, person, or summary..."
- className="h-9 w-full rounded-md border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
- />
- </div>
- <select
- value={filters?.replyStatus || ''}
- onChange={(event) => setFilter('replyStatus', event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.replyStatus ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {replyStatusOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filters?.followUp || ''}
- onChange={(event) => setFilter('followUp', event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.followUp ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {followUpOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filters?.channel || ''}
- onChange={(event) => setFilter('channel', event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.channel ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {channelOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filters?.messageType || ''}
- onChange={(event) => setFilter('messageType', event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.messageType ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {typeOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filters?.dateRange || ''}
- onChange={(event) => setFilter('dateRange', event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filters?.dateRange ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {dateRangeOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- {hasActiveFilters ? (
- <Button variant="ghost" size="sm" onClick={clearFilters}>
- Clear
- </Button>
- ) : null}
+  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
+  <div className="relative min-w-0 flex-1">
+  <svg
+  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
+  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+  <circle cx="11" cy="11" r="8" />
+  <path d="m21 21-4.35-4.35" />
+  </svg>
+  <input
+  type="text"
+  value={filters?.searchQuery || ''}
+  onChange={(event) => setFilter('searchQuery', event.target.value)}
+  placeholder="Search company, person, or summary..."
+  className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+  />
+  </div>
+  <select
+  value={filters?.replyStatus || ''}
+  onChange={(event) => setFilter('replyStatus', event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filters?.replyStatus ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {replyStatusOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filters?.followUp || ''}
+  onChange={(event) => setFilter('followUp', event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filters?.followUp ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {followUpOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filters?.channel || ''}
+  onChange={(event) => setFilter('channel', event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filters?.channel ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {channelOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filters?.messageType || ''}
+  onChange={(event) => setFilter('messageType', event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filters?.messageType ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {typeOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filters?.dateRange || ''}
+  onChange={(event) => setFilter('dateRange', event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filters?.dateRange ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {dateRangeOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  {hasActiveFilters ? (
+  <Button variant="ghost" size="sm" className="h-10" onClick={clearFilters}>
+  Clear
+  </Button>
+  ) : null}
  </div>
 
  {filtered.length ? (

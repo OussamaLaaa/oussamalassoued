@@ -610,25 +610,25 @@ function IdeasView(props: IdeasViewProps) {
  <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Idea</button>
  </div>
 
- <div className="flex flex-wrap gap-3">
- <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[200px]" placeholder="Search ideas..." />
- <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All types</option>
- {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
- </select>
- <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All platforms</option>
- {props.socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
- </select>
- <select value={pillarFilter} onChange={(e) => setPillarFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All pillars</option>
- {props.contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
- </select>
- <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
- <option value="">All priorities</option>
- {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
- </select>
- </div>
+  <div className="flex flex-wrap items-center gap-3">
+  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[220px] flex-1" placeholder="Search ideas..." />
+  <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All types</option>
+  {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+  </select>
+  <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All platforms</option>
+  {props.socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+  </select>
+  <select value={pillarFilter} onChange={(e) => setPillarFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All pillars</option>
+  {props.contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+  </select>
+  <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+  <option value="">All priorities</option>
+  {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+  </select>
+  </div>
 
  {filteredIdeas.length === 0 ? (
  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No ideas found.</div>

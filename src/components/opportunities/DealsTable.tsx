@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
+import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
 
 export interface DealFilters {
   searchQuery: string;
@@ -95,11 +96,11 @@ const DealsTable: React.FC<{
   return (
     <div>
       {filters && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-3 mb-4">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 mb-4">
+          <div className={toolbarSearch}>
             <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={toolbarSearchIcon}
             >
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
@@ -108,35 +109,35 @@ const DealsTable: React.FC<{
               value={filters.searchQuery}
               onChange={(event) => setFilter('searchQuery', event.target.value)}
               placeholder="Search deals"
-              className="h-8 w-full rounded-lg border border-neutral-200 bg-white pl-8 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+              className={toolbarSearchInput}
             />
           </div>
           <Select
             value={filters.stage}
             onChange={(e) => setFilter('stage', e.target.value)}
             options={stageOptions}
-            className="h-8 min-w-[120px] text-xs"
+            className={`${toolbarSelect} min-w-[140px]`}
           />
           <input
             type="number" min="0" max="1" step="0.1"
             value={filters.probabilityMin}
             onChange={(e) => setFilter('probabilityMin', e.target.value)}
             placeholder="Prob. min"
-            className="h-8 w-[100px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+            className="h-10 w-[110px] rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
           />
           <input
             type="number" min="0" max="1" step="0.1"
             value={filters.probabilityMax}
             onChange={(e) => setFilter('probabilityMax', e.target.value)}
             placeholder="Prob. max"
-            className="h-8 w-[100px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+            className="h-10 w-[110px] rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
           />
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-neutral-400 hover:text-neutral-900 text-xs whitespace-nowrap">
+            <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
               Clear
             </Button>
           )}
-          <span className="text-xs text-neutral-400 tabular-nums whitespace-nowrap">{filtered.length} deals</span>
+          <span className={toolbarCount}>{filtered.length} deals</span>
         </div>
       )}
 

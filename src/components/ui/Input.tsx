@@ -11,7 +11,7 @@ const Input: React.FC<InputProps> = ({ label, error, className = '', ...props })
       <label className="text-xs font-semibold text-black">{label}</label>
     )}
     <input
-      className={`h-9 px-3 text-sm rounded-md border bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors min-w-0 w-full box-border
+      className={`h-10 px-3 text-sm rounded-lg border bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors min-w-0 w-full box-border
         ${error ? 'border-red-400' : 'border-neutral-200 focus:border-neutral-400'}
         ${className}`}
       {...props}

@@ -142,59 +142,59 @@ const TemplatesPanel: React.FC<{
 
  return (
  <div className="space-y-4">
- <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-2">
- <div className="relative min-w-0 flex-1">
- <svg
- className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
- width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
- >
- <circle cx="11" cy="11" r="8" />
- <path d="m21 21-4.35-4.35" />
- </svg>
- <input
- type="text"
- value={searchQuery}
- onChange={(event) => setSearchQuery(event.target.value)}
- placeholder="Search templates..."
- className="h-9 w-full rounded-md border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
- />
- </div>
- <select
- value={filterAudience}
- onChange={(event) => setFilterAudience(event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filterAudience ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {audienceSelectOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filterGoal}
- onChange={(event) => setFilterGoal(event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filterGoal ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {goalSelectOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filterLanguage}
- onChange={(event) => setFilterLanguage(event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filterLanguage ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {languageSelectOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
- <select
- value={filterStatus}
- onChange={(event) => setFilterStatus(event.target.value)}
- className={`h-9 rounded-md border bg-white px-3 text-sm outline-none transition-colors ${filterStatus ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
- >
- {statusSelectOptions.map((o) => (
- <option key={o.value} value={o.value}>{o.label}</option>
- ))}
- </select>
+  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
+  <div className="relative min-w-0 flex-1">
+  <svg
+  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
+  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+  >
+  <circle cx="11" cy="11" r="8" />
+  <path d="m21 21-4.35-4.35" />
+  </svg>
+  <input
+  type="text"
+  value={searchQuery}
+  onChange={(event) => setSearchQuery(event.target.value)}
+  placeholder="Search templates..."
+  className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+  />
+  </div>
+  <select
+  value={filterAudience}
+  onChange={(event) => setFilterAudience(event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filterAudience ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {audienceSelectOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filterGoal}
+  onChange={(event) => setFilterGoal(event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filterGoal ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {goalSelectOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filterLanguage}
+  onChange={(event) => setFilterLanguage(event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filterLanguage ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {languageSelectOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
+  <select
+  value={filterStatus}
+  onChange={(event) => setFilterStatus(event.target.value)}
+  className={`h-10 rounded-lg border bg-white px-3 text-sm outline-none transition-colors ${filterStatus ? 'border-neutral-900 text-neutral-900' : 'border-neutral-200 text-neutral-700 hover:border-neutral-300'}`}
+  >
+  {statusSelectOptions.map((o) => (
+  <option key={o.value} value={o.value}>{o.label}</option>
+  ))}
+  </select>
  {templates.length === 0 && onSeedDefaults ? (
  <Button variant="secondary" size="sm" onClick={() => void onSeedDefaults()}>
  Seed default templates
