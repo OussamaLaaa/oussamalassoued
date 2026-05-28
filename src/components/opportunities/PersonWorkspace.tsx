@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import type { Company, Deal, DealInput, MessageInput, OutreachMessage, Person, PersonContactMethod, PersonContactMethodInput, PersonInput } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -212,55 +213,66 @@ const PersonWorkspace: React.FC<Props> = ({
  const companyMessages = personMessages.filter((message) => String(message.companyId || '') === String(company.id) || !message.companyId);
  const companyDeals = personDeals.filter((deal) => String(deal.companyId || '') === String(company.id) || !deal.companyId);
 
- return (
- <div className="space-y-6">
- <div className="flex flex-wrap items-start justify-between gap-4">
- <div className="min-w-0 flex-1">
- <Button variant="ghost" size="sm" onClick={onBack} className="mb-2 -ml-2 text-neutral-600">← Back to Company</Button>
- <div className="flex flex-wrap items-center gap-2">
- <h2 className="truncate text-2xl font-semibold text-neutral-900">{person.fullName}</h2>
- {person.role ? <Badge variant="neutral">{person.role}</Badge> : null}
- {person.seniority ? <Badge variant="neutral">{person.seniority}</Badge> : null}
- {person.decisionPower ? <Badge variant="neutral">Decision {person.decisionPower}</Badge> : null}
- {person.relevance ? <Badge variant="neutral">Relevance {person.relevance}</Badge> : null}
- {person.relationshipStatus ? <Badge variant="neutral">{person.relationshipStatus}</Badge> : null}
- </div>
- <p className="mt-2 text-sm text-neutral-600">{company.name}</p>
- </div>
- <div className="flex flex-wrap gap-2">
- <Button type="button" variant="secondary" size="sm" onClick={() => onEditPerson(person)}>Edit Person</Button>
- <Button type="button" variant="secondary" size="sm" onClick={openAddContactMethod}>Add Contact Method</Button>
- <Button type="button" variant="secondary" size="sm" onClick={() => onAddMessage(person.id)}>Log Message</Button>
- <Button type="button" variant="secondary" size="sm" onClick={() => onAddDeal(person.id)}>Add Deal</Button>
- </div>
- </div>
+  return (
+  <div className="space-y-6">
+  <div className="flex flex-col gap-4">
+  <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
+  <ArrowLeft className="h-3 w-3" />
+  Back to Company
+  </Button>
+  <div className="flex flex-wrap items-start justify-between gap-4">
+  <div className="min-w-0 flex-1">
+  <h2 className="text-xl font-semibold text-neutral-900 break-words">{person.fullName}</h2>
+  <div className="mt-1.5 flex flex-wrap gap-1.5">
+  {person.role ? <Badge variant="neutral">{person.role}</Badge> : null}
+  {person.seniority ? <Badge variant="neutral">{person.seniority}</Badge> : null}
+  {person.decisionPower ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-violet-200 text-violet-700 bg-violet-50">Decision {person.decisionPower}</span>
+  ) : null}
+  {person.relevance ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-blue-200 text-blue-700 bg-blue-50">Relevance {person.relevance}</span>
+  ) : null}
+  {person.relationshipStatus ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{person.relationshipStatus}</span>
+  ) : null}
+  </div>
+  <p className="mt-1 text-xs text-neutral-500">{company.name}</p>
+  </div>
+  <div className="flex shrink-0 flex-wrap gap-1.5">
+  <Button type="button" variant="primary" size="sm" onClick={() => onEditPerson(person)}>Edit Person</Button>
+  <Button type="button" variant="outline" size="sm" onClick={openAddContactMethod}>+ Contact</Button>
+  <Button type="button" variant="outline" size="sm" onClick={() => onAddMessage(person.id)}>Log Message</Button>
+  <Button type="button" variant="outline" size="sm" onClick={() => onAddDeal(person.id)}>Add Deal</Button>
+  </div>
+  </div>
+  </div>
 
- <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
- <div className={cardClass}>
- <div className={sectionLabelClass}>Company</div>
- <div className={`mt-2 ${valueClass}`}>{company.name}</div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Primary Contact</div>
- <div className={`mt-2 ${valueClass}`}>{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} /> : '—'}</div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Last Message</div>
- <div className={`mt-2 ${valueClass}`}>{latestMessage ? formatDate(latestMessage.sentDate || latestMessage.createdAt) : '—'}</div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Next Follow-up</div>
- <div className={`mt-2 ${valueClass}`}>{nextActionDate === '—' ? '—' : formatDate(nextActionDate)}</div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Relevance</div>
- <div className={`mt-2 ${valueClass}`}>{person.relevance ?? '—'}</div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Decision Power</div>
- <div className={`mt-2 ${valueClass}`}>{person.decisionPower ?? '—'}</div>
- </div>
- </div>
+  <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Company</div>
+  <div className={`mt-2 ${valueClass} text-neutral-900 font-medium`}>{company.name}</div>
+  </div>
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Primary Contact</div>
+  <div className={`mt-2 ${valueClass} text-blue-600`}>{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} /> : '—'}</div>
+  </div>
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Last Message</div>
+  <div className={`mt-2 ${valueClass} ${latestMessage ? 'text-indigo-600' : ''}`}>{latestMessage ? formatDate(latestMessage.sentDate || latestMessage.createdAt) : '—'}</div>
+  </div>
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Next Follow-up</div>
+  <div className={`mt-2 ${valueClass} ${nextActionDate !== '—' ? 'text-amber-600' : ''}`}>{nextActionDate === '—' ? '—' : formatDate(nextActionDate)}</div>
+  </div>
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Relevance</div>
+  <div className={`mt-2 ${valueClass}`}>{person.relevance ?? '—'}</div>
+  </div>
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Decision Power</div>
+  <div className={`mt-2 ${valueClass}`}>{person.decisionPower ?? '—'}</div>
+  </div>
+  </div>
 
  <div className="overflow-x-auto">
  <div className="flex min-w-max gap-0 border-b border-neutral-200">

@@ -7,9 +7,9 @@ import type {
  PersonInput, MessageInput, DealInput,
  PersonContactMethod, PersonContactMethodInput,
 } from '../../types/opportunities';
+import { ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
-import StatCard from '../ui/StatCard';
 import EmptyState from '../ui/EmptyState';
 import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
@@ -1150,53 +1150,86 @@ const CompanyWorkspace: React.FC<Props> = ({
  }
  };
 
- return (
- <div className="space-y-6">
- {/* Header */}
- <div className="flex flex-wrap items-start justify-between gap-4">
- <div className="min-w-0 flex-1">
- <Button variant="ghost" size="sm" onClick={onBack} className="mb-2 -ml-2 text-neutral-600">← Back to CRM</Button>
- <h2 className="text-2xl font-semibold text-black break-words">{company.name}</h2>
- <div className="mt-2 flex flex-wrap gap-2">
- <Badge variant="neutral">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</Badge>
- <PriorityBadge priority={company.priority} />
- <Badge variant={ethicalFitColor(company.ethicalFit) as any}>{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge>
- <StatusBadge status={company.status} />
- {typeof company.fitScore === 'number' && <Badge variant="neutral">Fit: {company.fitScore}</Badge>}
- </div>
- <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-500">
- {company.website ? <ContactLink type="website" value={company.website} className="text-xs font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900" /> : null}
- {company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-xs font-medium text-neutral-700 underline underline-offset-2 hover:text-neutral-900" /> : null}
- {!company.website && !company.linkedin ? <span>—</span> : null}
- </div>
- </div>
- <div className="flex shrink-0 flex-wrap gap-2">
- <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(() => setShowResearchPanel(true))}>Research / Refresh AI</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddContactMethod)}>Add Contact Method</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddProblemProfile)}>Add Problem Profile</Button>
- <Button type="button" variant="secondary" size="sm" onClick={handleActionClick(openAddOutreachScript)}>Add Outreach Script</Button>
- <Button type="button" variant="danger" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))}>Delete</Button>
- </div>
- </div>
+  return (
+  <div className="space-y-6">
+  {/* Header */}
+  <div className="flex flex-col gap-4">
+  <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
+  <ArrowLeft className="h-3 w-3" />
+  Back to CRM
+  </Button>
+  <div className="flex flex-wrap items-start justify-between gap-4">
+  <div className="min-w-0 flex-1">
+  <h2 className="text-xl font-semibold text-neutral-900 break-words">{company.name}</h2>
+  <div className="mt-1.5 flex flex-wrap gap-1.5">
+  <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</Badge>
+  <PriorityBadge priority={company.priority} />
+  {company.ethicalFit === 'good' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : company.ethicalFit === 'needs_review' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : company.ethicalFit === 'avoid' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : (
+  <Badge variant="neutral">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge>
+  )}
+  <StatusBadge status={company.status} />
+  {typeof company.fitScore === 'number' && (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50">Fit: {company.fitScore}</span>
+  )}
+  </div>
+  <div className="mt-1 flex flex-wrap gap-3 text-xs">
+  {company.website ? <ContactLink type="website" value={company.website} className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
+  {company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
+  {!company.website && !company.linkedin ? <span className="text-neutral-300">—</span> : null}
+  </div>
+  </div>
+  <div className="flex shrink-0 flex-wrap gap-1.5">
+  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => setShowResearchPanel(true))}>Research</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddContactMethod)}>+ Contact</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddProblemProfile)}>+ Problem</Button>
+  <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddOutreachScript)}>+ Script</Button>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))} className="text-neutral-300 hover:text-red-500">Delete</Button>
+  </div>
+  </div>
+  </div>
 
- {copyFeedback ? (
- <div className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700">
- {copyFeedback}
- </div>
- ) : null}
+  {copyFeedback ? (
+  <div className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700">
+  {copyFeedback}
+  </div>
+  ) : null}
 
- {/* Summary Cards */}
- <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
- <StatCard label="Fit Score" value={typeof company.fitScore === 'number' ? company.fitScore : '—'} />
- <StatCard label="Priority" value={company.priority || '—'} />
- <StatCard label="People" value={companyPeople.length} />
- <StatCard label="Messages" value={companyMessages.length} />
- <StatCard label="Open Deals" value={openDeals.length} />
- <StatCard label="Next Action" value={company.nextAction || '—'} hint={company.nextActionDate || undefined} />
- </div>
+  {/* Summary Cards */}
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Fit Score</p>
+  <p className="mt-1 text-lg font-bold text-indigo-600 tabular-nums">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Priority</p>
+  <p className="mt-1 text-lg font-bold text-neutral-900">{company.priority || '—'}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">People</p>
+  <p className="mt-1 text-lg font-bold text-neutral-900 tabular-nums">{companyPeople.length}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Messages</p>
+  <p className="mt-1 text-lg font-bold text-indigo-600 tabular-nums">{companyMessages.length}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Open Deals</p>
+  <p className="mt-1 text-lg font-bold text-emerald-600 tabular-nums">{openDeals.length}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Next Action</p>
+  <p className="mt-1 text-lg font-bold text-neutral-900 truncate">{company.nextAction || '—'}</p>
+  </div>
+  </div>
 
  {selectedPerson ? (
  <PersonWorkspace
