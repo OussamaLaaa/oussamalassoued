@@ -537,8 +537,7 @@ const OpportunitiesLayout: React.FC<{
 
   const handleLaunchApp = (appId: AppId) => {
   setActiveApp(appId);
-  if (appId === 'crm') { setTab('dashboard'); setAppSection(''); }
-  else if (appId === 'messages') { setTab('messages'); setAppSection(''); }
+  if (appId === 'crm' || appId === 'messages') { setTab('messages'); setAppSection(''); }
   else if (appId === 'strategy') { setTab('strategy'); setAppSection('goals'); }
   else if (appId === 'plans') { setTab('plans'); setAppSection('dashboard'); }
   else if (appId === 'tasks') { setTab('tasks'); setAppSection('weekly'); }
@@ -561,8 +560,8 @@ const OpportunitiesLayout: React.FC<{
 
   const getShellTitle = () => {
  switch (activeApp) {
- case 'crm': return 'CRM';
- case 'messages': return 'Messages';
+  case 'crm': return 'CRM';
+  case 'messages': return 'CRM';
  case 'strategy': return 'Strategy';
  case 'plans': return 'Plans';
  case 'tasks': return 'Tasks';
@@ -588,8 +587,6 @@ const OpportunitiesLayout: React.FC<{
    { id: 'people', label: 'People', icon: Users },
    { id: 'deals', label: 'Deals', icon: Handshake },
    { id: 'queue', label: 'Outreach Queue', icon: Send },
-   ],
-   messages: [
    { id: 'messages', label: 'Messages', icon: MessageSquare },
    { id: 'templates', label: 'Templates', icon: FileText },
    ],

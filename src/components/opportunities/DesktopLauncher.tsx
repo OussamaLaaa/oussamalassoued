@@ -11,8 +11,7 @@ import {
  Heart,
  LayoutGrid,
  Leaf,
- MessageSquare,
- MoreHorizontal,
+  MoreHorizontal,
  Palette,
  Plus,
  Share2,
@@ -40,9 +39,8 @@ const iconProps: Partial<LucideProps> = {
 };
 
 const APPS: AppShortcut[] = [
- { id: 'crm', label: 'CRM', icon: LayoutGrid },
- { id: 'messages', label: 'Messages', icon: MessageSquare },
- { id: 'strategy', label: 'Strategy', icon: Compass },
+  { id: 'crm', label: 'CRM', icon: LayoutGrid },
+  { id: 'strategy', label: 'Strategy', icon: Compass },
  { id: 'plans', label: 'Plans', icon: CalendarDays },
  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
  { id: 'projects', label: 'Projects', icon: FolderKanban },
