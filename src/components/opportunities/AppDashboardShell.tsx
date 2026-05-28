@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import PersonalOSLogo from '../personal/PersonalOSLogo';
 
 export interface SidebarItem {
   id: string;
@@ -20,7 +21,6 @@ interface AppDashboardShellProps {
 
 const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
   appName,
-  appSubtitle,
   sidebarItems,
   activeSection,
   onSectionChange,
@@ -31,11 +31,20 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
     <div className="min-h-screen bg-neutral-50 flex">
       {/* Left Sidebar */}
       <aside className="w-[220px] shrink-0 border-r border-neutral-200 bg-white flex flex-col">
-        {/* App identity */}
-        <div className="px-4 pt-4 pb-3 border-b border-neutral-100">
-          <span className="text-xs font-medium text-neutral-400">Personal OS</span>
-          <p className="text-sm font-semibold text-neutral-900 mt-0.5">{appName}</p>
-          {appSubtitle && <p className="text-xs text-neutral-500 mt-0.5 leading-tight">{appSubtitle}</p>}
+        {/* Brand header */}
+        <div className="h-16 shrink-0 border-b border-neutral-200 bg-white flex items-center justify-between px-4">
+          <div className="flex items-center gap-2.5">
+            <PersonalOSLogo className="text-neutral-900" size={24} />
+            <span className="text-sm font-semibold text-neutral-950">Personal OS</span>
+          </div>
+          <button
+            type="button"
+            onClick={onBackToDesktop}
+            aria-label="Back to Desktop"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Navigation items */}
@@ -66,18 +75,6 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
             );
           })}
         </nav>
-
-        {/* Footer - Back to Desktop */}
-        <div className="p-2 border-t border-neutral-100">
-          <button
-            type="button"
-            onClick={onBackToDesktop}
-            className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
-            Back to Desktop
-          </button>
-        </div>
       </aside>
 
       {/* Right area: topbar + main content */}

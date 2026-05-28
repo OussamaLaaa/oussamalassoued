@@ -578,26 +578,7 @@ const OpportunitiesLayout: React.FC<{
  }
  };
 
- const getShellSubtitle = () => {
- switch (activeApp) {
- case 'crm': return 'Companies, people, deals, and outreach pipeline.';
- case 'messages': return 'Messages, templates, and outreach communication.';
- case 'strategy': return 'Goals, tactics, experiments, and strategic decisions.';
- case 'plans': return 'Yearly, monthly, weekly planning and execution structure.';
- case 'tasks': return 'Weekly tasks, daily recurring routines, and work logs.';
- case 'projects': return 'Projects, workspaces, meetings, documents, and time logs.';
- case 'finance': return 'Income, expenses, allocation, investments, and financial review.';
- case 'documents': return 'Invoices, contracts, cahier de charges, PDFs, and archive.';
- case 'social': return 'Content strategy, ideas, weekly plan, calendar, and performance.';
- case 'relationships': return 'Relationship categories, people dashboards, contact methods, and follow-ups.';
- case 'life': return 'Nutrition, fitness, deen, family, and life review.';
- case 'notes': return 'Smart notes, categories, blocks, attachments, and linked memory.';
- case 'ai_control': return 'Providers, encrypted keys, use-case routing, and AI tests.';
- default: return '';
- }
- };
-
-    const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
+   const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
    crm: [
    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
    { id: 'big_companies', label: 'Big Companies', icon: Building2 },
@@ -1028,7 +1009,6 @@ const OpportunitiesLayout: React.FC<{
    return (
    <AppDashboardShell
    appName={getShellTitle()}
-   appSubtitle={getShellSubtitle()}
    sidebarItems={getSidebarItems()}
     activeSection={activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
    onSectionChange={handleSectionChange}
