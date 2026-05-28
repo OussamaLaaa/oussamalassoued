@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, LayoutDashboard, Store, Briefcase, Globe, Users, Handshake, Send, MessageSquare } from 'lucide-react';
+import {
+  MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText,
+  LayoutDashboard, Store, Briefcase, Globe, Users, Handshake, Send, MessageSquare,
+  ListChecks, RotateCcw, Clock, Archive, Star,
+  Calendar, TrendingUp, DollarSign, PiggyBank, Target, BarChart3, Shield,
+  Activity, FolderOpen, FileEdit, Image, Smartphone, Heart, Leaf,
+  Key, Route, TestTube, Lock,
+} from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
@@ -529,22 +536,22 @@ const OpportunitiesLayout: React.FC<{
  }
  }, [activeApp, tab, globalSearch, companyFilters, personFilters, messageFilters, dealFilters]);
 
- const handleLaunchApp = (appId: AppId) => {
- setActiveApp(appId);
- if (appId === 'crm') setTab('dashboard');
- else if (appId === 'messages') setTab('messages');
- else if (appId === 'strategy') setTab('strategy');
- else if (appId === 'plans') setTab('plans');
- else if (appId === 'tasks') setTab('tasks');
- else if (appId === 'projects') setTab('projects');
- else if (appId === 'finance') setTab('finance');
- else if (appId === 'documents') setTab('documents');
- else if (appId === 'social') setTab('social');
- else if (appId === 'relationships') setTab('relationships');
- else if (appId === 'life') setTab('life');
- else if (appId === 'notes') setTab('notes');
- else if (appId === 'ai_control') setTab('ai-control');
- setGlobalSearch('');
+  const handleLaunchApp = (appId: AppId) => {
+  setActiveApp(appId);
+  if (appId === 'crm') { setTab('dashboard'); setAppSection(''); }
+  else if (appId === 'messages') { setTab('messages'); setAppSection(''); }
+  else if (appId === 'strategy') { setTab('strategy'); setAppSection('goals'); }
+  else if (appId === 'plans') { setTab('plans'); setAppSection('dashboard'); }
+  else if (appId === 'tasks') { setTab('tasks'); setAppSection('weekly'); }
+  else if (appId === 'projects') setTab('projects');
+  else if (appId === 'finance') { setTab('finance'); setAppSection('dashboard'); }
+  else if (appId === 'documents') { setTab('documents'); setAppSection('dashboard'); }
+  else if (appId === 'social') { setTab('social'); setAppSection('dashboard'); }
+  else if (appId === 'relationships') setTab('relationships');
+  else if (appId === 'life') { setTab('life'); setAppSection('dashboard'); }
+  else if (appId === 'notes') setTab('notes');
+  else if (appId === 'ai_control') { setTab('ai-control'); setAppSection('overview'); }
+  setGlobalSearch('');
  };
 
  const handleBackToDesktop = () => {
@@ -591,22 +598,90 @@ const OpportunitiesLayout: React.FC<{
  }
  };
 
-   const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
-  crm: [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'big_companies', label: 'Big Companies', icon: Building2 },
-  { id: 'sme_companies', label: 'SME Companies', icon: Store },
-  { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
-  { id: 'companies', label: 'All Companies', icon: Globe },
-  { id: 'people', label: 'People', icon: Users },
-  { id: 'deals', label: 'Deals', icon: Handshake },
-  { id: 'queue', label: 'Outreach Queue', icon: Send },
-  ],
-  messages: [
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
-  { id: 'templates', label: 'Templates', icon: FileText },
-  ],
-  };
+    const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
+   crm: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'big_companies', label: 'Big Companies', icon: Building2 },
+   { id: 'sme_companies', label: 'SME Companies', icon: Store },
+   { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
+   { id: 'companies', label: 'All Companies', icon: Globe },
+   { id: 'people', label: 'People', icon: Users },
+   { id: 'deals', label: 'Deals', icon: Handshake },
+   { id: 'queue', label: 'Outreach Queue', icon: Send },
+   ],
+   messages: [
+   { id: 'messages', label: 'Messages', icon: MessageSquare },
+   { id: 'templates', label: 'Templates', icon: FileText },
+   ],
+   plans: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'plans', label: 'Plans', icon: Calendar },
+   { id: 'plan_items', label: 'Plan Items', icon: ListChecks },
+   { id: 'timeline', label: 'Timeline', icon: Clock },
+   { id: 'review', label: 'Review', icon: Star },
+   ],
+   tasks: [
+   { id: 'weekly', label: 'Weekly Tasks', icon: ListChecks },
+   { id: 'daily', label: 'Daily Recurring', icon: RotateCcw },
+   { id: 'worklogs', label: 'Work Logs', icon: Clock },
+   { id: 'backlog', label: 'Backlog', icon: Archive },
+   { id: 'review', label: 'Weekly Review', icon: Star },
+   ],
+   finance: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'periods', label: 'Periods', icon: Calendar },
+   { id: 'income', label: 'Income', icon: TrendingUp },
+   { id: 'expenses', label: 'Expenses', icon: Activity },
+   { id: 'allocation', label: 'Allocation', icon: BarChart3 },
+   { id: 'purchase_goals', label: 'Purchase Goals', icon: Target },
+   { id: 'investments', label: 'Investments', icon: TrendingUp },
+   { id: 'recurring', label: 'Recurring Rules', icon: RotateCcw },
+   { id: 'ai_assistant', label: 'AI Finance', icon: Sparkles },
+   ],
+   documents: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'generated', label: 'Generated Documents', icon: FileText },
+   { id: 'invoice-studio', label: 'Invoice Studio', icon: FileEdit },
+   { id: 'invoice-archive', label: 'Invoice Archive', icon: Archive },
+   { id: 'contract-studio', label: 'Contract Studio', icon: FileEdit },
+   { id: 'cahier-builder', label: 'Cahier de Charges', icon: FileText },
+   { id: 'templates', label: 'Templates', icon: FileText },
+   { id: 'brand', label: 'Brand Settings', icon: LayoutDashboard },
+   { id: 'builder', label: 'Builder', icon: LayoutDashboard },
+   { id: 'ai-assistant', label: 'AI Document', icon: Sparkles },
+   { id: 'review', label: 'Review', icon: Star },
+   ],
+   social: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'strategy', label: 'Strategy', icon: Target },
+   { id: 'platforms', label: 'Platforms', icon: Smartphone },
+   { id: 'pillars', label: 'Pillars', icon: LayoutDashboard },
+   { id: 'ideas', label: 'Ideas', icon: Star },
+   { id: 'weekly', label: 'Weekly Plan', icon: Calendar },
+   { id: 'production', label: 'Production Board', icon: Activity },
+   { id: 'calendar', label: 'Calendar', icon: Calendar },
+   { id: 'performance', label: 'Performance', icon: BarChart3 },
+   { id: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
+   ],
+   life: [
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'nutrition', label: 'Nutrition', icon: Heart },
+   { id: 'fitness', label: 'Fitness', icon: Activity },
+   { id: 'deen', label: 'Deen', icon: Star },
+   { id: 'family', label: 'Family', icon: Heart },
+   { id: 'weekly-review', label: 'Weekly Review', icon: Star },
+   ],
+   ai_control: [
+   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+   { id: 'keys', label: 'Provider Keys', icon: Key },
+   { id: 'routing', label: 'Use Case Routing', icon: Route },
+   { id: 'tests', label: 'Provider Tests', icon: TestTube },
+   { id: 'security', label: 'Security Notes', icon: Lock },
+   ],
+   strategy: [
+   { id: 'goals', label: 'Goals', icon: Target },
+   ],
+   };
 
   const getSidebarItems = (): SidebarItem[] => {
   return SIDEBAR_ITEMS[activeApp] || [];
@@ -617,6 +692,8 @@ const OpportunitiesLayout: React.FC<{
   setTab(sectionId as OpportunitiesTab);
   setSelectedCompanyId(null);
   setGlobalSearch('');
+  } else {
+  setAppSection(sectionId);
   }
   };
 
@@ -963,7 +1040,7 @@ const OpportunitiesLayout: React.FC<{
   appName={getShellTitle()}
   appSubtitle={getShellSubtitle()}
   sidebarItems={getSidebarItems()}
-  activeSection={tab}
+   activeSection={activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
   onSectionChange={handleSectionChange}
   showSearch={activeApp === 'crm'}
   onBackToDesktop={handleBackToDesktop}
@@ -1328,8 +1405,9 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'strategy' && (
- <StrategyPanel
- strategyItems={strategyItems}
+  <StrategyPanel
+  section={appSection}
+  strategyItems={strategyItems}
  strategyNotes={strategyNotes}
  strategyGoals={strategyGoals}
  strategyPlans={strategyPlans}
@@ -1362,54 +1440,58 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'plans' && (
- <PlansPanel
- plans={plans}
- planItems={planItems}
- projects={projects}
- strategyGoals={strategyGoals}
- onAddPlan={addPlan}
- onUpdatePlan={updatePlan}
- onDeletePlan={deletePlan}
- onAddPlanItem={addPlanItem}
- onUpdatePlanItem={updatePlanItem}
- onDeletePlanItem={deletePlanItem}
- />
- )}
+  <PlansPanel
+  plans={plans}
+  planItems={planItems}
+  projects={projects}
+  strategyGoals={strategyGoals}
+  section={appSection}
+  onAddPlan={addPlan}
+  onUpdatePlan={updatePlan}
+  onDeletePlan={deletePlan}
+  onAddPlanItem={addPlanItem}
+  onUpdatePlanItem={updatePlanItem}
+  onDeletePlanItem={deletePlanItem}
+  />
+  )}
 
- {tab === 'tasks' && (
- <TasksPanel
- tasks={tasks}
- recurringTasks={recurringTasks}
- projects={projects}
- plans={plans}
- strategyGoals={strategyGoals}
- companies={companies}
- people={people}
- generatedDocuments={generatedDocuments}
- onAddTask={addTask}
- onUpdateTask={updateTask}
- onDeleteTask={deleteTask}
- onAddRecurringTask={addRecurringTask}
- onUpdateRecurringTask={updateRecurringTask}
- onDeleteRecurringTask={deleteRecurringTask}
- recurringTaskLogs={recurringTaskLogs}
- onAddRecurringTaskLog={addRecurringTaskLog}
- onUpdateRecurringTaskLog={updateRecurringTaskLog}
- onDeleteRecurringTaskLog={deleteRecurringTaskLog}
- taskWorkLogs={taskWorkLogs}
- weeklyTaskReviews={weeklyTaskReviews}
- onAddTaskWorkLog={addTaskWorkLog}
- onUpdateTaskWorkLog={updateTaskWorkLog}
- onDeleteTaskWorkLog={deleteTaskWorkLog}
- onAddWeeklyTaskReview={addWeeklyTaskReview}
- onUpdateWeeklyTaskReview={updateWeeklyTaskReview}
- onDeleteWeeklyTaskReview={deleteWeeklyTaskReview}
- />
- )}
+  {tab === 'tasks' && (
+  <TasksPanel
+  tasks={tasks}
+  recurringTasks={recurringTasks}
+  projects={projects}
+  plans={plans}
+  strategyGoals={strategyGoals}
+  companies={companies}
+  people={people}
+  generatedDocuments={generatedDocuments}
+  section={appSection}
+  onAddTask={addTask}
+  onUpdateTask={updateTask}
+  onDeleteTask={deleteTask}
+  onAddRecurringTask={addRecurringTask}
+  onUpdateRecurringTask={updateRecurringTask}
+  onDeleteRecurringTask={deleteRecurringTask}
+  recurringTaskLogs={recurringTaskLogs}
+  onAddRecurringTaskLog={addRecurringTaskLog}
+  onUpdateRecurringTaskLog={updateRecurringTaskLog}
+  onDeleteRecurringTaskLog={deleteRecurringTaskLog}
+  taskWorkLogs={taskWorkLogs}
+  weeklyTaskReviews={weeklyTaskReviews}
+  onAddTaskWorkLog={addTaskWorkLog}
+  onUpdateTaskWorkLog={updateTaskWorkLog}
+  onDeleteTaskWorkLog={deleteTaskWorkLog}
+  onAddWeeklyTaskReview={addWeeklyTaskReview}
+  onUpdateWeeklyTaskReview={updateWeeklyTaskReview}
+  onDeleteWeeklyTaskReview={deleteWeeklyTaskReview}
+  />
+  )}
+
 
  {tab === 'finance' && (
- <FinancePanel
- onBackToDesktop={handleBackToDesktop}
+  <FinancePanel
+  section={appSection}
+  onBackToDesktop={handleBackToDesktop}
  financeIncome={financeIncome}
  financeExpenses={financeExpenses}
  financeAllocationRules={financeAllocationRules}
@@ -1452,8 +1534,9 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'documents' && (
- <DocumentStudioPanel
- onBackToDesktop={handleBackToDesktop}
+  <DocumentStudioPanel
+  section={appSection}
+  onBackToDesktop={handleBackToDesktop}
  documentTemplates={documentTemplates}
  documentBrandSettings={documentBrandSettings}
  generatedDocuments={generatedDocuments}
@@ -1487,10 +1570,11 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'ai-control' && (
- <AIControlPanel
- aiProviderKeys={aiProviderKeys}
- aiUseCaseSettings={aiUseCaseSettings}
- quickAction={aiControlQuickAction}
+  <AIControlPanel
+  section={appSection}
+  aiProviderKeys={aiProviderKeys}
+  aiUseCaseSettings={aiUseCaseSettings}
+  quickAction={aiControlQuickAction}
  onQuickActionHandled={() => setAiControlQuickAction(null)}
  onAddAIProviderKey={addAIProviderKey}
  onUpdateAIProviderKey={updateAIProviderKey}
@@ -1503,8 +1587,9 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'social' && (
- <SocialMediaPanel
- socialPlatforms={socialPlatforms}
+  <SocialMediaPanel
+  section={appSection}
+  socialPlatforms={socialPlatforms}
  contentPillars={contentPillars}
  contentStrategies={contentStrategies}
  contentItems={contentItems}
@@ -1531,13 +1616,13 @@ const OpportunitiesLayout: React.FC<{
  )}
 
  {tab === 'life' && (
- <LifeManagementPanel
- lifeNutritionLogs={lifeNutritionLogs}
- lifeFitnessLogs={lifeFitnessLogs}
- lifeDeenLogs={lifeDeenLogs}
- lifeFamilyActions={lifeFamilyActions}
- lifeWeeklyReviews={lifeWeeklyReviews}
- requestedTab={lifeQuickTab}
+  <LifeManagementPanel
+  section={appSection}
+  lifeNutritionLogs={lifeNutritionLogs}
+  lifeFitnessLogs={lifeFitnessLogs}
+  lifeDeenLogs={lifeDeenLogs}
+  lifeFamilyActions={lifeFamilyActions}
+  lifeWeeklyReviews={lifeWeeklyReviews}
  onAddLifeNutritionLog={addLifeNutritionLog}
  onUpdateLifeNutritionLog={updateLifeNutritionLog}
  onDeleteLifeNutritionLog={deleteLifeNutritionLog}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Badge } from '../ui';
 import type {
  Company, Person, Project,
@@ -21,6 +21,7 @@ import DecisionsPanel from './StrategyDecisionsPanel';
 import ItemModal, { type ModalState } from './StrategyItemModal';
 
 type StrategyPanelProps = {
+ section?: Section;
  strategyItems: StrategyItem[];
  strategyNotes: StrategyNote[];
  strategyGoals: StrategyGoal[];
@@ -74,6 +75,7 @@ const emptyDecisionForm = (): StrategyDecisionInput => ({ title: '', context: ''
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
 const StrategyPanel: React.FC<StrategyPanelProps> = ({
+ section,
  strategyItems, strategyNotes, strategyGoals, strategyPlans, strategyTactics, strategyExperiments, strategyDecisions,
  projects, companies, people,
  onBackToDesktop,
@@ -85,6 +87,11 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  onAddStrategyDecision, onUpdateStrategyDecision, onDeleteStrategyDecision,
 }) => {
  const [activeSection, setActiveSection] = useState<Section>('command_center');
+
+ useEffect(() => {
+ if (section) setActiveSection(section);
+ }, [section]);
+
  const [modalState, setModalState] = useState<ModalState>(null);
  const [isBusy, setIsBusy] = useState(false);
  const [formError, setFormError] = useState<string | null>(null);

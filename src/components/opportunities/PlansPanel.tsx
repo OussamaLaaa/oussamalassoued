@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button, Badge } from '../ui';
 import StatCard from '../ui/StatCard';
 import PlanDetailWorkspace from './PlanDetailWorkspace';
@@ -6,16 +6,17 @@ import PlanForm from './PlanForm';
 import type { Plan, PlanInput, PlanItem, PlanItemInput, StrategyGoal, Project, PlanType } from '../../types/opportunities';
 
 type Props = {
- plans: Plan[];
- planItems: PlanItem[];
- projects: Project[];
- strategyGoals: StrategyGoal[];
- onAddPlan: (input: PlanInput) => Promise<Plan>;
- onUpdatePlan: (id: string, input: Partial<PlanInput>) => Promise<Plan>;
- onDeletePlan: (id: string) => Promise<void>;
- onAddPlanItem: (input: PlanItemInput) => Promise<PlanItem>;
- onUpdatePlanItem: (id: string, input: Partial<PlanItemInput>) => Promise<PlanItem>;
- onDeletePlanItem: (id: string) => Promise<void>;
+  plans: Plan[];
+  planItems: PlanItem[];
+  projects: Project[];
+  strategyGoals: StrategyGoal[];
+  section?: PlanSection;
+  onAddPlan: (input: PlanInput) => Promise<Plan>;
+  onUpdatePlan: (id: string, input: Partial<PlanInput>) => Promise<Plan>;
+  onDeletePlan: (id: string) => Promise<void>;
+  onAddPlanItem: (input: PlanItemInput) => Promise<PlanItem>;
+  onUpdatePlanItem: (id: string, input: Partial<PlanItemInput>) => Promise<PlanItem>;
+  onDeletePlanItem: (id: string) => Promise<void>;
 };
 
 type PlanSection = 'dashboard' | 'plans' | 'plan_items' | 'timeline' | 'review';
@@ -64,10 +65,14 @@ const getItemStatusVariant = (s: string) => {
 };
 
 const PlansPanel: React.FC<Props> = ({
- plans, planItems, projects, strategyGoals, onAddPlan, onUpdatePlan, onDeletePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem,
+  plans, planItems, projects, strategyGoals, section, onAddPlan, onUpdatePlan, onDeletePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem,
 }) => {
- const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
- const [activeSection, setActiveSection] = useState<PlanSection>('dashboard');
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<PlanSection>('dashboard');
+
+  useEffect(() => {
+  if (section) setActiveSection(section as PlanSection);
+  }, [section]);
  const [activeType, setActiveType] = useState<PlanType>('weekly');
  const [showForm, setShowForm] = useState(false);
  const [planForm, setPlanForm] = useState<PlanInput>({ title: '', type: 'weekly' });
@@ -161,24 +166,7 @@ const PlansPanel: React.FC<Props> = ({
  </div>
  ) : null}
 
- <div className="flex flex-wrap gap-1.5 border-b border-neutral-200 pb-2">
- {SECTIONS.map((section) => (
- <button
- key={section.value}
- type="button"
- onClick={() => setActiveSection(section.value)}
- className={`px-4 py-2 text-sm font-medium transition-all ${
- activeSection === section.value
- ? 'text-neutral-900 border-b-2 border-neutral-900'
- : 'text-neutral-500 hover:text-neutral-700 border-b-2 border-transparent'
- }`}
- >
- {section.label}
- </button>
- ))}
- </div>
-
- {activeSection === 'dashboard' && (
+  {activeSection === 'dashboard' && (
  <div className="space-y-6">
  <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
  <StatCard label="Total Plans" value={plans.length} hint="All time" />

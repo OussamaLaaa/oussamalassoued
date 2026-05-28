@@ -53,20 +53,6 @@ type TemplateEditorState = {
  template?: DocumentTemplate;
 };
 
-const TABS: Array<{ id: StudioTab; label: string }> = [
- { id: 'dashboard', label: 'Dashboard' },
- { id: 'invoice-studio', label: 'Invoice Studio' },
- { id: 'invoice-archive', label: 'Invoice Archive' },
- { id: 'contract-studio', label: 'Contract Studio' },
- { id: 'cahier-builder', label: 'Cahier de Charges' },
- { id: 'templates', label: 'Templates' },
- { id: 'brand', label: 'Brand Settings' },
- { id: 'builder', label: 'Builder' },
- { id: 'generated', label: 'Generated Documents' },
- { id: 'ai-assistant', label: 'AI Assistant' },
- { id: 'review', label: 'Review' },
-];
-
 const STARTER_TEMPLATES: DocumentTemplateInput[] = [
  {
  name: 'Simple Invoice',
@@ -266,7 +252,8 @@ const defaultBuilderState = (template?: DocumentTemplate | null, brand?: Documen
 });
 
 const DocumentStudioPanel: React.FC<{
- onBackToDesktop?: () => void;
+  onBackToDesktop?: () => void;
+  section?: StudioTab;
  documentTemplates: DocumentTemplate[];
  documentBrandSettings: DocumentBrandSettings[];
  generatedDocuments: GeneratedDocument[];
@@ -327,8 +314,13 @@ const DocumentStudioPanel: React.FC<{
  financeIncome,
  financePeriods,
  onAddFinanceIncome,
+  section,
 }) => {
- const [tab, setTab] = useState<StudioTab>('dashboard');
+  const [tab, setTab] = useState<StudioTab>('dashboard');
+
+  useEffect(() => {
+  if (section) setTab(section);
+  }, [section]);
  const [templateEditor, setTemplateEditor] = useState<TemplateEditorState | null>(null);
  const [brandEditorOpen, setBrandEditorOpen] = useState(false);
  const [builder, setBuilder] = useState<BuilderState>(() => defaultBuilderState(documentTemplates[0] ?? null, documentBrandSettings[0] ?? null));
@@ -540,20 +532,7 @@ const DocumentStudioPanel: React.FC<{
 
  return (
  <div className="space-y-8">
- <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-3">
- {TABS.map((item) => (
- <button
- key={item.id}
- type="button"
- onClick={() => setTab(item.id)}
- className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 ${tab === item.id ? 'border-neutral-900 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
- >
- {item.label}
- </button>
- ))}
- </div>
-
- {tab === 'dashboard' ? (
+  {tab === 'dashboard' ? (
  <div className="space-y-5">
  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
  <MetricCard title="Active Templates" value={activeTemplates.length} />

@@ -46,14 +46,6 @@ const USE_CASE_OPTIONS: Array<{ value: AIUseCase; label: string; hint: string }>
  { value: 'social_media', label: 'Social Media', hint: 'Content ideas, hooks, rewrites, and planning' },
 ];
 
-const TABS: Array<{ id: ControlTab; label: string }> = [
- { id: 'overview', label: 'Overview' },
- { id: 'keys', label: 'Provider Keys' },
- { id: 'routing', label: 'Use Case Routing' },
- { id: 'tests', label: 'Provider Tests' },
- { id: 'security', label: 'Security Notes' },
-];
-
 const getDefaultModelForProvider = (provider: string): string => DEFAULT_MODELS[provider] || 'default';
 
 const defaultProviderForm = (): AIProviderKeyInput => ({
@@ -122,10 +114,11 @@ const getUseCaseStatus = (healthData: any, useCase: AIUseCase) => {
 };
 
 const AIControlPanel: React.FC<{
- aiProviderKeys: AIProviderKey[];
- aiUseCaseSettings: AIUseCaseSetting[];
- quickAction?: AIControlQuickAction | null;
- onQuickActionHandled?: () => void;
+  aiProviderKeys: AIProviderKey[];
+  aiUseCaseSettings: AIUseCaseSetting[];
+  section?: ControlTab;
+  quickAction?: AIControlQuickAction | null;
+  onQuickActionHandled?: () => void;
  onAddAIProviderKey: (input: AIProviderKeyInput) => Promise<AIProviderKey>;
  onUpdateAIProviderKey: (id: string, input: Partial<AIProviderKeyInput>) => Promise<AIProviderKey>;
  onDeleteAIProviderKey: (id: string) => Promise<void>;
@@ -134,10 +127,11 @@ const AIControlPanel: React.FC<{
  onUpdateAIUseCaseSetting: (id: string, input: Partial<AIUseCaseSettingInput>) => Promise<AIUseCaseSetting>;
  onDeleteAIUseCaseSetting: (id: string) => Promise<void>;
 }> = ({
- aiProviderKeys,
- aiUseCaseSettings,
- quickAction,
- onQuickActionHandled,
+  aiProviderKeys,
+  aiUseCaseSettings,
+  section,
+  quickAction,
+  onQuickActionHandled,
  onAddAIProviderKey,
  onUpdateAIProviderKey,
  onDeleteAIProviderKey,
@@ -157,6 +151,10 @@ const AIControlPanel: React.FC<{
  const [healthData, setHealthData] = useState<any>(null);
  const [selectedTestProviderKeyId, setSelectedTestProviderKeyId] = useState('');
  const [selectedTestModel, setSelectedTestModel] = useState('');
+
+ useEffect(() => {
+ if (section) setActiveTab(section);
+ }, [section]);
 
  useEffect(() => {
  fetch('/api/ai?action=health&type=control', { credentials: 'same-origin' })
@@ -362,29 +360,6 @@ const AIControlPanel: React.FC<{
 
  return (
  <div className="space-y-6 min-w-0">
- <div className="border-b border-neutral-200 overflow-x-auto">
- <div className="flex min-w-max gap-1">
- {TABS.map((tab) => {
- const isActive = activeTab === tab.id;
- return (
- <button
- key={tab.id}
- type="button"
- onClick={() => setActiveTab(tab.id)}
- className={
- 'relative px-3 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap ' +
- (isActive
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900')
- }
- >
- {tab.label}
- </button>
- );
- })}
- </div>
- </div>
-
  {statusMessage ? (
  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700">{statusMessage}</div>
  ) : null}

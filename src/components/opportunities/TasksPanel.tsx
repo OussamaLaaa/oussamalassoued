@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import RecurringTaskForm from './RecurringTaskForm';
@@ -196,42 +196,48 @@ const StatBox: React.FC<{ label: string; value: string | number; subtitle?: stri
 
 // ── Main Panel ──
 const TasksPanel: React.FC<{
- tasks: Task[];
- recurringTasks: RecurringTask[];
- recurringTaskLogs: RecurringTaskLog[];
- taskWorkLogs: TaskWorkLog[];
- weeklyTaskReviews: WeeklyTaskReview[];
- projects: Project[];
- plans: Plan[];
- strategyGoals: StrategyGoal[];
- companies: Company[];
- people: Person[];
- generatedDocuments: { id: string; title: string }[];
- onAddTask: (input: TaskInput) => Promise<any>;
- onUpdateTask: (id: string, input: Partial<TaskInput>) => Promise<any>;
- onDeleteTask: (id: string) => Promise<void>;
- onAddRecurringTask: (input: RecurringTaskInput) => Promise<any>;
- onUpdateRecurringTask: (id: string, input: Partial<RecurringTaskInput>) => Promise<any>;
- onDeleteRecurringTask: (id: string) => Promise<void>;
- onAddRecurringTaskLog: (input: RecurringTaskLogInput) => Promise<RecurringTaskLog>;
- onUpdateRecurringTaskLog: (id: string, input: Partial<RecurringTaskLogInput>) => Promise<RecurringTaskLog>;
- onDeleteRecurringTaskLog: (id: string) => Promise<void>;
- onAddTaskWorkLog: (input: TaskWorkLogInput) => Promise<TaskWorkLog>;
- onUpdateTaskWorkLog: (id: string, input: Partial<TaskWorkLogInput>) => Promise<TaskWorkLog>;
- onDeleteTaskWorkLog: (id: string) => Promise<void>;
- onAddWeeklyTaskReview: (input: WeeklyTaskReviewInput) => Promise<WeeklyTaskReview>;
- onUpdateWeeklyTaskReview: (id: string, input: Partial<WeeklyTaskReviewInput>) => Promise<WeeklyTaskReview>;
- onDeleteWeeklyTaskReview: (id: string) => Promise<void>;
+  tasks: Task[];
+  recurringTasks: RecurringTask[];
+  recurringTaskLogs: RecurringTaskLog[];
+  taskWorkLogs: TaskWorkLog[];
+  weeklyTaskReviews: WeeklyTaskReview[];
+  projects: Project[];
+  plans: Plan[];
+  strategyGoals: StrategyGoal[];
+  companies: Company[];
+  people: Person[];
+  generatedDocuments: { id: string; title: string }[];
+  section?: TasksView;
+  onAddTask: (input: TaskInput) => Promise<any>;
+  onUpdateTask: (id: string, input: Partial<TaskInput>) => Promise<any>;
+  onDeleteTask: (id: string) => Promise<void>;
+  onAddRecurringTask: (input: RecurringTaskInput) => Promise<any>;
+  onUpdateRecurringTask: (id: string, input: Partial<RecurringTaskInput>) => Promise<any>;
+  onDeleteRecurringTask: (id: string) => Promise<void>;
+  onAddRecurringTaskLog: (input: RecurringTaskLogInput) => Promise<RecurringTaskLog>;
+  onUpdateRecurringTaskLog: (id: string, input: Partial<RecurringTaskLogInput>) => Promise<RecurringTaskLog>;
+  onDeleteRecurringTaskLog: (id: string) => Promise<void>;
+  onAddTaskWorkLog: (input: TaskWorkLogInput) => Promise<TaskWorkLog>;
+  onUpdateTaskWorkLog: (id: string, input: Partial<TaskWorkLogInput>) => Promise<TaskWorkLog>;
+  onDeleteTaskWorkLog: (id: string) => Promise<void>;
+  onAddWeeklyTaskReview: (input: WeeklyTaskReviewInput) => Promise<WeeklyTaskReview>;
+  onUpdateWeeklyTaskReview: (id: string, input: Partial<WeeklyTaskReviewInput>) => Promise<WeeklyTaskReview>;
+  onDeleteWeeklyTaskReview: (id: string) => Promise<void>;
 }> = ({
- tasks, recurringTasks, recurringTaskLogs, taskWorkLogs, weeklyTaskReviews,
- projects, plans, strategyGoals, companies, people, generatedDocuments,
- onAddTask, onUpdateTask, onDeleteTask,
- onAddRecurringTask, onUpdateRecurringTask, onDeleteRecurringTask,
- onAddRecurringTaskLog, onUpdateRecurringTaskLog, onDeleteRecurringTaskLog,
- onAddTaskWorkLog, onUpdateTaskWorkLog, onDeleteTaskWorkLog,
- onAddWeeklyTaskReview, onUpdateWeeklyTaskReview, onDeleteWeeklyTaskReview,
+  tasks, recurringTasks, recurringTaskLogs, taskWorkLogs, weeklyTaskReviews,
+  projects, plans, strategyGoals, companies, people, generatedDocuments,
+  section,
+  onAddTask, onUpdateTask, onDeleteTask,
+  onAddRecurringTask, onUpdateRecurringTask, onDeleteRecurringTask,
+  onAddRecurringTaskLog, onUpdateRecurringTaskLog, onDeleteRecurringTaskLog,
+  onAddTaskWorkLog, onUpdateTaskWorkLog, onDeleteTaskWorkLog,
+  onAddWeeklyTaskReview, onUpdateWeeklyTaskReview, onDeleteWeeklyTaskReview,
 }) => {
- const [view, setView] = useState<TasksView>('weekly');
+  const [view, setView] = useState<TasksView>('weekly');
+
+  useEffect(() => {
+  if (section) setView(section);
+  }, [section]);
  const [selectedWeekStart, setSelectedWeekStart] = useState(() => weekStartStr());
  const [showTaskForm, setShowTaskForm] = useState(false);
  const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -703,31 +709,9 @@ const TasksPanel: React.FC<{
  }
  };
 
- return (
- <div className="space-y-4">
- <div className="flex items-center justify-between border-b border-neutral-200">
- <nav className="flex flex-wrap gap-1 -mb-px overflow-x-auto">
- {VIEWS.map((v) => (
- <button
- key={v.id}
- type="button"
- onClick={() => setView(v.id)}
- className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 whitespace-nowrap ${
- view === v.id
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900'
- }`}
- >
- {v.label}
- </button>
- ))}
- </nav>
- {view === 'weekly' && (
- <Button type="button" variant="primary" size="sm" className="shrink-0 ml-2" onClick={() => setShowTaskForm(true)}>+ Add Task</Button>
- )}
- </div>
-
- {renderView()}
+  return (
+  <div className="space-y-4">
+  {renderView()}
 
  {/* Task Form Modal */}
  {(showTaskForm || editingTask) && (

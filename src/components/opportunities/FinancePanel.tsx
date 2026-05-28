@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, FinanceRecurringRule, Project, Company } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -121,7 +121,8 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 }
 
 interface FinancePanelProps {
- onBackToDesktop?: () => void;
+  onBackToDesktop?: () => void;
+  section?: FinanceTab;
  financeIncome: FinanceIncome[];
  financeExpenses: FinanceExpense[];
  financeAllocationRules: FinanceAllocationRule[];
@@ -163,8 +164,9 @@ interface FinancePanelProps {
 }
 
 function FinancePanel({
- onBackToDesktop,
- financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
+  onBackToDesktop,
+  section,
+  financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
  financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
  projects, companies,
  onAddFinanceIncome, onUpdateFinanceIncome, onDeleteFinanceIncome,
@@ -179,9 +181,14 @@ function FinancePanel({
  financeRecurringRules,
  onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
 }: FinancePanelProps) {
- const [tab, setTab] = useState<FinanceTab>('dashboard');
- const [investTab, setInvestTab] = useState<InvestTab>('overview');
- const [aiMode, setAiMode] = useState<AiMode>('monthly_review');
+  const [tab, setTab] = useState<FinanceTab>('dashboard');
+  const [investTab, setInvestTab] = useState<InvestTab>('overview');
+
+  useEffect(() => {
+  if (section) setTab(section);
+  }, [section]);
+
+  const [aiMode, setAiMode] = useState<AiMode>('monthly_review');
  const [modal, setModal] = useState<{type: FinanceTab; id?: string} | null>(null);
  const [aiLoading, setAiLoading] = useState(false);
  const [aiError, setAiError] = useState<string | null>(null);
@@ -1604,37 +1611,11 @@ function FinancePanel({
  }
  }
 
- const tabs: {key: FinanceTab; label: string}[] = [
- {key:'dashboard', label:'Dashboard'},
- {key:'periods', label:'Periods'},
- {key:'income', label:'Income'},
- {key:'expenses', label:'Expenses'},
- {key:'allocation', label:'Allocation'},
- {key:'purchase_goals', label:'Goals'},
- {key:'investments', label:'Investments'},
- {key:'recurring', label:'Recurring'},
- {key:'ai_assistant', label:'AI Finance'},
- ];
+  const showSidebar = tab === 'dashboard';
 
- const showSidebar = tab === 'dashboard';
-
- return (
- <div>
- <div className="overflow-x-auto -mx-6 px-6 border-b border-neutral-200 bg-white">
- <div className="flex gap-0 min-w-max">
- {tabs.map(t => (
- <button key={t.key} onClick={() => setTab(t.key)}
- className={`relative px-3 py-2.5 text-sm transition-colors border-b-2 whitespace-nowrap ${
- tab === t.key
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900'
- }`}
- >{t.label}</button>
- ))}
- </div>
- </div>
-
- <div className="mt-6">
+  return (
+  <div>
+  <div className="mt-6">
  <div className="flex gap-6 items-start">
  <div className="flex-1 min-w-0 space-y-6">
  {tab === 'dashboard' && (

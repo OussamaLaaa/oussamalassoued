@@ -110,7 +110,7 @@ interface LifeManagementPanelProps {
  lifeDeenLogs: LifeDeenLog[];
  lifeFamilyActions: LifeFamilyAction[];
  lifeWeeklyReviews: LifeWeeklyReview[];
- requestedTab?: LifeSection | null;
+  section?: LifeSection;
  onAddLifeNutritionLog: (input: LifeNutritionLogInput) => Promise<LifeNutritionLog>;
  onUpdateLifeNutritionLog: (id: string, input: Partial<LifeNutritionLogInput>) => Promise<LifeNutritionLog>;
  onDeleteLifeNutritionLog: (id: string) => Promise<void>;
@@ -133,41 +133,13 @@ export default function LifeManagementPanel(props: LifeManagementPanelProps) {
  const [selectedDate, setSelectedDate] = useState(todayStr);
  const [selectedWeekStart, setSelectedWeekStart] = useState(() => WEEK_START(new Date()));
 
- useEffect(() => {
- if (props.requestedTab) {
- setActiveTab(props.requestedTab);
- }
- }, [props.requestedTab]);
+  useEffect(() => {
+  if (props.section) setActiveTab(props.section);
+  }, [props.section]);
 
- const renderTabs = () => (
- <div className="border-b border-neutral-200">
- <div className="flex flex-wrap gap-1 overflow-x-auto">
- {LIFE_TABS.map((tab) => {
- const isActive = activeTab === tab.id;
- return (
- <button
- key={tab.id}
- type="button"
- onClick={() => setActiveTab(tab.id)}
- className={
- 'relative px-3 pb-3 pt-2 text-sm whitespace-nowrap transition-colors border-b-2 ' +
- (isActive
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900')
- }
- >
- {tab.label}
- </button>
- );
- })}
- </div>
- </div>
- );
-
- return (
+  return (
  <section className="space-y-7">
- {renderTabs()}
- {activeTab === 'dashboard' && (
+  {activeTab === 'dashboard' && (
  <DashboardView
  lifeNutritionLogs={props.lifeNutritionLogs}
  lifeFitnessLogs={props.lifeFitnessLogs}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 
@@ -81,6 +81,7 @@ const isActiveBadge = (isActive: boolean) =>
  isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500';
 
 interface SocialMediaPanelProps {
+  section?: typeof SOCIAL_TABS[number]['id'];
  socialPlatforms: SocialPlatform[];
  contentPillars: ContentPillar[];
  contentStrategies: ContentStrategy[];
@@ -109,11 +110,15 @@ interface SocialMediaPanelProps {
 export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  const [activeTab, setActiveTab] = useState<typeof SOCIAL_TABS[number]['id']>('dashboard');
  const [selectedWeek, setSelectedWeek] = useState(() => WEEK_START(new Date()));
- const now = new Date();
- const currentWeek = WEEK_START(now);
- const todayStr = now.toISOString().slice(0, 10);
+  const now = new Date();
+  const currentWeek = WEEK_START(now);
+  const todayStr = now.toISOString().slice(0, 10);
 
- // ── Dashboard ──
+  useEffect(() => {
+    if (props.section) setActiveTab(props.section as typeof SOCIAL_TABS[number]['id']);
+  }, [props.section]);
+
+  // ── Dashboard ──
 
  const thisWeekItems = useMemo(() => props.contentItems.filter((item) => item.weekStart === currentWeek), [props.contentItems, currentWeek]);
  const publishedThisWeek = useMemo(() => thisWeekItems.filter((item) => item.status === 'published'), [thisWeekItems]);
@@ -128,36 +133,10 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  const recentIdeas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea').slice(0, 5), [props.contentItems]);
  const readyScheduled = useMemo(() => props.contentItems.filter((item) => item.status === 'ready' || item.status === 'scheduled').slice(0, 5), [props.contentItems]);
 
- const renderTabs = () => (
- <div className="border-b border-neutral-200">
- <div className="flex flex-wrap gap-1 overflow-x-auto">
- {SOCIAL_TABS.map((tab) => {
- const isActive = activeTab === tab.id;
- return (
- <button
- key={tab.id}
- type="button"
- onClick={() => setActiveTab(tab.id)}
- className={
- 'relative px-3 pb-3 pt-2 text-sm whitespace-nowrap transition-colors border-b-2 ' +
- (isActive
- ? 'border-neutral-900 text-neutral-900'
- : 'border-transparent text-neutral-500 hover:text-neutral-900')
- }
- >
- {tab.label}
- </button>
- );
- })}
- </div>
- </div>
- );
-
- // ── Main Render ──
+  // ── Main Render ──
 
  return (
  <section className="space-y-7">
- {renderTabs()}
  {activeTab === 'dashboard' && <DashboardView {...props} thisWeekItems={thisWeekItems} publishedThisWeek={publishedThisWeek} ideasCount={ideasCount} inProduction={inProduction} readyToPublish={readyToPublish} scheduledItems={scheduledItems} totalLeads={totalLeads} totalViews={totalViews} plan={plan} activeStrategy={activeStrategy} recentIdeas={recentIdeas} readyScheduled={readyScheduled} currentWeek={currentWeek} onNavigate={setActiveTab} />}
  {activeTab === 'strategy' && <StrategyView contentStrategies={props.contentStrategies} onAddContentStrategy={props.onAddContentStrategy} onUpdateContentStrategy={props.onUpdateContentStrategy} onDeleteContentStrategy={props.onDeleteContentStrategy} />}
  {activeTab === 'platforms' && <PlatformsView socialPlatforms={props.socialPlatforms} onAddSocialPlatform={props.onAddSocialPlatform} onUpdateSocialPlatform={props.onUpdateSocialPlatform} onDeleteSocialPlatform={props.onDeleteSocialPlatform} />}
