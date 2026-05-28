@@ -829,9 +829,9 @@ const CompanyWorkspace: React.FC<Props> = ({
  <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
  <div className="space-y-2">
  <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Primary Contact</div>
- <div className="text-sm text-neutral-900">
- {primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}
- </div>
+  <div className="text-sm text-neutral-900 max-w-[200px] min-w-0 overflow-hidden truncate whitespace-nowrap">
+  {primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} compact className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}
+  </div>
  </div>
  <div className="space-y-2">
  <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Contact</div>

@@ -187,7 +187,7 @@ const PeopleTable: React.FC<{
                   <td className="px-4 py-3.5 align-top">
                     <div className="min-w-0">
                       <div className="font-medium text-neutral-900">{p.fullName}</div>
-                      <div className="mt-0.5 text-xs text-neutral-500 break-words">
+                      <div className="mt-0.5 text-xs text-neutral-500 max-w-[180px] min-w-0 overflow-hidden truncate whitespace-nowrap">
                         {p.linkedin ? (
                           <a
                             href={p.linkedin}
@@ -199,9 +199,16 @@ const PeopleTable: React.FC<{
                             LinkedIn
                           </a>
                         ) : p.emailPublic ? (
-                          <span>{p.emailPublic}</span>
+                          <a
+                            href={`mailto:${p.emailPublic}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-600 hover:text-blue-700 hover:underline"
+                            title={p.emailPublic}
+                          >
+                            {p.emailPublic.length < 25 ? p.emailPublic : 'Email'}
+                          </a>
                         ) : primaryContact ? (
-                          primaryContact.label || primaryContact.value
+                          <ContactLink type={primaryContact.type} value={primaryContact.value} displayValue={primaryContact.label || primaryContact.value} compact className="text-blue-600 hover:text-blue-700 hover:underline text-xs" />
                         ) : (
                           <span className="text-neutral-300">—</span>
                         )}
@@ -218,19 +225,21 @@ const PeopleTable: React.FC<{
                   <td className="px-4 py-3.5 align-top">{badgeForRelevance(p.relevance)}</td>
                   <td className="px-4 py-3.5 align-top">{badgeForDecisionPower(p.decisionPower)}</td>
                   <td className="px-4 py-3.5 align-top">{badgeForRelationshipStatus(p.relationshipStatus)}</td>
-                  <td className="px-4 py-3.5 align-top">
+                  <td className="px-4 py-3.5 align-top max-w-[160px] min-w-0">
                     {primaryContact && canClickContact ? (
                       <ContactLink
                         type={primaryContactType}
                         value={primaryContactValue || p.linkedin || p.emailPublic}
                         displayValue={primaryContact.label || primaryContact.type}
                         className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                        compact
                       />
                     ) : p.emailPublic || p.linkedin ? (
                       <ContactLink
                         type={p.emailPublic ? 'email' : 'linkedin'}
                         value={p.emailPublic || p.linkedin}
                         className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                        compact
                       />
                     ) : (
                       <span className="text-sm text-neutral-300">—</span>

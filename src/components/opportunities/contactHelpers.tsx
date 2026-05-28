@@ -3,6 +3,7 @@ import React from 'react';
 const UNSAFE_SCHEMES = /^(javascript|data|file|vbscript):/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+()\d\s.-]{6,}$/;
+const LINKEDIN_RE = /linkedin/i;
 
 const normalizeUrlValue = (value: string) => {
  const trimmed = value.trim();
@@ -84,6 +85,37 @@ export const getContactHref = (type: string | undefined, value?: string | null) 
 
 export const isClickableContact = (type: string | undefined, value?: string | null) => Boolean(getContactHref(type, value));
 
+export const getCompactContactLabel = (type?: string | null, value?: string | null): string => {
+  const t = String(type || '').trim().toLowerCase();
+  const v = String(value || '').trim();
+
+  if (!v && !t) return 'Contact';
+
+  if (t === 'linkedin' || LINKEDIN_RE.test(v)) return 'LinkedIn';
+  if (t === 'email') return v.length < 25 ? v : 'Email';
+  if (t === 'phone') return 'Phone';
+  if (t === 'whatsapp') return 'WhatsApp';
+
+  if (t === 'website' || t === 'instagram' || t === 'facebook' || t === 'x' || t === 'telegram' || t === 'other') {
+    try {
+      return new URL(v.includes('://') ? v : `https://${v}`).hostname.replace(/^www\./, '');
+    } catch {
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+  }
+
+  if (EMAIL_RE.test(v)) return v.length < 25 ? v : 'Email';
+  if (PHONE_RE.test(v)) return 'Phone';
+  if (v.includes('://') || v.includes('.')) {
+    try {
+      return new URL(v.includes('://') ? v : `https://${v}`).hostname.replace(/^www\./, '');
+    } catch {
+      return 'Contact';
+    }
+  }
+  return 'Contact';
+};
+
 const copyToClipboard = async (text: string) => {
  try {
  await navigator.clipboard.writeText(text);
@@ -94,41 +126,51 @@ const copyToClipboard = async (text: string) => {
 };
 
 export interface ContactLinkProps {
- type?: string;
- value?: string | null;
- displayValue?: string;
- className?: string;
- copyLabel?: string;
+  type?: string;
+  value?: string | null;
+  displayValue?: string;
+  className?: string;
+  copyLabel?: string;
+  compact?: boolean;
 }
 
-export const ContactLink: React.FC<ContactLinkProps> = ({ type, value, displayValue, className, copyLabel = 'Copy' }) => {
- const text = String(displayValue || value || '').trim();
- const href = getContactHref(type, value);
+export const ContactLink: React.FC<ContactLinkProps> = ({ type, value, displayValue, className, copyLabel = 'Copy', compact }) => {
+  const text = String(displayValue || value || '').trim();
+  const originalValue = String(value || '').trim();
+  const href = getContactHref(type, value);
 
- if (!text) {
- return <span className={className || 'text-sm text-neutral-500'}>—</span>;
- }
+  if (!text) {
+    return <span className={className || 'text-sm text-neutral-500'}>—</span>;
+  }
 
- if (href) {
- return (
- <a
- href={href}
- target="_blank"
- rel="noopener noreferrer"
- className={className || 'text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700'}
- >
- {text}
- </a>
- );
- }
+  const displayText = compact ? getCompactContactLabel(type, value) : text;
+  const tooltipText = compact ? originalValue || text : undefined;
 
- return (
- <button
- type="button"
- className={className || 'text-left text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700'}
- onClick={async () => { await copyToClipboard(text); }}
- >
- {text} <span className="font-normal text-neutral-500">{copyLabel}</span>
- </button>
- );
+  const linkClasses = className || 'text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700';
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={tooltipText}
+        className={compact ? `max-w-[140px] min-w-0 overflow-hidden truncate whitespace-nowrap block ${linkClasses}` : linkClasses}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {displayText}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      title={tooltipText}
+      className={compact ? `max-w-[140px] min-w-0 overflow-hidden truncate whitespace-nowrap block text-left ${linkClasses}` : `text-left ${linkClasses}`}
+      onClick={async (e) => { e.stopPropagation(); await copyToClipboard(text); }}
+    >
+      {displayText} <span className="font-normal text-neutral-500">{copyLabel}</span>
+    </button>
+  );
 };
