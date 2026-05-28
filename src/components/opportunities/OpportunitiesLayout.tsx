@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, ArrowLeft } from 'lucide-react';
+import { MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText, LayoutDashboard, Store, Briefcase, Globe, Users, Handshake, Send, MessageSquare } from 'lucide-react';
 import Button from '../ui/Button';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
@@ -35,7 +35,8 @@ import SocialMediaPanel from './SocialMediaPanel';
 import LifeManagementPanel from './LifeManagementPanel';
 import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
-import FullPageAppShell from './FullPageAppShell';
+import AppDashboardShell from './AppDashboardShell';
+import type { SidebarItem } from './AppDashboardShell';
 import type { CompanyResearchResult } from '../../types/opportunities';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -505,9 +506,10 @@ const OpportunitiesLayout: React.FC<{
  const [lifeQuickTab, setLifeQuickTab] = useState<LifeQuickTab | null>(null);
  const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
- const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
+  const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
+  const [appSection, setAppSection] = useState<string>('');
 
- useEffect(() => {
+  useEffect(() => {
  if (typeof window === 'undefined') return;
 
  const nextState: PersistedNavState = {
@@ -551,23 +553,7 @@ const OpportunitiesLayout: React.FC<{
  setGlobalSearch('');
  };
 
- const CRM_TABS = [
- { id: 'dashboard', label: 'Dashboard' },
- { id: 'big_companies', label: 'Big Companies' },
- { id: 'sme_companies', label: 'SME Companies' },
- { id: 'freelance_leads', label: 'Freelance Leads' },
- { id: 'companies', label: 'All Companies' },
- { id: 'people', label: 'People' },
- { id: 'deals', label: 'Deals' },
- { id: 'queue', label: 'Outreach Queue' },
- ];
-
- const MESSAGES_TABS = [
- { id: 'messages', label: 'Messages' },
- { id: 'templates', label: 'Templates' },
- ];
-
- const getShellTitle = () => {
+  const getShellTitle = () => {
  switch (activeApp) {
  case 'crm': return 'CRM';
  case 'messages': return 'Messages';
@@ -605,13 +591,36 @@ const OpportunitiesLayout: React.FC<{
  }
  };
 
- const getShellTabs = () => {
- if (activeApp === 'crm') return CRM_TABS;
- if (activeApp === 'messages') return MESSAGES_TABS;
- return undefined;
- };
+   const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
+  crm: [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'big_companies', label: 'Big Companies', icon: Building2 },
+  { id: 'sme_companies', label: 'SME Companies', icon: Store },
+  { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
+  { id: 'companies', label: 'All Companies', icon: Globe },
+  { id: 'people', label: 'People', icon: Users },
+  { id: 'deals', label: 'Deals', icon: Handshake },
+  { id: 'queue', label: 'Outreach Queue', icon: Send },
+  ],
+  messages: [
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
+  { id: 'templates', label: 'Templates', icon: FileText },
+  ],
+  };
 
- // Sync global search to all table filters
+  const getSidebarItems = (): SidebarItem[] => {
+  return SIDEBAR_ITEMS[activeApp] || [];
+  };
+
+  const handleSectionChange = (sectionId: string) => {
+  if (activeApp === 'crm' || activeApp === 'messages') {
+  setTab(sectionId as OpportunitiesTab);
+  setSelectedCompanyId(null);
+  setGlobalSearch('');
+  }
+  };
+
+  // Sync global search to all table filters
  const handleGlobalSearchChange = (value: string) => {
  setGlobalSearch(value);
  setCompanyFilters((prev) => ({ ...prev, searchQuery: value }));
@@ -949,21 +958,16 @@ const OpportunitiesLayout: React.FC<{
  );
  }
 
- const handleShellTabChange = (tabId: string) => {
- setTab(tabId as OpportunitiesTab);
- setSelectedCompanyId(null);
- setGlobalSearch('');
- };
-
- return (
- <FullPageAppShell
- title={getShellTitle()}
- subtitle={getShellSubtitle()}
- onBackToDesktop={handleBackToDesktop}
- tabs={getShellTabs()}
- activeTab={tab}
- onTabChange={handleShellTabChange}
-  rightActions={activeApp === 'crm' ? (
+  return (
+  <AppDashboardShell
+  appName={getShellTitle()}
+  appSubtitle={getShellSubtitle()}
+  sidebarItems={getSidebarItems()}
+  activeSection={tab}
+  onSectionChange={handleSectionChange}
+  showSearch={activeApp === 'crm'}
+  onBackToDesktop={handleBackToDesktop}
+   topActions={activeApp === 'crm' ? (
   <>
   <Button variant="primary" size="md" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
   <Button variant="outline" size="md" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
@@ -1843,8 +1847,8 @@ const OpportunitiesLayout: React.FC<{
  </div>
  </OpportunityModal>
  ) : null}
- </FullPageAppShell>
- );
+  </AppDashboardShell>
+  );
 };
 
 export default OpportunitiesLayout;
