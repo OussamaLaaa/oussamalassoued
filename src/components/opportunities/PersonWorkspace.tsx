@@ -224,34 +224,18 @@ const PersonWorkspace: React.FC<Props> = ({
   return (
   <div className="space-y-6">
   <div className="flex flex-col gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
-          <ArrowLeft className="h-3 w-3" />
-          {directCompany ? 'Back to Company' : 'Back to People'}
-        </Button>
-  <div className="flex flex-wrap items-start justify-between gap-4">
-  <div className="min-w-0 flex-1">
-  <h2 className="text-xl font-semibold text-neutral-900 break-words">{person.fullName}</h2>
-  <div className="mt-1.5 flex flex-wrap gap-1.5">
-  {person.role ? <Badge variant="neutral">{person.role}</Badge> : null}
-  {person.seniority ? <Badge variant="neutral">{person.seniority}</Badge> : null}
-  {person.decisionPower ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-violet-200 text-violet-700 bg-violet-50">Decision {person.decisionPower}</span>
-  ) : null}
-  {person.relevance ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-blue-200 text-blue-700 bg-blue-50">Relevance {person.relevance}</span>
-  ) : null}
-  {person.relationshipStatus ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{person.relationshipStatus}</span>
-  ) : null}
+  <div className="flex items-center justify-between">
+  <Button variant="ghost" size="sm" onClick={onBack} className="-ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
+  <ArrowLeft className="h-3 w-3" />
+  {directCompany ? 'Back to Company' : 'Back to People'}
+  </Button>
   </div>
-  <p className="mt-1 text-xs text-neutral-500">{company ? company.name : (person.companyName || '—')}</p>
-  </div>
-  <div className="flex shrink-0 flex-wrap gap-1.5">
+  <h2 className="text-xl font-semibold text-neutral-900 text-center">{person.fullName}</h2>
+  <div className="flex flex-wrap justify-center gap-2">
   <Button type="button" variant="primary" size="sm" onClick={() => onEditPerson(person)}>Edit Person</Button>
   <Button type="button" variant="outline" size="sm" onClick={openAddContactMethod}>+ Contact</Button>
   <Button type="button" variant="outline" size="sm" onClick={() => onAddMessage(person.id)}>Log Message</Button>
   <Button type="button" variant="outline" size="sm" onClick={() => onAddDeal(person.id)}>Add Deal</Button>
-  </div>
   </div>
   </div>
 
@@ -297,84 +281,84 @@ const PersonWorkspace: React.FC<Props> = ({
  </div>
  </div>
 
- {tab === 'overview' ? (
- <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
- <div className={cardClass}>
- <div className={sectionLabelClass}>Profile</div>
- <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
- <div>
- <div className={sectionLabelClass}>Full Name</div>
- <div className={`mt-1 ${valueClass}`}>{person.fullName}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Company</div>
-  <div className={`mt-1 ${valueClass}`}>{company ? company.name : (person.companyName || '—')}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Role</div>
- <div className={`mt-1 ${valueClass}`}>{person.role || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Department</div>
- <div className={`mt-1 ${valueClass}`}>{person.department || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Seniority</div>
- <div className={`mt-1 ${valueClass}`}>{person.seniority || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Contact Channel</div>
- <div className={`mt-1 ${valueClass}`}>{person.contactChannel || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Relationship Status</div>
- <div className={`mt-1 ${valueClass}`}>{person.relationshipStatus || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Next Follow-up</div>
- <div className={`mt-1 ${valueClass}`}>{formatDate(person.nextFollowUpDate)}</div>
- </div>
- </div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Summary</div>
- <div className="mt-4 space-y-3 text-sm text-neutral-700">
- <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
- <span className="text-neutral-500">Company</span>
-  <span className="font-medium text-neutral-900">{company ? company.name : (person.companyName || '—')}</span>
- </div>
- <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
- <span className="text-neutral-500">Primary Contact</span>
- <span className="font-medium text-neutral-900">{primaryMethod ? primaryMethod.label || primaryMethod.value : '—'}</span>
- </div>
- <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
- <span className="text-neutral-500">Last Message</span>
- <span className="font-medium text-neutral-900">{latestMessage ? formatDate(latestMessage.sentDate || latestMessage.createdAt) : '—'}</span>
- </div>
- <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
- <span className="text-neutral-500">Next Follow-up</span>
- <span className="font-medium text-neutral-900">{formatDate(nextActionDate)}</span>
- </div>
- <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
- <span className="text-neutral-500">Relevance</span>
- <span className="font-medium text-neutral-900">{person.relevance ?? '—'}</span>
- </div>
- <div className="flex items-center justify-between gap-3">
- <span className="text-neutral-500">Decision Power</span>
- <span className="font-medium text-neutral-900">{person.decisionPower ?? '—'}</span>
- </div>
- </div>
- </div>
- <div className={cardClass}>
- <div className={sectionLabelClass}>Contact Links</div>
- <div className="mt-4 space-y-2 text-sm">
- {person.linkedin ? <ContactLink type="linkedin" value={person.linkedin} /> : null}
- {person.emailPublic ? <ContactLink type="email" value={person.emailPublic} /> : null}
- {!person.linkedin && !person.emailPublic && personMethods.length === 0 ? <div className="text-neutral-500">No contact links yet.</div> : null}
- </div>
- </div>
- </div>
- ) : null}
+  {tab === 'overview' ? (
+  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Person Details</div>
+  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+  <div>
+  <div className={sectionLabelClass}>Full Name</div>
+  <div className={`mt-1 ${valueClass}`}>{person.fullName}</div>
+  </div>
+  <div>
+  <div className={sectionLabelClass}>Company</div>
+   <div className={`mt-1 ${valueClass}`}>{company ? company.name : (person.companyName || '—')}</div>
+  </div>
+  <div>
+  <div className={sectionLabelClass}>Role</div>
+  <div className={`mt-1 ${valueClass}`}>{person.role || '—'}</div>
+  </div>
+  <div>
+  <div className={sectionLabelClass}>Department</div>
+  <div className={`mt-1 ${valueClass}`}>{person.department || '—'}</div>
+  </div>
+  <div>
+  <div className={sectionLabelClass}>Seniority</div>
+  <div className={`mt-1 ${valueClass}`}>{person.seniority || '—'}</div>
+  </div>
+  </div>
+  </div>
+
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>CRM Relationship</div>
+  <div className="mt-4 space-y-3 text-sm text-neutral-700">
+  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
+  <span className="text-neutral-500">Decision Power</span>
+  <span className="font-medium text-neutral-900">{person.decisionPower ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-violet-200 text-violet-700 bg-violet-50">Decision {person.decisionPower}</span>
+  ) : '—'}</span>
+  </div>
+  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
+  <span className="text-neutral-500">Relevance</span>
+  <span className="font-medium text-neutral-900">{person.relevance ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-blue-200 text-blue-700 bg-blue-50">Relevance {person.relevance}</span>
+  ) : '—'}</span>
+  </div>
+  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
+  <span className="text-neutral-500">Relationship Status</span>
+  <span className="font-medium text-neutral-900">{person.relationshipStatus ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{person.relationshipStatus}</span>
+  ) : '—'}</span>
+  </div>
+  <div className="flex items-center justify-between gap-3">
+  <span className="text-neutral-500">Next Follow-up</span>
+  <span className="font-medium text-neutral-900">{formatDate(person.nextFollowUpDate)}</span>
+  </div>
+  </div>
+  </div>
+
+  <div className={cardClass}>
+  <div className={sectionLabelClass}>Contact Summary</div>
+  <div className="mt-4 space-y-2 text-sm">
+  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
+  <span className="text-neutral-500">Primary Contact</span>
+  <span className="font-medium text-neutral-900">{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} compact className="text-blue-600 hover:text-blue-700 hover:underline" /> : '—'}</span>
+  </div>
+  <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
+  <span className="text-neutral-500">Preferred Channel</span>
+  <span className="font-medium text-neutral-900">{person.contactChannel || '—'}</span>
+  </div>
+  <div className="flex flex-wrap gap-2 pt-1">
+  {person.linkedin ? <ContactLink type="linkedin" value={person.linkedin} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
+  {person.emailPublic ? <ContactLink type="email" value={person.emailPublic} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
+  {personMethods.filter(m => m.id !== primaryMethod?.id).slice(0, 3).map(m => (
+  <ContactLink key={m.id} type={m.type} value={m.value} displayValue={m.label || m.type} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" />
+  ))}
+  </div>
+  </div>
+  </div>
+  </div>
+  ) : null}
 
  {tab === 'contact_methods' ? (
  <div className="space-y-4">

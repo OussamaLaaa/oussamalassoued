@@ -658,60 +658,73 @@ const CompanyWorkspace: React.FC<Props> = ({
 
  const tabContent = () => {
  switch (tab) {
- case 'overview':
- return (
- <div className="space-y-6">
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="mb-3 text-sm font-semibold text-neutral-900">Company Details</h3>
- <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
- <div className="text-neutral-500">Name</div>
- <div className="text-neutral-900 font-medium">{company.name}</div>
- <div className="text-neutral-500">Database Type</div>
- <div className="text-neutral-900">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</div>
- <div className="text-neutral-500">Category</div>
- <div className="text-neutral-900">{company.category || '—'}</div>
- <div className="text-neutral-500">Industry</div>
- <div className="text-neutral-900">{company.industry || '—'}</div>
- <div className="text-neutral-500">Country</div>
- <div className="text-neutral-900">{company.country || '—'}</div>
- <div className="text-neutral-500">City</div>
- <div className="text-neutral-900">{company.city || '—'}</div>
- </div>
- </div>
+  case 'overview':
+  return (
+  <div className="space-y-6">
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Company Details</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+  <div className="text-neutral-500">Name</div>
+  <div className="text-neutral-900 font-medium">{company.name}</div>
+  <div className="text-neutral-500">Category</div>
+  <div className="text-neutral-900">{company.category || '—'}</div>
+  <div className="text-neutral-500">Industry</div>
+  <div className="text-neutral-900">{company.industry || '—'}</div>
+  <div className="text-neutral-500">Country</div>
+  <div className="text-neutral-900">{company.country || '—'}</div>
+  <div className="text-neutral-500">City</div>
+  <div className="text-neutral-900">{company.city || '—'}</div>
+  </div>
+  </div>
 
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="mb-3 text-sm font-semibold text-neutral-900">Web Presence</h3>
- <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
- <div className="text-neutral-500">Website</div>
- <div className="text-neutral-900 break-words">{company.website ? <ContactLink type="website" value={company.website} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}</div>
- <div className="text-neutral-500">LinkedIn</div>
- <div className="text-neutral-900 break-words">{company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}</div>
- </div>
- </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">CRM Classification</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+  <div className="text-neutral-500">Database Type</div>
+  <div className="text-neutral-900"><Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</Badge></div>
+  <div className="text-neutral-500">Priority</div>
+  <div className="text-neutral-900"><PriorityBadge priority={company.priority} /></div>
+  <div className="text-neutral-500">Fit Score</div>
+  <div className="text-neutral-900">{typeof company.fitScore === 'number' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50">Fit: {company.fitScore}</span>
+  ) : '—'}</div>
+  <div className="text-neutral-500">Ethical Fit</div>
+  <div className="text-neutral-900">{company.ethicalFit === 'good' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : company.ethicalFit === 'needs_review' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : company.ethicalFit === 'avoid' ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  ) : (
+  <Badge variant="neutral">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge>
+  )}</div>
+  <div className="text-neutral-500">Status</div>
+  <div className="text-neutral-900"><StatusBadge status={company.status} /></div>
+  <div className="text-neutral-500">Next Action</div>
+  <div className="text-neutral-900">{company.nextAction || '—'}</div>
+  </div>
+  </div>
 
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="mb-3 text-sm font-semibold text-neutral-900">CRM Status</h3>
- <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
- <div className="text-neutral-500">Priority</div>
- <div className="text-neutral-900"><PriorityBadge priority={company.priority} /></div>
- <div className="text-neutral-500">Fit Score</div>
- <div className="text-neutral-900 font-medium">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</div>
- <div className="text-neutral-500">Ethical Fit</div>
- <div className="text-neutral-900"><Badge variant={ethicalFitColor(company.ethicalFit) as any}>{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge></div>
- <div className="text-neutral-500">Status</div>
- <div className="text-neutral-900"><StatusBadge status={company.status} /></div>
- <div className="text-neutral-500">Next Action</div>
- <div className="text-neutral-900">{company.nextAction || '—'}</div>
- </div>
- </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Web Presence</h3>
+  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+  {company.website ? <><div className="text-neutral-500">Website</div><div className="text-neutral-900"><ContactLink type="website" value={company.website} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {company.linkedin ? <><div className="text-neutral-500">LinkedIn</div><div className="text-neutral-900"><ContactLink type="linkedin" value={company.linkedin} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {company.facebook ? <><div className="text-neutral-500">Facebook</div><div className="text-neutral-900"><ContactLink type="facebook" value={company.facebook} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {company.instagram ? <><div className="text-neutral-500">Instagram</div><div className="text-neutral-900"><ContactLink type="instagram" value={company.instagram} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {company.twitter ? <><div className="text-neutral-500">X / Twitter</div><div className="text-neutral-900"><ContactLink type="x" value={company.twitter} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {company.youtube ? <><div className="text-neutral-500">YouTube</div><div className="text-neutral-900"><ContactLink type="other" value={company.youtube} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
+  {!company.website && !company.linkedin && !company.facebook && !company.instagram && !company.twitter && !company.youtube ? <div className="text-neutral-500 col-span-2">No web presence data.</div> : null}
+  </div>
+  </div>
 
- {company.notes && (
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
- <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words">{company.notes}</p>
- </div>
- )}
- </div>
+  {company.notes && (
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
+  <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words">{company.notes}</p>
+  </div>
+  )}
+  </div>
  );
 
  case 'contact_methods': {
@@ -1154,37 +1167,15 @@ const CompanyWorkspace: React.FC<Props> = ({
   <div className="space-y-6">
   {/* Header */}
   <div className="flex flex-col gap-4">
-  <Button variant="ghost" size="sm" onClick={onBack} className="self-start -ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
+  <div className="flex items-center justify-between">
+  <Button variant="ghost" size="sm" onClick={onBack} className="-ml-1.5 h-7 px-1.5 text-xs text-neutral-400 hover:text-neutral-900">
   <ArrowLeft className="h-3 w-3" />
   Back to CRM
   </Button>
-  <div className="flex flex-wrap items-start justify-between gap-4">
-  <div className="min-w-0 flex-1">
-  <h2 className="text-xl font-semibold text-neutral-900 break-words">{company.name}</h2>
-  <div className="mt-1.5 flex flex-wrap gap-1.5">
-  <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</Badge>
-  <PriorityBadge priority={company.priority} />
-  {company.ethicalFit === 'good' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
-  ) : company.ethicalFit === 'needs_review' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
-  ) : company.ethicalFit === 'avoid' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
-  ) : (
-  <Badge variant="neutral">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge>
-  )}
-  <StatusBadge status={company.status} />
-  {typeof company.fitScore === 'number' && (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50">Fit: {company.fitScore}</span>
-  )}
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))} className="text-neutral-300 hover:text-red-500">Delete</Button>
   </div>
-  <div className="mt-1 flex flex-wrap gap-3 text-xs">
-  {company.website ? <ContactLink type="website" value={company.website} className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
-  {company.linkedin ? <ContactLink type="linkedin" value={company.linkedin} className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
-  {!company.website && !company.linkedin ? <span className="text-neutral-300">—</span> : null}
-  </div>
-  </div>
-  <div className="flex shrink-0 flex-wrap gap-1.5">
+  <h2 className="text-xl font-semibold text-neutral-900 text-center">{company.name}</h2>
+  <div className="flex flex-wrap justify-center gap-2">
   <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onEditCompany(company))}>Edit Company</Button>
   <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>AI Score</Button>
   <Button type="button" variant="outline" size="sm" onClick={handleActionClick(() => setShowResearchPanel(true))}>Research</Button>
@@ -1192,8 +1183,6 @@ const CompanyWorkspace: React.FC<Props> = ({
   <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddContactMethod)}>+ Contact</Button>
   <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddProblemProfile)}>+ Problem</Button>
   <Button type="button" variant="outline" size="sm" onClick={handleActionClick(openAddOutreachScript)}>+ Script</Button>
-  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))} className="text-neutral-300 hover:text-red-500">Delete</Button>
-  </div>
   </div>
   </div>
 
