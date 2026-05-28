@@ -1082,14 +1082,6 @@ const OpportunitiesLayout: React.FC<{
   )}
 
   {tab === 'big_companies' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="Big Companies"
-  description="Enterprise-level targets — internships, junior roles, recruiter relationships."
-  actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
-  }
-  />
   <CompanySegmentView
   segmentType="big_company"
   title="Big Companies"
@@ -1105,18 +1097,9 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   />
-  </div>
   )}
 
   {tab === 'sme_companies' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="SME Companies"
-  description="Small & medium businesses — faster decisions, partnership potential, agency work."
-  actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
-  }
-  />
   <CompanySegmentView
   segmentType="sme"
   title="SME Companies"
@@ -1132,18 +1115,9 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   />
-  </div>
   )}
 
   {tab === 'freelance_leads' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="Freelance Leads"
-  description="Independent professionals — paid UX/UI work, audits, recurring clients."
-  actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
-  }
-  />
   <CompanySegmentView
   segmentType="freelance"
   title="Freelance Leads"
@@ -1159,7 +1133,6 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   />
-  </div>
   )}
 
   {tab === 'queue' && (
@@ -1222,13 +1195,8 @@ const OpportunitiesLayout: React.FC<{
   )}
 
   {tab === 'companies' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="All Companies"
-  description="All tracked companies, filters, and bulk actions."
-  actions={
-  <>
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  <div className="space-y-4">
+  <div className="flex items-center justify-end">
   <button
   type="button"
   onClick={() => setShowCsvImport(true)}
@@ -1236,9 +1204,7 @@ const OpportunitiesLayout: React.FC<{
   >
   Import CSV
   </button>
-  </>
-  }
-  />
+  </div>
   <CompaniesTable
  companies={companies}
  onEdit={handleEditCompany}
