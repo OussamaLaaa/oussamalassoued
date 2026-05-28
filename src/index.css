@@ -1196,7 +1196,6 @@ body.opportunities-page .scene-05-overlay {
   background: var(--opp-card) !important;
   color: var(--opp-primary) !important;
   border-color: var(--opp-border) !important;
-  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
 }
 
 /* Do not force card styling on interactive controls. */
@@ -1232,9 +1231,6 @@ body.opportunities-page .scene-05-overlay {
 }
 
 /* Active tab look in light theme */
-.opportunities-shell.opportunities-light .scale-100 {
-  box-shadow: 0 6px 18px rgba(59,130,246,0.08) !important;
-}
 
 /* Buttons */
 .opportunities-shell.opportunities-light .ds-btn-v2-dark,
@@ -1469,4 +1465,52 @@ body.opportunities-page .opportunities-shell {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ─── Personal OS: Flat visual cleanup ─── */
+.personal-os-root,
+.personal-os-root *,
+.personal-os-root *::before,
+.personal-os-root *::after {
+  text-shadow: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+}
+
+.personal-os-root .ds-btn:hover,
+.personal-os-root .ds-card:hover {
+  transform: none;
+}
+
+.personal-os-root button:focus-visible,
+.personal-os-root a:focus-visible,
+.personal-os-root input:focus-visible,
+.personal-os-root textarea:focus-visible,
+.personal-os-root select:focus-visible {
+  outline: 2px solid #666666;
+  outline-offset: 2px;
+}
+
+.personal-os-root .ds-glass-v3-dark {
+  box-shadow: none !important;
+}
+
+.personal-os-root .glass-panel,
+.personal-os-root .glass-navbar,
+.personal-os-root .glass-tag {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+.personal-os-root .ui-card {
+  box-shadow: none !important;
+}
+
+.personal-os-root .shadow-sys-soft-light,
+.personal-os-root .shadow-sys-soft-dark,
+.personal-os-root .shadow-sys-lift-light {
+  box-shadow: none !important;
 }

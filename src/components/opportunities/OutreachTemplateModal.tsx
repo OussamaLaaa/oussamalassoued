@@ -4,12 +4,12 @@ import { audienceOptions, goalOptions, languageOptions, type TemplateAudience, t
 import { renderMessageTemplate } from '../../utils/renderMessageTemplate';
 
 const CTA_TYPES = [
-  { value: 'ask_permission_to_send_audit', label: 'Ask for UX audit permission' },
-  { value: 'ask_for_feedback', label: 'Ask for feedback' },
-  { value: 'ask_for_call', label: 'Ask for a call' },
-  { value: 'ask_for_referral', label: 'Ask for referral' },
-  { value: 'ask_for_opportunity', label: 'Ask for opportunity' },
-  { value: 'soft_follow_up', label: 'Soft follow-up' },
+ { value: 'ask_permission_to_send_audit', label: 'Ask for UX audit permission' },
+ { value: 'ask_for_feedback', label: 'Ask for feedback' },
+ { value: 'ask_for_call', label: 'Ask for a call' },
+ { value: 'ask_for_referral', label: 'Ask for referral' },
+ { value: 'ask_for_opportunity', label: 'Ask for opportunity' },
+ { value: 'soft_follow_up', label: 'Soft follow-up' },
 ] as const;
 
 const baseInput = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400';
@@ -17,403 +17,403 @@ const baseInput = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
 const followUpDate = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+ const date = new Date();
+ date.setDate(date.getDate() + days);
+ return date.toISOString().slice(0, 10);
 };
 
 const renderBaseMessage = (template: MessageTemplate | undefined, variables: Record<string, string>) => {
-  if (!template) return '';
-  const renderedSubject = template.subject ? renderMessageTemplate(template.subject, variables) : '';
-  const renderedBody = renderMessageTemplate(template.body, variables);
-  return [renderedSubject ? `Subject: ${renderedSubject}` : '', renderedBody].filter(Boolean).join('\n\n');
+ if (!template) return '';
+ const renderedSubject = template.subject ? renderMessageTemplate(template.subject, variables) : '';
+ const renderedBody = renderMessageTemplate(template.body, variables);
+ return [renderedSubject ? `Subject: ${renderedSubject}` : '', renderedBody].filter(Boolean).join('\n\n');
 };
 
 const filterTemplates = (templates: MessageTemplate[], audience: string, goal: string, language: string) => templates.filter((template) => {
-  if (template.isActive === false) return false;
-  if (audience && template.audience !== audience) return false;
-  if (goal && template.goal !== goal) return false;
-  if (language && template.language !== language) return false;
-  return true;
+ if (template.isActive === false) return false;
+ if (audience && template.audience !== audience) return false;
+ if (goal && template.goal !== goal) return false;
+ if (language && template.language !== language) return false;
+ return true;
 });
 
 const OutreachTemplateModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  person: Person;
-  company: Company | null;
-  templates: MessageTemplate[];
-  onLogMessage: (input: MessageInput) => Promise<unknown>;
-  onUpdatePerson?: (id: string, input: PersonInput) => Promise<unknown>;
+ isOpen: boolean;
+ onClose: () => void;
+ person: Person;
+ company: Company | null;
+ templates: MessageTemplate[];
+ onLogMessage: (input: MessageInput) => Promise<unknown>;
+ onUpdatePerson?: (id: string, input: PersonInput) => Promise<unknown>;
 }> = ({ isOpen, onClose, person, company, templates, onLogMessage, onUpdatePerson }) => {
-  const [audience, setAudience] = useState<TemplateAudience | ''>('founder');
-  const [goal, setGoal] = useState<TemplateGoal | ''>('ux_audit_offer');
-  const [language, setLanguage] = useState<TemplateLanguage | ''>('english');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [observation, setObservation] = useState('');
-  const [tone, setTone] = useState<'professional' | 'friendly' | 'concise'>('professional');
-  const [length, setLength] = useState<'short' | 'medium'>('short');
-  const [ctaType, setCtaType] = useState<string>('ask_permission_to_send_audit');
-  const [messageBody, setMessageBody] = useState('');
-  const [isCopying, setIsCopying] = useState(false);
-  const [isImproving, setIsImproving] = useState(false);
-  const [isLogging, setIsLogging] = useState(false);
-  const [status, setStatus] = useState('');
-  const bodyDirtyRef = useRef(false);
+ const [audience, setAudience] = useState<TemplateAudience | ''>('founder');
+ const [goal, setGoal] = useState<TemplateGoal | ''>('ux_audit_offer');
+ const [language, setLanguage] = useState<TemplateLanguage | ''>('english');
+ const [selectedTemplateId, setSelectedTemplateId] = useState('');
+ const [observation, setObservation] = useState('');
+ const [tone, setTone] = useState<'professional' | 'friendly' | 'concise'>('professional');
+ const [length, setLength] = useState<'short' | 'medium'>('short');
+ const [ctaType, setCtaType] = useState<string>('ask_permission_to_send_audit');
+ const [messageBody, setMessageBody] = useState('');
+ const [isCopying, setIsCopying] = useState(false);
+ const [isImproving, setIsImproving] = useState(false);
+ const [isLogging, setIsLogging] = useState(false);
+ const [status, setStatus] = useState('');
+ const bodyDirtyRef = useRef(false);
 
-  const runtimeTemplates = templates;
+ const runtimeTemplates = templates;
 
-  const filteredTemplates = useMemo(
-    () => filterTemplates(runtimeTemplates, audience, goal, language),
-    [runtimeTemplates, audience, goal, language]
-  );
+ const filteredTemplates = useMemo(
+ () => filterTemplates(runtimeTemplates, audience, goal, language),
+ [runtimeTemplates, audience, goal, language]
+ );
 
-  const selectedTemplate = useMemo<MessageTemplate | undefined>(() => {
-    return filteredTemplates.find((template) => template.id === selectedTemplateId)
-      || filteredTemplates[0]
-      || runtimeTemplates.find((template) => template.id === selectedTemplateId);
-  }, [filteredTemplates, selectedTemplateId, runtimeTemplates]);
+ const selectedTemplate = useMemo<MessageTemplate | undefined>(() => {
+ return filteredTemplates.find((template) => template.id === selectedTemplateId)
+ || filteredTemplates[0]
+ || runtimeTemplates.find((template) => template.id === selectedTemplateId);
+ }, [filteredTemplates, selectedTemplateId, runtimeTemplates]);
 
-  const variables = {
-    personName: person.fullName,
-    companyName: company?.name || person.companyName || '',
-    role: person.role || '',
-    myName: 'Oussama',
-    service: 'UX audit',
-    observation: observation.trim(),
-  };
+ const variables = {
+ personName: person.fullName,
+ companyName: company?.name || person.companyName || '',
+ role: person.role || '',
+ myName: 'Oussama',
+ service: 'UX audit',
+ observation: observation.trim(),
+ };
 
-  const renderedMessage = renderBaseMessage(selectedTemplate, variables);
+ const renderedMessage = renderBaseMessage(selectedTemplate, variables);
 
-  useEffect(() => {
-    bodyDirtyRef.current = false;
-    setMessageBody(renderedMessage);
-  }, [selectedTemplate?.id]);
+ useEffect(() => {
+ bodyDirtyRef.current = false;
+ setMessageBody(renderedMessage);
+ }, [selectedTemplate?.id]);
 
-  useEffect(() => {
-    if (!bodyDirtyRef.current) {
-      setMessageBody(renderedMessage);
-    }
-  }, [renderedMessage]);
+ useEffect(() => {
+ if (!bodyDirtyRef.current) {
+ setMessageBody(renderedMessage);
+ }
+ }, [renderedMessage]);
 
-  const renderedSubject = selectedTemplate?.subject ? renderMessageTemplate(selectedTemplate.subject, variables) : '';
-  const messageText = [renderedSubject ? `Subject: ${renderedSubject}` : '', messageBody].filter(Boolean).join('\n\n');
+ const renderedSubject = selectedTemplate?.subject ? renderMessageTemplate(selectedTemplate.subject, variables) : '';
+ const messageText = [renderedSubject ? `Subject: ${renderedSubject}` : '', messageBody].filter(Boolean).join('\n\n');
 
-  const handleCopy = async () => {
-    try {
-      setIsCopying(true);
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(messageText);
-        setStatus('Message copied to clipboard.');
-      } else {
-        setStatus('Clipboard is not available in this browser.');
-      }
-    } catch {
-      setStatus('Could not copy the message.');
-    } finally {
-      setIsCopying(false);
-    }
-  };
+ const handleCopy = async () => {
+ try {
+ setIsCopying(true);
+ if (navigator.clipboard?.writeText) {
+ await navigator.clipboard.writeText(messageText);
+ setStatus('Message copied to clipboard.');
+ } else {
+ setStatus('Clipboard is not available in this browser.');
+ }
+ } catch {
+ setStatus('Could not copy the message.');
+ } finally {
+ setIsCopying(false);
+ }
+ };
 
-  const handleImproveWithAi = async () => {
-    if (!selectedTemplate) return;
+ const handleImproveWithAi = async () => {
+ if (!selectedTemplate) return;
 
-    const currentEditableMessageOrRenderedTemplate = messageBody.trim() || renderedMessage.trim();
-    const hasTemplateText = Boolean(currentEditableMessageOrRenderedTemplate);
+ const currentEditableMessageOrRenderedTemplate = messageBody.trim() || renderedMessage.trim();
+ const hasTemplateText = Boolean(currentEditableMessageOrRenderedTemplate);
 
-    if (import.meta.env.DEV) {
-      console.debug('[OutreachTemplateModal] AI request context', {
-        hasTemplateText,
-        language: selectedTemplate.language,
-        hasPerson: Boolean(person),
-        hasCompany: Boolean(company),
-      });
-    }
+ if (import.meta.env.DEV) {
+ console.debug('[OutreachTemplateModal] AI request context', {
+ hasTemplateText,
+ language: selectedTemplate.language,
+ hasPerson: Boolean(person),
+ hasCompany: Boolean(company),
+ });
+ }
 
-    if (!hasTemplateText) {
-      setStatus('AI could not generate a clean message. Try again or edit manually.');
-      return;
-    }
+ if (!hasTemplateText) {
+ setStatus('AI could not generate a clean message. Try again or edit manually.');
+ return;
+ }
 
-    setIsImproving(true);
-    setStatus('');
+ setIsImproving(true);
+ setStatus('');
 
-    try {
-      const response = await fetch('/api/ai?action=message', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'message',
-          debug: import.meta.env.DEV,
-          templateText: currentEditableMessageOrRenderedTemplate,
-          person: {
-            fullName: person.fullName,
-            role: person.role,
-            companyName: company?.name || person.companyName,
-            contactChannel: person.contactChannel,
-            relationshipStatus: person.relationshipStatus,
-          },
-          company: {
-            name: company?.name || person.companyName,
-            industry: company?.industry,
-            country: company?.country,
-            website: company?.website,
-            notes: company?.notes,
-          },
-          observation: observation.trim() || undefined,
-          goal: selectedTemplate.goal,
-          language: selectedTemplate.language as 'english' | 'french' | 'arabic',
-          tone,
-          length,
-          ctaType,
-        }),
-      });
+ try {
+ const response = await fetch('/api/ai?action=message', {
+ method: 'POST',
+ credentials: 'same-origin',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ action: 'message',
+ debug: import.meta.env.DEV,
+ templateText: currentEditableMessageOrRenderedTemplate,
+ person: {
+ fullName: person.fullName,
+ role: person.role,
+ companyName: company?.name || person.companyName,
+ contactChannel: person.contactChannel,
+ relationshipStatus: person.relationshipStatus,
+ },
+ company: {
+ name: company?.name || person.companyName,
+ industry: company?.industry,
+ country: company?.country,
+ website: company?.website,
+ notes: company?.notes,
+ },
+ observation: observation.trim() || undefined,
+ goal: selectedTemplate.goal,
+ language: selectedTemplate.language as 'english' | 'french' | 'arabic',
+ tone,
+ length,
+ ctaType,
+ }),
+ });
 
-      const result = await response.json().catch(() => ({}));
+ const result = await response.json().catch(() => ({}));
 
-      if (response.status === 401) {
-        setStatus('Authentication required. Please log in again.');
-        return;
-      }
+ if (response.status === 401) {
+ setStatus('Authentication required. Please log in again.');
+ return;
+ }
 
-      if (!response.ok || result?.success === false) {
-        if (import.meta.env.DEV) {
-          console.error('[OutreachTemplateModal] AI message generation failed', {
-            status: response.status,
-            error: result?.error,
-            debug: result?.debug,
-          });
-        }
+ if (!response.ok || result?.success === false) {
+ if (import.meta.env.DEV) {
+ console.error('[OutreachTemplateModal] AI message generation failed', {
+ status: response.status,
+ error: result?.error,
+ debug: result?.debug,
+ });
+ }
 
-        setStatus('AI could not generate a clean message. Try again or edit manually.');
-        return;
-      }
+ setStatus('AI could not generate a clean message. Try again or edit manually.');
+ return;
+ }
 
-      if (typeof result?.message === 'string' && result.message.trim()) {
-        bodyDirtyRef.current = true;
-        setMessageBody(result.message.trim());
-        setStatus('Message improved with AI.');
-      } else {
-        setStatus('AI could not generate a clean message. Try again or edit manually.');
-      }
-    } catch {
-      setStatus('AI could not generate a clean message. Try again or edit manually.');
-    } finally {
-      setIsImproving(false);
-    }
-  };
+ if (typeof result?.message === 'string' && result.message.trim()) {
+ bodyDirtyRef.current = true;
+ setMessageBody(result.message.trim());
+ setStatus('Message improved with AI.');
+ } else {
+ setStatus('AI could not generate a clean message. Try again or edit manually.');
+ }
+ } catch {
+ setStatus('AI could not generate a clean message. Try again or edit manually.');
+ } finally {
+ setIsImproving(false);
+ }
+ };
 
-  const handleLog = async () => {
-    if (!selectedTemplate) return;
+ const handleLog = async () => {
+ if (!selectedTemplate) return;
 
-    try {
-      setIsLogging(true);
-      setStatus('');
-      await onLogMessage({
-        companyId: company?.id || person.companyId,
-        personId: person.id,
-        channel: person.contactChannel || 'LinkedIn',
-        language: selectedTemplate.language,
-        messageType: selectedTemplate.goal,
-        messageText,
-        sentDate: todayDate(),
-        replyStatus: 'waiting',
-        replySummary: '',
-        nextFollowUpDate: followUpDate(3),
-        status: 'sent',
-      });
+ try {
+ setIsLogging(true);
+ setStatus('');
+ await onLogMessage({
+ companyId: company?.id || person.companyId,
+ personId: person.id,
+ channel: person.contactChannel || 'LinkedIn',
+ language: selectedTemplate.language,
+ messageType: selectedTemplate.goal,
+ messageText,
+ sentDate: todayDate(),
+ replyStatus: 'waiting',
+ replySummary: '',
+ nextFollowUpDate: followUpDate(3),
+ status: 'sent',
+ });
 
-      if (onUpdatePerson) {
-        await onUpdatePerson(person.id, {
-          companyId: person.companyId,
-          fullName: person.fullName,
-          role: person.role,
-          department: person.department,
-          seniority: person.seniority,
-          decisionPower: person.decisionPower !== undefined ? String(person.decisionPower) as PersonInput['decisionPower'] : undefined,
-          influencePower: person.influencePower !== undefined ? String(person.influencePower) as PersonInput['influencePower'] : undefined,
-          relevance: person.relevance !== undefined ? String(person.relevance) as PersonInput['relevance'] : undefined,
-          linkedin: person.linkedin,
-          emailPublic: person.emailPublic,
-          contactChannel: person.contactChannel,
-          relationshipStatus: 'Message Sent',
-          nextFollowUpDate: person.nextFollowUpDate,
-          notes: person.notes,
-        });
-      }
+ if (onUpdatePerson) {
+ await onUpdatePerson(person.id, {
+ companyId: person.companyId,
+ fullName: person.fullName,
+ role: person.role,
+ department: person.department,
+ seniority: person.seniority,
+ decisionPower: person.decisionPower !== undefined ? String(person.decisionPower) as PersonInput['decisionPower'] : undefined,
+ influencePower: person.influencePower !== undefined ? String(person.influencePower) as PersonInput['influencePower'] : undefined,
+ relevance: person.relevance !== undefined ? String(person.relevance) as PersonInput['relevance'] : undefined,
+ linkedin: person.linkedin,
+ emailPublic: person.emailPublic,
+ contactChannel: person.contactChannel,
+ relationshipStatus: 'Message Sent',
+ nextFollowUpDate: person.nextFollowUpDate,
+ notes: person.notes,
+ });
+ }
 
-      setStatus('Message logged successfully.');
-      setTimeout(() => onClose(), 300);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Failed to log message.');
-    } finally {
-      setIsLogging(false);
-    }
-  };
+ setStatus('Message logged successfully.');
+ setTimeout(() => onClose(), 300);
+ } catch (error) {
+ setStatus(error instanceof Error ? error.message : 'Failed to log message.');
+ } finally {
+ setIsLogging(false);
+ }
+ };
 
-  if (!isOpen) return null;
+ if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-5">
-      <div className="w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-mono uppercase text-neutral-900">Outreach Template</h3>
-            <p className="mt-1 text-xs text-neutral-500">Pick a template, preview the message, copy it, or log it as sent.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-neutral-200 px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50"
-          >
-            Close
-          </button>
-        </div>
+ return (
+ <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-5">
+ <div className="w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6">
+ <div className="mb-4 flex items-start justify-between gap-4">
+ <div>
+ <h3 className="text-sm font-mono uppercase text-neutral-900">Outreach Template</h3>
+ <p className="mt-1 text-xs text-neutral-500">Pick a template, preview the message, copy it, or log it as sent.</p>
+ </div>
+ <button
+ type="button"
+ onClick={onClose}
+ className="rounded border border-neutral-200 px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-50"
+ >
+ Close
+ </button>
+ </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>Audience</span>
-                <select className={baseInput} value={audience} onChange={(event) => setAudience(event.target.value as TemplateAudience | '')}>
-                  <option value="">All</option>
-                  {audienceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>Goal</span>
-                <select className={baseInput} value={goal} onChange={(event) => setGoal(event.target.value as TemplateGoal | '')}>
-                  <option value="">All</option>
-                  {goalOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>Language</span>
-                <select className={baseInput} value={language} onChange={(event) => setLanguage(event.target.value as TemplateLanguage | '')}>
-                  <option value="">All</option>
-                  {languageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
-            </div>
+ <div className="grid gap-4 lg:grid-cols-2">
+ <div className="space-y-3">
+ <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>Audience</span>
+ <select className={baseInput} value={audience} onChange={(event) => setAudience(event.target.value as TemplateAudience | '')}>
+ <option value="">All</option>
+ {audienceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+ </select>
+ </label>
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>Goal</span>
+ <select className={baseInput} value={goal} onChange={(event) => setGoal(event.target.value as TemplateGoal | '')}>
+ <option value="">All</option>
+ {goalOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+ </select>
+ </label>
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>Language</span>
+ <select className={baseInput} value={language} onChange={(event) => setLanguage(event.target.value as TemplateLanguage | '')}>
+ <option value="">All</option>
+ {languageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+ </select>
+ </label>
+ </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>Tone</span>
-                <select className={baseInput} value={tone} onChange={(event) => setTone(event.target.value as 'professional' | 'friendly' | 'concise')}>
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="concise">Concise</option>
-                </select>
-              </label>
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>Length</span>
-                <select className={baseInput} value={length} onChange={(event) => setLength(event.target.value as 'short' | 'medium')}>
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
-                </select>
-              </label>
-              <label className="space-y-1 text-xs text-neutral-500">
-                <span>CTA Type</span>
-                <select className={baseInput} value={ctaType} onChange={(event) => setCtaType(event.target.value)}>
-                  {CTA_TYPES.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
+ <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>Tone</span>
+ <select className={baseInput} value={tone} onChange={(event) => setTone(event.target.value as 'professional' | 'friendly' | 'concise')}>
+ <option value="professional">Professional</option>
+ <option value="friendly">Friendly</option>
+ <option value="concise">Concise</option>
+ </select>
+ </label>
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>Length</span>
+ <select className={baseInput} value={length} onChange={(event) => setLength(event.target.value as 'short' | 'medium')}>
+ <option value="short">Short</option>
+ <option value="medium">Medium</option>
+ </select>
+ </label>
+ <label className="space-y-1 text-xs text-neutral-500">
+ <span>CTA Type</span>
+ <select className={baseInput} value={ctaType} onChange={(event) => setCtaType(event.target.value)}>
+ {CTA_TYPES.map((opt) => (
+ <option key={opt.value} value={opt.value}>{opt.label}</option>
+ ))}
+ </select>
+ </label>
+ </div>
 
-            <label className="block space-y-1 text-xs text-neutral-500">
-              <span>Template</span>
-              <select className={baseInput} value={selectedTemplate?.id || ''} onChange={(event) => setSelectedTemplateId(event.target.value)}>
-                {filteredTemplates.map((template) => (
-                  <option key={template.id} value={template.id}>{template.name}</option>
-                ))}
-                {filteredTemplates.length === 0 && <option value="">No templates found</option>}
-              </select>
-            </label>
+ <label className="block space-y-1 text-xs text-neutral-500">
+ <span>Template</span>
+ <select className={baseInput} value={selectedTemplate?.id || ''} onChange={(event) => setSelectedTemplateId(event.target.value)}>
+ {filteredTemplates.map((template) => (
+ <option key={template.id} value={template.id}>{template.name}</option>
+ ))}
+ {filteredTemplates.length === 0 && <option value="">No templates found</option>}
+ </select>
+ </label>
 
-            <label className="block space-y-1 text-xs text-neutral-500">
-              <span>Observation</span>
-              <textarea
-                className={`${baseInput} min-h-24`}
-                value={observation}
-                onChange={(event) => setObservation(event.target.value)}
-                placeholder="Add a quick observation about the person, company, or project..."
-              />
-            </label>
+ <label className="block space-y-1 text-xs text-neutral-500">
+ <span>Observation</span>
+ <textarea
+ className={`${baseInput} min-h-24`}
+ value={observation}
+ onChange={(event) => setObservation(event.target.value)}
+ placeholder="Add a quick observation about the person, company, or project..."
+ />
+ </label>
 
-            <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500">
-              <div className="font-medium text-neutral-900">Context</div>
-              <div className="mt-1">Person: {person.fullName}</div>
-              <div>Company: {company?.name || person.companyName || 'Unknown company'}</div>
-              <div>Role: {person.role || '—'}</div>
-            </div>
-          </div>
+ <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500">
+ <div className="font-medium text-neutral-900">Context</div>
+ <div className="mt-1">Person: {person.fullName}</div>
+ <div>Company: {company?.name || person.companyName || 'Unknown company'}</div>
+ <div>Role: {person.role || '—'}</div>
+ </div>
+ </div>
 
-          <div className="space-y-3">
-            <div className="rounded-lg border border-neutral-200 bg-white p-3">
-              <div className="mb-2 text-xs font-medium text-neutral-900">Preview</div>
-              {selectedTemplate?.subject && (
-                <div className="mb-2 text-xs text-neutral-500">
-                  Subject: <span className="font-medium text-neutral-900">{renderedSubject}</span>
-                </div>
-              )}
-              <textarea
-                value={messageBody}
-                onChange={(event) => {
-                  bodyDirtyRef.current = true;
-                  setMessageBody(event.target.value);
-                }}
-                className={`${baseInput} min-h-[360px]`}
-                placeholder="Your message will appear here. You can edit it manually."
-              />
-            </div>
+ <div className="space-y-3">
+ <div className="rounded-lg border border-neutral-200 bg-white p-3">
+ <div className="mb-2 text-xs font-medium text-neutral-900">Preview</div>
+ {selectedTemplate?.subject && (
+ <div className="mb-2 text-xs text-neutral-500">
+ Subject: <span className="font-medium text-neutral-900">{renderedSubject}</span>
+ </div>
+ )}
+ <textarea
+ value={messageBody}
+ onChange={(event) => {
+ bodyDirtyRef.current = true;
+ setMessageBody(event.target.value);
+ }}
+ className={`${baseInput} min-h-[360px]`}
+ placeholder="Your message will appear here. You can edit it manually."
+ />
+ </div>
 
-            {status && (
-              <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
-                {status}
-              </div>
-            )}
+ {status && (
+ <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
+ {status}
+ </div>
+ )}
 
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => void handleImproveWithAi()}
-                disabled={isImproving || !selectedTemplate}
-                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-              >
-                {isImproving ? 'Improving...' : 'Improve with AI'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={isCopying || !messageText}
-                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
-              >
-                {isCopying ? 'Copying...' : 'Copy Message'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleLog()}
-                disabled={isLogging || !selectedTemplate}
-                className="rounded-md border border-black bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50"
-              >
-                {isLogging ? 'Logging...' : 'Log as Sent'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+ <div className="flex flex-wrap justify-end gap-2">
+ <button
+ type="button"
+ onClick={() => void handleImproveWithAi()}
+ disabled={isImproving || !selectedTemplate}
+ className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+ >
+ {isImproving ? 'Improving...' : 'Improve with AI'}
+ </button>
+ <button
+ type="button"
+ onClick={handleCopy}
+ disabled={isCopying || !messageText}
+ className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+ >
+ {isCopying ? 'Copying...' : 'Copy Message'}
+ </button>
+ <button
+ type="button"
+ onClick={() => void handleLog()}
+ disabled={isLogging || !selectedTemplate}
+ className="rounded-md border border-black bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800 disabled:opacity-50"
+ >
+ {isLogging ? 'Logging...' : 'Log as Sent'}
+ </button>
+ <button
+ type="button"
+ onClick={onClose}
+ className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+ >
+ Cancel
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ );
 };
 
 export default OutreachTemplateModal;

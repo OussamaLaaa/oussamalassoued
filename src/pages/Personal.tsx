@@ -42,7 +42,7 @@ const PersonalWorkspace: React.FC = () => {
   }, []);
 
   return (
-    <div className="opportunities-shell min-h-screen w-full relative z-[9999] overflow-x-hidden">
+    <div className="personal-os-root opportunities-shell min-h-screen w-full relative z-[9999] overflow-x-hidden">
       <OpportunitiesLayout theme={theme} setTheme={setTheme} data={opportunitiesData} />
     </div>
   );
