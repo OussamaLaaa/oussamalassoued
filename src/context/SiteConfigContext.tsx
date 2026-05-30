@@ -475,11 +475,8 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           } catch (err) {
             console.warn('[Config] Failed to hydrate incoming config, skipping apply', err);
           }
-        } else {
-          console.log('[Config] API returned empty or invalid config');
         }
-      } catch (error) {
-        console.error('Failed to fetch config from API:', error);
+      } catch {
       } finally {
         if (!mounted) return;
         setIsHydratingFromApi(false);

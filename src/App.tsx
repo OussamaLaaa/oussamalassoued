@@ -1,11 +1,12 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { SiteConfigProvider } from './context/SiteConfigContext';
+import { lazyWithRetry, clearChunkReloadedFlag } from './utils/lazyWithRetry';
 
 // Lazy load all pages including Home for better initial load performance
 const Home = lazy(() => import('./pages/Home'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Personal = lazy(() => import('./pages/Personal'));
+const Personal = lazyWithRetry(() => import('./pages/Personal'));
 const Articles = lazy(() => import('./pages/Articles'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -90,25 +91,80 @@ const getRoute = (): AppRoute => {
   return { page: 'home' };
 };
 
+function isChunkError(error: Error): boolean {
+  const msg = error.message;
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('Loading chunk') ||
+    msg.includes('ChunkLoadError')
+  );
+}
+
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
+  { hasError: boolean; error?: Error; isChunkError: boolean }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, isChunkError: false };
   }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+    return { hasError: true, error, isChunkError: isChunkError(error) };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    if (!isChunkError(error)) {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      if (this.state.isChunkError) {
+        return (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '100vh',
+              padding: '20px',
+              background: '#000',
+              color: '#fff',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              textAlign: 'center',
+              gap: '16px',
+            }}
+          >
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
+              App update available
+            </h1>
+            <p style={{ color: '#aaa', margin: 0, maxWidth: '360px', lineHeight: 1.5 }}>
+              The app was updated. Reload to load the latest version.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                marginTop: '4px',
+                padding: '10px 24px',
+                background: '#fff',
+                color: '#000',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              Reload app
+            </button>
+          </div>
+        );
+      }
+
       return (
         <div style={{ padding: '20px', color: 'white', background: '#000', minHeight: '100vh' }}>
           <h1>Something went wrong</h1>
