@@ -15,12 +15,13 @@ export const fixedCategories = [
 ] as const;
 
 export const fixedCategorySlugSet = new Set(fixedCategories.map((item) => item.slug));
+export const protectedCategorySlugSet = new Set(['all', 'uncategorized', ...fixedCategories.map((item) => item.slug)]);
 
 export const categoryKey = (category: NoteCategory) => category.slug || category.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 export const noteCategorySlug = (note: SmartNote, noteCategories: NoteCategory[]) => {
   const categoryById = new Map(noteCategories.map((category) => [category.id, category] as const));
-  return note.categorySlug || categoryById.get(note.categoryId || '')?.slug || 'uncategorized';
+  return categoryById.get(note.categoryId || '')?.slug || note.categorySlug || 'uncategorized';
 };
 
 export const buildDraft = (selectedCategorySlug: string, noteCategories: NoteCategory[]): Partial<SmartNoteInput> => {
@@ -41,10 +42,11 @@ export const buildDraft = (selectedCategorySlug: string, noteCategories: NoteCat
 
 export type NoteCategorySidebarItem = {
   id: string;
+  categoryId?: string;
   slug: string;
   name: string;
   count: number;
-  isAction?: boolean;
+  isProtected?: boolean;
 };
 
 export const buildNoteCategoryMenu = (noteCategories: NoteCategory[], smartNotes: SmartNote[]): NoteCategorySidebarItem[] => {
@@ -54,19 +56,21 @@ export const buildNoteCategoryMenu = (noteCategories: NoteCategory[], smartNotes
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return [
-    { id: 'all', slug: 'all', name: 'All', count: smartNotes.length },
+    { id: 'all', slug: 'all', name: 'All', count: smartNotes.length, isProtected: true },
     ...fixedCategories.map((item) => ({
       id: item.slug,
       slug: item.slug,
       name: item.label,
       count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === item.slug).length,
+      isProtected: true,
     })),
     ...customCategories.map((category) => ({
-      id: category.id,
+      id: categoryKey(category),
+      categoryId: category.id,
       slug: categoryKey(category),
       name: category.name,
       count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === categoryKey(category)).length,
     })),
-    { id: 'uncategorized', slug: 'uncategorized', name: 'Uncategorized', count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === 'uncategorized').length },
+    { id: 'uncategorized', slug: 'uncategorized', name: 'Uncategorized', count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === 'uncategorized').length, isProtected: true },
   ];
 };

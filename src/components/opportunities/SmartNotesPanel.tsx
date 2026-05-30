@@ -243,7 +243,7 @@ const SmartNotesPanel: React.FC<{
  </div>
  {selectedCategorySlug !== 'all' ? (
  <div className="mt-3 text-xs text-neutral-500">
- Showing <span className="font-medium text-neutral-900">{selectedCategoryName}</span> notes
+ Showing <span className="inline-block max-w-[14rem] truncate align-bottom font-medium text-neutral-900">{selectedCategoryName}</span> notes
  </div>
  ) : null}
  </div>
@@ -251,6 +251,8 @@ const SmartNotesPanel: React.FC<{
  <div className="space-y-2">
  {filteredNotes.map((note) => {
  const filterCategory = noteCategories.find((item) => item.id === note.categoryId) || categoryBySlug.get(note.categorySlug || '') || null;
+	const titleDirection = detectTextDirection(note.title || note.content || note.notes || '');
+	const previewDirection = detectTextDirection(note.content || note.notes || '');
 
  const editNote = (event: React.MouseEvent) => {
  event.stopPropagation();
@@ -286,58 +288,55 @@ const SmartNotesPanel: React.FC<{
  <div
  key={note.id}
  onClick={() => openNote(note)}
- className="group cursor-pointer rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left transition hover:bg-neutral-50"
+	className="group cursor-pointer rounded-xl border border-neutral-200 bg-white px-4 py-3 transition hover:bg-neutral-50"
  >
- <div className="flex items-start justify-between gap-4">
- <div className="min-w-0 flex-1">
- <div className="flex items-center gap-2">
- <h3
- dir={detectTextDirection(note.title)}
- className={`min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900 ${getDirectionClass(note.title)}`}
- >
- {note.title}
- </h3>
- {blocks?.length ? <span className="shrink-0 text-xs text-neutral-400">B:{blocks.length}</span> : null}
- {attachments?.length ? <span className="shrink-0 text-xs text-neutral-400">A:{attachments.length}</span> : null}
- </div>
- <p
- dir={detectTextDirection(note.content || note.notes || '')}
- className={`mt-0.5 line-clamp-2 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 ${getDirectionClass(note.content || note.notes || '')}`}
- >
- {excerpt(note) || 'No content yet.'}
- </p>
- </div>
- <div className="flex shrink-0 flex-wrap items-center gap-1.5">
- {filterCategory ? (
- <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
- {filterCategory.name}
- </span>
- ) : null}
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(note.priority)}`}>
- {note.priority}
- </span>
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadge(note.status)}`}>
- {note.status}
- </span>
- {note.tags ? note.tags.split(',').slice(0, 2).map((tag) => (
- <span key={tag.trim()} className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs text-neutral-600">
- {tag.trim()}
- </span>
- )) : null}
- <span className="text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
- <div className="flex items-center gap-1">
- <button type="button" onClick={editNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
- Open
- </button>
- <button type="button" onClick={archiveNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50">
- Archive
- </button>
- <button type="button" onClick={deleteNote} className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100">
- Delete
- </button>
- </div>
- </div>
- </div>
+  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+  <div className="min-w-0 flex-1" dir={titleDirection}>
+  <h3 className={`min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900 ${getDirectionClass(note.title)}`}>
+  {note.title}
+  </h3>
+  <p
+  dir={previewDirection}
+  className={`mt-1.5 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 line-clamp-2 ${getDirectionClass(note.content || note.notes || '')}`}
+  >
+  {excerpt(note) || 'No content yet.'}
+  </p>
+  </div>
+  <div className="flex min-w-0 shrink-0 flex-col items-start gap-2 lg:items-end" dir="ltr">
+  <div className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 lg:justify-end">
+  {filterCategory ? (
+  <span className="max-w-[180px] truncate rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+  {filterCategory.name}
+  </span>
+  ) : null}
+  {blocks?.length ? <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-500">B:{blocks.length}</span> : null}
+  {attachments?.length ? <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-500">A:{attachments.length}</span> : null}
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(note.priority)}`}>
+  {note.priority}
+  </span>
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadge(note.status)}`}>
+  {note.status}
+  </span>
+  {note.tags ? note.tags.split(',').slice(0, 2).map((tag) => (
+  <span key={tag.trim()} className="max-w-[140px] truncate rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs text-neutral-600">
+  {tag.trim()}
+  </span>
+  )) : null}
+  </div>
+  <div className="flex items-center gap-1">
+  <span className="text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
+  <button type="button" onClick={editNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
+  Open
+  </button>
+  <button type="button" onClick={archiveNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
+  Archive
+  </button>
+  <button type="button" onClick={deleteNote} className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100" onMouseDown={(event) => event.stopPropagation()}>
+  Delete
+  </button>
+  </div>
+  </div>
+  </div>
  </div>
  );
  })}

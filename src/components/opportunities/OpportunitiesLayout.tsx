@@ -5,12 +5,12 @@ import {
   ListChecks, RotateCcw, Clock, Archive, Star,
   Calendar, TrendingUp, DollarSign, PiggyBank, Target, BarChart3, Shield,
   Activity, FolderOpen, FileEdit, Image, Smartphone, Heart, Leaf,
-  Key, Route, TestTube, Lock, Search,
+  Key, Route, TestTube, Lock, Search, MoreHorizontal,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import SectionHeader from '../ui/SectionHeader';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, NoteCategory, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import CompanyWorkspace from './CompanyWorkspace';
@@ -48,7 +48,7 @@ import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
 import AppDashboardShell from './AppDashboardShell';
 import type { SidebarItem } from './AppDashboardShell';
-import { buildNoteCategoryMenu, categoryKey } from './noteCategoryUtils';
+import { buildNoteCategoryMenu, protectedCategorySlugSet } from './noteCategoryUtils';
 import type { CompanyResearchResult } from '../../types/opportunities';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -522,7 +522,8 @@ const OpportunitiesLayout: React.FC<{
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
   const [appSection, setAppSection] = useState<string>('');
   const [selectedNoteCategorySlug, setSelectedNoteCategorySlug] = useState('all');
-  const [isNoteCategoryModalOpen, setIsNoteCategoryModalOpen] = useState(false);
+  const [noteCategoryEditor, setNoteCategoryEditor] = useState<{ mode: 'add' | 'edit'; category?: NoteCategory } | null>(null);
+  const [noteCategoryActionError, setNoteCategoryActionError] = useState<string | null>(null);
 
   useEffect(() => {
  if (typeof window === 'undefined') return;
@@ -677,7 +678,8 @@ const OpportunitiesLayout: React.FC<{
 
   const handleSectionChange = (sectionId: string) => {
   if (sectionId === 'add-category') {
-  setIsNoteCategoryModalOpen(true);
+  setNoteCategoryEditor({ mode: 'add' });
+  setNoteCategoryActionError(null);
   return;
   }
 
@@ -692,6 +694,44 @@ const OpportunitiesLayout: React.FC<{
   setGlobalSearch('');
   } else {
   setAppSection(sectionId);
+  }
+  };
+
+  const handleSubmitNoteCategory = async (input: NoteCategoryInput) => {
+  if (!noteCategoryEditor) return;
+
+  try {
+  if (noteCategoryEditor.mode === 'edit' && noteCategoryEditor.category) {
+  const next = await updateNoteCategory(noteCategoryEditor.category.id, input);
+  if (selectedNoteCategorySlug === noteCategoryEditor.category.slug) {
+  setSelectedNoteCategorySlug(next.slug);
+  }
+  } else {
+  await addNoteCategory(input);
+  }
+  setNoteCategoryEditor(null);
+  setNoteCategoryActionError(null);
+  } catch (error) {
+  throw error instanceof Error ? error : new Error('Failed to save category.');
+  }
+  };
+
+  const handleDeleteNoteCategory = async (category: NoteCategory) => {
+  const confirmed = window.confirm('Delete this category? Notes inside it will become Uncategorized.');
+  if (!confirmed) return;
+
+  try {
+  const affectedNotes = smartNotes.filter((note) => note.categoryId === category.id || note.categorySlug === category.slug);
+  await Promise.all(affectedNotes.map((note) => updateSmartNote(note.id, { categoryId: '', categorySlug: '' })));
+  await deleteNoteCategory(category.id);
+  if (selectedNoteCategorySlug === category.slug) {
+  setSelectedNoteCategorySlug('uncategorized');
+  }
+  setNoteCategoryEditor(null);
+  setNoteCategoryActionError(null);
+  } catch (error) {
+  console.error('[Notes] Failed to delete category.', error);
+  setNoteCategoryActionError('Unable to delete category.');
   }
   };
 
@@ -824,10 +864,24 @@ const OpportunitiesLayout: React.FC<{
  label: category.name,
  icon: FileText,
  badge: category.count,
+ trailingAction: category.isProtected ? undefined : (
+ <button
+ type="button"
+ onClick={(event) => {
+ event.stopPropagation();
+ const categoryToEdit = noteCategories.find((item) => item.id === category.categoryId);
+ if (categoryToEdit) setNoteCategoryEditor({ mode: 'edit', category: categoryToEdit });
+ }}
+ className="hidden h-7 w-7 items-center justify-center rounded-md border border-transparent text-neutral-400 transition hover:border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 group-hover:flex"
+ aria-label={`Edit ${category.name}`}
+ >
+ <MoreHorizontal className="h-4 w-4" />
+ </button>
+ ),
  })),
- { id: 'add-category', label: '+ Category', icon: Plus },
+ { id: 'add-category', label: 'Category', icon: Plus },
  ];
- }, [noteCategoryMenu]);
+ }, [noteCategoryMenu, noteCategories]);
 
  const handleResetDemoData = () => {
  const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
@@ -1910,16 +1964,37 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  </>)}
  </div>
 
- {isNoteCategoryModalOpen ? (
- <OpportunityModal title="Add Note Category" onClose={() => setIsNoteCategoryModalOpen(false)}>
+ {noteCategoryActionError ? (
+ <div className="fixed right-6 top-6 z-[999] rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-none">
+ {noteCategoryActionError}
+ </div>
+ ) : null}
+
+ {noteCategoryEditor ? (
+ <OpportunityModal
+ title={noteCategoryEditor.mode === 'edit' ? 'Edit Note Category' : 'Add Note Category'}
+ onClose={() => setNoteCategoryEditor(null)}
+ >
+ <div className="space-y-4">
  <NoteCategoryForm
- onSubmit={async (input) => {
- await addNoteCategory(input);
- setIsNoteCategoryModalOpen(false);
- }}
- onCancel={() => setIsNoteCategoryModalOpen(false)}
- submitLabel="Create Category"
+ initialData={noteCategoryEditor.category}
+ onSubmit={handleSubmitNoteCategory}
+ onCancel={() => setNoteCategoryEditor(null)}
+ submitLabel={noteCategoryEditor.mode === 'edit' ? 'Save Category' : 'Create Category'}
  />
+ {noteCategoryEditor.mode === 'edit' && noteCategoryEditor.category && !protectedCategorySlugSet.has(noteCategoryEditor.category.slug) ? (
+ <div className="flex justify-end pt-1">
+ <Button
+ variant="ghost"
+ size="sm"
+ onClick={() => handleDeleteNoteCategory(noteCategoryEditor.category!)}
+ className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+ >
+ Delete Category
+ </Button>
+ </div>
+ ) : null}
+ </div>
  </OpportunityModal>
  ) : null}
 

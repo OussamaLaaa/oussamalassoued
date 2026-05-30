@@ -7,6 +7,7 @@ export interface SidebarItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number | string;
+  trailingAction?: React.ReactNode;
 }
 
 interface AppDashboardShellProps {
@@ -53,25 +54,25 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (
-              <button
+              <div
                 key={item.id}
-                type="button"
-                onClick={() => onSectionChange(item.id)}
-                className={
-                  'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm transition-colors text-left ' +
-                  (isActive
-                    ? 'bg-neutral-100 text-neutral-900 font-medium'
-                    : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900')
-                }
+                className={'group flex items-center gap-1 rounded-lg text-sm transition-colors ' + (isActive ? 'bg-neutral-100 text-neutral-900 font-medium' : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900')}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-                {item.badge != null && (
-                  <span className="ml-auto text-xs text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded-md tabular-nums">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => onSectionChange(item.id)}
+                  className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 rounded-lg text-left"
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 truncate">{item.label}</span>
+                  {item.badge != null && (
+                    <span className="ml-auto text-xs text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded-md tabular-nums">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+                {item.trailingAction ? <div className="pr-2">{item.trailingAction}</div> : null}
+              </div>
             );
           })}
         </nav>

@@ -3083,8 +3083,6 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const deleteNoteCategory = async (id: string) => {
-    const confirmed = window.confirm('Delete this note category?');
-    if (!confirmed) return;
     await syncDelete('note_categories', id);
     setNoteCategories((current) => current.filter((item) => item.id !== id));
   };
