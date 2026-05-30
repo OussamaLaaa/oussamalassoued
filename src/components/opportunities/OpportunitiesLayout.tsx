@@ -658,8 +658,7 @@ const OpportunitiesLayout: React.FC<{
    { id: 'family', label: 'Family', icon: Heart },
    { id: 'weekly-review', label: 'Weekly Review', icon: Star },
    ],
-  notes: noteSidebarItems,
-  ai_control: [
+   ai_control: [
    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
    { id: 'keys', label: 'Provider Keys', icon: Key },
    { id: 'routing', label: 'Use Case Routing', icon: Route },
