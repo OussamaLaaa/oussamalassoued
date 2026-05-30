@@ -40,6 +40,7 @@ import AICompanyScoringModal from './AICompanyScoringModal';
 import TasksPanel from './TasksPanel';
 import RelationshipsPanel from './RelationshipsPanel';
 import SmartNotesPanel from './SmartNotesPanel';
+import NoteCategoryForm from './NoteCategoryForm';
 import SocialMediaPanel from './SocialMediaPanel';
 import LifeManagementPanel from './LifeManagementPanel';
 import LeadResearchPlaybook from './LeadResearchPlaybook';
@@ -47,6 +48,7 @@ import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
 import AppDashboardShell from './AppDashboardShell';
 import type { SidebarItem } from './AppDashboardShell';
+import { buildNoteCategoryMenu, categoryKey } from './noteCategoryUtils';
 import type { CompanyResearchResult } from '../../types/opportunities';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
@@ -519,6 +521,8 @@ const OpportunitiesLayout: React.FC<{
 
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
   const [appSection, setAppSection] = useState<string>('');
+  const [selectedNoteCategorySlug, setSelectedNoteCategorySlug] = useState('all');
+  const [isNoteCategoryModalOpen, setIsNoteCategoryModalOpen] = useState(false);
 
   useEffect(() => {
  if (typeof window === 'undefined') return;
@@ -654,7 +658,8 @@ const OpportunitiesLayout: React.FC<{
    { id: 'family', label: 'Family', icon: Heart },
    { id: 'weekly-review', label: 'Weekly Review', icon: Star },
    ],
-   ai_control: [
+  notes: noteSidebarItems,
+  ai_control: [
    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
    { id: 'keys', label: 'Provider Keys', icon: Key },
    { id: 'routing', label: 'Use Case Routing', icon: Route },
@@ -667,10 +672,21 @@ const OpportunitiesLayout: React.FC<{
    };
 
   const getSidebarItems = (): SidebarItem[] => {
+  if (tab === 'notes' || activeApp === 'notes') return noteSidebarItems;
   return SIDEBAR_ITEMS[activeApp] || [];
   };
 
   const handleSectionChange = (sectionId: string) => {
+  if (sectionId === 'add-category') {
+  setIsNoteCategoryModalOpen(true);
+  return;
+  }
+
+  if (tab === 'notes' || activeApp === 'notes') {
+  setSelectedNoteCategorySlug(sectionId);
+  return;
+  }
+
   if (activeApp === 'crm' || activeApp === 'messages') {
   setTab(sectionId as OpportunitiesTab);
   setSelectedCompanyId(null);
@@ -801,6 +817,18 @@ const OpportunitiesLayout: React.FC<{
  () => companies.filter((c) => normalizeDatabaseType(c.databaseType) === 'freelance').length,
  [companies],
  );
+ const noteCategoryMenu = useMemo(() => buildNoteCategoryMenu(noteCategories, smartNotes), [noteCategories, smartNotes]);
+ const noteSidebarItems = useMemo<SidebarItem[]>(() => {
+ return [
+ ...noteCategoryMenu.map((category) => ({
+ id: category.slug,
+ label: category.name,
+ icon: FileText,
+ badge: category.count,
+ })),
+ { id: 'add-category', label: '+ Category', icon: Plus },
+ ];
+ }, [noteCategoryMenu]);
 
  const handleResetDemoData = () => {
  const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
@@ -1022,7 +1050,7 @@ const OpportunitiesLayout: React.FC<{
    <AppDashboardShell
    appName={getShellTitle()}
    sidebarItems={getSidebarItems()}
-    activeSection={activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
+    activeSection={tab === 'notes' || activeApp === 'notes' ? selectedNoteCategorySlug : activeApp === 'crm' || activeApp === 'messages' ? tab : appSection}
    onSectionChange={handleSectionChange}
    onBackToDesktop={handleBackToDesktop}
    >
@@ -1505,15 +1533,7 @@ onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
   )}
 
   {tab === 'notes' && (
-  <div className="space-y-5">
-   <SectionHeader
-    title="Notes"
-    description="Smart notes, knowledge management, and insights."
-    actions={
-     <Button variant="primary" size="sm" onClick={() => addSmartNote()}><FileText className="h-4 w-4" />New Note</Button>
-    }
-   />
-   <SmartNotesPanel
+  <SmartNotesPanel
  noteCategories={noteCategories}
  smartNotes={smartNotes}
  noteAttachments={noteAttachments}
@@ -1525,18 +1545,17 @@ onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
  tasks={tasks}
  strategyGoals={strategyGoals}
  plans={plans}
- onAddNoteCategory={addNoteCategory}
- onUpdateNoteCategory={updateNoteCategory}
- onDeleteNoteCategory={deleteNoteCategory}
  onAddSmartNote={addSmartNote}
  onUpdateSmartNote={updateSmartNote}
  onDeleteSmartNote={deleteSmartNote}
  onAddNoteAttachment={addNoteAttachment}
  onUpdateNoteAttachment={updateNoteAttachment}
  onDeleteNoteAttachment={deleteNoteAttachment}
-onAddNoteBlock={addNoteBlock}
-  />
-  </div>
+ onAddNoteBlock={addNoteBlock}
+ onUpdateNoteBlock={updateNoteBlock}
+ onDeleteNoteBlock={deleteNoteBlock}
+ selectedCategorySlug={selectedNoteCategorySlug}
+ />
   )}
 
   {tab === 'projects' && (
@@ -1891,6 +1910,19 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
   )}
  </>)}
  </div>
+
+ {isNoteCategoryModalOpen ? (
+ <OpportunityModal title="Add Note Category" onClose={() => setIsNoteCategoryModalOpen(false)}>
+ <NoteCategoryForm
+ onSubmit={async (input) => {
+ await addNoteCategory(input);
+ setIsNoteCategoryModalOpen(false);
+ }}
+ onCancel={() => setIsNoteCategoryModalOpen(false)}
+ submitLabel="Create Category"
+ />
+ </OpportunityModal>
+ ) : null}
 
  {/* Add Company Modal */}
  {activeModal === 'company' ? (

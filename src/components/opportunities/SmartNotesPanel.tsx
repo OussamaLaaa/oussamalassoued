@@ -6,7 +6,6 @@ import type {
  NoteBlock,
  NoteBlockInput,
  NoteCategory,
- NoteCategoryInput,
  Person,
  Plan,
  Project,
@@ -16,47 +15,14 @@ import type {
  StrategyGoal,
  Task,
 } from '../../types/opportunities';
-import OpportunityModal from './OpportunityModal';
-import NoteCategoryForm from './NoteCategoryForm';
+import Button from '../ui/Button';
 import NoteEditorPage from './NoteEditorPage';
-
-const fixedCategories = [
- { slug: 'work', label: 'Work' },
- { slug: 'home', label: 'Home' },
- { slug: 'money', label: 'Money' },
- { slug: 'projects', label: 'Projects' },
- { slug: 'ideas', label: 'Ideas' },
- { slug: 'learning', label: 'Learning' },
- { slug: 'health', label: 'Health' },
- { slug: 'relationships', label: 'Relationships' },
- { slug: 'islamic-ethics', label: 'Islamic/Ethics' },
- { slug: 'admin', label: 'Admin' },
- { slug: 'other', label: 'Other' },
-] as const;
-
-const fixedCategorySlugSet = new Set(fixedCategories.map((item) => item.slug));
-
-const categoryKey = (category: NoteCategory) => category.slug || category.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-const noteCategorySlug = (note: SmartNote, noteCategories: NoteCategory[]) => {
- const categoryById = new Map(noteCategories.map((category) => [category.id, category] as const));
- return note.categorySlug || categoryById.get(note.categoryId || '')?.slug || 'uncategorized';
-};
-
-const buildDraft = (selectedCategorySlug: string, noteCategories: NoteCategory[]): Partial<SmartNoteInput> => {
- const categoryBySlug = new Map(noteCategories.map((category) => [categoryKey(category), category] as const));
- const selectedCategory = categoryBySlug.get(selectedCategorySlug);
- return {
- title: '',
- content: '',
- categoryId: selectedCategory?.id,
- categorySlug: selectedCategory?.slug,
- status: 'active',
- priority: 'medium',
- tags: '',
- source: '',
- notes: '',
- };
-};
+import {
+ buildDraft,
+ buildNoteCategoryMenu,
+ categoryKey,
+ noteCategorySlug,
+ } from './noteCategoryUtils';
 
 const sortNotes = (notes: SmartNote[], sortBy: string) => {
  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -94,9 +60,6 @@ const SmartNotesPanel: React.FC<{
  tasks: Task[];
  strategyGoals: StrategyGoal[];
  plans: Plan[];
- onAddNoteCategory: (input: NoteCategoryInput) => Promise<any>;
- onUpdateNoteCategory: (id: string, input: Partial<NoteCategoryInput>) => Promise<any>;
- onDeleteNoteCategory: (id: string) => Promise<any>;
  onAddSmartNote: (input: SmartNoteInput) => Promise<any>;
  onUpdateSmartNote: (id: string, input: Partial<SmartNoteInput>) => Promise<any>;
  onDeleteSmartNote: (id: string) => Promise<any>;
@@ -106,6 +69,7 @@ const SmartNotesPanel: React.FC<{
  onAddNoteBlock: (input: NoteBlockInput) => Promise<any>;
  onUpdateNoteBlock: (id: string, input: Partial<NoteBlockInput>) => Promise<any>;
  onDeleteNoteBlock: (id: string) => Promise<any>;
+ selectedCategorySlug: string;
 }> = ({
  noteCategories,
  smartNotes,
@@ -118,9 +82,6 @@ const SmartNotesPanel: React.FC<{
  tasks,
  strategyGoals,
  plans,
- onAddNoteCategory,
- onUpdateNoteCategory,
- onDeleteNoteCategory,
  onAddSmartNote,
  onUpdateSmartNote,
  onDeleteSmartNote,
@@ -130,13 +91,12 @@ const SmartNotesPanel: React.FC<{
  onAddNoteBlock,
  onUpdateNoteBlock,
  onDeleteNoteBlock,
+ selectedCategorySlug,
 }) => {
- const [selectedCategorySlug, setSelectedCategorySlug] = useState('all');
  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
  const [isCreatingNote, setIsCreatingNote] = useState(false);
  const [sortBy, setSortBy] = useState<'created_desc' | 'created_asc' | 'updated_desc' | 'name_asc' | 'name_desc' | 'priority'>('created_desc');
  const [searchQuery, setSearchQuery] = useState('');
- const [categoryModalOpen, setCategoryModalOpen] = useState(false);
  const [draftNote, setDraftNote] = useState<Partial<SmartNoteInput>>(buildDraft('all', noteCategories));
 
  const categoryBySlug = useMemo(() => new Map(noteCategories.map((category) => [categoryKey(category), category] as const)), [noteCategories]);
@@ -160,28 +120,7 @@ const SmartNotesPanel: React.FC<{
  return map;
  }, [noteAttachments]);
 
- const categoryMenu = useMemo(() => {
- const customCategories = noteCategories
- .filter((category) => !fixedCategorySlugSet.has(categoryKey(category)))
- .slice()
- .sort((a, b) => a.name.localeCompare(b.name));
-
- return [
- { id: 'all', slug: 'all', name: 'All', count: smartNotes.length },
- ...fixedCategories.map((item) => ({
- id: item.slug,
- slug: item.slug,
- name: item.label,
- count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === item.slug).length,
- })),
- ...customCategories.map((category) => ({
- ...category,
- slug: categoryKey(category),
- count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === categoryKey(category)).length,
- })),
- { id: 'uncategorized', slug: 'uncategorized', name: 'Uncategorized', count: smartNotes.filter((note) => noteCategorySlug(note, noteCategories) === 'uncategorized').length },
- ];
- }, [noteCategories, smartNotes]);
+ const categoryMenu = useMemo(() => buildNoteCategoryMenu(noteCategories, smartNotes), [noteCategories, smartNotes]);
 
  const filteredNotes = useMemo(() => {
  const query = searchQuery.trim().toLowerCase();
@@ -198,7 +137,6 @@ const SmartNotesPanel: React.FC<{
  const selectedBlocks = selectedNote ? (blocksByNoteId.get(selectedNote.id) || []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)) : [];
  const selectedAttachments = selectedNote ? (attachmentsByNoteId.get(selectedNote.id) || []).slice() : [];
 
- const openCreateCategory = () => setCategoryModalOpen(true);
  const openCreateNote = () => {
  setDraftNote(buildDraft(selectedCategorySlug, noteCategories));
  setSelectedNoteId(null);
@@ -208,11 +146,6 @@ const SmartNotesPanel: React.FC<{
  setSelectedNoteId(note.id);
  setIsCreatingNote(false);
  setDraftNote({});
- };
-
- const handleSubmitCategory = async (input: NoteCategoryInput) => {
- await onAddNoteCategory(input);
- setCategoryModalOpen(false);
  };
 
  const handleSaveNewNote = async (input: SmartNoteInput) => {
@@ -279,37 +212,7 @@ const SmartNotesPanel: React.FC<{
  }
 
  return (
- <div className="space-y-6">
- <div className="flex flex-wrap gap-1 border-b border-neutral-200 pb-3 overflow-x-auto">
- {categoryMenu.map((category) => {
- const active = selectedCategorySlug === category.slug;
- return (
- <button
- key={category.id}
- type="button"
- onClick={() => {
- setSelectedCategorySlug(category.slug);
- setSelectedNoteId(null);
- setIsCreatingNote(false);
- }}
- className={`relative shrink-0 px-3 py-2 text-sm transition-colors border-b-2 whitespace-nowrap ${
- active ? 'border-neutral-900 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-900'
- }`}
- >
- {category.name}
- <span className="ml-1.5 text-xs text-neutral-400">{category.count}</span>
- </button>
- );
- })}
- <button
- type="button"
- onClick={openCreateCategory}
- className="shrink-0 px-3 py-2 text-sm text-neutral-500 border-b-2 border-transparent hover:text-neutral-900"
- >
- + Category
- </button>
- </div>
-
+ <div className="space-y-4">
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="flex flex-wrap items-center gap-3">
  <div className="min-w-0 flex-1">
@@ -317,14 +220,13 @@ const SmartNotesPanel: React.FC<{
  value={searchQuery}
  onChange={(event) => setSearchQuery(event.target.value)}
  placeholder="Search notes, content, tags..."
- className={inputClass}
+ className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400"
  />
  </div>
  <select
  value={sortBy}
  onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
- className={inputClass}
- style={{ width: 'auto', minWidth: '140px' }}
+ className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400 md:w-auto md:min-w-[160px]"
  >
  <option value="created_desc">Newest</option>
  <option value="created_asc">Oldest</option>
@@ -333,10 +235,15 @@ const SmartNotesPanel: React.FC<{
  <option value="name_desc">Name Z-A</option>
  <option value="priority">Priority</option>
  </select>
- <button type="button" onClick={openCreateNote} className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800">
+ <Button variant="primary" size="sm" onClick={openCreateNote} className="h-10 px-4">
  + New Note
- </button>
+ </Button>
  </div>
+ {selectedCategorySlug !== 'all' ? (
+ <div className="mt-3 text-xs text-neutral-500">
+ Showing <span className="font-medium text-neutral-900">{selectedCategoryName}</span> notes
+ </div>
+ ) : null}
  </div>
 
  <div className="space-y-2">
@@ -433,15 +340,6 @@ const SmartNotesPanel: React.FC<{
  ) : null}
  </div>
 
- {categoryModalOpen ? (
- <OpportunityModal title="Add Category" onClose={() => setCategoryModalOpen(false)}>
- <NoteCategoryForm
- onSubmit={handleSubmitCategory}
- onCancel={() => setCategoryModalOpen(false)}
- submitLabel="Create Category"
- />
- </OpportunityModal>
- ) : null}
  </div>
  );
 };
