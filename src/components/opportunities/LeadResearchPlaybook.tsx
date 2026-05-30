@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Download, RotateCcw } from 'lucide-react';
+import { Check, Copy, Download, Languages, RotateCcw } from 'lucide-react';
 import Button from '../ui/Button';
 import {
   LEAD_RESEARCH_NICHES,
@@ -15,6 +15,7 @@ const STORAGE_KEYS = {
   notes: 'crmLeadResearch.notes',
   selectedNiche: 'crmLeadResearch.selectedNiche',
   currentStep: 'crmLeadResearch.currentStep',
+  language: 'crmLeadResearch.language',
 } as const;
 
 const LEGACY_STORAGE_KEYS = {
@@ -25,9 +26,101 @@ const LEGACY_STORAGE_KEYS = {
   currentStep: ['lrp_currentStep', 'lrp_step'],
 } as const;
 
+type LeadResearchLanguage = 'ar' | 'en';
+
+const copyLabel = {
+  en: 'Copy',
+  ar: 'نسخ',
+} as const;
+
+const t = {
+  en: {
+    sectionLabel: 'CRM section',
+    title: 'Lead Research Playbook',
+    subtitle: 'Step-by-step system for finding and qualifying UX/UI leads.',
+    currentNiche: 'Current niche',
+    progress: 'Progress',
+    completedStages: 'completed stages',
+    operatingRule: 'Operating rule',
+    operatingRuleText: 'One niche → one platform → then next',
+    stages: 'Stages',
+    reset: 'Reset current niche',
+    export: 'Export progress',
+    qualificationRules: 'Quick qualification rules',
+    placesToSearch: 'Where to search',
+    tricks: 'Tricks / rules',
+    readyQueries: 'Ready-to-copy queries',
+    readyQueriesHelp: 'Search syntax stays LTR inside the query cards.',
+    leadCount: 'Leads found in this stage',
+    notes: 'Notes for this stage',
+    notesPlaceholder: 'Write here: number of companies, result quality, queries that worked, issues you faced...',
+    previous: 'Previous',
+    markComplete: 'Mark complete',
+    undoComplete: 'Undo completion',
+    completeNext: 'Completed, next',
+    currentStageLabel: 'Current stage',
+    completed: 'completed',
+    notCompletedYet: 'not completed yet',
+    targetCount: 'Target count',
+    scoreGuide: 'Score /10',
+    finalCleanup: 'After completing all platforms in this niche',
+    finalCleanupText: 'Remove duplicates, remove weak leads, choose Top 20, then run mini UX audits.',
+    templateTitle: 'Sheet registration template',
+    languageEnglish: 'English',
+    languageArabic: 'العربية',
+    resetConfirm: 'Reset progress for the current niche?',
+    copied: 'Copied',
+    stageCompleted: 'completed',
+    stageIncomplete: 'not completed yet',
+  },
+  ar: {
+    sectionLabel: 'قسم CRM',
+    title: 'خطة البحث التفاعلية عن Leads',
+    subtitle: 'نظام خطوة بخطوة للبحث عن Leads وتأهيلها لخدمات UX/UI.',
+    currentNiche: 'النيش الحالي',
+    progress: 'التقدم',
+    completedStages: 'مراحل مكتملة',
+    operatingRule: 'قاعدة التشغيل',
+    operatingRuleText: 'نيش واحد → منصة واحدة → ثم التالي',
+    stages: 'المراحل',
+    reset: 'إعادة',
+    export: 'تصدير التقدم',
+    qualificationRules: 'قواعد التأهيل السريع',
+    placesToSearch: 'أين تبحث؟',
+    tricks: 'Tricks / قواعد خاصة',
+    readyQueries: 'Queries جاهزة لهذا النيش',
+    readyQueriesHelp: 'Search syntax stays LTR inside the query cards.',
+    leadCount: 'Leads التي وجدتها في هذه المرحلة',
+    notes: 'ملاحظاتك لهذه المرحلة',
+    notesPlaceholder: 'اكتب هنا: عدد الشركات، جودة النتائج، queries التي نجحت، مشاكل واجهتها...',
+    previous: 'المرحلة السابقة',
+    markComplete: 'علّمها كمكتملة',
+    undoComplete: 'إلغاء الإكمال',
+    completeNext: 'أنهيت المرحلة، التالي',
+    currentStageLabel: 'المرحلة الحالية',
+    completed: 'مكتملة',
+    notCompletedYet: 'غير مكتملة بعد',
+    targetCount: 'الهدف العددي',
+    scoreGuide: 'Score /10',
+    finalCleanup: 'بعد إكمال كل المنصات في النيش',
+    finalCleanupText: 'احذف duplicates، احذف C leads، اختر Top 20، واعمل mini UX audit.',
+    templateTitle: 'Template التسجيل في الشيت',
+    languageEnglish: 'English',
+    languageArabic: 'العربية',
+    resetConfirm: 'Reset progress for the current niche?',
+    copied: 'تم النسخ',
+    stageCompleted: 'مكتملة',
+    stageIncomplete: 'غير مكتملة بعد',
+  },
+} as const;
+
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const pickText = (value: { en: string; ar: string }, language: LeadResearchLanguage) => value[language];
+
+const pickList = (value: { en: string[]; ar: string[] }, language: LeadResearchLanguage) => value[language];
 
 const safeParse = (raw: string | null): unknown => {
   if (!raw) return null;
@@ -88,6 +181,13 @@ const readStringMap = (primaryKey: string, legacyKeys: readonly string[]): Recor
   }, {});
 };
 
+const readLanguage = (): LeadResearchLanguage => {
+  if (typeof window === 'undefined') return 'en';
+
+  const raw = window.localStorage.getItem(STORAGE_KEYS.language);
+  return raw === 'ar' || raw === 'en' ? raw : 'en';
+};
+
 const copyText = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -111,6 +211,7 @@ const copyText = async (text: string) => {
 };
 
 const LeadResearchPlaybook: React.FC = () => {
+  const [language, setLanguage] = useState<LeadResearchLanguage>(() => readLanguage());
   const [selectedNiche, setSelectedNiche] = useState<LeadResearchNiche>(() => {
     const initial = readString(STORAGE_KEYS.selectedNiche, LEGACY_STORAGE_KEYS.selectedNiche, LEAD_RESEARCH_NICHES[0]);
     return (LEAD_RESEARCH_NICHES as readonly string[]).includes(initial) ? (initial as LeadResearchNiche) : LEAD_RESEARCH_NICHES[0];
@@ -131,6 +232,8 @@ const LeadResearchPlaybook: React.FC = () => {
   const stageCount = counts[currentStageKey] ?? '';
   const stageNotes = notes[currentStageKey] ?? '';
   const isCurrentCompleted = Boolean(done[currentStageKey]);
+  const copyTextLabel = copyLabel[language];
+  const languageCopy = t[language];
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -141,6 +244,11 @@ const LeadResearchPlaybook: React.FC = () => {
     window.localStorage.setItem(STORAGE_KEYS.selectedNiche, selectedNiche);
     window.localStorage.setItem(STORAGE_KEYS.currentStep, String(currentStep));
   }, [counts, currentStep, done, notes, selectedNiche]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(STORAGE_KEYS.language, language);
+  }, [language]);
 
   useEffect(() => () => {
     if (copyTimerRef.current !== null && typeof window !== 'undefined') {
@@ -168,7 +276,7 @@ const LeadResearchPlaybook: React.FC = () => {
   };
 
   const handleResetCurrentNiche = () => {
-    const confirmed = typeof window === 'undefined' ? true : window.confirm('Reset progress for the current niche?');
+    const confirmed = typeof window === 'undefined' ? true : window.confirm(languageCopy.resetConfirm);
     if (!confirmed) return;
 
     const nextDone = { ...done };
@@ -187,6 +295,52 @@ const LeadResearchPlaybook: React.FC = () => {
     setNotes(nextNotes);
     setCurrentStep(0);
   };
+
+  const handleLanguageChange = (nextLanguage: LeadResearchLanguage) => {
+    setLanguage(nextLanguage);
+  };
+
+  const activeStageTitle = pickText(currentStage.title, language);
+  const activeStageGoal = pickText(currentStage.goal, language);
+  const activeStageTarget = pickText(currentStage.target, language);
+  const activeStagePlaces = pickList(currentStage.places, language);
+  const activeStageTricks = pickList(currentStage.tricks, language);
+
+  const sheetTemplate = language === 'en'
+    ? `Company:
+Niche:
+Category:
+Website:
+LinkedIn / Social:
+Source:
+Source Query:
+What they sell:
+Decision Maker:
+Evidence of Budget:
+UX Problem Observed:
+Potential Offer:
+Lead Score /10:
+Priority: A / B / C
+Status: New
+Duplicate? Yes/No
+Notes:`
+    : `Company:
+Niche:
+Category:
+Website:
+LinkedIn / Social:
+Source:
+Source Query:
+What they sell:
+Decision Maker:
+Evidence of Budget:
+UX Problem Observed:
+Potential Offer:
+Lead Score /10:
+Priority: A / B / C
+Status: New
+Duplicate? Yes/No
+Notes:`;
 
   const handleExportProgress = () => {
     if (typeof window === 'undefined') return;
@@ -232,23 +386,39 @@ const LeadResearchPlaybook: React.FC = () => {
   };
 
   return (
-    <section dir="rtl" className="space-y-4 text-right">
+    <section dir={language === 'ar' ? 'rtl' : 'ltr'} className={`space-y-4 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
       <div className="rounded-xl border border-neutral-200 bg-white p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">CRM section</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 md:text-3xl">Lead Research Playbook</h1>
-            <p className="max-w-3xl text-sm leading-6 text-neutral-600">Step-by-step system for finding and qualifying UX/UI leads.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">{languageCopy.sectionLabel}</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-neutral-950 md:text-3xl">{languageCopy.title}</h1>
+            <p className="max-w-3xl text-sm leading-6 text-neutral-600">{languageCopy.subtitle}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:justify-end">
             <Button variant="outline" size="sm" onClick={handleResetCurrentNiche}>
               <RotateCcw className="h-4 w-4" />
-              Reset current niche
+              {languageCopy.reset}
             </Button>
             <Button variant="primary" size="sm" onClick={handleExportProgress}>
               <Download className="h-4 w-4" />
-              Export progress
+              {languageCopy.export}
             </Button>
+            <div className="inline-flex h-10 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('en')}
+                className={`h-full px-3 text-sm font-medium transition-colors ${language === 'en' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`}
+              >
+                {languageCopy.languageEnglish}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('ar')}
+                className={`h-full px-3 text-sm font-medium transition-colors ${language === 'ar' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'}`}
+              >
+                {languageCopy.languageArabic}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -256,7 +426,7 @@ const LeadResearchPlaybook: React.FC = () => {
       <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500" htmlFor="lead-research-niche">النيش الحالي</label>
+            <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500" htmlFor="lead-research-niche">{languageCopy.currentNiche}</label>
             <select
               id="lead-research-niche"
               value={selectedNiche}
@@ -274,11 +444,11 @@ const LeadResearchPlaybook: React.FC = () => {
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Progress</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">{languageCopy.progress}</div>
                 <div className="mt-1 text-2xl font-semibold text-neutral-950">{progressPercent}%</div>
               </div>
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-right">
-                <div className="text-xs text-neutral-500">Completed</div>
+                <div className="text-xs text-neutral-500">{languageCopy.completedStages}</div>
                 <div className="text-sm font-semibold text-neutral-900">{completedCount} / {selectedNicheStages.length}</div>
               </div>
             </div>
@@ -288,12 +458,17 @@ const LeadResearchPlaybook: React.FC = () => {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="mt-2 text-xs text-neutral-500">{completedCount} من {selectedNicheStages.length} مراحل مكتملة</div>
+            <div className="mt-2 text-xs text-neutral-500">{completedCount} / {selectedNicheStages.length} {languageCopy.completedStages}</div>
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">{languageCopy.operatingRule}</div>
+            <div className="mt-2 text-sm font-semibold text-neutral-900">{languageCopy.operatingRuleText}</div>
           </div>
 
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-neutral-900">المراحل</h2>
+              <h2 className="text-sm font-semibold text-neutral-900">{languageCopy.stages}</h2>
               <span className="text-xs text-neutral-500">{currentStep + 1} / {selectedNicheStages.length}</span>
             </div>
             <div className="space-y-2">
@@ -301,10 +476,11 @@ const LeadResearchPlaybook: React.FC = () => {
                 const stageKey = `${selectedNiche}-${index}`;
                 const isActive = index === currentStep;
                 const isDone = Boolean(done[stageKey]);
+                const stageTitle = pickText(stage.title, language);
 
                 return (
                   <button
-                    key={`${stage.title}-${index}`}
+                    key={`${stageTitle}-${index}`}
                     type="button"
                     onClick={() => setCurrentStep(index)}
                     className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-right transition-colors ${
@@ -318,7 +494,7 @@ const LeadResearchPlaybook: React.FC = () => {
                     <span className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-semibold ${isActive ? 'border-white text-white' : isDone ? 'border-emerald-600 text-emerald-600' : 'border-neutral-300 text-neutral-500'}`}>
                       {isDone ? <Check className="h-3.5 w-3.5" /> : index + 1}
                     </span>
-                    <span className="min-w-0 flex-1 text-sm font-medium leading-5">{stage.title}</span>
+                    <span className="min-w-0 flex-1 text-sm font-medium leading-5">{stageTitle}</span>
                   </button>
                 );
               })}
@@ -330,22 +506,22 @@ const LeadResearchPlaybook: React.FC = () => {
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Stage details</div>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight text-neutral-950">{currentStage.title}</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">{currentStage.goal}</p>
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">{languageCopy.currentStageLabel}</div>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-neutral-950">{activeStageTitle}</h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">{activeStageGoal}</p>
               </div>
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-right">
-                <div className="text-xs text-neutral-500">الهدف العددي</div>
-                <div className="text-sm font-semibold text-neutral-900">{currentStage.target}</div>
+                <div className="text-xs text-neutral-500">{languageCopy.targetCount}</div>
+                <div className="text-sm font-semibold text-neutral-900">{activeStageTarget}</div>
               </div>
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
-              <h3 className="text-sm font-semibold text-neutral-900">أماكن البحث</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.placesToSearch}</h3>
               <div className="mt-3 flex flex-wrap gap-2">
-                {currentStage.places.map((place) => (
+                {activeStagePlaces.map((place) => (
                   <span key={place} className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-700">
                     {place}
                   </span>
@@ -354,9 +530,9 @@ const LeadResearchPlaybook: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
-              <h3 className="text-sm font-semibold text-neutral-900">Tricks / rules</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.tricks}</h3>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
-                {currentStage.tricks.map((trick) => (
+                {activeStageTricks.map((trick) => (
                   <li key={trick} className="flex gap-2">
                     <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-900" />
                     <span>{trick}</span>
@@ -369,8 +545,8 @@ const LeadResearchPlaybook: React.FC = () => {
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900">Ready-to-copy queries</h3>
-                <p className="mt-1 text-xs text-neutral-500">Search syntax stays LTR inside the query cards.</p>
+                <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.readyQueries}</h3>
+                <p className="mt-1 text-xs text-neutral-500">{languageCopy.readyQueriesHelp}</p>
               </div>
               <div className="text-xs text-neutral-500">{stageQueries.length} queries</div>
             </div>
@@ -390,7 +566,7 @@ const LeadResearchPlaybook: React.FC = () => {
                         className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
                       >
                         <Copy className="h-3.5 w-3.5" />
-                        {copiedQueryKey === queryKey ? 'Copied' : 'Copy'}
+                        {copiedQueryKey === queryKey ? languageCopy.copied : copyTextLabel}
                       </button>
                     </div>
                   </div>
@@ -401,7 +577,7 @@ const LeadResearchPlaybook: React.FC = () => {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
-              <label className="block text-sm font-semibold text-neutral-900" htmlFor="lead-research-count">عدد الـ leads في هذه المرحلة</label>
+              <label className="block text-sm font-semibold text-neutral-900" htmlFor="lead-research-count">{languageCopy.leadCount}</label>
               <input
                 id="lead-research-count"
                 type="number"
@@ -420,7 +596,7 @@ const LeadResearchPlaybook: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
-              <label className="block text-sm font-semibold text-neutral-900" htmlFor="lead-research-notes">ملاحظاتك لهذه المرحلة</label>
+              <label className="block text-sm font-semibold text-neutral-900" htmlFor="lead-research-notes">{languageCopy.notes}</label>
               <textarea
                 id="lead-research-notes"
                 value={stageNotes}
@@ -431,16 +607,21 @@ const LeadResearchPlaybook: React.FC = () => {
                     [currentStageKey]: value,
                   }));
                 }}
-                placeholder="اكتب هنا: عدد الشركات، جودة النتائج، queries التي نجحت، مشاكل واجهتها..."
+                  placeholder={languageCopy.notesPlaceholder}
                 className="mt-2 min-h-32 w-full resize-y rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm leading-6 text-neutral-900 outline-none transition-colors focus:border-neutral-400"
               />
             </div>
           </div>
 
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.templateTitle}</h3>
+              <pre dir="ltr" className="mt-3 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-left text-xs leading-6 text-neutral-700 whitespace-pre-wrap">{sheetTemplate}</pre>
+            </div>
+
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h3 className="text-sm font-semibold text-neutral-900">قواعد التأهيل السريع</h3>
+              <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.qualificationRules}</h3>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
-              {LEAD_RESEARCH_QUALIFICATION_RULES.map((rule) => (
+                {LEAD_RESEARCH_QUALIFICATION_RULES[language].map((rule) => (
                 <li key={rule} className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-900" />
                   <span>{rule}</span>
@@ -448,7 +629,7 @@ const LeadResearchPlaybook: React.FC = () => {
               ))}
             </ul>
             <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
-              <div className="font-semibold text-neutral-900">Score /10</div>
+                <div className="font-semibold text-neutral-900">{languageCopy.scoreGuide}</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {LEAD_RESEARCH_SCORE_GUIDE.map((item) => (
                   <span key={item} className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700">
@@ -462,30 +643,35 @@ const LeadResearchPlaybook: React.FC = () => {
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm text-neutral-600">
-                Current stage is <span className="font-semibold text-neutral-900">{currentStage.title}</span>{' '}
-                {isCurrentCompleted ? <span className="text-emerald-600">completed</span> : <span className="text-neutral-500">not completed yet</span>}
+                {languageCopy.currentStageLabel} <span className="font-semibold text-neutral-900">{activeStageTitle}</span>{' '}
+                {isCurrentCompleted ? <span className="text-emerald-600">{languageCopy.completed}</span> : <span className="text-neutral-500">{languageCopy.notCompletedYet}</span>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handlePrevious} disabled={currentStep === 0}>
                   <span className="inline-flex items-center gap-1">
-                    <span>Previous</span>
+                    <span>{languageCopy.previous}</span>
                     <RotateCcw className="h-4 w-4 rotate-90" />
                   </span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleToggleDone}>
                   <span className="inline-flex items-center gap-1">
                     <Check className="h-4 w-4" />
-                    {isCurrentCompleted ? 'Undo Completed' : 'Mark Completed'}
+                    {isCurrentCompleted ? languageCopy.undoComplete : languageCopy.markComplete}
                   </span>
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleCompletedNext}>
                   <span className="inline-flex items-center gap-1">
                     <Check className="h-4 w-4" />
-                    Completed, Next
+                    {languageCopy.completeNext}
                   </span>
                 </Button>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-neutral-900">{languageCopy.finalCleanup}</h3>
+            <p className="mt-2 text-sm leading-6 text-neutral-600">{languageCopy.finalCleanupText}</p>
           </div>
         </main>
       </div>
