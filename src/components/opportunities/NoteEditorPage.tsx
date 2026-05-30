@@ -17,9 +17,12 @@ import type {
  StrategyGoal,
  Task,
 } from '../../types/opportunities';
+import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
 
 const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
 const textareaClass = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y';
+const directionInputClass = (text: string) => `${inputClass} ${getDirectionClass(text)}`;
+const directionTextareaClass = (text: string) => `${textareaClass} ${getDirectionClass(text)}`;
 
 const noteStatuses: SmartNoteInput['status'][] = ['active', 'pinned', 'draft', 'archived'];
 const notePriorities: SmartNoteInput['priority'][] = ['high', 'medium', 'low'];
@@ -341,6 +344,8 @@ const NoteEditorPage: React.FC<{
  };
 
  const categoryName = note?.categoryName || categoryOptions.find((c) => c.id === form.categoryId)?.name || null;
+ const titleDir = detectTextDirection(form.title || '');
+ const contentDir = detectTextDirection(form.content || '');
 
  return (
  <div className="space-y-6">
@@ -424,7 +429,8 @@ const NoteEditorPage: React.FC<{
  <input
  value={form.title}
  onChange={(event) => setField('title', event.target.value)}
- className="mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-lg font-medium text-neutral-900 outline-none focus:border-neutral-400"
+ dir={titleDir}
+ className={`mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-lg font-medium text-neutral-900 outline-none focus:border-neutral-400 ${titleDir === 'rtl' ? 'text-right' : 'text-left'}`}
  placeholder="Untitled note"
  />
  </div>
@@ -434,7 +440,8 @@ const NoteEditorPage: React.FC<{
  value={form.content || ''}
  onChange={(event) => setField('content', event.target.value)}
  rows={20}
- className="mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-6 text-neutral-900 outline-none focus:border-neutral-400 resize-y min-h-[400px]"
+ dir={contentDir}
+ className={`mt-2 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none focus:border-neutral-400 resize-y min-h-[400px] whitespace-pre-wrap ${contentDir === 'rtl' ? 'text-right' : 'text-left'}`}
  placeholder="Write your note here..."
  />
  </div>
@@ -511,25 +518,25 @@ const NoteEditorPage: React.FC<{
  </div>
  <div className="mt-4 space-y-4">
  {block.type === 'paragraph' ? (
- <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={textareaClass} placeholder="Paragraph text" />
+ <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} dir={detectTextDirection(block.content || '')} className={directionTextareaClass(block.content || '')} placeholder="Paragraph text" />
  ) : null}
  {block.type === 'heading' ? (
- <input value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} className={inputClass} placeholder="Heading" />
+ <input value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} dir={detectTextDirection(block.content || '')} className={directionInputClass(block.content || '')} placeholder="Heading" />
  ) : null}
  {block.type === 'quote' ? (
- <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} className={`${textareaClass} border-l-4 border-l-neutral-400 pl-4 italic`} placeholder="Quote" />
+ <textarea value={block.content || ''} onChange={(event) => onUpdateBlock(block.id, { content: event.target.value })} rows={4} dir={detectTextDirection(block.content || '')} className={`${directionTextareaClass(block.content || '')} border-l-4 border-l-neutral-400 pl-4 italic`} placeholder="Quote" />
  ) : null}
  {block.type === 'link' ? (
  <div className="grid gap-3 md:grid-cols-2">
- <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="https://..." />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Link label" />
+ <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="https://..." />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Link label" />
  </div>
  ) : null}
  {block.type === 'image' ? (
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
- <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Image URL" />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Caption" />
+ <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Image URL" />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Caption" />
  </div>
  {block.content ? <img src={block.content} alt={String((block.dataJson as any)?.title || 'Note image')} className="max-h-[280px] w-full rounded-md border border-neutral-200 object-cover" /> : null}
  </div>
@@ -537,8 +544,8 @@ const NoteEditorPage: React.FC<{
  {block.type === 'video' ? (
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
- <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Video URL" />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
+ <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Video URL" />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Title" />
  </div>
  {block.content ? <a href={block.content} target="_blank" rel="noreferrer" className="text-sm text-neutral-600 hover:underline">Open video</a> : null}
  </div>
@@ -546,8 +553,8 @@ const NoteEditorPage: React.FC<{
  {block.type === 'audio' ? (
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
- <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} className={inputClass} placeholder="Audio URL" />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} className={inputClass} placeholder="Title" />
+ <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Audio URL" />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Title" />
  </div>
  {block.content ? <audio controls src={block.content} className="w-full" /> : null}
  </div>
@@ -591,13 +598,13 @@ const NoteEditorPage: React.FC<{
  <option value="file">File</option>
  <option value="other">Other</option>
  </select>
- <input value={attachmentDraft.title || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, title: event.target.value }))} className={inputClass} placeholder="Title" />
- <input value={attachmentDraft.url || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, url: event.target.value }))} className={inputClass} placeholder="URL" />
+ <input value={attachmentDraft.title || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, title: event.target.value }))} dir={detectTextDirection(attachmentDraft.title || '')} className={directionInputClass(attachmentDraft.title || '')} placeholder="Title" />
+ <input value={attachmentDraft.url || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, url: event.target.value }))} dir="ltr" className={`${inputClass} text-left`} placeholder="URL" />
  <button type="button" onClick={handleAttachmentSubmit} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">
  Add attachment
  </button>
  </div>
- <textarea value={attachmentDraft.notes || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, notes: event.target.value }))} rows={3} className={`${textareaClass} mt-3`} placeholder="Optional notes" />
+ <textarea value={attachmentDraft.notes || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, notes: event.target.value }))} rows={3} dir={detectTextDirection(attachmentDraft.notes || '')} className={`${directionTextareaClass(attachmentDraft.notes || '')} mt-3`} placeholder="Optional notes" />
  </div>
 
  <div className="space-y-3">
@@ -605,7 +612,7 @@ const NoteEditorPage: React.FC<{
  <div key={attachment.id} className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="flex flex-wrap items-start justify-between gap-3">
  <div className="min-w-0 flex-1">
- <div className="text-sm font-medium text-neutral-900 truncate">{attachment.title || attachment.url}</div>
+ <div dir={detectTextDirection(attachment.title || attachment.notes || attachment.url || '')} className={`text-sm font-medium text-neutral-900 break-words whitespace-pre-wrap ${getDirectionClass(attachment.title || attachment.notes || attachment.url || '')}`}>{attachment.title || attachment.url}</div>
  <div className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{attachment.type}</div>
  </div>
  <div className="flex gap-2">
@@ -641,7 +648,8 @@ const NoteEditorPage: React.FC<{
  title: event.target.value,
  },
  }))}
- className={inputClass}
+ dir={detectTextDirection(attachmentEdits[attachment.id]?.title || attachment.title || '')}
+ className={directionInputClass(attachmentEdits[attachment.id]?.title || attachment.title || '')}
  placeholder="Title"
  />
  <input
@@ -653,7 +661,8 @@ const NoteEditorPage: React.FC<{
  url: event.target.value,
  },
  }))}
- className={`${inputClass} md:col-span-2`}
+ dir="ltr"
+ className={`${inputClass} text-left md:col-span-2`}
  placeholder="URL"
  />
  <textarea
@@ -666,7 +675,8 @@ const NoteEditorPage: React.FC<{
  },
  }))}
  rows={3}
- className={`${textareaClass} md:col-span-2`}
+ dir={detectTextDirection(attachmentEdits[attachment.id]?.notes || attachment.notes || '')}
+ className={`${directionTextareaClass(attachmentEdits[attachment.id]?.notes || attachment.notes || '')} md:col-span-2`}
  placeholder="Notes"
  />
  </div>
@@ -718,11 +728,11 @@ const NoteEditorPage: React.FC<{
  </div>
  <label className="rounded-xl border border-neutral-200 bg-white p-5 space-y-1.5">
  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Source</div>
- <input value={form.source || ''} onChange={(event) => setField('source', event.target.value)} className={inputClass} placeholder="Meeting, link, doc, call" />
+ <input value={form.source || ''} onChange={(event) => setField('source', event.target.value)} dir={detectTextDirection(form.source || '')} className={directionInputClass(form.source || '')} placeholder="Meeting, link, doc, call" />
  </label>
  <label className="rounded-xl border border-neutral-200 bg-white p-5 space-y-1.5 md:col-span-2 xl:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Internal notes</div>
- <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={4} className={textareaClass} placeholder="Private notes about this note." />
+ <textarea value={form.notes || ''} onChange={(event) => setField('notes', event.target.value)} rows={4} dir={detectTextDirection(form.notes || '')} className={directionTextareaClass(form.notes || '')} placeholder="Private notes about this note." />
  </label>
  </div>
  ) : null}
@@ -743,7 +753,7 @@ const ChecklistEditor: React.FC<{
  {items.map((item, index) => (
  <div key={index} className="flex items-start gap-3 rounded-md border border-neutral-200 bg-white p-3">
  <input type="checkbox" checked={Boolean(item.done)} onChange={(event) => setItem(index, { done: event.target.checked })} className="mt-1" />
- <input value={item.text} onChange={(event) => setItem(index, { text: event.target.value })} className={inputClass} placeholder={`Item ${index + 1}`} />
+ <input value={item.text} onChange={(event) => setItem(index, { text: event.target.value })} dir={detectTextDirection(item.text || '')} className={directionInputClass(item.text || '')} placeholder={`Item ${index + 1}`} />
  <button type="button" onClick={() => onChange(items.filter((_, currentIndex) => currentIndex !== index))} className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100">
  Remove
  </button>
@@ -789,7 +799,7 @@ const TableEditor: React.FC<{
  <div className="min-w-[520px] rounded-md border border-neutral-200 bg-white">
  <div className="grid gap-0 border-b border-neutral-200" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
  {columns.map((column, index) => (
- <input key={index} value={column} onChange={(event) => updateColumn(index, event.target.value)} className="border-0 border-r border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-900 outline-none last:border-r-0" />
+ <input key={index} value={column} onChange={(event) => updateColumn(index, event.target.value)} dir={detectTextDirection(column || '')} className={`border-0 border-r border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-900 outline-none last:border-r-0 ${getDirectionClass(column || '')}`} />
  ))}
  </div>
  {rows.map((row, rowIndex) => (
@@ -800,7 +810,8 @@ const TableEditor: React.FC<{
  value={row[columnIndex] || ''}
  onChange={(event) => updateCell(rowIndex, columnIndex, event.target.value)}
  rows={2}
- className="border-0 border-r border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none last:border-r-0"
+ dir={detectTextDirection(row[columnIndex] || '')}
+ className={`border-0 border-r border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none last:border-r-0 ${getDirectionClass(row[columnIndex] || '')}`}
  />
  ))}
  </div>

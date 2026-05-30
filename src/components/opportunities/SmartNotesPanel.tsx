@@ -23,6 +23,7 @@ import {
  categoryKey,
  noteCategorySlug,
  } from './noteCategoryUtils';
+import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
 
 const sortNotes = (notes: SmartNote[], sortBy: string) => {
  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -220,6 +221,7 @@ const SmartNotesPanel: React.FC<{
  value={searchQuery}
  onChange={(event) => setSearchQuery(event.target.value)}
  placeholder="Search notes, content, tags..."
+ dir="auto"
  className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400"
  />
  </div>
@@ -289,11 +291,19 @@ const SmartNotesPanel: React.FC<{
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2">
- <h3 className="truncate text-sm font-semibold text-neutral-900">{note.title}</h3>
+ <h3
+ dir={detectTextDirection(note.title)}
+ className={`min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900 ${getDirectionClass(note.title)}`}
+ >
+ {note.title}
+ </h3>
  {blocks?.length ? <span className="shrink-0 text-xs text-neutral-400">B:{blocks.length}</span> : null}
  {attachments?.length ? <span className="shrink-0 text-xs text-neutral-400">A:{attachments.length}</span> : null}
  </div>
- <p className="mt-0.5 line-clamp-2 overflow-hidden break-words text-sm text-neutral-500">
+ <p
+ dir={detectTextDirection(note.content || note.notes || '')}
+ className={`mt-0.5 line-clamp-2 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 ${getDirectionClass(note.content || note.notes || '')}`}
+ >
  {excerpt(note) || 'No content yet.'}
  </p>
  </div>
