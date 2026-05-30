@@ -5,7 +5,7 @@ import {
   ListChecks, RotateCcw, Clock, Archive, Star,
   Calendar, TrendingUp, DollarSign, PiggyBank, Target, BarChart3, Shield,
   Activity, FolderOpen, FileEdit, Image, Smartphone, Heart, Leaf,
-  Key, Route, TestTube, Lock,
+  Key, Route, TestTube, Lock, Search,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import SectionHeader from '../ui/SectionHeader';
@@ -42,6 +42,7 @@ import RelationshipsPanel from './RelationshipsPanel';
 import SmartNotesPanel from './SmartNotesPanel';
 import SocialMediaPanel from './SocialMediaPanel';
 import LifeManagementPanel from './LifeManagementPanel';
+import LeadResearchPlaybook from './LeadResearchPlaybook';
 import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
 import AppDashboardShell from './AppDashboardShell';
@@ -208,6 +209,7 @@ const VALID_TABS: OpportunitiesTab[] = [
  'relationships',
  'life',
  'notes',
+  'lead_research',
  'ai-control',
 ];
 
@@ -592,6 +594,7 @@ const OpportunitiesLayout: React.FC<{
    { id: 'queue', label: 'Outreach Queue', icon: Send },
    { id: 'messages', label: 'Messages', icon: MessageSquare },
    { id: 'templates', label: 'Templates', icon: FileText },
+  { id: 'lead_research', label: 'Lead Research', icon: Search },
    ],
    plans: [
    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -1592,6 +1595,10 @@ onDeleteFinanceItem={deleteProjectFinanceItem}
 onSeedDefaults={seedDefaultTemplates}
   />
   </div>
+  )}
+
+  {tab === 'lead_research' && (
+   <LeadResearchPlaybook />
   )}
 
   {tab === 'strategy' && (
