@@ -271,6 +271,7 @@ const TaskForm: React.FC<{
  onSave: (data: ProjectTaskInput) => void;
  onCancel: () => void;
 }> = ({ initial, people, projectId, onSave, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [title, setTitle] = useState(initial?.title || '');
  const [description, setDescription] = useState(initial?.description || '');
  const [status, setStatus] = useState(initial?.status || 'todo');
@@ -324,6 +325,7 @@ const TimeLogForm: React.FC<{
  onSave: (data: ProjectTimeLogInput) => void;
  onCancel: () => void;
 }> = ({ projectId, onSave, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [title, setTitle] = useState('');
  const [description, setDescription] = useState('');
  const [hours, setHours] = useState('');
@@ -353,6 +355,7 @@ const MeetingForm: React.FC<{
  onSave: (data: ProjectMeetingInput) => void;
  onCancel: () => void;
 }> = ({ projectId, onSave, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [title, setTitle] = useState('');
  const [meetingDate, setMeetingDate] = useState(new Date().toISOString().slice(0, 10));
  const [attendees, setAttendees] = useState('');
@@ -388,6 +391,7 @@ const DocumentForm: React.FC<{
  onSave: (data: ProjectDocumentInput) => void;
  onCancel: () => void;
 }> = ({ projectId, onSave, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [name, setName] = useState('');
  const [type, setType] = useState('document');
  const [status, setStatus] = useState('');
@@ -424,6 +428,7 @@ const FinanceItemForm: React.FC<{
  onSave: (data: ProjectFinanceItemInput) => void;
  onCancel: () => void;
 }> = ({ projectId, onSave, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [title, setTitle] = useState('');
  const [type, setType] = useState('income');
  const [amount, setAmount] = useState('');

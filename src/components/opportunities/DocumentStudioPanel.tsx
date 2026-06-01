@@ -319,7 +319,8 @@ const DocumentStudioPanel: React.FC<{
  onAddFinanceIncome,
   section,
 }) => {
-  const [tab, setTab] = useState<StudioTab>('dashboard');
+ const { t } = usePersonalLanguage();
+ const [tab, setTab] = useState<StudioTab>('dashboard');
 
   useEffect(() => {
   if (section) setTab(section);
@@ -1020,6 +1021,7 @@ const TemplateEditorModal: React.FC<{
  onClose: () => void;
  onSave: (input: DocumentTemplateInput) => Promise<void>;
 }> = ({ template, onClose, onSave }) => {
+ const { t } = usePersonalLanguage();
  const [form, setForm] = useState<DocumentTemplateInput>({
  name: template?.name || '',
  type: template?.type || 'document',

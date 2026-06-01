@@ -66,6 +66,7 @@ const CsvImportModal: React.FC<{
  onClose: () => void;
  onImport: (rows: CsvRow[]) => Promise<CsvImportResult>;
 }> = ({ onClose, onImport }) => {
+ const { t } = usePersonalLanguage();
  const fileInputRef = useRef<HTMLInputElement>(null);
  const [selectedFile, setSelectedFile] = useState<File | null>(null);
  const [importing, setImporting] = useState(false);

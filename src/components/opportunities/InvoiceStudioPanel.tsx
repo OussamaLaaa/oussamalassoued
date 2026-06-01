@@ -207,6 +207,7 @@ const InvoiceStudioPanel: React.FC<{
  onUpdateGeneratedDocument,
  onDeleteGeneratedDocument,
 }) => {
+ const { t } = usePersonalLanguage();
  const [tab, setTab] = useState<InvoiceStudioTab>('details');
  const [draftItems, setDraftItems] = useState<InvoiceDraftItem[]>([]);
  const [saving, setSaving] = useState(false);

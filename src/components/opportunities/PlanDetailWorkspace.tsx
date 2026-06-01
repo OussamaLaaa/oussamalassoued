@@ -61,6 +61,7 @@ type Props = {
 const PlanDetailWorkspace: React.FC<Props> = ({
  plan, planItems, projects, strategyGoals, onUpdatePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem, onBack,
 }) => {
+ const { t } = usePersonalLanguage();
  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
  const [saving, setSaving] = useState<string | null>(null);
  const [showNewItem, setShowNewItem] = useState(false);

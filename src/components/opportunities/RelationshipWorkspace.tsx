@@ -101,6 +101,7 @@ const RelationshipWorkspace: React.FC<{
  onUpdateRelationshipContactMethod,
  onDeleteRelationshipContactMethod,
 }) => {
+ const { t } = usePersonalLanguage();
  const [activeTab, setActiveTab] = useState<typeof WORKSPACE_TABS[number]['id']>('overview');
  const [editingInteraction, setEditingInteraction] = useState<RelationshipInteraction | null>(null);
  const [editingOpportunity, setEditingOpportunity] = useState<RelationshipOpportunity | null>(null);

@@ -453,6 +453,7 @@ const DesktopLauncher: React.FC<{
  isDesktopLoading?: boolean;
  desktopLoadError?: boolean;
 }> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings, desktopGroups = [], addDesktopGroup, updateDesktopGroup, deleteDesktopGroup, isDesktopLoading, desktopLoadError }) => {
+ const { t } = usePersonalLanguage();
  const [showAddDialog, setShowAddDialog] = useState(false);
  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
  const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);

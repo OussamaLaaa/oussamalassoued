@@ -121,6 +121,7 @@ const NoteEditorPage: React.FC<{
  onUpdateAttachment,
  onDeleteAttachment,
 }) => {
+ const { t } = usePersonalLanguage();
  const [form, setForm] = useState<SmartNoteInput>(() => createFormState(note || undefined, draft));
  const [activeTab, setActiveTab] = useState<'write' | 'ai' | 'blocks' | 'attachments' | 'links' | 'metadata'>('write');
  const [saving, setSaving] = useState(false);

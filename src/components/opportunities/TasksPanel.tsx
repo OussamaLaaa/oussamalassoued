@@ -827,6 +827,7 @@ const WeeklyReviewSection: React.FC<{
  formatDate: (iso: string) => string;
  formatWeekRange: (startStr: string) => string;
 }> = ({ weekReview, selectedWeekStart, weekStats, onSave, onWeekNav, onThisWeek, formatDate, formatWeekRange }) => {
+ const { t } = usePersonalLanguage();
  const [summary, setSummary] = useState(weekReview?.summary || '');
  const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
  const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');

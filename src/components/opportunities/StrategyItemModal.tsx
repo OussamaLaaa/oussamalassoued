@@ -58,6 +58,7 @@ const ItemModal: React.FC<Props> = ({
  setGoalForm, setPlanForm, setTacticForm, setExperimentForm, setDecisionForm,
  onSave, onDelete, onClose,
 }) => {
+ const { t } = usePersonalLanguage();
  if (!modalState) return null;
 
  const title = modalState.item

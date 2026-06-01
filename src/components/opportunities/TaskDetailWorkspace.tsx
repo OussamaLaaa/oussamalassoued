@@ -68,6 +68,7 @@ const TaskDetailWorkspace: React.FC<{
  task, taskWorkLogs, projects, plans, strategyGoals, companies, people, generatedDocuments,
  onUpdateTask, onDeleteTask, onAddWorkLog, onUpdateWorkLog, onDeleteWorkLog, onComplete, onClose,
 }) => {
+ const { t } = usePersonalLanguage();
  const [tab, setTab] = useState<DetailTab>('overview');
  const [editing, setEditing] = useState(false);
  const [completing, setCompleting] = useState(false);
