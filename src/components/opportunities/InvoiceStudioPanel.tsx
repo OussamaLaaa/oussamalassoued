@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
  Company,
@@ -77,6 +78,8 @@ const DEFAULT_LANGUAGE: InvoiceInput['language'] = 'english';
 const makeDraftItemId = () => `draft-${Math.random().toString(36).slice(2, 10)}`;
 
 const formatMoney = (amount?: number, currency = 'MYR') => {
+  const { t, language } = usePersonalLanguage();
+
  if (amount == null || Number.isNaN(Number(amount))) return '—';
  try {
  return new Intl.NumberFormat('en-US', {
@@ -662,11 +665,11 @@ const InvoiceStudioPanel: React.FC<{
  </div>
  <div className="grid gap-4 md:grid-cols-2">
  <Field label="Invoice Number"><input className={inputClass} value={form.invoiceNumber} onChange={(event) => updateField('invoiceNumber', event.target.value)} placeholder="INV-2026-001" /></Field>
- <Field label="Title"><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Website redesign invoice" /></Field>
+ <Field label={t("Title", "Title", "Title")}><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Website redesign invoice" /></Field>
  <Field label="Issue Date"><input type="date" className={inputClass} value={form.issueDate} onChange={(event) => updateField('issueDate', event.target.value)} /></Field>
  <Field label="Due Date"><input type="date" className={inputClass} value={form.dueDate} onChange={(event) => updateField('dueDate', event.target.value)} /></Field>
  <Field label="Currency"><input className={inputClass} value={form.currency} onChange={(event) => updateField('currency', event.target.value.toUpperCase())} placeholder="MYR" /></Field>
- <Field label="Status">
+ <Field label={t("Status", "Status", "Status")}>
  <select className={inputClass} value={form.status} onChange={(event) => updateField('status', event.target.value as InvoiceInput['status'])}>
  <option value="draft">Draft</option>
  <option value="ready">Ready</option>
@@ -678,7 +681,7 @@ const InvoiceStudioPanel: React.FC<{
  <option value="archived">Archived</option>
  </select>
  </Field>
- <Field label="Language">
+ <Field label={t("common.language", "common.language", "Language")}>
  <select className={inputClass} value={form.language} onChange={(event) => updateField('language', event.target.value as InvoiceInput['language'])}>
  <option value="english">English</option>
  <option value="french">French</option>
@@ -692,7 +695,7 @@ const InvoiceStudioPanel: React.FC<{
  <p className="mt-1 text-xs text-neutral-500">Pre-filled from brand settings</p>
  </div>
  <div className="grid gap-4 md:grid-cols-2">
- <Field label="Name"><input className={inputClass} value={form.sellerName} onChange={(event) => updateField('sellerName', event.target.value)} placeholder="Your company name" /></Field>
+ <Field label={t("Name", "Name", "Name")}><input className={inputClass} value={form.sellerName} onChange={(event) => updateField('sellerName', event.target.value)} placeholder="Your company name" /></Field>
  <Field label="Email"><input className={inputClass} value={form.sellerEmail} onChange={(event) => updateField('sellerEmail', event.target.value)} placeholder="billing@company.com" /></Field>
  <Field label="Phone"><input className={inputClass} value={form.sellerPhone} onChange={(event) => updateField('sellerPhone', event.target.value)} placeholder="+60 12-345 6789" /></Field>
  <Field label="Tax ID"><input className={inputClass} value={form.sellerTaxId} onChange={(event) => updateField('sellerTaxId', event.target.value)} placeholder="Tax registration number" /></Field>
@@ -710,7 +713,7 @@ const InvoiceStudioPanel: React.FC<{
  <p className="mt-1 text-xs text-neutral-500">Who is being billed</p>
  </div>
  <div className="grid gap-4 md:grid-cols-2">
- <Field label="Name"><input className={inputClass} value={form.clientName} onChange={(event) => updateField('clientName', event.target.value)} placeholder="Client company or contact" /></Field>
+ <Field label={t("Name", "Name", "Name")}><input className={inputClass} value={form.clientName} onChange={(event) => updateField('clientName', event.target.value)} placeholder="Client company or contact" /></Field>
  <Field label="Email"><input className={inputClass} value={form.clientEmail} onChange={(event) => updateField('clientEmail', event.target.value)} placeholder="client@company.com" /></Field>
  <Field label="Phone"><input className={inputClass} value={form.clientPhone} onChange={(event) => updateField('clientPhone', event.target.value)} placeholder="+60 12-345 6789" /></Field>
  <Field label="Address"><textarea className={textareaClass} rows={2} value={form.clientAddress} onChange={(event) => updateField('clientAddress', event.target.value)} placeholder="Street address" /></Field>
@@ -769,7 +772,7 @@ const InvoiceStudioPanel: React.FC<{
  </div>
  <div className="mt-4 grid gap-4">
  <Field label="Terms / Payment Notes"><textarea className={textareaClass} rows={3} value={form.terms} onChange={(event) => updateField('terms', event.target.value)} placeholder="Payment due within 30 days" /></Field>
- <Field label="Notes"><textarea className={textareaClass} rows={3} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} placeholder="Additional notes" /></Field>
+ <Field label={t("Notes", "Notes", "Notes")}><textarea className={textareaClass} rows={3} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} placeholder="Additional notes" /></Field>
  </div>
  </div>
 

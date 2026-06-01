@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
  Company,
@@ -122,6 +123,8 @@ const CahierDeChargesBuilder: React.FC<{
  const updateField = (field: keyof CahierFormState, value: string) => setForm((current) => ({ ...current, [field]: value }));
 
  const resetForm = () => {
+  const { t, language } = usePersonalLanguage();
+
  setForm(defaultForm());
  setActiveDocumentId(null);
  setStoredPdfPath(null);
@@ -295,15 +298,15 @@ const CahierDeChargesBuilder: React.FC<{
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <SectionHeader title="Project Context" subtitle="Set the framing, audience, and core challenge" />
  <div className="mt-4 grid gap-4 md:grid-cols-2">
- <Field label="Title"><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} /></Field>
- <Field label="Language">
+ <Field label={t("Title", "Title", "Title")}><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} /></Field>
+ <Field label={t("common.language", "common.language", "Language")}>
  <select className={inputClass} value={form.language} onChange={(event) => updateField('language', event.target.value as DocumentLanguage)}>
  <option value="english">English</option>
  <option value="french">French</option>
  <option value="arabic">Arabic</option>
  </select>
  </Field>
- <Field label="Status">
+ <Field label={t("Status", "Status", "Status")}>
  <select className={inputClass} value={form.status} onChange={(event) => updateField('status', event.target.value as CahierFormState['status'])}>
  <option value="draft">Draft</option>
  <option value="ready">Ready</option>
@@ -323,13 +326,13 @@ const CahierDeChargesBuilder: React.FC<{
  <SummaryCard title="Brand context">
  <SummaryLine label="Brand" value={brand?.brandName || 'Not set'} />
  <SummaryLine label="Owner" value={brand?.ownerName || 'Not set'} />
- <SummaryLine label="Signature" value={brand?.signatureName || 'Not set'} />
+ <SummaryLine label={t("common.signature", "common.signature", "Signature")} value={brand?.signatureName || 'Not set'} />
  <SummaryLine label="PDF" value={storedPdfPath || activeDoc?.pdfStoragePath ? 'Stored' : 'Not stored yet'} />
  </SummaryCard>
  <SummaryCard title="Related records">
  <SummaryLine label="Project" value={selectedProject?.name || 'None'} />
- <SummaryLine label="Company" value={selectedCompany?.name || 'None'} />
- <SummaryLine label="Person" value={selectedPerson?.fullName || 'None'} />
+ <SummaryLine label={t("Company", "Company", "Company")} value={selectedCompany?.name || 'None'} />
+ <SummaryLine label={t("Person", "Person", "Person")} value={selectedPerson?.fullName || 'None'} />
  <SummaryLine label="Deal" value={selectedDeal?.servicePackage || selectedDeal?.id || 'None'} />
  </SummaryCard>
  </aside>
@@ -345,7 +348,7 @@ const CahierDeChargesBuilder: React.FC<{
  <Field label="Non-Functional Requirements"><textarea className={textareaClass} rows={8} value={form.nonFunctionalRequirements} onChange={(event) => updateField('nonFunctionalRequirements', event.target.value)} placeholder="One requirement per line" /></Field>
  <Field label="UX/UI Requirements"><textarea className={textareaClass} rows={8} value={form.uxUiRequirements} onChange={(event) => updateField('uxUiRequirements', event.target.value)} placeholder="One requirement per line" /></Field>
  <Field label="Constraints"><textarea className={textareaClass} rows={6} value={form.constraints} onChange={(event) => updateField('constraints', event.target.value)} /></Field>
- <Field label="Notes"><textarea className={textareaClass} rows={6} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></Field>
+ <Field label={t("Notes", "Notes", "Notes")}><textarea className={textareaClass} rows={6} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></Field>
  </div>
  </div>
  ) : null}
@@ -378,7 +381,7 @@ const CahierDeChargesBuilder: React.FC<{
  <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex flex-wrap items-center justify-between gap-3">
- <SectionHeader title="Preview" subtitle="Professional document layout for project requirements" />
+ <SectionHeader title={t("common.preview", "common.preview", "Preview")} subtitle="Professional document layout for project requirements" />
  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${storedPdfPath || activeDoc?.pdfStoragePath ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500'}`}>
  {storedPdfPath || activeDoc?.pdfStoragePath ? 'PDF Stored' : 'Live Draft'}
  </span>
@@ -389,9 +392,9 @@ const CahierDeChargesBuilder: React.FC<{
  </div>
 
  <SummaryCard title="Preview summary">
- <SummaryLine label="Title" value={form.title || 'Untitled'} />
- <SummaryLine label="Status" value={form.status} />
- <SummaryLine label="Language" value={form.language} />
+ <SummaryLine label={t("Title", "Title", "Title")} value={form.title || 'Untitled'} />
+ <SummaryLine label={t("Status", "Status", "Status")} value={form.status} />
+ <SummaryLine label={t("common.language", "common.language", "Language")} value={form.language} />
  <SummaryLine label="Start date" value={form.startDate || 'Not set'} />
  <SummaryLine label="Due date" value={form.dueDate || 'Not set'} />
  <SummaryLine label="Sections" value="Context, requirements, deliverables, timeline, signatures" />
@@ -402,7 +405,7 @@ const CahierDeChargesBuilder: React.FC<{
  {tab === 'export' ? (
  <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <SectionHeader title="Export" subtitle="Save, generate a stored PDF, and open the private link when ready" />
+ <SectionHeader title={t("Export", "Export", "Export")} subtitle="Save, generate a stored PDF, and open the private link when ready" />
  <div className="mt-4 flex flex-wrap items-center gap-3">
  <button type="button" onClick={() => void saveDocument('ready')} disabled={saving} className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60">
  Save as Generated Document
@@ -425,10 +428,10 @@ const CahierDeChargesBuilder: React.FC<{
 
  <div className="mt-6 grid gap-3 md:grid-cols-2">
  <SummaryCard title="Export summary">
- <SummaryLine label="Title" value={form.title || 'Untitled'} />
+ <SummaryLine label={t("Title", "Title", "Title")} value={form.title || 'Untitled'} />
  <SummaryLine label="Related company" value={selectedCompany?.name || 'None'} />
  <SummaryLine label="Related project" value={selectedProject?.name || 'None'} />
- <SummaryLine label="Archive" value="Generated Documents" />
+ <SummaryLine label={t("Archive", "Archive", "Archive")} value="Generated Documents" />
  </SummaryCard>
  <SummaryCard title="Document archive">
  <SummaryLine label="Saved docs" value={`${cahierDocuments.length} cahier${cahierDocuments.length === 1 ? '' : 's'}`} />

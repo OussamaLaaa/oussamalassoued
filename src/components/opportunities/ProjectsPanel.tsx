@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
@@ -27,6 +28,8 @@ const priorityBadgeVariant: Record<string, 'danger' | 'warning' | 'neutral'> = {
 };
 
 const clampProgress = (value: unknown) => {
+  const { t, language } = usePersonalLanguage();
+
  const parsed = Number(value);
  if (!Number.isFinite(parsed)) return 0;
  return Math.max(0, Math.min(100, parsed));
@@ -156,9 +159,9 @@ const ProjectsPanel: React.FC<{
  {/* Stats */}
  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
  <StatBox label="Total Projects" value={stats.total} subtitle="Current total" />
- <StatBox label="Active" value={stats.active} />
+ <StatBox label={t("Active", "Active", "Active")} value={stats.active} />
  <StatBox label="Planned" value={stats.planned} />
- <StatBox label="Completed" value={stats.completed} />
+ <StatBox label={t("Completed", "Completed", "Completed")} value={stats.completed} />
  <StatBox label="High Priority" value={stats.highPriority} />
  <StatBox label="Avg Progress" value={stats.avgProgress ? `${stats.avgProgress}%` : '—'} />
  </div>

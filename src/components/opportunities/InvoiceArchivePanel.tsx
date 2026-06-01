@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, DocumentBrandSettings, FinanceIncome, FinancePeriod,
@@ -5,6 +6,8 @@ import type {
 } from '../../types/opportunities';
 
 const formatMoney = (amount?: number, currency = 'MYR') => {
+  const { t, language } = usePersonalLanguage();
+
  if (amount == null || Number.isNaN(Number(amount))) return '—';
  try {
  return new Intl.NumberFormat('en-US', {
@@ -445,10 +448,10 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
  <InfoBlock label="Seller" value={invoice.sellerName || brandSettings?.brandName || '—'} />
  <InfoBlock label="Client" value={invoice.clientName || '—'} />
  <InfoBlock label="Project" value={invoice.relatedProjectName || '—'} />
- <InfoBlock label="Company" value={invoice.relatedCompanyName || '—'} />
+ <InfoBlock label={t("Company", "Company", "Company")} value={invoice.relatedCompanyName || '—'} />
  </div>
  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
- <InfoBlock label="Person" value={invoice.relatedPersonName || '—'} />
+ <InfoBlock label={t("Person", "Person", "Person")} value={invoice.relatedPersonName || '—'} />
  <InfoBlock label="Deal" value={invoice.relatedDealName || '—'} />
  <InfoBlock label="Generated Doc" value={invoice.generatedDocumentId ? 'Linked' : '—'} />
  </div>

@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
@@ -18,6 +19,8 @@ const emptyForm: MessageTemplateInput = {
 };
 
 const formatDateLabel = (value?: string) => {
+  const { t, language } = usePersonalLanguage();
+
  if (!value) return 'Current';
  const date = new Date(value);
  if (Number.isNaN(date.getTime())) return 'Current';
@@ -218,26 +221,26 @@ const TemplatesPanel: React.FC<{
  <div className="space-y-4 p-5">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
  <Input
- label="Name"
+ label={t("Name", "Name", "Name")}
  type="text"
  value={form.name}
  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
  placeholder="Founder / UX audit offer / English"
  />
  <Select
- label="Language"
+ label={t("common.language", "common.language", "Language")}
  value={form.language}
  onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
  options={languageOptions.map((option) => ({ value: option.value, label: option.label }))}
  />
  <Select
- label="Audience"
+ label={t("common.audience", "common.audience", "Audience")}
  value={form.audience}
  onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
  options={audienceOptions.map((option) => ({ value: option.value, label: option.label }))}
  />
  <Select
- label="Goal"
+ label={t("common.goal", "common.goal", "Goal")}
  value={form.goal}
  onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
  options={goalOptions.map((option) => ({ value: option.value, label: option.label }))}
@@ -334,7 +337,7 @@ const TemplatesPanel: React.FC<{
  <div className="flex items-center justify-end gap-1">
  <button
  type="button"
- aria-label="Edit"
+ aria-label={t("Edit", "Edit", "Edit")}
  onClick={() => startEdit(template)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors"
  >
@@ -344,7 +347,7 @@ const TemplatesPanel: React.FC<{
  </button>
  <button
  type="button"
- aria-label="Deactivate"
+ aria-label={t("common.deactivate", "common.deactivate", "Deactivate")}
  onClick={() => void handleDeactivate(template.id)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
  >

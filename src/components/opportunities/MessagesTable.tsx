@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo } from 'react';
 import type { OutreachMessage } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -61,6 +62,8 @@ const dateRangeOptions = [
 const normalize = (value?: string | null) => (value || '').trim().toLowerCase();
 
 const toDate = (value?: string | null) => {
+  const { t, language } = usePersonalLanguage();
+
  if (!value) return null;
  const date = new Date(value);
  return Number.isNaN(date.getTime()) ? null : date;
@@ -200,7 +203,7 @@ const MessagesTable: React.FC<{
  <div className="space-y-4">
  <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
  <StatCard label="Total Messages" value={total} hint="Current total" />
- <StatCard label="Sent" value={sent} hint="Last 30 days" />
+ <StatCard label={t("Sent", "Sent", "Sent")} value={sent} hint="Last 30 days" />
  <StatCard label="Replies" value={replies} hint="Last 30 days" />
  <StatCard label="Follow-ups Due" value={followUpsDue} hint="Today" />
  <StatCard label="No Reply" value={noReply} hint="Needs nudge" />
@@ -333,7 +336,7 @@ const MessagesTable: React.FC<{
  {onEdit ? (
  <button
  type="button"
- aria-label="Edit"
+ aria-label={t("Edit", "Edit", "Edit")}
  onClick={() => onEdit(message)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors"
  >
@@ -345,7 +348,7 @@ const MessagesTable: React.FC<{
  {onDelete ? (
  <button
  type="button"
- aria-label="Delete"
+ aria-label={t("Delete", "Delete", "Delete")}
  onClick={() => onDelete(message.id)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
  >

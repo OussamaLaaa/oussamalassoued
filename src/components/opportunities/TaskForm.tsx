@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { Task, TaskInput, TaskStatus, TaskPriority, TaskCategory, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import Button from '../ui/Button';
@@ -74,16 +75,16 @@ const TaskForm: React.FC<{
 
  <Input label="Title *" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" />
 
- <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+ <Textarea label={t("Description", "Description", "Description")} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
 
  <div className="grid grid-cols-3 gap-3">
- <Select label="Status" options={STATUS_OPTIONS.map(s => ({ value: s, label: s }))} value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} />
- <Select label="Priority" options={PRIORITY_OPTIONS.map(p => ({ value: p, label: p }))} value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} />
- <Select label="Category" options={[{ value: '', label: 'None' }, ...CATEGORY_OPTIONS.map(c => ({ value: c, label: c }))]} value={category} onChange={(e) => setCategory(e.target.value)} />
+ <Select label={t("Status", "Status", "Status")} options={STATUS_OPTIONS.map(s => ({ value: s, label: s }))} value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} />
+ <Select label={t("Priority", "Priority", "Priority")} options={PRIORITY_OPTIONS.map(p => ({ value: p, label: p }))} value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} />
+ <Select label={t("Category", "Category", "Category")} options={[{ value: '', label: 'None' }, ...CATEGORY_OPTIONS.map(c => ({ value: c, label: c }))]} value={category} onChange={(e) => setCategory(e.target.value)} />
  </div>
 
  <div className="grid grid-cols-3 gap-3">
- <Input label="Date" type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} />
+ <Input label={t("Date", "Date", "Date")} type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} />
  <Input label="Est. Minutes" type="number" min={0} value={estimatedMinutes} onChange={(e) => setEstimatedMinutes(e.target.value)} />
  <Input label="Actual Minutes" type="number" min={0} value={actualMinutes} onChange={(e) => setActualMinutes(e.target.value)} />
  </div>
@@ -95,12 +96,12 @@ const TaskForm: React.FC<{
 
  <div className="grid grid-cols-2 gap-3">
  <Select label="Strategy Goal" options={[{ value: '', label: 'None' }, ...strategyGoals.map(g => ({ value: g.id, label: g.title }))]} value={linkedStrategyGoalId} onChange={(e) => setLinkedStrategyGoalId(e.target.value)} />
- <Select label="Company" options={[{ value: '', label: 'None' }, ...companies.map(c => ({ value: c.id, label: c.name }))]} value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} />
+ <Select label={t("Company", "Company", "Company")} options={[{ value: '', label: 'None' }, ...companies.map(c => ({ value: c.id, label: c.name }))]} value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} />
  </div>
 
- <Select label="Person" options={[{ value: '', label: 'None' }, ...people.map(p => ({ value: p.id, label: p.fullName }))]} value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} />
+ <Select label={t("Person", "Person", "Person")} options={[{ value: '', label: 'None' }, ...people.map(p => ({ value: p.id, label: p.fullName }))]} value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} />
 
- <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+ <Textarea label={t("Notes", "Notes", "Notes")} value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
 
  <div className="flex items-center justify-end gap-2 pt-2">
  <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>

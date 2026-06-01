@@ -238,7 +238,7 @@ const SmartNotesPanel: React.FC<{
  <option value="updated_desc">{t("notes.Recently updated", "Recently updated")}</option>
  <option value="name_asc">{t("notes.Name A-Z", "Name A-Z")}</option>
  <option value="name_desc">{t("notes.Name Z-A", "Name Z-A")}</option>
- <option value="priority">{t("notes.Priority", "Priority")}</option>
+ <option value="priority">{t("notes.Priority", "Priority", "Priority")}</option>
  </select>
  <Button variant="primary" size="sm" onClick={openCreateNote} className="h-10 px-4">
  + {t("notes.New Note", "New Note")}
@@ -322,13 +322,13 @@ const SmartNotesPanel: React.FC<{
   <div className="flex items-center gap-1">
   <span className="text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
   <button type="button" onClick={editNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Open", "Open")}
+  {t("notes.Open", "Open", "Open")}
   </button>
   <button type="button" onClick={archiveNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Archive", "Archive")}
+  {t("notes.Archive", "Archive", "Archive")}
   </button>
   <button type="button" onClick={deleteNote} className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Delete", "Delete")}
+  {t("notes.Delete", "Delete", "Delete")}
   </button>
   </div>
   </div>

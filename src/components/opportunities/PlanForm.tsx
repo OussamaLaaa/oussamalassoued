@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { PlanInput, Project, StrategyGoal, PlanType, PlanStatus } from '../../types/opportunities';
 
@@ -12,10 +13,10 @@ type Props = {
 
 const PlanForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals }) => (
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label="Title" required>
+ <Field label={t("Title", "Title", "Title")} required>
  <input value={form.title} onChange={(e) => onChange({ ...form, title: e.target.value })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label="Type">
+ <Field label={t("Type", "Type", "Type")}>
  <select value={form.type} onChange={(e) => onChange({ ...form, type: e.target.value as PlanType })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  <option value="yearly">Year</option>
  <option value="six_months">6 Months</option>
@@ -25,7 +26,7 @@ const PlanForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals }) 
  <option value="daily">Daily</option>
  </select>
  </Field>
- <Field label="Status">
+ <Field label={t("Status", "Status", "Status")}>
  <select value={form.status || 'planned'} onChange={(e) => onChange({ ...form, status: e.target.value as PlanStatus })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  <option value="planned">Planned</option>
  <option value="active">Active</option>
@@ -33,7 +34,7 @@ const PlanForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals }) 
  <option value="archived">Archived</option>
  </select>
  </Field>
- <Field label="Priority">
+ <Field label={t("Priority", "Priority", "Priority")}>
  <select value={form.priority || 'medium'} onChange={(e) => onChange({ ...form, priority: e.target.value as typeof PRIORITY_OPTIONS[number] })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
  </select>

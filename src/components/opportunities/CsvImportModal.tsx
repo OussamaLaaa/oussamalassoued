@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useRef, useState } from 'react';
 
 interface CsvRow {
@@ -31,7 +32,7 @@ const parseCsvText = (text: string): { rows: CsvRow[]; errors: string[] } => {
  const websiteIndex = headers.findIndex((h) => h.toLowerCase() === 'website');
 
  if (nameIndex === -1) {
- return { rows: [], errors: ['CSV must contain a "Name" column.'] };
+ return { rows: [], errors: ['CSV must contain a {t("Name", "Name", "Name")} column.'] };
  }
 
  const rows: CsvRow[] = [];
@@ -71,6 +72,8 @@ const CsvImportModal: React.FC<{
  const [resultMessage, setResultMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
 
  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { t, language } = usePersonalLanguage();
+
  const file = e.target.files?.[0] || null;
  setSelectedFile(file);
  setResultMessage(null);

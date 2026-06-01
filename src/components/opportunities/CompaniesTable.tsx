@@ -140,19 +140,19 @@ const CompaniesTable: React.FC<{
           <Select
             value={filters.priority}
             onChange={(event) => setFilter('priority', event.target.value)}
-            options={priorityOptions.map(o => ({ ...o, label: o.value === '' ? t("Priority", "Priority") : o.label }))}
+            options={priorityOptions.map(o => ({ ...o, label: o.value === '' ? t("Priority", "Priority", "Priority") : o.label }))}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.status}
             onChange={(event) => setFilter('status', event.target.value)}
-            options={statusOptions.map(o => ({ ...o, label: o.value === '' ? t("Status", "Status") : o.label }))}
+            options={statusOptions.map(o => ({ ...o, label: o.value === '' ? t("Status", "Status", "Status") : o.label }))}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.databaseType}
             onChange={(event) => setFilter('databaseType', event.target.value)}
-            options={databaseTypeOptions.map(o => ({ ...o, label: o.value === '' ? t("Database Type", "Database Type") : o.label }))}
+            options={databaseTypeOptions.map(o => ({ ...o, label: o.value === '' ? t("Database Type", "crm.databaseType", "Database Type") : o.label }))}
             className={`${toolbarSelect} min-w-[120px]`}
           />
           <input
@@ -165,7 +165,7 @@ const CompaniesTable: React.FC<{
           />
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
-              {t("Clear", "Clear")}
+              {t("Clear", "Clear", "Clear")}
             </Button>
           )}
           <span className={toolbarCount}>{filtered.length} companies</span>
@@ -176,16 +176,16 @@ const CompaniesTable: React.FC<{
   <table className="min-w-[1160px] w-full border-collapse text-left">
   <thead>
   <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
-  <th className="px-4 py-3 font-medium">{t("Company", "Company")}</th>
-  <th className="px-4 py-3 font-medium">{t("Type", "Type")}</th>
-  <th className="px-4 py-3 font-medium">{t("Category", "Category")}</th>
+  <th className="px-4 py-3 font-medium">{t("Company", "Company", "Company")}</th>
+  <th className="px-4 py-3 font-medium">{t("Type", "Type", "Type")}</th>
+  <th className="px-4 py-3 font-medium">{t("Category", "Category", "Category")}</th>
   <th className="px-4 py-3 font-medium">{t("Location", "Location")}</th>
-  <th className="px-4 py-3 font-medium">{t("Priority", "Priority")}</th>
+  <th className="px-4 py-3 font-medium">{t("Priority", "Priority", "Priority")}</th>
   <th className="px-4 py-3 font-medium">{t("Fit", "Fit")}</th>
   <th className="px-4 py-3 font-medium">{t("Ethical", "Ethical")}</th>
-  <th className="px-4 py-3 font-medium">{t("Status", "Status")}</th>
+  <th className="px-4 py-3 font-medium">{t("Status", "Status", "Status")}</th>
   <th className="px-4 py-3 font-medium">{t("Next action", "Next action")}</th>
-  <th className="px-4 py-3 text-right font-medium">{t("Actions", "Actions")}</th>
+  <th className="px-4 py-3 text-right font-medium">{t("Actions", "Actions", "Actions")}</th>
   </tr>
   </thead>
   <tbody>
@@ -279,7 +279,7 @@ const CompaniesTable: React.FC<{
   onEdit(company);
   }}
   className="text-neutral-400 hover:text-neutral-900 px-1.5"
-  title="Edit"
+  title={t("Edit", "Edit")}
   >
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
@@ -315,7 +315,7 @@ const CompaniesTable: React.FC<{
   onDelete(company.id);
   }}
   className="text-neutral-300 hover:text-red-500 px-1.5"
-  title="Delete"
+  title={t("Delete", "Delete")}
   >
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

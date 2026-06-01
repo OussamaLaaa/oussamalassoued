@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
   Company,
@@ -34,6 +35,8 @@ const WORKSPACE_TABS = [
 ] as const;
 
 const badgeClass = (kind?: string) => {
+  const { t, language } = usePersonalLanguage();
+
  const value = String(kind || '').toLowerCase();
  if (['strong', 'high', 'active', 'warm', 'open', 'in_progress'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';
@@ -690,7 +693,7 @@ const RelationshipWorkspace: React.FC<{
  ) : null}
 
  {showContactMethodForm ? (
- <OpportunityModal title="Add Contact Method" onClose={() => setShowContactMethodForm(false)}>
+ <OpportunityModal title={t("common.addContactMethod", "common.addContactMethod", "Add Contact Method")} onClose={() => setShowContactMethodForm(false)}>
  <RelationshipContactMethodForm
  relationships={relationships}
  people={people}

@@ -690,8 +690,8 @@ const DesktopLauncher: React.FC<{
  </div>
  </div>
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label="Notifications" />
- <TopBarButton icon={Palette} label="Desktop Settings" onClick={() => setShowSettingsDialog(true)} />
+ <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
+ <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} onClick={() => setShowSettingsDialog(true)} />
  <ProfileDropdown />
  </div>
  </div>
@@ -765,8 +765,8 @@ const DesktopLauncher: React.FC<{
  </div>
  </div>
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label="Notifications" />
- <TopBarButton icon={Palette} label="Desktop Settings" />
+ <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
+ <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} />
  <ProfileDropdown />
  </div>
  </div>
@@ -847,8 +847,8 @@ const DesktopLauncher: React.FC<{
  </div>
 
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label="Notifications" />
- <TopBarButton icon={Palette} label="Desktop Settings" onClick={() => setShowSettingsDialog(true)} />
+ <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
+ <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} onClick={() => setShowSettingsDialog(true)} />
  <ProfileDropdown />
  </div>
  </div>

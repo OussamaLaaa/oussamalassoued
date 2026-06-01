@@ -1,7 +1,10 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef } from 'react';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 
 const formatMoney = (amount: number, currency = 'MYR') => {
+  const { t, language } = usePersonalLanguage();
+
  const value = Number.isFinite(amount) ? amount : 0;
  const cur = (currency || 'MYR').toUpperCase();
  if (cur === 'USD') return `$${value.toFixed(2)}`;
@@ -170,7 +173,7 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ invoic
  {brandSettings?.signatureUrl ? (
  <div className="mt-10 border-t border-[#e5e7eb] pt-6">
  <div className="text-sm font-bold text-[#0f172a]">Authorized Signature</div>
- <img src={brandSettings.signatureUrl} alt="Signature" className="mt-2 h-14 w-auto rounded object-contain" />
+ <img src={brandSettings.signatureUrl} alt={t("common.signature", "common.signature", "Signature")} className="mt-2 h-14 w-auto rounded object-contain" />
  {brandSettings.signatureName ? <div className="mt-1 text-sm text-[#475569]">{brandSettings.signatureName}</div> : null}
  </div>
  ) : null}

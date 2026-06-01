@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type {
  Company, Person, OutreachMessage, Deal,
@@ -163,6 +164,8 @@ const CompanyWorkspace: React.FC<Props> = ({
  updateCompany,
  deleteCompany,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [tab, setTab] = useState<WorkspaceTab>('overview');
  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
  const [notesDraft, setNotesDraft] = useState('');
@@ -264,7 +267,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  return (
  <div className="space-y-4">
  <Button variant="ghost" size="sm" onClick={onBack}>← Back to CRM</Button>
- <EmptyState title="Company not found." description="The company you are looking for does not exist." />
+ <EmptyState title={t("company.notFound", "company.notFound", "Company not found.")} description="The company you are looking for does not exist." />
  </div>
  );
  }
@@ -739,7 +742,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {methods.length === 0 ? (
  <EmptyState
- title="No company contact methods yet."
+ title={t("crm.noContactMethods", "crm.noContactMethods", "No company contact methods yet.")}
  description="Add email, phone, website, LinkedIn, WhatsApp, or another channel."
  />
  ) : (
@@ -785,7 +788,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {companyPeople.length === 0 ? (
  <EmptyState
- title="No people linked to this company yet."
+ title={t("crm.noPeopleLinked", "crm.noPeopleLinked", "No people linked to this company yet.")}
  description="Add decision makers, influencers, or relevant contacts."
  />
  ) : (
@@ -882,7 +885,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {profiles.length === 0 ? (
  <EmptyState
- title="No problem profile yet."
+ title={t("crm.noProblemProfile", "crm.noProblemProfile", "No problem profile yet.")}
  description="Define what problem you can solve before outreach."
  />
  ) : (
@@ -954,7 +957,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {scripts.length === 0 ? (
  <EmptyState
- title="No outreach script yet."
+ title={t("crm.noOutreachScript", "crm.noOutreachScript", "No outreach script yet.")}
  description="Prepare what to send or say before contacting this company."
  />
  ) : (
@@ -1398,7 +1401,7 @@ const CompanyWorkspace: React.FC<Props> = ({
 
 
  {showPersonChoiceModal ? (
- <OpportunityModal title="Add Person" onClose={() => setShowPersonChoiceModal(false)}>
+ <OpportunityModal title={t("crm.addPerson", "crm.addPerson", "Add Person")} onClose={() => setShowPersonChoiceModal(false)}>
  <div className="space-y-3">
  <p className="text-sm text-neutral-600">Choose how you want to add a person to this company.</p>
  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

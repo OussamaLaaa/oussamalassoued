@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -63,6 +64,8 @@ const TYPE_SECTION_TITLES: Record<string, string> = {
 };
 
 const formatDate = (value?: string) => {
+  const { t, language } = usePersonalLanguage();
+
  if (!value) return '\u2014';
  const d = new Date(value);
  if (Number.isNaN(d.getTime())) return value;
@@ -282,7 +285,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  {/* ─── Amount inline for non-receipt ─── */}
  {!isReceipt && document.amount != null ? (
  <div className="mt-6">
- <MetaCard label="Amount" value={formatMoney(document.amount, document.currency)} />
+ <MetaCard label={t("Amount", "Amount", "Amount")} value={formatMoney(document.amount, document.currency)} />
  </div>
  ) : null}
 
@@ -292,7 +295,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  <SectionTitle>Agreement Details</SectionTitle>
  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
  {document.relatedProjectName ? <MetaCard label="Project" value={document.relatedProjectName} /> : null}
- {document.relatedCompanyName ? <MetaCard label="Company" value={document.relatedCompanyName} /> : null}
+ {document.relatedCompanyName ? <MetaCard label={t("Company", "Company", "Company")} value={document.relatedCompanyName} /> : null}
  {document.relatedPersonName ? <MetaCard label="Contact" value={document.relatedPersonName} /> : null}
  {document.signedDate ? <MetaCard label="Signed Date" value={formatDate(document.signedDate)} /> : null}
  </div>
@@ -366,7 +369,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  {brand.signatureUrl ? (
  <img
  src={brand.signatureUrl}
- alt="Signature"
+ alt={t("common.signature", "common.signature", "Signature")}
  className="mt-3 max-h-[70px] w-auto rounded object-contain"
  />
  ) : null}

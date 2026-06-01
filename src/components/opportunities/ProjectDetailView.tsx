@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import DirectionalText from '../DirectionalText';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -66,6 +67,8 @@ const financeStatusBadgeVariant: Record<string, 'success' | 'danger' | 'warning'
 };
 
 const clampProgress = (value: unknown) => {
+  const { t, language } = usePersonalLanguage();
+
  const parsed = Number(value);
  if (!Number.isFinite(parsed)) return 0;
  return Math.max(0, Math.min(100, parsed));
@@ -293,13 +296,13 @@ const TaskForm: React.FC<{
  return (
  <div>
  <FormField label="Title *"><FormInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" /></FormField>
- <FormField label="Description"><FormTextarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" rows={2} /></FormField>
+ <FormField label={t("Description", "Description", "Description")}><FormTextarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" rows={2} /></FormField>
  <div className="grid grid-cols-2 gap-3">
- <FormField label="Status"><FormSelect value={status} onChange={(e) => setStatus(e.target.value)} options={[
+ <FormField label={t("Status", "Status", "Status")}><FormSelect value={status} onChange={(e) => setStatus(e.target.value)} options={[
  { value: 'todo', label: 'Todo' }, { value: 'doing', label: 'Doing' },
  { value: 'done', label: 'Done' }, { value: 'blocked', label: 'Blocked' },
  ]} /></FormField>
- <FormField label="Priority"><FormSelect value={priority} onChange={(e) => setPriority(e.target.value)} options={[
+ <FormField label={t("Priority", "Priority", "Priority")}><FormSelect value={priority} onChange={(e) => setPriority(e.target.value)} options={[
  { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' },
  ]} /></FormField>
  </div>
@@ -334,10 +337,10 @@ const TimeLogForm: React.FC<{
  return (
  <div>
  <FormField label="Title *"><FormInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Time log title" /></FormField>
- <FormField label="Description"><FormTextarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" rows={2} /></FormField>
+ <FormField label={t("Description", "Description", "Description")}><FormTextarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" rows={2} /></FormField>
  <div className="grid grid-cols-2 gap-3">
  <FormField label="Hours *"><FormInput type="number" step="0.5" min="0" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="e.g. 2.5" /></FormField>
- <FormField label="Date"><FormInput type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></FormField>
+ <FormField label={t("Date", "Date", "Date")}><FormInput type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} /></FormField>
  </div>
  <div className="flex gap-2 justify-end mt-5">
  <Button variant="outline" onClick={onCancel}>Cancel</Button>
@@ -367,13 +370,13 @@ const MeetingForm: React.FC<{
  <div>
  <FormField label="Title *"><FormInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Meeting title" /></FormField>
  <div className="grid grid-cols-2 gap-3">
- <FormField label="Date"><FormInput type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} /></FormField>
+ <FormField label={t("Date", "Date", "Date")}><FormInput type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} /></FormField>
  <FormField label="Attendees"><FormInput value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Comma-separated names" /></FormField>
  </div>
   <FormField label="Agenda"><FormTextarea value={agenda} onChange={(e) => setAgenda(e.target.value)} placeholder="Meeting agenda" rows={2} dir={detectTextDirection(agenda || '')} /></FormField>
-  <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Meeting notes" rows={2} dir={detectTextDirection(notes || '')} /></FormField>
+  <FormField label={t("Notes", "Notes", "Notes")}><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Meeting notes" rows={2} dir={detectTextDirection(notes || '')} /></FormField>
   <FormField label="Outcome"><FormTextarea value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Key outcomes" rows={2} dir={detectTextDirection(outcome || '')} /></FormField>
-  <FormField label="Next Action"><FormInput value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="Next steps" dir={detectTextDirection(nextAction || '')} /></FormField>
+  <FormField label={t("common.nextAction", "common.nextAction", "Next Action")}><FormInput value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="Next steps" dir={detectTextDirection(nextAction || '')} /></FormField>
  <div className="flex gap-2 justify-end mt-5">
  <Button variant="outline" onClick={onCancel}>Cancel</Button>
  <Button variant="primary" onClick={handleSave} disabled={!title.trim()}>Add Meeting</Button>
@@ -400,16 +403,16 @@ const DocumentForm: React.FC<{
  <div>
  <FormField label="Name *"><FormInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Document name" /></FormField>
  <div className="grid grid-cols-2 gap-3">
- <FormField label="Type"><FormSelect value={type} onChange={(e) => setType(e.target.value)} options={[
+ <FormField label={t("Type", "Type", "Type")}><FormSelect value={type} onChange={(e) => setType(e.target.value)} options={[
  { value: 'contract', label: 'Contract' }, { value: 'invoice', label: 'Invoice' },
  { value: 'agreement', label: 'Agreement' }, { value: 'brief', label: 'Brief' },
  { value: 'receipt', label: 'Receipt' }, { value: 'link', label: 'Link' },
  { value: 'document', label: 'Document' }, { value: 'other', label: 'Other' },
  ]} /></FormField>
- <FormField label="Status"><FormInput value={status} onChange={(e) => setStatus(e.target.value)} placeholder="e.g. draft, signed" /></FormField>
+ <FormField label={t("Status", "Status", "Status")}><FormInput value={status} onChange={(e) => setStatus(e.target.value)} placeholder="e.g. draft, signed" /></FormField>
  </div>
  <FormField label="URL"><FormInput value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." /></FormField>
- <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
+ <FormField label={t("Notes", "Notes", "Notes")}><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
  <div className="flex gap-2 justify-end mt-5">
  <Button variant="outline" onClick={onCancel}>Cancel</Button>
  <Button variant="primary" onClick={handleSave} disabled={!name.trim()}>Add Document</Button>
@@ -439,12 +442,12 @@ const FinanceItemForm: React.FC<{
  <div>
  <FormField label="Title *"><FormInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Finance item title" /></FormField>
  <div className="grid grid-cols-2 gap-3">
- <FormField label="Type"><FormSelect value={type} onChange={(e) => setType(e.target.value)} options={[
+ <FormField label={t("Type", "Type", "Type")}><FormSelect value={type} onChange={(e) => setType(e.target.value)} options={[
  { value: 'income', label: 'Income' }, { value: 'expense', label: 'Expense' },
  { value: 'invoice', label: 'Invoice' }, { value: 'payment', label: 'Payment' },
  { value: 'investment', label: 'Investment' },
  ]} /></FormField>
- <FormField label="Status"><FormSelect value={status} onChange={(e) => setStatus(e.target.value)} options={[
+ <FormField label={t("Status", "Status", "Status")}><FormSelect value={status} onChange={(e) => setStatus(e.target.value)} options={[
  { value: 'planned', label: 'Planned' }, { value: 'sent', label: 'Sent' },
  { value: 'paid', label: 'Paid' }, { value: 'unpaid', label: 'Unpaid' },
  { value: 'overdue', label: 'Overdue' }, { value: 'cancelled', label: 'Cancelled' },
@@ -461,7 +464,7 @@ const FinanceItemForm: React.FC<{
  <FormField label="Due Date"><FormInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></FormField>
  <FormField label="Paid Date"><FormInput type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} /></FormField>
  </div>
- <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
+ <FormField label={t("Notes", "Notes", "Notes")}><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" rows={2} /></FormField>
  <div className="flex gap-2 justify-end mt-5">
  <Button variant="outline" onClick={onCancel}>Cancel</Button>
  <Button variant="primary" onClick={handleSave} disabled={!title.trim() || !amount}>Add Finance Item</Button>
@@ -706,7 +709,7 @@ const ProjectDetailView: React.FC<{
  {/* Summary cards */}
  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-4">
  {/* Progress card */}
- <SummaryCard label="Progress">
+ <SummaryCard label={t("Progress", "Progress", "Progress")}>
  <div className="flex items-center gap-2">
  <div className="flex-1"><ProgressBar value={progressDraft} /></div>
  <span className="text-sm font-semibold text-black">{progressDraft}%</span>
@@ -754,7 +757,7 @@ const ProjectDetailView: React.FC<{
  </SummaryCard>
 
  {/* Next Action card */}
- <SummaryCard label="Next Action">
+ <SummaryCard label={t("common.nextAction", "common.nextAction", "Next Action")}>
   {project.nextAction ? (
   <DirectionalText text={project.nextAction} as="div" className="text-sm font-semibold text-black truncate" />
   ) : (
@@ -1016,8 +1019,8 @@ const ProjectDetailView: React.FC<{
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
  <StatCard title="Income" value={`${financeStats.income.toLocaleString()}`} />
  <StatCard title="Expenses" value={`${financeStats.expenses.toLocaleString()}`} />
- <StatCard title="Unpaid" value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-red-50 border-red-200' : ''} />
- <StatCard title="Paid" value={`${financeStats.paid.toLocaleString()}`} />
+ <StatCard title={t("Unpaid", "Unpaid", "Unpaid")} value={`${financeStats.unpaid.toLocaleString()}`} className={financeStats.unpaid > 0 ? 'bg-red-50 border-red-200' : ''} />
+ <StatCard title={t("Paid", "Paid", "Paid")} value={`${financeStats.paid.toLocaleString()}`} />
  </div>
  <div className="flex items-center justify-between mb-3">
  <h3 className="text-sm font-semibold text-black">Items ({projectFinanceList.length})</h3>
@@ -1198,7 +1201,7 @@ const ProjectDetailView: React.FC<{
  <h3 className="text-xs font-semibold text-black uppercase tracking-wider mb-3">Quick Stats</h3>
  <div className="grid grid-cols-2 gap-2">
  <StatCard title="Tasks" value={taskStats.open} />
- <StatCard title="Done" value={taskStats.completed} />
+ <StatCard title={t("Done", "Done", "Done")} value={taskStats.completed} />
  <StatCard title="Hours" value={totalHours.toFixed(1)} />
  <StatCard title="Meetings" value={projectMeetingList.length} />
  </div>

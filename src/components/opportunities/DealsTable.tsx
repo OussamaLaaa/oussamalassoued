@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo } from 'react';
 import type { Deal } from '../../types/opportunities';
 import Button from '../ui/Button';
@@ -15,6 +16,8 @@ export interface DealFilters {
 }
 
 const badgeForStage = (stage?: string) => {
+  const { t, language } = usePersonalLanguage();
+
   if (!stage) return null;
   const colorMap: Record<string, string> = {
     discovery: 'text-blue-700 bg-blue-50 border-blue-200',
@@ -192,7 +195,7 @@ const DealsTable: React.FC<{
                           onEdit(d);
                         }}
                         className="text-neutral-400 hover:text-neutral-900 px-1.5"
-                        title="Edit"
+                        title={t("Edit", "Edit", "Edit")}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
@@ -210,7 +213,7 @@ const DealsTable: React.FC<{
                           onDelete(d.id);
                         }}
                         className="text-neutral-300 hover:text-red-500 px-1.5"
-                        title="Delete"
+                        title={t("Delete", "Delete", "Delete")}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

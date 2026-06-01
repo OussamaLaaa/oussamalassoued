@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
  Company,
@@ -143,6 +144,8 @@ const LANGUAGE_OPTIONS: Array<{ value: DocumentLanguage; label: string }> = [
 ];
 
 const formatMoney = (amount?: number, currency = 'MYR') => {
+  const { t, language } = usePersonalLanguage();
+
  if (amount == null || Number.isNaN(Number(amount))) return '—';
  return `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
@@ -760,15 +763,15 @@ const DocumentStudioPanel: React.FC<{
  {documentTemplates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
  </select>
  </Field>
- <Field label="Title">
+ <Field label={t("Title", "Title", "Title")}>
  <input value={builder.title} onChange={(event) => updateBuilder('title', event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400" placeholder="Generated document title" />
  </Field>
- <Field label="Type">
+ <Field label={t("Type", "Type", "Type")}>
  <select value={builder.type} onChange={(event) => updateBuilder('type', event.target.value as DocumentType)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400">
  {TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
  </select>
  </Field>
- <Field label="Language">
+ <Field label={t("common.language", "common.language", "Language")}>
  <select value={builder.language} onChange={(event) => updateBuilder('language', event.target.value as DocumentLanguage)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400">
  {LANGUAGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
  </select>
@@ -797,7 +800,7 @@ const DocumentStudioPanel: React.FC<{
  {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.servicePackage || deal.id}</option>)}
  </select>
  </Field>
- <Field label="Amount">
+ <Field label={t("Amount", "Amount", "Amount")}>
  <input value={builder.amount} onChange={(event) => updateBuilder('amount', event.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400" placeholder="0.00" inputMode="decimal" />
  </Field>
  <Field label="Currency">
@@ -829,7 +832,7 @@ const DocumentStudioPanel: React.FC<{
  {renderedPreview || 'Select a template to preview rendered content.'}
  </div>
  </CardShell>
- <CardShell title="Context" subtitle="Preview sources" emptyText={undefined}>
+ <CardShell title={t("common.context", "common.context", "Context")} subtitle="Preview sources" emptyText={undefined}>
  <div className="space-y-2 text-sm text-neutral-600">
  <div><span className="font-medium text-neutral-900">Brand:</span> {brand?.brandName || 'None'}</div>
  <div><span className="font-medium text-neutral-900">Project:</span> {selectedProject?.name || 'None'}</div>
@@ -1031,13 +1034,13 @@ const TemplateEditorModal: React.FC<{
  return (
  <Modal title={template ? 'Edit Template' : 'Add Template'} onClose={onClose}>
  <div className="grid gap-4 md:grid-cols-2">
- <Field label="Name"><input className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></Field>
- <Field label="Type"><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as DocumentType }))}>{TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
- <Field label="Language"><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.language} onChange={(event) => setForm((current) => ({ ...current, language: event.target.value as DocumentLanguage }))}>{LANGUAGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
- <Field label="Active"><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.isActive ? 'true' : 'false'} onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.value === 'true' }))}><option value="true">Yes</option><option value="false">No</option></select></Field>
+ <Field label={t("Name", "Name", "Name")}><input className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></Field>
+ <Field label={t("Type", "Type", "Type")}><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as DocumentType }))}>{TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+ <Field label={t("common.language", "common.language", "Language")}><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.language} onChange={(event) => setForm((current) => ({ ...current, language: event.target.value as DocumentLanguage }))}>{LANGUAGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+ <Field label={t("Active", "Active", "Active")}><select className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" value={form.isActive ? 'true' : 'false'} onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.value === 'true' }))}><option value="true">Yes</option><option value="false">No</option></select></Field>
  </div>
  <div className="mt-4 grid gap-4">
- <Field label="Description"><textarea className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 min-h-[80px]" value={form.description || ''} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} rows={3} /></Field>
+ <Field label={t("Description", "Description", "Description")}><textarea className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 min-h-[80px]" value={form.description || ''} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} rows={3} /></Field>
  <Field label="Variables"><input className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400" value={form.variables || ''} onChange={(event) => setForm((current) => ({ ...current, variables: event.target.value }))} placeholder="clientName,projectName,amount" /></Field>
  <Field label="Content"><textarea className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 min-h-[240px]" value={form.content} onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))} rows={10} /></Field>
  </div>

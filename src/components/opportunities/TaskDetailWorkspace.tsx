@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import DirectionalText from '../DirectionalText';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -23,6 +24,8 @@ const PRIORITY_BADGE_VARIANT: Record<string, 'danger' | 'warning' | 'neutral'> =
 };
 
 const formatHours = (minutes?: number | null): string => {
+  const { t, language } = usePersonalLanguage();
+
  if (minutes == null) return '0h';
  const h = Math.floor(minutes / 60);
  const m = minutes % 60;
@@ -342,11 +345,11 @@ const TaskDetailWorkspace: React.FC<{
  <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
  <h4 className="text-sm font-medium text-black">{editingLog ? 'Edit Work Log' : 'Add Work Log'}</h4>
  <div className="grid grid-cols-2 gap-3">
- <Input label="Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
+ <Input label={t("Date", "Date", "Date")} type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
  <Input label="Minutes" type="number" min={1} value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} />
  </div>
- <Input label="Summary" type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
-  <Textarea label="Notes" value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} dir={detectTextDirection(logNotes || '')} />
+ <Input label={t("Summary", "Summary", "Summary")} type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
+  <Textarea label={t("Notes", "Notes", "Notes")} value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} dir={detectTextDirection(logNotes || '')} />
  <div className="flex items-center justify-end gap-2">
  <Button type="button" variant="secondary" onClick={() => { setShowAddLog(false); setEditingLog(null); }}>Cancel</Button>
  <Button type="button" variant="primary" onClick={editingLog ? handleUpdateLog : handleSubmitLog}>
@@ -385,8 +388,8 @@ const TaskDetailWorkspace: React.FC<{
  <div className="space-y-3">
  <Input label="Completion Date" type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} />
  <Input label="Hours Spent" type="number" min={0} step={0.5} value={completionHours} onChange={(e) => setCompletionHours(e.target.value)} placeholder="e.g. 2.5" />
- <Input label="Summary" type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} />
- <Textarea label="Notes" value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} />
+ <Input label={t("Summary", "Summary", "Summary")} type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} />
+ <Textarea label={t("Notes", "Notes", "Notes")} value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} />
  </div>
  <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-200">
  <Button type="button" variant="secondary" onClick={() => setCompleting(false)}>Cancel</Button>

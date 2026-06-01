@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState, useEffect } from 'react';
 import DirectionalText from '../DirectionalText';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
@@ -51,6 +52,8 @@ const COLUMNS: { status: TaskStatus; label: string }[] = [
 ];
 
 const todayStr = () => {
+  const { t, language } = usePersonalLanguage();
+
  const d = new Date();
  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
@@ -466,8 +469,8 @@ const TasksPanel: React.FC<{
  <StatBox label="Total Tasks" value={weekStats.total} />
  <StatBox label="Todo" value={weekStats.todo} />
  <StatBox label="Doing" value={weekStats.doing} />
- <StatBox label="Done" value={weekStats.done} />
- <StatBox label="Blocked" value={weekStats.blocked} />
+ <StatBox label={t("Done", "Done", "Done")} value={weekStats.done} />
+ <StatBox label={t("Blocked", "Blocked", "Blocked")} value={weekStats.blocked} />
  <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
  <StatBox label="Logged" value={formatHours(weekStats.actual)} />
  <StatBox label="Completion" value={weekStats.rate ? `${weekStats.rate}%` : '—'} subtitle={weekStats.total > 0 ? `${weekStats.done}/${weekStats.total}` : undefined} />
@@ -926,7 +929,7 @@ const WeeklyReviewSection: React.FC<{
 
  {/* Execution stats */}
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
- <StatBox label="Done" value={`${weekStats.done}/${weekStats.total}`} subtitle={`${weekStats.rate}% rate`} />
+ <StatBox label={t("Done", "Done", "Done")} value={`${weekStats.done}/${weekStats.total}`} subtitle={`${weekStats.rate}% rate`} />
  <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
  <StatBox label="Logged" value={formatHours(weekStats.actual)} />
  <StatBox label="Score" value={score || '—'} subtitle={score ? '/10' : undefined} />
@@ -988,7 +991,7 @@ const WeeklyReviewSection: React.FC<{
  <Input label="Score (0-10)" type="number" min={0} max={10} value={score} onChange={(e) => setScore(e.target.value)} />
  </div>
 
- <Textarea label="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="How did the week go overall?" />
+ <Textarea label={t("Summary", "Summary", "Summary")} value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="How did the week go overall?" />
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <Textarea label="What Worked" value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} placeholder="What went well this week?" />
