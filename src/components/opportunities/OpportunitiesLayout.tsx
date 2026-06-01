@@ -519,7 +519,7 @@ const OpportunitiesLayout: React.FC<{
   const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
-  const { t } = usePersonalLanguage();
+  const { t, language } = usePersonalLanguage();
 
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
   const [appSection, setAppSection] = useState<string>('');
@@ -859,7 +859,8 @@ const OpportunitiesLayout: React.FC<{
  [companies],
  );
  const noteCategoryMenu = useMemo(() => buildNoteCategoryMenu(noteCategories, smartNotes), [noteCategories, smartNotes]);
- const noteSidebarItems = useMemo<SidebarItem[]>(() => {
+  const noteSidebarItems = useMemo<SidebarItem[]>(() => {
+    const catLabel = selectedNoteCategorySlug;
  return [
  ...noteCategoryMenu.map((category) => ({
  id: category.slug,
@@ -883,7 +884,8 @@ const OpportunitiesLayout: React.FC<{
  })),
   { id: 'add-category', label: t('Category'), icon: Plus },
  ];
- }, [noteCategoryMenu, noteCategories]);
+  // language is intentionally included to re-memoize t() labels on toggle
+  }, [noteCategoryMenu, noteCategories, language]);
 
  const handleResetDemoData = () => {
   const confirmed = window.confirm(t('Reset Opportunities OS demo data to the original seed data?'));
@@ -1350,12 +1352,12 @@ const OpportunitiesLayout: React.FC<{
   const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost' && cIds.includes(d.companyId)).length;
   const messagesSent = messages.filter(m => m.companyId && cIds.includes(m.companyId)).length;
   const primaryStats = [
-  { label: t('Total'), value: totalCompanies, color: '' },
-  { label: t('Avg Fit Score'), value: avgFitScore, color: 'text-blue-600' },
-  { label: t('High Priority'), value: highPriority, color: 'text-amber-600' },
-  { label: t('People Connected'), value: peopleConnected, color: '' },
-  { label: t('Open Deals'), value: openDeals, color: 'text-emerald-600' },
-  { label: t('Messages Sent'), value: messagesSent, color: 'text-indigo-500' },
+   { label: t('crm.Total', 'Total'), value: totalCompanies, color: '' },
+   { label: t('crm.Avg Fit Score', 'Avg Fit Score'), value: avgFitScore, color: 'text-blue-600' },
+   { label: t('crm.High Priority', 'High Priority'), value: highPriority, color: 'text-amber-600' },
+   { label: t('crm.People Connected', 'People Connected'), value: peopleConnected, color: '' },
+   { label: t('crm.Open Deals', 'Open Deals'), value: openDeals, color: 'text-emerald-600' },
+   { label: t('crm.Messages Sent', 'Messages Sent'), value: messagesSent, color: 'text-indigo-500' },
   ];
   return (
   <>
@@ -1418,12 +1420,12 @@ const OpportunitiesLayout: React.FC<{
   }).length;
   const companiesConnected = new Set(people.map(p => p.companyId).filter(Boolean)).size;
   const peopleStats = [
-  { label: t('Total People'), value: totalPeople, color: '' },
-  { label: t('Decision Makers'), value: decisionMakers, color: 'text-violet-600' },
-  { label: t('High Relevance'), value: highRelevance, color: 'text-blue-600' },
-  { label: t('With Contact'), value: withContactMethod, color: 'text-emerald-600' },
-  { label: t('Follow-ups Due'), value: followUpsDue, color: 'text-amber-600' },
-  { label: t('Companies'), value: companiesConnected, color: '' },
+   { label: t('crm.Total People', 'Total People'), value: totalPeople, color: '' },
+   { label: t('crm.Decision Makers', 'Decision Makers'), value: decisionMakers, color: 'text-violet-600' },
+   { label: t('crm.High Relevance', 'High Relevance'), value: highRelevance, color: 'text-blue-600' },
+   { label: t('crm.With Contact', 'With Contact'), value: withContactMethod, color: 'text-emerald-600' },
+   { label: t('crm.Follow-ups Due', 'Follow-ups Due'), value: followUpsDue, color: 'text-amber-600' },
+   { label: t('crm.Companies', 'Companies'), value: companiesConnected, color: '' },
   ];
   return (
   <>
@@ -1502,12 +1504,12 @@ const OpportunitiesLayout: React.FC<{
   : 0;
   const needsAction = deals.filter(d => !d.nextAction || d.nextAction.trim() === '').length;
   const dealStats = [
-  { label: t('Total Deals'), value: totalDeals, color: '' },
-  { label: t('Open Deals'), value: openDeals, color: 'text-blue-600' },
-  { label: t('Won Deals'), value: wonDeals, color: 'text-emerald-600' },
-  { label: t('Pipeline Value'), value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
-  { label: t('Avg Probability'), value: `${avgProbability}%`, color: '' },
-  { label: t('Needs Action'), value: needsAction, color: 'text-violet-600' },
+   { label: t('crm.Total Deals', 'Total Deals'), value: totalDeals, color: '' },
+   { label: t('crm.Open Deals', 'Open Deals'), value: openDeals, color: 'text-blue-600' },
+   { label: t('crm.Won Deals', 'Won Deals'), value: wonDeals, color: 'text-emerald-600' },
+   { label: t('crm.Pipeline Value', 'Pipeline Value'), value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
+   { label: t('crm.Avg Probability', 'Avg Probability'), value: `${avgProbability}%`, color: '' },
+   { label: t('crm.Needs Action', 'Needs Action'), value: needsAction, color: 'text-violet-600' },
   ];
   return (
   <>

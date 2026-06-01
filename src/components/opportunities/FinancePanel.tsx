@@ -3,6 +3,7 @@ import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurch
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import DirectionalText from '../DirectionalText';
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 type FinanceTab = 'dashboard' | 'periods' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'ai_assistant';
 type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'recurring_income_review' | 'next_actions';
@@ -168,20 +169,21 @@ function FinancePanel({
   onBackToDesktop,
   section,
   financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
- financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
- projects, companies,
- onAddFinanceIncome, onUpdateFinanceIncome, onDeleteFinanceIncome,
- onAddFinanceExpense, onUpdateFinanceExpense, onDeleteFinanceExpense,
- onAddFinanceAllocationRule, onUpdateFinanceAllocationRule, onDeleteFinanceAllocationRule,
- onAddFinancePurchaseGoal, onUpdateFinancePurchaseGoal, onDeleteFinancePurchaseGoal,
- onAddFinanceInvestmentIdea, onUpdateFinanceInvestmentIdea, onDeleteFinanceInvestmentIdea,
- onAddFinanceInvestmentRule, onUpdateFinanceInvestmentRule, onDeleteFinanceInvestmentRule,
- onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
- financePeriods,
- onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
- financeRecurringRules,
- onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
+  financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
+  projects, companies,
+  onAddFinanceIncome, onUpdateFinanceIncome, onDeleteFinanceIncome,
+  onAddFinanceExpense, onUpdateFinanceExpense, onDeleteFinanceExpense,
+  onAddFinanceAllocationRule, onUpdateFinanceAllocationRule, onDeleteFinanceAllocationRule,
+  onAddFinancePurchaseGoal, onUpdateFinancePurchaseGoal, onDeleteFinancePurchaseGoal,
+  onAddFinanceInvestmentIdea, onUpdateFinanceInvestmentIdea, onDeleteFinanceInvestmentIdea,
+  onAddFinanceInvestmentRule, onUpdateFinanceInvestmentRule, onDeleteFinanceInvestmentRule,
+  onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
+  financePeriods,
+  onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
+  financeRecurringRules,
+  onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
 }: FinancePanelProps) {
+  const { t } = usePersonalLanguage();
   const [tab, setTab] = useState<FinanceTab>('dashboard');
   const [investTab, setInvestTab] = useState<InvestTab>('overview');
 

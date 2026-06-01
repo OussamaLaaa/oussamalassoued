@@ -18,6 +18,7 @@ import type {
  Task,
 } from '../../types/opportunities';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
 const textareaClass = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y';
