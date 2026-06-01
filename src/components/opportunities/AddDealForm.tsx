@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { Company, DealInput, Person } from '../../types/opportunities';
+import { detectTextDirection } from '../../utils/textDirection';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none';
 
@@ -74,11 +75,11 @@ const AddDealForm: React.FC<{
  </label>
  <label className="space-y-1 md:col-span-2">
  <span className="text-sm font-medium text-[#0f172a]">Problem</span>
- <textarea className={`${baseInput} min-h-20`} value={form.problem || ''} onChange={(e) => setField('problem', e.target.value)} />
+  <textarea className={`${baseInput} min-h-20`} dir={detectTextDirection(form.problem || '')} value={form.problem || ''} onChange={(e) => setField('problem', e.target.value)} />
  </label>
  <label className="space-y-1 md:col-span-2">
  <span className="text-sm font-medium text-[#0f172a]">Proposed Solution</span>
- <textarea className={`${baseInput} min-h-20`} value={form.proposedSolution || ''} onChange={(e) => setField('proposedSolution', e.target.value)} />
+  <textarea className={`${baseInput} min-h-20`} dir={detectTextDirection(form.proposedSolution || '')} value={form.proposedSolution || ''} onChange={(e) => setField('proposedSolution', e.target.value)} />
  </label>
  <label className="space-y-1">
  <span className="text-sm font-medium text-[#0f172a]">Value</span>
@@ -109,7 +110,7 @@ const AddDealForm: React.FC<{
  </label>
  <label className="space-y-1 md:col-span-2">
  <span className="text-sm font-medium text-[#0f172a]">Notes</span>
- <textarea className={`${baseInput} min-h-24`} value={form.notes || ''} onChange={(e) => setField('notes', e.target.value)} />
+  <textarea className={`${baseInput} min-h-24`} dir={detectTextDirection(form.notes || '')} value={form.notes || ''} onChange={(e) => setField('notes', e.target.value)} />
  </label>
  </div>
 

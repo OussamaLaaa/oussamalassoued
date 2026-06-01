@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
 import StatCard from '../ui/StatCard';
 import { toolbarButton, toolbarCount } from './Toolbar';
+import DirectionalText from '../DirectionalText';
 
 export interface MessageFilters {
   searchQuery: string;
@@ -325,7 +326,7 @@ const MessagesTable: React.FC<{
  )}
  </td>
  <td className="px-4 py-3 align-middle text-sm text-neutral-600 max-w-[240px] truncate">
- {message.replySummary || message.messageText || '—'}
+  <DirectionalText text={message.replySummary || message.messageText || '—'} className="text-sm text-neutral-600" />
  </td>
  <td className="px-4 py-3 align-middle">
  <div className="flex items-center justify-end gap-1">

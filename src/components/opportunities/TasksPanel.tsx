@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import DirectionalText from '../DirectionalText';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import RecurringTaskForm from './RecurringTaskForm';
@@ -117,16 +118,16 @@ const TaskCard: React.FC<{
  const actions = getActionsForStatus(task.status);
 
  return (
- <div className="rounded-lg border border-neutral-200 bg-white p-2.5 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => onClick(task)}>
- <div className="flex items-start justify-between gap-2">
- <div className="flex-1 min-w-0 overflow-hidden">
- <div className="flex items-center gap-1.5 flex-wrap">
- <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
- {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
- {task.category && <Badge variant="neutral">{task.category}</Badge>}
- </div>
- <div className="mt-1 font-medium text-black truncate">{task.title}</div>
- {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
+  <div className="rounded-lg border border-neutral-200 bg-white p-2.5 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => onClick(task)}>
+  <div className="flex items-start justify-between gap-2">
+  <div className="flex-1 min-w-0 overflow-hidden">
+  <div className="flex items-center gap-1.5 flex-wrap">
+  <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
+  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
+  {task.category && <Badge variant="neutral">{task.category}</Badge>}
+  </div>
+  <DirectionalText text={task.title} as="div" className="mt-1 font-medium text-black truncate" />
+  {task.description && <DirectionalText text={task.description} as="div" className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate" />}
  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-neutral-500">
  {task.estimatedMinutes != null && <span>Est {formatHours(task.estimatedMinutes)}</span>}
  {task.actualMinutes != null && <span>Act {formatHours(task.actualMinutes)}</span>}
@@ -667,16 +668,16 @@ const TasksPanel: React.FC<{
  ) : (
  <div className="space-y-2">
  {backlogTasks.map((task) => (
- <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => setSelectedTask(task)}>
- <div className="flex items-start justify-between gap-3">
- <div className="flex-1 min-w-0 overflow-hidden">
- <div className="flex items-center gap-1.5 flex-wrap">
- <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
- {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
- {task.category && <Badge variant="neutral">{task.category}</Badge>}
- </div>
- <div className="mt-1 font-medium text-black truncate">{task.title}</div>
- {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
+  <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => setSelectedTask(task)}>
+  <div className="flex items-start justify-between gap-3">
+  <div className="flex-1 min-w-0 overflow-hidden">
+  <div className="flex items-center gap-1.5 flex-wrap">
+  <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
+  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
+  {task.category && <Badge variant="neutral">{task.category}</Badge>}
+  </div>
+  <DirectionalText text={task.title} as="div" className="mt-1 font-medium text-black truncate" />
+  {task.description && <DirectionalText text={task.description} as="div" className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate" />}
  </div>
  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
  {task.status !== 'done' && (

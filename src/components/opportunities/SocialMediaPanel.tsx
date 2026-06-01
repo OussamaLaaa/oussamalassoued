@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 
 const SOCIAL_TABS = [
@@ -524,7 +526,7 @@ function PillarsView(props: PillarsViewProps) {
  <div className="min-w-0 flex-1">
  <div className="text-sm font-semibold text-neutral-900">{pillar.name}</div>
  <div className="text-xs text-neutral-500">/{pillar.slug}</div>
- {pillar.description && <div className="text-xs text-neutral-500 mt-1">{pillar.description}</div>}
+ {pillar.description && <DirectionalText text={pillar.description} as="div" className="text-xs text-neutral-500 mt-1" />}
  {pillar.targetAudience && <div className="text-xs text-neutral-500 mt-0.5">Audience: {pillar.targetAudience}</div>}
  {pillar.notes && <div className="text-xs text-neutral-500 mt-1">{pillar.notes}</div>}
  </div>
@@ -639,16 +641,16 @@ function IdeasView(props: IdeasViewProps) {
  <div className="flex items-start justify-between gap-3">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2">
- <span className="text-sm font-semibold text-neutral-900 truncate">{item.title}</span>
+          <DirectionalText text={item.title} as="span" className="text-sm font-semibold text-neutral-900 truncate" />
  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${priorityBadge(item.priority)}`}>{item.priority}</span>
  </div>
  <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
  <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.type}</span>
  {item.platformName && <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.platformName}</span>}
  {item.pillarName && <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium">{item.pillarName}</span>}
- {item.hook && <span className="italic text-neutral-400 truncate max-w-[200px]">"{item.hook}"</span>}
+ {item.hook && <DirectionalText text={`"${item.hook}"`} as="span" className="italic text-neutral-400 truncate max-w-[200px]" />}
  </div>
- {item.content && <div className="mt-1 text-xs text-neutral-500 truncate">{item.content}</div>}
+ {item.content && <DirectionalText text={item.content} as="div" className="mt-1 text-xs text-neutral-500 truncate" />}
  </div>
  <div className="flex gap-2 shrink-0">
  <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'drafted' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Draft</button>
@@ -863,14 +865,14 @@ function ProductionBoardView(props: ProductionBoardViewProps) {
  )}
  {items.map((item) => (
  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
- <div className="text-sm font-medium text-neutral-900 break-words">{item.title}</div>
- <div className="mt-1 flex flex-wrap gap-1">
- <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.type}</span>
- {item.platformName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.platformName}</span>}
- {item.pillarName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.pillarName}</span>}
- </div>
- {item.publishDate && <div className="mt-1 text-[10px] text-neutral-500">Publish: {formatDate(item.publishDate)}</div>}
- {item.hook && <div className="mt-1 text-[10px] text-neutral-500 truncate">"{item.hook}"</div>}
+<DirectionalText text={item.title} as="div" className="text-sm font-medium text-neutral-900 break-words" />
+          <div className="mt-1 flex flex-wrap gap-1">
+          <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.type}</span>
+          {item.platformName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.platformName}</span>}
+          {item.pillarName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.pillarName}</span>}
+          </div>
+          {item.publishDate && <div className="mt-1 text-[10px] text-neutral-500">Publish: {formatDate(item.publishDate)}</div>}
+          {item.hook && <DirectionalText text={`"${item.hook}"`} as="div" className="mt-1 text-[10px] text-neutral-500 truncate" />}
  <div className="mt-2 flex gap-1">
  <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
  <select
@@ -1352,11 +1354,11 @@ function ContentItemForm({ initial, socialPlatforms, contentPillars, projects, s
  <input value={assetUrl} onChange={(e) => setAssetUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
  </label>
  <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Hook</div>
- <input value={hook} onChange={(e) => setHook(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Hook</div>
+          <input value={hook} onChange={(e) => setHook(e.target.value)} dir={detectTextDirection(hook)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+          </label>
+          <label className="space-y-1.5">
+          <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</div>
  <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
  <option value="">None</option>
  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1377,17 +1379,17 @@ function ContentItemForm({ initial, socialPlatforms, contentPillars, projects, s
  </select>
  </label>
  <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content</div>
- <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={3} />
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content</div>
+  <textarea value={content} onChange={(e) => setContent(e.target.value)} dir={detectTextDirection(content)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={3} />
  </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Caption</div>
- <textarea value={caption} onChange={(e) => setCaption(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
- </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Caption</div>
+  <textarea value={caption} onChange={(e) => setCaption(e.target.value)} dir={detectTextDirection(caption)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} dir={detectTextDirection(notes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" rows={2} />
+  </label>
  </div>
  <div className="flex gap-2 mt-4">
  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>

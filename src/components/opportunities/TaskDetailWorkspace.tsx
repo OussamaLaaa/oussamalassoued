@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import Button from '../ui/Button';
@@ -188,7 +190,7 @@ const TaskDetailWorkspace: React.FC<{
  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
  {task.category && <Badge variant="neutral">{task.category}</Badge>}
  </div>
- <h2 className="text-base font-semibold text-black break-words">{task.title}</h2>
+ <DirectionalText text={task.title} as="h2" className="text-base font-semibold text-black break-words" />
  </div>
  <Button type="button" variant="ghost" size="sm" className="shrink-0 ml-2" onClick={onClose}>
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -217,7 +219,7 @@ const TaskDetailWorkspace: React.FC<{
  {task.description && (
  <div className="rounded-xl border border-neutral-200 bg-white p-3">
  <label className="text-xs font-medium text-neutral-600 mb-1 block">Description</label>
- <div className="text-sm text-black whitespace-pre-wrap break-words">{task.description}</div>
+  <DirectionalText text={task.description} as="div" className="text-sm text-black break-words" preserveWhitespace />
  </div>
  )}
  <div className="grid grid-cols-2 gap-3">
@@ -325,7 +327,7 @@ const TaskDetailWorkspace: React.FC<{
  {tab === 'notes' && (
  <div>
  {task.notes ? (
- <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-black whitespace-pre-wrap break-words">{task.notes}</div>
+  <DirectionalText text={task.notes} as="div" className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-black break-words" preserveWhitespace />
  ) : (
  <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
  <span className="font-medium text-neutral-500">No notes</span>
@@ -344,7 +346,7 @@ const TaskDetailWorkspace: React.FC<{
  <Input label="Minutes" type="number" min={1} value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} />
  </div>
  <Input label="Summary" type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
- <Textarea label="Notes" value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} />
+  <Textarea label="Notes" value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} dir={detectTextDirection(logNotes || '')} />
  <div className="flex items-center justify-end gap-2">
  <Button type="button" variant="secondary" onClick={() => { setShowAddLog(false); setEditingLog(null); }}>Cancel</Button>
  <Button type="button" variant="primary" onClick={editingLog ? handleUpdateLog : handleSubmitLog}>

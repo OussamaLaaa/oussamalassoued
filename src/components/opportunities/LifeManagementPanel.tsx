@@ -9,6 +9,8 @@ import type {
  LifeWorkoutType, LifeIntensity,
  LifePrayerStatus, LifeFamilyActionType, LifeFamilyActionStatus, LifePriority,
 } from '../../types/opportunities';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 
 const LIFE_TABS = [
@@ -362,7 +364,7 @@ function DashboardView(props: DashboardViewProps) {
  </div>
  {currentReview && (
  <div className="mt-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
- <span className="font-semibold text-neutral-900">Review:</span> {currentReview.summary || 'No summary'}
+  <span className="font-semibold text-neutral-900">Review:</span> <DirectionalText text={currentReview.summary || 'No summary'} as="span" />
  </div>
  )}
  </div>
@@ -415,19 +417,19 @@ function DashboardView(props: DashboardViewProps) {
  </div>
  </div>
 
- {currentReview?.nextWeekFocus && (
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Week Focus</h3>
- <div className="mt-2 text-sm text-neutral-700">{currentReview.nextWeekFocus}</div>
- </div>
- )}
+  {currentReview?.nextWeekFocus && (
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Week Focus</h3>
+  <DirectionalText text={currentReview.nextWeekFocus} as="div" className="mt-2 text-sm text-neutral-700" />
+  </div>
+  )}
 
- {currentReview?.neglectedArea && (
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Neglected Area</h3>
- <div className="mt-2 text-sm text-neutral-700">{currentReview.neglectedArea}</div>
- </div>
- )}
+  {currentReview?.neglectedArea && (
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Neglected Area</h3>
+  <DirectionalText text={currentReview.neglectedArea} as="div" className="mt-2 text-sm text-neutral-700" />
+  </div>
+  )}
 
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Reminder</h3>
@@ -513,11 +515,11 @@ function NutritionView(props: NutritionViewProps) {
  </label>
  <label className="space-y-1.5 md:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Food Description</div>
- <input value={form.foodDescription} onChange={(e) => setForm((p) => ({ ...p, foodDescription: e.target.value }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" placeholder="What did you eat?" />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <input value={form.foodDescription} onChange={(e) => setForm((p) => ({ ...p, foodDescription: e.target.value }))} dir={detectTextDirection(form.foodDescription)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" placeholder="What did you eat?" />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} dir={detectTextDirection(form.notes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
  <div className="md:col-span-3 flex gap-2">
  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : editingId ? 'Update' : 'Add'}</button>
@@ -538,8 +540,8 @@ function NutritionView(props: NutritionViewProps) {
  {log.qualityRating ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${qualityBadge(log.qualityRating)}`}>{log.qualityRating}</span> : null}
  {log.energyLevel ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${energyBadge(log.energyLevel)}`}>{log.energyLevel}</span> : null}
  </div>
- {log.foodDescription ? <div className="mt-1 text-sm text-neutral-700">{log.foodDescription}</div> : null}
- {log.notes ? <div className="mt-0.5 text-xs text-neutral-500">{log.notes}</div> : null}
+  {log.foodDescription ? <DirectionalText text={log.foodDescription} as="div" className="mt-1 text-sm text-neutral-700" /> : null}
+  {log.notes ? <DirectionalText text={log.notes} as="div" className="mt-0.5 text-xs text-neutral-500" /> : null}
  </div>
  <div className="flex gap-2 shrink-0">
  <button type="button" onClick={() => startEdit(log)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
@@ -637,19 +639,19 @@ function FitnessView(props: FitnessViewProps) {
  </label>
  <label className="space-y-1.5 md:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Exercises</div>
- <textarea value={form.exercises} onChange={(e) => setForm((p) => ({ ...p, exercises: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Body Notes</div>
- <textarea value={form.bodyNotes} onChange={(e) => setForm((p) => ({ ...p, bodyNotes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Recovery Notes</div>
- <textarea value={form.recoveryNotes} onChange={(e) => setForm((p) => ({ ...p, recoveryNotes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <textarea value={form.exercises} onChange={(e) => setForm((p) => ({ ...p, exercises: e.target.value }))} dir={detectTextDirection(form.exercises)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Body Notes</div>
+  <textarea value={form.bodyNotes} onChange={(e) => setForm((p) => ({ ...p, bodyNotes: e.target.value }))} dir={detectTextDirection(form.bodyNotes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Recovery Notes</div>
+  <textarea value={form.recoveryNotes} onChange={(e) => setForm((p) => ({ ...p, recoveryNotes: e.target.value }))} dir={detectTextDirection(form.recoveryNotes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} dir={detectTextDirection(form.notes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
  <div className="md:col-span-3 flex gap-2">
  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : editingId ? 'Update' : 'Add'}</button>
@@ -671,9 +673,9 @@ function FitnessView(props: FitnessViewProps) {
  {log.intensity ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${intensityBadge(log.intensity)}`}>{log.intensity}</span> : null}
  </div>
  <div className="text-xs text-neutral-500 mt-0.5">{formatDate(log.workoutDate)}</div>
- {log.exercises ? <div className="mt-1 text-sm text-neutral-700">{log.exercises}</div> : null}
- {log.bodyNotes ? <div className="mt-0.5 text-xs text-neutral-500">{log.bodyNotes}</div> : null}
- {log.recoveryNotes ? <div className="mt-0.5 text-xs text-neutral-500">Recovery: {log.recoveryNotes}</div> : null}
+  {log.exercises ? <DirectionalText text={log.exercises} as="div" className="mt-1 text-sm text-neutral-700" /> : null}
+  {log.bodyNotes ? <DirectionalText text={log.bodyNotes} as="div" className="mt-0.5 text-xs text-neutral-500" /> : null}
+  {log.recoveryNotes ? <DirectionalText text={`Recovery: ${log.recoveryNotes}`} as="div" className="mt-0.5 text-xs text-neutral-500" /> : null}
  </div>
  <div className="flex gap-2 shrink-0">
  <button type="button" onClick={() => startEdit(log)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
@@ -781,15 +783,15 @@ function DeenView(props: DeenViewProps) {
  </label>
  <label className="space-y-1.5 md:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Charity / Sadaqah Notes</div>
- <textarea value={form.charityNotes} onChange={(e) => setForm((p) => ({ ...p, charityNotes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Reflection</div>
- <textarea value={form.reflection} onChange={(e) => setForm((p) => ({ ...p, reflection: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <textarea value={form.charityNotes} onChange={(e) => setForm((p) => ({ ...p, charityNotes: e.target.value }))} dir={detectTextDirection(form.charityNotes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Reflection</div>
+  <textarea value={form.reflection} onChange={(e) => setForm((p) => ({ ...p, reflection: e.target.value }))} dir={detectTextDirection(form.reflection)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} dir={detectTextDirection(form.notes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
 
  <div className="md:col-span-3 flex gap-2">
@@ -878,23 +880,23 @@ function FamilyView(props: FamilyViewProps) {
  </label>
  <label className="space-y-1.5">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Person Name</div>
- <input value={form.personName} onChange={(e) => setForm((p) => ({ ...p, personName: e.target.value }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Description</div>
- <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Outcome</div>
- <textarea value={form.outcome} onChange={(e) => setForm((p) => ({ ...p, outcome: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</div>
- <textarea value={form.nextAction} onChange={(e) => setForm((p) => ({ ...p, nextAction: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5 md:col-span-3">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <input value={form.personName} onChange={(e) => setForm((p) => ({ ...p, personName: e.target.value }))} dir={detectTextDirection(form.personName)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400" />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Description</div>
+  <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} dir={detectTextDirection(form.description)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Outcome</div>
+  <textarea value={form.outcome} onChange={(e) => setForm((p) => ({ ...p, outcome: e.target.value }))} dir={detectTextDirection(form.outcome)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</div>
+  <textarea value={form.nextAction} onChange={(e) => setForm((p) => ({ ...p, nextAction: e.target.value }))} dir={detectTextDirection(form.nextAction)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5 md:col-span-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} dir={detectTextDirection(form.notes)} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
  <div className="md:col-span-3 flex gap-2">
  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : editingId ? 'Update' : 'Add'}</button>
@@ -911,15 +913,15 @@ function FamilyView(props: FamilyViewProps) {
  <div key={action.id} className="rounded-xl border border-neutral-200 bg-white p-4 flex items-start justify-between gap-3">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2 flex-wrap">
- <span className="text-sm font-semibold text-neutral-900">{action.title}</span>
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${familyTypeBadge(action.type)}`}>{action.type}</span>
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${familyStatusBadge(action.status)}`}>{action.status}</span>
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(action.priority)}`}>{action.priority}</span>
- </div>
- {action.personName ? <div className="text-xs text-neutral-500 mt-1">{action.personName}</div> : null}
- {action.description ? <div className="text-sm text-neutral-700 mt-1">{action.description}</div> : null}
- {action.outcome ? <div className="text-xs text-neutral-500 mt-0.5">Outcome: {action.outcome}</div> : null}
- {action.nextAction ? <div className="text-xs text-neutral-500 mt-0.5">Next: {action.nextAction}</div> : null}
+  <DirectionalText text={action.title} as="span" className="text-sm font-semibold text-neutral-900" />
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${familyTypeBadge(action.type)}`}>{action.type}</span>
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${familyStatusBadge(action.status)}`}>{action.status}</span>
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(action.priority)}`}>{action.priority}</span>
+  </div>
+  {action.personName ? <DirectionalText text={action.personName} as="div" className="text-xs text-neutral-500 mt-1" /> : null}
+  {action.description ? <DirectionalText text={action.description} as="div" className="text-sm text-neutral-700 mt-1" /> : null}
+  {action.outcome ? <DirectionalText text={`Outcome: ${action.outcome}`} as="div" className="text-xs text-neutral-500 mt-0.5" /> : null}
+  {action.nextAction ? <DirectionalText text={`Next: ${action.nextAction}`} as="div" className="text-xs text-neutral-500 mt-0.5" /> : null}
  </div>
  <div className="flex gap-2 shrink-0">
  {action.status !== 'done' ? <button type="button" onClick={() => markDone(action)} className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">Done</button> : null}
@@ -1023,17 +1025,17 @@ function WeeklyReviewView(props: WeeklyReviewViewProps) {
  <h3 className="text-sm font-semibold text-neutral-900 mb-1">Review Summary</h3>
  <p className="text-xs text-neutral-500 mb-4">Week of {formatDate(props.selectedWeekStart)}</p>
  <div className="grid gap-4 md:grid-cols-2">
- {existingReview.summary && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700 md:col-span-2"><span className="font-semibold text-neutral-900">Summary:</span> {existingReview.summary}</div>}
- {existingReview.healthReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Health:</span> {existingReview.healthReview}</div>}
- {existingReview.nutritionReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Nutrition:</span> {existingReview.nutritionReview}</div>}
- {existingReview.fitnessReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Fitness:</span> {existingReview.fitnessReview}</div>}
- {existingReview.deenReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Deen:</span> {existingReview.deenReview}</div>}
- {existingReview.familyReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Family:</span> {existingReview.familyReview}</div>}
- {existingReview.whatWorked && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">What Worked:</span> {existingReview.whatWorked}</div>}
- {existingReview.whatFailed && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">What Failed:</span> {existingReview.whatFailed}</div>}
- {existingReview.neglectedArea && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Neglected:</span> {existingReview.neglectedArea}</div>}
- {existingReview.nextWeekFocus && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Next Focus:</span> {existingReview.nextWeekFocus}</div>}
- {existingReview.notes && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700 md:col-span-2"><span className="font-semibold text-neutral-900">Notes:</span> {existingReview.notes}</div>}
+  {existingReview.summary && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700 md:col-span-2"><span className="font-semibold text-neutral-900">Summary:</span> <DirectionalText text={existingReview.summary} as="span" /></div>}
+  {existingReview.healthReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Health:</span> <DirectionalText text={existingReview.healthReview} as="span" /></div>}
+  {existingReview.nutritionReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Nutrition:</span> <DirectionalText text={existingReview.nutritionReview} as="span" /></div>}
+  {existingReview.fitnessReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Fitness:</span> <DirectionalText text={existingReview.fitnessReview} as="span" /></div>}
+  {existingReview.deenReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Deen:</span> <DirectionalText text={existingReview.deenReview} as="span" /></div>}
+  {existingReview.familyReview && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Family:</span> <DirectionalText text={existingReview.familyReview} as="span" /></div>}
+  {existingReview.whatWorked && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">What Worked:</span> <DirectionalText text={existingReview.whatWorked} as="span" /></div>}
+  {existingReview.whatFailed && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">What Failed:</span> <DirectionalText text={existingReview.whatFailed} as="span" /></div>}
+  {existingReview.neglectedArea && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Neglected:</span> <DirectionalText text={existingReview.neglectedArea} as="span" /></div>}
+  {existingReview.nextWeekFocus && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700"><span className="font-semibold text-neutral-900">Next Focus:</span> <DirectionalText text={existingReview.nextWeekFocus} as="span" /></div>}
+  {existingReview.notes && <div className="rounded-md bg-neutral-50 p-3 text-sm text-neutral-700 md:col-span-2"><span className="font-semibold text-neutral-900">Notes:</span> <DirectionalText text={existingReview.notes} as="span" /></div>}
  </div>
  </div>
 
@@ -1042,43 +1044,43 @@ function WeeklyReviewView(props: WeeklyReviewViewProps) {
  <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-3">
  <label className="space-y-1.5 md:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</div>
- <textarea value={form.summary || ''} onChange={(e) => setForm((p) => ({ ...p, summary: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Health Review</div>
- <textarea value={form.healthReview || ''} onChange={(e) => setForm((p) => ({ ...p, healthReview: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Nutrition Review</div>
- <textarea value={form.nutritionReview || ''} onChange={(e) => setForm((p) => ({ ...p, nutritionReview: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Fitness Review</div>
- <textarea value={form.fitnessReview || ''} onChange={(e) => setForm((p) => ({ ...p, fitnessReview: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Deen Review</div>
- <textarea value={form.deenReview || ''} onChange={(e) => setForm((p) => ({ ...p, deenReview: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Family Review</div>
- <textarea value={form.familyReview || ''} onChange={(e) => setForm((p) => ({ ...p, familyReview: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What Worked</div>
- <textarea value={form.whatWorked || ''} onChange={(e) => setForm((p) => ({ ...p, whatWorked: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What Failed / Challenges</div>
- <textarea value={form.whatFailed || ''} onChange={(e) => setForm((p) => ({ ...p, whatFailed: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Neglected Area</div>
- <textarea value={form.neglectedArea || ''} onChange={(e) => setForm((p) => ({ ...p, neglectedArea: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
- </label>
- <label className="space-y-1.5">
- <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Week Focus</div>
- <textarea value={form.nextWeekFocus || ''} onChange={(e) => setForm((p) => ({ ...p, nextWeekFocus: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <textarea value={form.summary || ''} onChange={(e) => setForm((p) => ({ ...p, summary: e.target.value }))} dir={detectTextDirection(form.summary || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Health Review</div>
+  <textarea value={form.healthReview || ''} onChange={(e) => setForm((p) => ({ ...p, healthReview: e.target.value }))} dir={detectTextDirection(form.healthReview || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Nutrition Review</div>
+  <textarea value={form.nutritionReview || ''} onChange={(e) => setForm((p) => ({ ...p, nutritionReview: e.target.value }))} dir={detectTextDirection(form.nutritionReview || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Fitness Review</div>
+  <textarea value={form.fitnessReview || ''} onChange={(e) => setForm((p) => ({ ...p, fitnessReview: e.target.value }))} dir={detectTextDirection(form.fitnessReview || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Deen Review</div>
+  <textarea value={form.deenReview || ''} onChange={(e) => setForm((p) => ({ ...p, deenReview: e.target.value }))} dir={detectTextDirection(form.deenReview || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Family Review</div>
+  <textarea value={form.familyReview || ''} onChange={(e) => setForm((p) => ({ ...p, familyReview: e.target.value }))} dir={detectTextDirection(form.familyReview || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What Worked</div>
+  <textarea value={form.whatWorked || ''} onChange={(e) => setForm((p) => ({ ...p, whatWorked: e.target.value }))} dir={detectTextDirection(form.whatWorked || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What Failed / Challenges</div>
+  <textarea value={form.whatFailed || ''} onChange={(e) => setForm((p) => ({ ...p, whatFailed: e.target.value }))} dir={detectTextDirection(form.whatFailed || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Neglected Area</div>
+  <textarea value={form.neglectedArea || ''} onChange={(e) => setForm((p) => ({ ...p, neglectedArea: e.target.value }))} dir={detectTextDirection(form.neglectedArea || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  </label>
+  <label className="space-y-1.5">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Week Focus</div>
+  <textarea value={form.nextWeekFocus || ''} onChange={(e) => setForm((p) => ({ ...p, nextWeekFocus: e.target.value }))} dir={detectTextDirection(form.nextWeekFocus || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
  <label className="space-y-1.5">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Life Score</div>
@@ -1110,7 +1112,7 @@ function WeeklyReviewView(props: WeeklyReviewViewProps) {
  </label>
  <label className="space-y-1.5 md:col-span-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
- <textarea value={form.notes || ''} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
+  <textarea value={form.notes || ''} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} dir={detectTextDirection(form.notes || '')} className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-400" rows={2} />
  </label>
  <div className="md:col-span-3 flex gap-2">
  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Update'}</button>

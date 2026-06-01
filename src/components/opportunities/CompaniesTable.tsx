@@ -249,7 +249,7 @@ const CompaniesTable: React.FC<{
   <StatusBadge status={company.status} />
   </td>
   <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
-  <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
+   <div className="max-w-[180px] truncate"><DirectionalText text={company.nextAction || '—'} /></div>
   </td>
   <td className="px-4 py-3.5 align-top">
   <div className="flex items-center justify-end gap-1">

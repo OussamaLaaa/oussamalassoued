@@ -5,6 +5,7 @@ import Badge from '../ui/Badge';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
+import DirectionalText from '../DirectionalText';
 
 export interface DealFilters {
   searchQuery: string;
@@ -166,7 +167,7 @@ const DealsTable: React.FC<{
                   <div className="min-w-0">
                     <div className="font-medium text-neutral-900">{d.servicePackage || 'Untitled Deal'}</div>
                     {(d.problem || d.proposedSolution) && (
-                      <div className="mt-0.5 text-xs text-neutral-500 max-w-[200px] truncate">{d.problem || d.proposedSolution}</div>
+                      <div className="mt-0.5 text-xs text-neutral-500 max-w-[200px] truncate"><DirectionalText text={d.problem || d.proposedSolution} /></div>
                     )}
                   </div>
                 </td>
@@ -177,7 +178,7 @@ const DealsTable: React.FC<{
                 <td className="px-4 py-3.5 align-top">{badgeForStage(d.stage)}</td>
                 <td className="px-4 py-3.5 align-top">{badgeForProbability(d.probability)}</td>
                 <td className="px-4 py-3.5 align-top text-right font-semibold text-neutral-900 tabular-nums">{d.value != null ? `${d.value} ${d.currency || ''}` : <span className="text-neutral-300">—</span>}</td>
-                <td className="px-4 py-3.5 align-top text-sm text-neutral-700 max-w-[180px] truncate">{d.nextAction || <span className="text-neutral-300">—</span>}</td>
+                <td className="px-4 py-3.5 align-top text-sm text-neutral-700 max-w-[180px] truncate"><DirectionalText text={d.nextAction || '—'} className="text-sm text-neutral-700" /></td>
                 <td className="px-4 py-3.5 align-top">
                   <div className="flex items-center justify-end gap-1">
                     {onEdit && (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DirectionalText from '../DirectionalText';
 import { Button, Badge } from '../ui';
 import type {
  Company, Person, Project,
@@ -514,8 +515,8 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  <div key={item.id} className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="flex items-start justify-between gap-2">
  <div className="min-w-0">
- <h5 className="text-sm font-semibold text-neutral-900">{item.title}</h5>
- <p className="mt-1 text-sm text-neutral-500">{item.content || 'No content'}</p>
+<DirectionalText text={item.title} as="h5" className="text-sm font-semibold text-neutral-900" />
+  <DirectionalText text={item.content || 'No content'} as="p" className="mt-1 text-sm text-neutral-500" />
  </div>
  <Button type="button" variant="danger" size="sm" onClick={() => onDeleteStrategyItem(item.id)}>Delete</Button>
  </div>
@@ -545,9 +546,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  {dueGoals.length === 0
  ? <p className="text-sm text-neutral-500">No overdue goals.</p>
  : dueGoals.map((g) => (
- <div key={g.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-sm text-neutral-700">
- <div className="font-medium">{g.title}</div>
- <div className="text-xs text-neutral-500">Target: {g.targetDate?.slice(0, 10)}</div>
+  <div key={g.id} className="rounded-lg border border-neutral-200 bg-neutral-50 p-2.5 text-sm text-neutral-700">
+  <DirectionalText text={g.title} as="div" className="font-medium" />
+  <div className="text-xs text-neutral-500">Target: {g.targetDate?.slice(0, 10)}</div>
  </div>
  ))}
  </div>
@@ -558,9 +559,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  {dueDecisions.length === 0
  ? <p className="text-sm text-neutral-500">No due decisions.</p>
  : dueDecisions.map((d) => (
- <div key={d.id} className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-sm text-red-700">
- <div className="font-medium">{d.title}</div>
- <div className="text-xs">Review: {d.reviewDate?.slice(0, 10)}</div>
+  <div key={d.id} className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-sm text-red-700">
+  <DirectionalText text={d.title} as="div" className="font-medium" />
+  <div className="text-xs">Review: {d.reviewDate?.slice(0, 10)}</div>
  </div>
  ))}
  </div>
@@ -571,9 +572,9 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  {dueExperiments.length === 0
  ? <p className="text-sm text-neutral-500">No experiments past end date.</p>
  : dueExperiments.map((e) => (
- <div key={e.id} className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-700">
- <div className="font-medium">{e.title}</div>
- <div className="text-xs">Ended: {e.endDate?.slice(0, 10)}</div>
+  <div key={e.id} className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-700">
+  <DirectionalText text={e.title} as="div" className="font-medium" />
+  <div className="text-xs">Ended: {e.endDate?.slice(0, 10)}</div>
  </div>
  ))}
  </div>

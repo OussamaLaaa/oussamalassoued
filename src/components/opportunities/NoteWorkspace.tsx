@@ -1,5 +1,6 @@
 import React from 'react';
 import type { NoteAttachment, SmartNote } from '../../types/opportunities';
+import DirectionalText from '../DirectionalText';
 
 const badgeClass = (kind?: string) => {
  const value = String(kind || '').toLowerCase();
@@ -46,8 +47,8 @@ const NoteWorkspace: React.FC<{
  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${badgeClass(note.priority)}`}>{note.priority}</span>
  {note.categoryName ? <span className="rounded-full border border-[#dbeafe] bg-[#eff6ff] px-3 py-1 text-xs font-medium text-[#1d4ed8]">{note.categoryName}</span> : null}
  </div>
- <h3 className="mt-3 text-2xl font-semibold text-[#0f172a]">{note.title}</h3>
- {note.source ? <p className="mt-2 text-sm text-[#64748b]">Source: {note.source}</p> : null}
+  <DirectionalText text={note.title} as="h3" className="mt-3 text-2xl font-semibold text-[#0f172a]" />
+  {note.source ? <DirectionalText text={`Source: ${note.source}`} as="p" className="mt-2 text-sm text-[#64748b]" /> : null}
  </div>
  <div className="flex flex-wrap justify-end gap-2">
  <button type="button" onClick={onBack} className="rounded-md border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0f172a] hover:bg-[#f8fafc]">
@@ -62,7 +63,7 @@ const NoteWorkspace: React.FC<{
  </div>
  </div>
 
- {note.content ? <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm leading-6 text-[#334155] whitespace-pre-wrap">{note.content}</div> : null}
+  {note.content ? <DirectionalText text={note.content} as="div" className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4 text-sm leading-6 text-[#334155] whitespace-pre-wrap" preserveWhitespace /> : null}
 
  {linkedItems.length > 0 ? (
  <div className="space-y-2">
@@ -70,7 +71,7 @@ const NoteWorkspace: React.FC<{
  <div className="flex flex-wrap gap-2">
  {linkedItems.map((item) => (
  <span key={`${item.label}-${item.value}`} className="rounded-full border border-[#e5e7eb] bg-[#fafafa] px-3 py-1 text-xs text-[#475569]">
- <span className="font-medium text-[#0f172a]">{item.label}:</span> {item.value}
+  <span className="font-medium text-[#0f172a]">{item.label}:</span> <DirectionalText text={item.value} as="span" />
  </span>
  ))}
  </div>
@@ -99,7 +100,7 @@ const NoteWorkspace: React.FC<{
  <div key={attachment.id} className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
  <div className="flex items-start justify-between gap-3">
  <div>
- <div className="text-sm font-medium text-[#0f172a]">{attachment.title || attachment.url}</div>
+  <DirectionalText text={attachment.title || attachment.url} as="div" className="text-sm font-medium text-[#0f172a]" />
  <div className="mt-1 text-xs uppercase tracking-[0.12em] text-[#64748b]">{attachment.type}</div>
  </div>
  <div className="flex gap-2">
@@ -114,7 +115,7 @@ const NoteWorkspace: React.FC<{
  <a href={attachment.url} target="_blank" rel="noreferrer" className="mt-3 block break-all text-sm text-[#2563eb] hover:underline">
  {attachment.url}
  </a>
- {attachment.notes ? <p className="mt-2 text-sm text-[#64748b]">{attachment.notes}</p> : null}
+  {attachment.notes ? <DirectionalText text={attachment.notes} as="p" className="mt-2 text-sm text-[#64748b]" /> : null}
  </div>
  ))}
  </div>

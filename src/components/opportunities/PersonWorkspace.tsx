@@ -8,6 +8,8 @@ import StatusBadge from './StatusBadge';
 import OpportunityModal from './OpportunityModal';
 import PersonContactMethodForm from './PersonContactMethodForm';
 import { ContactLink, getContactHref } from './contactHelpers';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 
 const tabs = ['overview', 'contact_methods', 'messages', 'deals', 'notes'] as const;
 type PersonWorkspaceTab = (typeof tabs)[number];
@@ -375,7 +377,7 @@ const PersonWorkspace: React.FC<Props> = ({
  {method.isPrimary ? <Badge variant="neutral">Primary</Badge> : null}
  </div>
  <div className="text-sm text-neutral-700 break-words">{method.value}</div>
- {method.notes ? <div className="text-xs text-neutral-500">{method.notes}</div> : null}
+  {method.notes ? <DirectionalText text={method.notes} as="div" className="text-xs text-neutral-500" /> : null}
  </div>
  <div className="flex flex-wrap gap-1">
  <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenContactMethod(method)} className="text-neutral-600">Open</Button>
@@ -418,7 +420,7 @@ const PersonWorkspace: React.FC<Props> = ({
  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
  <div>
  <div className={sectionLabelClass}>Summary</div>
- <div className="mt-1 text-sm text-neutral-700 break-words">{message.messageText || message.replySummary || '—'}</div>
+  <div className="mt-1 text-sm text-neutral-700 break-words"><DirectionalText text={message.messageText || message.replySummary || '—'} /></div>
  </div>
  <div>
  <div className={sectionLabelClass}>Follow-up</div>
@@ -459,11 +461,11 @@ const PersonWorkspace: React.FC<Props> = ({
  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
  <div>
  <div className={sectionLabelClass}>Problem</div>
- <div className="mt-1 text-sm text-neutral-700 break-words">{deal.problem || '—'}</div>
- </div>
- <div>
- <div className={sectionLabelClass}>Next Action</div>
- <div className="mt-1 text-sm text-neutral-700 break-words">{deal.nextAction || '—'}</div>
+  <div className="mt-1 text-sm text-neutral-700 break-words"><DirectionalText text={deal.problem || '—'} /></div>
+  </div>
+  <div>
+  <div className={sectionLabelClass}>Next Action</div>
+  <div className="mt-1 text-sm text-neutral-700 break-words"><DirectionalText text={deal.nextAction || '—'} /></div>
  </div>
  </div>
  </div>
@@ -477,12 +479,13 @@ const PersonWorkspace: React.FC<Props> = ({
  <div className="space-y-4">
  {notesError ? <div className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">{notesError}</div> : null}
  <div className={cardClass}>
- <textarea
- className="min-h-[220px] w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
- value={notesDraft}
- onChange={(event) => setNotesDraft(event.target.value)}
- placeholder="Write notes about this person..."
- />
+   <textarea
+    dir={detectTextDirection(notesDraft)}
+    className="min-h-[220px] w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+    value={notesDraft}
+    onChange={(event) => setNotesDraft(event.target.value)}
+    placeholder="Write notes about this person..."
+   />
  <div className="mt-3 flex items-center justify-end gap-3">
  <Button type="button" variant="primary" size="sm" onClick={handleSaveNotes} disabled={notesSaving}>
  {notesSaving ? 'Saving...' : 'Save Notes'}

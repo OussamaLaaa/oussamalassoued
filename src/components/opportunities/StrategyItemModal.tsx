@@ -1,4 +1,5 @@
 import React from 'react';
+import { detectTextDirection } from '../../utils/textDirection';
 import type {
  StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput,
  StrategyGoal, StrategyPlan, StrategyTactic, StrategyExperiment, StrategyDecision,
@@ -73,7 +74,7 @@ const ItemModal: React.FC<Props> = ({
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
  <Field label="Title" required>
- <input value={goalForm.title || ''} onChange={(e) => setGoalForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
+  <input value={goalForm.title || ''} onChange={(e) => setGoalForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" dir={detectTextDirection(goalForm.title || '')} required />
  </Field>
  <Field label="Category">
  <select value={goalForm.category || 'career'} onChange={(e) => setGoalForm((f) => ({ ...f, category: e.target.value as StrategySection }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
@@ -119,7 +120,7 @@ const ItemModal: React.FC<Props> = ({
  </Field>
  </div>
  <Field label="Description">
- <textarea value={goalForm.description || ''} onChange={(e) => setGoalForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
+  <textarea value={goalForm.description || ''} onChange={(e) => setGoalForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" dir={detectTextDirection(goalForm.description || '')} />
  </Field>
  </div>
  )}

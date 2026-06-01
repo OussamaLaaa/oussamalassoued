@@ -24,6 +24,8 @@ import CompanyResearchPanel from './CompanyResearchPanel';
 import PersonWorkspace from './PersonWorkspace';
 import LinkExistingPersonDialog from './LinkExistingPersonDialog';
 import { ContactLink, getContactHref } from './contactHelpers';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 
 interface Props {
  companyId: string;
@@ -722,7 +724,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   {company.notes && (
   <div className="rounded-xl border border-neutral-200 bg-white p-4">
   <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
-  <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words">{company.notes}</p>
+   <DirectionalText text={company.notes} as="p" preserveWhitespace className="text-sm text-neutral-700" />
   </div>
   )}
   </div>
@@ -905,19 +907,19 @@ const CompanyWorkspace: React.FC<Props> = ({
  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
  <div>
  <p className="text-xs font-medium text-neutral-500">Problem Description</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.problemDescription || '—'}</p>
+          <DirectionalText text={profile.problemDescription || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Current Situation</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.currentSituation || '—'}</p>
+          <DirectionalText text={profile.currentSituation || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Business Impact</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.businessImpact || '—'}</p>
+          <DirectionalText text={profile.businessImpact || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Proposed Solution</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.proposedSolution || '—'}</p>
+          <DirectionalText text={profile.proposedSolution || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Service Angle</p>
@@ -932,7 +934,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  {profile.notes && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Notes</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.notes}</p>
+          <DirectionalText text={profile.notes} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  </div>
@@ -981,13 +983,13 @@ const CompanyWorkspace: React.FC<Props> = ({
  {script.goal && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Goal</p>
- <p className="mt-1 text-sm text-neutral-700">{script.goal}</p>
+  <DirectionalText text={script.goal} as="p" className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  {script.hook && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Hook</p>
- <p className="mt-1 text-sm text-neutral-700">{script.hook}</p>
+  <DirectionalText text={script.hook} as="p" className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  {script.messageBody && (
@@ -996,7 +998,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Message Body</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.messageBody!))} className="text-neutral-500 text-xs">Copy Message Body</Button>
  </div>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.messageBody}</p>
+  <DirectionalText text={script.messageBody} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  {script.callScript && (
@@ -1005,13 +1007,13 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Call Script</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.callScript!))} className="text-neutral-500 text-xs">Copy Call Script</Button>
  </div>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.callScript}</p>
+  <DirectionalText text={script.callScript} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  {script.objectionHandling && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Objection Handling</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.objectionHandling}</p>
+  <DirectionalText text={script.objectionHandling} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  {script.followUpMessage && (
@@ -1020,7 +1022,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Follow-up Message</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.followUpMessage!))} className="text-neutral-500 text-xs">Copy Follow-up Message</Button>
  </div>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.followUpMessage}</p>
+  <DirectionalText text={script.followUpMessage} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  </div>
@@ -1028,7 +1030,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  {script.notes && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Notes</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap">{script.notes}</p>
+  <DirectionalText text={script.notes} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
  </div>
  )}
  </div>
@@ -1073,7 +1075,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <td className="px-3 py-3 text-neutral-700">{msg.messageType || '—'}</td>
  <td className="px-3 py-3"><StatusBadge status={msg.replyStatus} /></td>
  <td className="px-3 py-3 text-neutral-700">{msg.nextFollowUpDate || '—'}</td>
- <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.messageText || msg.replySummary || '—'}</td>
+  <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate"><DirectionalText text={msg.messageText || msg.replySummary || '—'} className="text-neutral-700" /></td>
  <td className="px-3 py-3">
  <div className="flex justify-end gap-1">
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditMessage(msg))} className="text-neutral-600">Edit</Button>
@@ -1119,8 +1121,8 @@ const CompanyWorkspace: React.FC<Props> = ({
  <td className="px-3 py-3"><StatusBadge status={deal.stage as string} /></td>
  <td className="px-3 py-3 text-neutral-700">{typeof deal.probability === 'number' ? `${deal.probability}%` : '—'}</td>
  <td className="px-3 py-3 text-neutral-700">{deal.value ? `${deal.currency || '$'}${deal.value}` : '—'}</td>
- <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{deal.problem || '—'}</td>
- <td className="px-3 py-3 text-neutral-700">{deal.nextAction || '—'}</td>
+  <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate"><DirectionalText text={deal.problem || '—'} className="text-neutral-700" /></td>
+  <td className="px-3 py-3 text-neutral-700"><DirectionalText text={deal.nextAction || '—'} className="text-neutral-700" /></td>
  <td className="px-3 py-3">
  <div className="flex justify-end gap-1">
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditDeal(deal))} className="text-neutral-600">Edit</Button>
@@ -1143,12 +1145,13 @@ const CompanyWorkspace: React.FC<Props> = ({
  <div className="rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
  )}
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <textarea
- className="w-full min-h-[200px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none"
- value={notesDraft}
- onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
- placeholder="Write notes about this company..."
- />
+   <textarea
+    dir={detectTextDirection(notesDraft)}
+    className="w-full min-h-[200px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none"
+    value={notesDraft}
+    onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
+    placeholder="Write notes about this company..."
+   />
  <div className="mt-3 flex items-center justify-end gap-3">
  {notesSaved && <span className="text-xs text-emerald-600">Saved</span>}
  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(handleSaveNotes)} disabled={notesSaving}>

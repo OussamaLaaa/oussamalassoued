@@ -1,4 +1,5 @@
 import React from 'react';
+import DirectionalText from '../DirectionalText';
 import type { StrategyDecision, StrategyDecisionInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -82,10 +83,10 @@ const DecisionsPanel: React.FC<Props> = ({
  <tr key={dec.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors">
  <td className="px-4 py-3 align-middle">
  <div>
- <div className="text-sm text-neutral-900 font-medium">{dec.title}</div>
- {dec.description && (
- <div className="mt-0.5 text-xs text-neutral-500 max-w-[220px] truncate">{dec.description}</div>
- )}
+  <DirectionalText text={dec.title} as="div" className="text-sm text-neutral-900 font-medium" />
+  {dec.description && (
+  <DirectionalText text={dec.description} as="div" className="mt-0.5 text-xs text-neutral-500 max-w-[220px] truncate" />
+  )}
  </div>
  </td>
  <td className="px-4 py-3 align-middle">

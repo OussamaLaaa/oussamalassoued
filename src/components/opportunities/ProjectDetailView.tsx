@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 import type {
  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
  ProjectTask, ProjectTaskInput,
@@ -205,7 +207,7 @@ const TaskDrawer: React.FC<{
  </div>
  <div className="p-5 space-y-4">
  <div>
- <h4 className="text-lg font-semibold text-black">{task.title}</h4>
+ <DirectionalText text={task.title} as="h4" className="text-lg font-semibold text-black" />
  {task.description && <p className="mt-1 text-sm text-neutral-500">{task.description}</p>}
  </div>
 
@@ -368,10 +370,10 @@ const MeetingForm: React.FC<{
  <FormField label="Date"><FormInput type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} /></FormField>
  <FormField label="Attendees"><FormInput value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Comma-separated names" /></FormField>
  </div>
- <FormField label="Agenda"><FormTextarea value={agenda} onChange={(e) => setAgenda(e.target.value)} placeholder="Meeting agenda" rows={2} /></FormField>
- <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Meeting notes" rows={2} /></FormField>
- <FormField label="Outcome"><FormTextarea value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Key outcomes" rows={2} /></FormField>
- <FormField label="Next Action"><FormInput value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="Next steps" /></FormField>
+  <FormField label="Agenda"><FormTextarea value={agenda} onChange={(e) => setAgenda(e.target.value)} placeholder="Meeting agenda" rows={2} dir={detectTextDirection(agenda || '')} /></FormField>
+  <FormField label="Notes"><FormTextarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Meeting notes" rows={2} dir={detectTextDirection(notes || '')} /></FormField>
+  <FormField label="Outcome"><FormTextarea value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Key outcomes" rows={2} dir={detectTextDirection(outcome || '')} /></FormField>
+  <FormField label="Next Action"><FormInput value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="Next steps" dir={detectTextDirection(nextAction || '')} /></FormField>
  <div className="flex gap-2 justify-end mt-5">
  <Button variant="outline" onClick={onCancel}>Cancel</Button>
  <Button variant="primary" onClick={handleSave} disabled={!title.trim()}>Add Meeting</Button>
@@ -753,11 +755,11 @@ const ProjectDetailView: React.FC<{
 
  {/* Next Action card */}
  <SummaryCard label="Next Action">
- {project.nextAction ? (
- <div className="text-sm font-semibold text-black truncate">{project.nextAction}</div>
- ) : (
- <div className="text-sm text-neutral-400">No next action</div>
- )}
+  {project.nextAction ? (
+  <DirectionalText text={project.nextAction} as="div" className="text-sm font-semibold text-black truncate" />
+  ) : (
+  <div className="text-sm text-neutral-400">No next action</div>
+  )}
  </SummaryCard>
  </div>
 
@@ -813,11 +815,11 @@ const ProjectDetailView: React.FC<{
  <div className="grid grid-cols-2 gap-4">
  <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Current Phase</div><div className="mt-1 text-sm text-black">{phaseLabel(project.phase)}</div></div>
  <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Status</div><div className="mt-1 text-sm text-black capitalize">{project.status || '—'}</div></div>
- <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Next Action</div><div className="mt-1 text-sm text-black">{project.nextAction || '—'}</div></div>
+ <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Next Action</div><DirectionalText text={project.nextAction || '—'} as="div" className="mt-1 text-sm text-black" /></div>
  <div><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium">Deadline</div><div className="mt-1 text-sm text-black">{formatDate(project.deadline)}</div></div>
  </div>
  {project.notes && (
- <div className="mt-4"><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium mb-1">Notes</div><p className="text-sm text-neutral-500">{project.notes}</p></div>
+ <div className="mt-4"><div className="text-xs text-neutral-400 uppercase tracking-wider font-medium mb-1">Notes</div><DirectionalText text={project.notes} as="p" className="text-sm text-neutral-500" /></div>
  )}
  </div>
 
@@ -881,7 +883,7 @@ const ProjectDetailView: React.FC<{
  onClick={() => setSelectedTask(task)}
  >
  <div className="flex items-start justify-between gap-2">
- <div className="text-xs font-medium text-black flex-1 min-w-0 leading-snug">{task.title}</div>
+  <DirectionalText text={task.title} as="div" className="text-xs font-medium text-black flex-1 min-w-0 leading-snug" />
  <Badge variant={priorityBadgeVariant[task.priority] || 'neutral'}>{priorityLabel(task.priority)}</Badge>
  </div>
  {task.description && (
@@ -992,15 +994,15 @@ const ProjectDetailView: React.FC<{
  <div key={meeting.id} className="rounded-lg border border-neutral-200 p-3.5">
  <div className="flex items-start justify-between">
  <div>
- <div className="text-sm font-medium text-black">{meeting.title}</div>
+  <DirectionalText text={meeting.title} as="div" className="text-sm font-medium text-black" />
  <div className="text-xs text-neutral-500 mt-0.5">{formatDate(meeting.meetingDate)}{meeting.attendees ? ` — ${meeting.attendees}` : ''}</div>
  </div>
  <Button variant="danger" onClick={() => onDeleteMeeting(meeting.id)}>Delete</Button>
  </div>
- {meeting.agenda && <div className="mt-2 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Agenda:</span> {meeting.agenda}</div>}
- {meeting.notes && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Notes:</span> {meeting.notes}</div>}
- {meeting.outcome && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Outcome:</span> {meeting.outcome}</div>}
- {meeting.nextAction && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Next:</span> {meeting.nextAction}</div>}
+  {meeting.agenda && <div className="mt-2 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Agenda:</span> <DirectionalText text={meeting.agenda} as="span" /></div>}
+  {meeting.notes && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Notes:</span> <DirectionalText text={meeting.notes} as="span" /></div>}
+  {meeting.outcome && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Outcome:</span> <DirectionalText text={meeting.outcome} as="span" /></div>}
+  {meeting.nextAction && <div className="mt-1 text-xs text-neutral-500"><span className="font-medium text-neutral-600">Next:</span> <DirectionalText text={meeting.nextAction} as="span" /></div>}
  </div>
  ))}
  </div>
@@ -1153,7 +1155,7 @@ const ProjectDetailView: React.FC<{
  </div>
  </div>
  ) : (
- <p className="text-sm text-neutral-500 whitespace-pre-wrap">{project.notes || 'No notes yet.'}</p>
+ <DirectionalText text={project.notes || 'No notes yet.'} as="p" className="text-sm text-neutral-500" preserveWhitespace />
  )}
 
  <div className="mt-6 pt-4 border-t border-neutral-200">

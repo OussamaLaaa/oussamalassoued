@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import DirectionalText from '../DirectionalText';
+import { detectTextDirection } from '../../utils/textDirection';
 import type {
  Company,
  Project,
@@ -411,8 +413,8 @@ const GoalWorkspace: React.FC<Props> = ({
  <Badge variant={getStatusVariant(goal.status)}>{goal.status}</Badge>
  <Badge variant={goal.priority === 'high' ? 'warning' : 'neutral'}>{goal.priority}</Badge>
  </div>
- <h3 className="mt-3 text-lg font-semibold text-neutral-900">{goal.title}</h3>
- {goal.description ? <p className="mt-1 text-sm text-neutral-600">{goal.description}</p> : null}
+ <DirectionalText text={goal.title} as="h3" className="mt-3 text-lg font-semibold text-neutral-900" />
+ {goal.description ? <DirectionalText text={goal.description} as="p" className="mt-1 text-sm text-neutral-600" /> : null}
  </div>
  <div className="flex shrink-0 gap-2">
  <Button type="button" variant="secondary" size="sm" onClick={() => onEditGoal(goal)}>Edit Goal</Button>
@@ -564,15 +566,15 @@ const GoalWorkspace: React.FC<Props> = ({
  </tr>
  </thead>
  <tbody>
- {filteredTactics.map((tactic) => (
- <tr key={tactic.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50">
- <td className="px-4 py-3 align-middle">
- <div className="text-sm font-medium text-neutral-900">{tactic.title}</div>
- {tactic.description ? <div className="mt-0.5 max-w-[320px] truncate text-xs text-neutral-500">{tactic.description}</div> : null}
- </td>
- <td className="px-4 py-3 align-middle"><Badge variant={getStatusVariant(tactic.status)}>{tactic.status}</Badge></td>
- <td className="px-4 py-3 align-middle text-sm text-neutral-700">{tactic.metric || '—'}</td>
- <td className="px-4 py-3 align-middle text-sm text-neutral-700">{tactic.nextAction || '—'}</td>
+  {filteredTactics.map((tactic) => (
+  <tr key={tactic.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50">
+  <td className="px-4 py-3 align-middle">
+  <DirectionalText text={tactic.title} as="div" className="text-sm font-medium text-neutral-900" />
+  {tactic.description ? <DirectionalText text={tactic.description} as="div" className="mt-0.5 max-w-[320px] truncate text-xs text-neutral-500" /> : null}
+  </td>
+  <td className="px-4 py-3 align-middle"><Badge variant={getStatusVariant(tactic.status)}>{tactic.status}</Badge></td>
+  <td className="px-4 py-3 align-middle text-sm text-neutral-700">{tactic.metric || '—'}</td>
+  <td className="px-4 py-3 align-middle text-sm text-neutral-700"><DirectionalText text={tactic.nextAction || '—'} as="span" /></td>
  <td className="px-4 py-3 align-middle">
  <div className="flex items-center gap-2">
  <Button type="button" variant="secondary" size="sm" onClick={() => openModal('tactic', tactic)}>Edit</Button>
@@ -602,11 +604,11 @@ const GoalWorkspace: React.FC<Props> = ({
  <EmptyState title="No experiments yet." description="Create one test with a clear hypothesis and metric." action={<Button type="button" size="sm" onClick={() => openModal('experiment')}>Add Experiment</Button>} />
  ) : (
  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
- {filteredExperiments.map((experiment) => (
- <div key={experiment.id} className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="flex items-start justify-between gap-2">
- <div>
- <div className="text-sm font-semibold text-neutral-900">{experiment.title}</div>
+  {filteredExperiments.map((experiment) => (
+  <div key={experiment.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="flex items-start justify-between gap-2">
+  <div>
+  <DirectionalText text={experiment.title} as="div" className="text-sm font-semibold text-neutral-900" />
  {experiment.hypothesis ? <p className="mt-1 text-xs text-neutral-500">{experiment.hypothesis}</p> : null}
  </div>
  <Badge variant={getStatusVariant(experiment.status)}>{experiment.status}</Badge>
@@ -647,9 +649,9 @@ const GoalWorkspace: React.FC<Props> = ({
  <div key={decision.id} className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="flex flex-wrap items-start justify-between gap-3">
  <div className="min-w-0">
- <div className="flex flex-wrap items-center gap-2">
- <div className="text-sm font-semibold text-neutral-900">{decision.title}</div>
- {due ? <Badge variant="warning">Review due</Badge> : null}
+  <div className="flex flex-wrap items-center gap-2">
+  <DirectionalText text={decision.title} as="div" className="text-sm font-semibold text-neutral-900" />
+  {due ? <Badge variant="warning">Review due</Badge> : null}
  </div>
  {decision.context ? <p className="mt-1 text-xs text-neutral-500">{decision.context}</p> : null}
  </div>
@@ -762,7 +764,7 @@ const GoalWorkspace: React.FC<Props> = ({
  ← Back to Goals
  </button>
  <div className="mt-2 flex flex-wrap items-center gap-2">
- <h2 className="text-xl font-semibold text-neutral-900">{goal.title}</h2>
+ <DirectionalText text={goal.title} as="h2" className="text-xl font-semibold text-neutral-900" />
  <Badge variant="neutral">Goal Workspace</Badge>
  </div>
  <p className="mt-1 text-sm text-neutral-600">All strategy work for this goal lives here.</p>
@@ -884,7 +886,7 @@ const PlanCard: React.FC<{
  <div className="flex items-start justify-between gap-2">
  <div>
  <div className="text-sm font-semibold text-neutral-900">{plan.name}</div>
- {plan.description ? <p className="mt-1 text-xs text-neutral-500">{plan.description}</p> : null}
+  {plan.description ? <DirectionalText text={plan.description} as="p" className="mt-1 text-xs text-neutral-500" /> : null}
  </div>
  <Badge variant={getStatusVariant(plan.status)}>{plan.status}</Badge>
  </div>
