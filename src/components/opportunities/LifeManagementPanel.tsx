@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState, useEffect } from 'react';
 import type {
  LifeNutritionLog, LifeNutritionLogInput,
@@ -36,8 +35,6 @@ const FAMILY_STATUSES: LifeFamilyActionStatus[] = ['planned', 'done', 'postponed
 const PRIORITIES: LifePriority[] = ['high', 'medium', 'low'];
 
 const WEEK_START = (date: Date) => {
-  const { t, language } = usePersonalLanguage();
-
  const d = new Date(date);
  const day = d.getDay();
  const diff = d.getDate() - day + (day === 0 ? -6 : 1);

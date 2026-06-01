@@ -1,10 +1,7 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef } from 'react';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 
 const formatMoney = (amount: number, currency = 'MYR') => {
-  const { t, language } = usePersonalLanguage();
-
  const value = Number.isFinite(amount) ? amount : 0;
  const cur = (currency || 'MYR').toUpperCase();
  if (cur === 'USD') return `$${value.toFixed(2)}`;

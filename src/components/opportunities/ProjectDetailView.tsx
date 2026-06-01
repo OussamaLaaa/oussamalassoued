@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import DirectionalText from '../DirectionalText';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -67,8 +66,6 @@ const financeStatusBadgeVariant: Record<string, 'success' | 'danger' | 'warning'
 };
 
 const clampProgress = (value: unknown) => {
-  const { t, language } = usePersonalLanguage();
-
  const parsed = Number(value);
  if (!Number.isFinite(parsed)) return 0;
  return Math.max(0, Math.min(100, parsed));

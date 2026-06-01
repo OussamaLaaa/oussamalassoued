@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button, Badge } from '../ui';
 import StatCard from '../ui/StatCard';
@@ -40,8 +39,6 @@ const PLAN_TYPES: Array<{ value: PlanType; label: string }> = [
 ];
 
 const formatDate = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return '';
  return value.slice(0, 10);
 };

@@ -21,6 +21,7 @@ const TaskForm: React.FC<{
  onSubmit: (input: TaskInput) => Promise<void>;
  onCancel: () => void;
 }> = ({ initial, projects, plans, strategyGoals, companies, people, onSubmit, onCancel }) => {
+ const { t } = usePersonalLanguage();
  const [title, setTitle] = useState(initial?.title || '');
  const [description, setDescription] = useState(initial?.description || '');
  const [status, setStatus] = useState<TaskStatus>(initial?.status || 'todo');

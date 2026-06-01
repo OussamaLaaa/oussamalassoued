@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyTactic, StrategyTacticInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -8,8 +7,6 @@ import EmptyState from '../ui/EmptyState';
 const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 'failed'];
 
 const getStatusVariant = (s: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (s === 'active') return 'success';
  if (s === 'planned') return 'blue';
  if (s === 'paused' || s === 'archived') return 'warning';

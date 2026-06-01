@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import DirectionalText from '../DirectionalText';
 import type { StrategyDecision, StrategyDecisionInput } from '../../types/opportunities';
@@ -10,8 +9,6 @@ const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 
 const DECISION_TYPE_OPTIONS = ['outcome', 'check_in', 'pivot'];
 
 const getStatusVariant = (s: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (s === 'active') return 'success';
  if (s === 'planned') return 'blue';
  if (s === 'paused' || s === 'archived') return 'warning';

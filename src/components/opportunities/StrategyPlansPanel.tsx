@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyPlan, StrategyPlanInput, StrategyPlanVariant } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -9,8 +8,6 @@ const PRIORITY_OPTIONS = ['high', 'medium', 'low'];
 const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 'failed'];
 
 const getPriorityVariant = (p: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (p === 'high') return 'warning';
  return 'neutral';
 };

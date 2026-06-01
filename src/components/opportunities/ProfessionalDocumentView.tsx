@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -64,8 +63,6 @@ const TYPE_SECTION_TITLES: Record<string, string> = {
 };
 
 const formatDate = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return '\u2014';
  const d = new Date(value);
  if (Number.isNaN(d.getTime())) return value;

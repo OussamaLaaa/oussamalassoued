@@ -62,9 +62,7 @@ const dateRangeOptions = [
 const normalize = (value?: string | null) => (value || '').trim().toLowerCase();
 
 const toDate = (value?: string | null) => {
-  const { t, language } = usePersonalLanguage();
-
- if (!value) return null;
+  if (!value) return null;
  const date = new Date(value);
  return Number.isNaN(date.getTime()) ? null : date;
 };
@@ -123,6 +121,7 @@ const MessagesTable: React.FC<{
  onFilterChange?: (filters: MessageFilters) => void;
  onLogMessage?: () => void;
 }> = ({ messages, onEdit, onDelete, filters, onFilterChange, onLogMessage }) => {
+ const { t } = usePersonalLanguage();
  const filtered = useMemo(() => {
  if (!filters) return messages;
 

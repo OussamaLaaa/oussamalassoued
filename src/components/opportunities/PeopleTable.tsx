@@ -16,8 +16,6 @@ export interface PersonFilters {
 }
 
 const badgeForRelevance = (value?: number) => {
-  const { t, language } = usePersonalLanguage();
-
   if (value == null) return null;
   if (value >= 3) return <Badge variant="neutral">High</Badge>;
   if (value >= 2) return <Badge variant="neutral">Medium</Badge>;
@@ -62,6 +60,7 @@ const PeopleTable: React.FC<{
   filters?: PersonFilters;
   onFilterChange?: (filters: PersonFilters) => void;
 }> = ({ people, onEdit, onDelete, onUseTemplate, onPersonClick, personContactMethods, filters, onFilterChange }) => {
+  const { t } = usePersonalLanguage();
   const safePersonContactMethods = personContactMethods ?? [];
 
   const filtered = useMemo(() => {

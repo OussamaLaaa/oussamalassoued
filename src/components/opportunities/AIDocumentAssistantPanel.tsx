@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useMemo, useState } from 'react';
 import type {
  Company,
@@ -488,8 +487,6 @@ const AIDocumentAssistantPanel: React.FC<{
 };
 
 const normalizeResultText = (result: AiResult) => {
-  const { t, language } = usePersonalLanguage();
-
  const sections: string[] = [];
  if (result.improvedContent) sections.push(result.improvedContent);
  if (result.templateContent) sections.push(result.templateContent);

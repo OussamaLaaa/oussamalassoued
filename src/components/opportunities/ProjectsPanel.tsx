@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
@@ -28,8 +27,6 @@ const priorityBadgeVariant: Record<string, 'danger' | 'warning' | 'neutral'> = {
 };
 
 const clampProgress = (value: unknown) => {
-  const { t, language } = usePersonalLanguage();
-
  const parsed = Number(value);
  if (!Number.isFinite(parsed)) return 0;
  return Math.max(0, Math.min(100, parsed));

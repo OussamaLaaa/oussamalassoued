@@ -16,8 +16,6 @@ export interface DealFilters {
 }
 
 const badgeForStage = (stage?: string) => {
-  const { t, language } = usePersonalLanguage();
-
   if (!stage) return null;
   const colorMap: Record<string, string> = {
     discovery: 'text-blue-700 bg-blue-50 border-blue-200',
@@ -58,6 +56,7 @@ const DealsTable: React.FC<{
   filters?: DealFilters;
   onFilterChange?: (filters: DealFilters) => void;
 }> = ({ deals, onEdit, onDelete, onDealClick, filters, onFilterChange }) => {
+  const { t } = usePersonalLanguage();
   const filtered = useMemo(() => {
     if (!filters) return deals;
     return deals.filter((d) => {

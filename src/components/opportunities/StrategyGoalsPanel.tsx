@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyGoal, StrategyGoalInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -11,8 +10,6 @@ const STATUS_OPTIONS = ['active', 'planned', 'paused', 'completed', 'archived', 
 const TIME_HORIZON_OPTIONS = ['yearly', 'six_months', 'quarterly', 'monthly', 'weekly', 'daily'];
 
 const formatDate = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return '—';
  return value.slice(0, 10);
 };

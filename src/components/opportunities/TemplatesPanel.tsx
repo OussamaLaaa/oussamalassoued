@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
@@ -19,8 +18,6 @@ const emptyForm: MessageTemplateInput = {
 };
 
 const formatDateLabel = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return 'Current';
  const date = new Date(value);
  if (Number.isNaN(date.getTime())) return 'Current';

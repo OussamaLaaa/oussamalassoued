@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyExperiment, StrategyExperimentInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -8,8 +7,6 @@ import EmptyState from '../ui/EmptyState';
 const STATUS_OPTIONS = ['running', 'planned', 'completed', 'failed', 'archived'];
 
 const getStatusVariant = (s: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (s === 'running') return 'success';
  if (s === 'planned') return 'blue';
  if (s === 'completed') return 'success';
