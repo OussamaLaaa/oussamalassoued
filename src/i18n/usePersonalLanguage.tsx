@@ -11,8 +11,18 @@ const PersonalLanguageContext = createContext<PersonalLanguageContextType | unde
 
 const LANGUAGE_STORAGE_KEY = 'personalOS.language';
 
-export const PersonalLanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const getLanguageFromRoute = (): PersonalLanguage | null => {
+  const path = window.location.pathname;
+  if (/^\/personal\/ar(?:\/|$)/.test(path)) return 'ar';
+  if (/^\/personal(?:\/|$)/.test(path)) return 'en';
+  return null;
+};
+
+export const PersonalLanguageProvider: React.FC<{ children: ReactNode; initialLanguage?: PersonalLanguage }> = ({ children, initialLanguage }) => {
   const [language, setLanguageState] = useState<PersonalLanguage>(() => {
+    const routeLang = getLanguageFromRoute();
+    if (routeLang) return routeLang;
+    if (initialLanguage === 'en' || initialLanguage === 'ar') return initialLanguage;
     try {
       const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (stored === 'en' || stored === 'ar') {
@@ -24,12 +34,29 @@ export const PersonalLanguageProvider: React.FC<{ children: ReactNode }> = ({ ch
     return 'en';
   });
 
+  useEffect(() => {
+    const routeLang = getLanguageFromRoute();
+    if (routeLang && routeLang !== language) {
+      setLanguageState(routeLang);
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, routeLang);
+      } catch {
+        // ignore
+      }
+    }
+  }, [initialLanguage]);
+
   const setLanguage = (lang: PersonalLanguage) => {
     setLanguageState(lang);
     try {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
     } catch {
       // ignore
+    }
+    const targetUrl = lang === 'ar' ? '/personal/ar' : '/personal';
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({}, '', targetUrl);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };
 

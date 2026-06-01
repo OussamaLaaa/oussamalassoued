@@ -50,19 +50,13 @@ const PersonalWorkspaceInner: React.FC = () => {
   );
 };
 
-const PersonalWorkspace: React.FC = () => {
+const PersonalPage: React.FC<{ lang?: 'en' | 'ar' }> = ({ lang = 'en' }) => {
   return (
-    <PersonalLanguageProvider>
-      <PersonalWorkspaceInner />
+    <PersonalLanguageProvider initialLanguage={lang}>
+      <PersonalAuthGate>
+        <PersonalWorkspaceInner />
+      </PersonalAuthGate>
     </PersonalLanguageProvider>
-  );
-};
-
-const PersonalPage: React.FC = () => {
-  return (
-    <PersonalAuthGate>
-      <PersonalWorkspace />
-    </PersonalAuthGate>
   );
 };
 

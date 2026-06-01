@@ -18,7 +18,7 @@ const AboutOussama = lazy(() => import('./pages/AboutOussama'));
 type AppRoute =
   | { page: 'home' }
   | { page: 'dashboard' }
-  | { page: 'personal' }
+  | { page: 'personal'; lang?: 'en' | 'ar' }
   | { page: 'contact' }
   | { page: 'terms' }
   | { page: 'privacy' }
@@ -49,7 +49,8 @@ const getRoute = (): AppRoute => {
   }
 
   if (section === 'opportunities' || section === 'personal') {
-    return { page: 'personal' };
+    const lang = routeSegments[1]?.toLowerCase() === 'ar' ? 'ar' : 'en';
+    return { page: 'personal', lang };
   }
 
   if (section === 'contact') {
@@ -202,16 +203,18 @@ function App() {
     const path = window.location.pathname;
     const routeSource = hash && hash !== '/' ? hash : path;
     const firstSeg = routeSource.replace(/^\/+/, '').split('/')[0]?.toLowerCase();
-    if (firstSeg === 'opportunities' && path !== '/personal') {
-      window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
+    if (firstSeg === 'opportunities' && !path.startsWith('/personal')) {
+      const rest = path.replace(/^\/opportunities/, '') || '';
+      window.history.replaceState({}, '', `/personal${rest}${window.location.search}${window.location.hash}`);
     }
   }
 
   const [route, setRoute] = useState<AppRoute>(() => getRoute());
 
   useEffect(() => {
-    if (window.location.pathname === '/opportunities') {
-      window.history.replaceState({}, '', `/personal${window.location.search}${window.location.hash}`);
+    if (/^\/opportunities(?:\/|$)/.test(window.location.pathname) && !window.location.pathname.startsWith('/personal')) {
+      const rest = window.location.pathname.replace(/^\/opportunities/, '') || '';
+      window.history.replaceState({}, '', `/personal${rest}${window.location.search}${window.location.hash}`);
     }
 
     const handleRouteChange = () => {
@@ -244,7 +247,7 @@ function App() {
           </Suspense>
         ) : route.page === 'personal' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-            <Personal />
+            <Personal lang={route.lang} />
           </Suspense>
         ) : route.page === 'contact' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
