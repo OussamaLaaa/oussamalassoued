@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState, useEffect } from 'react';
 import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
 import DirectionalText from '../DirectionalText';
@@ -44,6 +45,8 @@ const STARTER_PILLARS: Array<{ name: string; slug: string; description: string }
 ];
 
 const WEEK_START = (date: Date) => {
+  const { t, language } = usePersonalLanguage();
+
  const d = new Date(date);
  const day = d.getDay();
  const diff = d.getDate() - day + (day === 0 ? -6 : 1);

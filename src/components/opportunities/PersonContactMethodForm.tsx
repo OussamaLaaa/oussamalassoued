@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { PersonContactMethodInput } from '../../types/opportunities';
 
@@ -24,6 +25,8 @@ interface Props {
 }
 
 const PersonContactMethodForm: React.FC<Props> = ({ personId, onSubmit, onCancel, initialData }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [error, setError] = useState('');
  const [saving, setSaving] = useState(false);
  const [form, setForm] = useState<PersonContactMethodInput>({

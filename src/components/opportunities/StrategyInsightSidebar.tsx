@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyDecision, StrategyGoal, StrategyPlan } from '../../types/opportunities';
 
@@ -24,6 +25,8 @@ type Props = {
 };
 
 const InsightSidebar: React.FC<Props> = ({ goals, plans, decisions }) => {
+  const { t, language } = usePersonalLanguage();
+
  const topPriorityGoals = goals
  .filter((g) => g.priority === 'high')
  .slice()

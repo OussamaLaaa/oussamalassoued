@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import type {
  Company,
@@ -63,6 +64,8 @@ const SmartNoteForm: React.FC<{
  onCancel,
  submitLabel = 'Save Note',
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<SmartNoteInput>(() => createInitialState(initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

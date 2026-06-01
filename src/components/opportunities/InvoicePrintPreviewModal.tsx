@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useRef, useState } from 'react';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 import { isValidUuid } from '../../utils/securityUtils';
@@ -69,6 +70,8 @@ const InvoicePrintPreviewModal: React.FC<InvoicePrintPreviewModalProps> = ({
  onStoredPdf,
  onEnsureSavedInvoice,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const pageRef = useRef<HTMLDivElement>(null);
  const [status, setStatus] = useState('');
  const [isGenerating, setIsGenerating] = useState(false);

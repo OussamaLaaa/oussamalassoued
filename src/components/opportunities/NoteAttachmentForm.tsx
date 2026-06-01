@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { NoteAttachment, NoteAttachmentInput, NoteAttachmentType, SmartNote } from '../../types/opportunities';
 
@@ -21,6 +22,8 @@ const NoteAttachmentForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ initialData, notes, onSubmit, onCancel, submitLabel = 'Save Attachment' }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<NoteAttachmentInput>(() => createInitialState(initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

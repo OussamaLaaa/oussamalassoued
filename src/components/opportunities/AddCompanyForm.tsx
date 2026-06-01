@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { CompanyInput, CompanyResearchResult } from '../../types/opportunities';
 import CompanyResearchPanel from './CompanyResearchPanel';
@@ -31,6 +32,8 @@ const AddCompanyForm: React.FC<{
  };
 
  const applyResearchPatch = (patch: Partial<CompanyInput>) => {
+  const { t, language } = usePersonalLanguage();
+
  setForm((current) => ({
  ...current,
  ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),

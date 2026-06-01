@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, Person, MessageInput } from '../../types/opportunities';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -13,6 +14,8 @@ const LogMessageForm: React.FC<{
  onCancel: () => void;
  initialData?: MessageInput;
 }> = ({ companies, people, onSubmit, onCancel, initialData }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
  const filteredPeople = useMemo(() => {
  if (initialData?.companyId) {

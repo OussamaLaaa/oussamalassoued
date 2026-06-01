@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type { RelationshipInteractionInput } from '../../types/opportunities';
 
@@ -47,6 +48,8 @@ const RelationshipInteractionForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ relationshipId, initialData, onSubmit, onCancel, submitLabel = 'Save Interaction' }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<RelationshipInteractionInput>(() => createInitialState(relationshipId, initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

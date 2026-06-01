@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
@@ -9,6 +10,8 @@ import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
 
 const isSegmentMatch = (company: Company, segment: SegmentType): boolean => {
+  const { t, language } = usePersonalLanguage();
+
   return normalizeDatabaseType(company.databaseType) === segment;
 };
 

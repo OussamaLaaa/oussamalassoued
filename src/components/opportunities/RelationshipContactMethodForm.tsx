@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type { Person, Relationship, RelationshipContactMethod, RelationshipContactMethodInput } from '../../types/opportunities';
 
@@ -38,6 +39,8 @@ const RelationshipContactMethodForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ relationships, people = [], relationshipId, initialData, onSubmit, onCancel, submitLabel = 'Save Contact Method' }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<RelationshipContactMethodInput>(() => ({ ...createInitialState(initialData), relationshipId: relationshipId || initialData?.relationshipId || '' }));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

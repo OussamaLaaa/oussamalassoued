@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useEffect } from 'react';
 import DirectionalText from '../DirectionalText';
 import { Button, Badge } from '../ui';
@@ -87,6 +88,8 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  onAddStrategyExperiment, onUpdateStrategyExperiment, onDeleteStrategyExperiment,
  onAddStrategyDecision, onUpdateStrategyDecision, onDeleteStrategyDecision,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [activeSection, setActiveSection] = useState<Section>('command_center');
 
  useEffect(() => {

@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Company, MessageInput, MessageTemplate, Person, PersonInput } from '../../types/opportunities';
 import { audienceOptions, goalOptions, languageOptions, type TemplateAudience, type TemplateGoal, type TemplateLanguage } from '../../data/messageTemplates';
@@ -17,6 +18,8 @@ const baseInput = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
 const followUpDate = (days: number) => {
+  const { t, language } = usePersonalLanguage();
+
  const date = new Date();
  date.setDate(date.getDate() + days);
  return date.toISOString().slice(0, 10);

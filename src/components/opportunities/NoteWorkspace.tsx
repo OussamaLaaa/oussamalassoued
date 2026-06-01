@@ -1,8 +1,11 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { NoteAttachment, SmartNote } from '../../types/opportunities';
 import DirectionalText from '../DirectionalText';
 
 const badgeClass = (kind?: string) => {
+  const { t, language } = usePersonalLanguage();
+
  const value = String(kind || '').toLowerCase();
  if (['pinned', 'high'].includes(value)) return 'border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]';
  if (['archived', 'low'].includes(value)) return 'border-[#e2e8f0] bg-[#f8fafc] text-[#475569]';

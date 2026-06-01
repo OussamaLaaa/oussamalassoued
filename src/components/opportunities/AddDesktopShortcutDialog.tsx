@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Folder, Globe, X } from 'lucide-react';
 import type { DesktopGroup, DesktopShortcut, DesktopShortcutInput } from '../../types/opportunities';
@@ -42,6 +43,8 @@ interface Props {
 }
 
 const AddDesktopShortcutDialog: React.FC<Props> = ({ onSave, onClose, editing, groupId, allowGroupSelect, desktopGroups = [] }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [name, setName] = useState(editing?.name ?? '');
  const [url, setUrl] = useState(editing?.url ?? '');
  const [notes, setNotes] = useState(editing?.notes ?? '');

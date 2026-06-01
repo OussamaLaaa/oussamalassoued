@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, Deal, OutreachMessage, Person, PersonInput, MessageInput } from '../../types/opportunities';
 import Button from '../ui/Button';
@@ -5,6 +6,8 @@ import Badge from '../ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 
 const parseDate = (value?: string | null) => {
+  const { t, language } = usePersonalLanguage();
+
  if (!value) return null;
  const date = new Date(value);
  if (Number.isNaN(date.getTime())) return null;

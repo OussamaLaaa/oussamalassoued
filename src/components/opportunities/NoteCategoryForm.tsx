@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type { NoteCategory, NoteCategoryInput } from '../../types/opportunities';
 
@@ -25,6 +26,8 @@ const NoteCategoryForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ initialData, onSubmit, onCancel, submitLabel = 'Save Category' }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<NoteCategoryInput>(() => createInitialState(initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

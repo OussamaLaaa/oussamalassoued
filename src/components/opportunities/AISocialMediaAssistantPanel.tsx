@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 
 export type SocialMediaAIMode =
@@ -91,6 +92,8 @@ export default function AISocialMediaAssistantPanel({
  onUpdateContentItem,
  onCreateWeeklyPlan,
 }: AISocialMediaAssistantPanelProps) {
+  const { t } = usePersonalLanguage();
+
  const [mode, setMode] = useState<SocialMediaAIMode>('generate_ideas');
  const [language, setLanguage] = useState<SocialMediaAILanguage>('auto');
  const [selectedStrategyId, setSelectedStrategyId] = useState('');

@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type { Company, Project, RelationshipOpportunityInput } from '../../types/opportunities';
 
@@ -57,6 +58,8 @@ const RelationshipOpportunityForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ relationshipId, projects = [], companies = [], initialData, onSubmit, onCancel, submitLabel = 'Save Opportunity' }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [form, setForm] = useState<RelationshipOpportunityInput>(() => createInitialState(relationshipId, initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

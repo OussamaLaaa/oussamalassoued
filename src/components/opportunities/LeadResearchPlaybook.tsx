@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Download, Languages, RotateCcw } from 'lucide-react';
 import Button from '../ui/Button';
@@ -211,6 +212,8 @@ const copyText = async (text: string) => {
 };
 
 const LeadResearchPlaybook: React.FC = () => {
+  const { t } = usePersonalLanguage();
+
   const [language, setLanguage] = useState<LeadResearchLanguage>(() => readLanguage());
   const [selectedNiche, setSelectedNiche] = useState<LeadResearchNiche>(() => {
     const initial = readString(STORAGE_KEYS.selectedNiche, LEGACY_STORAGE_KEYS.selectedNiche, LEAD_RESEARCH_NICHES[0]);

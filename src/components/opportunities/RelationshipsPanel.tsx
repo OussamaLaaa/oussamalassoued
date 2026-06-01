@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui';
 import type {
@@ -21,6 +22,8 @@ import RelationshipForm from './RelationshipForm';
 import RelationshipWorkspace from './RelationshipWorkspace';
 
 const badgeClass = (kind?: string) => {
+  const { t, language } = usePersonalLanguage();
+
  const value = String(kind || '').toLowerCase();
  if (['strong', 'high', 'active', 'warm'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';

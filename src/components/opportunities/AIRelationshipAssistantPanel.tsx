@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Relationship,
@@ -49,6 +50,8 @@ const AIRelationshipAssistantPanel: React.FC<{
  onAddRelationshipInteraction,
  onUpdateRelationship,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [mode, setMode] = useState<RelationshipAssistantMode>('review');
  const [instructions, setInstructions] = useState('');
  const [loading, setLoading] = useState(false);

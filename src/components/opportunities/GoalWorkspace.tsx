@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import DirectionalText from '../DirectionalText';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -161,6 +162,8 @@ const GoalWorkspace: React.FC<Props> = ({
  onUpdateStrategyDecision,
  onDeleteStrategyDecision,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [activeTab, setActiveTab] = useState<TabId>('overview');
  const [modalState, setModalState] = useState<ModalState>(null);
  const [isBusy, setIsBusy] = useState(false);

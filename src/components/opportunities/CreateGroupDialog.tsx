@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import { Folder, X } from 'lucide-react';
 import type { DesktopGroup, DesktopGroupInput } from '../../types/opportunities';
@@ -26,6 +27,8 @@ interface Props {
 }
 
 const CreateGroupDialog: React.FC<Props> = ({ onSave, onClose, editing }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [name, setName] = useState(editing?.name ?? '');
  const [color, setColor] = useState(editing?.color ?? '');
  const [notes, setNotes] = useState(editing?.notes ?? '');

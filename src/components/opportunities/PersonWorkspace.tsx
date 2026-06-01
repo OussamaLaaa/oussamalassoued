@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { Company, Deal, DealInput, MessageInput, OutreachMessage, Person, PersonContactMethod, PersonContactMethodInput, PersonInput } from '../../types/opportunities';
@@ -90,6 +91,8 @@ const PersonWorkspace: React.FC<Props> = ({
   updateDeal,
   deleteDeal,
 }) => {
+  const { t, language } = usePersonalLanguage();
+
   const [tab, setTab] = useState<PersonWorkspaceTab>('overview');
   const [notesDraft, setNotesDraft] = useState(person.notes || '');
   const [notesSaving, setNotesSaving] = useState(false);

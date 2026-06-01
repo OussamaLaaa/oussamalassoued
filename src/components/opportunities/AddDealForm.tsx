@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, DealInput, Person } from '../../types/opportunities';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -11,6 +12,8 @@ const AddDealForm: React.FC<{
  onCancel: () => void;
  initialData?: DealInput;
 }> = ({ companies, people, onSubmit, onCancel, initialData }) => {
+  const { t, language } = usePersonalLanguage();
+
  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
  const filteredPeople = useMemo(() => {
  if (initialData?.companyId) {

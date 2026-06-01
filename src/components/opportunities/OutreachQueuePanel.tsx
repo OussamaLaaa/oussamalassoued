@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, OutreachMessage, Person } from '../../types/opportunities';
 import StatCard from '../ui/StatCard';
@@ -22,6 +23,8 @@ type QueueItem = {
 const DAY_GOAL = 10;
 
 const toDayKey = (value: string | undefined | null) => {
+  const { t, language } = usePersonalLanguage();
+
  if (!value) return null;
  const date = new Date(value);
  if (Number.isNaN(date.getTime())) return null;
