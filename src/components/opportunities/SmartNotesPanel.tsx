@@ -24,6 +24,7 @@ import {
  noteCategorySlug,
  } from './noteCategoryUtils';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
+import DirectionalText from '../DirectionalText';
 
 const sortNotes = (notes: SmartNote[], sortBy: string) => {
  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -291,16 +292,9 @@ const SmartNotesPanel: React.FC<{
 	className="group cursor-pointer rounded-xl border border-neutral-200 bg-white px-4 py-3 transition hover:bg-neutral-50"
  >
   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-  <div className="min-w-0 flex-1" dir={titleDirection}>
-  <h3 className={`min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900 ${getDirectionClass(note.title)}`}>
-  {note.title}
-  </h3>
-  <p
-  dir={previewDirection}
-  className={`mt-1.5 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 line-clamp-2 ${getDirectionClass(note.content || note.notes || '')}`}
-  >
-  {excerpt(note) || 'No content yet.'}
-  </p>
+  <div className="min-w-0 flex-1">
+  <DirectionalText text={note.title} as="h3" className="min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900" />
+  <DirectionalText text={excerpt(note) || 'No content yet.'} as="p" className="mt-1.5 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 line-clamp-2" maxLines={2} />
   </div>
   <div className="flex min-w-0 shrink-0 flex-col items-start gap-2 lg:items-end" dir="ltr">
   <div className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 lg:justify-end">

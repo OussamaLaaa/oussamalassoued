@@ -29,6 +29,20 @@ export const detectTextDirection = (text: string): 'rtl' | 'ltr' => {
   return 'ltr';
 };
 
+export const isRtlText = (text: string): boolean => {
+  return detectTextDirection(text) === 'rtl';
+};
+
+export const getDirectionalTextProps = (text: string, baseClassName = "") => {
+  const dir = detectTextDirection(text);
+  const className = [
+    baseClassName,
+    dir === 'rtl' ? 'text-right' : 'text-left'
+  ].filter(Boolean).join(' ');
+
+  return { dir, className };
+};
+
 export const getDirectionClass = (text: string) => (detectTextDirection(text) === 'rtl' ? 'text-right' : 'text-left');
 
 export const getTextDirectionProps = (text: string) => {

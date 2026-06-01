@@ -25,6 +25,7 @@ import type { DesktopGroup, DesktopGroupInput, DesktopShortcut, DesktopShortcutI
 import AddDesktopShortcutDialog from './AddDesktopShortcutDialog';
 import CreateGroupDialog from './CreateGroupDialog';
 import DesktopGroupPanel from './DesktopGroupPanel';
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 type AppId = 'desktop' | 'crm' | 'messages' | 'strategy' | 'plans' | 'tasks' | 'projects' | 'finance' | 'documents' | 'social' | 'relationships' | 'life' | 'notes' | 'ai_control';
 
@@ -73,6 +74,7 @@ function TopBarButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label:
 }
 
 function AppTile({ label, icon: Icon, onOpen, className }: AppShortcut & { onOpen?: () => void; className?: string }) {
+ const { t } = usePersonalLanguage();
  return (
  <button
  type="button"
@@ -83,7 +85,7 @@ function AppTile({ label, icon: Icon, onOpen, className }: AppShortcut & { onOpe
  <Icon className="h-7 w-7" {...iconProps} />
  </span>
  <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
- {label}
+ {t(label)}
  </span>
  </button>
  );

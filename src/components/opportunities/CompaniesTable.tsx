@@ -8,6 +8,9 @@ import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
+
+import DirectionalText from '../DirectionalText';
 
 export interface CompanyFilters {
  searchQuery: string;
@@ -70,6 +73,8 @@ const CompaniesTable: React.FC<{
  filters?: CompanyFilters;
  onFilterChange?: (filters: CompanyFilters) => void;
 }> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, filters, onFilterChange }) => {
+ const { t, language } = usePersonalLanguage();
+
  const filtered = useMemo(() => {
  if (!filters) return companies;
  return companies.filter((company) => {
@@ -127,38 +132,40 @@ const CompaniesTable: React.FC<{
               type="text"
               value={filters.searchQuery}
               onChange={(event) => setFilter('searchQuery', event.target.value)}
-              placeholder="Search companies"
+              placeholder={t("Search", "Search companies")}
+              dir="auto"
               className={toolbarSearchInput}
             />
           </div>
           <Select
             value={filters.priority}
             onChange={(event) => setFilter('priority', event.target.value)}
-            options={priorityOptions}
+            options={priorityOptions.map(o => ({ ...o, label: o.value === '' ? t("Priority", "Priority") : o.label }))}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.status}
             onChange={(event) => setFilter('status', event.target.value)}
-            options={statusOptions}
+            options={statusOptions.map(o => ({ ...o, label: o.value === '' ? t("Status", "Status") : o.label }))}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.databaseType}
             onChange={(event) => setFilter('databaseType', event.target.value)}
-            options={databaseTypeOptions}
+            options={databaseTypeOptions.map(o => ({ ...o, label: o.value === '' ? t("Database Type", "Database Type") : o.label }))}
             className={`${toolbarSelect} min-w-[120px]`}
           />
           <input
             type="text"
             value={filters.country}
             onChange={(event) => setFilter('country', event.target.value)}
-            placeholder="Country"
+            placeholder={t("Country", "Country")}
+            dir="auto"
             className="h-10 min-w-[110px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
           />
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
-              Clear
+              {t("Clear", "Clear")}
             </Button>
           )}
           <span className={toolbarCount}>{filtered.length} companies</span>
@@ -169,16 +176,16 @@ const CompaniesTable: React.FC<{
   <table className="min-w-[1160px] w-full border-collapse text-left">
   <thead>
   <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
-  <th className="px-4 py-3 font-medium">Company</th>
-  <th className="px-4 py-3 font-medium">Type</th>
-  <th className="px-4 py-3 font-medium">Category</th>
-  <th className="px-4 py-3 font-medium">Location</th>
-  <th className="px-4 py-3 font-medium">Priority</th>
-  <th className="px-4 py-3 font-medium">Fit</th>
-  <th className="px-4 py-3 font-medium">Ethical</th>
-  <th className="px-4 py-3 font-medium">Status</th>
-  <th className="px-4 py-3 font-medium">Next action</th>
-  <th className="px-4 py-3 text-right font-medium">Actions</th>
+  <th className="px-4 py-3 font-medium">{t("Company", "Company")}</th>
+  <th className="px-4 py-3 font-medium">{t("Type", "Type")}</th>
+  <th className="px-4 py-3 font-medium">{t("Category", "Category")}</th>
+  <th className="px-4 py-3 font-medium">{t("Location", "Location")}</th>
+  <th className="px-4 py-3 font-medium">{t("Priority", "Priority")}</th>
+  <th className="px-4 py-3 font-medium">{t("Fit", "Fit")}</th>
+  <th className="px-4 py-3 font-medium">{t("Ethical", "Ethical")}</th>
+  <th className="px-4 py-3 font-medium">{t("Status", "Status")}</th>
+  <th className="px-4 py-3 font-medium">{t("Next action", "Next action")}</th>
+  <th className="px-4 py-3 text-right font-medium">{t("Actions", "Actions")}</th>
   </tr>
   </thead>
   <tbody>
