@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
  Company,
@@ -131,8 +130,6 @@ const ContractStudioPanel: React.FC<{
  const updateField = (field: keyof ContractFormState, value: string) => setForm((current) => ({ ...current, [field]: value }));
 
  const resetForm = () => {
-  const { t, language } = usePersonalLanguage();
-
  setForm(defaultForm());
  setActiveDocumentId(null);
  setStoredPdfPath(null);
@@ -306,15 +303,15 @@ const ContractStudioPanel: React.FC<{
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <SectionHeader title="Contract Details" subtitle="Title, language, status, and related records" />
  <div className="mt-4 grid gap-4 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")}><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Master services agreement" /></Field>
- <Field label={t("common.language", "common.language", "Language")}>
+ <Field label="Title"><input className={inputClass} value={form.title} onChange={(event) => updateField('title', event.target.value)} placeholder="Master services agreement" /></Field>
+ <Field label="Language">
  <select className={inputClass} value={form.language} onChange={(event) => updateField('language', event.target.value as DocumentLanguage)}>
  <option value="english">English</option>
  <option value="french">French</option>
  <option value="arabic">Arabic</option>
  </select>
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select className={inputClass} value={form.status} onChange={(event) => updateField('status', event.target.value as ContractFormState['status'])}>
  <option value="draft">Draft</option>
  <option value="ready">Ready</option>
@@ -338,8 +335,8 @@ const ContractStudioPanel: React.FC<{
  </SummaryCard>
  <SummaryCard title="Related records">
  <SummaryLine label="Project" value={selectedProject?.name || 'None'} />
- <SummaryLine label={t("Company", "Company", "Company")} value={selectedCompany?.name || 'None'} />
- <SummaryLine label={t("Person", "Person", "Person")} value={selectedPerson?.fullName || 'None'} />
+ <SummaryLine label="Company" value={selectedCompany?.name || 'None'} />
+ <SummaryLine label="Person" value={selectedPerson?.fullName || 'None'} />
  <SummaryLine label="Deal" value={selectedDeal?.servicePackage || selectedDeal?.id || 'None'} />
  </SummaryCard>
  </aside>
@@ -349,7 +346,7 @@ const ContractStudioPanel: React.FC<{
  {tab === 'parties' ? (
  <div className="grid gap-5 xl:grid-cols-2">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <SectionHeader title={t("common.provider", "common.provider", "Provider")} subtitle="Your company or practitioner details" />
+ <SectionHeader title="Provider" subtitle="Your company or practitioner details" />
  <div className="mt-4 grid gap-4 md:grid-cols-2">
  <Field label="Provider Name"><input className={inputClass} value={form.providerName} onChange={(event) => updateField('providerName', event.target.value)} /></Field>
  <Field label="Provider Email"><input className={inputClass} value={form.providerEmail} onChange={(event) => updateField('providerEmail', event.target.value)} /></Field>
@@ -392,7 +389,7 @@ const ContractStudioPanel: React.FC<{
  <Field label="Ownership / Usage Rights"><textarea className={textareaClass} rows={4} value={form.ownershipTerms} onChange={(event) => updateField('ownershipTerms', event.target.value)} /></Field>
  <Field label="Cancellation Terms"><textarea className={textareaClass} rows={4} value={form.cancellationTerms} onChange={(event) => updateField('cancellationTerms', event.target.value)} /></Field>
  <Field label="Confidentiality Terms"><textarea className={textareaClass} rows={4} value={form.confidentialityTerms} onChange={(event) => updateField('confidentialityTerms', event.target.value)} /></Field>
- <Field label={t("Notes", "Notes", "Notes")}><textarea className={textareaClass} rows={4} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></Field>
+ <Field label="Notes"><textarea className={textareaClass} rows={4} value={form.notes} onChange={(event) => updateField('notes', event.target.value)} /></Field>
  </div>
  </div>
  ) : null}
@@ -401,7 +398,7 @@ const ContractStudioPanel: React.FC<{
  <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex flex-wrap items-center justify-between gap-3">
- <SectionHeader title={t("common.preview", "common.preview", "Preview")} subtitle="Professional contract layout with brand identity" />
+ <SectionHeader title="Preview" subtitle="Professional contract layout with brand identity" />
  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${storedPdfPath || activeDoc?.pdfStoragePath ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500'}`}>
  {storedPdfPath || activeDoc?.pdfStoragePath ? 'PDF Stored' : 'Live Draft'}
  </span>
@@ -412,9 +409,9 @@ const ContractStudioPanel: React.FC<{
  </div>
 
  <SummaryCard title="Preview summary">
- <SummaryLine label={t("Title", "Title", "Title")} value={form.title || 'Untitled'} />
- <SummaryLine label={t("Status", "Status", "Status")} value={form.status} />
- <SummaryLine label={t("common.language", "common.language", "Language")} value={form.language} />
+ <SummaryLine label="Title" value={form.title || 'Untitled'} />
+ <SummaryLine label="Status" value={form.status} />
+ <SummaryLine label="Language" value={form.language} />
  <SummaryLine label="Issue date" value={form.issueDate || 'Not set'} />
  <SummaryLine label="Due date" value={form.dueDate || 'Not set'} />
  <SummaryLine label="Sections" value="Parties, scope, terms, signatures" />
@@ -425,7 +422,7 @@ const ContractStudioPanel: React.FC<{
  {tab === 'export' ? (
  <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <SectionHeader title={t("Export", "Export", "Export")} subtitle="Save as a generated document, store a private PDF, or open the signed file" />
+ <SectionHeader title="Export" subtitle="Save as a generated document, store a private PDF, or open the signed file" />
  <div className="mt-4 flex flex-wrap items-center gap-3">
  <button type="button" onClick={() => void saveDocument('ready')} disabled={saving} className="rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60">
  Save as Generated Document
@@ -448,14 +445,14 @@ const ContractStudioPanel: React.FC<{
 
  <div className="mt-6 grid gap-3 md:grid-cols-2">
  <SummaryCard title="Export summary">
- <SummaryLine label={t("Title", "Title", "Title")} value={form.title || 'Untitled'} />
+ <SummaryLine label="Title" value={form.title || 'Untitled'} />
  <SummaryLine label="Related company" value={selectedCompany?.name || 'None'} />
  <SummaryLine label="Related project" value={selectedProject?.name || 'None'} />
  <SummaryLine label="Related deal" value={selectedDeal?.servicePackage || selectedDeal?.id || 'None'} />
  </SummaryCard>
  <SummaryCard title="Document archive">
  <SummaryLine label="Saved docs" value={`${contractDocuments.length} contract${contractDocuments.length === 1 ? '' : 's'}`} />
- <SummaryLine label={t("Archive", "Archive", "Archive")} value="Generated Documents" />
+ <SummaryLine label="Archive" value="Generated Documents" />
  <SummaryLine label="Storage" value="Private Supabase Storage" />
  <SummaryLine label="Source" value="/api/documents?action=generate-pdf" />
  </SummaryCard>

@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
@@ -74,7 +73,6 @@ const ProjectsPanel: React.FC<{
  onAddFinanceItem: (input: ProjectFinanceItemInput) => Promise<any>;
  onDeleteFinanceItem: (id: string) => Promise<void>;
 }> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onUpdateProject, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
- const { t } = usePersonalLanguage();
  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
  const selectedProject = useMemo(
  () => (selectedProjectId ? projects.find((project) => project.id === selectedProjectId) || null : null),
@@ -158,9 +156,9 @@ const ProjectsPanel: React.FC<{
  {/* Stats */}
  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
  <StatBox label="Total Projects" value={stats.total} subtitle="Current total" />
- <StatBox label={t("Active", "Active", "Active")} value={stats.active} />
+ <StatBox label="Active" value={stats.active} />
  <StatBox label="Planned" value={stats.planned} />
- <StatBox label={t("Completed", "Completed", "Completed")} value={stats.completed} />
+ <StatBox label="Completed" value={stats.completed} />
  <StatBox label="High Priority" value={stats.highPriority} />
  <StatBox label="Avg Progress" value={stats.avgProgress ? `${stats.avgProgress}%` : '—'} />
  </div>

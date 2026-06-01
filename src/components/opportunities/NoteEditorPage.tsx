@@ -18,7 +18,6 @@ import type {
  Task,
 } from '../../types/opportunities';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 const inputClass = 'h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400';
 const textareaClass = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y';
@@ -49,8 +48,6 @@ const createFormState = (note?: Partial<SmartNote>, draft?: Partial<SmartNoteInp
 });
 
 const createDefaultBlock = (type: NoteBlockType, noteId: string, sortOrder: number): NoteBlockInput => {
-  const { t, language } = usePersonalLanguage();
-
  if (type === 'checklist') {
  return { noteId, type, dataJson: { items: [{ text: '', done: false }] }, sortOrder };
  }
@@ -121,7 +118,6 @@ const NoteEditorPage: React.FC<{
  onUpdateAttachment,
  onDeleteAttachment,
 }) => {
- const { t } = usePersonalLanguage();
  const [form, setForm] = useState<SmartNoteInput>(() => createFormState(note || undefined, draft));
  const [activeTab, setActiveTab] = useState<'write' | 'ai' | 'blocks' | 'attachments' | 'links' | 'metadata'>('write');
  const [saving, setSaving] = useState(false);
@@ -539,7 +535,7 @@ const NoteEditorPage: React.FC<{
  {block.type === 'image' ? (
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
- <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder={t("desktop.Image URL", "desktop.Image URL", "Image URL")} />
+ <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Image URL" />
  <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Caption" />
  </div>
  {block.content ? <img src={block.content} alt={String((block.dataJson as any)?.title || 'Note image')} className="max-h-[280px] w-full rounded-md border border-neutral-200 object-cover" /> : null}
@@ -549,7 +545,7 @@ const NoteEditorPage: React.FC<{
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
  <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Video URL" />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder={t("Title", "Title", "Title")} />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Title" />
  </div>
  {block.content ? <a href={block.content} target="_blank" rel="noreferrer" className="text-sm text-neutral-600 hover:underline">Open video</a> : null}
  </div>
@@ -558,7 +554,7 @@ const NoteEditorPage: React.FC<{
  <div className="space-y-3">
  <div className="grid gap-3 md:grid-cols-2">
  <input value={block.content || ''} onChange={(event) => updateMediaBlock(block, event.target.value, String((block.dataJson as any)?.title || ''))} dir="ltr" className={`${inputClass} text-left`} placeholder="Audio URL" />
- <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder={t("Title", "Title", "Title")} />
+ <input value={String((block.dataJson as any)?.title || '')} onChange={(event) => onUpdateBlock(block.id, { dataJson: { ...(block.dataJson || {}), title: event.target.value } })} dir={detectTextDirection(String((block.dataJson as any)?.title || ''))} className={directionInputClass(String((block.dataJson as any)?.title || ''))} placeholder="Title" />
  </div>
  {block.content ? <audio controls src={block.content} className="w-full" /> : null}
  </div>
@@ -602,7 +598,7 @@ const NoteEditorPage: React.FC<{
  <option value="file">File</option>
  <option value="other">Other</option>
  </select>
- <input value={attachmentDraft.title || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, title: event.target.value }))} dir={detectTextDirection(attachmentDraft.title || '')} className={directionInputClass(attachmentDraft.title || '')} placeholder={t("Title", "Title", "Title")} />
+ <input value={attachmentDraft.title || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, title: event.target.value }))} dir={detectTextDirection(attachmentDraft.title || '')} className={directionInputClass(attachmentDraft.title || '')} placeholder="Title" />
  <input value={attachmentDraft.url || ''} onChange={(event) => setAttachmentDraft((current) => ({ ...current, url: event.target.value }))} dir="ltr" className={`${inputClass} text-left`} placeholder="URL" />
  <button type="button" onClick={handleAttachmentSubmit} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">
  Add attachment
@@ -654,7 +650,7 @@ const NoteEditorPage: React.FC<{
  }))}
  dir={detectTextDirection(attachmentEdits[attachment.id]?.title || attachment.title || '')}
  className={directionInputClass(attachmentEdits[attachment.id]?.title || attachment.title || '')}
- placeholder={t("Title", "Title", "Title")}
+ placeholder="Title"
  />
  <input
  value={attachmentEdits[attachment.id]?.url || attachment.url || ''}
@@ -681,7 +677,7 @@ const NoteEditorPage: React.FC<{
  rows={3}
  dir={detectTextDirection(attachmentEdits[attachment.id]?.notes || attachment.notes || '')}
  className={`${directionTextareaClass(attachmentEdits[attachment.id]?.notes || attachment.notes || '')} md:col-span-2`}
- placeholder={t("Notes", "Notes", "Notes")}
+ placeholder="Notes"
  />
  </div>
  <div className="mt-3 flex flex-wrap gap-2">

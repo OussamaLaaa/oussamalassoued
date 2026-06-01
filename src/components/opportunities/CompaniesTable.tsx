@@ -8,9 +8,6 @@ import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
-
-import DirectionalText from '../DirectionalText';
 
 export interface CompanyFilters {
  searchQuery: string;
@@ -73,8 +70,6 @@ const CompaniesTable: React.FC<{
  filters?: CompanyFilters;
  onFilterChange?: (filters: CompanyFilters) => void;
 }> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, filters, onFilterChange }) => {
- const { t, language } = usePersonalLanguage();
-
  const filtered = useMemo(() => {
  if (!filters) return companies;
  return companies.filter((company) => {
@@ -132,40 +127,38 @@ const CompaniesTable: React.FC<{
               type="text"
               value={filters.searchQuery}
               onChange={(event) => setFilter('searchQuery', event.target.value)}
-              placeholder={t("Search", "Search companies")}
-              dir="auto"
+              placeholder="Search companies"
               className={toolbarSearchInput}
             />
           </div>
           <Select
             value={filters.priority}
             onChange={(event) => setFilter('priority', event.target.value)}
-            options={priorityOptions.map(o => ({ ...o, label: o.value === '' ? t("Priority", "Priority", "Priority") : o.label }))}
+            options={priorityOptions}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.status}
             onChange={(event) => setFilter('status', event.target.value)}
-            options={statusOptions.map(o => ({ ...o, label: o.value === '' ? t("Status", "Status", "Status") : o.label }))}
+            options={statusOptions}
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
             value={filters.databaseType}
             onChange={(event) => setFilter('databaseType', event.target.value)}
-            options={databaseTypeOptions.map(o => ({ ...o, label: o.value === '' ? t("Database Type", "crm.databaseType", "Database Type") : o.label }))}
+            options={databaseTypeOptions}
             className={`${toolbarSelect} min-w-[120px]`}
           />
           <input
             type="text"
             value={filters.country}
             onChange={(event) => setFilter('country', event.target.value)}
-            placeholder={t("Country", "Country")}
-            dir="auto"
+            placeholder="Country"
             className="h-10 min-w-[110px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
           />
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
-              {t("Clear", "Clear", "Clear")}
+              Clear
             </Button>
           )}
           <span className={toolbarCount}>{filtered.length} companies</span>
@@ -176,16 +169,16 @@ const CompaniesTable: React.FC<{
   <table className="min-w-[1160px] w-full border-collapse text-left">
   <thead>
   <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
-  <th className="px-4 py-3 font-medium">{t("Company", "Company", "Company")}</th>
-  <th className="px-4 py-3 font-medium">{t("Type", "Type", "Type")}</th>
-  <th className="px-4 py-3 font-medium">{t("Category", "Category", "Category")}</th>
-  <th className="px-4 py-3 font-medium">{t("Location", "Location")}</th>
-  <th className="px-4 py-3 font-medium">{t("Priority", "Priority", "Priority")}</th>
-  <th className="px-4 py-3 font-medium">{t("Fit", "Fit")}</th>
-  <th className="px-4 py-3 font-medium">{t("Ethical", "Ethical")}</th>
-  <th className="px-4 py-3 font-medium">{t("Status", "Status", "Status")}</th>
-  <th className="px-4 py-3 font-medium">{t("Next action", "Next action")}</th>
-  <th className="px-4 py-3 text-right font-medium">{t("Actions", "Actions", "Actions")}</th>
+  <th className="px-4 py-3 font-medium">Company</th>
+  <th className="px-4 py-3 font-medium">Type</th>
+  <th className="px-4 py-3 font-medium">Category</th>
+  <th className="px-4 py-3 font-medium">Location</th>
+  <th className="px-4 py-3 font-medium">Priority</th>
+  <th className="px-4 py-3 font-medium">Fit</th>
+  <th className="px-4 py-3 font-medium">Ethical</th>
+  <th className="px-4 py-3 font-medium">Status</th>
+  <th className="px-4 py-3 font-medium">Next action</th>
+  <th className="px-4 py-3 text-right font-medium">Actions</th>
   </tr>
   </thead>
   <tbody>
@@ -249,7 +242,7 @@ const CompaniesTable: React.FC<{
   <StatusBadge status={company.status} />
   </td>
   <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
-   <div className="max-w-[180px] truncate"><DirectionalText text={company.nextAction || '—'} /></div>
+  <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
   </td>
   <td className="px-4 py-3.5 align-top">
   <div className="flex items-center justify-end gap-1">
@@ -279,7 +272,7 @@ const CompaniesTable: React.FC<{
   onEdit(company);
   }}
   className="text-neutral-400 hover:text-neutral-900 px-1.5"
-  title={t("Edit", "Edit")}
+  title="Edit"
   >
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
@@ -315,7 +308,7 @@ const CompaniesTable: React.FC<{
   onDelete(company.id);
   }}
   className="text-neutral-300 hover:text-red-500 px-1.5"
-  title={t("Delete", "Delete")}
+  title="Delete"
   >
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

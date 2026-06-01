@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useMemo } from 'react';
 import LabelPill from './StrategyLabelPill';
 import type {
@@ -91,8 +90,6 @@ const GoalDetailView: React.FC<Props> = ({
  onQuickAction,
  onBack,
 }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
  const [saving, setSaving] = useState<string | null>(null);
  const [planDraft, setPlanDraft] = useState<Record<string, { progress: number; status: StrategyStatus }>>({});

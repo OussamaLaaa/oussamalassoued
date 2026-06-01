@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { CompanyProblemProfileInput } from '../../types/opportunities';
 
@@ -24,8 +23,6 @@ const CompanyProblemProfileForm: React.FC<{
  const [notes, setNotes] = useState(initialData?.notes || '');
 
  const handleSubmit = (e: React.FormEvent) => {
-  const { t, language } = usePersonalLanguage();
-
  e.preventDefault();
  if (!problemTitle.trim()) {
  setError('Problem title is required.');

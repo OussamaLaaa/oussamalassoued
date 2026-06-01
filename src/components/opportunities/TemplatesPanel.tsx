@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
@@ -32,8 +31,7 @@ const TemplatesPanel: React.FC<{
  onDeleteTemplate: (id: string) => Promise<unknown>;
  onSeedDefaults?: () => Promise<unknown>;
 }> = ({ templates, onAddTemplate, onUpdateTemplate, onDeleteTemplate, onSeedDefaults }) => {
-  const { t } = usePersonalLanguage();
-  const [showForm, setShowForm] = useState(false);
+ const [showForm, setShowForm] = useState(false);
  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
  const [form, setForm] = useState<MessageTemplateInput>(emptyForm);
  const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,26 +218,26 @@ const TemplatesPanel: React.FC<{
  <div className="space-y-4 p-5">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
  <Input
- label={t("Name", "Name", "Name")}
+ label="Name"
  type="text"
  value={form.name}
  onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
  placeholder="Founder / UX audit offer / English"
  />
  <Select
- label={t("common.language", "common.language", "Language")}
+ label="Language"
  value={form.language}
  onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))}
  options={languageOptions.map((option) => ({ value: option.value, label: option.label }))}
  />
  <Select
- label={t("common.audience", "common.audience", "Audience")}
+ label="Audience"
  value={form.audience}
  onChange={(event) => setForm((current) => ({ ...current, audience: event.target.value }))}
  options={audienceOptions.map((option) => ({ value: option.value, label: option.label }))}
  />
  <Select
- label={t("common.goal", "common.goal", "Goal")}
+ label="Goal"
  value={form.goal}
  onChange={(event) => setForm((current) => ({ ...current, goal: event.target.value }))}
  options={goalOptions.map((option) => ({ value: option.value, label: option.label }))}
@@ -336,7 +334,7 @@ const TemplatesPanel: React.FC<{
  <div className="flex items-center justify-end gap-1">
  <button
  type="button"
- aria-label={t("Edit", "Edit", "Edit")}
+ aria-label="Edit"
  onClick={() => startEdit(template)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors"
  >
@@ -346,7 +344,7 @@ const TemplatesPanel: React.FC<{
  </button>
  <button
  type="button"
- aria-label={t("common.deactivate", "common.deactivate", "Deactivate")}
+ aria-label="Deactivate"
  onClick={() => void handleDeactivate(template.id)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
  >

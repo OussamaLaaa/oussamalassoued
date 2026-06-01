@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useRef, useState } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 import ProfessionalDocumentView from './ProfessionalDocumentView';
@@ -65,8 +64,6 @@ const DocumentPrintPreviewModal: React.FC<DocumentPrintPreviewModalProps> = ({
  brandSettings,
  onStoredPdf,
 }) => {
-  const { t, language } = usePersonalLanguage();
-
  const pageRef = useRef<HTMLDivElement | null>(null);
  const [statusMessage, setStatusMessage] = useState('');
  const [statusState, setStatusState] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');

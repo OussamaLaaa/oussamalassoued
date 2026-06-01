@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, Person } from '../../types/opportunities';
 
@@ -12,8 +11,6 @@ interface Props {
 }
 
 const LinkExistingPersonDialog: React.FC<Props> = ({ company, people, onSelect, onCancel }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [query, setQuery] = useState('');
  const [error, setError] = useState('');
  const [savingPersonId, setSavingPersonId] = useState<string | null>(null);

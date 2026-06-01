@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, DocumentBrandSettings, FinanceIncome, FinancePeriod,
@@ -58,12 +57,21 @@ type InvoiceArchivePanelProps = {
 };
 
 const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
- invoices, invoiceItems, brandSettings, financeIncome, financePeriods,
- companies, projects, people, deals, generatedDocuments,
- onNewInvoice, onEditInvoice, onPreviewInvoice, onDeleteInvoice,
- onUpdateInvoice, onAddFinanceIncome,
+ invoices,
+ invoiceItems,
+ brandSettings,
+ financeIncome,
+ financePeriods,
+ companies,
+ projects,
+ generatedDocuments,
+ onNewInvoice,
+ onEditInvoice,
+ onPreviewInvoice,
+ onDeleteInvoice,
+ onUpdateInvoice,
+ onAddFinanceIncome,
 }) => {
- const { t } = usePersonalLanguage();
  const [searchQuery, setSearchQuery] = useState('');
  const [statusFilter, setStatusFilter] = useState('');
  const [companyFilter, setCompanyFilter] = useState('');
@@ -437,10 +445,10 @@ const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
  <InfoBlock label="Seller" value={invoice.sellerName || brandSettings?.brandName || '—'} />
  <InfoBlock label="Client" value={invoice.clientName || '—'} />
  <InfoBlock label="Project" value={invoice.relatedProjectName || '—'} />
- <InfoBlock label={t("Company", "Company", "Company")} value={invoice.relatedCompanyName || '—'} />
+ <InfoBlock label="Company" value={invoice.relatedCompanyName || '—'} />
  </div>
  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
- <InfoBlock label={t("Person", "Person", "Person")} value={invoice.relatedPersonName || '—'} />
+ <InfoBlock label="Person" value={invoice.relatedPersonName || '—'} />
  <InfoBlock label="Deal" value={invoice.relatedDealName || '—'} />
  <InfoBlock label="Generated Doc" value={invoice.generatedDocumentId ? 'Linked' : '—'} />
  </div>

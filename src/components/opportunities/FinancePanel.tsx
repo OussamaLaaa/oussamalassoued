@@ -2,8 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { FinanceIncome, FinanceExpense, FinanceAllocationRule, FinancePurchaseGoal, FinanceInvestmentIdea, FinanceInvestmentRule, FinanceInvestmentAllocation, FinancePeriod, FinanceRecurringRule, Project, Company } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
-import DirectionalText from '../DirectionalText';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 type FinanceTab = 'dashboard' | 'periods' | 'income' | 'expenses' | 'allocation' | 'purchase_goals' | 'investments' | 'recurring' | 'ai_assistant';
 type AiMode = 'monthly_review' | 'allocation_review' | 'purchase_review' | 'investment_review' | 'recurring_income_review' | 'next_actions';
@@ -169,21 +167,20 @@ function FinancePanel({
   onBackToDesktop,
   section,
   financeIncome, financeExpenses, financeAllocationRules, financePurchaseGoals,
-  financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
-  projects, companies,
-  onAddFinanceIncome, onUpdateFinanceIncome, onDeleteFinanceIncome,
-  onAddFinanceExpense, onUpdateFinanceExpense, onDeleteFinanceExpense,
-  onAddFinanceAllocationRule, onUpdateFinanceAllocationRule, onDeleteFinanceAllocationRule,
-  onAddFinancePurchaseGoal, onUpdateFinancePurchaseGoal, onDeleteFinancePurchaseGoal,
-  onAddFinanceInvestmentIdea, onUpdateFinanceInvestmentIdea, onDeleteFinanceInvestmentIdea,
-  onAddFinanceInvestmentRule, onUpdateFinanceInvestmentRule, onDeleteFinanceInvestmentRule,
-  onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
-  financePeriods,
-  onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
-  financeRecurringRules,
-  onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
+ financeInvestmentIdeas, financeInvestmentRules, financeInvestmentAllocations,
+ projects, companies,
+ onAddFinanceIncome, onUpdateFinanceIncome, onDeleteFinanceIncome,
+ onAddFinanceExpense, onUpdateFinanceExpense, onDeleteFinanceExpense,
+ onAddFinanceAllocationRule, onUpdateFinanceAllocationRule, onDeleteFinanceAllocationRule,
+ onAddFinancePurchaseGoal, onUpdateFinancePurchaseGoal, onDeleteFinancePurchaseGoal,
+ onAddFinanceInvestmentIdea, onUpdateFinanceInvestmentIdea, onDeleteFinanceInvestmentIdea,
+ onAddFinanceInvestmentRule, onUpdateFinanceInvestmentRule, onDeleteFinanceInvestmentRule,
+ onAddFinanceInvestmentAllocation, onUpdateFinanceInvestmentAllocation, onDeleteFinanceInvestmentAllocation,
+ financePeriods,
+ onAddFinancePeriod, onUpdateFinancePeriod, onDeleteFinancePeriod,
+ financeRecurringRules,
+ onAddFinanceRecurringRule, onUpdateFinanceRecurringRule, onDeleteFinanceRecurringRule,
 }: FinancePanelProps) {
-  const { t } = usePersonalLanguage();
   const [tab, setTab] = useState<FinanceTab>('dashboard');
   const [investTab, setInvestTab] = useState<InvestTab>('overview');
 
@@ -645,21 +642,21 @@ function FinancePanel({
  {recentIncome.map(i => (
  <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
  <div className="min-w-0 flex-1 truncate pr-2">
-          <DirectionalText text={i.title || i.incomeType} as="span" className="text-black font-medium" />
-          <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
-          </div>
-          <span className="font-semibold text-black shrink-0">{toCur(i.amount, i.currency)}</span>
-          </div>
-          ))}
-          </div>
-          )}
-          {recentExpenses.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-          <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Expenses</div>
-          {recentExpenses.map(e => (
-          <div key={e.id} className="px-4 py-2 flex items-center justify-between text-xs">
-          <div className="min-w-0 flex-1 truncate pr-2">
-          <DirectionalText text={e.title || e.category} as="span" className="text-black font-medium" />
+ <span className="text-black font-medium">{i.title || i.incomeType}</span>
+ <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+ </div>
+ <span className="font-semibold text-black shrink-0">{toCur(i.amount, i.currency)}</span>
+ </div>
+ ))}
+ </div>
+ )}
+ {recentExpenses.length > 0 && (
+ <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+ <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Expenses</div>
+ {recentExpenses.map(e => (
+ <div key={e.id} className="px-4 py-2 flex items-center justify-between text-xs">
+ <div className="min-w-0 flex-1 truncate pr-2">
+ <span className="text-black font-medium">{e.title || e.category}</span>
  <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
  </div>
  <span className="font-semibold text-black shrink-0">{toCur(e.amount, e.currency)}</span>
@@ -675,7 +672,7 @@ function FinancePanel({
  <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Allocation Rules</div>
  {activeRules.map(r => (
  <div key={r.id} className="px-4 py-2 flex items-center justify-between text-xs">
-          <DirectionalText text={r.name || r.category} as="span" className="text-black" />
+ <span className="text-black">{r.name || r.category}</span>
  <span className="text-neutral-500">{r.category} &middot; {r.percentage}%</span>
  </div>
  ))}
@@ -693,23 +690,23 @@ function FinancePanel({
  {allIdeas.slice(0, 3).map(i => (
  <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
  <div className="min-w-0 flex-1 truncate pr-2">
-          <DirectionalText text={i.title || 'Unnamed'} as="span" className="text-black font-medium" />
-          <Badge variant="neutral">{i.type}</Badge>
-          </div>
-          <span className="font-semibold text-black shrink-0">{toCur(i.plannedAmount, i.currency)}</span>
-          </div>
-          ))}
-          </div>
-          )}
-          {activeGoals.length > 0 && (
-          <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
-          <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Purchase Goals</div>
-          {activeGoals.slice(0, 3).map(g => {
-          const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
-          return (
-          <div key={g.id} className="px-4 py-2 text-xs">
-          <div className="flex items-center justify-between">
-          <DirectionalText text={g.title || 'Unnamed'} as="span" className="text-black font-medium" />
+ <span className="text-black font-medium">{i.title || 'Unnamed'}</span>
+ <Badge variant="neutral">{i.type}</Badge>
+ </div>
+ <span className="font-semibold text-black shrink-0">{toCur(i.plannedAmount, i.currency)}</span>
+ </div>
+ ))}
+ </div>
+ )}
+ {activeGoals.length > 0 && (
+ <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
+ <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Purchase Goals</div>
+ {activeGoals.slice(0, 3).map(g => {
+ const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+ return (
+ <div key={g.id} className="px-4 py-2 text-xs">
+ <div className="flex items-center justify-between">
+ <span className="text-black font-medium">{g.title || 'Unnamed'}</span>
  <span className="text-neutral-500">{pct}%</span>
  </div>
  <div className="mt-1 h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
@@ -839,18 +836,18 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={i.title || i.incomeType} as="span" className="text-sm font-medium text-black" />
-          <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
-          {i.isRecurring && <Badge variant="neutral">Recurring</Badge>}
-          </div>
-          <div className="mt-0.5 text-xs text-neutral-500">
-          {i.source} &middot; {i.recurrence}
-          {i.incomeDate && <> &middot; {new Date(i.incomeDate).toLocaleDateString()}</>}
-          {i.expectedDate && <> &middot; Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
-          {i.receivedDate && <> &middot; Received: {new Date(i.receivedDate).toLocaleDateString()}</>}
-          </div>
-          {(i as any).notes && <DirectionalText text={(i as any).notes} as="div" className="mt-1 text-xs text-neutral-400" preserveWhitespace />}
-          </div>
+ <span className="text-sm font-medium text-black">{i.title || i.incomeType}</span>
+ <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+ {i.isRecurring && <Badge variant="neutral">Recurring</Badge>}
+ </div>
+ <div className="mt-0.5 text-xs text-neutral-500">
+ {i.source} &middot; {i.recurrence}
+ {i.incomeDate && <> &middot; {new Date(i.incomeDate).toLocaleDateString()}</>}
+ {i.expectedDate && <> &middot; Expected: {new Date(i.expectedDate).toLocaleDateString()}</>}
+ {i.receivedDate && <> &middot; Received: {new Date(i.receivedDate).toLocaleDateString()}</>}
+ </div>
+ {(i as any).notes && <div className="mt-1 text-xs text-neutral-400">{(i as any).notes}</div>}
+ </div>
  <div className="text-right shrink-0">
  <div className="text-sm font-semibold text-black">{toCur(i.amount, i.currency)}</div>
  <div className="mt-0.5 flex gap-1">
@@ -888,16 +885,16 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={e.title || e.category} as="span" className="text-sm font-medium text-black" />
-          <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
-          <Badge variant="neutral">{e.category}</Badge>
-          </div>
-          <div className="mt-0.5 text-xs text-neutral-500">
-          {e.expenseDate && <>{new Date(e.expenseDate).toLocaleDateString()}</>}
-          {e.financePeriodId && <> &middot; Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
-          </div>
-          {(e as any).notes && <DirectionalText text={(e as any).notes} as="div" className="mt-1 text-xs text-neutral-400" preserveWhitespace />}
-          </div>
+ <span className="text-sm font-medium text-black">{e.title || e.category}</span>
+ <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
+ <Badge variant="neutral">{e.category}</Badge>
+ </div>
+ <div className="mt-0.5 text-xs text-neutral-500">
+ {e.expenseDate && <>{new Date(e.expenseDate).toLocaleDateString()}</>}
+ {e.financePeriodId && <> &middot; Period: {allPeriods.find(p=>p.id===e.financePeriodId)?.title || e.financePeriodId}</>}
+ </div>
+ {(e as any).notes && <div className="mt-1 text-xs text-neutral-400">{(e as any).notes}</div>}
+ </div>
  <div className="text-right shrink-0">
  <div className="text-sm font-semibold text-black">{toCur(e.amount, e.currency)}</div>
  <div className="mt-0.5 flex gap-1">
@@ -932,12 +929,12 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={r.name || r.category} as="span" className="text-sm font-medium text-black" />
-          <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
-          <span className="text-xs text-neutral-500">{r.category} &middot; {r.percentage}% &middot; Priority {r.priority}</span>
-          </div>
-          {(r as any).notes && <DirectionalText text={(r as any).notes} as="div" className="mt-1 text-xs text-neutral-400" preserveWhitespace />}
-          </div>
+ <span className="text-sm font-medium text-black">{r.name || r.category}</span>
+ <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
+ <span className="text-xs text-neutral-500">{r.category} &middot; {r.percentage}% &middot; Priority {r.priority}</span>
+ </div>
+ {(r as any).notes && <div className="mt-1 text-xs text-neutral-400">{(r as any).notes}</div>}
+ </div>
  <div className="flex gap-1 shrink-0">
  <Button variant="outline" size="sm" onClick={() => openModal('allocation', r.id)}>Edit</Button>
  <Button variant="danger" size="sm" onClick={() => handleDelete('allocation', r.id)}>Del</Button>
@@ -975,9 +972,9 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={g.title || 'Unnamed'} as="span" className="text-sm font-medium text-black" />
-          <Badge variant={statusBadge[g.status] || 'neutral'}>{g.status}</Badge>
-          <Badge variant={priorityBadge[g.priority] || 'neutral'}>{g.priority}</Badge>
+ <span className="text-sm font-medium text-black">{g.title || 'Unnamed'}</span>
+ <Badge variant={statusBadge[g.status] || 'neutral'}>{g.status}</Badge>
+ <Badge variant={priorityBadge[g.priority] || 'neutral'}>{g.priority}</Badge>
  </div>
  <div className="mt-1 text-xs text-neutral-500">
  Target: {toCur(g.targetAmount, g.currency)} &middot; Saved: {toCur(g.savedAmount, g.currency)} &middot; {pct}%
@@ -1031,19 +1028,19 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={r.title} as="span" className="text-sm font-medium text-black" />
-          <Badge variant={r.kind === 'income' ? 'success' : 'danger'}>{r.kind}</Badge>
-          <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
-          <Badge variant="neutral">{r.frequency}</Badge>
-          </div>
-          <div className="mt-0.5 text-xs text-neutral-500">
-          Confidence: {r.confidence}
-          {r.startDate && <> &middot; Start: {new Date(r.startDate).toLocaleDateString()}</>}
-          {r.endDate && <> &middot; End: {new Date(r.endDate).toLocaleDateString()}</>}
-          {r.source && <> &middot; Source: {r.source}</>}
-          </div>
-          {r.notes && <DirectionalText text={r.notes} as="div" className="mt-1 text-xs text-neutral-400" preserveWhitespace />}
-          </div>
+ <span className="text-sm font-medium text-black">{r.title}</span>
+ <Badge variant={r.kind === 'income' ? 'success' : 'danger'}>{r.kind}</Badge>
+ <Badge variant={r.isActive ? 'success' : 'neutral'}>{r.isActive ? 'Active' : 'Inactive'}</Badge>
+ <Badge variant="neutral">{r.frequency}</Badge>
+ </div>
+ <div className="mt-0.5 text-xs text-neutral-500">
+ Confidence: {r.confidence}
+ {r.startDate && <> &middot; Start: {new Date(r.startDate).toLocaleDateString()}</>}
+ {r.endDate && <> &middot; End: {new Date(r.endDate).toLocaleDateString()}</>}
+ {r.source && <> &middot; Source: {r.source}</>}
+ </div>
+ {r.notes && <div className="mt-1 text-xs text-neutral-400">{r.notes}</div>}
+ </div>
  <div className="text-right shrink-0">
  <div className="text-sm font-semibold text-black">{toCur(r.amount, r.currency)}</div>
  <div className="mt-0.5 flex gap-1">
@@ -1113,20 +1110,20 @@ function FinancePanel({
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-1.5 flex-wrap">
-          <DirectionalText text={i.title || 'Unnamed'} as="span" className="text-sm font-medium text-black" />
-          <Badge variant="neutral">{i.type}</Badge>
-          <Badge variant={riskBadge[i.riskLevel] || 'neutral'}>{i.riskLevel}</Badge>
-          <Badge variant={statusBadge[i.ethicalStatus] || 'neutral'}>{i.ethicalStatus}</Badge>
-          <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
-          </div>
-          <div className="mt-0.5 text-xs text-neutral-500">
-          {i.decisionStatus && <>Decision: {i.decisionStatus}</>}
-          {i.fundingStatus && <> &middot; Funding: {i.fundingStatus}</>}
-          {i.reviewDate && <> &middot; Review: {new Date(i.reviewDate).toLocaleDateString()}</>}
-          {i.maxAllocation && <> &middot; Max: {i.maxAllocation}%</>}
-          </div>
-          {(i as any).notes && <DirectionalText text={(i as any).notes} as="div" className="mt-1 text-xs text-neutral-400" preserveWhitespace />}
-          </div>
+ <span className="text-sm font-medium text-black">{i.title || 'Unnamed'}</span>
+ <Badge variant="neutral">{i.type}</Badge>
+ <Badge variant={riskBadge[i.riskLevel] || 'neutral'}>{i.riskLevel}</Badge>
+ <Badge variant={statusBadge[i.ethicalStatus] || 'neutral'}>{i.ethicalStatus}</Badge>
+ <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
+ </div>
+ <div className="mt-0.5 text-xs text-neutral-500">
+ {i.decisionStatus && <>Decision: {i.decisionStatus}</>}
+ {i.fundingStatus && <> &middot; Funding: {i.fundingStatus}</>}
+ {i.reviewDate && <> &middot; Review: {new Date(i.reviewDate).toLocaleDateString()}</>}
+ {i.maxAllocation && <> &middot; Max: {i.maxAllocation}%</>}
+ </div>
+ {(i as any).notes && <div className="mt-1 text-xs text-neutral-400">{(i as any).notes}</div>}
+ </div>
  <div className="text-right shrink-0">
  <div className="text-sm font-semibold text-black">{toCur(i.plannedAmount, i.currency)}</div>
  <div className="mt-0.5 flex gap-1">
@@ -1155,8 +1152,8 @@ function FinancePanel({
  <div key={a.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
  <div className="flex items-start justify-between gap-4">
  <div className="min-w-0 flex-1">
-          <DirectionalText text={a.name || a.category} as="span" className="text-sm font-medium text-black" />
-          <span className="ml-2 text-xs text-neutral-500">{a.category} &middot; {a.percentage}%</span>
+ <span className="text-sm font-medium text-black">{a.name || a.category}</span>
+ <span className="ml-2 text-xs text-neutral-500">{a.category} &middot; {a.percentage}%</span>
  </div>
  <Button variant="danger" size="sm" onClick={() => handleDelete('investments', a.id)}>Del</Button>
  </div>
@@ -1179,8 +1176,8 @@ function FinancePanel({
  {allInvRules.map(r => (
  <div key={r.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
  <div className="flex items-center gap-2">
-          <DirectionalText text={r.title} as="span" className="text-sm font-medium text-black" />
-          <Badge variant="neutral">{r.category}</Badge>
+ <span className="text-sm font-medium text-black">{r.title}</span>
+ <Badge variant="neutral">{r.category}</Badge>
  </div>
  </div>
  ))}

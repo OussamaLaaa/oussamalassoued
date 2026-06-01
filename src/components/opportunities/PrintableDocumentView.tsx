@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -92,8 +91,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewProps>(({ document, brandSettings, showActions }, ref) => {
-  const { t } = usePersonalLanguage();
-  const brand = useMemo(() => resolveBrandSettings(brandSettings), [brandSettings]);
+ const brand = useMemo(() => resolveBrandSettings(brandSettings), [brandSettings]);
  const blocks = useMemo(() => parseContentBlocks(document.content), [document.content]);
  const paidDate = (document as GeneratedDocument & { paidDate?: string }).paidDate;
  const isInvoice = document.type === 'invoice';
@@ -147,7 +145,7 @@ const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewPr
  <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
  <InfoRow label="Issue Date" value={formatDate(document.issueDate)} />
  <InfoRow label="Due Date" value={formatDate(document.dueDate)} />
- <InfoRow label={t("Amount", "Amount", "Amount")} value={isInvoice || document.amount != null ? formatMoney(document.amount, document.currency) : '—'} />
+ <InfoRow label="Amount" value={isInvoice || document.amount != null ? formatMoney(document.amount, document.currency) : '—'} />
  <InfoRow
  label="Related"
  value={document.relatedCompanyName || document.relatedProjectName || document.relatedPersonName || document.relatedDealName || '—'}
@@ -158,13 +156,13 @@ const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewPr
  <section className="mt-6 rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4">
  <SectionTitle>Invoice Details</SectionTitle>
  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
- <InfoRow label={t("Amount", "Amount", "Amount")} value={formatMoney(document.amount, document.currency)} />
+ <InfoRow label="Amount" value={formatMoney(document.amount, document.currency)} />
  <InfoRow label="Currency" value={document.currency || brand.defaultCurrency || 'MYR'} />
  <InfoRow label="Issue Date" value={formatDate(document.issueDate)} />
  <InfoRow label="Due Date" value={formatDate(document.dueDate)} />
  </div>
  <div className="mt-3 grid gap-3 sm:grid-cols-2">
- <InfoRow label={t("Status", "Status", "Status")} value={<span className="capitalize">{document.status.replace(/_/g, ' ')}</span>} />
+ <InfoRow label="Status" value={<span className="capitalize">{document.status.replace(/_/g, ' ')}</span>} />
  <InfoRow label="Paid Date" value={document.status === 'paid' ? formatDate(paidDate) : '—'} />
  </div>
  {brand.paymentNotes ? (
@@ -181,8 +179,8 @@ const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewPr
  <SectionTitle>Agreement / Scope Details</SectionTitle>
  <div className="mt-3 grid gap-3 sm:grid-cols-2">
  <InfoRow label="Project" value={document.relatedProjectName || '—'} />
- <InfoRow label={t("Company", "Company", "Company")} value={document.relatedCompanyName || '—'} />
- <InfoRow label={t("Person", "Person", "Person")} value={document.relatedPersonName || '—'} />
+ <InfoRow label="Company" value={document.relatedCompanyName || '—'} />
+ <InfoRow label="Person" value={document.relatedPersonName || '—'} />
  <InfoRow label="Deal" value={document.relatedDealName || '—'} />
  </div>
  <div className="mt-3 grid gap-3 sm:grid-cols-2">

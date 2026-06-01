@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button, Badge } from '../ui';
 import StatCard from '../ui/StatCard';
@@ -68,7 +67,6 @@ const getItemStatusVariant = (s: string) => {
 const PlansPanel: React.FC<Props> = ({
   plans, planItems, projects, strategyGoals, section, onAddPlan, onUpdatePlan, onDeletePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem,
 }) => {
-  const { t } = usePersonalLanguage();
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<PlanSection>('dashboard');
 
@@ -174,7 +172,7 @@ const PlansPanel: React.FC<Props> = ({
  <StatCard label="Total Plans" value={plans.length} hint="All time" />
  <StatCard label="Active Plans" value={activePlans.length} hint="Currently running" />
  <StatCard label="Total Items" value={planItems.length} hint="Across all plans" />
- <StatCard label={t("Completed", "Completed", "Completed")} value={doneItems.length} hint="Items marked done" />
+ <StatCard label="Completed" value={doneItems.length} hint="Items marked done" />
  <StatCard label="High Priority" value={highPriorityItems.length} hint="Needs attention" />
  <StatCard label="Avg Progress" value={`${avgPlanProgress}%`} hint="Across plans" />
  </section>
@@ -437,7 +435,7 @@ const PlansPanel: React.FC<Props> = ({
  </div>
  ) : null}
  <div className="flex items-center justify-end gap-1 border-t border-neutral-100 px-5 py-2">
- <button type="button" aria-label={t("Delete", "Delete", "Delete")} onClick={(e) => { e.stopPropagation(); onDeletePlan(plan.id); }}
+ <button type="button" aria-label="Delete" onClick={(e) => { e.stopPropagation(); onDeletePlan(plan.id); }}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
  </button>

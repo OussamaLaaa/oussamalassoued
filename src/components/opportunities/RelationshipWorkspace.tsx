@@ -1,20 +1,18 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
-  Company,
-  Person,
-  Project,
-  RelationshipCategory,
-  RelationshipContactMethod,
-  RelationshipContactMethodInput,
-  Relationship,
-  RelationshipInteraction,
-  RelationshipOpportunity,
-  RelationshipInteractionInput,
-  RelationshipOpportunityInput,
-  RelationshipInput,
+ Company,
+ Person,
+ Project,
+ RelationshipCategory,
+ RelationshipContactMethod,
+ RelationshipContactMethodInput,
+ Relationship,
+ RelationshipInteraction,
+ RelationshipOpportunity,
+ RelationshipInteractionInput,
+ RelationshipOpportunityInput,
+ RelationshipInput,
 } from '../../types/opportunities';
-import DirectionalText from '../DirectionalText';
 import OpportunityModal from './OpportunityModal';
 import RelationshipForm from './RelationshipForm';
 import RelationshipInteractionForm from './RelationshipInteractionForm';
@@ -35,8 +33,6 @@ const WORKSPACE_TABS = [
 ] as const;
 
 const badgeClass = (kind?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  const value = String(kind || '').toLowerCase();
  if (['strong', 'high', 'active', 'warm', 'open', 'in_progress'].includes(value)) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
  if (['medium', 'unknown', 'paused'].includes(value)) return 'border-neutral-200 bg-neutral-50 text-neutral-600';
@@ -101,7 +97,6 @@ const RelationshipWorkspace: React.FC<{
  onUpdateRelationshipContactMethod,
  onDeleteRelationshipContactMethod,
 }) => {
- const { t } = usePersonalLanguage();
  const [activeTab, setActiveTab] = useState<typeof WORKSPACE_TABS[number]['id']>('overview');
  const [editingInteraction, setEditingInteraction] = useState<RelationshipInteraction | null>(null);
  const [editingOpportunity, setEditingOpportunity] = useState<RelationshipOpportunity | null>(null);
@@ -230,7 +225,7 @@ const RelationshipWorkspace: React.FC<{
  {relationshipFacts.map((item) => (
  <div key={item.label} className="rounded-md bg-neutral-50 p-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{item.label}</div>
-  <DirectionalText text={item.value} as="div" className="mt-1 text-sm font-medium text-neutral-900" />
+ <div className="mt-1 text-sm font-medium text-neutral-900">{item.value}</div>
  </div>
  ))}
  </div>
@@ -240,7 +235,7 @@ const RelationshipWorkspace: React.FC<{
  <h3 className="text-sm font-semibold text-neutral-900">Follow-up Status</h3>
  <div className="mt-3 space-y-2 text-sm text-neutral-700">
  <div className="rounded-md bg-neutral-50 p-3">{followUpOverdue ? 'Follow-up overdue' : 'Follow-up on track'}</div>
-  <DirectionalText text={`Next action: ${selectedRelationship.nextAction || '—'}`} as="div" className="rounded-md bg-neutral-50 p-3" />
+ <div className="rounded-md bg-neutral-50 p-3">Next action: {selectedRelationship.nextAction || '—'}</div>
  </div>
  </div>
 
@@ -264,7 +259,7 @@ const RelationshipWorkspace: React.FC<{
  <div className="mt-3 grid gap-3 md:grid-cols-2">
  <div className="rounded-md bg-neutral-50 p-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How We Met</div>
-  <DirectionalText text={selectedRelationship.howWeMet || '—'} as="div" className="mt-1 text-sm text-neutral-900" />
+ <div className="mt-1 text-sm text-neutral-900">{selectedRelationship.howWeMet || '—'}</div>
  </div>
  <div className="rounded-md bg-neutral-50 p-3">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Person</div>
@@ -308,10 +303,10 @@ const RelationshipWorkspace: React.FC<{
  <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowRelationshipForm(true)}>Edit Relationship</button>
  </div>
  <div className="mt-3 grid gap-3 md:grid-cols-2 text-sm text-neutral-700">
-  <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What They Need</div><DirectionalText text={selectedRelationship.whatTheyNeed || '—'} as="div" className="mt-1" /></div>
-  <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How I Can Help</div><DirectionalText text={selectedRelationship.howICanHelp || '—'} as="div" className="mt-1" /></div>
-  <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How They Can Help Me</div><DirectionalText text={selectedRelationship.howTheyCanHelpMe || '—'} as="div" className="mt-1" /></div>
-  <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Shared Interests</div><DirectionalText text={selectedRelationship.sharedInterests || '—'} as="div" className="mt-1" /></div>
+ <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">What They Need</div><div className="mt-1">{selectedRelationship.whatTheyNeed || '—'}</div></div>
+ <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How I Can Help</div><div className="mt-1">{selectedRelationship.howICanHelp || '—'}</div></div>
+ <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">How They Can Help Me</div><div className="mt-1">{selectedRelationship.howTheyCanHelpMe || '—'}</div></div>
+ <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Shared Interests</div><div className="mt-1">{selectedRelationship.sharedInterests || '—'}</div></div>
  </div>
  </div>
  </div>
@@ -348,9 +343,9 @@ const RelationshipWorkspace: React.FC<{
  </div>
  <div className="mt-3 text-sm text-neutral-700">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Value</div>
-  <DirectionalText text={item.value || '—'} as="div" className="mt-1" />
-  </div>
-  {item.notes ? <div className="mt-3 text-sm text-neutral-700"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div><DirectionalText text={item.notes} as="div" className="mt-1" /></div> : null}
+ <div className="mt-1">{item.value || '—'}</div>
+ </div>
+ {item.notes ? <div className="mt-3 text-sm text-neutral-700"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div><div className="mt-1">{item.notes}</div></div> : null}
  </div>
  )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No contact methods yet. Add LinkedIn, phone, email, WhatsApp, or another channel.</div>}
  </div>
@@ -386,10 +381,10 @@ const RelationshipWorkspace: React.FC<{
  </div>
  </div>
  <div className="mt-3 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
-  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</span><DirectionalText text={item.summary || '—'} as="div" className="mt-1" /></div>
-  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Outcome</span><DirectionalText text={item.outcome || '—'} as="div" className="mt-1" /></div>
-  </div>
-  <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><DirectionalText text={item.nextAction || '—'} as="div" className="mt-1" /></div>
+ <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</span><div className="mt-1">{item.summary || '—'}</div></div>
+ <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Outcome</span><div className="mt-1">{item.outcome || '—'}</div></div>
+ </div>
+ <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
  </div>
  )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No interaction history yet.</div>}
  </div>
@@ -404,22 +399,22 @@ const RelationshipWorkspace: React.FC<{
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <h3 className="text-sm font-semibold text-neutral-900">What They Need</h3>
  <p className="mt-3 text-sm text-neutral-500">What does this person need?</p>
-  <DirectionalText text={selectedRelationship.whatTheyNeed || '—'} as="p" className="mt-2 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="text-sm font-semibold text-neutral-900">How I Can Help</h3>
-  <p className="mt-3 text-sm text-neutral-500">How can I help them?</p>
-  <DirectionalText text={selectedRelationship.howICanHelp || '—'} as="p" className="mt-2 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="text-sm font-semibold text-neutral-900">How They Can Help Me</h3>
-  <p className="mt-3 text-sm text-neutral-500">How can they help me?</p>
-  <DirectionalText text={selectedRelationship.howTheyCanHelpMe || '—'} as="p" className="mt-2 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="text-sm font-semibold text-neutral-900">Shared Interests</h3>
-  <p className="mt-3 text-sm text-neutral-500">What do we share?</p>
-  <DirectionalText text={selectedRelationship.sharedInterests || '—'} as="p" className="mt-2 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
+ <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.whatTheyNeed || '—'}</p>
+ </div>
+ <div className="rounded-xl border border-neutral-200 bg-white p-4">
+ <h3 className="text-sm font-semibold text-neutral-900">How I Can Help</h3>
+ <p className="mt-3 text-sm text-neutral-500">How can I help them?</p>
+ <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.howICanHelp || '—'}</p>
+ </div>
+ <div className="rounded-xl border border-neutral-200 bg-white p-4">
+ <h3 className="text-sm font-semibold text-neutral-900">How They Can Help Me</h3>
+ <p className="mt-3 text-sm text-neutral-500">How can they help me?</p>
+ <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.howTheyCanHelpMe || '—'}</p>
+ </div>
+ <div className="rounded-xl border border-neutral-200 bg-white p-4">
+ <h3 className="text-sm font-semibold text-neutral-900">Shared Interests</h3>
+ <p className="mt-3 text-sm text-neutral-500">What do we share?</p>
+ <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.sharedInterests || '—'}</p>
  </div>
  </div>
  {renderSidebar()}
@@ -431,11 +426,11 @@ const RelationshipWorkspace: React.FC<{
  <div className="space-y-4">
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <h3 className="text-sm font-semibold text-neutral-900">Problems / Friction</h3>
-  <DirectionalText text={selectedRelationship.problems || '—'} as="p" className="mt-3 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="text-sm font-semibold text-neutral-900">Risk Notes</h3>
-  <DirectionalText text={selectedRelationship.riskNotes || '—'} as="p" className="mt-3 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
+ <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.problems || '—'}</p>
+ </div>
+ <div className="rounded-xl border border-neutral-200 bg-white p-4">
+ <h3 className="text-sm font-semibold text-neutral-900">Risk Notes</h3>
+ <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.riskNotes || '—'}</p>
  </div>
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="flex flex-wrap items-center justify-between gap-3">
@@ -482,7 +477,7 @@ const RelationshipWorkspace: React.FC<{
  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
  <div className="flex flex-wrap items-start justify-between gap-3">
  <div>
-  <DirectionalText text={item.title} as="div" className="text-sm font-medium text-neutral-900" />
+ <div className="text-sm font-medium text-neutral-900">{item.title}</div>
  <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-500">
  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.type)}`}>{item.type || 'opportunity'}</span>
  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(item.status)}`}>{item.status || 'open'}</span>
@@ -495,13 +490,13 @@ const RelationshipWorkspace: React.FC<{
  </div>
  </div>
  <div className="mt-3 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
-  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Value</span><DirectionalText text={item.valueDescription || '—'} as="div" className="mt-1" /></div>
+ <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Value</span><div className="mt-1">{item.valueDescription || '—'}</div></div>
  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Due</span><div className="mt-1">{formatDate(item.dueDate)}</div></div>
  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</span><div className="mt-1">{item.linkedProjectName || '—'}</div></div>
  <div><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Company</span><div className="mt-1">{item.linkedCompanyName || '—'}</div></div>
  </div>
-  <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><DirectionalText text={item.nextAction || '—'} as="div" className="mt-1" /></div>
-  {item.notes ? <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</span><DirectionalText text={item.notes} as="div" className="mt-1" /></div> : null}
+ <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Next Action</span><div className="mt-1">{item.nextAction || '—'}</div></div>
+ {item.notes ? <div className="mt-3 text-sm text-neutral-700"><span className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</span><div className="mt-1">{item.notes}</div></div> : null}
  </div>
  )) : <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">No opportunities linked yet.</div>}
  </div>
@@ -553,7 +548,7 @@ const RelationshipWorkspace: React.FC<{
  </div>
  <button type="button" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors" onClick={() => setShowRelationshipForm(true)}>Edit Notes</button>
  </div>
-  <DirectionalText text={selectedRelationship.notes || '—'} as="p" className="mt-3 whitespace-pre-wrap text-sm text-neutral-700" preserveWhitespace />
+ <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{selectedRelationship.notes || '—'}</p>
  </div>
  {renderSidebar()}
  </div>
@@ -566,7 +561,7 @@ const RelationshipWorkspace: React.FC<{
  <div>
  <div className="flex flex-wrap items-center gap-2">
  <button type="button" onClick={onBack} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Back</button>
-  <DirectionalText text={selectedRelationship.displayName} as="h2" className="text-2xl font-semibold text-neutral-900" />
+ <h2 className="text-2xl font-semibold text-neutral-900">{selectedRelationship.displayName}</h2>
  </div>
  <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium">
  {selectedRelationship.domain ? <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass(selectedRelationship.domain)}`}>{selectedRelationship.domain.replace('_', ' ')}</span> : null}
@@ -694,7 +689,7 @@ const RelationshipWorkspace: React.FC<{
  ) : null}
 
  {showContactMethodForm ? (
- <OpportunityModal title={t("common.addContactMethod", "common.addContactMethod", "Add Contact Method")} onClose={() => setShowContactMethodForm(false)}>
+ <OpportunityModal title="Add Contact Method" onClose={() => setShowContactMethodForm(false)}>
  <RelationshipContactMethodForm
  relationships={relationships}
  people={people}

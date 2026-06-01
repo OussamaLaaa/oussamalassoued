@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type {
  Company, Person, OutreachMessage, Deal,
@@ -25,8 +24,6 @@ import CompanyResearchPanel from './CompanyResearchPanel';
 import PersonWorkspace from './PersonWorkspace';
 import LinkExistingPersonDialog from './LinkExistingPersonDialog';
 import { ContactLink, getContactHref } from './contactHelpers';
-import DirectionalText from '../DirectionalText';
-import { detectTextDirection } from '../../utils/textDirection';
 
 interface Props {
  companyId: string;
@@ -164,8 +161,6 @@ const CompanyWorkspace: React.FC<Props> = ({
  updateCompany,
  deleteCompany,
 }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [tab, setTab] = useState<WorkspaceTab>('overview');
  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
  const [notesDraft, setNotesDraft] = useState('');
@@ -267,7 +262,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  return (
  <div className="space-y-4">
  <Button variant="ghost" size="sm" onClick={onBack}>← Back to CRM</Button>
- <EmptyState title={t("company.notFound", "company.notFound", "Company not found.")} description="The company you are looking for does not exist." />
+ <EmptyState title="Company not found." description="The company you are looking for does not exist." />
  </div>
  );
  }
@@ -727,7 +722,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   {company.notes && (
   <div className="rounded-xl border border-neutral-200 bg-white p-4">
   <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
-   <DirectionalText text={company.notes} as="p" preserveWhitespace className="text-sm text-neutral-700" />
+  <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words">{company.notes}</p>
   </div>
   )}
   </div>
@@ -742,7 +737,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {methods.length === 0 ? (
  <EmptyState
- title={t("crm.noContactMethods", "crm.noContactMethods", "No company contact methods yet.")}
+ title="No company contact methods yet."
  description="Add email, phone, website, LinkedIn, WhatsApp, or another channel."
  />
  ) : (
@@ -788,7 +783,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {companyPeople.length === 0 ? (
  <EmptyState
- title={t("crm.noPeopleLinked", "crm.noPeopleLinked", "No people linked to this company yet.")}
+ title="No people linked to this company yet."
  description="Add decision makers, influencers, or relevant contacts."
  />
  ) : (
@@ -885,7 +880,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {profiles.length === 0 ? (
  <EmptyState
- title={t("crm.noProblemProfile", "crm.noProblemProfile", "No problem profile yet.")}
+ title="No problem profile yet."
  description="Define what problem you can solve before outreach."
  />
  ) : (
@@ -910,19 +905,19 @@ const CompanyWorkspace: React.FC<Props> = ({
  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
  <div>
  <p className="text-xs font-medium text-neutral-500">Problem Description</p>
-          <DirectionalText text={profile.problemDescription || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.problemDescription || '—'}</p>
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Current Situation</p>
-          <DirectionalText text={profile.currentSituation || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.currentSituation || '—'}</p>
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Business Impact</p>
-          <DirectionalText text={profile.businessImpact || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.businessImpact || '—'}</p>
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Proposed Solution</p>
-          <DirectionalText text={profile.proposedSolution || '—'} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.proposedSolution || '—'}</p>
  </div>
  <div>
  <p className="text-xs font-medium text-neutral-500">Service Angle</p>
@@ -937,7 +932,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  {profile.notes && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Notes</p>
-          <DirectionalText text={profile.notes} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.notes}</p>
  </div>
  )}
  </div>
@@ -957,7 +952,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  {scripts.length === 0 ? (
  <EmptyState
- title={t("crm.noOutreachScript", "crm.noOutreachScript", "No outreach script yet.")}
+ title="No outreach script yet."
  description="Prepare what to send or say before contacting this company."
  />
  ) : (
@@ -986,13 +981,13 @@ const CompanyWorkspace: React.FC<Props> = ({
  {script.goal && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Goal</p>
-  <DirectionalText text={script.goal} as="p" className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700">{script.goal}</p>
  </div>
  )}
  {script.hook && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Hook</p>
-  <DirectionalText text={script.hook} as="p" className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700">{script.hook}</p>
  </div>
  )}
  {script.messageBody && (
@@ -1001,7 +996,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Message Body</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.messageBody!))} className="text-neutral-500 text-xs">Copy Message Body</Button>
  </div>
-  <DirectionalText text={script.messageBody} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.messageBody}</p>
  </div>
  )}
  {script.callScript && (
@@ -1010,13 +1005,13 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Call Script</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.callScript!))} className="text-neutral-500 text-xs">Copy Call Script</Button>
  </div>
-  <DirectionalText text={script.callScript} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.callScript}</p>
  </div>
  )}
  {script.objectionHandling && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Objection Handling</p>
-  <DirectionalText text={script.objectionHandling} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.objectionHandling}</p>
  </div>
  )}
  {script.followUpMessage && (
@@ -1025,7 +1020,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <p className="text-xs font-medium text-neutral-500">Follow-up Message</p>
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleCopyToClipboard(script.followUpMessage!))} className="text-neutral-500 text-xs">Copy Follow-up Message</Button>
  </div>
-  <DirectionalText text={script.followUpMessage} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{script.followUpMessage}</p>
  </div>
  )}
  </div>
@@ -1033,7 +1028,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  {script.notes && (
  <div>
  <p className="text-xs font-medium text-neutral-500">Notes</p>
-  <DirectionalText text={script.notes} as="p" preserveWhitespace className="mt-1 text-sm text-neutral-700" />
+ <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap">{script.notes}</p>
  </div>
  )}
  </div>
@@ -1078,7 +1073,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  <td className="px-3 py-3 text-neutral-700">{msg.messageType || '—'}</td>
  <td className="px-3 py-3"><StatusBadge status={msg.replyStatus} /></td>
  <td className="px-3 py-3 text-neutral-700">{msg.nextFollowUpDate || '—'}</td>
-  <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate"><DirectionalText text={msg.messageText || msg.replySummary || '—'} className="text-neutral-700" /></td>
+ <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.messageText || msg.replySummary || '—'}</td>
  <td className="px-3 py-3">
  <div className="flex justify-end gap-1">
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditMessage(msg))} className="text-neutral-600">Edit</Button>
@@ -1124,8 +1119,8 @@ const CompanyWorkspace: React.FC<Props> = ({
  <td className="px-3 py-3"><StatusBadge status={deal.stage as string} /></td>
  <td className="px-3 py-3 text-neutral-700">{typeof deal.probability === 'number' ? `${deal.probability}%` : '—'}</td>
  <td className="px-3 py-3 text-neutral-700">{deal.value ? `${deal.currency || '$'}${deal.value}` : '—'}</td>
-  <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate"><DirectionalText text={deal.problem || '—'} className="text-neutral-700" /></td>
-  <td className="px-3 py-3 text-neutral-700"><DirectionalText text={deal.nextAction || '—'} className="text-neutral-700" /></td>
+ <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{deal.problem || '—'}</td>
+ <td className="px-3 py-3 text-neutral-700">{deal.nextAction || '—'}</td>
  <td className="px-3 py-3">
  <div className="flex justify-end gap-1">
  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditDeal(deal))} className="text-neutral-600">Edit</Button>
@@ -1148,13 +1143,12 @@ const CompanyWorkspace: React.FC<Props> = ({
  <div className="rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
  )}
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-   <textarea
-    dir={detectTextDirection(notesDraft)}
-    className="w-full min-h-[200px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none"
-    value={notesDraft}
-    onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
-    placeholder="Write notes about this company..."
-   />
+ <textarea
+ className="w-full min-h-[200px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none"
+ value={notesDraft}
+ onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
+ placeholder="Write notes about this company..."
+ />
  <div className="mt-3 flex items-center justify-end gap-3">
  {notesSaved && <span className="text-xs text-emerald-600">Saved</span>}
  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(handleSaveNotes)} disabled={notesSaving}>
@@ -1401,7 +1395,7 @@ const CompanyWorkspace: React.FC<Props> = ({
 
 
  {showPersonChoiceModal ? (
- <OpportunityModal title={t("crm.addPerson", "crm.addPerson", "Add Person")} onClose={() => setShowPersonChoiceModal(false)}>
+ <OpportunityModal title="Add Person" onClose={() => setShowPersonChoiceModal(false)}>
  <div className="space-y-3">
  <p className="text-sm text-neutral-600">Choose how you want to add a person to this company.</p>
  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

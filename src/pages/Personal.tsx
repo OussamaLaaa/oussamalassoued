@@ -2,13 +2,11 @@ import React, { useEffect, useState } from 'react';
 import PersonalAuthGate from '../components/personal/PersonalAuthGate';
 import OpportunitiesLayout from '../components/opportunities/OpportunitiesLayout';
 import { useOpportunitiesData } from '../hooks/useOpportunitiesData';
-import { PersonalLanguageProvider, usePersonalLanguage } from '../i18n/usePersonalLanguage';
 
 const STORAGE_KEY = 'opportunities-theme';
 
-const PersonalWorkspaceInner: React.FC = () => {
+const PersonalWorkspace: React.FC = () => {
   const opportunitiesData = useOpportunitiesData(true);
-  const { language } = usePersonalLanguage();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -44,19 +42,17 @@ const PersonalWorkspaceInner: React.FC = () => {
   }, []);
 
   return (
-    <div className="personal-os-root opportunities-shell min-h-screen w-full relative z-[9999] overflow-x-hidden" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="personal-os-root opportunities-shell min-h-screen w-full relative z-[9999] overflow-x-hidden">
       <OpportunitiesLayout theme={theme} setTheme={setTheme} data={opportunitiesData} />
     </div>
   );
 };
 
-const PersonalPage: React.FC<{ lang?: 'en' | 'ar' }> = ({ lang = 'en' }) => {
+const PersonalPage: React.FC = () => {
   return (
-    <PersonalLanguageProvider initialLanguage={lang}>
-      <PersonalAuthGate>
-        <PersonalWorkspaceInner />
-      </PersonalAuthGate>
-    </PersonalLanguageProvider>
+    <PersonalAuthGate>
+      <PersonalWorkspace />
+    </PersonalAuthGate>
   );
 };
 

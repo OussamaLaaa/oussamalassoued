@@ -1,7 +1,4 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
-import DirectionalText from '../DirectionalText';
-import { detectTextDirection } from '../../utils/textDirection';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import Button from '../ui/Button';
@@ -24,8 +21,6 @@ const PRIORITY_BADGE_VARIANT: Record<string, 'danger' | 'warning' | 'neutral'> =
 };
 
 const formatHours = (minutes?: number | null): string => {
-  const { t, language } = usePersonalLanguage();
-
  if (minutes == null) return '0h';
  const h = Math.floor(minutes / 60);
  const m = minutes % 60;
@@ -68,7 +63,6 @@ const TaskDetailWorkspace: React.FC<{
  task, taskWorkLogs, projects, plans, strategyGoals, companies, people, generatedDocuments,
  onUpdateTask, onDeleteTask, onAddWorkLog, onUpdateWorkLog, onDeleteWorkLog, onComplete, onClose,
 }) => {
- const { t } = usePersonalLanguage();
  const [tab, setTab] = useState<DetailTab>('overview');
  const [editing, setEditing] = useState(false);
  const [completing, setCompleting] = useState(false);
@@ -194,7 +188,7 @@ const TaskDetailWorkspace: React.FC<{
  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
  {task.category && <Badge variant="neutral">{task.category}</Badge>}
  </div>
- <DirectionalText text={task.title} as="h2" className="text-base font-semibold text-black break-words" />
+ <h2 className="text-base font-semibold text-black break-words">{task.title}</h2>
  </div>
  <Button type="button" variant="ghost" size="sm" className="shrink-0 ml-2" onClick={onClose}>
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -223,7 +217,7 @@ const TaskDetailWorkspace: React.FC<{
  {task.description && (
  <div className="rounded-xl border border-neutral-200 bg-white p-3">
  <label className="text-xs font-medium text-neutral-600 mb-1 block">Description</label>
-  <DirectionalText text={task.description} as="div" className="text-sm text-black break-words" preserveWhitespace />
+ <div className="text-sm text-black whitespace-pre-wrap break-words">{task.description}</div>
  </div>
  )}
  <div className="grid grid-cols-2 gap-3">
@@ -331,7 +325,7 @@ const TaskDetailWorkspace: React.FC<{
  {tab === 'notes' && (
  <div>
  {task.notes ? (
-  <DirectionalText text={task.notes} as="div" className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-black break-words" preserveWhitespace />
+ <div className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-black whitespace-pre-wrap break-words">{task.notes}</div>
  ) : (
  <div className="flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-white py-8 text-xs text-neutral-400">
  <span className="font-medium text-neutral-500">No notes</span>
@@ -346,11 +340,11 @@ const TaskDetailWorkspace: React.FC<{
  <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
  <h4 className="text-sm font-medium text-black">{editingLog ? 'Edit Work Log' : 'Add Work Log'}</h4>
  <div className="grid grid-cols-2 gap-3">
- <Input label={t("Date", "Date", "Date")} type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
+ <Input label="Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} />
  <Input label="Minutes" type="number" min={1} value={logMinutes} onChange={(e) => setLogMinutes(e.target.value)} />
  </div>
- <Input label={t("Summary", "Summary", "Summary")} type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
-  <Textarea label={t("Notes", "Notes", "Notes")} value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} dir={detectTextDirection(logNotes || '')} />
+ <Input label="Summary" type="text" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} />
+ <Textarea label="Notes" value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} />
  <div className="flex items-center justify-end gap-2">
  <Button type="button" variant="secondary" onClick={() => { setShowAddLog(false); setEditingLog(null); }}>Cancel</Button>
  <Button type="button" variant="primary" onClick={editingLog ? handleUpdateLog : handleSubmitLog}>
@@ -389,8 +383,8 @@ const TaskDetailWorkspace: React.FC<{
  <div className="space-y-3">
  <Input label="Completion Date" type="date" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} />
  <Input label="Hours Spent" type="number" min={0} step={0.5} value={completionHours} onChange={(e) => setCompletionHours(e.target.value)} placeholder="e.g. 2.5" />
- <Input label={t("Summary", "Summary", "Summary")} type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} />
- <Textarea label={t("Notes", "Notes", "Notes")} value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} />
+ <Input label="Summary" type="text" value={completionSummary} onChange={(e) => setCompletionSummary(e.target.value)} />
+ <Textarea label="Notes" value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} rows={2} />
  </div>
  <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-neutral-200">
  <Button type="button" variant="secondary" onClick={() => setCompleting(false)}>Cancel</Button>

@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { PlanItemInput, Project, StrategyGoal, PlanItemStatus, PlanItemCategory } from '../../types/opportunities';
 
@@ -13,25 +12,23 @@ type Props = {
  strategyGoals: StrategyGoal[];
 };
 
-const PlanItemForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals }) => {
-  const { t } = usePersonalLanguage();
-  return (
-  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")} required>
+const PlanItemForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals }) => (
+ <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+ <Field label="Title" required>
  <input value={form.title} onChange={(e) => onChange({ ...form, title: e.target.value })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label={t("Category", "Category", "Category")}>
+ <Field label="Category">
  <select value={form.category || ''} onChange={(e) => onChange({ ...form, category: e.target.value as PlanItemCategory })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  <option value="">None</option>
  {CATEGORY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
  </select>
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={form.status || 'todo'} onChange={(e) => onChange({ ...form, status: e.target.value as PlanItemStatus })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={form.priority || 'medium'} onChange={(e) => onChange({ ...form, priority: e.target.value as typeof PRIORITY_OPTIONS[number] })} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
  </select>
@@ -54,12 +51,11 @@ const PlanItemForm: React.FC<Props> = ({ form, onChange, projects, strategyGoals
  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
  </select>
  </Field>
- <Field label={t("Description", "Description", "Description")} className="md:col-span-2">
+ <Field label="Description" className="md:col-span-2">
  <textarea value={form.description || ''} onChange={(e) => onChange({ ...form, description: e.target.value })} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm text-neutral-900 bg-white outline-none focus:border-neutral-400" />
  </Field>
-  </div>
-  );
-};
+ </div>
+);
 
 const Field: React.FC<{ label: string; required?: boolean; className?: string; children: React.ReactNode }> = ({ label, required, className, children }) => (
  <label className={`block text-sm text-neutral-700 ${className || ''}`}>

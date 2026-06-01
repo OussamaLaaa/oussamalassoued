@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyTactic, StrategyTacticInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -38,8 +37,7 @@ const TacticsPanel: React.FC<Props> = ({
  tactics, onEdit, onDelete, onOpenNew,
  filterStatus, setFilterStatus,
 }) => {
-  const { t } = usePersonalLanguage();
-  const filtered = tactics.filter((t) => {
+ const filtered = tactics.filter((t) => {
  if (filterStatus && t.status !== filterStatus) return false;
  return true;
  });
@@ -103,11 +101,11 @@ const TacticsPanel: React.FC<Props> = ({
  <td className="px-4 py-3 align-middle text-sm text-neutral-700">{formatDate(tactic.dueDate)}</td>
  <td className="px-4 py-3 align-middle">
  <div className="flex items-center gap-1">
- <button type="button" aria-label={t("Edit", "Edit", "Edit")} onClick={() => onEdit(tactic)}
+ <button type="button" aria-label="Edit" onClick={() => onEdit(tactic)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
  </button>
- <button type="button" aria-label={t("Delete", "Delete", "Delete")} onClick={() => onDelete(tactic.id)}
+ <button type="button" aria-label="Delete" onClick={() => onDelete(tactic.id)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
  </button>

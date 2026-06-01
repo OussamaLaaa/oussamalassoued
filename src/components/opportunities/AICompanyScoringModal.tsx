@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { Company, Person, OutreachMessage, Deal } from '../../types/opportunities';
 import Modal from '../ui/Modal';
@@ -48,8 +47,6 @@ const AICompanyScoringModal: React.FC<{
  const [questionsText, setQuestionsText] = useState('');
 
  const populateResult = (r: ScoringResult) => {
-  const { t, language } = usePersonalLanguage();
-
  setDatabaseType(r.databaseType || 'sme');
  setIndustry(r.industry || '');
  setPriority(r.priority || 'medium');
@@ -164,7 +161,7 @@ const AICompanyScoringModal: React.FC<{
 
  <div className="grid grid-cols-2 gap-4">
  <Select
- label={t("crm.databaseType", "crm.databaseType", "Database Type")}
+ label="Database Type"
  value={databaseType}
  onChange={(e) => setDatabaseType(e.target.value)}
  options={[
@@ -180,7 +177,7 @@ const AICompanyScoringModal: React.FC<{
  placeholder="e.g. SaaS, E-commerce"
  />
  <Select
- label={t("Priority", "Priority", "Priority")}
+ label="Priority"
  value={priority}
  onChange={(e) => setPriority(e.target.value)}
  options={[
@@ -198,7 +195,7 @@ const AICompanyScoringModal: React.FC<{
  onChange={(e) => setFitScore(Math.max(1, Math.min(10, Number(e.target.value) || 5)))}
  />
  <Select
- label={t("crm.ethicalFit", "crm.ethicalFit", "Ethical Fit")}
+ label="Ethical Fit"
  value={ethicalFit}
  onChange={(e) => setEthicalFit(e.target.value)}
  options={[
@@ -224,7 +221,7 @@ const AICompanyScoringModal: React.FC<{
  placeholder="Suggested service..."
  />
  <Textarea
- label={t("common.nextAction", "common.nextAction", "Next Action")}
+ label="Next Action"
  value={nextAction}
  onChange={(e) => setNextAction(e.target.value)}
  rows={2}

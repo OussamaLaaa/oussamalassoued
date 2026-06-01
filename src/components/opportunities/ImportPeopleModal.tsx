@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, PersonInput } from '../../types/opportunities';
 import { parsePeopleCsv, type ParsedPeopleCsvRow } from '../../utils/parsePeopleCsv';
@@ -38,8 +37,6 @@ const ImportPeopleModal: React.FC<{
  onClose: () => void;
  onImport: (people: PersonInput[]) => Promise<unknown>;
 }> = ({ companies, onClose, onImport }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [selectedFile, setSelectedFile] = useState<File | null>(null);
  const [importing, setImporting] = useState(false);
  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);

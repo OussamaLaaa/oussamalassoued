@@ -7,7 +7,6 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import StatCard from '../ui/StatCard';
 import type { Company, Deal, DocumentInput, DocumentItem, DocumentStatus, DocumentType, Person, Project } from '../../types/opportunities';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 type DocumentsTab = 'dashboard' | 'all' | 'invoices' | 'contracts' | 'agreements' | 'receipts' | 'review';
 
@@ -22,6 +21,16 @@ interface DocumentsPanelProps {
  onDeleteDocument: (id: string) => Promise<void>;
 }
 
+const TABS: Array<{ id: DocumentsTab; label: string }> = [
+ { id: 'dashboard', label: 'Dashboard' },
+ { id: 'all', label: 'All Documents' },
+ { id: 'invoices', label: 'Invoices' },
+ { id: 'contracts', label: 'Contracts' },
+ { id: 'agreements', label: 'Agreements' },
+ { id: 'receipts', label: 'Receipts' },
+ { id: 'review', label: 'Review' },
+];
+
 const REVIEW_PROMPTS = [
  'Which invoices are unpaid?',
  'Which contracts need signing?',
@@ -29,6 +38,29 @@ const REVIEW_PROMPTS = [
  'Which documents should be archived?',
  'Which documents are missing for this project/client?',
 ];
+
+const TYPE_LABELS: Record<DocumentType, string> = {
+ document: 'Document',
+ invoice: 'Invoice',
+ contract: 'Contract',
+ agreement: 'Agreement',
+ receipt: 'Receipt',
+ proposal: 'Proposal',
+ legal: 'Legal',
+ admin: 'Admin',
+ other: 'Other',
+};
+
+const STATUS_LABELS: Record<DocumentStatus, string> = {
+ draft: 'Draft',
+ sent: 'Sent',
+ signed: 'Signed',
+ paid: 'Paid',
+ unpaid: 'Unpaid',
+ overdue: 'Overdue',
+ archived: 'Archived',
+ cancelled: 'Cancelled',
+};
 
 const formatDate = (value?: string) => {
  if (!value) return '—';
@@ -90,60 +122,22 @@ const isOverdueDocument = (document: DocumentItem, today: Date) => {
  return !['paid', 'signed', 'archived', 'cancelled'].includes(document.status);
 };
 
+const TYPE_OPTIONS = [
+ { value: 'all', label: 'All' },
+ ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label })),
+];
+
+const STATUS_OPTIONS = [
+ { value: 'all', label: 'All' },
+ ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
+];
+
 const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, companies, people, deals, onAddDocument, onUpdateDocument, onDeleteDocument }) => {
- const { t } = usePersonalLanguage();
  const [tab, setTab] = useState<DocumentsTab>('dashboard');
  const [searchQuery, setSearchQuery] = useState('');
  const [typeFilter, setTypeFilter] = useState<DocumentType | 'all'>('all');
  const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
  const [editor, setEditor] = useState<{ mode: 'create' | 'edit'; document?: DocumentItem } | null>(null);
-
- const TABS: Array<{ id: DocumentsTab; label: string }> = [
- { id: 'dashboard', label: t('documents.Dashboard', 'Dashboard') },
- { id: 'all', label: t('documents.All Documents', 'All Documents') },
- { id: 'invoices', label: t('documents.Invoices', 'Invoices') },
- { id: 'contracts', label: t('documents.Contracts', 'Contracts') },
- { id: 'agreements', label: t('documents.Agreements', 'Agreements') },
- { id: 'receipts', label: t('documents.Receipts', 'Receipts') },
- { id: 'review', label: t('documents.Review', 'Review') },
- ];
-
- const TYPE_LABELS: Record<DocumentType, string> = {
- document: t('documents.Document', 'Document'),
- invoice: t('documents.Invoice', 'Invoice'),
- contract: t('documents.Contract', 'Contract'),
- agreement: t('documents.Agreement', 'Agreement'),
- receipt: t('documents.Receipt', 'Receipt'),
- proposal: t('documents.Proposal', 'Proposal'),
- legal: t('documents.Legal', 'Legal'),
- admin: t('documents.Admin', 'Admin'),
- other: t('documents.Other', 'Other'),
- cahier_de_charges: t('documents.Cahier de Charges', 'Cahier de Charges'),
- ux_audit_report: t('documents.UX Audit Report', 'UX Audit Report'),
- project_brief: t('documents.Project Brief', 'Project Brief'),
- };
-
- const STATUS_LABELS: Record<DocumentStatus, string> = {
- draft: t('documents.Draft', 'Draft'),
- ready: t('documents.Ready', 'Ready'),
- sent: t('documents.Sent', 'Sent'),
- signed: t('documents.Signed', 'Signed'),
- paid: t('documents.Paid', 'Paid'),
- unpaid: t('documents.Unpaid', 'Unpaid'),
- overdue: t('documents.Overdue', 'Overdue'),
- archived: t('documents.Archived', 'Archived'),
- cancelled: t('documents.Cancelled', 'Cancelled'),
- };
-
- const TYPE_OPTIONS = [
- { value: 'all', label: t('documents.All', 'All') },
- ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label })),
- ];
-
- const STATUS_OPTIONS = [
- { value: 'all', label: t('documents.All', 'All') },
- ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
- ];
 
  const today = useMemo(() => {
  const date = new Date();
@@ -276,7 +270,7 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  size="sm"
  onClick={() => window.open(document.url, '_blank', 'noopener,noreferrer')}
  >
- {t('documents.Open', 'Open')}
+ Open
  </Button>
  ) : null}
  <Button
@@ -284,45 +278,45 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  size="sm"
  onClick={() => openEdit(document)}
  >
- {t('documents.Edit', 'Edit')}
+ Edit
  </Button>
  <Button
  variant="danger"
  size="sm"
  onClick={() => void onDeleteDocument(document.id)}
  >
- {t('documents.Delete', 'Delete')}
+ Delete
  </Button>
  </div>
  </div>
 
  <div className="mt-4 grid gap-3 text-sm text-neutral-600 md:grid-cols-2">
  <div className="space-y-1">
- <div><span className="font-medium text-black">{t('documents.Amount:', 'Amount:')}</span> {formatAmount(document.amount, document.currency)}</div>
- <div><span className="font-medium text-black">{t('documents.Issue:', 'Issue:')}</span> {formatDate(document.issueDate)}</div>
- <div><span className="font-medium text-black">{t('documents.Due:', 'Due:')}</span> {formatDate(document.dueDate)}</div>
- <div><span className="font-medium text-black">{t('documents.Paid:', 'Paid:')}</span> {formatDate(document.paidDate)}</div>
+ <div><span className="font-medium text-black">Amount:</span> {formatAmount(document.amount, document.currency)}</div>
+ <div><span className="font-medium text-black">Issue:</span> {formatDate(document.issueDate)}</div>
+ <div><span className="font-medium text-black">Due:</span> {formatDate(document.dueDate)}</div>
+ <div><span className="font-medium text-black">Paid:</span> {formatDate(document.paidDate)}</div>
  </div>
  <div className="space-y-1">
- <div><span className="font-medium text-black">{t('documents.Related:', 'Related:')}</span> {relatedParts.length > 0 ? relatedParts.join(' · ') : t('documents.None', 'None')}</div>
- <div><span className="font-medium text-black">{t('documents.Updated:', 'Updated:')}</span> {formatDate(document.updatedAt || document.createdAt)}</div>
- {document.url ? <div className="break-all"><span className="font-medium text-black">{t('documents.Link:', 'Link:')}</span> {document.url}</div> : null}
+ <div><span className="font-medium text-black">Related:</span> {relatedParts.length > 0 ? relatedParts.join(' · ') : 'None'}</div>
+ <div><span className="font-medium text-black">Updated:</span> {formatDate(document.updatedAt || document.createdAt)}</div>
+ {document.url ? <div className="break-all"><span className="font-medium text-black">Link:</span> {document.url}</div> : null}
  </div>
  </div>
 
  {(isInvoice || isContract) && (
  <div className="mt-4 flex flex-wrap gap-2 border-t border-neutral-200 pt-3">
- <Button variant="secondary" size="sm" onClick={() => void handleQuickStatus(document, 'sent')}>{t('documents.Mark Sent', 'Mark Sent')}</Button>
+ <Button variant="secondary" size="sm" onClick={() => void handleQuickStatus(document, 'sent')}>Mark Sent</Button>
  {isInvoice ? (
  <>
- <Button variant="success" size="sm" onClick={() => void handleQuickStatus(document, 'paid')}>{t('documents.Mark Paid', 'Mark Paid')}</Button>
- <Button variant="danger" size="sm" onClick={() => void handleQuickStatus(document, 'overdue')}>{t('documents.Mark Overdue', 'Mark Overdue')}</Button>
+ <Button variant="success" size="sm" onClick={() => void handleQuickStatus(document, 'paid')}>Mark Paid</Button>
+ <Button variant="danger" size="sm" onClick={() => void handleQuickStatus(document, 'overdue')}>Mark Overdue</Button>
  </>
  ) : null}
  {isContract ? (
- <Button variant="success" size="sm" onClick={() => void handleQuickStatus(document, 'signed')}>{t('documents.Mark Signed', 'Mark Signed')}</Button>
+ <Button variant="success" size="sm" onClick={() => void handleQuickStatus(document, 'signed')}>Mark Signed</Button>
  ) : null}
- <Button variant="ghost" size="sm" onClick={() => void handleQuickStatus(document, 'archived')}>{t('documents.Archive', 'Archive')}</Button>
+ <Button variant="ghost" size="sm" onClick={() => void handleQuickStatus(document, 'archived')}>Archive</Button>
  </div>
  )}
  </article>
@@ -334,19 +328,19 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex flex-wrap items-center justify-between gap-4">
  <div>
- <h2 className="text-lg font-semibold text-black">{t('documents.Documents OS', 'Documents OS')}</h2>
- <p className="mt-1 text-sm text-neutral-500">{t('documents.Track invoices, contracts, agreements, receipts, proposals, and admin notes in one place.', 'Track invoices, contracts, agreements, receipts, proposals, and admin notes in one place.')}</p>
+ <h2 className="text-lg font-semibold text-black">Documents OS</h2>
+ <p className="mt-1 text-sm text-neutral-500">Track invoices, contracts, agreements, receipts, proposals, and admin notes in one place.</p>
  </div>
- <Button variant="primary" onClick={openCreate}>{t('documents.New Document', 'New Document')}</Button>
+ <Button variant="primary" onClick={openCreate}>New Document</Button>
  </div>
 
  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
- <StatCard label={t('documents.Total Documents', 'Total Documents')} value={metrics.totalDocuments} />
- <StatCard label={t('documents.Open Invoices', 'Open Invoices')} value={metrics.openInvoices} />
- <StatCard label={t('documents.Unpaid Amount', 'Unpaid Amount')} value={formatAmount(metrics.unpaidAmount)} />
- <StatCard label={t('documents.Contracts Signed', 'Contracts Signed')} value={metrics.contractsSigned} />
- <StatCard label={t('documents.Documents Due Soon', 'Documents Due Soon')} value={metrics.dueSoon} />
- <StatCard label={t('documents.Overdue Documents', 'Overdue Documents')} value={metrics.overdue} />
+ <StatCard label="Total Documents" value={metrics.totalDocuments} />
+ <StatCard label="Open Invoices" value={metrics.openInvoices} />
+ <StatCard label="Unpaid Amount" value={formatAmount(metrics.unpaidAmount)} />
+ <StatCard label="Contracts Signed" value={metrics.contractsSigned} />
+ <StatCard label="Documents Due Soon" value={metrics.dueSoon} />
+ <StatCard label="Overdue Documents" value={metrics.overdue} />
  </div>
  </div>
 
@@ -366,15 +360,15 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  {tab === 'dashboard' ? (
  <div className="grid gap-5 lg:grid-cols-2">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">{t('documents.Due Soon', 'Due Soon')}</h3>
+ <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">Due Soon</h3>
  <div className="mt-4 space-y-3">
- {dueSoonList.length === 0 ? <EmptyState text={t('documents.No documents due in next 7 days.', 'No documents are due in the next 7 days.')} /> : dueSoonList.slice(0, 6).map(renderDocumentCard)}
+ {dueSoonList.length === 0 ? <EmptyState text="No documents are due in the next 7 days." /> : dueSoonList.slice(0, 6).map(renderDocumentCard)}
  </div>
  </div>
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">{t('documents.Overdue', 'Overdue')}</h3>
+ <h3 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">Overdue</h3>
  <div className="mt-4 space-y-3">
- {overdueList.length === 0 ? <EmptyState text={t('documents.No overdue documents right now.', 'No overdue documents right now.')} /> : overdueList.slice(0, 6).map(renderDocumentCard)}
+ {overdueList.length === 0 ? <EmptyState text="No overdue documents right now." /> : overdueList.slice(0, 6).map(renderDocumentCard)}
  </div>
  </div>
  </div>
@@ -398,20 +392,20 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  <div className="grid gap-3 md:grid-cols-4">
  <div className="md:col-span-2">
  <Input
- label={t('documents.Search', 'Search')}
+ label="Search"
  value={searchQuery}
  onChange={(event) => setSearchQuery(event.target.value)}
- placeholder={t('documents.Search by name, type, status, relation, or notes', 'Search by name, type, status, relation, or notes')}
+ placeholder="Search by name, type, status, relation, or notes"
  />
  </div>
  <Select
- label={t('documents.Type', 'Type')}
+ label="Type"
  value={typeFilter}
  onChange={(event) => setTypeFilter(event.target.value as DocumentType | 'all')}
  options={TYPE_OPTIONS}
  />
  <Select
- label={t('documents.Status', 'Status')}
+ label="Status"
  value={statusFilter}
  onChange={(event) => setStatusFilter(event.target.value as DocumentStatus | 'all')}
  options={STATUS_OPTIONS}
@@ -421,13 +415,13 @@ const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ documents, projects, co
  ) : null}
 
  <div className="grid gap-4 lg:grid-cols-2">
- {documentsForQuickTab.length === 0 ? <EmptyState text={t('documents.No documents match the current view.', 'No documents match the current view.')} /> : documentsForQuickTab.map(renderDocumentCard)}
+ {documentsForQuickTab.length === 0 ? <EmptyState text="No documents match the current view." /> : documentsForQuickTab.map(renderDocumentCard)}
  </div>
  </div>
  ) : null}
 
  {editor ? (
- <OpportunityModal title={editor.mode === 'edit' ? t('documents.Edit Document', 'Edit Document') : t('documents.New Document Title', 'New Document')} onClose={closeEditor}>
+ <OpportunityModal title={editor.mode === 'edit' ? 'Edit Document' : 'New Document'} onClose={closeEditor}>
  <DocumentForm
  initialData={editor.document || undefined}
  projects={projects}

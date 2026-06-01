@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { RecurringTask, RecurringTaskInput, TaskPriority, TaskCategory, RecurringFrequency, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import Button from '../ui/Button';
@@ -41,8 +40,6 @@ const RecurringTaskForm: React.FC<{
  const [error, setError] = useState<string | null>(null);
 
  const handleToggleDay = (day: string) => {
-  const { t, language } = usePersonalLanguage();
-
  const current = daysOfWeek ? daysOfWeek.split(',').map((d) => d.trim()).filter(Boolean) : [];
  const idx = current.indexOf(day);
  if (idx >= 0) { current.splice(idx, 1); } else { current.push(day); }
@@ -88,14 +85,14 @@ const RecurringTaskForm: React.FC<{
 
  <Input label="Title *" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Recurring task title" />
 
- <Textarea label={t("Description", "Description", "Description")} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+ <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
 
  <div className="grid grid-cols-2 gap-3">
  <Select label="Frequency" options={FREQ_OPTIONS.map(f => ({ value: f, label: f }))} value={frequency} onChange={(e) => setFrequency(e.target.value as RecurringFrequency)} />
- <Select label={t("Priority", "Priority", "Priority")} options={PRIORITY_OPTIONS.map(p => ({ value: p, label: p }))} value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} />
+ <Select label="Priority" options={PRIORITY_OPTIONS.map(p => ({ value: p, label: p }))} value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} />
  </div>
 
- <Select label={t("Category", "Category", "Category")} options={[{ value: '', label: 'None' }, ...CATEGORY_OPTIONS.map(c => ({ value: c, label: c }))]} value={category} onChange={(e) => setCategory(e.target.value)} />
+ <Select label="Category" options={[{ value: '', label: 'None' }, ...CATEGORY_OPTIONS.map(c => ({ value: c, label: c }))]} value={category} onChange={(e) => setCategory(e.target.value)} />
 
  <div>
  <label className="block text-xs font-semibold text-black mb-1">Days of Week</label>
@@ -131,12 +128,12 @@ const RecurringTaskForm: React.FC<{
 
  <div className="grid grid-cols-2 gap-3">
  <Select label="Strategy Goal" options={[{ value: '', label: 'None' }, ...strategyGoals.map(g => ({ value: g.id, label: g.title }))]} value={linkedStrategyGoalId} onChange={(e) => setLinkedStrategyGoalId(e.target.value)} />
- <Select label={t("Company", "Company", "Company")} options={[{ value: '', label: 'None' }, ...companies.map(c => ({ value: c.id, label: c.name }))]} value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} />
+ <Select label="Company" options={[{ value: '', label: 'None' }, ...companies.map(c => ({ value: c.id, label: c.name }))]} value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} />
  </div>
 
- <Select label={t("Person", "Person", "Person")} options={[{ value: '', label: 'None' }, ...people.map(p => ({ value: p.id, label: p.fullName }))]} value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} />
+ <Select label="Person" options={[{ value: '', label: 'None' }, ...people.map(p => ({ value: p.id, label: p.fullName }))]} value={linkedPersonId} onChange={(e) => setLinkedPersonId(e.target.value)} />
 
- <Textarea label={t("Notes", "Notes", "Notes")} value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+ <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
 
  <div className="flex items-center justify-end gap-2 pt-2">
  <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>

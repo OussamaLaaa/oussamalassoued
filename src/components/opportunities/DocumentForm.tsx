@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Company, Deal, DocumentInput, DocumentType, DocumentStatus, Person, Project } from '../../types/opportunities';
 
@@ -77,8 +76,6 @@ const labelForPerson = (person: Person) => person.fullName;
 const labelForDeal = (deal: Deal) => deal.servicePackage || deal.id;
 
 const DocumentForm: React.FC<DocumentFormProps> = ({ initialData, projects, companies, people, deals, onSubmit, onCancel }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [form, setForm] = useState<DocumentFormState>(() => buildState(initialData));
  const [error, setError] = useState('');
  const [saving, setSaving] = useState(false);

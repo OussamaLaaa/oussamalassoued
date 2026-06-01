@@ -5,7 +5,6 @@ import {
   personalLogout,
   verifyPersonalSecondFactor,
 } from '../../utils/personalAuth';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 const NAV_STATE_STORAGE_KEY = 'personalOS.navigationState';
 
@@ -31,6 +30,15 @@ type AuthContextValue = {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+const getStatusError = (status: number, fallback: string): string => {
+  const statusMessages: Record<number, string> = {
+    500: 'Login service is temporarily unavailable.',
+    403: 'Access denied.',
+    429: 'Too many failed attempts. Try again later.',
+  };
+  return statusMessages[status] || fallback;
+};
+
 const AuthShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <main className="min-h-screen bg-[#fafafa] px-4 py-4 text-neutral-950 sm:px-6 sm:py-6">
     <div className="flex min-h-[calc(100vh-2rem)] items-center justify-center sm:min-h-[calc(100vh-3rem)]">
@@ -42,7 +50,6 @@ const AuthShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { t } = usePersonalLanguage();
   const [status, setStatus] = useState<PersonalAuthState>(initialState);
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
@@ -115,12 +122,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
     try {
       const result = await customLogin(email.trim(), loginPassword, rememberDevice);
       if (!result.success) {
-        const statusMessages: Record<number, string> = {
-          500: t('Login service is temporarily unavailable.'),
-          403: t('Access denied.'),
-          429: t('Too many failed attempts. Try again later.'),
-        };
-        setAuthError(statusMessages[result.status || 0] || result.error || t('Invalid email or password.'));
+        setAuthError(getStatusError(result.status || 0, result.error || 'Invalid email or password.'));
         return;
       }
 
@@ -145,7 +147,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       const response = await verifyPersonalSecondFactor(password, rememberDevice);
 
       if (!response.success) {
-        setAuthError(t('Invalid password.'));
+        setAuthError('Invalid password.');
         return;
       }
 
@@ -158,14 +160,14 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       }
       await refreshStatus();
     } catch {
-      setAuthError(t('Invalid password.'));
+      setAuthError('Invalid password.');
     } finally {
       setIsSubmittingPassword(false);
     }
   };
 
   if (isLoading) {
-    return <AuthShell><div className="text-sm text-neutral-600">{t('Checking access...')}</div></AuthShell>;
+    return <AuthShell><div className="text-sm text-neutral-600">Checking access...</div></AuthShell>;
   }
 
   if (!status.mainPasswordPassed) {
@@ -173,14 +175,14 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       <AuthShell>
         <form onSubmit={handleSignIn} className="space-y-6">
           <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">{t('Personal OS')}</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">{t('Welcome back')}</h1>
-            <p className="text-sm leading-6 text-neutral-600">{t('Sign in to access your workspace.')}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Personal OS</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Welcome back</h1>
+            <p className="text-sm leading-6 text-neutral-600">Sign in to access your workspace.</p>
           </div>
 
           <div className="space-y-4">
             <label className="block space-y-2">
-              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">{t('Email')}</span>
+              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Email</span>
               <input
                 type="email"
                 value={email}
@@ -188,12 +190,12 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
                 autoComplete="email"
                 required
                 className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
-                placeholder={t('you@example.com')}
+                placeholder="you@example.com"
               />
             </label>
 
             <label className="block space-y-2">
-              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">{t('Password')}</span>
+              <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Password</span>
               <input
                 type="password"
                 value={loginPassword}
@@ -201,7 +203,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
                 autoComplete="current-password"
                 required
                 className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-950"
-                placeholder={t('Enter your password')}
+                placeholder="Enter your password"
               />
             </label>
           </div>
@@ -213,7 +215,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
               onChange={(event) => setRememberDevice(event.target.checked)}
               className="h-4 w-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 focus:ring-offset-0"
             />
-            <span>{t('Remember this browser for 30 days')}</span>
+            <span>Remember this browser for 30 days</span>
           </label>
 
           {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
@@ -223,10 +225,10 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
             disabled={isSigningIn}
             className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSigningIn ? t('Signing in...') : t('Sign in')}
+            {isSigningIn ? 'Signing in...' : 'Sign in'}
           </button>
 
-          <p className="text-sm text-neutral-500">{t('Secure access only.')}</p>
+          <p className="text-sm text-neutral-500">Secure access only.</p>
         </form>
       </AuthShell>
     );
@@ -237,13 +239,13 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
       <AuthShell>
         <form onSubmit={handleSecondFactorSubmit} className="space-y-6">
           <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">{t('Security check')}</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">{t('Unlock Personal OS')}</h1>
-            <p className="text-sm leading-6 text-neutral-600">{t('Enter your second password to continue.')}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">Security check</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">Unlock Personal OS</h1>
+            <p className="text-sm leading-6 text-neutral-600">Enter your second password to continue.</p>
           </div>
 
           <label className="block space-y-2">
-            <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">{t('Second password')}</span>
+            <span className="block text-xs font-medium uppercase tracking-[0.16em] text-neutral-500">Second password</span>
             <input
               type="password"
               value={password}
@@ -262,7 +264,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
               onChange={(event) => setRememberDevice(event.target.checked)}
               className="h-4 w-4 rounded border-neutral-300 text-neutral-950 focus:ring-0 focus:ring-offset-0"
             />
-            <span>{t('Remember this browser for 30 days')}</span>
+            <span>Remember this browser for 30 days</span>
           </label>
 
           {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
@@ -272,7 +274,7 @@ const PersonalAuthGate: React.FC<{ children: React.ReactNode }> = ({ children })
             disabled={isSubmittingPassword}
             className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmittingPassword ? t('Unlocking...') : t('Unlock Personal OS')}
+            {isSubmittingPassword ? 'Unlocking...' : 'Unlock Personal OS'}
           </button>
         </form>
       </AuthShell>

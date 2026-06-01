@@ -1,6 +1,4 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState, useEffect } from 'react';
-import DirectionalText from '../DirectionalText';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
 import TaskForm from './TaskForm';
 import RecurringTaskForm from './RecurringTaskForm';
@@ -119,16 +117,16 @@ const TaskCard: React.FC<{
  const actions = getActionsForStatus(task.status);
 
  return (
-  <div className="rounded-lg border border-neutral-200 bg-white p-2.5 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => onClick(task)}>
-  <div className="flex items-start justify-between gap-2">
-  <div className="flex-1 min-w-0 overflow-hidden">
-  <div className="flex items-center gap-1.5 flex-wrap">
-  <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
-  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
-  {task.category && <Badge variant="neutral">{task.category}</Badge>}
-  </div>
-  <DirectionalText text={task.title} as="div" className="mt-1 font-medium text-black truncate" />
-  {task.description && <DirectionalText text={task.description} as="div" className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate" />}
+ <div className="rounded-lg border border-neutral-200 bg-white p-2.5 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => onClick(task)}>
+ <div className="flex items-start justify-between gap-2">
+ <div className="flex-1 min-w-0 overflow-hidden">
+ <div className="flex items-center gap-1.5 flex-wrap">
+ <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
+ {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
+ {task.category && <Badge variant="neutral">{task.category}</Badge>}
+ </div>
+ <div className="mt-1 font-medium text-black truncate">{task.title}</div>
+ {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-neutral-500">
  {task.estimatedMinutes != null && <span>Est {formatHours(task.estimatedMinutes)}</span>}
  {task.actualMinutes != null && <span>Act {formatHours(task.actualMinutes)}</span>}
@@ -235,7 +233,6 @@ const TasksPanel: React.FC<{
   onAddTaskWorkLog, onUpdateTaskWorkLog, onDeleteTaskWorkLog,
   onAddWeeklyTaskReview, onUpdateWeeklyTaskReview, onDeleteWeeklyTaskReview,
 }) => {
-  const { t } = usePersonalLanguage();
   const [view, setView] = useState<TasksView>('weekly');
 
   useEffect(() => {
@@ -468,8 +465,8 @@ const TasksPanel: React.FC<{
  <StatBox label="Total Tasks" value={weekStats.total} />
  <StatBox label="Todo" value={weekStats.todo} />
  <StatBox label="Doing" value={weekStats.doing} />
- <StatBox label={t("Done", "Done", "Done")} value={weekStats.done} />
- <StatBox label={t("Blocked", "Blocked", "Blocked")} value={weekStats.blocked} />
+ <StatBox label="Done" value={weekStats.done} />
+ <StatBox label="Blocked" value={weekStats.blocked} />
  <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
  <StatBox label="Logged" value={formatHours(weekStats.actual)} />
  <StatBox label="Completion" value={weekStats.rate ? `${weekStats.rate}%` : '—'} subtitle={weekStats.total > 0 ? `${weekStats.done}/${weekStats.total}` : undefined} />
@@ -670,16 +667,16 @@ const TasksPanel: React.FC<{
  ) : (
  <div className="space-y-2">
  {backlogTasks.map((task) => (
-  <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => setSelectedTask(task)}>
-  <div className="flex items-start justify-between gap-3">
-  <div className="flex-1 min-w-0 overflow-hidden">
-  <div className="flex items-center gap-1.5 flex-wrap">
-  <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
-  {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
-  {task.category && <Badge variant="neutral">{task.category}</Badge>}
-  </div>
-  <DirectionalText text={task.title} as="div" className="mt-1 font-medium text-black truncate" />
-  {task.description && <DirectionalText text={task.description} as="div" className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate" />}
+ <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 text-sm cursor-pointer hover:bg-neutral-50 transition-colors" onClick={() => setSelectedTask(task)}>
+ <div className="flex items-start justify-between gap-3">
+ <div className="flex-1 min-w-0 overflow-hidden">
+ <div className="flex items-center gap-1.5 flex-wrap">
+ <Badge variant={STATUS_BADGE_VARIANT[task.status]}>{task.status}</Badge>
+ {task.priority && <Badge variant={PRIORITY_BADGE_VARIANT[task.priority] || 'neutral'}>{task.priority}</Badge>}
+ {task.category && <Badge variant="neutral">{task.category}</Badge>}
+ </div>
+ <div className="mt-1 font-medium text-black truncate">{task.title}</div>
+ {task.description && <div className="mt-0.5 text-xs text-neutral-500 line-clamp-1 truncate">{task.description}</div>}
  </div>
  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
  {task.status !== 'done' && (
@@ -827,7 +824,6 @@ const WeeklyReviewSection: React.FC<{
  formatDate: (iso: string) => string;
  formatWeekRange: (startStr: string) => string;
 }> = ({ weekReview, selectedWeekStart, weekStats, onSave, onWeekNav, onThisWeek, formatDate, formatWeekRange }) => {
- const { t } = usePersonalLanguage();
  const [summary, setSummary] = useState(weekReview?.summary || '');
  const [whatWorked, setWhatWorked] = useState(weekReview?.whatWorked || '');
  const [whatFailed, setWhatFailed] = useState(weekReview?.whatFailed || '');
@@ -929,7 +925,7 @@ const WeeklyReviewSection: React.FC<{
 
  {/* Execution stats */}
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
- <StatBox label={t("Done", "Done", "Done")} value={`${weekStats.done}/${weekStats.total}`} subtitle={`${weekStats.rate}% rate`} />
+ <StatBox label="Done" value={`${weekStats.done}/${weekStats.total}`} subtitle={`${weekStats.rate}% rate`} />
  <StatBox label="Estimated" value={formatHours(weekStats.estimated)} />
  <StatBox label="Logged" value={formatHours(weekStats.actual)} />
  <StatBox label="Score" value={score || '—'} subtitle={score ? '/10' : undefined} />
@@ -991,7 +987,7 @@ const WeeklyReviewSection: React.FC<{
  <Input label="Score (0-10)" type="number" min={0} max={10} value={score} onChange={(e) => setScore(e.target.value)} />
  </div>
 
- <Textarea label={t("Summary", "Summary", "Summary")} value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="How did the week go overall?" />
+ <Textarea label="Summary" value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="How did the week go overall?" />
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <Textarea label="What Worked" value={whatWorked} onChange={(e) => setWhatWorked(e.target.value)} rows={3} placeholder="What went well this week?" />

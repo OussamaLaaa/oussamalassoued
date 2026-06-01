@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useMemo } from 'react';
 import { Button, Badge } from '../ui';
 import PlanItemForm from './PlanItemForm';
@@ -19,8 +18,6 @@ const ITEM_STATUS_OPTIONS: PlanItemStatus[] = ['todo', 'doing', 'done', 'blocked
 const CATEGORY_OPTIONS = ['work', 'career', 'freelance', 'project', 'money', 'health', 'learning', 'family', 'admin'];
 
 const formatDate = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return '';
  return value.slice(0, 10);
 };
@@ -61,7 +58,6 @@ type Props = {
 const PlanDetailWorkspace: React.FC<Props> = ({
  plan, planItems, projects, strategyGoals, onUpdatePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem, onBack,
 }) => {
- const { t } = usePersonalLanguage();
  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
  const [saving, setSaving] = useState<string | null>(null);
  const [showNewItem, setShowNewItem] = useState(false);
@@ -184,9 +180,9 @@ const PlanDetailWorkspace: React.FC<Props> = ({
  <StatCardDetail title="Total Items" value={planItems.length} />
  <StatCardDetail title="Todo" value={countMap.todo} />
  <StatCardDetail title="Doing" value={countMap.doing} />
- <StatCardDetail title={t("Done", "Done", "Done")} value={countMap.done} />
- <StatCardDetail title={t("Blocked", "Blocked", "Blocked")} value={countMap.blocked} />
- <StatCardDetail title={t("Overdue", "Overdue", "Overdue")} value={overdueItems.length} />
+ <StatCardDetail title="Done" value={countMap.done} />
+ <StatCardDetail title="Blocked" value={countMap.blocked} />
+ <StatCardDetail title="Overdue" value={overdueItems.length} />
  </div>
 
  <div className="flex flex-wrap gap-1.5 border-b border-neutral-200 pb-2">

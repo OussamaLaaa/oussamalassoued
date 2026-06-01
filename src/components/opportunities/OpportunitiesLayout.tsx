@@ -50,7 +50,6 @@ import AppDashboardShell from './AppDashboardShell';
 import type { SidebarItem } from './AppDashboardShell';
 import { buildNoteCategoryMenu, protectedCategorySlugSet } from './noteCategoryUtils';
 import type { CompanyResearchResult } from '../../types/opportunities';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
  name: c.name,
@@ -519,7 +518,6 @@ const OpportunitiesLayout: React.FC<{
   const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
-  const { t, language } = usePersonalLanguage();
 
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
   const [appSection, setAppSection] = useState<string>('');
@@ -571,105 +569,105 @@ const OpportunitiesLayout: React.FC<{
  };
 
   const getShellTitle = () => {
-  switch (activeApp) {
-  case 'crm': return t('CRM');
-  case 'messages': return t('CRM');
-  case 'strategy': return t('Strategy');
-  case 'plans': return t('Plans');
-  case 'tasks': return t('Tasks');
-  case 'projects': return t('Projects');
-  case 'finance': return t('Finance');
-  case 'documents': return t('Documents');
-  case 'social': return t('Social Media');
-  case 'relationships': return t('Relationships');
-  case 'life': return t('Life');
-  case 'notes': return t('Notes');
-  case 'ai_control': return t('AI Control');
-  default: return '';
-  }
-  };
+ switch (activeApp) {
+  case 'crm': return 'CRM';
+  case 'messages': return 'CRM';
+ case 'strategy': return 'Strategy';
+ case 'plans': return 'Plans';
+ case 'tasks': return 'Tasks';
+ case 'projects': return 'Projects';
+ case 'finance': return 'Finance';
+ case 'documents': return 'Documents';
+ case 'social': return 'Social Media';
+ case 'relationships': return 'Relationships';
+ case 'life': return 'Life';
+ case 'notes': return 'Notes';
+ case 'ai_control': return 'AI Control';
+ default: return '';
+ }
+ };
 
    const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
    crm: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'big_companies', label: t('Big Companies'), icon: Building2 },
-   { id: 'sme_companies', label: t('SME Companies'), icon: Store },
-   { id: 'freelance_leads', label: t('Freelance Leads'), icon: Briefcase },
-   { id: 'companies', label: t('All Companies'), icon: Globe },
-   { id: 'people', label: t('People'), icon: Users },
-   { id: 'deals', label: t('Deals'), icon: Handshake },
-   { id: 'queue', label: t('Outreach Queue'), icon: Send },
-   { id: 'messages', label: t('Messages'), icon: MessageSquare },
-   { id: 'templates', label: t('Templates'), icon: FileText },
-  { id: 'lead_research', label: t('Lead Research'), icon: Search },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'big_companies', label: 'Big Companies', icon: Building2 },
+   { id: 'sme_companies', label: 'SME Companies', icon: Store },
+   { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
+   { id: 'companies', label: 'All Companies', icon: Globe },
+   { id: 'people', label: 'People', icon: Users },
+   { id: 'deals', label: 'Deals', icon: Handshake },
+   { id: 'queue', label: 'Outreach Queue', icon: Send },
+   { id: 'messages', label: 'Messages', icon: MessageSquare },
+   { id: 'templates', label: 'Templates', icon: FileText },
+  { id: 'lead_research', label: 'Lead Research', icon: Search },
    ],
    plans: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'plans', label: t('Plans'), icon: Calendar },
-   { id: 'plan_items', label: t('Plan Items'), icon: ListChecks },
-   { id: 'timeline', label: t('Timeline'), icon: Clock },
-   { id: 'review', label: t('Review'), icon: Star },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'plans', label: 'Plans', icon: Calendar },
+   { id: 'plan_items', label: 'Plan Items', icon: ListChecks },
+   { id: 'timeline', label: 'Timeline', icon: Clock },
+   { id: 'review', label: 'Review', icon: Star },
    ],
    tasks: [
-   { id: 'weekly', label: t('Weekly Tasks'), icon: ListChecks },
-   { id: 'daily', label: t('Daily Recurring'), icon: RotateCcw },
-   { id: 'worklogs', label: t('Work Logs'), icon: Clock },
-   { id: 'backlog', label: t('Backlog'), icon: Archive },
-   { id: 'review', label: t('Weekly Review'), icon: Star },
+   { id: 'weekly', label: 'Weekly Tasks', icon: ListChecks },
+   { id: 'daily', label: 'Daily Recurring', icon: RotateCcw },
+   { id: 'worklogs', label: 'Work Logs', icon: Clock },
+   { id: 'backlog', label: 'Backlog', icon: Archive },
+   { id: 'review', label: 'Weekly Review', icon: Star },
    ],
    finance: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'periods', label: t('Periods'), icon: Calendar },
-   { id: 'income', label: t('Income'), icon: TrendingUp },
-   { id: 'expenses', label: t('Expenses'), icon: Activity },
-   { id: 'allocation', label: t('Allocation'), icon: BarChart3 },
-   { id: 'purchase_goals', label: t('Purchase Goals'), icon: Target },
-   { id: 'investments', label: t('Investments'), icon: TrendingUp },
-   { id: 'recurring', label: t('Recurring Rules'), icon: RotateCcw },
-   { id: 'ai_assistant', label: t('AI Finance'), icon: Sparkles },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'periods', label: 'Periods', icon: Calendar },
+   { id: 'income', label: 'Income', icon: TrendingUp },
+   { id: 'expenses', label: 'Expenses', icon: Activity },
+   { id: 'allocation', label: 'Allocation', icon: BarChart3 },
+   { id: 'purchase_goals', label: 'Purchase Goals', icon: Target },
+   { id: 'investments', label: 'Investments', icon: TrendingUp },
+   { id: 'recurring', label: 'Recurring Rules', icon: RotateCcw },
+   { id: 'ai_assistant', label: 'AI Finance', icon: Sparkles },
    ],
    documents: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'generated', label: t('Generated Documents'), icon: FileText },
-   { id: 'invoice-studio', label: t('Invoice Studio'), icon: FileEdit },
-   { id: 'invoice-archive', label: t('Invoice Archive'), icon: Archive },
-   { id: 'contract-studio', label: t('Contract Studio'), icon: FileEdit },
-   { id: 'cahier-builder', label: t('Cahier de Charges'), icon: FileText },
-   { id: 'templates', label: t('Templates'), icon: FileText },
-   { id: 'brand', label: t('Brand Settings'), icon: LayoutDashboard },
-   { id: 'builder', label: t('Builder'), icon: LayoutDashboard },
-   { id: 'ai-assistant', label: t('AI Document'), icon: Sparkles },
-   { id: 'review', label: t('Review'), icon: Star },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'generated', label: 'Generated Documents', icon: FileText },
+   { id: 'invoice-studio', label: 'Invoice Studio', icon: FileEdit },
+   { id: 'invoice-archive', label: 'Invoice Archive', icon: Archive },
+   { id: 'contract-studio', label: 'Contract Studio', icon: FileEdit },
+   { id: 'cahier-builder', label: 'Cahier de Charges', icon: FileText },
+   { id: 'templates', label: 'Templates', icon: FileText },
+   { id: 'brand', label: 'Brand Settings', icon: LayoutDashboard },
+   { id: 'builder', label: 'Builder', icon: LayoutDashboard },
+   { id: 'ai-assistant', label: 'AI Document', icon: Sparkles },
+   { id: 'review', label: 'Review', icon: Star },
    ],
    social: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'strategy', label: t('Strategy'), icon: Target },
-   { id: 'platforms', label: t('Platforms'), icon: Smartphone },
-   { id: 'pillars', label: t('Pillars'), icon: LayoutDashboard },
-   { id: 'ideas', label: t('Ideas'), icon: Star },
-   { id: 'weekly', label: t('Weekly Plan'), icon: Calendar },
-   { id: 'production', label: t('Production Board'), icon: Activity },
-   { id: 'calendar', label: t('Calendar'), icon: Calendar },
-   { id: 'performance', label: t('Performance'), icon: BarChart3 },
-   { id: 'ai-assistant', label: t('AI Assistant'), icon: Sparkles },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'strategy', label: 'Strategy', icon: Target },
+   { id: 'platforms', label: 'Platforms', icon: Smartphone },
+   { id: 'pillars', label: 'Pillars', icon: LayoutDashboard },
+   { id: 'ideas', label: 'Ideas', icon: Star },
+   { id: 'weekly', label: 'Weekly Plan', icon: Calendar },
+   { id: 'production', label: 'Production Board', icon: Activity },
+   { id: 'calendar', label: 'Calendar', icon: Calendar },
+   { id: 'performance', label: 'Performance', icon: BarChart3 },
+   { id: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
    ],
    life: [
-   { id: 'dashboard', label: t('Dashboard'), icon: LayoutDashboard },
-   { id: 'nutrition', label: t('Nutrition'), icon: Heart },
-   { id: 'fitness', label: t('Fitness'), icon: Activity },
-   { id: 'deen', label: t('Deen'), icon: Star },
-   { id: 'family', label: t('Family'), icon: Heart },
-   { id: 'weekly-review', label: t('Weekly Review'), icon: Star },
+   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+   { id: 'nutrition', label: 'Nutrition', icon: Heart },
+   { id: 'fitness', label: 'Fitness', icon: Activity },
+   { id: 'deen', label: 'Deen', icon: Star },
+   { id: 'family', label: 'Family', icon: Heart },
+   { id: 'weekly-review', label: 'Weekly Review', icon: Star },
    ],
    ai_control: [
-   { id: 'overview', label: t('Overview'), icon: LayoutDashboard },
-   { id: 'keys', label: t('Provider Keys'), icon: Key },
-   { id: 'routing', label: t('Use Case Routing'), icon: Route },
-   { id: 'tests', label: t('Provider Tests'), icon: TestTube },
-   { id: 'security', label: t('Security Notes'), icon: Lock },
+   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+   { id: 'keys', label: 'Provider Keys', icon: Key },
+   { id: 'routing', label: 'Use Case Routing', icon: Route },
+   { id: 'tests', label: 'Provider Tests', icon: TestTube },
+   { id: 'security', label: 'Security Notes', icon: Lock },
    ],
    strategy: [
-   { id: 'goals', label: t('Goals'), icon: Target },
+   { id: 'goals', label: 'Goals', icon: Target },
    ],
    };
 
@@ -714,12 +712,12 @@ const OpportunitiesLayout: React.FC<{
   setNoteCategoryEditor(null);
   setNoteCategoryActionError(null);
   } catch (error) {
-  throw error instanceof Error ? error : new Error(t('Failed to save category.'));
+  throw error instanceof Error ? error : new Error('Failed to save category.');
   }
   };
 
   const handleDeleteNoteCategory = async (category: NoteCategory) => {
-  const confirmed = window.confirm(t('Delete this category? Notes inside it will become Uncategorized.'));
+  const confirmed = window.confirm('Delete this category? Notes inside it will become Uncategorized.');
   if (!confirmed) return;
 
   try {
@@ -733,7 +731,7 @@ const OpportunitiesLayout: React.FC<{
   setNoteCategoryActionError(null);
   } catch (error) {
   console.error('[Notes] Failed to delete category.', error);
-  setNoteCategoryActionError(t('Unable to delete category.'));
+  setNoteCategoryActionError('Unable to delete category.');
   }
   };
 
@@ -859,8 +857,7 @@ const OpportunitiesLayout: React.FC<{
  [companies],
  );
  const noteCategoryMenu = useMemo(() => buildNoteCategoryMenu(noteCategories, smartNotes), [noteCategories, smartNotes]);
-  const noteSidebarItems = useMemo<SidebarItem[]>(() => {
-    const catLabel = selectedNoteCategorySlug;
+ const noteSidebarItems = useMemo<SidebarItem[]>(() => {
  return [
  ...noteCategoryMenu.map((category) => ({
  id: category.slug,
@@ -876,19 +873,18 @@ const OpportunitiesLayout: React.FC<{
  if (categoryToEdit) setNoteCategoryEditor({ mode: 'edit', category: categoryToEdit });
  }}
  className="hidden h-7 w-7 items-center justify-center rounded-md border border-transparent text-neutral-400 transition hover:border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 group-hover:flex"
-  aria-label={`${t('Edit')} ${category.name}`}
+ aria-label={`Edit ${category.name}`}
  >
  <MoreHorizontal className="h-4 w-4" />
  </button>
  ),
  })),
-  { id: 'add-category', label: t('Category'), icon: Plus },
+ { id: 'add-category', label: 'Category', icon: Plus },
  ];
-  // language is intentionally included to re-memoize t() labels on toggle
-  }, [noteCategoryMenu, noteCategories, language]);
+ }, [noteCategoryMenu, noteCategories]);
 
  const handleResetDemoData = () => {
-  const confirmed = window.confirm(t('Reset Opportunities OS demo data to the original seed data?'));
+ const confirmed = window.confirm('Reset Opportunities OS demo data to the original seed data?');
  if (!confirmed) return;
  resetToSeedData();
  };
@@ -921,7 +917,7 @@ const OpportunitiesLayout: React.FC<{
  if (import.meta.env.DEV) {
  console.error('[CRM] delete company failed', error);
  }
-  const message = error instanceof Error && error.message ? error.message : t('Unable to delete company.');
+ const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
  setDeleteError(message);
  }
  };
@@ -962,7 +958,7 @@ const OpportunitiesLayout: React.FC<{
  if (!research) return;
 
  if (research.contactMethods?.length > 0) {
-  const shouldCreateContactMethods = window.confirm(`${t('Create')} ${research.contactMethods.length} ${t('suggested contact method(s) for')} ${company.name}?`);
+ const shouldCreateContactMethods = window.confirm(`Create ${research.contactMethods.length} suggested contact method(s) for ${company.name}?`);
  if (shouldCreateContactMethods) {
  for (const method of research.contactMethods) {
  if (!method.value) continue;
@@ -979,7 +975,7 @@ const OpportunitiesLayout: React.FC<{
  }
 
  if (research.problemProfile) {
-  const shouldCreateProblemProfile = window.confirm(`${t('Create the suggested problem profile for')} ${company.name}?`);
+ const shouldCreateProblemProfile = window.confirm(`Create the suggested problem profile for ${company.name}?`);
  if (shouldCreateProblemProfile) {
  await addCompanyProblemProfile({
  companyId: company.id,
@@ -999,11 +995,11 @@ const OpportunitiesLayout: React.FC<{
  }
 
  if (research.outreachScript) {
-  const shouldCreateOutreachScript = window.confirm(`${t('Create the suggested outreach script for')} ${company.name}?`);
+ const shouldCreateOutreachScript = window.confirm(`Create the suggested outreach script for ${company.name}?`);
  if (shouldCreateOutreachScript) {
  await addCompanyOutreachScript({
  companyId: company.id,
-  name: research.outreachScript.name || `${company.name} ${t('AI Research Script')}`,
+ name: research.outreachScript.name || `${company.name} AI Research Script`,
  channel: research.outreachScript.channel || undefined,
  language: research.outreachScript.language || undefined,
  audience: research.outreachScript.audience || undefined,
@@ -1025,17 +1021,17 @@ const OpportunitiesLayout: React.FC<{
  if (!aiScoringCompany) return;
 
  const today = new Date().toISOString().slice(0, 10);
-  const aiNotes = [
-  '',
-  `${t('AI Lead Scoring Analysis')} — ${today}:`,
-  `${t('UX Problem')}: ${result.uxProblem || 'N/A'}`,
-  `${t('Service To Offer')}: ${result.serviceToOffer || 'N/A'}`,
-  `${t('Reasoning')}: ${result.reasoningSummary || 'N/A'}`,
-  t('Risks:'),
-  ...(Array.isArray(result.risks) ? result.risks.map((r: string) => `- ${r}`) : ['- N/A']),
-  t('Questions To Review:'),
-  ...(Array.isArray(result.questionsToReview) ? result.questionsToReview.map((q: string) => `- ${q}`) : ['- N/A']),
-  ].join('\n');
+ const aiNotes = [
+ '',
+ `AI Lead Scoring Analysis — ${today}:`,
+ `UX Problem: ${result.uxProblem || 'N/A'}`,
+ `Service To Offer: ${result.serviceToOffer || 'N/A'}`,
+ `Reasoning: ${result.reasoningSummary || 'N/A'}`,
+ 'Risks:',
+ ...(Array.isArray(result.risks) ? result.risks.map((r: string) => `- ${r}`) : ['- N/A']),
+ 'Questions To Review:',
+ ...(Array.isArray(result.questionsToReview) ? result.questionsToReview.map((q: string) => `- ${q}`) : ['- N/A']),
+ ].join('\n');
 
  const payload: any = {
  name: aiScoringCompany.name,
@@ -1169,7 +1165,7 @@ const OpportunitiesLayout: React.FC<{
   companyId: person.companyId || '',
   personId: personId || person.id,
   channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
-  language: t('English'),
+  language: 'English',
   messageType: 'outreach',
   messageText: '',
   sentDate: new Date().toISOString().slice(0, 16),
@@ -1199,12 +1195,12 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'dashboard' && (
   <div className="space-y-5">
   <SectionHeader
-  title={t('Dashboard')}
-  description={t('CRM overview and pipeline health.')}
+  title="Dashboard"
+  description="CRM overview and pipeline health."
   actions={
   <>
-  <Button variant="ghost" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />{t('Log Message')}</Button>
-  <Button variant="outline" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />{t('Add Company')}</Button>
+  <Button variant="ghost" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
+  <Button variant="outline" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
   </>
   }
   />
@@ -1228,8 +1224,8 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'big_companies' && (
   <CompanySegmentView
   segmentType="big_company"
-  title={t('Big Companies')}
-  subtitle={t('Enterprise-level targets — internships, junior roles, recruiter relationships.')}
+  title="Big Companies"
+  subtitle="Enterprise-level targets — internships, junior roles, recruiter relationships."
   companies={companies}
   people={people}
   messages={messages}
@@ -1246,8 +1242,8 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'sme_companies' && (
   <CompanySegmentView
   segmentType="sme"
-  title={t('SME Companies')}
-  subtitle={t('Small & medium businesses — faster decisions, partnership potential, agency work.')}
+  title="SME Companies"
+  subtitle="Small & medium businesses — faster decisions, partnership potential, agency work."
   companies={companies}
   people={people}
   messages={messages}
@@ -1264,8 +1260,8 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'freelance_leads' && (
   <CompanySegmentView
   segmentType="freelance"
-  title={t('Freelance Leads')}
-  subtitle={t('Independent professionals — paid UX/UI work, audits, recurring clients.')}
+  title="Freelance Leads"
+  subtitle="Independent professionals — paid UX/UI work, audits, recurring clients."
   companies={companies}
   people={people}
   messages={messages}
@@ -1282,10 +1278,10 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'queue' && (
   <div className="space-y-5">
   <SectionHeader
-  title={t('Outreach Queue')}
-  description={t('Messages, follow-ups, and communication priorities.')}
+  title="Outreach Queue"
+  description="Messages, follow-ups, and communication priorities."
   actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />{t('Log Message')}</Button>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
   }
   />
   <OutreachQueuePanel
@@ -1298,18 +1294,18 @@ const OpportunitiesLayout: React.FC<{
  companyId: person.companyId,
  personId: person.id,
  channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
-  language: t('English'),
-  messageType: 'outreach',
-  messageText: '',
-  sentDate: new Date().toISOString().slice(0, 16),
-  replyStatus: 'no_reply',
-  replySummary: '',
-  nextFollowUpDate: '',
-  status: 'sent',
-  });
-  setActiveModal('message');
-  }}
-  onMarkContacted={async (person) => {
+ language: 'English',
+ messageType: 'outreach',
+ messageText: '',
+ sentDate: new Date().toISOString().slice(0, 16),
+ replyStatus: 'no_reply',
+ replySummary: '',
+ nextFollowUpDate: '',
+ status: 'sent',
+ });
+ setActiveModal('message');
+ }}
+ onMarkContacted={async (person) => {
  await updatePerson(person.id, {
  ...toPersonInput(person),
  relationshipStatus: 'Message Sent',
@@ -1352,18 +1348,18 @@ const OpportunitiesLayout: React.FC<{
   const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost' && cIds.includes(d.companyId)).length;
   const messagesSent = messages.filter(m => m.companyId && cIds.includes(m.companyId)).length;
   const primaryStats = [
-   { label: t('crm.Total', 'Total'), value: totalCompanies, color: '' },
-   { label: t('crm.Avg Fit Score', 'Avg Fit Score'), value: avgFitScore, color: 'text-blue-600' },
-   { label: t('crm.High Priority', 'High Priority'), value: highPriority, color: 'text-amber-600' },
-   { label: t('crm.People Connected', 'People Connected'), value: peopleConnected, color: '' },
-   { label: t('crm.Open Deals', 'Open Deals'), value: openDeals, color: 'text-emerald-600' },
-   { label: t('crm.Messages Sent', 'Messages Sent'), value: messagesSent, color: 'text-indigo-500' },
+  { label: 'Total', value: totalCompanies, color: '' },
+  { label: 'Avg Fit Score', value: avgFitScore, color: 'text-blue-600' },
+  { label: 'High Priority', value: highPriority, color: 'text-amber-600' },
+  { label: 'People Connected', value: peopleConnected, color: '' },
+  { label: 'Open Deals', value: openDeals, color: 'text-emerald-600' },
+  { label: 'Messages Sent', value: messagesSent, color: 'text-indigo-500' },
   ];
   return (
   <>
   <div>
-  <h2 className="text-xl font-semibold text-neutral-900">{t('All Companies')}</h2>
-  <p className="mt-0.5 text-sm text-neutral-500">{t('Every company record across your CRM pipeline.')}</p>
+  <h2 className="text-xl font-semibold text-neutral-900">All Companies</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Every company record across your CRM pipeline.</p>
   </div>
   <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
   <div className="mt-0.5 shrink-0 text-blue-600">
@@ -1372,8 +1368,8 @@ const OpportunitiesLayout: React.FC<{
   </svg>
   </div>
   <div className="min-w-0">
-  <div className="text-sm font-semibold text-neutral-900">{t('Full CRM pipeline view')}</div>
-  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">{t('Review all companies, compare segments, and decide the next best action.')}</div>
+  <div className="text-sm font-semibold text-neutral-900">Full CRM pipeline view</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Review all companies, compare segments, and decide the next best action.</div>
   </div>
   </div>
   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -1385,8 +1381,8 @@ const OpportunitiesLayout: React.FC<{
   ))}
   </div>
   <div className="flex flex-wrap justify-end gap-2">
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />{t('Add Company')}</Button>
-  <Button variant="secondary" size="sm" onClick={() => setShowCsvImport(true)}>{t('Import CSV')}</Button>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+  <Button variant="secondary" size="sm" onClick={() => setShowCsvImport(true)}>Import CSV</Button>
   </div>
   <CompaniesTable
   companies={companies}
@@ -1420,18 +1416,18 @@ const OpportunitiesLayout: React.FC<{
   }).length;
   const companiesConnected = new Set(people.map(p => p.companyId).filter(Boolean)).size;
   const peopleStats = [
-   { label: t('crm.Total People', 'Total People'), value: totalPeople, color: '' },
-   { label: t('crm.Decision Makers', 'Decision Makers'), value: decisionMakers, color: 'text-violet-600' },
-   { label: t('crm.High Relevance', 'High Relevance'), value: highRelevance, color: 'text-blue-600' },
-   { label: t('crm.With Contact', 'With Contact'), value: withContactMethod, color: 'text-emerald-600' },
-   { label: t('crm.Follow-ups Due', 'Follow-ups Due'), value: followUpsDue, color: 'text-amber-600' },
-   { label: t('crm.Companies', 'Companies'), value: companiesConnected, color: '' },
+  { label: 'Total People', value: totalPeople, color: '' },
+  { label: 'Decision Makers', value: decisionMakers, color: 'text-violet-600' },
+  { label: 'High Relevance', value: highRelevance, color: 'text-blue-600' },
+  { label: 'With Contact', value: withContactMethod, color: 'text-emerald-600' },
+  { label: 'Follow-ups Due', value: followUpsDue, color: 'text-amber-600' },
+  { label: 'Companies', value: companiesConnected, color: '' },
   ];
   return (
   <>
   <div>
-  <h2 className="text-xl font-semibold text-neutral-900">{t('People')}</h2>
-  <p className="mt-0.5 text-sm text-neutral-500">{t('Contacts, decision makers, and relationship context.')}</p>
+  <h2 className="text-xl font-semibold text-neutral-900">People</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Contacts, decision makers, and relationship context.</p>
   </div>
   <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
   <div className="mt-0.5 shrink-0 text-blue-600">
@@ -1440,8 +1436,8 @@ const OpportunitiesLayout: React.FC<{
   </svg>
   </div>
   <div className="min-w-0">
-  <div className="text-sm font-semibold text-neutral-900">{t('Relationship intelligence')}</div>
-  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">{t('Track decision makers, contact options, follow-ups, and outreach context.')}</div>
+  <div className="text-sm font-semibold text-neutral-900">Relationship intelligence</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Track decision makers, contact options, follow-ups, and outreach context.</div>
   </div>
   </div>
   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -1453,8 +1449,8 @@ const OpportunitiesLayout: React.FC<{
   ))}
   </div>
   <div className="flex flex-wrap justify-end gap-2">
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />{t('Add Person')}</Button>
-  <Button variant="secondary" size="sm" onClick={() => setShowPeopleImport(true)}>{t('Import CSV')}</Button>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('person')}><UserPlus className="h-4 w-4" />Add Person</Button>
+  <Button variant="secondary" size="sm" onClick={() => setShowPeopleImport(true)}>Import CSV</Button>
   </div>
   <PeopleTable
   people={people}
@@ -1475,10 +1471,10 @@ const OpportunitiesLayout: React.FC<{
   {tab === 'messages' && (
   <div className="space-y-5">
   <SectionHeader
-  title={t('Messages')}
-  description={t('All logged outreach, follow-ups, and communication history.')}
+  title="Messages"
+  description="All logged outreach, follow-ups, and communication history."
   actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />{t('Log Message')}</Button>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
   }
   />
   <MessagesTable
@@ -1504,18 +1500,18 @@ const OpportunitiesLayout: React.FC<{
   : 0;
   const needsAction = deals.filter(d => !d.nextAction || d.nextAction.trim() === '').length;
   const dealStats = [
-   { label: t('crm.Total Deals', 'Total Deals'), value: totalDeals, color: '' },
-   { label: t('crm.Open Deals', 'Open Deals'), value: openDeals, color: 'text-blue-600' },
-   { label: t('crm.Won Deals', 'Won Deals'), value: wonDeals, color: 'text-emerald-600' },
-   { label: t('crm.Pipeline Value', 'Pipeline Value'), value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
-   { label: t('crm.Avg Probability', 'Avg Probability'), value: `${avgProbability}%`, color: '' },
-   { label: t('crm.Needs Action', 'Needs Action'), value: needsAction, color: 'text-violet-600' },
+  { label: 'Total Deals', value: totalDeals, color: '' },
+  { label: 'Open Deals', value: openDeals, color: 'text-blue-600' },
+  { label: 'Won Deals', value: wonDeals, color: 'text-emerald-600' },
+  { label: 'Pipeline Value', value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
+  { label: 'Avg Probability', value: `${avgProbability}%`, color: '' },
+  { label: 'Needs Action', value: needsAction, color: 'text-violet-600' },
   ];
   return (
   <>
   <div>
-  <h2 className="text-xl font-semibold text-neutral-900">{t('Deals')}</h2>
-  <p className="mt-0.5 text-sm text-neutral-500">{t('Opportunities, stages, value, and next actions.')}</p>
+  <h2 className="text-xl font-semibold text-neutral-900">Deals</h2>
+  <p className="mt-0.5 text-sm text-neutral-500">Opportunities, stages, value, and next actions.</p>
   </div>
   <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
   <div className="mt-0.5 shrink-0 text-blue-600">
@@ -1524,8 +1520,8 @@ const OpportunitiesLayout: React.FC<{
   </svg>
   </div>
   <div className="min-w-0">
-  <div className="text-sm font-semibold text-neutral-900">{t('Revenue pipeline')}</div>
-  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">{t('Track deal stages, value, probability, and the next action needed to move forward.')}</div>
+  <div className="text-sm font-semibold text-neutral-900">Revenue pipeline</div>
+  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Track deal stages, value, probability, and the next action needed to move forward.</div>
   </div>
   </div>
   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -1537,7 +1533,7 @@ const OpportunitiesLayout: React.FC<{
   ))}
   </div>
   <div className="flex flex-wrap justify-end gap-2">
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />{t('Add Deal')}</Button>
+  <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
   </div>
   <DealsTable
   deals={deals}
@@ -1552,13 +1548,13 @@ const OpportunitiesLayout: React.FC<{
   </div>
   )}
 
-  {tab === 'relationships' && (
+ {tab === 'relationships' && (
   <div className="space-y-5">
    <SectionHeader
-    title={t('Relationships')}
-    description={t('Professional connections, interactions, and relationship management.')}
+    title="Relationships"
+    description="Professional connections, interactions, and relationship management."
     actions={
-     <Button variant="primary" size="sm" onClick={() => addRelationship()}><Heart className="h-4 w-4" />{t('Add Relationship')}</Button>
+     <Button variant="primary" size="sm" onClick={() => addRelationship()}><Heart className="h-4 w-4" />Add Relationship</Button>
     }
    />
    <RelationshipsPanel
@@ -1618,10 +1614,10 @@ onDeleteRelationshipContactMethod={deleteRelationshipContactMethod}
   {tab === 'projects' && (
   <div className="space-y-5">
    <SectionHeader
-    title={t('Projects')}
-    description={t('Project management, tracking, and deliverables.')}
+    title="Projects"
+    description="Project management, tracking, and deliverables."
     actions={
-     <Button variant="primary" size="sm" onClick={() => setActiveModal('project')}><Target className="h-4 w-4" />{t('Add Project')}</Button>
+     <Button variant="primary" size="sm" onClick={() => setActiveModal('project')}><Target className="h-4 w-4" />Add Project</Button>
     }
    />
    <ProjectsPanel
@@ -1657,10 +1653,10 @@ onDeleteFinanceItem={deleteProjectFinanceItem}
   {tab === 'templates' && (
   <div className="space-y-5">
    <SectionHeader
-    title={t('Templates')}
-    description={t('Message templates, personalization, and reuse.')}
+    title="Templates"
+    description="Message templates, personalization, and reuse."
     actions={
-     <Button variant="primary" size="sm" onClick={() => addTemplate()}><FileText className="h-4 w-4" />{t('New Template')}</Button>
+     <Button variant="primary" size="sm" onClick={() => addTemplate()}><FileText className="h-4 w-4" />New Template</Button>
     }
    />
    <TemplatesPanel
@@ -1680,10 +1676,10 @@ onSeedDefaults={seedDefaultTemplates}
   {tab === 'strategy' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Strategy')}
-     description={t('Strategic goals, objectives, and progress tracking.')}
+     title="Strategy"
+     description="Strategic goals, objectives, and progress tracking."
      actions={
-      <Button variant="primary" size="sm" onClick={() => addStrategyGoal()}><Target className="h-4 w-4" />{t('Add Goal')}</Button>
+      <Button variant="primary" size="sm" onClick={() => addStrategyGoal()}><Target className="h-4 w-4" />Add Goal</Button>
      }
     />
     <StrategyPanel
@@ -1724,10 +1720,10 @@ onDeleteStrategyDecision={deleteStrategyDecision}
   {tab === 'plans' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Plans')}
-     description={t('Yearly, monthly, weekly planning and execution structure.')}
+     title="Plans"
+     description="Yearly, monthly, weekly planning and execution structure."
      actions={
-      <Button variant="primary" size="sm" onClick={() => addPlan()}><Calendar className="h-4 w-4" />{t('Add Plan')}</Button>
+      <Button variant="primary" size="sm" onClick={() => addPlan()}><Calendar className="h-4 w-4" />Add Plan</Button>
      }
     />
     <PlansPanel
@@ -1747,8 +1743,8 @@ onAddPlanItem={addPlanItem}
   {tab === 'tasks' && (
   <div className="space-y-5">
    <SectionHeader
-    title={t('Tasks')}
-    description={t('Task management, tracking, and weekly reviews.')}
+    title="Tasks"
+    description="Task management, tracking, and weekly reviews."
    />
    <TasksPanel
   tasks={tasks}
@@ -1786,8 +1782,8 @@ onAddPlanItem={addPlanItem}
  {tab === 'finance' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Finance')}
-     description={t('Income, expenses, investments, and financial planning.')}
+     title="Finance"
+     description="Income, expenses, investments, and financial planning."
     />
     <FinancePanel
   section={appSection}
@@ -1837,8 +1833,8 @@ onDeleteFinanceRecurringRule={deleteFinanceRecurringRule}
  {tab === 'documents' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Documents')}
-     description={t('Document generation, templates, branding, and invoices.')}
+     title="Documents"
+     description="Document generation, templates, branding, and invoices."
     />
     <DocumentStudioPanel
   section={appSection}
@@ -1879,8 +1875,8 @@ onAddFinanceIncome={addFinanceIncome}
  {tab === 'ai-control' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('AI Control')}
-     description={t('AI provider keys, use case settings, and model configuration.')}
+     title="AI Control"
+     description="AI provider keys, use case settings, and model configuration."
     />
     <AIControlPanel
   section={appSection}
@@ -1902,8 +1898,8 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
  {tab === 'social' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Social Media')}
-     description={t('Content strategy, planning, and social platform management.')}
+     title="Social Media"
+     description="Content strategy, planning, and social platform management."
     />
     <SocialMediaPanel
   section={appSection}
@@ -1937,8 +1933,8 @@ onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
  {tab === 'life' && (
    <div className="space-y-5">
     <SectionHeader
-     title={t('Life Management')}
-     description={t('Nutrition, fitness, deen, family, and weekly reviews.')}
+     title="Life Management"
+     description="Nutrition, fitness, deen, family, and weekly reviews."
     />
     <LifeManagementPanel
   section={appSection}
@@ -1976,7 +1972,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
 
  {noteCategoryEditor ? (
  <OpportunityModal
-  title={noteCategoryEditor.mode === 'edit' ? t('Edit Note Category') : t('Add Note Category')}
+ title={noteCategoryEditor.mode === 'edit' ? 'Edit Note Category' : 'Add Note Category'}
  onClose={() => setNoteCategoryEditor(null)}
  >
  <div className="space-y-4">
@@ -1984,7 +1980,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  initialData={noteCategoryEditor.category}
  onSubmit={handleSubmitNoteCategory}
  onCancel={() => setNoteCategoryEditor(null)}
-  submitLabel={noteCategoryEditor.mode === 'edit' ? t('Save Category') : t('Create Category')}
+ submitLabel={noteCategoryEditor.mode === 'edit' ? 'Save Category' : 'Create Category'}
  />
  {noteCategoryEditor.mode === 'edit' && noteCategoryEditor.category && !protectedCategorySlugSet.has(noteCategoryEditor.category.slug) ? (
  <div className="flex justify-end pt-1">
@@ -1994,8 +1990,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  onClick={() => handleDeleteNoteCategory(noteCategoryEditor.category!)}
  className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
  >
-  {t('Delete Category')}
-  </Button>
+ Delete Category
+ </Button>
  </div>
  ) : null}
  </div>
@@ -2003,8 +1999,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Add Company Modal */}
-  {activeModal === 'company' ? (
-  <OpportunityModal title={t('Add Company')} onClose={() => { setActiveModal(null); setCompanyResearchDraft(null); }}>
+ {activeModal === 'company' ? (
+ <OpportunityModal title="Add Company" onClose={() => { setActiveModal(null); setCompanyResearchDraft(null); }}>
  <AddCompanyForm
  onResearchResultChange={setCompanyResearchDraft}
  onSubmit={async (input) => {
@@ -2026,8 +2022,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Edit Company Modal */}
-  {editingCompany ? (
-  <OpportunityModal title={t('Edit Company')} onClose={() => { setEditingCompany(null); setCompanyResearchDraft(null); }}>
+ {editingCompany ? (
+ <OpportunityModal title="Edit Company" onClose={() => { setEditingCompany(null); setCompanyResearchDraft(null); }}>
  <AddCompanyForm
  initialData={toCompanyInput(editingCompany)}
  onResearchResultChange={setCompanyResearchDraft}
@@ -2050,8 +2046,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Add Person Modal */}
-  {activeModal === 'person' ? (
-  <OpportunityModal title={t('Add Person')} onClose={() => setActiveModal(null)}>
+ {activeModal === 'person' ? (
+ <OpportunityModal title="Add Person" onClose={() => setActiveModal(null)}>
  <AddPersonForm
  companies={companies}
  onSubmit={async (input) => {
@@ -2068,8 +2064,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Edit Person Modal */}
-  {editingPerson ? (
-  <OpportunityModal title={t('Edit Person')} onClose={() => setEditingPerson(null)}>
+ {editingPerson ? (
+ <OpportunityModal title="Edit Person" onClose={() => setEditingPerson(null)}>
  <AddPersonForm
  companies={companies}
  initialData={toPersonInput(editingPerson)}
@@ -2087,8 +2083,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Add Message Modal */}
-  {activeModal === 'message' ? (
-  <OpportunityModal title={t('Log Message')} onClose={() => { setActiveModal(null); setMessageDraft(null); }}>
+ {activeModal === 'message' ? (
+ <OpportunityModal title="Log Message" onClose={() => { setActiveModal(null); setMessageDraft(null); }}>
  <LogMessageForm
  companies={companies}
  people={people}
@@ -2111,8 +2107,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Edit Message Modal */}
-  {editingMessage ? (
-  <OpportunityModal title={t('Edit Message')} onClose={() => setEditingMessage(null)}>
+ {editingMessage ? (
+ <OpportunityModal title="Edit Message" onClose={() => setEditingMessage(null)}>
  <LogMessageForm
  companies={companies}
  people={people}
@@ -2131,8 +2127,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Add Project Modal */}
-  {activeModal === 'project' ? (
-  <OpportunityModal title={t('Add Project')} onClose={() => setActiveModal(null)}>
+ {activeModal === 'project' ? (
+ <OpportunityModal title="Add Project" onClose={() => setActiveModal(null)}>
  <AddProjectForm
  companies={companies}
  people={people}
@@ -2150,8 +2146,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Edit Project Modal */}
-  {editingProject ? (
-  <OpportunityModal title={t('Edit Project')} onClose={() => setEditingProject(null)}>
+ {editingProject ? (
+ <OpportunityModal title="Edit Project" onClose={() => setEditingProject(null)}>
  <AddProjectForm
  companies={companies}
  people={people}
@@ -2170,8 +2166,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Add Deal Modal */}
-  {activeModal === 'deal' ? (
-  <OpportunityModal title={t('Add Deal')} onClose={() => setActiveModal(null)}>
+ {activeModal === 'deal' ? (
+ <OpportunityModal title="Add Deal" onClose={() => setActiveModal(null)}>
  <AddDealForm
  companies={companies}
  people={people}
@@ -2189,8 +2185,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  ) : null}
 
  {/* Edit Deal Modal */}
-  {editingDeal ? (
-  <OpportunityModal title={t('Edit Deal')} onClose={() => setEditingDeal(null)}>
+ {editingDeal ? (
+ <OpportunityModal title="Edit Deal" onClose={() => setEditingDeal(null)}>
  <AddDealForm
  companies={companies}
  people={people}
@@ -2214,13 +2210,13 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  onClose={() => setShowCsvImport(false)}
  onImport={async (rows) => {
  if (!importCompaniesBatch) {
-  return { success: false, error: t('Import function not available.') };
+ return { success: false, error: 'Import function not available.' };
  }
  try {
  const inserted = await importCompaniesBatch(rows);
  return { success: true, count: inserted.length };
  } catch (err) {
-  return { success: false, error: err instanceof Error ? err.message : t('Import failed.') };
+ return { success: false, error: err instanceof Error ? err.message : 'Import failed.' };
  }
  }}
  />
@@ -2232,14 +2228,14 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  onClose={() => setShowPeopleImport(false)}
  onImport={async (rows) => {
  if (!importPeople) {
-  throw new Error(t('Import function not available.'));
+ throw new Error('Import function not available.');
  }
 
  try {
  const inserted = await importPeople(rows);
  return inserted;
  } catch (err) {
-  throw err instanceof Error ? err : new Error(t('Import failed.'));
+ throw err instanceof Error ? err : new Error('Import failed.');
  }
  }}
  />
@@ -2273,24 +2269,24 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  />
  ) : null}
 
-  {confirmDeleteCompanyId ? (
-  <OpportunityModal title={t('Confirm Delete')} onClose={handleCancelDelete}>
-  <p className="text-sm leading-6 text-neutral-700">{t('This may leave related people, messages, and deals without a company. Continue?')}</p>
-  <div className="mt-6 flex items-center gap-3">
-  <Button variant="primary" size="md" onClick={handleConfirmDelete}>{t('Delete')}</Button>
-  <Button variant="secondary" size="md" onClick={handleCancelDelete}>{t('Cancel')}</Button>
-  </div>
-  </OpportunityModal>
-  ) : null}
+ {confirmDeleteCompanyId ? (
+ <OpportunityModal title="Confirm Delete" onClose={handleCancelDelete}>
+ <p className="text-sm leading-6 text-neutral-700">This may leave related people, messages, and deals without a company. Continue?</p>
+ <div className="mt-6 flex items-center gap-3">
+ <Button variant="primary" size="md" onClick={handleConfirmDelete}>Delete</Button>
+ <Button variant="secondary" size="md" onClick={handleCancelDelete}>Cancel</Button>
+ </div>
+ </OpportunityModal>
+ ) : null}
 
-  {deleteError ? (
-  <OpportunityModal title={t('Error')} onClose={() => setDeleteError(null)}>
-  <p className="text-sm leading-6 text-neutral-700">{deleteError}</p>
-  <div className="mt-6">
-  <Button variant="primary" size="md" onClick={() => setDeleteError(null)}>{t('OK')}</Button>
-  </div>
-  </OpportunityModal>
-  ) : null}
+ {deleteError ? (
+ <OpportunityModal title="Error" onClose={() => setDeleteError(null)}>
+ <p className="text-sm leading-6 text-neutral-700">{deleteError}</p>
+ <div className="mt-6">
+ <Button variant="primary" size="md" onClick={() => setDeleteError(null)}>OK</Button>
+ </div>
+ </OpportunityModal>
+ ) : null}
   </AppDashboardShell>
   );
 };

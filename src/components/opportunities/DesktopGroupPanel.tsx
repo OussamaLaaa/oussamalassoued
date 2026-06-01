@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Edit3, Folder, MoreHorizontal, Plus, Trash2, X } from 'lucide-react';
 import type { DesktopGroup, DesktopShortcut, DesktopShortcutInput } from '../../types/opportunities';
@@ -137,8 +136,6 @@ const DesktopGroupPanel: React.FC<Props> = ({
  updateDesktopShortcut,
  ungroupedShortcuts = [],
 }) => {
-  const { t, language } = usePersonalLanguage();
-
  // ── Drag state ──
  const [dragItem, setDragItem] = useState<DragItem | null>(null);
  const [dragOverId, setDragOverId] = useState<string | null>(null);

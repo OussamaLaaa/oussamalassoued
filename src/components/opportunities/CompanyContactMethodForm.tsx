@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState } from 'react';
 import type { CompanyContactMethodInput } from '../../types/opportunities';
 
@@ -20,8 +19,6 @@ const CompanyContactMethodForm: React.FC<{
  const [notes, setNotes] = useState(initialData?.notes || '');
 
  const handleSubmit = (e: React.FormEvent) => {
-  const { t, language } = usePersonalLanguage();
-
  e.preventDefault();
  if (!value.trim()) {
  setError('Value is required.');

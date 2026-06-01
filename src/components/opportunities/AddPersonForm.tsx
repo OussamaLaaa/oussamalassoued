@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, PersonInput } from '../../types/opportunities';
 
@@ -10,8 +9,6 @@ const AddPersonForm: React.FC<{
  onCancel: () => void;
  initialData?: PersonInput;
 }> = ({ companies, onSubmit, onCancel, initialData }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [companyId, setCompanyId] = useState(initialData?.companyId || '');
  const [error, setError] = useState('');
  const [form, setForm] = useState<PersonInput>(initialData || {

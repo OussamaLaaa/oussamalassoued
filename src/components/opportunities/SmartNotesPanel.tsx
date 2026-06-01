@@ -24,8 +24,6 @@ import {
  noteCategorySlug,
  } from './noteCategoryUtils';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
-import DirectionalText from '../DirectionalText';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 const sortNotes = (notes: SmartNote[], sortBy: string) => {
  const priorityRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -96,7 +94,6 @@ const SmartNotesPanel: React.FC<{
  onDeleteNoteBlock,
  selectedCategorySlug,
 }) => {
- const { t } = usePersonalLanguage();
  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
  const [isCreatingNote, setIsCreatingNote] = useState(false);
  const [sortBy, setSortBy] = useState<'created_desc' | 'created_asc' | 'updated_desc' | 'name_asc' | 'name_desc' | 'priority'>('created_desc');
@@ -178,7 +175,7 @@ const SmartNotesPanel: React.FC<{
  setIsCreatingNote(false);
  };
 
- const selectedCategoryName = categoryMenu.find((category) => category.slug === selectedCategorySlug)?.name || t('notes.All', 'All');
+ const selectedCategoryName = categoryMenu.find((category) => category.slug === selectedCategorySlug)?.name || 'All';
 
  if (selectedNoteId || isCreatingNote) {
  return (
@@ -223,7 +220,7 @@ const SmartNotesPanel: React.FC<{
  <input
  value={searchQuery}
  onChange={(event) => setSearchQuery(event.target.value)}
- placeholder={t("notes.Search notes, content, tags...", "Search notes, content, tags...")}
+ placeholder="Search notes, content, tags..."
  dir="auto"
  className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-400"
  />
@@ -233,20 +230,20 @@ const SmartNotesPanel: React.FC<{
  onChange={(event) => setSortBy(event.target.value as typeof sortBy)}
  className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none focus:border-neutral-400 md:w-auto md:min-w-[160px]"
  >
- <option value="created_desc">{t("notes.Newest", "Newest")}</option>
- <option value="created_asc">{t("notes.Oldest", "Oldest")}</option>
- <option value="updated_desc">{t("notes.Recently updated", "Recently updated")}</option>
- <option value="name_asc">{t("notes.Name A-Z", "Name A-Z")}</option>
- <option value="name_desc">{t("notes.Name Z-A", "Name Z-A")}</option>
- <option value="priority">{t("notes.Priority", "Priority", "Priority")}</option>
+ <option value="created_desc">Newest</option>
+ <option value="created_asc">Oldest</option>
+ <option value="updated_desc">Recently updated</option>
+ <option value="name_asc">Name A-Z</option>
+ <option value="name_desc">Name Z-A</option>
+ <option value="priority">Priority</option>
  </select>
  <Button variant="primary" size="sm" onClick={openCreateNote} className="h-10 px-4">
- + {t("notes.New Note", "New Note")}
+ + New Note
  </Button>
  </div>
  {selectedCategorySlug !== 'all' ? (
  <div className="mt-3 text-xs text-neutral-500">
- {t("notes.Showing", "Showing")} <span className="inline-block max-w-[14rem] truncate align-bottom font-medium text-neutral-900">{selectedCategoryName}</span> {t("notes.notes", "notes")}
+ Showing <span className="inline-block max-w-[14rem] truncate align-bottom font-medium text-neutral-900">{selectedCategoryName}</span> notes
  </div>
  ) : null}
  </div>
@@ -294,9 +291,16 @@ const SmartNotesPanel: React.FC<{
 	className="group cursor-pointer rounded-xl border border-neutral-200 bg-white px-4 py-3 transition hover:bg-neutral-50"
  >
   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-  <div className="min-w-0 flex-1">
-  <DirectionalText text={note.title} as="h3" className="min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900" />
-  <DirectionalText text={excerpt(note) || t("notes.No content yet.", "No content yet.")} as="p" className="mt-1.5 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 line-clamp-2" maxLines={2} />
+  <div className="min-w-0 flex-1" dir={titleDirection}>
+  <h3 className={`min-w-0 break-words whitespace-pre-wrap text-sm font-semibold text-neutral-900 ${getDirectionClass(note.title)}`}>
+  {note.title}
+  </h3>
+  <p
+  dir={previewDirection}
+  className={`mt-1.5 min-w-0 overflow-hidden break-words whitespace-pre-wrap text-sm text-neutral-500 line-clamp-2 ${getDirectionClass(note.content || note.notes || '')}`}
+  >
+  {excerpt(note) || 'No content yet.'}
+  </p>
   </div>
   <div className="flex min-w-0 shrink-0 flex-col items-start gap-2 lg:items-end" dir="ltr">
   <div className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 lg:justify-end">
@@ -322,13 +326,13 @@ const SmartNotesPanel: React.FC<{
   <div className="flex items-center gap-1">
   <span className="text-xs text-neutral-500">{formatNoteDate(note.createdAt)}</span>
   <button type="button" onClick={editNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Open", "Open", "Open")}
+  Open
   </button>
   <button type="button" onClick={archiveNote} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Archive", "Archive", "Archive")}
+  Archive
   </button>
   <button type="button" onClick={deleteNote} className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100" onMouseDown={(event) => event.stopPropagation()}>
-  {t("notes.Delete", "Delete", "Delete")}
+  Delete
   </button>
   </div>
   </div>
@@ -339,8 +343,8 @@ const SmartNotesPanel: React.FC<{
  {filteredNotes.length === 0 ? (
  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-8 text-sm text-neutral-500">
  {searchQuery || selectedCategorySlug !== 'all'
- ? t("notes.No notes match your filters.", "No notes match your filters. Try changing search or category.")
- : t("notes.No notes yet.", "No notes yet. Create your first note to start building your personal memory.")}
+ ? 'No notes match your filters. Try changing search or category.'
+ : 'No notes yet. Create your first note to start building your personal memory.'}
  </div>
  ) : null}
  </div>

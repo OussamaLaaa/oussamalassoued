@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo } from 'react';
 import type { Deal } from '../../types/opportunities';
 import Button from '../ui/Button';
@@ -6,7 +5,6 @@ import Badge from '../ui/Badge';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
-import DirectionalText from '../DirectionalText';
 
 export interface DealFilters {
   searchQuery: string;
@@ -56,7 +54,6 @@ const DealsTable: React.FC<{
   filters?: DealFilters;
   onFilterChange?: (filters: DealFilters) => void;
 }> = ({ deals, onEdit, onDelete, onDealClick, filters, onFilterChange }) => {
-  const { t } = usePersonalLanguage();
   const filtered = useMemo(() => {
     if (!filters) return deals;
     return deals.filter((d) => {
@@ -169,7 +166,7 @@ const DealsTable: React.FC<{
                   <div className="min-w-0">
                     <div className="font-medium text-neutral-900">{d.servicePackage || 'Untitled Deal'}</div>
                     {(d.problem || d.proposedSolution) && (
-                      <div className="mt-0.5 text-xs text-neutral-500 max-w-[200px] truncate"><DirectionalText text={d.problem || d.proposedSolution} /></div>
+                      <div className="mt-0.5 text-xs text-neutral-500 max-w-[200px] truncate">{d.problem || d.proposedSolution}</div>
                     )}
                   </div>
                 </td>
@@ -180,7 +177,7 @@ const DealsTable: React.FC<{
                 <td className="px-4 py-3.5 align-top">{badgeForStage(d.stage)}</td>
                 <td className="px-4 py-3.5 align-top">{badgeForProbability(d.probability)}</td>
                 <td className="px-4 py-3.5 align-top text-right font-semibold text-neutral-900 tabular-nums">{d.value != null ? `${d.value} ${d.currency || ''}` : <span className="text-neutral-300">—</span>}</td>
-                <td className="px-4 py-3.5 align-top text-sm text-neutral-700 max-w-[180px] truncate"><DirectionalText text={d.nextAction || '—'} className="text-sm text-neutral-700" /></td>
+                <td className="px-4 py-3.5 align-top text-sm text-neutral-700 max-w-[180px] truncate">{d.nextAction || <span className="text-neutral-300">—</span>}</td>
                 <td className="px-4 py-3.5 align-top">
                   <div className="flex items-center justify-end gap-1">
                     {onEdit && (
@@ -194,7 +191,7 @@ const DealsTable: React.FC<{
                           onEdit(d);
                         }}
                         className="text-neutral-400 hover:text-neutral-900 px-1.5"
-                        title={t("Edit", "Edit", "Edit")}
+                        title="Edit"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
@@ -212,7 +209,7 @@ const DealsTable: React.FC<{
                           onDelete(d.id);
                         }}
                         className="text-neutral-300 hover:text-red-500 px-1.5"
-                        title={t("Delete", "Delete", "Delete")}
+                        title="Delete"
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

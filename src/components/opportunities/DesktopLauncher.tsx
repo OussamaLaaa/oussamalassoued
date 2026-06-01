@@ -25,7 +25,6 @@ import type { DesktopGroup, DesktopGroupInput, DesktopShortcut, DesktopShortcutI
 import AddDesktopShortcutDialog from './AddDesktopShortcutDialog';
 import CreateGroupDialog from './CreateGroupDialog';
 import DesktopGroupPanel from './DesktopGroupPanel';
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 
 type AppId = 'desktop' | 'crm' | 'messages' | 'strategy' | 'plans' | 'tasks' | 'projects' | 'finance' | 'documents' | 'social' | 'relationships' | 'life' | 'notes' | 'ai_control';
 
@@ -74,7 +73,6 @@ function TopBarButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label:
 }
 
 function AppTile({ label, icon: Icon, onOpen, className }: AppShortcut & { onOpen?: () => void; className?: string }) {
- const { t } = usePersonalLanguage();
  return (
  <button
  type="button"
@@ -85,7 +83,7 @@ function AppTile({ label, icon: Icon, onOpen, className }: AppShortcut & { onOpe
  <Icon className="h-7 w-7" {...iconProps} />
  </span>
  <span className="w-full max-w-[6.5rem] text-xs font-medium leading-tight text-neutral-700 transition-colors group-hover:text-neutral-900">
- {t(label)}
+ {label}
  </span>
  </button>
  );
@@ -453,7 +451,6 @@ const DesktopLauncher: React.FC<{
  isDesktopLoading?: boolean;
  desktopLoadError?: boolean;
 }> = ({ onLaunchApp, desktopShortcuts = [], desktopSettings = null, addDesktopShortcut, updateDesktopShortcut, deleteDesktopShortcut, updateDesktopSettings, desktopGroups = [], addDesktopGroup, updateDesktopGroup, deleteDesktopGroup, isDesktopLoading, desktopLoadError }) => {
- const { t } = usePersonalLanguage();
  const [showAddDialog, setShowAddDialog] = useState(false);
  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
  const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false);
@@ -691,8 +688,8 @@ const DesktopLauncher: React.FC<{
  </div>
  </div>
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
- <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} onClick={() => setShowSettingsDialog(true)} />
+ <TopBarButton icon={Bell} label="Notifications" />
+ <TopBarButton icon={Palette} label="Desktop Settings" onClick={() => setShowSettingsDialog(true)} />
  <ProfileDropdown />
  </div>
  </div>
@@ -766,8 +763,8 @@ const DesktopLauncher: React.FC<{
  </div>
  </div>
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
- <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} />
+ <TopBarButton icon={Bell} label="Notifications" />
+ <TopBarButton icon={Palette} label="Desktop Settings" />
  <ProfileDropdown />
  </div>
  </div>
@@ -848,8 +845,8 @@ const DesktopLauncher: React.FC<{
  </div>
 
  <div className="flex items-center gap-1">
- <TopBarButton icon={Bell} label={t("desktop.Notifications", "desktop.Notifications", "Notifications")} />
- <TopBarButton icon={Palette} label={t("desktop.Desktop Settings", "desktop.Desktop Settings", "Desktop Settings")} onClick={() => setShowSettingsDialog(true)} />
+ <TopBarButton icon={Bell} label="Notifications" />
+ <TopBarButton icon={Palette} label="Desktop Settings" onClick={() => setShowSettingsDialog(true)} />
  <ProfileDropdown />
  </div>
  </div>

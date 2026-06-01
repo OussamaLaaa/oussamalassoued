@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyGoal, StrategyPlan, StrategyDecision } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -15,8 +14,6 @@ const questions = [
 ];
 
 const formatDate = (value?: string) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!value) return '';
  return value.slice(0, 10);
 };

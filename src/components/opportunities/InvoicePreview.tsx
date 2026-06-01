@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef } from 'react';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 
@@ -35,8 +34,7 @@ type InvoicePreviewProps = {
 };
 
 const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ invoice, items, brandSettings, className }, ref) => {
-  const { t } = usePersonalLanguage();
-  const safeInvoice = invoice;
+ const safeInvoice = invoice;
  const currency = safeInvoice?.currency || brandSettings?.defaultCurrency || 'MYR';
  const subtotal = safeInvoice?.subtotal ?? items.reduce((sum, item) => sum + getLineTotal(item), 0);
  const discountAmount = safeInvoice?.discountAmount ?? 0;
@@ -172,7 +170,7 @@ const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ invoic
  {brandSettings?.signatureUrl ? (
  <div className="mt-10 border-t border-[#e5e7eb] pt-6">
  <div className="text-sm font-bold text-[#0f172a]">Authorized Signature</div>
- <img src={brandSettings.signatureUrl} alt={t("common.signature", "common.signature", "Signature")} className="mt-2 h-14 w-auto rounded object-contain" />
+ <img src={brandSettings.signatureUrl} alt="Signature" className="mt-2 h-14 w-auto rounded object-contain" />
  {brandSettings.signatureName ? <div className="mt-1 text-sm text-[#475569]">{brandSettings.signatureName}</div> : null}
  </div>
  ) : null}

@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { NoteAttachment, NoteBlock, NoteCategory, SmartNote } from '../../types/opportunities';
 
@@ -69,8 +68,6 @@ const copyToClipboard = async (value: string) => {
 const normalizeTextList = (value: string[]) => value.map((item) => item.trim()).filter(Boolean);
 
 const formatTasksForClipboard = (tasks: AINotesAssistantTask[]) => {
-  const { t, language } = usePersonalLanguage();
-
  if (!tasks.length) return '';
  return tasks
  .map((task, index) => {

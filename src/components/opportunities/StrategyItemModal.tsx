@@ -1,6 +1,4 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
-import { detectTextDirection } from '../../utils/textDirection';
 import type {
  StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput,
  StrategyGoal, StrategyPlan, StrategyTactic, StrategyExperiment, StrategyDecision,
@@ -44,8 +42,6 @@ type Props = {
 };
 
 const parseProgress = (value: string) => {
-  const { t, language } = usePersonalLanguage();
-
  const numeric = Number(value);
  if (!Number.isFinite(numeric)) return 0;
  return Math.max(0, Math.min(100, numeric));
@@ -58,7 +54,6 @@ const ItemModal: React.FC<Props> = ({
  setGoalForm, setPlanForm, setTacticForm, setExperimentForm, setDecisionForm,
  onSave, onDelete, onClose,
 }) => {
- const { t } = usePersonalLanguage();
  if (!modalState) return null;
 
  const title = modalState.item
@@ -77,20 +72,20 @@ const ItemModal: React.FC<Props> = ({
  {modalState.type === 'goal' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")} required>
-  <input value={goalForm.title || ''} onChange={(e) => setGoalForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" dir={detectTextDirection(goalForm.title || '')} required />
+ <Field label="Title" required>
+ <input value={goalForm.title || ''} onChange={(e) => setGoalForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label={t("Category", "Category", "Category")}>
+ <Field label="Category">
  <select value={goalForm.category || 'career'} onChange={(e) => setGoalForm((f) => ({ ...f, category: e.target.value as StrategySection }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {CATEGORY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={goalForm.priority || 'medium'} onChange={(e) => setGoalForm((f) => ({ ...f, priority: e.target.value as StrategyPriority }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={goalForm.status || 'active'} onChange={(e) => setGoalForm((f) => ({ ...f, status: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
@@ -104,7 +99,7 @@ const ItemModal: React.FC<Props> = ({
  <Field label="Target Date">
  <input type="date" value={goalForm.targetDate || ''} onChange={(e) => setGoalForm((f) => ({ ...f, targetDate: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
- <Field label={t("Progress", "Progress", "Progress")}>
+ <Field label="Progress">
  <input type="number" min={0} max={100} value={Number(goalForm.progress ?? 0)} onChange={(e) => setGoalForm((f) => ({ ...f, progress: parseProgress(e.target.value) }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  <Field label="Success Metric">
@@ -123,8 +118,8 @@ const ItemModal: React.FC<Props> = ({
  </select>
  </Field>
  </div>
- <Field label={t("Description", "Description", "Description")}>
-  <textarea value={goalForm.description || ''} onChange={(e) => setGoalForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" dir={detectTextDirection(goalForm.description || '')} />
+ <Field label="Description">
+ <textarea value={goalForm.description || ''} onChange={(e) => setGoalForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  </div>
  )}
@@ -132,25 +127,25 @@ const ItemModal: React.FC<Props> = ({
  {modalState.type === 'plan' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Name", "Name", "Name")} required>
+ <Field label="Name" required>
  <input value={planForm.name || ''} onChange={(e) => setPlanForm((f) => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label={t("common.label", "common.label", "Label")}>
+ <Field label="Label">
  <select value={planForm.label || 'A'} onChange={(e) => setPlanForm((f) => ({ ...f, label: e.target.value as StrategyPlan['label'] }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
  </select>
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={planForm.status || 'planned'} onChange={(e) => setPlanForm((f) => ({ ...f, status: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={planForm.priority || 'medium'} onChange={(e) => setPlanForm((f) => ({ ...f, priority: e.target.value as StrategyPriority }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Progress", "Progress", "Progress")}>
+ <Field label="Progress">
  <input type="number" min={0} max={100} value={Number(planForm.progress ?? 0)} onChange={(e) => setPlanForm((f) => ({ ...f, progress: parseProgress(e.target.value) }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  <Field label="Target Date">
@@ -169,7 +164,7 @@ const ItemModal: React.FC<Props> = ({
  </select>
  </Field>
  </div>
- <Field label={t("Description", "Description", "Description")}>
+ <Field label="Description">
  <textarea value={planForm.description || ''} onChange={(e) => setPlanForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  <Field label="Assumptions">
@@ -184,7 +179,7 @@ const ItemModal: React.FC<Props> = ({
  <Field label="Trigger to Switch">
  <input value={planForm.triggerToSwitch || ''} onChange={(e) => setPlanForm((f) => ({ ...f, triggerToSwitch: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
- <Field label={t("common.nextAction", "common.nextAction", "Next Action")}>
+ <Field label="Next Action">
  <input value={planForm.nextAction || ''} onChange={(e) => setPlanForm((f) => ({ ...f, nextAction: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  </div>
@@ -193,18 +188,18 @@ const ItemModal: React.FC<Props> = ({
  {modalState.type === 'tactic' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")} required>
+ <Field label="Title" required>
  <input value={tacticForm.title || ''} onChange={(e) => setTacticForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label={t("Category", "Category", "Category")}>
+ <Field label="Category">
  <input value={tacticForm.category || ''} onChange={(e) => setTacticForm((f) => ({ ...f, category: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={tacticForm.status || 'active'} onChange={(e) => setTacticForm((f) => ({ ...f, status: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={tacticForm.priority || 'medium'} onChange={(e) => setTacticForm((f) => ({ ...f, priority: e.target.value as StrategyPriority }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
@@ -215,7 +210,7 @@ const ItemModal: React.FC<Props> = ({
  <Field label="Metric">
  <input value={tacticForm.metric || ''} onChange={(e) => setTacticForm((f) => ({ ...f, metric: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
- <Field label={t("common.nextAction", "common.nextAction", "Next Action")}>
+ <Field label="Next Action">
  <input value={tacticForm.nextAction || ''} onChange={(e) => setTacticForm((f) => ({ ...f, nextAction: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  <Field label="Linked Goal">
@@ -237,7 +232,7 @@ const ItemModal: React.FC<Props> = ({
  </select>
  </Field>
  </div>
- <Field label={t("Description", "Description", "Description")}>
+ <Field label="Description">
  <textarea value={tacticForm.description || ''} onChange={(e) => setTacticForm((f) => ({ ...f, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  </div>
@@ -246,15 +241,15 @@ const ItemModal: React.FC<Props> = ({
  {modalState.type === 'experiment' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")} required>
+ <Field label="Title" required>
  <input value={experimentForm.title || ''} onChange={(e) => setExperimentForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={experimentForm.status || 'planned'} onChange={(e) => setExperimentForm((f) => ({ ...f, status: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={experimentForm.priority || 'medium'} onChange={(e) => setExperimentForm((f) => ({ ...f, priority: e.target.value as StrategyPriority }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
@@ -305,18 +300,18 @@ const ItemModal: React.FC<Props> = ({
  {modalState.type === 'decision' && (
  <div className="space-y-4">
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
- <Field label={t("Title", "Title", "Title")} required>
+ <Field label="Title" required>
  <input value={decisionForm.title || ''} onChange={(e) => setDecisionForm((f) => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" required />
  </Field>
  <Field label="Review Date">
  <input type="date" value={decisionForm.reviewDate || ''} onChange={(e) => setDecisionForm((f) => ({ ...f, reviewDate: e.target.value }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
- <Field label={t("Status", "Status", "Status")}>
+ <Field label="Status">
  <select value={decisionForm.status || 'planned'} onChange={(e) => setDecisionForm((f) => ({ ...f, status: e.target.value as StrategyStatus }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
  </Field>
- <Field label={t("Priority", "Priority", "Priority")}>
+ <Field label="Priority">
  <select value={decisionForm.priority || 'medium'} onChange={(e) => setDecisionForm((f) => ({ ...f, priority: e.target.value as StrategyPriority }))} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
  {PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
  </select>
@@ -340,7 +335,7 @@ const ItemModal: React.FC<Props> = ({
  </select>
  </Field>
  </div>
- <Field label={t("common.context", "common.context", "Context")}>
+ <Field label="Context">
  <textarea value={decisionForm.context || ''} onChange={(e) => setDecisionForm((f) => ({ ...f, context: e.target.value }))} rows={2} className="mt-1 w-full rounded-md border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400" />
  </Field>
  <Field label="Decision">

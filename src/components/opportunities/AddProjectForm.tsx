@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, Person, ProjectInput } from '../../types/opportunities';
 
@@ -46,8 +45,6 @@ const AddProjectForm: React.FC<{
  };
 
  const handleSubmit = (event: React.FormEvent) => {
-  const { t, language } = usePersonalLanguage();
-
  event.preventDefault();
  const errs: string[] = [];
  if (!form.name.trim()) errs.push('Project name is required.');

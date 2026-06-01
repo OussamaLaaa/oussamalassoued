@@ -1,7 +1,5 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type { Company, Person, MessageInput } from '../../types/opportunities';
-import { detectTextDirection } from '../../utils/textDirection';
 
 const inputClass = 'w-full h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400';
 const textareaClass = 'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400';
@@ -14,8 +12,6 @@ const LogMessageForm: React.FC<{
  onCancel: () => void;
  initialData?: MessageInput;
 }> = ({ companies, people, onSubmit, onCancel, initialData }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || '');
  const filteredPeople = useMemo(() => {
  if (initialData?.companyId) {
@@ -105,7 +101,7 @@ const LogMessageForm: React.FC<{
  </label>
  <label className="space-y-1.5 md:col-span-2">
  <span className="text-sm font-medium text-neutral-900">Message Text</span>
-   <textarea className={`${textareaClass} min-h-24`} dir={detectTextDirection(form.messageText || '')} value={form.messageText || ''} onChange={(e) => setField('messageText', e.target.value)} placeholder="Message content..." />
+ <textarea className={`${textareaClass} min-h-24`} value={form.messageText || ''} onChange={(e) => setField('messageText', e.target.value)} placeholder="Message content..." />
  </label>
  <label className="space-y-1.5">
  <span className="text-sm font-medium text-neutral-900">Follow-up Date</span>
@@ -122,7 +118,7 @@ const LogMessageForm: React.FC<{
  </label>
  <label className="space-y-1.5 md:col-span-2">
  <span className="text-sm font-medium text-neutral-900">Notes</span>
-   <textarea className={`${textareaClass} min-h-20`} dir={detectTextDirection(form.replySummary || '')} value={form.replySummary || ''} onChange={(e) => setField('replySummary', e.target.value)} placeholder="Private notes for next steps, objections, or context." />
+ <textarea className={`${textareaClass} min-h-20`} value={form.replySummary || ''} onChange={(e) => setField('replySummary', e.target.value)} placeholder="Private notes for next steps, objections, or context." />
  </label>
  </div>
 

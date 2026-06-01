@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -137,8 +136,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocumentViewProps>(
  ({ document, brandSettings }, ref) => {
-  const { t } = usePersonalLanguage();
-  const brand = useMemo(() => resolveBrand(brandSettings), [brandSettings]);
+ const brand = useMemo(() => resolveBrand(brandSettings), [brandSettings]);
  const blocks = useMemo(() => parseContent(document.content), [document.content]);
  const statusClass = STATUS_STYLES[document.status] || STATUS_STYLES.draft;
  const typeLabel = FORMATTED_TYPE_LABELS[document.type] || document.type.replace(/_/g, ' ').toUpperCase();
@@ -284,7 +282,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  {/* ─── Amount inline for non-receipt ─── */}
  {!isReceipt && document.amount != null ? (
  <div className="mt-6">
- <MetaCard label={t("Amount", "Amount", "Amount")} value={formatMoney(document.amount, document.currency)} />
+ <MetaCard label="Amount" value={formatMoney(document.amount, document.currency)} />
  </div>
  ) : null}
 
@@ -294,7 +292,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  <SectionTitle>Agreement Details</SectionTitle>
  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
  {document.relatedProjectName ? <MetaCard label="Project" value={document.relatedProjectName} /> : null}
- {document.relatedCompanyName ? <MetaCard label={t("Company", "Company", "Company")} value={document.relatedCompanyName} /> : null}
+ {document.relatedCompanyName ? <MetaCard label="Company" value={document.relatedCompanyName} /> : null}
  {document.relatedPersonName ? <MetaCard label="Contact" value={document.relatedPersonName} /> : null}
  {document.signedDate ? <MetaCard label="Signed Date" value={formatDate(document.signedDate)} /> : null}
  </div>
@@ -368,7 +366,7 @@ const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocument
  {brand.signatureUrl ? (
  <img
  src={brand.signatureUrl}
- alt={t("common.signature", "common.signature", "Signature")}
+ alt="Signature"
  className="mt-3 max-h-[70px] w-auto rounded object-contain"
  />
  ) : null}

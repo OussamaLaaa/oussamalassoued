@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type { Person, RelationshipCategory, RelationshipInput } from '../../types/opportunities';
 
@@ -93,8 +92,6 @@ const RelationshipForm: React.FC<{
  onCancel: () => void;
  submitLabel?: string;
 }> = ({ people = [], categories = [], initialData, onSubmit, onCancel, submitLabel = 'Save Relationship' }) => {
-  const { t, language } = usePersonalLanguage();
-
  const [form, setForm] = useState<RelationshipInput>(() => createInitialState(initialData));
  const [saving, setSaving] = useState(false);
  const [error, setError] = useState('');

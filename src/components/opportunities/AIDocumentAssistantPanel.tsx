@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useMemo, useState } from 'react';
 import type {
  Company,
@@ -94,13 +93,12 @@ const callAiDocument = async (promptBody: Record<string, unknown>): Promise<AiRe
 };
 
 const AIDocumentAssistantPanel: React.FC<{
-  documentBrandSettings: DocumentBrandSettings[];
-  documentTemplates: DocumentTemplate[];
-  generatedDocuments: GeneratedDocument[];
-  projects: Project[];
-  companies: Company[];
-  people: Person[];
-
+ documentBrandSettings: DocumentBrandSettings[];
+ documentTemplates: DocumentTemplate[];
+ generatedDocuments: GeneratedDocument[];
+ projects: Project[];
+ companies: Company[];
+ people: Person[];
  deals: Deal[];
  onAddDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
  onAddGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
@@ -117,8 +115,7 @@ const AIDocumentAssistantPanel: React.FC<{
  onAddGeneratedDocument,
  onUpdateGeneratedDocument,
 }) => {
-  const { t } = usePersonalLanguage();
-  const [mode, setMode] = useState<AiMode>('generate_document');
+ const [mode, setMode] = useState<AiMode>('generate_document');
  const [documentType, setDocumentType] = useState<DocumentType>('document');
  const [language, setLanguage] = useState<DocumentLanguage>('english');
  const [tone, setTone] = useState<AiTone>('professional');
@@ -350,7 +347,7 @@ const AIDocumentAssistantPanel: React.FC<{
  {DOCUMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
  </select>
  </Field>
- <Field label={t("common.language", "common.language", "Language")}>
+ <Field label="Language">
  <select className={inputClass} value={language} onChange={(event) => setLanguage(event.target.value as DocumentLanguage)}>
  {LANGUAGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
  </select>
@@ -385,7 +382,7 @@ const AIDocumentAssistantPanel: React.FC<{
  </div>
 
  <div className="space-y-4">
- <SectionHeader title={t("common.context", "common.context", "Context")} subtitle="Selected project, company, person, and deal context are used to guide the AI." />
+ <SectionHeader title="Context" subtitle="Selected project, company, person, and deal context are used to guide the AI." />
  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
  <Field label="Related Project">
  <select className={inputClass} value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
@@ -436,7 +433,7 @@ const AIDocumentAssistantPanel: React.FC<{
  </div>
 
  <div className="grid gap-5 xl:grid-cols-2">
- <ResultCard title={t("Summary", "Summary", "Summary")} value={result.summary || 'No summary yet.'} />
+ <ResultCard title="Summary" value={result.summary || 'No summary yet.'} />
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex items-start justify-between gap-3">
  <div>

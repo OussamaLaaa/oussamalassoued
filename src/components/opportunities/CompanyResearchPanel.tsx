@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useState } from 'react';
 import type {
  CompanyInput,
@@ -37,8 +36,6 @@ const hasText = (value?: string | number | null) => value !== null && value !== 
 const normalizeText = (value?: string | number | null) => (value === null || value === undefined ? '' : String(value).trim());
 
 const toConfidenceClass = (value: CompanyResearchConfidence) => {
-  const { t, language } = usePersonalLanguage();
-
  if (value === 'high') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
  if (value === 'medium') return 'border-amber-200 bg-amber-50 text-amber-700';
  return 'border-neutral-200 bg-neutral-100 text-neutral-600';

@@ -1,4 +1,3 @@
-import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo } from 'react';
 import type { OutreachMessage } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -6,7 +5,6 @@ import Button from '../ui/Button';
 import EmptyState from '../ui/EmptyState';
 import StatCard from '../ui/StatCard';
 import { toolbarButton, toolbarCount } from './Toolbar';
-import DirectionalText from '../DirectionalText';
 
 export interface MessageFilters {
   searchQuery: string;
@@ -62,7 +60,7 @@ const dateRangeOptions = [
 const normalize = (value?: string | null) => (value || '').trim().toLowerCase();
 
 const toDate = (value?: string | null) => {
-  if (!value) return null;
+ if (!value) return null;
  const date = new Date(value);
  return Number.isNaN(date.getTime()) ? null : date;
 };
@@ -121,7 +119,6 @@ const MessagesTable: React.FC<{
  onFilterChange?: (filters: MessageFilters) => void;
  onLogMessage?: () => void;
 }> = ({ messages, onEdit, onDelete, filters, onFilterChange, onLogMessage }) => {
- const { t } = usePersonalLanguage();
  const filtered = useMemo(() => {
  if (!filters) return messages;
 
@@ -202,7 +199,7 @@ const MessagesTable: React.FC<{
  <div className="space-y-4">
  <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
  <StatCard label="Total Messages" value={total} hint="Current total" />
- <StatCard label={t("Sent", "Sent", "Sent")} value={sent} hint="Last 30 days" />
+ <StatCard label="Sent" value={sent} hint="Last 30 days" />
  <StatCard label="Replies" value={replies} hint="Last 30 days" />
  <StatCard label="Follow-ups Due" value={followUpsDue} hint="Today" />
  <StatCard label="No Reply" value={noReply} hint="Needs nudge" />
@@ -328,14 +325,14 @@ const MessagesTable: React.FC<{
  )}
  </td>
  <td className="px-4 py-3 align-middle text-sm text-neutral-600 max-w-[240px] truncate">
-  <DirectionalText text={message.replySummary || message.messageText || '—'} className="text-sm text-neutral-600" />
+ {message.replySummary || message.messageText || '—'}
  </td>
  <td className="px-4 py-3 align-middle">
  <div className="flex items-center justify-end gap-1">
  {onEdit ? (
  <button
  type="button"
- aria-label={t("Edit", "Edit", "Edit")}
+ aria-label="Edit"
  onClick={() => onEdit(message)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-neutral-900 hover:border-neutral-200 hover:bg-neutral-50 transition-colors"
  >
@@ -347,7 +344,7 @@ const MessagesTable: React.FC<{
  {onDelete ? (
  <button
  type="button"
- aria-label={t("Delete", "Delete", "Delete")}
+ aria-label="Delete"
  onClick={() => onDelete(message.id)}
  className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-transparent text-neutral-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
  >
