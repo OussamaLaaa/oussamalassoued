@@ -614,20 +614,15 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  />
  ) : (
  <div className="space-y-4">
- <div className="rounded-xl border border-neutral-200 bg-white px-5 py-4">
- <div className="flex flex-wrap items-start justify-between gap-3">
- <div className="min-w-0">
- <button type="button" onClick={onBackToDesktop} className="text-xs font-medium text-neutral-500 hover:text-neutral-900">
- ← Back to Desktop
- </button>
- <h2 className="mt-2 text-xl font-semibold text-neutral-900">Strategy</h2>
- <p className="mt-1 text-sm text-neutral-600">Goals, plans, tactics, experiments, and decisions organized by goal.</p>
- </div>
- <Button type="button" variant="primary" size="md" onClick={() => openModal({ type: 'goal' })}>
- Add Goal
- </Button>
- </div>
- </div>
+	 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-neutral-200 pb-4">
+	 <div className="min-w-0">
+	 <h2 className="text-lg font-semibold text-neutral-900">Goals</h2>
+	 <p className="mt-0.5 text-sm text-neutral-600">Define, track, and review your strategic goals.</p>
+	 </div>
+	 <Button type="button" variant="primary" size="md" onClick={() => openModal({ type: 'goal' })}>
+	 Add Goal
+	 </Button>
+	 </div>
 
  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
@@ -649,16 +644,6 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({
  <div className="text-xs uppercase tracking-[0.08em] text-neutral-500">Average progress</div>
  <div className="mt-2 text-2xl font-semibold text-neutral-900">{averageProgress}%</div>
  <div className="mt-1 text-xs text-neutral-500">Across goals</div>
- </div>
- </div>
-
- <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <div className="flex flex-wrap items-center justify-between gap-3">
- <div>
- <h3 className="text-sm font-semibold text-neutral-900">Goals Dashboard</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Open one goal to enter the full workspace.</p>
- </div>
- <Badge variant="neutral">Top level only</Badge>
  </div>
  </div>
 
