@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState, useEffect } from 'react';
 import DirectionalText from '../DirectionalText';
 import type { Task, TaskInput, TaskStatus, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, RecurringTask, RecurringTaskInput, RecurringTaskLog, RecurringTaskLogInput, Project, Plan, StrategyGoal, Company, Person } from '../../types/opportunities';
@@ -234,6 +235,7 @@ const TasksPanel: React.FC<{
   onAddTaskWorkLog, onUpdateTaskWorkLog, onDeleteTaskWorkLog,
   onAddWeeklyTaskReview, onUpdateWeeklyTaskReview, onDeleteWeeklyTaskReview,
 }) => {
+  const { t } = usePersonalLanguage();
   const [view, setView] = useState<TasksView>('weekly');
 
   useEffect(() => {

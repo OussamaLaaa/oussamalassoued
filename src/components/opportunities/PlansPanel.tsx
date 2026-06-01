@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button, Badge } from '../ui';
 import StatCard from '../ui/StatCard';
@@ -67,6 +68,7 @@ const getItemStatusVariant = (s: string) => {
 const PlansPanel: React.FC<Props> = ({
   plans, planItems, projects, strategyGoals, section, onAddPlan, onUpdatePlan, onDeletePlan, onAddPlanItem, onUpdatePlanItem, onDeletePlanItem,
 }) => {
+  const { t } = usePersonalLanguage();
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<PlanSection>('dashboard');
 

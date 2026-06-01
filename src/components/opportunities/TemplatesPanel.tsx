@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import { audienceOptions, goalOptions, languageOptions } from '../../data/messageTemplates';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
@@ -31,7 +32,8 @@ const TemplatesPanel: React.FC<{
  onDeleteTemplate: (id: string) => Promise<unknown>;
  onSeedDefaults?: () => Promise<unknown>;
 }> = ({ templates, onAddTemplate, onUpdateTemplate, onDeleteTemplate, onSeedDefaults }) => {
- const [showForm, setShowForm] = useState(false);
+  const { t } = usePersonalLanguage();
+  const [showForm, setShowForm] = useState(false);
  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
  const [form, setForm] = useState<MessageTemplateInput>(emptyForm);
  const [isSubmitting, setIsSubmitting] = useState(false);

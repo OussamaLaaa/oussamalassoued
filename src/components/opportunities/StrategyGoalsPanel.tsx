@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyGoal, StrategyGoalInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -61,7 +62,8 @@ const GoalsPanel: React.FC<Props> = ({
  filterCategory, setFilterCategory, filterStatus, setFilterStatus, filterPriority, setFilterPriority,
  showCreateButton = true,
 }) => {
- const filtered = goals.filter((g) => {
+  const { t } = usePersonalLanguage();
+  const filtered = goals.filter((g) => {
  if (filterCategory && g.category !== filterCategory) return false;
  if (filterStatus && g.status !== filterStatus) return false;
  if (filterPriority && g.priority !== filterPriority) return false;

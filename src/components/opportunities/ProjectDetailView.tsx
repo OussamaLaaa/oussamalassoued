@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useEffect, useMemo, useState } from 'react';
 import DirectionalText from '../DirectionalText';
 import { detectTextDirection } from '../../utils/textDirection';
@@ -503,9 +504,10 @@ const ProjectDetailView: React.FC<{
  onAddTimeLog, onDeleteTimeLog,
  onAddMeeting, onDeleteMeeting,
  onAddDocument, onDeleteDocument,
- onAddFinanceItem, onDeleteFinanceItem,
+  onAddFinanceItem, onDeleteFinanceItem,
 }) => {
- const [activeTab, setActiveTab] = useState<InternalTab>('overview');
+  const { t } = usePersonalLanguage();
+  const [activeTab, setActiveTab] = useState<InternalTab>('overview');
  const [showModal, setShowModal] = useState<string | null>(null);
  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
  const [selectedTask, setSelectedTask] = useState<ProjectTask | null>(null);

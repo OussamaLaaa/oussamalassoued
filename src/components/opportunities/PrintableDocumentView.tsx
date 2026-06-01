@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -91,7 +92,8 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 );
 
 const PrintableDocumentView = forwardRef<HTMLDivElement, PrintableDocumentViewProps>(({ document, brandSettings, showActions }, ref) => {
- const brand = useMemo(() => resolveBrandSettings(brandSettings), [brandSettings]);
+  const { t } = usePersonalLanguage();
+  const brand = useMemo(() => resolveBrandSettings(brandSettings), [brandSettings]);
  const blocks = useMemo(() => parseContentBlocks(document.content), [document.content]);
  const paidDate = (document as GeneratedDocument & { paidDate?: string }).paidDate;
  const isInvoice = document.type === 'invoice';

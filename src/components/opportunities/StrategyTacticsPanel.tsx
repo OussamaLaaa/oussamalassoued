@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyTactic, StrategyTacticInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -37,7 +38,8 @@ const TacticsPanel: React.FC<Props> = ({
  tactics, onEdit, onDelete, onOpenNew,
  filterStatus, setFilterStatus,
 }) => {
- const filtered = tactics.filter((t) => {
+  const { t } = usePersonalLanguage();
+  const filtered = tactics.filter((t) => {
  if (filterStatus && t.status !== filterStatus) return false;
  return true;
  });

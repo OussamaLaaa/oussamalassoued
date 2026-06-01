@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, DocumentBrandSettings, FinanceIncome, FinancePeriod,
@@ -57,21 +58,12 @@ type InvoiceArchivePanelProps = {
 };
 
 const InvoiceArchivePanel: React.FC<InvoiceArchivePanelProps> = ({
- invoices,
- invoiceItems,
- brandSettings,
- financeIncome,
- financePeriods,
- companies,
- projects,
- generatedDocuments,
- onNewInvoice,
- onEditInvoice,
- onPreviewInvoice,
- onDeleteInvoice,
- onUpdateInvoice,
- onAddFinanceIncome,
+ invoices, invoiceItems, brandSettings, financeIncome, financePeriods,
+ companies, projects, people, deals, generatedDocuments,
+ onNewInvoice, onEditInvoice, onPreviewInvoice, onDeleteInvoice,
+ onUpdateInvoice, onAddFinanceIncome,
 }) => {
+ const { t } = usePersonalLanguage();
  const [searchQuery, setSearchQuery] = useState('');
  const [statusFilter, setStatusFilter] = useState('');
  const [companyFilter, setCompanyFilter] = useState('');

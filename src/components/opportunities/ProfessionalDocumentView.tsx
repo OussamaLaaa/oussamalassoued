@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef, useMemo } from 'react';
 import type { DocumentBrandSettings, GeneratedDocument } from '../../types/opportunities';
 
@@ -136,7 +137,8 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const ProfessionalDocumentView = forwardRef<HTMLDivElement, ProfessionalDocumentViewProps>(
  ({ document, brandSettings }, ref) => {
- const brand = useMemo(() => resolveBrand(brandSettings), [brandSettings]);
+  const { t } = usePersonalLanguage();
+  const brand = useMemo(() => resolveBrand(brandSettings), [brandSettings]);
  const blocks = useMemo(() => parseContent(document.content), [document.content]);
  const statusClass = STATUS_STYLES[document.status] || STATUS_STYLES.draft;
  const typeLabel = FORMATTED_TYPE_LABELS[document.type] || document.type.replace(/_/g, ' ').toUpperCase();

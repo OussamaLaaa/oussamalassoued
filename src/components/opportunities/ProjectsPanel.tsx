@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useMemo, useState } from 'react';
 import type {
  Company, Deal, OutreachMessage, Person, Project, ProjectInput,
@@ -73,6 +74,7 @@ const ProjectsPanel: React.FC<{
  onAddFinanceItem: (input: ProjectFinanceItemInput) => Promise<any>;
  onDeleteFinanceItem: (id: string) => Promise<void>;
 }> = ({ projects, companies, people, messages, deals, projectTasks, projectTimeLogs, projectMeetings, projectDocuments, projectFinanceItems, onAddProject, onEdit, onUpdateProject, onDelete, onAddTask, onUpdateTask, onDeleteTask, onAddTimeLog, onDeleteTimeLog, onAddMeeting, onDeleteMeeting, onAddDocument, onDeleteDocument, onAddFinanceItem, onDeleteFinanceItem }) => {
+ const { t } = usePersonalLanguage();
  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
  const selectedProject = useMemo(
  () => (selectedProjectId ? projects.find((project) => project.id === selectedProjectId) || null : null),

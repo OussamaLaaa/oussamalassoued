@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { useCallback, useMemo, useState } from 'react';
 import type {
  Company,
@@ -93,12 +94,13 @@ const callAiDocument = async (promptBody: Record<string, unknown>): Promise<AiRe
 };
 
 const AIDocumentAssistantPanel: React.FC<{
- documentBrandSettings: DocumentBrandSettings[];
- documentTemplates: DocumentTemplate[];
- generatedDocuments: GeneratedDocument[];
- projects: Project[];
- companies: Company[];
- people: Person[];
+  documentBrandSettings: DocumentBrandSettings[];
+  documentTemplates: DocumentTemplate[];
+  generatedDocuments: GeneratedDocument[];
+  projects: Project[];
+  companies: Company[];
+  people: Person[];
+
  deals: Deal[];
  onAddDocumentTemplate: (input: DocumentTemplateInput) => Promise<DocumentTemplate>;
  onAddGeneratedDocument: (input: GeneratedDocumentInput) => Promise<GeneratedDocument>;
@@ -115,7 +117,8 @@ const AIDocumentAssistantPanel: React.FC<{
  onAddGeneratedDocument,
  onUpdateGeneratedDocument,
 }) => {
- const [mode, setMode] = useState<AiMode>('generate_document');
+  const { t } = usePersonalLanguage();
+  const [mode, setMode] = useState<AiMode>('generate_document');
  const [documentType, setDocumentType] = useState<DocumentType>('document');
  const [language, setLanguage] = useState<DocumentLanguage>('english');
  const [tone, setTone] = useState<AiTone>('professional');

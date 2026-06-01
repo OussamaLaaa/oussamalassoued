@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React, { forwardRef } from 'react';
 import type { DocumentBrandSettings, Invoice, InvoiceItem } from '../../types/opportunities';
 
@@ -34,7 +35,8 @@ type InvoicePreviewProps = {
 };
 
 const InvoicePreview = forwardRef<HTMLDivElement, InvoicePreviewProps>(({ invoice, items, brandSettings, className }, ref) => {
- const safeInvoice = invoice;
+  const { t } = usePersonalLanguage();
+  const safeInvoice = invoice;
  const currency = safeInvoice?.currency || brandSettings?.defaultCurrency || 'MYR';
  const subtotal = safeInvoice?.subtotal ?? items.reduce((sum, item) => sum + getLineTotal(item), 0);
  const discountAmount = safeInvoice?.discountAmount ?? 0;

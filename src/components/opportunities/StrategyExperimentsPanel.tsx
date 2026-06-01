@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyExperiment, StrategyExperimentInput } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -37,7 +38,8 @@ const ExperimentsPanel: React.FC<Props> = ({
  experiments, onEdit, onDelete, onOpenNew,
  experimentsFilterStatus: filterStatus, setExperimentsFilterStatus: setFilterStatus,
 }) => {
- const filtered = experiments.filter((e) => {
+  const { t } = usePersonalLanguage();
+  const filtered = experiments.filter((e) => {
  if (filterStatus && e.status !== filterStatus) return false;
  return true;
  });

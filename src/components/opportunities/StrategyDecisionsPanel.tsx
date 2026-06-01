@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import DirectionalText from '../DirectionalText';
 import type { StrategyDecision, StrategyDecisionInput } from '../../types/opportunities';
@@ -39,7 +40,8 @@ const DecisionsPanel: React.FC<Props> = ({
  decisions, onEdit, onDelete, onOpenNew,
  filterStatus, setFilterStatus,
 }) => {
- const filtered = decisions.filter((d) => {
+  const { t } = usePersonalLanguage();
+  const filtered = decisions.filter((d) => {
  if (filterStatus && d.status !== filterStatus) return false;
  return true;
  });

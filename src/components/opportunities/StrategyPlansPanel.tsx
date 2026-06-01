@@ -1,3 +1,4 @@
+import { usePersonalLanguage } from '../../i18n/usePersonalLanguage';
 import React from 'react';
 import type { StrategyPlan, StrategyPlanInput, StrategyPlanVariant } from '../../types/opportunities';
 import Badge from '../ui/Badge';
@@ -53,7 +54,8 @@ type Props = {
 const PlansPanel: React.FC<Props> = ({
  plans, filterVariant, setFilterVariant, filterStatus, setFilterStatus, filterPriority, setFilterPriority, onOpenNew, onEdit, onDelete,
 }) => {
- const filtered = plans.filter((p) => {
+  const { t } = usePersonalLanguage();
+  const filtered = plans.filter((p) => {
  if (filterVariant && p.variant !== filterVariant) return false;
  if (filterStatus && p.status !== filterStatus) return false;
  if (filterPriority && p.priority !== filterPriority) return false;
