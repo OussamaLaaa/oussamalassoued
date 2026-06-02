@@ -1895,12 +1895,7 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
   </div>
   )}
 
- {tab === 'social' && (
-   <div className="space-y-5">
-    <SectionHeader
-     title="Social Media"
-     description="Content strategy, planning, and social platform management."
-    />
+  {tab === 'social' && (
     <SocialMediaPanel
   section={appSection}
   socialPlatforms={socialPlatforms}
@@ -1927,7 +1922,6 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
  onUpdateWeeklyContentPlan={updateWeeklyContentPlan}
 onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
   />
-  </div>
   )}
 
  {tab === 'life' && (
