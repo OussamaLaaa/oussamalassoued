@@ -17,3 +17,4 @@ export { default as Separator } from './Separator';
 export { default as Label } from './Label';
 export { default as DropdownMenu } from './DropdownMenu';
 export { default as Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './Table';
+export { default as DirectionalText } from './DirectionalText';

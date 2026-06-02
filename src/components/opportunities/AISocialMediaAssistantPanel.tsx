@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import DirectionalText from '../ui/DirectionalText';
+import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
 
 export type SocialMediaAIMode =
  | 'generate_ideas'
@@ -468,12 +470,13 @@ export default function AISocialMediaAssistantPanel({
 
  <label className="block space-y-1.5">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Instructions (optional)</div>
- <textarea
- value={instructions}
- onChange={(e) => setInstructions(e.target.value)}
- className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px]"
- placeholder="Any specific instructions for the AI..."
- />
+  <textarea
+  value={instructions}
+  onChange={(e) => setInstructions(e.target.value)}
+  dir={detectTextDirection(instructions)}
+  className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(instructions)}`}
+  placeholder="Any specific instructions for the AI..."
+  />
  </label>
 
  <button
@@ -498,7 +501,7 @@ export default function AISocialMediaAssistantPanel({
  {result.summary ? (
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Summary</div>
- <p className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap">{result.summary}</p>
+  <DirectionalText text={result.summary} className="mt-2 text-sm text-neutral-900" preserveWhitespace as="div" />
  </div>
  ) : null}
 
@@ -509,7 +512,7 @@ export default function AISocialMediaAssistantPanel({
  {result.ideas.map((idea, i) => (
  <li key={i} className="flex items-start gap-2">
  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
- <span className="flex-1">{idea}</span>
+  <DirectionalText text={idea} className="flex-1" />
  <button
  type="button"
  onClick={() => handleCreateIdea(idea)}
@@ -539,7 +542,7 @@ export default function AISocialMediaAssistantPanel({
  {result.hooks.map((hook, i) => (
  <li key={i} className="flex items-start gap-2">
  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
- <span className="flex-1">{hook}</span>
+  <DirectionalText text={hook} className="flex-1" />
  </li>
  ))}
  </ul>
@@ -567,7 +570,7 @@ export default function AISocialMediaAssistantPanel({
  {result.contentDraft ? (
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content Draft</div>
- <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap mb-3">{result.contentDraft}</div>
+  <DirectionalText text={result.contentDraft} className="mt-2 text-sm text-neutral-900 mb-3" preserveWhitespace as="div" />
  <div className="flex flex-wrap gap-2">
  <button
  type="button"
@@ -599,7 +602,7 @@ export default function AISocialMediaAssistantPanel({
  {result.weeklyPlan ? (
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Plan</div>
- <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap mb-3">{result.weeklyPlan}</div>
+  <DirectionalText text={result.weeklyPlan} className="mt-2 text-sm text-neutral-900 mb-3" preserveWhitespace as="div" />
  <div className="flex flex-wrap gap-2">
  <button
  type="button"
@@ -624,7 +627,7 @@ export default function AISocialMediaAssistantPanel({
  {result.repurposedContent ? (
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Repurposed Content</div>
- <div className="mt-2 text-sm text-neutral-900 whitespace-pre-wrap">{result.repurposedContent}</div>
+  <DirectionalText text={result.repurposedContent} className="mt-2 text-sm text-neutral-900" preserveWhitespace as="div" />
  </div>
  ) : null}
 
@@ -635,7 +638,7 @@ export default function AISocialMediaAssistantPanel({
  {result.performanceInsights.map((insight, i) => (
  <li key={i} className="flex items-start gap-2">
  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
- <span>{insight}</span>
+  <DirectionalText text={insight} className="flex-1" />
  </li>
  ))}
  </ul>
@@ -649,7 +652,7 @@ export default function AISocialMediaAssistantPanel({
  {result.questionsToReview.map((q, i) => (
  <li key={i} className="flex items-start gap-2">
  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
- <span>{q}</span>
+ <DirectionalText text={q} className="flex-1" />
  </li>
  ))}
  </ul>
@@ -663,7 +666,7 @@ export default function AISocialMediaAssistantPanel({
  {result.nextActions.map((action, i) => (
  <li key={i} className="flex items-start gap-2">
  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
- <span>{action}</span>
+  <DirectionalText text={action} className="flex-1" />
  </li>
  ))}
  </ul>
