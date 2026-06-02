@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput } from '../../types/opportunities';
+import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTargets, SocialWeeklyChecklistItem, SocialWeeklyTask, SocialContentTypePlanItem } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 import DirectionalText from '../ui/DirectionalText';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
@@ -104,15 +104,20 @@ interface SocialMediaPanelProps {
  onAddContentItem: (input: ContentItemInput) => Promise<ContentItem>;
  onUpdateContentItem: (id: string, input: Partial<ContentItemInput>) => Promise<ContentItem>;
  onDeleteContentItem: (id: string) => Promise<void>;
- onAddWeeklyContentPlan: (input: WeeklyContentPlanInput) => Promise<WeeklyContentPlan>;
- onUpdateWeeklyContentPlan: (id: string, input: Partial<WeeklyContentPlanInput>) => Promise<WeeklyContentPlan>;
- onDeleteWeeklyContentPlan: (id: string) => Promise<void>;
+  onAddWeeklyContentPlan: (input: WeeklyContentPlanInput) => Promise<WeeklyContentPlan>;
+  onUpdateWeeklyContentPlan: (id: string, input: Partial<WeeklyContentPlanInput>) => Promise<WeeklyContentPlan>;
+  onDeleteWeeklyContentPlan: (id: string) => Promise<void>;
+  socialWeeklySystems: SocialWeeklySystem[];
+  activeSocialWeeklySystem: SocialWeeklySystem | null;
+  onAddSocialWeeklySystem: (input: SocialWeeklySystemInput) => Promise<SocialWeeklySystem>;
+  onUpdateSocialWeeklySystem: (id: string, input: Partial<SocialWeeklySystemInput>) => Promise<SocialWeeklySystem>;
+  onDeleteSocialWeeklySystem: (id: string) => Promise<void>;
+  onEnsureDefaultSocialWeeklySystem: () => Promise<SocialWeeklySystem | null>;
 }
 
 export default function SocialMediaPanel(props: SocialMediaPanelProps) {
- const [activeTab, setActiveTab] = useState<typeof SOCIAL_TABS[number]['id']>('dashboard');
- const [selectedWeek, setSelectedWeek] = useState(() => WEEK_START(new Date()));
-  const now = new Date();
+  const [activeTab, setActiveTab] = useState<typeof SOCIAL_TABS[number]['id']>('dashboard');
+   const now = new Date();
   const currentWeek = WEEK_START(now);
   const todayStr = now.toISOString().slice(0, 10);
 
@@ -144,7 +149,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  {activeTab === 'platforms' && <PlatformsView socialPlatforms={props.socialPlatforms} onAddSocialPlatform={props.onAddSocialPlatform} onUpdateSocialPlatform={props.onUpdateSocialPlatform} onDeleteSocialPlatform={props.onDeleteSocialPlatform} />}
  {activeTab === 'pillars' && <PillarsView contentPillars={props.contentPillars} onAddContentPillar={props.onAddContentPillar} onUpdateContentPillar={props.onUpdateContentPillar} onDeleteContentPillar={props.onDeleteContentPillar} />}
  {activeTab === 'ideas' && <IdeasView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onAddContentItem={props.onAddContentItem} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
- {activeTab === 'weekly' && <WeeklyPlanView weeklyContentPlans={props.weeklyContentPlans} contentItems={props.contentItems} onAddWeeklyContentPlan={props.onAddWeeklyContentPlan} onUpdateWeeklyContentPlan={props.onUpdateWeeklyContentPlan} onUpdateContentItem={props.onUpdateContentItem} selectedWeek={selectedWeek} onSelectedWeekChange={setSelectedWeek} />}
+  {activeTab === 'weekly' && <WeeklyPlanView contentItems={props.contentItems} onUpdateContentItem={props.onUpdateContentItem} socialWeeklySystem={props.activeSocialWeeklySystem} onUpdateSocialWeeklySystem={props.onUpdateSocialWeeklySystem} onEnsureDefaultSocialWeeklySystem={props.onEnsureDefaultSocialWeeklySystem} />}
  {activeTab === 'production' && <ProductionBoardView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
  {activeTab === 'calendar' && <CalendarView contentItems={props.contentItems} />}
  {activeTab === 'performance' && <PerformanceView contentItems={props.contentItems} onUpdateContentItem={props.onUpdateContentItem} totalLeads={totalLeads} />}
@@ -739,136 +744,262 @@ function IdeasView(props: IdeasViewProps) {
  );
 }
 
-// ── Weekly Plan View ──
+// ── Weekly Plan View (Recurring, Supabase-backed) ──
 
 interface WeeklyPlanViewProps {
- weeklyContentPlans: WeeklyContentPlan[];
- contentItems: ContentItem[];
- onAddWeeklyContentPlan: (input: WeeklyContentPlanInput) => Promise<WeeklyContentPlan>;
- onUpdateWeeklyContentPlan: (id: string, input: Partial<WeeklyContentPlanInput>) => Promise<WeeklyContentPlan>;
- onUpdateContentItem: (id: string, input: Partial<ContentItemInput>) => Promise<ContentItem>;
- selectedWeek: string;
- onSelectedWeekChange: (week: string) => void;
+  contentItems: ContentItem[];
+  onUpdateContentItem: (id: string, input: Partial<ContentItemInput>) => Promise<ContentItem>;
+  socialWeeklySystem: SocialWeeklySystem | null;
+  onUpdateSocialWeeklySystem: (id: string, input: Partial<SocialWeeklySystemInput>) => Promise<SocialWeeklySystem>;
+  onEnsureDefaultSocialWeeklySystem: () => Promise<SocialWeeklySystem | null>;
 }
 
+const FALLBACK_TARGETS: SocialWeeklyTargets = { posts: 6, videos: 5, carousels: 2, reels: 3, stories: 10, other: 1 };
+const FALLBACK_CHECKLIST_LABELS = [
+  'Review weekly content plan', 'Finalize captions', 'Finalize video edits',
+  'Finalize carousel designs', 'Schedule posts', 'Publish Friday content',
+  'Check links and CTAs', 'Review analytics from last week', 'Reply to comments/messages',
+  'Collect new ideas for next week',
+];
+const FALLBACK_TASK_DEFS = [
+  { label: 'Research ideas', category: 'research' as const },
+  { label: 'Write hooks', category: 'writing' as const },
+  { label: 'Draft captions', category: 'writing' as const },
+  { label: 'Record videos', category: 'production' as const },
+  { label: 'Edit videos', category: 'production' as const },
+  { label: 'Design carousels', category: 'production' as const },
+  { label: 'Prepare thumbnails', category: 'production' as const },
+  { label: 'Schedule content', category: 'publishing' as const },
+  { label: 'Review performance', category: 'review' as const },
+  { label: 'Engage with comments/messages', category: 'engagement' as const },
+];
+const FALLBACK_TYPE_PLANS: SocialContentTypePlanItem[] = [
+  { id: 'posts', type: 'Post', target: 3, topicNotes: '', platformNotes: '', status: 'not_started' },
+  { id: 'videos', type: 'Video', target: 2, topicNotes: '', platformNotes: '', status: 'not_started' },
+  { id: 'carousels', type: 'Carousel', target: 1, topicNotes: '', platformNotes: '', status: 'not_started' },
+  { id: 'reels', type: 'Reel', target: 2, topicNotes: '', platformNotes: '', status: 'not_started' },
+  { id: 'stories', type: 'Story', target: 5, topicNotes: '', platformNotes: '', status: 'not_started' },
+  { id: 'other', type: 'Other', target: 1, topicNotes: '', platformNotes: '', status: 'not_started' },
+];
+
+let _idCounter = Date.now();
+const uid = () => `w_${++_idCounter}`;
+
+const catColor: Record<string, string> = {
+  research: 'border-violet-200 bg-violet-50 text-violet-700',
+  writing: 'border-blue-200 bg-blue-50 text-blue-700',
+  production: 'border-amber-200 bg-amber-50 text-amber-700',
+  publishing: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  engagement: 'border-rose-200 bg-rose-50 text-rose-700',
+  review: 'border-neutral-200 bg-neutral-50 text-neutral-600',
+};
+
 function WeeklyPlanView(props: WeeklyPlanViewProps) {
- const plan = useMemo(() => props.weeklyContentPlans.find((p) => p.weekStart === props.selectedWeek), [props.weeklyContentPlans, props.selectedWeek]);
- const weekItems = useMemo(() => props.contentItems.filter((item) => item.weekStart === props.selectedWeek), [props.contentItems, props.selectedWeek]);
- const unassignedItems = useMemo(() => props.contentItems.filter((item) => !item.weekStart || item.weekStart === ''), [props.contentItems]);
- const [editing, setEditing] = useState<boolean>(false);
- const [formData, setFormData] = useState<Partial<WeeklyContentPlanInput>>({});
+  const system = props.socialWeeklySystem;
 
- const handleSavePlan = async () => {
- if (plan) { await props.onUpdateWeeklyContentPlan(plan.id, { ...formData, weekStart: props.selectedWeek }); }
- else { await props.onAddWeeklyContentPlan({ ...formData, weekStart: props.selectedWeek } as WeeklyContentPlanInput); }
- setEditing(false);
- };
+  useEffect(() => {
+    if (!system) {
+      props.onEnsureDefaultSocialWeeklySystem();
+    }
+  }, [system, props.onEnsureDefaultSocialWeeklySystem]);
 
- const assignToWeek = async (itemId: string) => {
- await props.onUpdateContentItem(itemId, { weekStart: props.selectedWeek });
- };
+  const ideas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea' || item.status === 'drafted'), [props.contentItems]);
 
- return (
- <div className="space-y-4">
- <div className="flex flex-wrap items-center justify-between gap-3">
- <div className="flex flex-wrap items-center gap-2">
- <button type="button" onClick={() => props.onSelectedWeekChange(addWeeks(props.selectedWeek, -1))} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">&larr; Prev</button>
- <span className="text-sm font-semibold text-neutral-900">Week of {formatDate(props.selectedWeek)}</span>
- <button type="button" onClick={() => props.onSelectedWeekChange(addWeeks(props.selectedWeek, 1))} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Next &rarr;</button>
- <button type="button" onClick={() => props.onSelectedWeekChange(WEEK_START(new Date()))} className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">This Week</button>
- </div>
- <button type="button" onClick={() => { setFormData(plan || { weekStart: props.selectedWeek }); setEditing(true); }} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">
- {plan ? 'Edit Plan' : 'Create Plan'}
- </button>
- </div>
+  const targets = system?.targets ?? FALLBACK_TARGETS;
+  const checklist = system?.fridayChecklist ?? [];
+  const tasks = system?.weeklyTasks ?? [];
+  const typePlan = system?.contentTypePlan ?? [];
+  const notes = system?.notes ?? '';
 
- {editing && (
- <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <div className="grid gap-3 md:grid-cols-3">
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Focus</div>
-  <input value={formData.focus || ''} onChange={(e) => setFormData((prev) => ({ ...prev, focus: e.target.value }))} dir={detectTextDirection(formData.focus || '')} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(formData.focus || '')}`} />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Posts</div>
-  <input type="number" min="0" value={formData.targetPosts ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetPosts: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Videos</div>
-  <input type="number" min="0" value={formData.targetVideos ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetVideos: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Carousels</div>
-  <input type="number" min="0" value={formData.targetCarousels ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetCarousels: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Other</div>
-  <input type="number" min="0" value={formData.targetOther ?? ''} onChange={(e) => setFormData((prev) => ({ ...prev, targetOther: e.target.value ? Number(e.target.value) : undefined }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Review Notes</div>
-  <input value={formData.reviewNotes || ''} onChange={(e) => setFormData((prev) => ({ ...prev, reviewNotes: e.target.value }))} dir={detectTextDirection(formData.reviewNotes || '')} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(formData.reviewNotes || '')}`} />
- </label>
- </div>
- <div className="mt-4 flex gap-2">
- <button type="button" onClick={handleSavePlan} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Save</button>
- <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
- </div>
- </div>
- )}
+  const [editingTargets, setEditingTargets] = useState(false);
+  const [targetForm, setTargetForm] = useState<SocialWeeklyTargets>(targets);
+  useEffect(() => { if (!editingTargets) setTargetForm(targets); }, [targets, editingTargets]);
 
- {plan && !editing && (
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="space-y-2 text-sm text-neutral-700">
-  {plan.focus && <div className="rounded-md bg-neutral-50 p-3"><span className="font-medium text-neutral-900">Focus:</span> <DirectionalText text={plan.focus} /></div>}
-  <div className="flex flex-wrap gap-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
-  <span>Posts: {plan.targetPosts ?? '—'}</span>
-  <span>Videos: {plan.targetVideos ?? '—'}</span>
-  <span>Carousels: {plan.targetCarousels ?? '—'}</span>
-  <span>Other: {plan.targetOther ?? '—'}</span>
-  </div>
-  {plan.reviewNotes && <div className="rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">Review: <DirectionalText text={plan.reviewNotes} /></div>}
- </div>
- </div>
- )}
+  const [newCheckItem, setNewCheckItem] = useState('');
+  const [newTaskLabel, setNewTaskLabel] = useState('');
+  const [newTaskCategory, setNewTaskCategory] = useState('research');
 
- <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Content Items This Week ({weekItems.length})</h3>
- {weekItems.length === 0 ? (
- <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No items assigned to this week.</div>
- ) : (
- <div className="mt-3 space-y-2">
- {weekItems.map((item) => (
- <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
- <div className="flex items-center gap-2 min-w-0 flex-1">
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
-  <DirectionalText text={item.title} className="text-sm font-medium text-neutral-900 truncate" />
-  <span className="text-xs text-neutral-500 shrink-0">{item.type}</span>
-  </div>
-  </div>
-  ))}
-  </div>
-  )}
+  const saveTargets = async (v: SocialWeeklyTargets) => {
+    if (system?.id) await props.onUpdateSocialWeeklySystem(system.id, { targets: v });
+    setEditingTargets(false);
+  };
 
-  {unassignedItems.length > 0 && (
-  <div className="mt-4">
-  <h4 className="text-sm font-semibold text-neutral-900 mb-2">Unassigned Items ({unassignedItems.length})</h4>
-  <div className="space-y-2">
-  {unassignedItems.map((item) => (
-  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
-  <div className="flex items-center gap-2 min-w-0 flex-1">
-  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
-  <DirectionalText text={item.title} className="text-sm font-medium text-neutral-900 truncate" />
- </div>
- <button type="button" onClick={() => assignToWeek(item.id)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Assign to Week</button>
- </div>
- ))}
- </div>
- </div>
- )}
- </div>
- </div>
- );
+  const updateChecklist = async (items: SocialWeeklyChecklistItem[]) => {
+    if (system?.id) await props.onUpdateSocialWeeklySystem(system.id, { fridayChecklist: items });
+  };
+
+  const updateTasks = async (items: SocialWeeklyTask[]) => {
+    if (system?.id) await props.onUpdateSocialWeeklySystem(system.id, { weeklyTasks: items });
+  };
+
+  const updateTypePlan = async (items: SocialContentTypePlanItem[]) => {
+    if (system?.id) await props.onUpdateSocialWeeklySystem(system.id, { contentTypePlan: items });
+  };
+
+  const saveNotes = async (v: string) => {
+    if (system?.id) await props.onUpdateSocialWeeklySystem(system.id, { notes: v });
+  };
+
+  const handleReset = async () => {
+    if (!window.confirm('Reset all weekly checks? Targets, labels, and notes will be kept.')) return;
+    if (system?.id) {
+      const resetChecklist = checklist.map((item) => ({ ...item, done: false }));
+      const resetTasks = tasks.map((t) => ({ ...t, done: false }));
+      await props.onUpdateSocialWeeklySystem(system.id, {
+        fridayChecklist: resetChecklist,
+        weeklyTasks: resetTasks,
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div>
+        <h2 className="text-sm font-semibold text-neutral-900">Weekly Social Media System</h2>
+        <p className="mt-0.5 text-xs text-neutral-500">Recurring publishing targets and tasks for every week.</p>
+      </div>
+
+      {/* Weekly Content Targets */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Weekly Content Targets</h3>
+          <button type="button" onClick={() => { setTargetForm(targets); setEditingTargets(true); }} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Edit Targets</button>
+        </div>
+        {editingTargets ? (
+          <div className="grid gap-3 md:grid-cols-3">
+            {(['posts', 'videos', 'carousels', 'reels', 'stories', 'other'] as const).map((key) => (
+              <label key={key} className="space-y-1">
+                <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{key}</div>
+                <input type="number" min="0" value={targetForm[key]} onChange={(e) => setTargetForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+              </label>
+            ))}
+            <div className="md:col-span-3 flex gap-2 mt-2">
+              <button type="button" onClick={() => saveTargets(targetForm)} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Save</button>
+              <button type="button" onClick={() => setEditingTargets(false)} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+            {(['posts', 'videos', 'carousels', 'reels', 'stories', 'other'] as const).map((key) => (
+              <div key={key} className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-center">
+                <div className="text-lg font-semibold text-neutral-900">{targets[key]}</div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-neutral-500 mt-0.5">{key}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Friday Publishing Checklist */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900">Friday Publishing Checklist</h3>
+            <p className="mt-0.5 text-xs text-neutral-500">Recurring tasks for every Friday publishing.</p>
+          </div>
+          <button type="button" onClick={handleReset} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">Reset Weekly Checks</button>
+        </div>
+        <div className="space-y-1.5">
+          {checklist.map((item) => (
+            <label key={item.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 transition-colors cursor-pointer">
+              <input type="checkbox" checked={item.done} onChange={() => updateChecklist(checklist.map((c) => c.id === item.id ? { ...c, done: !c.done } : c))} className="h-4 w-4 shrink-0 rounded border-neutral-300" />
+              <DirectionalText text={item.label} className={`text-sm flex-1 min-w-0 ${item.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
+            </label>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input value={newCheckItem} onChange={(e) => setNewCheckItem(e.target.value)} placeholder="Add checklist item..." dir={detectTextDirection(newCheckItem)} className={`h-9 flex-1 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(newCheckItem)}`} onKeyDown={(e) => { if (e.key === 'Enter' && newCheckItem.trim()) { updateChecklist([...checklist, { id: uid(), label: newCheckItem.trim(), done: false }]); setNewCheckItem(''); }}} />
+          <button type="button" onClick={() => { if (newCheckItem.trim()) { updateChecklist([...checklist, { id: uid(), label: newCheckItem.trim(), done: false }]); setNewCheckItem(''); }}} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Add</button>
+        </div>
+      </div>
+
+      {/* Weekly Social Tasks */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="text-sm font-semibold text-neutral-900">Weekly Social Tasks</h3>
+          <button type="button" onClick={handleReset} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">Reset Weekly Checks</button>
+        </div>
+        <div className="space-y-1.5">
+          {tasks.map((task) => (
+            <div key={task.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 transition-colors">
+              <input type="checkbox" checked={task.done} onChange={() => updateTasks(tasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t))} className="h-4 w-4 shrink-0 rounded border-neutral-300" />
+              <DirectionalText text={task.label} className={`text-sm flex-1 min-w-0 ${task.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${catColor[task.category] || 'border-neutral-200 bg-neutral-50 text-neutral-600'}`}>{task.category}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input value={newTaskLabel} onChange={(e) => setNewTaskLabel(e.target.value)} placeholder="Add task..." dir={detectTextDirection(newTaskLabel)} className={`h-9 flex-1 rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(newTaskLabel)}`} onKeyDown={(e) => { if (e.key === 'Enter' && newTaskLabel.trim()) { updateTasks([...tasks, { id: uid(), label: newTaskLabel.trim(), done: false, category: newTaskCategory }]); setNewTaskLabel(''); }}} />
+          <select value={newTaskCategory} onChange={(e) => setNewTaskCategory(e.target.value)} className="h-9 rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+            <option value="research">research</option>
+            <option value="writing">writing</option>
+            <option value="production">production</option>
+            <option value="publishing">publishing</option>
+            <option value="engagement">engagement</option>
+            <option value="review">review</option>
+          </select>
+          <button type="button" onClick={() => { if (newTaskLabel.trim()) { updateTasks([...tasks, { id: uid(), label: newTaskLabel.trim(), done: false, category: newTaskCategory }]); setNewTaskLabel(''); }}} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Add</button>
+        </div>
+      </div>
+
+      {/* Content Type Plan */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-neutral-900 mb-4">Content Type Plan</h3>
+        <div className="space-y-2">
+          {typePlan.map((item) => (
+            <div key={item.id} className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-neutral-900 min-w-[80px]">{item.type}</span>
+                <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+                  Target:
+                  <input type="number" min="0" value={item.target} onChange={(e) => { const next = typePlan.map((t) => t.id === item.id ? { ...t, target: Number(e.target.value) } : t); updateTypePlan(next); }} className="h-7 w-16 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+                </label>
+                <input value={item.topicNotes || ''} onChange={(e) => { const next = typePlan.map((t) => t.id === item.id ? { ...t, topicNotes: e.target.value } : t); updateTypePlan(next); }} placeholder="Topic notes..." dir={detectTextDirection(item.topicNotes || '')} className={`h-7 flex-1 min-w-[120px] rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(item.topicNotes || '')}`} />
+                <input value={item.platformNotes || ''} onChange={(e) => { const next = typePlan.map((t) => t.id === item.id ? { ...t, platformNotes: e.target.value } : t); updateTypePlan(next); }} placeholder="Platform..." dir={detectTextDirection(item.platformNotes || '')} className={`h-7 w-24 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(item.platformNotes || '')}`} />
+                <select value={item.status} onChange={(e) => { const next = typePlan.map((t) => t.id === item.id ? { ...t, status: e.target.value } : t); updateTypePlan(next); }} className="h-7 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+                  <option value="not_started">not started</option>
+                  <option value="in_progress">in progress</option>
+                  <option value="ready">ready</option>
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ideas to Use This Week */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-neutral-900 mb-1">Ideas to Use This Week</h3>
+        <p className="text-xs text-neutral-500 mb-4">Unscheduled ideas and drafts ready for production.</p>
+        {ideas.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No ideas available. Add ideas in the Ideas section.</div>
+        ) : (
+          <div className="space-y-1.5">
+            {ideas.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 transition-colors">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <DirectionalText text={item.title} className="text-sm font-medium text-neutral-900 truncate" />
+                  <span className="text-[10px] rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-neutral-600 shrink-0">{item.type}</span>
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${priorityBadge(item.priority)}`}>{item.priority}</span>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'drafted' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors">Draft</button>
+                  <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'ready' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors">Ready</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Weekly Plan Notes */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+        <h3 className="text-sm font-semibold text-neutral-900 mb-3">Weekly Plan Notes</h3>
+        <textarea value={notes} onChange={(e) => saveNotes(e.target.value)} dir={detectTextDirection(notes)} className={`w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[100px] ${getDirectionClass(notes)}`} placeholder="Notes about the weekly system, what to improve, reminders, constraints..." />
+      </div>
+    </div>
+  );
 }
 
 // ── Production Board View ──

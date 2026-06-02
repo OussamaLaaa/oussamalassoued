@@ -62,6 +62,7 @@ const allowedEntities = new Set([
   'content_strategy',
   'content_items',
   'weekly_content_plans',
+  'social_weekly_system',
   'life_nutrition_logs',
   'life_fitness_logs',
   'life_deen_logs',
@@ -1132,6 +1133,19 @@ const normalizeCompanyOutreachScriptRow = (row, { forUpdate = false } = {}) => {
   return payload;
 };
 
+const normalizeSocialWeeklySystemRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name) || 'Weekly Social Media System';
+  if (!forUpdate || row?.targets !== undefined) payload.targets = row?.targets ?? null;
+  if (!forUpdate || row?.fridayChecklist !== undefined || row?.friday_checklist !== undefined) payload.friday_checklist = row?.friday_checklist ?? row?.fridayChecklist ?? null;
+  if (!forUpdate || row?.weeklyTasks !== undefined || row?.weekly_tasks !== undefined) payload.weekly_tasks = row?.weekly_tasks ?? row?.weeklyTasks ?? null;
+  if (!forUpdate || row?.contentTypePlan !== undefined || row?.content_type_plan !== undefined) payload.content_type_plan = row?.content_type_plan ?? row?.contentTypePlan ?? null;
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  if (!forUpdate || row?.isActive !== undefined || row?.is_active !== undefined) payload.is_active = row?.is_active == null ? true : Boolean(row.is_active);
+  payload.updated_at = new Date().toISOString();
+  return payload;
+};
+
 const normalizeEntityRow = (entity, row) => {
   if (entity === 'message_templates') return normalizeTemplateRow(row, { forUpdate: false });
   if (entity === 'documents') return normalizeDocumentRow(row, { forUpdate: false });
@@ -1172,6 +1186,7 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'content_strategy') return normalizeContentStrategyRow(row);
   if (entity === 'content_items') return normalizeContentItemRow(row);
   if (entity === 'weekly_content_plans') return normalizeWeeklyContentPlanRow(row);
+  if (entity === 'social_weekly_system') return normalizeSocialWeeklySystemRow(row);
   if (entity === 'life_nutrition_logs') return normalizeLifeNutritionLogRow(row);
   if (entity === 'life_fitness_logs') return normalizeLifeFitnessLogRow(row);
   if (entity === 'life_deen_logs') return normalizeLifeDeenLogRow(row);
@@ -1280,6 +1295,7 @@ const OPTIONAL_TABLES = new Set([
   'content_strategy',
   'content_items',
   'weekly_content_plans',
+  'social_weekly_system',
 ]);
 
 const SCOPES = {
@@ -1294,7 +1310,7 @@ const SCOPES = {
   strategy: ['strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions', 'plans', 'plan_items'],
   projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
   ai: ['ai_provider_keys', 'ai_use_case_settings'],
-  social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
+  social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
   desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
 };
 
@@ -1444,7 +1460,7 @@ export default async function handler(req, res) {
         plans: ['plans', 'plan_items'],
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
-        social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans'],
+        social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
         desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
         life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
       };
@@ -1681,6 +1697,8 @@ export default async function handler(req, res) {
                         ? normalizeCompanyProblemProfileRow(data, { forUpdate: true })
                       : entity === 'company_outreach_scripts'
                         ? normalizeCompanyOutreachScriptRow(data, { forUpdate: true })
+                      : entity === 'social_weekly_system'
+                        ? normalizeSocialWeeklySystemRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
 
       if (entity === 'relationships') {

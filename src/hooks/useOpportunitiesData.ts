@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import seedData from '../data/opportunitiesSeed';
 import { messageTemplates as staticMessageTemplates } from '../data/messageTemplates';
 import { isValidUuid } from '../utils/securityUtils';
@@ -150,6 +150,8 @@ import type {
   ContentItemInput,
   WeeklyContentPlan,
   WeeklyContentPlanInput,
+  SocialWeeklySystem,
+  SocialWeeklySystemInput,
   LifeNutritionLog,
   LifeNutritionLogInput,
   LifeFitnessLog,
@@ -222,6 +224,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   contentStrategies: [],
   contentItems: [],
   weeklyContentPlans: [],
+  socialWeeklySystems: [],
   lifeNutritionLogs: [],
   lifeFitnessLogs: [],
   lifeDeenLogs: [],
@@ -1846,6 +1849,31 @@ const weeklyContentPlanToDb = (input: Partial<WeeklyContentPlanInput>) => {
   return payload;
 };
 
+const socialWeeklySystemFromDb = (row: any): SocialWeeklySystem => ({
+  id: String(row?.id ?? ''),
+  name: row?.name ?? undefined,
+  targets: row?.targets ?? { posts: 0, videos: 0, carousels: 0, reels: 0, stories: 0, other: 0 },
+  fridayChecklist: row?.friday_checklist ?? row?.fridayChecklist ?? [],
+  weeklyTasks: row?.weekly_tasks ?? row?.weeklyTasks ?? [],
+  contentTypePlan: row?.content_type_plan ?? row?.contentTypePlan ?? [],
+  notes: row?.notes ?? undefined,
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const socialWeeklySystemToDb = (input: Partial<SocialWeeklySystemInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || 'Weekly Social Media System');
+  if (input.targets !== undefined) payload.targets = input.targets;
+  if (input.fridayChecklist !== undefined) payload.friday_checklist = input.fridayChecklist;
+  if (input.weeklyTasks !== undefined) payload.weekly_tasks = input.weeklyTasks;
+  if (input.contentTypePlan !== undefined) payload.content_type_plan = input.contentTypePlan;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  return payload;
+};
+
 const attachContentItemLinkNames = (
   items: ContentItem[],
   socialPlatforms: SocialPlatform[],
@@ -2064,6 +2092,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [contentStrategies, setContentStrategies] = useState<ContentStrategy[]>([]);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [weeklyContentPlans, setWeeklyContentPlans] = useState<WeeklyContentPlan[]>([]);
+  const [socialWeeklySystems, setSocialWeeklySystems] = useState<SocialWeeklySystem[]>([]);
   const [lifeNutritionLogs, setLifeNutritionLogs] = useState<LifeNutritionLog[]>([]);
   const [lifeFitnessLogs, setLifeFitnessLogs] = useState<LifeFitnessLog[]>([]);
   const [lifeDeenLogs, setLifeDeenLogs] = useState<LifeDeenLog[]>([]);
@@ -2332,6 +2361,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('content_pillars')) setContentPillars((raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)));
     if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
     if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
+    if (has('social_weekly_systems')) setSocialWeeklySystems((raw('social_weekly_systems') || []).map((row: any) => socialWeeklySystemFromDb(row)));
     // ── Life ──
     if (has('life_nutrition_logs')) setLifeNutritionLogs((raw('life_nutrition_logs') || []).map((row: any) => lifeNutritionLogFromDb(row)));
     if (has('life_fitness_logs')) setLifeFitnessLogs((raw('life_fitness_logs') || []).map((row: any) => lifeFitnessLogFromDb(row)));
@@ -2466,6 +2496,7 @@ export const useOpportunitiesData = (enabled = true) => {
           setPersonContactMethods([]);
           setCompanyProblemProfiles([]);
           setCompanyOutreachScripts([]);
+          setSocialWeeklySystems([]);
           return;
         }
 
@@ -2506,6 +2537,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setPersonContactMethods(fallback.personContactMethods || []);
         setCompanyProblemProfiles(fallback.companyProblemProfiles);
         setCompanyOutreachScripts(fallback.companyOutreachScripts);
+        setSocialWeeklySystems(fallback.socialWeeklySystems);
         setError('Using seed data fallback.');
       } finally {
         if (mounted) {
@@ -4466,6 +4498,84 @@ export const useOpportunitiesData = (enabled = true) => {
     setContentStrategies((current) => current.filter((item) => item.id !== id));
   };
 
+  const DEFAULT_WEEKLY_SYSTEM = {
+    name: 'Weekly Social Media System',
+    targets: { posts: 6, videos: 5, carousels: 2, reels: 3, stories: 10, other: 1 },
+    fridayChecklist: [
+      { id: 'review-weekly-plan', label: 'Review weekly content plan', done: false, notes: '' },
+      { id: 'finalize-captions', label: 'Finalize captions', done: false, notes: '' },
+      { id: 'finalize-video-edits', label: 'Finalize video edits', done: false, notes: '' },
+      { id: 'finalize-carousel-designs', label: 'Finalize carousel designs', done: false, notes: '' },
+      { id: 'schedule-posts', label: 'Schedule posts', done: false, notes: '' },
+      { id: 'publish-friday-content', label: 'Publish Friday content', done: false, notes: '' },
+      { id: 'check-links-ctas', label: 'Check links and CTAs', done: false, notes: '' },
+      { id: 'review-last-week-analytics', label: 'Review analytics from last week', done: false, notes: '' },
+      { id: 'reply-comments-messages', label: 'Reply to comments/messages', done: false, notes: '' },
+      { id: 'collect-new-ideas', label: 'Collect new ideas for next week', done: false, notes: '' },
+    ],
+    weeklyTasks: [
+      { id: 'research-ideas', label: 'Research ideas', category: 'research', done: false, notes: '' },
+      { id: 'write-hooks', label: 'Write hooks', category: 'writing', done: false, notes: '' },
+      { id: 'draft-captions', label: 'Draft captions', category: 'writing', done: false, notes: '' },
+      { id: 'record-videos', label: 'Record videos', category: 'production', done: false, notes: '' },
+      { id: 'edit-videos', label: 'Edit videos', category: 'production', done: false, notes: '' },
+      { id: 'design-carousels', label: 'Design carousels', category: 'production', done: false, notes: '' },
+      { id: 'prepare-thumbnails', label: 'Prepare thumbnails', category: 'production', done: false, notes: '' },
+      { id: 'schedule-content', label: 'Schedule content', category: 'publishing', done: false, notes: '' },
+      { id: 'review-performance', label: 'Review performance', category: 'review', done: false, notes: '' },
+      { id: 'engage-comments-messages', label: 'Engage with comments/messages', category: 'engagement', done: false, notes: '' },
+    ],
+    contentTypePlan: [
+      { id: 'posts', type: 'posts', target: 6, topicNotes: '', platformNotes: '', status: 'not_started' },
+      { id: 'videos', type: 'videos', target: 5, topicNotes: '', platformNotes: '', status: 'not_started' },
+      { id: 'carousels', type: 'carousels', target: 2, topicNotes: '', platformNotes: '', status: 'not_started' },
+      { id: 'reels', type: 'reels', target: 3, topicNotes: '', platformNotes: '', status: 'not_started' },
+      { id: 'stories', type: 'stories', target: 10, topicNotes: '', platformNotes: '', status: 'not_started' },
+      { id: 'other', type: 'other', target: 1, topicNotes: '', platformNotes: '', status: 'not_started' },
+    ],
+    isActive: true,
+  };
+
+  const ensureDefaultSocialWeeklySystem = useCallback(async () => {
+    const active = socialWeeklySystems.find((s) => s.isActive);
+    if (active) return active;
+    try {
+      const row = await syncInsert('social_weekly_system', DEFAULT_WEEKLY_SYSTEM);
+      const next = socialWeeklySystemFromDb(row);
+      setSocialWeeklySystems((current) => [next, ...current.filter((s) => s.id !== next.id)]);
+      return next;
+    } catch {
+      return null;
+    }
+  }, [socialWeeklySystems]);
+
+  const activeSocialWeeklySystem = useMemo(() => socialWeeklySystems.find((s) => s.isActive) || null, [socialWeeklySystems]);
+
+  const addSocialWeeklySystem = async (input: SocialWeeklySystemInput) => {
+    const row = await syncInsert('social_weekly_system', socialWeeklySystemToDb(input));
+    const next = socialWeeklySystemFromDb(row);
+    setSocialWeeklySystems((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateSocialWeeklySystem = async (id: string, input: Partial<SocialWeeklySystemInput>) => {
+    const row = await syncUpdate('social_weekly_system', id, socialWeeklySystemToDb(input));
+    const next = socialWeeklySystemFromDb(row);
+    setSocialWeeklySystems((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteSocialWeeklySystem = async (id: string) => {
+    await syncDelete('social_weekly_system' as any, id);
+    setSocialWeeklySystems((current) => current.filter((item) => item.id !== id));
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      ensureDefaultSocialWeeklySystem();
+    }
+  }, [loading, ensureDefaultSocialWeeklySystem]);
+
   const addContentItem = async (input: ContentItemInput) => {
     if (!String(input.title || '').trim()) {
       throw new Error('Content title is required.');
@@ -5016,6 +5126,12 @@ export const useOpportunitiesData = (enabled = true) => {
     contentStrategies,
     contentItems,
     weeklyContentPlans,
+    socialWeeklySystems,
+    activeSocialWeeklySystem,
+    addSocialWeeklySystem,
+    updateSocialWeeklySystem,
+    deleteSocialWeeklySystem,
+    ensureDefaultSocialWeeklySystem,
     addSocialPlatform,
     updateSocialPlatform,
     deleteSocialPlatform,

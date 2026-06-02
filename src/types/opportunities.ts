@@ -1241,6 +1241,7 @@ export interface OpportunitiesData {
   contentStrategies: ContentStrategy[];
   contentItems: ContentItem[];
   weeklyContentPlans: WeeklyContentPlan[];
+  socialWeeklySystems: SocialWeeklySystem[];
   desktopShortcuts: DesktopShortcut[];
   desktopSettings: DesktopSettings | null;
   desktopGroups: DesktopGroup[];
@@ -1891,6 +1892,62 @@ export interface WeeklyContentPlanInput {
   targetCarousels?: number;
   targetOther?: number;
   reviewNotes?: string;
+}
+
+export interface SocialWeeklyTargets {
+  posts: number;
+  videos: number;
+  carousels: number;
+  reels: number;
+  stories: number;
+  other: number;
+}
+
+export interface SocialWeeklyChecklistItem {
+  id: string;
+  label: string;
+  done: boolean;
+  notes?: string;
+}
+
+export interface SocialWeeklyTask {
+  id: string;
+  label: string;
+  category: string;
+  done: boolean;
+  notes?: string;
+}
+
+export interface SocialContentTypePlanItem {
+  id: string;
+  type: string;
+  target: number;
+  topicNotes?: string;
+  platformNotes?: string;
+  status: string;
+}
+
+export interface SocialWeeklySystem {
+  id: string;
+  name?: string;
+  targets: SocialWeeklyTargets;
+  fridayChecklist: SocialWeeklyChecklistItem[];
+  weeklyTasks: SocialWeeklyTask[];
+  contentTypePlan: SocialContentTypePlanItem[];
+  notes?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialWeeklySystemInput {
+  name?: string;
+  targets?: SocialWeeklyTargets;
+  fridayChecklist?: SocialWeeklyChecklistItem[];
+  weeklyTasks?: SocialWeeklyTask[];
+  contentTypePlan?: SocialContentTypePlanItem[];
+  notes?: string;
+  isActive?: boolean;
 }
 
 export type LifeMealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'drink' | 'meal' | 'other';

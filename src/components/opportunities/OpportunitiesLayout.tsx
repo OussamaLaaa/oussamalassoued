@@ -821,12 +821,15 @@ const OpportunitiesLayout: React.FC<{
  taskWorkLogs, weeklyTaskReviews,
  addTaskWorkLog, updateTaskWorkLog, deleteTaskWorkLog,
  addWeeklyTaskReview, updateWeeklyTaskReview, deleteWeeklyTaskReview,
- socialPlatforms, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
- addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
- addContentPillar, updateContentPillar, deleteContentPillar,
- addContentStrategy, updateContentStrategy, deleteContentStrategy,
- addContentItem, updateContentItem, deleteContentItem,
- addWeeklyContentPlan, updateWeeklyContentPlan, deleteWeeklyContentPlan,
+  socialPlatforms, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
+  socialWeeklySystems, activeSocialWeeklySystem,
+  addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
+  addContentPillar, updateContentPillar, deleteContentPillar,
+  addContentStrategy, updateContentStrategy, deleteContentStrategy,
+  addContentItem, updateContentItem, deleteContentItem,
+  addWeeklyContentPlan, updateWeeklyContentPlan, deleteWeeklyContentPlan,
+  addSocialWeeklySystem, updateSocialWeeklySystem, deleteSocialWeeklySystem,
+  ensureDefaultSocialWeeklySystem,
  lifeNutritionLogs, lifeFitnessLogs, lifeDeenLogs, lifeFamilyActions, lifeWeeklyReviews,
  addLifeNutritionLog, updateLifeNutritionLog, deleteLifeNutritionLog,
  addLifeFitnessLog, updateLifeFitnessLog, deleteLifeFitnessLog,
@@ -1920,8 +1923,14 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
  onDeleteContentItem={deleteContentItem}
  onAddWeeklyContentPlan={addWeeklyContentPlan}
  onUpdateWeeklyContentPlan={updateWeeklyContentPlan}
-onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
-  />
+  onDeleteWeeklyContentPlan={deleteWeeklyContentPlan}
+  socialWeeklySystems={socialWeeklySystems}
+  activeSocialWeeklySystem={activeSocialWeeklySystem}
+  onAddSocialWeeklySystem={addSocialWeeklySystem}
+  onUpdateSocialWeeklySystem={updateSocialWeeklySystem}
+  onDeleteSocialWeeklySystem={deleteSocialWeeklySystem}
+  onEnsureDefaultSocialWeeklySystem={ensureDefaultSocialWeeklySystem}
+   />
   )}
 
  {tab === 'life' && (
