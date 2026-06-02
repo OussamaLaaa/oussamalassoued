@@ -1912,10 +1912,14 @@ export interface SocialWeeklyChecklistItem {
 
 export interface SocialWeeklyTask {
   id: string;
-  label: string;
-  category: string;
-  done: boolean;
+  title: string;
+  label?: string;
+  type: 'post' | 'video' | 'carousel' | 'reel' | 'story' | 'task' | 'other';
+  targetCount?: number;
   notes?: string;
+  done: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  isActive: boolean;
 }
 
 export interface SocialContentTypePlanItem {

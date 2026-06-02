@@ -152,6 +152,7 @@ import type {
   WeeklyContentPlanInput,
   SocialWeeklySystem,
   SocialWeeklySystemInput,
+  SocialWeeklyTask,
   LifeNutritionLog,
   LifeNutritionLogInput,
   LifeFitnessLog,
@@ -1849,12 +1850,24 @@ const weeklyContentPlanToDb = (input: Partial<WeeklyContentPlanInput>) => {
   return payload;
 };
 
+const normalizeWeeklyTask = (t: any): SocialWeeklyTask => ({
+  id: String(t?.id ?? ''),
+  title: t?.title ?? t?.label ?? '',
+  label: t?.label ?? undefined,
+  type: t?.type ?? 'task',
+  targetCount: t?.targetCount ?? t?.target_count ?? undefined,
+  notes: t?.notes ?? undefined,
+  done: t?.done == null ? false : Boolean(t.done),
+  priority: t?.priority ?? undefined,
+  isActive: t?.isActive ?? t?.is_active ?? true,
+});
+
 const socialWeeklySystemFromDb = (row: any): SocialWeeklySystem => ({
   id: String(row?.id ?? ''),
   name: row?.name ?? undefined,
   targets: row?.targets ?? { posts: 0, videos: 0, carousels: 0, reels: 0, stories: 0, other: 0 },
   fridayChecklist: row?.friday_checklist ?? row?.fridayChecklist ?? [],
-  weeklyTasks: row?.weekly_tasks ?? row?.weeklyTasks ?? [],
+  weeklyTasks: (row?.weekly_tasks ?? row?.weeklyTasks ?? []).map(normalizeWeeklyTask),
   contentTypePlan: row?.content_type_plan ?? row?.contentTypePlan ?? [],
   notes: row?.notes ?? undefined,
   isActive: row?.is_active == null ? true : Boolean(row.is_active),
@@ -4500,39 +4513,10 @@ export const useOpportunitiesData = (enabled = true) => {
 
   const DEFAULT_WEEKLY_SYSTEM = {
     name: 'Weekly Social Media System',
-    targets: { posts: 6, videos: 5, carousels: 2, reels: 3, stories: 10, other: 1 },
-    fridayChecklist: [
-      { id: 'review-weekly-plan', label: 'Review weekly content plan', done: false, notes: '' },
-      { id: 'finalize-captions', label: 'Finalize captions', done: false, notes: '' },
-      { id: 'finalize-video-edits', label: 'Finalize video edits', done: false, notes: '' },
-      { id: 'finalize-carousel-designs', label: 'Finalize carousel designs', done: false, notes: '' },
-      { id: 'schedule-posts', label: 'Schedule posts', done: false, notes: '' },
-      { id: 'publish-friday-content', label: 'Publish Friday content', done: false, notes: '' },
-      { id: 'check-links-ctas', label: 'Check links and CTAs', done: false, notes: '' },
-      { id: 'review-last-week-analytics', label: 'Review analytics from last week', done: false, notes: '' },
-      { id: 'reply-comments-messages', label: 'Reply to comments/messages', done: false, notes: '' },
-      { id: 'collect-new-ideas', label: 'Collect new ideas for next week', done: false, notes: '' },
-    ],
-    weeklyTasks: [
-      { id: 'research-ideas', label: 'Research ideas', category: 'research', done: false, notes: '' },
-      { id: 'write-hooks', label: 'Write hooks', category: 'writing', done: false, notes: '' },
-      { id: 'draft-captions', label: 'Draft captions', category: 'writing', done: false, notes: '' },
-      { id: 'record-videos', label: 'Record videos', category: 'production', done: false, notes: '' },
-      { id: 'edit-videos', label: 'Edit videos', category: 'production', done: false, notes: '' },
-      { id: 'design-carousels', label: 'Design carousels', category: 'production', done: false, notes: '' },
-      { id: 'prepare-thumbnails', label: 'Prepare thumbnails', category: 'production', done: false, notes: '' },
-      { id: 'schedule-content', label: 'Schedule content', category: 'publishing', done: false, notes: '' },
-      { id: 'review-performance', label: 'Review performance', category: 'review', done: false, notes: '' },
-      { id: 'engage-comments-messages', label: 'Engage with comments/messages', category: 'engagement', done: false, notes: '' },
-    ],
-    contentTypePlan: [
-      { id: 'posts', type: 'posts', target: 6, topicNotes: '', platformNotes: '', status: 'not_started' },
-      { id: 'videos', type: 'videos', target: 5, topicNotes: '', platformNotes: '', status: 'not_started' },
-      { id: 'carousels', type: 'carousels', target: 2, topicNotes: '', platformNotes: '', status: 'not_started' },
-      { id: 'reels', type: 'reels', target: 3, topicNotes: '', platformNotes: '', status: 'not_started' },
-      { id: 'stories', type: 'stories', target: 10, topicNotes: '', platformNotes: '', status: 'not_started' },
-      { id: 'other', type: 'other', target: 1, topicNotes: '', platformNotes: '', status: 'not_started' },
-    ],
+    targets: { posts: 0, videos: 0, carousels: 0, reels: 0, stories: 0, other: 0 },
+    fridayChecklist: [],
+    weeklyTasks: [],
+    contentTypePlan: [],
     isActive: true,
   };
 
