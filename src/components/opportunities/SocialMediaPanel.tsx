@@ -5,16 +5,13 @@ import DirectionalText from '../ui/DirectionalText';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
 
 const SOCIAL_TABS = [
- { id: 'dashboard', label: 'Dashboard' },
- { id: 'strategy', label: 'Strategy' },
- { id: 'platforms', label: 'Platforms' },
- { id: 'pillars', label: 'Pillars' },
- { id: 'ideas', label: 'Ideas' },
- { id: 'weekly', label: 'Weekly Plan' },
- { id: 'production', label: 'Production Board' },
- { id: 'calendar', label: 'Calendar' },
- { id: 'performance', label: 'Performance' },
- { id: 'ai-assistant', label: 'AI Assistant' },
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'strategy', label: 'Strategy' },
+  { id: 'platforms', label: 'Platforms' },
+  { id: 'pillars', label: 'Pillars' },
+  { id: 'ideas', label: 'Ideas' },
+  { id: 'weekly', label: 'Weekly Plan' },
+  { id: 'ai-assistant', label: 'AI Assistant' },
 ] as const;
 
 const CONTENT_TYPES = ['text_post', 'video', 'short_video', 'carousel', 'thread', 'story', 'reel', 'case_study', 'newsletter', 'image_post', 'poll', 'live', 'other'] as const;
@@ -122,7 +119,11 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
   const todayStr = now.toISOString().slice(0, 10);
 
   useEffect(() => {
-    if (props.section) setActiveTab(props.section as typeof SOCIAL_TABS[number]['id']);
+    if (props.section) {
+      const removed = ['production', 'calendar', 'performance'];
+      const target = removed.includes(props.section) ? 'dashboard' : props.section;
+      setActiveTab(target as typeof SOCIAL_TABS[number]['id']);
+    }
   }, [props.section]);
 
   // ── Dashboard ──
@@ -150,10 +151,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  {activeTab === 'pillars' && <PillarsView contentPillars={props.contentPillars} onAddContentPillar={props.onAddContentPillar} onUpdateContentPillar={props.onUpdateContentPillar} onDeleteContentPillar={props.onDeleteContentPillar} />}
  {activeTab === 'ideas' && <IdeasView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onAddContentItem={props.onAddContentItem} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
   {activeTab === 'weekly' && <WeeklyPlanView socialWeeklySystem={props.activeSocialWeeklySystem} onUpdateSocialWeeklySystem={props.onUpdateSocialWeeklySystem} onEnsureDefaultSocialWeeklySystem={props.onEnsureDefaultSocialWeeklySystem} />}
- {activeTab === 'production' && <ProductionBoardView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
- {activeTab === 'calendar' && <CalendarView contentItems={props.contentItems} />}
- {activeTab === 'performance' && <PerformanceView contentItems={props.contentItems} onUpdateContentItem={props.onUpdateContentItem} totalLeads={totalLeads} />}
- {activeTab === 'ai-assistant' && (
+  {activeTab === 'ai-assistant' && (
  <AISocialMediaAssistantPanel
  strategies={props.contentStrategies}
  platforms={props.socialPlatforms}
