@@ -383,35 +383,108 @@ function StrategyView(props: StrategyViewProps) {
  <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Strategy</button>
  )}
  </div>
- {props.contentStrategies.length === 0 ? (
- <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No content strategy yet. Define your audience, positioning, and weekly targets.</div>
- ) : (
- <div className="space-y-3">
- {props.contentStrategies.map((strategy) => (
- <div key={strategy.id} className="rounded-xl border border-neutral-200 bg-white p-5">
- <div className="flex items-start justify-between gap-3">
+  {props.contentStrategies.length === 0 ? (
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No content strategy yet. Define your audience, positioning, and weekly targets.</div>
+  ) : (
+  <div className="space-y-4">
+  {props.contentStrategies.map((strategy) => (
+  <div key={strategy.id} className="rounded-2xl border border-neutral-200 bg-white p-6">
+  {/* Top row: Title + Actions */}
+  <div className="flex items-start justify-between gap-4">
   <div className="min-w-0 flex-1">
-  <DirectionalText text={strategy.name} className="text-lg font-semibold text-neutral-900" as="div" />
-  <div className="mt-2 grid gap-2 text-sm text-neutral-700 md:grid-cols-2">
-  {strategy.targetAudience && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Audience</div><DirectionalText text={strategy.targetAudience} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  {strategy.positioning && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div><DirectionalText text={strategy.positioning} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  {strategy.mainPromise && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Promise</div><DirectionalText text={strategy.mainPromise} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  {strategy.tone && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div><DirectionalText text={strategy.tone} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  {strategy.languages && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div><DirectionalText text={strategy.languages} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  {strategy.activePlatforms && <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platforms</div><DirectionalText text={strategy.activePlatforms} className="mt-1 text-sm text-neutral-700" as="div" /></div>}
-  <div className="rounded-md bg-neutral-50 p-3"><div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</div><div className="mt-1">{strategy.weeklyPostTarget != null ? `${strategy.weeklyPostTarget} posts` : '—'}{strategy.weeklyVideoTarget != null ? ` · ${strategy.weeklyVideoTarget} videos` : ''}</div></div>
+  <DirectionalText text={strategy.name} className="text-xl font-semibold text-neutral-900" as="div" />
+  <div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-400">Content Strategy</div>
   </div>
-  {strategy.notes && <DirectionalText text={strategy.notes} className="mt-2 text-sm text-neutral-500" as="div" />}
- </div>
- <div className="flex gap-2 shrink-0">
- <button type="button" onClick={() => setEditing({ id: strategy.id, data: strategy })} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
- <button type="button" onClick={() => { if (window.confirm('Delete this strategy?')) props.onDeleteContentStrategy(strategy.id); }} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
- </div>
- </div>
- </div>
- ))}
- </div>
- )}
+  <div className="flex gap-2 shrink-0">
+  <button type="button" onClick={() => setEditing({ id: strategy.id, data: strategy })} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors">Edit</button>
+  <button type="button" onClick={() => { if (window.confirm('Delete this strategy?')) props.onDeleteContentStrategy(strategy.id); }} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">Delete</button>
+  </div>
+  </div>
+
+  {/* Main information grid */}
+  <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+  {/* Audience */}
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Audience</div>
+  {strategy.targetAudience ? (
+  <DirectionalText text={strategy.targetAudience} className="mt-2 text-sm text-neutral-800 leading-relaxed" as="div" />
+  ) : (
+  <div className="mt-2 text-sm text-neutral-400 italic">Audience not defined yet.</div>
+  )}
+  </div>
+
+  {/* Positioning */}
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div>
+  {strategy.positioning ? (
+  <DirectionalText text={strategy.positioning} className="mt-2 text-sm text-neutral-800 leading-relaxed" as="div" />
+  ) : (
+  <div className="mt-2 text-sm text-neutral-400 italic">Positioning not defined yet.</div>
+  )}
+  </div>
+
+  {/* Weekly Targets */}
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</div>
+  {(strategy.weeklyPostTarget != null || strategy.weeklyVideoTarget != null) ? (
+  <div className="mt-2 space-y-1.5 text-sm text-neutral-800">
+  {strategy.weeklyPostTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyPostTarget} posts</div>}
+  {strategy.weeklyVideoTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyVideoTarget} videos</div>}
+  </div>
+  ) : (
+  <div className="mt-2 text-sm text-neutral-400 italic">Weekly targets not defined yet.</div>
+  )}
+  </div>
+  </div>
+
+  {/* Extra fields row (Promise, Tone, Languages, Platforms) */}
+  {(strategy.mainPromise || strategy.tone || strategy.languages || strategy.activePlatforms) && (
+  <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  {strategy.mainPromise && (
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Promise</div>
+  <DirectionalText text={strategy.mainPromise} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
+  </div>
+  )}
+  {strategy.tone && (
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div>
+  <DirectionalText text={strategy.tone} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
+  </div>
+  )}
+  {strategy.languages && (
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div>
+  <DirectionalText text={strategy.languages} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
+  </div>
+  )}
+  {strategy.activePlatforms && (
+  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platforms</div>
+  <DirectionalText text={strategy.activePlatforms} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
+  </div>
+  )}
+  </div>
+  )}
+
+  {/* Notes footer */}
+  {strategy.notes && (
+  <div className="mt-4 border-t border-neutral-100 pt-4">
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-400 mb-1.5">Notes</div>
+  <DirectionalText text={strategy.notes} className="text-sm text-neutral-600 leading-relaxed" as="div" preserveWhitespace />
+  </div>
+  )}
+
+  {/* Created date footer */}
+  {strategy.createdAt && (
+  <div className="mt-4 border-t border-neutral-100 pt-3">
+  <span className="text-[11px] text-neutral-400">Created {formatDate(strategy.createdAt)}</span>
+  </div>
+  )}
+  </div>
+  ))}
+  </div>
+  )}
  </div>
  );
 }
