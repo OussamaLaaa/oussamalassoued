@@ -4614,6 +4614,7 @@ export const useOpportunitiesData = (enabled = true) => {
 
   const updateSocialWeeklySystem = async (id: string, input: Partial<SocialWeeklySystemInput>) => {
     const row = await syncUpdate('social_weekly_system', id, socialWeeklySystemToDb(input));
+    if (!row) throw new Error('Empty response from server. Please refresh and try again.');
     const next = socialWeeklySystemFromDb(row);
     setSocialWeeklySystems((current) => current.map((item) => (item.id === id ? next : item)));
     return next;

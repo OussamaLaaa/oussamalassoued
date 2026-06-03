@@ -856,7 +856,10 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
 
   const handleSave = async () => {
     if (!formTitle.trim()) return;
-    if (!systemRef.current?.id) return;
+    if (!systemRef.current?.id) {
+      setMutationError(t('System not ready. Please refresh.', 'النظام غير جاهز. يرجى التحديث.'));
+      return;
+    }
     setMutationError(null);
     setSavingTask(true);
     try {
@@ -932,6 +935,17 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   };
 
   const isMutating = savingTask || deletingTaskId !== null || togglingTaskId !== null || resettingCompleted;
+
+  useEffect(() => {
+    if (!isMutating) return;
+    const timer = setTimeout(() => {
+      if (savingTask) setSavingTask(false);
+      if (deletingTaskId) setDeletingTaskId(null);
+      if (togglingTaskId) setTogglingTaskId(null);
+      if (resettingCompleted) setResettingCompleted(false);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [isMutating, savingTask, deletingTaskId, togglingTaskId, resettingCompleted]);
 
   const displayTitle = (task: SocialWeeklyTask) => task.title || task.label || '';
 
@@ -1026,40 +1040,40 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
             <h3 className="text-sm font-semibold text-neutral-900 mb-4">{modalMode === 'add' ? t('Add Task', 'إضافة مهمة') : t('Edit Task', 'تعديل المهمة')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Title *', 'العنوان *')}</label>
-                <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} dir={detectTextDirection(formTitle)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(formTitle)}`} placeholder="اكتب 6 بوستات" />
+                <label htmlFor="wp-title" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Title *', 'العنوان *')}</label>
+                <input id="wp-title" name="wp-title" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} dir={detectTextDirection(formTitle)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(formTitle)}`} placeholder="اكتب 6 بوستات" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Type', 'النوع')}</label>
-                  <select value={formType} onChange={(e) => setFormType(e.target.value as SocialWeeklyTask['type'])} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+                  <label htmlFor="wp-type" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Type', 'النوع')}</label>
+                  <select id="wp-type" name="wp-type" value={formType} onChange={(e) => setFormType(e.target.value as SocialWeeklyTask['type'])} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
                     {TYPE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Target Count', 'العدد المستهدف')}</label>
-                  <input type="number" min="0" value={formTargetCount} onChange={(e) => setFormTargetCount(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" placeholder="6" />
+                  <label htmlFor="wp-target" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Target Count', 'العدد المستهدف')}</label>
+                  <input id="wp-target" name="wp-target" type="number" min="0" value={formTargetCount} onChange={(e) => setFormTargetCount(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" placeholder="6" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Priority', 'الأولوية')}</label>
-                  <select value={formPriority} onChange={(e) => setFormPriority(e.target.value as typeof formPriority)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+                  <label htmlFor="wp-priority" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Priority', 'الأولوية')}</label>
+                  <select id="wp-priority" name="wp-priority" value={formPriority} onChange={(e) => setFormPriority(e.target.value as typeof formPriority)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
                     <option value="">{t('None', 'لا يوجد')}</option>
                     {PRIORITY_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Active', 'نشط')}</label>
-                  <label className="flex items-center gap-2 h-9 px-3 rounded-md border border-neutral-200 bg-white cursor-pointer">
-                    <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-neutral-300" />
+                  <label htmlFor="wp-active" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Active', 'نشط')}</label>
+                  <label htmlFor="wp-active" className="flex items-center gap-2 h-9 px-3 rounded-md border border-neutral-200 bg-white cursor-pointer">
+                    <input id="wp-active" name="wp-active" type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-neutral-300" />
                     <span className="text-sm text-neutral-900">{formIsActive ? t('Yes', 'نعم') : t('No', 'لا')}</span>
                   </label>
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Notes', 'ملاحظات')}</label>
-                <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} dir={detectTextDirection(formNotes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(formNotes)}`} placeholder={t('Optional notes about this task...', 'ملاحظات اختيارية حول هذه المهمة...')} />
+                <label htmlFor="wp-notes" className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Notes', 'ملاحظات')}</label>
+                <textarea id="wp-notes" name="wp-notes" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} dir={detectTextDirection(formNotes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(formNotes)}`} placeholder={t('Optional notes about this task...', 'ملاحظات اختيارية حول هذه المهمة...')} />
               </div>
             </div>
             {mutationError && (
