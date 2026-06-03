@@ -155,6 +155,7 @@ import type {
   SocialWeeklySystem,
   SocialWeeklySystemInput,
   SocialWeeklyTask,
+  SocialWeeklyTaskInput,
   LifeNutritionLog,
   LifeNutritionLogInput,
   LifeFitnessLog,
@@ -229,6 +230,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   contentItems: [],
   weeklyContentPlans: [],
   socialWeeklySystems: [],
+  socialWeeklyTasks: [],
   lifeNutritionLogs: [],
   lifeFitnessLogs: [],
   lifeDeenLogs: [],
@@ -1927,6 +1929,32 @@ const socialWeeklySystemToDb = (input: Partial<SocialWeeklySystemInput>) => {
   return payload;
 };
 
+const socialWeeklyTaskFromDb = (row: any): SocialWeeklyTask => ({
+  id: String(row?.id ?? ''),
+  title: String(row?.title ?? ''),
+  type: row?.type ?? 'task',
+  targetCount: row?.target_count ?? row?.targetCount ?? undefined,
+  notes: row?.notes ?? undefined,
+  done: row?.done == null ? false : Boolean(row.done),
+  priority: row?.priority ?? 'medium',
+  isActive: row?.is_active == null ? true : Boolean(row.is_active),
+  sortOrder: row?.sort_order ?? row?.sortOrder ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const socialWeeklyTaskToDb = (input: Partial<SocialWeeklyTaskInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.title !== undefined) payload.title = String(input.title || '').trim();
+  if (input.type !== undefined) payload.type = input.type;
+  if (input.targetCount !== undefined) payload.target_count = input.targetCount != null ? Number(input.targetCount) : null;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  if (input.done !== undefined) payload.done = Boolean(input.done);
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.isActive !== undefined) payload.is_active = Boolean(input.isActive);
+  return payload;
+};
+
 const attachContentItemLinkNames = (
   items: ContentItem[],
   socialPlatforms: SocialPlatform[],
@@ -2147,6 +2175,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [weeklyContentPlans, setWeeklyContentPlans] = useState<WeeklyContentPlan[]>([]);
   const [socialWeeklySystems, setSocialWeeklySystems] = useState<SocialWeeklySystem[]>([]);
+  const [socialWeeklyTasks, setSocialWeeklyTasks] = useState<SocialWeeklyTask[]>([]);
   const [lifeNutritionLogs, setLifeNutritionLogs] = useState<LifeNutritionLog[]>([]);
   const [lifeFitnessLogs, setLifeFitnessLogs] = useState<LifeFitnessLog[]>([]);
   const [lifeDeenLogs, setLifeDeenLogs] = useState<LifeDeenLog[]>([]);
@@ -2417,6 +2446,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
     if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
     if (has('social_weekly_system')) setSocialWeeklySystems((raw('social_weekly_system') || []).map((row: any) => socialWeeklySystemFromDb(row)));
+    if (has('social_weekly_tasks')) setSocialWeeklyTasks((raw('social_weekly_tasks') || []).map((row: any) => socialWeeklyTaskFromDb(row)));
     // ── Life ──
     if (has('life_nutrition_logs')) setLifeNutritionLogs((raw('life_nutrition_logs') || []).map((row: any) => lifeNutritionLogFromDb(row)));
     if (has('life_fitness_logs')) setLifeFitnessLogs((raw('life_fitness_logs') || []).map((row: any) => lifeFitnessLogFromDb(row)));
@@ -2594,6 +2624,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setCompanyOutreachScripts(fallback.companyOutreachScripts);
         setSocialPeople(fallback.socialPeople);
         setSocialWeeklySystems(fallback.socialWeeklySystems);
+        setSocialWeeklyTasks(fallback.socialWeeklyTasks);
         setError('Using seed data fallback.');
       } finally {
         if (mounted) {
@@ -4524,6 +4555,31 @@ export const useOpportunitiesData = (enabled = true) => {
     setSocialPeople((current) => current.filter((item) => item.id !== id));
   };
 
+  const addSocialWeeklyTask = async (input: SocialWeeklyTaskInput) => {
+    if (!String(input.title || '').trim()) {
+      throw new Error('Task title is required.');
+    }
+    const row = await syncInsert('social_weekly_tasks', socialWeeklyTaskToDb(input));
+    const next = socialWeeklyTaskFromDb(row);
+    setSocialWeeklyTasks((current) => [...current, next]);
+    return next;
+  };
+
+  const updateSocialWeeklyTask = async (id: string, input: Partial<SocialWeeklyTaskInput>) => {
+    if (input.title !== undefined && !String(input.title || '').trim()) {
+      throw new Error('Task title is required.');
+    }
+    const row = await syncUpdate('social_weekly_tasks', id, socialWeeklyTaskToDb(input));
+    const next = socialWeeklyTaskFromDb(row);
+    setSocialWeeklyTasks((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteSocialWeeklyTask = async (id: string) => {
+    await syncDelete('social_weekly_tasks' as any, id);
+    setSocialWeeklyTasks((current) => current.filter((item) => item.id !== id));
+  };
+
   const addContentPillar = async (input: ContentPillarInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Pillar name is required.');
@@ -5183,6 +5239,10 @@ export const useOpportunitiesData = (enabled = true) => {
     contentItems,
     weeklyContentPlans,
     socialWeeklySystems,
+    socialWeeklyTasks,
+    addSocialWeeklyTask,
+    updateSocialWeeklyTask,
+    deleteSocialWeeklyTask,
     activeSocialWeeklySystem,
     addSocialWeeklySystem,
     updateSocialWeeklySystem,

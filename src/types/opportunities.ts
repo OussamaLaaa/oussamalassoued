@@ -1243,6 +1243,7 @@ export interface OpportunitiesData {
   contentItems: ContentItem[];
   weeklyContentPlans: WeeklyContentPlan[];
   socialWeeklySystems: SocialWeeklySystem[];
+  socialWeeklyTasks: SocialWeeklyTask[];
   desktopShortcuts: DesktopShortcut[];
   desktopSettings: DesktopSettings | null;
   desktopGroups: DesktopGroup[];
@@ -1952,13 +1953,25 @@ export interface SocialWeeklyChecklistItem {
 export interface SocialWeeklyTask {
   id: string;
   title: string;
-  label?: string;
   type: 'post' | 'video' | 'carousel' | 'reel' | 'story' | 'task' | 'other';
   targetCount?: number;
   notes?: string;
   done: boolean;
   priority?: 'low' | 'medium' | 'high';
   isActive: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialWeeklyTaskInput {
+  title: string;
+  type?: 'post' | 'video' | 'carousel' | 'reel' | 'story' | 'task' | 'other';
+  targetCount?: number;
+  notes?: string;
+  done?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  isActive?: boolean;
 }
 
 export interface SocialContentTypePlanItem {

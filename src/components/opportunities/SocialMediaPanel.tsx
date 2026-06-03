@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import type { SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTask } from '../../types/opportunities';
+import type { SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTask, SocialWeeklyTaskInput } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 import SocialPeoplePanel from './SocialPeoplePanel';
 import DirectionalText from '../ui/DirectionalText';
@@ -109,6 +109,10 @@ interface SocialMediaPanelProps {
   onUpdateSocialWeeklySystem: (id: string, input: Partial<SocialWeeklySystemInput>) => Promise<SocialWeeklySystem>;
   onDeleteSocialWeeklySystem: (id: string) => Promise<void>;
   onEnsureDefaultSocialWeeklySystem: () => Promise<SocialWeeklySystem | null>;
+  socialWeeklyTasks: SocialWeeklyTask[];
+  onAddSocialWeeklyTask: (input: SocialWeeklyTaskInput) => Promise<SocialWeeklyTask>;
+  onUpdateSocialWeeklyTask: (id: string, input: Partial<SocialWeeklyTaskInput>) => Promise<SocialWeeklyTask>;
+  onDeleteSocialWeeklyTask: (id: string) => Promise<void>;
 }
 
 export default function SocialMediaPanel(props: SocialMediaPanelProps) {
@@ -161,7 +165,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  {activeTab === 'pillars' && <PillarsView contentPillars={props.contentPillars} onAddContentPillar={props.onAddContentPillar} onUpdateContentPillar={props.onUpdateContentPillar} onDeleteContentPillar={props.onDeleteContentPillar} />}
   {activeTab === 'ideas' && <IdeasView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onAddContentItem={props.onAddContentItem} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
   {activeTab === 'people' && <SocialPeoplePanel socialPeople={props.socialPeople} onAddSocialPerson={props.onAddSocialPerson} onUpdateSocialPerson={props.onUpdateSocialPerson} onDeleteSocialPerson={props.onDeleteSocialPerson} />}
-  {activeTab === 'weekly' && <WeeklyPlanView socialWeeklySystem={props.activeSocialWeeklySystem} onUpdateSocialWeeklySystem={props.onUpdateSocialWeeklySystem} onEnsureDefaultSocialWeeklySystem={props.onEnsureDefaultSocialWeeklySystem} />}
+  {activeTab === 'weekly' && <WeeklyPlanView socialWeeklyTasks={props.socialWeeklyTasks} onAddSocialWeeklyTask={props.onAddSocialWeeklyTask} onUpdateSocialWeeklyTask={props.onUpdateSocialWeeklyTask} onDeleteSocialWeeklyTask={props.onDeleteSocialWeeklyTask} />}
   {activeTab === 'ai-assistant' && (
  <AISocialMediaAssistantPanel
  strategies={props.contentStrategies}
@@ -761,13 +765,11 @@ function IdeasView(props: IdeasViewProps) {
 // ── Weekly Plan View — Single Recurring Task Board ──
 
 interface WeeklyPlanViewProps {
-  socialWeeklySystem: SocialWeeklySystem | null;
-  onUpdateSocialWeeklySystem: (id: string, input: Partial<SocialWeeklySystemInput>) => Promise<SocialWeeklySystem>;
-  onEnsureDefaultSocialWeeklySystem: () => Promise<SocialWeeklySystem | null>;
+  socialWeeklyTasks: SocialWeeklyTask[];
+  onAddSocialWeeklyTask: (input: SocialWeeklyTaskInput) => Promise<SocialWeeklyTask>;
+  onUpdateSocialWeeklyTask: (id: string, input: Partial<SocialWeeklyTaskInput>) => Promise<SocialWeeklyTask>;
+  onDeleteSocialWeeklyTask: (id: string) => Promise<void>;
 }
-
-let _idCounter = Date.now();
-const uid = () => `w_${++_idCounter}`;
 
 const TYPE_OPTIONS = ['post', 'video', 'carousel', 'reel', 'story', 'task', 'other'] as const;
 const PRIORITY_OPTIONS = ['low', 'medium', 'high'] as const;
@@ -790,9 +792,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 function WeeklyPlanView(props: WeeklyPlanViewProps) {
   const { t } = useLanguage();
-  const system = props.socialWeeklySystem;
-
-  const tasks = system?.weeklyTasks ?? [];
+  const tasks = props.socialWeeklyTasks;
 
   const totalCount = tasks.length;
   const doneCount = tasks.filter((t) => t.done).length;
@@ -809,14 +809,9 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   const [formNotes, setFormNotes] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
 
-  const [savingTask, setSavingTask] = useState(false);
-  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
-  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
-  const [resettingCompleted, setResettingCompleted] = useState(false);
+  const [mutatingTasks, setMutatingTasks] = useState<Set<string>>(new Set());
   const [mutationError, setMutationError] = useState<string | null>(null);
-
-  const systemRef = useRef(system);
-  systemRef.current = system;
+  const isMutating = mutatingTasks.size > 0;
 
   const openAdd = () => {
     setModalMode('add');
@@ -832,7 +827,7 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   const openEdit = (task: SocialWeeklyTask) => {
     setModalMode('edit');
     setEditingTask(task);
-    setFormTitle(task.title || task.label || '');
+    setFormTitle(task.title || '');
     setFormType(task.type || 'task');
     setFormTargetCount(task.targetCount != null ? String(task.targetCount) : '');
     setFormPriority(task.priority || '');
@@ -845,109 +840,76 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
     setEditingTask(null);
   };
 
-  const getTasks = () => systemRef.current?.weeklyTasks ?? [];
-
-  const persistTasks = async (next: SocialWeeklyTask[]) => {
-    const currentSystem = systemRef.current;
-    if (currentSystem?.id) {
-      await props.onUpdateSocialWeeklySystem(currentSystem.id, { weeklyTasks: next });
-    }
-  };
-
   const handleSave = async () => {
     if (!formTitle.trim()) return;
-    if (!systemRef.current?.id) {
-      setMutationError(t('System not ready. Please refresh.', 'النظام غير جاهز. يرجى التحديث.'));
-      return;
-    }
     setMutationError(null);
-    setSavingTask(true);
+    setMutatingTasks((prev) => new Set(prev).add('save'));
     try {
-      const currentTasks = getTasks();
-      const next = modalMode === 'add'
-        ? [...currentTasks, {
-            id: uid(),
-            title: formTitle.trim(),
-            type: formType,
-            targetCount: formTargetCount ? Number(formTargetCount) : undefined,
-            priority: formPriority || undefined,
-            notes: formNotes || undefined,
-            done: false,
-            isActive: formIsActive,
-          }]
-        : currentTasks.map((t) => t.id === editingTask?.id
-            ? { ...t, title: formTitle.trim(), type: formType, targetCount: formTargetCount ? Number(formTargetCount) : undefined, priority: formPriority || undefined, notes: formNotes || undefined, isActive: formIsActive }
-            : t);
-      await persistTasks(next);
+      if (modalMode === 'add') {
+        await props.onAddSocialWeeklyTask({
+          title: formTitle.trim(),
+          type: formType,
+          targetCount: formTargetCount ? Number(formTargetCount) : undefined,
+          priority: formPriority || undefined,
+          notes: formNotes || undefined,
+          isActive: formIsActive,
+        });
+      } else if (editingTask) {
+        await props.onUpdateSocialWeeklyTask(editingTask.id, {
+          title: formTitle.trim(),
+          type: formType,
+          targetCount: formTargetCount ? Number(formTargetCount) : undefined,
+          priority: formPriority || undefined,
+          notes: formNotes || undefined,
+          isActive: formIsActive,
+        });
+      }
       closeModal();
     } catch (err: any) {
       setMutationError(err?.message || t('Unable to save weekly task.', 'تعذر حفظ المهمة الأسبوعية.'));
     } finally {
-      setSavingTask(false);
+      setMutatingTasks((prev) => { const next = new Set(prev); next.delete('save'); return next; });
     }
   };
 
   const toggleDone = async (task: SocialWeeklyTask) => {
-    if (togglingTaskId) return;
-    setTogglingTaskId(task.id);
     setMutationError(null);
+    setMutatingTasks((prev) => new Set(prev).add(task.id));
     try {
-      const currentTasks = getTasks();
-      const next = currentTasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t);
-      await persistTasks(next);
+      await props.onUpdateSocialWeeklyTask(task.id, { done: !task.done });
     } catch (err: any) {
       setMutationError(err?.message || t('Unable to update weekly task.', 'تعذر تحديث المهمة الأسبوعية.'));
     } finally {
-      setTogglingTaskId(null);
+      setMutatingTasks((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
     }
   };
 
   const handleDelete = async (task: SocialWeeklyTask) => {
-    if (deletingTaskId) return;
     if (!window.confirm(t('Delete this weekly task?', 'حذف هذه المهمة الأسبوعية؟'))) return;
-    setDeletingTaskId(task.id);
     setMutationError(null);
+    setMutatingTasks((prev) => new Set(prev).add(task.id));
     try {
-      const currentTasks = getTasks();
-      const next = currentTasks.filter((t) => t.id !== task.id);
-      await persistTasks(next);
+      await props.onDeleteSocialWeeklyTask(task.id);
     } catch (err: any) {
       setMutationError(err?.message || t('Unable to delete weekly task.', 'تعذر حذف المهمة الأسبوعية.'));
     } finally {
-      setDeletingTaskId(null);
+      setMutatingTasks((prev) => { const next = new Set(prev); next.delete(task.id); return next; });
     }
   };
 
   const handleResetCompleted = async () => {
-    if (resettingCompleted) return;
     if (!window.confirm(t('Reset all completed tasks? All tasks will be marked as not done.', 'إعادة تعيين جميع المهام المنجزة؟ سيتم وضع علامة "غير منجزة" على جميع المهام.'))) return;
-    setResettingCompleted(true);
     setMutationError(null);
+    setMutatingTasks((prev) => new Set(prev).add('reset'));
     try {
-      const currentTasks = getTasks();
-      const next = currentTasks.map((t) => ({ ...t, done: false }));
-      await persistTasks(next);
+      const doneTasks = tasks.filter((t) => t.done);
+      await Promise.all(doneTasks.map((t) => props.onUpdateSocialWeeklyTask(t.id, { done: false })));
     } catch (err: any) {
       setMutationError(err?.message || t('Unable to reset completed tasks.', 'تعذر إعادة تعيين المهام المنجزة.'));
     } finally {
-      setResettingCompleted(false);
+      setMutatingTasks((prev) => { const next = new Set(prev); next.delete('reset'); return next; });
     }
   };
-
-  const isMutating = savingTask || deletingTaskId !== null || togglingTaskId !== null || resettingCompleted;
-
-  useEffect(() => {
-    if (!isMutating) return;
-    const timer = setTimeout(() => {
-      if (savingTask) setSavingTask(false);
-      if (deletingTaskId) setDeletingTaskId(null);
-      if (togglingTaskId) setTogglingTaskId(null);
-      if (resettingCompleted) setResettingCompleted(false);
-    }, 15000);
-    return () => clearTimeout(timer);
-  }, [isMutating, savingTask, deletingTaskId, togglingTaskId, resettingCompleted]);
-
-  const displayTitle = (task: SocialWeeklyTask) => task.title || task.label || '';
 
   return (
     <div className="space-y-5">
@@ -999,15 +961,14 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
       ) : (
         <div className="space-y-1.5">
           {tasks.map((task) => {
-            const title = displayTitle(task);
-            const isToggling = togglingTaskId === task.id;
-            const isDeleting = deletingTaskId === task.id;
+            const isToggling = mutatingTasks.has(task.id);
+            const isDeleting = mutatingTasks.has(task.id) && false;
             return (
-              <div key={task.id} className={`rounded-xl border ${isDeleting ? 'border-red-200 bg-red-50' : 'border-neutral-200 bg-white'} p-3 flex items-start gap-3`}>
+              <div key={task.id} className={`rounded-xl border border-neutral-200 bg-white p-3 flex items-start gap-3`}>
                 <input type="checkbox" checked={task.done} onChange={() => toggleDone(task)} disabled={isToggling || isMutating} className="mt-1 h-4 w-4 shrink-0 rounded border-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <DirectionalText text={title} className={`text-sm font-medium ${task.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
+                    <DirectionalText text={task.title} className={`text-sm font-medium ${task.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${TYPE_COLORS[task.type] || TYPE_COLORS.other}`}>{task.type}</span>
                     {task.targetCount != null && (
                       <span className="text-[10px] text-neutral-500">{t('Target: ', 'الهدف: ')}{task.targetCount}</span>
@@ -1016,7 +977,6 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
                       <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</span>
                     )}
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${task.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{task.done ? t('done', 'تم') : t('active', 'نشط')}</span>
-                    {isDeleting && <span className="text-[10px] text-red-500">{t('Deleting...', 'جارٍ الحذف...')}</span>}
                     {isToggling && <span className="text-[10px] text-neutral-500">{t('Updating...', 'جارٍ التحديث...')}</span>}
                   </div>
                   {task.notes && (
@@ -1025,7 +985,7 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button type="button" onClick={() => openEdit(task)} disabled={isMutating} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Edit', 'تعديل')}</button>
-                  <button type="button" onClick={() => handleDelete(task)} disabled={isDeleting || isMutating} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Delete', 'حذف')}</button>
+                  <button type="button" onClick={() => handleDelete(task)} disabled={isMutating} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Delete', 'حذف')}</button>
                 </div>
               </div>
             );
@@ -1080,8 +1040,8 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
               <p className="mt-3 text-xs text-red-600">{mutationError}</p>
             )}
             <div className="flex gap-2 mt-5">
-              <button type="button" onClick={handleSave} disabled={!formTitle.trim() || savingTask} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">{savingTask ? t('Saving...', 'جارٍ الحفظ...') : t('Save', 'حفظ')}</button>
-              <button type="button" onClick={closeModal} disabled={savingTask} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors disabled:opacity-50">{t('Cancel', 'إلغاء')}</button>
+              <button type="button" onClick={handleSave} disabled={!formTitle.trim() || isMutating} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">{t('Save', 'حفظ')}</button>
+              <button type="button" onClick={closeModal} disabled={isMutating} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors disabled:opacity-50">{t('Cancel', 'إلغاء')}</button>
             </div>
           </div>
         </div>

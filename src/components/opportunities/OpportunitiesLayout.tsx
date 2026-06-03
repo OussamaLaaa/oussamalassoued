@@ -821,8 +821,9 @@ const OpportunitiesLayout: React.FC<{
  addTaskWorkLog, updateTaskWorkLog, deleteTaskWorkLog,
  addWeeklyTaskReview, updateWeeklyTaskReview, deleteWeeklyTaskReview,
    socialPlatforms, socialPeople, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
-  socialWeeklySystems, activeSocialWeeklySystem,
-  addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
+   socialWeeklySystems, activeSocialWeeklySystem, socialWeeklyTasks,
+   addSocialWeeklyTask, updateSocialWeeklyTask, deleteSocialWeeklyTask,
+   addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
   addSocialPerson, updateSocialPerson, deleteSocialPerson,
   addContentPillar, updateContentPillar, deleteContentPillar,
   addContentStrategy, updateContentStrategy, deleteContentStrategy,
@@ -1933,8 +1934,12 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
   onAddSocialWeeklySystem={addSocialWeeklySystem}
   onUpdateSocialWeeklySystem={updateSocialWeeklySystem}
   onDeleteSocialWeeklySystem={deleteSocialWeeklySystem}
-  onEnsureDefaultSocialWeeklySystem={ensureDefaultSocialWeeklySystem}
-   />
+   onEnsureDefaultSocialWeeklySystem={ensureDefaultSocialWeeklySystem}
+   socialWeeklyTasks={socialWeeklyTasks}
+   onAddSocialWeeklyTask={addSocialWeeklyTask}
+   onUpdateSocialWeeklyTask={updateSocialWeeklyTask}
+   onDeleteSocialWeeklyTask={deleteSocialWeeklyTask}
+    />
   )}
 
  {tab === 'life' && (
