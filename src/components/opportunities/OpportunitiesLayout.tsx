@@ -646,6 +646,7 @@ const OpportunitiesLayout: React.FC<{
       { id: 'platforms', label: 'Platforms', icon: Smartphone },
       { id: 'pillars', label: 'Pillars', icon: LayoutDashboard },
       { id: 'ideas', label: 'Ideas', icon: Star },
+      { id: 'people', label: 'People', icon: Users },
       { id: 'weekly', label: 'Weekly Plan', icon: Calendar },
       { id: 'ai-assistant', label: 'AI Assistant', icon: Sparkles },
     ],
