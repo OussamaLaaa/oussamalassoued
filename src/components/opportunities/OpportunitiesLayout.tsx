@@ -10,7 +10,7 @@ import {
 import Button from '../ui/Button';
 import SectionHeader from '../ui/SectionHeader';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, NoteCategory, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, NoteCategory, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import CompanyWorkspace from './CompanyWorkspace';
@@ -425,8 +425,9 @@ const OpportunitiesLayout: React.FC<{
  resetToSeedData: () => void;
  importCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>) => Promise<any>;
  importPeople?: (rows: PersonInput[]) => Promise<any>;
- socialPlatforms: SocialPlatform[];
- contentPillars: ContentPillar[];
+  socialPlatforms: SocialPlatform[];
+  socialPeople: SocialPerson[];
+  contentPillars: ContentPillar[];
  contentStrategies: ContentStrategy[];
  contentItems: ContentItem[];
  weeklyContentPlans: WeeklyContentPlan[];
@@ -818,9 +819,10 @@ const OpportunitiesLayout: React.FC<{
  taskWorkLogs, weeklyTaskReviews,
  addTaskWorkLog, updateTaskWorkLog, deleteTaskWorkLog,
  addWeeklyTaskReview, updateWeeklyTaskReview, deleteWeeklyTaskReview,
-  socialPlatforms, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
+   socialPlatforms, socialPeople, contentPillars, contentStrategies, contentItems, weeklyContentPlans,
   socialWeeklySystems, activeSocialWeeklySystem,
   addSocialPlatform, updateSocialPlatform, deleteSocialPlatform,
+  addSocialPerson, updateSocialPerson, deleteSocialPerson,
   addContentPillar, updateContentPillar, deleteContentPillar,
   addContentStrategy, updateContentStrategy, deleteContentStrategy,
   addContentItem, updateContentItem, deleteContentItem,
@@ -1898,8 +1900,9 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
   {tab === 'social' && (
     <SocialMediaPanel
   section={appSection}
-  socialPlatforms={socialPlatforms}
- contentPillars={contentPillars}
+   socialPlatforms={socialPlatforms}
+   socialPeople={socialPeople}
+  contentPillars={contentPillars}
  contentStrategies={contentStrategies}
  contentItems={contentItems}
  weeklyContentPlans={weeklyContentPlans}
@@ -1908,8 +1911,11 @@ onDeleteAIUseCaseSetting={deleteAIUseCaseSetting}
  companies={companies}
  onAddSocialPlatform={addSocialPlatform}
  onUpdateSocialPlatform={updateSocialPlatform}
- onDeleteSocialPlatform={deleteSocialPlatform}
- onAddContentPillar={addContentPillar}
+  onDeleteSocialPlatform={deleteSocialPlatform}
+  onAddSocialPerson={addSocialPerson}
+  onUpdateSocialPerson={updateSocialPerson}
+  onDeleteSocialPerson={deleteSocialPerson}
+  onAddContentPillar={addContentPillar}
  onUpdateContentPillar={updateContentPillar}
  onDeleteContentPillar={deleteContentPillar}
  onAddContentStrategy={addContentStrategy}

@@ -58,6 +58,7 @@ const allowedEntities = new Set([
   'task_work_logs',
   'weekly_task_reviews',
   'social_platforms',
+  'social_people',
   'content_pillars',
   'content_strategy',
   'content_items',
@@ -128,6 +129,7 @@ const tablesAttempted = [
   'task_work_logs',
   'weekly_task_reviews',
   'social_platforms',
+  'social_people',
   'content_pillars',
   'content_strategy',
   'content_items',
@@ -921,6 +923,24 @@ const normalizeRecurringTaskRow = (row) => ({
   notes: toNullableString(row?.notes),
 });
 
+const normalizeSocialPersonRow = (row, { forUpdate = false } = {}) => {
+  const payload = {};
+  if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
+  if (!forUpdate || row?.linkedinUrl !== undefined || row?.linkedin_url !== undefined) payload.linkedin_url = toNullableString(row?.linkedin_url ?? row?.linkedinUrl);
+  if (!forUpdate || row?.instagramUrl !== undefined || row?.instagram_url !== undefined) payload.instagram_url = toNullableString(row?.instagram_url ?? row?.instagramUrl);
+  if (!forUpdate || row?.xUrl !== undefined || row?.x_url !== undefined) payload.x_url = toNullableString(row?.x_url ?? row?.xUrl);
+  if (!forUpdate || row?.websiteUrl !== undefined || row?.website_url !== undefined) payload.website_url = toNullableString(row?.website_url ?? row?.websiteUrl);
+  if (!forUpdate || row?.priority !== undefined) payload.priority = toNullableString(row?.priority) || 'medium';
+  if (!forUpdate || row?.category !== undefined) payload.category = toNullableString(row?.category);
+  if (!forUpdate || row?.reason !== undefined) payload.reason = toNullableString(row?.reason);
+  if (!forUpdate || row?.interactionGoal !== undefined || row?.interaction_goal !== undefined) payload.interaction_goal = toNullableString(row?.interaction_goal ?? row?.interactionGoal);
+  if (!forUpdate || row?.lastInteractionAt !== undefined || row?.last_interaction_at !== undefined) payload.last_interaction_at = toNullableString(row?.last_interaction_at ?? row?.lastInteractionAt);
+  if (!forUpdate || row?.nextInteractionAt !== undefined || row?.next_interaction_at !== undefined) payload.next_interaction_at = toNullableString(row?.next_interaction_at ?? row?.nextInteractionAt);
+  if (!forUpdate || row?.status !== undefined) payload.status = toNullableString(row?.status) || 'active';
+  if (!forUpdate || row?.notes !== undefined) payload.notes = toNullableString(row?.notes);
+  return payload;
+};
+
 const normalizeSocialPlatformRow = (row, { forUpdate = false } = {}) => {
   const payload = {};
   if (!forUpdate || row?.name !== undefined) payload.name = toRequiredString(row?.name);
@@ -1182,6 +1202,7 @@ const normalizeEntityRow = (entity, row) => {
   if (entity === 'task_work_logs') return normalizeTaskWorkLogRow(row);
   if (entity === 'weekly_task_reviews') return normalizeWeeklyTaskReviewRow(row);
   if (entity === 'social_platforms') return normalizeSocialPlatformRow(row);
+  if (entity === 'social_people') return normalizeSocialPersonRow(row);
   if (entity === 'content_pillars') return normalizeContentPillarRow(row);
   if (entity === 'content_strategy') return normalizeContentStrategyRow(row);
   if (entity === 'content_items') return normalizeContentItemRow(row);
@@ -1291,6 +1312,7 @@ const OPTIONAL_TABLES = new Set([
   'task_work_logs',
   'weekly_task_reviews',
   'social_platforms',
+  'social_people',
   'content_pillars',
   'content_strategy',
   'content_items',
@@ -1310,7 +1332,7 @@ const SCOPES = {
   strategy: ['strategy_items', 'strategy_goals', 'strategy_plans', 'strategy_tactics', 'strategy_experiments', 'strategy_decisions', 'plans', 'plan_items'],
   projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
   ai: ['ai_provider_keys', 'ai_use_case_settings'],
-  social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
+  social: ['social_platforms', 'social_people', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
   desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
 };
 
@@ -1460,7 +1482,7 @@ export default async function handler(req, res) {
         plans: ['plans', 'plan_items'],
         projects: ['project_tasks', 'project_time_logs', 'project_meetings', 'project_documents', 'project_finance_items'],
         ai: ['ai_provider_keys', 'ai_use_case_settings'],
-        social: ['social_platforms', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
+        social: ['social_platforms', 'social_people', 'content_pillars', 'content_strategy', 'content_items', 'weekly_content_plans', 'social_weekly_system'],
         desktop: ['desktop_shortcuts', 'desktop_settings', 'desktop_groups'],
         life: ['life_nutrition_logs', 'life_fitness_logs', 'life_deen_logs', 'life_family_actions', 'life_weekly_reviews'],
       };
@@ -1671,6 +1693,8 @@ export default async function handler(req, res) {
                         ? normalizeRelationshipContactMethodRow(data, { forUpdate: true })
                       : entity === 'social_platforms'
                         ? normalizeSocialPlatformRow(data, { forUpdate: true })
+                      : entity === 'social_people'
+                        ? normalizeSocialPersonRow(data, { forUpdate: true })
                       : entity === 'content_pillars'
                         ? normalizeContentPillarRow(data, { forUpdate: true })
                       : entity === 'content_strategy'

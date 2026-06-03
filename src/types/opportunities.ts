@@ -1237,6 +1237,7 @@ export interface OpportunitiesData {
   taskWorkLogs: TaskWorkLog[];
   weeklyTaskReviews: WeeklyTaskReview[];
   socialPlatforms: SocialPlatform[];
+  socialPeople: SocialPerson[];
   contentPillars: ContentPillar[];
   contentStrategies: ContentStrategy[];
   contentItems: ContentItem[];
@@ -1892,6 +1893,44 @@ export interface WeeklyContentPlanInput {
   targetCarousels?: number;
   targetOther?: number;
   reviewNotes?: string;
+}
+
+export type SocialPersonPriority = 'high' | 'medium' | 'low' | 'strategic';
+export type SocialPersonStatus = 'active' | 'paused' | 'archived';
+
+export interface SocialPerson {
+  id: string;
+  name: string;
+  linkedinUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  websiteUrl?: string;
+  priority: SocialPersonPriority;
+  category?: string;
+  reason?: string;
+  interactionGoal?: string;
+  lastInteractionAt?: string;
+  nextInteractionAt?: string;
+  status: SocialPersonStatus;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialPersonInput {
+  name: string;
+  linkedinUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  websiteUrl?: string;
+  priority?: SocialPersonPriority;
+  category?: string;
+  reason?: string;
+  interactionGoal?: string;
+  lastInteractionAt?: string;
+  nextInteractionAt?: string;
+  status?: SocialPersonStatus;
+  notes?: string;
 }
 
 export interface SocialWeeklyTargets {

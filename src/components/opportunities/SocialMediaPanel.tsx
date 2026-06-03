@@ -1,18 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { SocialPlatform, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTask } from '../../types/opportunities';
+import type { SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTask } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
+import SocialPeoplePanel from './SocialPeoplePanel';
 import DirectionalText from '../ui/DirectionalText';
 import { detectTextDirection, getDirectionClass } from '../../utils/textDirection';
+import { useLanguage } from '../../hooks/useLanguage';
 
-const SOCIAL_TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'strategy', label: 'Strategy' },
-  { id: 'platforms', label: 'Platforms' },
-  { id: 'pillars', label: 'Pillars' },
-  { id: 'ideas', label: 'Ideas' },
-  { id: 'weekly', label: 'Weekly Plan' },
-  { id: 'ai-assistant', label: 'AI Assistant' },
-] as const;
+const SOCIAL_TAB_IDS = ['dashboard', 'strategy', 'platforms', 'pillars', 'ideas', 'people', 'weekly', 'ai-assistant'] as const;
+type SocialTabId = typeof SOCIAL_TAB_IDS[number];
 
 const CONTENT_TYPES = ['text_post', 'video', 'short_video', 'carousel', 'thread', 'story', 'reel', 'case_study', 'newsletter', 'image_post', 'poll', 'live', 'other'] as const;
 const CONTENT_STATUSES = ['idea', 'drafted', 'designing', 'recording', 'editing', 'ready', 'scheduled', 'published', 'repurpose', 'archived'] as const;
@@ -80,19 +75,23 @@ const isActiveBadge = (isActive: boolean) =>
  isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-neutral-200 bg-neutral-50 text-neutral-500';
 
 interface SocialMediaPanelProps {
-  section?: typeof SOCIAL_TABS[number]['id'];
- socialPlatforms: SocialPlatform[];
- contentPillars: ContentPillar[];
- contentStrategies: ContentStrategy[];
+  section?: SocialTabId;
+  socialPlatforms: SocialPlatform[];
+  socialPeople: SocialPerson[];
+  contentPillars: ContentPillar[];
+  contentStrategies: ContentStrategy[];
  contentItems: ContentItem[];
  weeklyContentPlans: WeeklyContentPlan[];
  projects: Project[];
  smartNotes: SmartNote[];
  companies: Company[];
- onAddSocialPlatform: (input: SocialPlatformInput) => Promise<SocialPlatform>;
- onUpdateSocialPlatform: (id: string, input: Partial<SocialPlatformInput>) => Promise<SocialPlatform>;
- onDeleteSocialPlatform: (id: string) => Promise<void>;
- onAddContentPillar: (input: ContentPillarInput) => Promise<ContentPillar>;
+  onAddSocialPlatform: (input: SocialPlatformInput) => Promise<SocialPlatform>;
+  onUpdateSocialPlatform: (id: string, input: Partial<SocialPlatformInput>) => Promise<SocialPlatform>;
+  onDeleteSocialPlatform: (id: string) => Promise<void>;
+  onAddSocialPerson: (input: SocialPersonInput) => Promise<SocialPerson>;
+  onUpdateSocialPerson: (id: string, input: Partial<SocialPersonInput>) => Promise<SocialPerson>;
+  onDeleteSocialPerson: (id: string) => Promise<void>;
+  onAddContentPillar: (input: ContentPillarInput) => Promise<ContentPillar>;
  onUpdateContentPillar: (id: string, input: Partial<ContentPillarInput>) => Promise<ContentPillar>;
  onDeleteContentPillar: (id: string) => Promise<void>;
  onAddContentStrategy: (input: ContentStrategyInput) => Promise<ContentStrategy>;
@@ -113,7 +112,18 @@ interface SocialMediaPanelProps {
 }
 
 export default function SocialMediaPanel(props: SocialMediaPanelProps) {
-  const [activeTab, setActiveTab] = useState<typeof SOCIAL_TABS[number]['id']>('dashboard');
+  const { t } = useLanguage();
+  const SOCIAL_TABS = [
+    { id: 'dashboard' as const, label: t('Dashboard', 'لوحة التحكم') },
+    { id: 'strategy' as const, label: t('Strategy', 'الاستراتيجية') },
+    { id: 'platforms' as const, label: t('Platforms', 'المنصات') },
+    { id: 'pillars' as const, label: t('Pillars', 'المحاور') },
+    { id: 'ideas' as const, label: t('Ideas', 'الأفكار') },
+    { id: 'people' as const, label: t('People', 'الأشخاص') },
+    { id: 'weekly' as const, label: t('Weekly Plan', 'الخطة الأسبوعية') },
+    { id: 'ai-assistant' as const, label: t('AI Assistant', 'المساعد الذكي') },
+  ] as const;
+  const [activeTab, setActiveTab] = useState<SocialTabId>('dashboard');
    const now = new Date();
   const currentWeek = WEEK_START(now);
   const todayStr = now.toISOString().slice(0, 10);
@@ -122,7 +132,7 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
     if (props.section) {
       const removed = ['production', 'calendar', 'performance'];
       const target = removed.includes(props.section) ? 'dashboard' : props.section;
-      setActiveTab(target as typeof SOCIAL_TABS[number]['id']);
+      setActiveTab(target as SocialTabId);
     }
   }, [props.section]);
 
@@ -149,7 +159,8 @@ export default function SocialMediaPanel(props: SocialMediaPanelProps) {
  {activeTab === 'strategy' && <StrategyView contentStrategies={props.contentStrategies} onAddContentStrategy={props.onAddContentStrategy} onUpdateContentStrategy={props.onUpdateContentStrategy} onDeleteContentStrategy={props.onDeleteContentStrategy} />}
  {activeTab === 'platforms' && <PlatformsView socialPlatforms={props.socialPlatforms} onAddSocialPlatform={props.onAddSocialPlatform} onUpdateSocialPlatform={props.onUpdateSocialPlatform} onDeleteSocialPlatform={props.onDeleteSocialPlatform} />}
  {activeTab === 'pillars' && <PillarsView contentPillars={props.contentPillars} onAddContentPillar={props.onAddContentPillar} onUpdateContentPillar={props.onUpdateContentPillar} onDeleteContentPillar={props.onDeleteContentPillar} />}
- {activeTab === 'ideas' && <IdeasView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onAddContentItem={props.onAddContentItem} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
+  {activeTab === 'ideas' && <IdeasView contentItems={props.contentItems} socialPlatforms={props.socialPlatforms} contentPillars={props.contentPillars} projects={props.projects} smartNotes={props.smartNotes} companies={props.companies} onAddContentItem={props.onAddContentItem} onUpdateContentItem={props.onUpdateContentItem} onDeleteContentItem={props.onDeleteContentItem} />}
+  {activeTab === 'people' && <SocialPeoplePanel socialPeople={props.socialPeople} onAddSocialPerson={props.onAddSocialPerson} onUpdateSocialPerson={props.onUpdateSocialPerson} onDeleteSocialPerson={props.onDeleteSocialPerson} />}
   {activeTab === 'weekly' && <WeeklyPlanView socialWeeklySystem={props.activeSocialWeeklySystem} onUpdateSocialWeeklySystem={props.onUpdateSocialWeeklySystem} onEnsureDefaultSocialWeeklySystem={props.onEnsureDefaultSocialWeeklySystem} />}
   {activeTab === 'ai-assistant' && (
  <AISocialMediaAssistantPanel
@@ -181,15 +192,16 @@ interface DashboardViewProps {
 }
 
 function DashboardView(props: DashboardViewProps) {
- const metricCards = [
- { label: 'Planned This Week', value: props.thisWeekItems.length },
- { label: 'Published This Week', value: props.publishedThisWeek.length },
- { label: 'Ideas Bank', value: props.ideasCount },
- { label: 'In Production', value: props.inProduction },
- { label: 'Ready to Publish', value: props.readyToPublish },
- { label: 'Scheduled', value: props.scheduledItems.length },
- { label: 'Leads Generated', value: props.totalLeads },
- { label: 'Total Views', value: props.totalViews.toLocaleString() },
+  const { t } = useLanguage();
+  const metricCards = [
+  { label: t('Planned This Week', 'مخطط هذا الأسبوع'), value: props.thisWeekItems.length },
+  { label: t('Published This Week', 'منشور هذا الأسبوع'), value: props.publishedThisWeek.length },
+  { label: t('Ideas Bank', 'بنك الأفكار'), value: props.ideasCount },
+  { label: t('In Production', 'قيد الإنتاج'), value: props.inProduction },
+  { label: t('Ready to Publish', 'جاهز للنشر'), value: props.readyToPublish },
+  { label: t('Scheduled', 'مجدول'), value: props.scheduledItems.length },
+  { label: t('Leads Generated', 'العملاء المتوقعون'), value: props.totalLeads },
+  { label: t('Total Views', 'إجمالي المشاهدات'), value: props.totalViews.toLocaleString() },
  ];
 
  return (
@@ -207,34 +219,34 @@ function DashboardView(props: DashboardViewProps) {
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">This Week Plan</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Week of {formatDate(props.currentWeek)}</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('This Week Plan', 'خطة هذا الأسبوع')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{t('Week of', 'أسبوع')} {formatDate(props.currentWeek)}</p>
  </div>
- <button type="button" onClick={() => props.onNavigate('weekly')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">View Week</button>
+ <button type="button" onClick={() => props.onNavigate('weekly')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('View Week', 'عرض الأسبوع')}</button>
  </div>
  {props.plan ? (
  <div className="mt-3 space-y-2 text-sm text-neutral-700">
- {props.plan.focus && <div className="rounded-md bg-neutral-50 p-3"><span className="font-medium text-neutral-900">Focus:</span> {props.plan.focus}</div>}
- <div className="flex flex-wrap gap-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
- <span>Posts: {props.plan.targetPosts ?? '—'}</span>
- <span>Videos: {props.plan.targetVideos ?? '—'}</span>
- <span>Carousels: {props.plan.targetCarousels ?? '—'}</span>
- <span>Other: {props.plan.targetOther ?? '—'}</span>
- </div>
- {props.plan.reviewNotes && <div className="rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">Review: {props.plan.reviewNotes}</div>}
+  {props.plan.focus && <div className="rounded-md bg-neutral-50 p-3"><span className="font-medium text-neutral-900">{t('Focus:', 'التركيز:')}</span> {props.plan.focus}</div>}
+  <div className="flex flex-wrap gap-3 rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">
+  <span>{t('Posts:', 'المنشورات:')} {props.plan.targetPosts ?? '—'}</span>
+  <span>{t('Videos:', 'الفيديوهات:')} {props.plan.targetVideos ?? '—'}</span>
+  <span>{t('Carousels:', 'الكاروسيل:')} {props.plan.targetCarousels ?? '—'}</span>
+  <span>{t('Other:', 'أخرى:')} {props.plan.targetOther ?? '—'}</span>
+  </div>
+  {props.plan.reviewNotes && <div className="rounded-md bg-neutral-50 p-3 text-xs text-neutral-600">{t('Review:', 'مراجعة:')} {props.plan.reviewNotes}</div>}
  </div>
  ) : (
- <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No plan for this week yet.</div>
+  <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">{t('No plan for this week yet.', 'لا توجد خطة لهذا الأسبوع بعد.')}</div>
  )}
  </div>
 
  <div className="grid gap-4 md:grid-cols-2">
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Content Pipeline</h3>
- <p className="mt-0.5 text-xs text-neutral-500">{props.inProduction} items in production</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Content Pipeline', 'خط أنابيب المحتوى')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{props.inProduction} {t('items in production', 'عنصر قيد الإنتاج')}</p>
  <div className="mt-3 space-y-2">
  {props.inProduction === 0 ? (
- <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No items in production.</div>
+  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">{t('No items in production.', 'لا توجد عناصر قيد الإنتاج.')}</div>
  ) : (
  props.contentItems.filter((item) => ['drafted', 'designing', 'recording', 'editing'].includes(item.status)).slice(0, 5).map((item) => (
  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
@@ -250,17 +262,17 @@ function DashboardView(props: DashboardViewProps) {
  </div>
 
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Ready / Scheduled</h3>
- <p className="mt-0.5 text-xs text-neutral-500">{props.readyScheduled.length} items ready to go</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Ready / Scheduled', 'جاهز / مجدول')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{props.readyScheduled.length} {t('items ready to go', 'عنصر جاهز')}</p>
  <div className="mt-3 space-y-2">
  {props.readyScheduled.length === 0 ? (
- <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No ready or scheduled items.</div>
+  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">{t('No ready or scheduled items.', 'لا توجد عناصر جاهزة أو مجدولة.')}</div>
  ) : (
  props.readyScheduled.map((item) => (
   <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
   <div className="min-w-0 flex-1">
   <DirectionalText text={item.title} className="text-sm font-medium text-neutral-900 truncate" />
-  <div className="text-xs text-neutral-500">{item.platformName || 'No platform'} · {item.publishDate ? formatDate(item.publishDate) : 'No date'}</div>
+  <div className="text-xs text-neutral-500">{item.platformName || t('No platform', 'لا توجد منصة')} · {item.publishDate ? formatDate(item.publishDate) : t('No date', 'لا يوجد تاريخ')}</div>
  </div>
  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${statusBadge(item.status)}`}>{item.status}</span>
  </div>
@@ -274,14 +286,14 @@ function DashboardView(props: DashboardViewProps) {
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">Recent Ideas</h3>
- <p className="mt-0.5 text-xs text-neutral-500">{props.ideasCount} total ideas</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Recent Ideas', 'الأفكار الأخيرة')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{props.ideasCount} {t('total ideas', 'فكرة')}</p>
  </div>
- <button type="button" onClick={() => props.onNavigate('ideas')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">View All</button>
+ <button type="button" onClick={() => props.onNavigate('ideas')} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('View All', 'عرض الكل')}</button>
  </div>
  <div className="mt-3 space-y-2">
  {props.recentIdeas.length === 0 ? (
- <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No ideas yet.</div>
+  <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">{t('No ideas yet.', 'لا توجد أفكار بعد.')}</div>
  ) : (
  props.recentIdeas.map((item) => (
   <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 flex items-center justify-between gap-2">
@@ -297,19 +309,19 @@ function DashboardView(props: DashboardViewProps) {
  </div>
 
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Performance Snapshot</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Lifetime aggregate metrics</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Performance Snapshot', 'لمحة الأداء')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{t('Lifetime aggregate metrics', 'مقاييس إجمالية')}</p>
  <div className="mt-3 grid grid-cols-2 gap-3">
  <div className="rounded-md bg-neutral-50 p-3">
  <div className="text-lg font-semibold text-neutral-900">{props.totalViews.toLocaleString()}</div>
- <div className="text-xs text-neutral-500">Views</div>
+  <div className="text-xs text-neutral-500">{t('Views', 'المشاهدات')}</div>
  </div>
  <div className="rounded-md bg-neutral-50 p-3">
  <div className="text-lg font-semibold text-neutral-900">{props.totalLeads.toLocaleString()}</div>
- <div className="text-xs text-neutral-500">Leads</div>
+  <div className="text-xs text-neutral-500">{t('Leads', 'العملاء المتوقعون')}</div>
  </div>
  </div>
- <button type="button" onClick={() => props.onNavigate('performance')} className="mt-3 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Full Performance</button>
+ <button type="button" onClick={() => props.onNavigate('performance')} className="mt-3 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Full Performance', 'الأداء الكامل')}</button>
  </div>
  </div>
  </div>
@@ -317,38 +329,38 @@ function DashboardView(props: DashboardViewProps) {
  <aside className="space-y-4 xl:sticky xl:top-4 xl:h-fit">
  {props.activeStrategy && (
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Active Strategy</h3>
+  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Active Strategy', 'الاستراتيجية النشطة')}</h3>
   <div className="mt-2 space-y-2 text-sm">
   <DirectionalText text={props.activeStrategy.name} className="font-medium text-neutral-900" />
   {props.activeStrategy.positioning && <DirectionalText text={props.activeStrategy.positioning} className="text-xs text-neutral-500" />}
- {props.activeStrategy.weeklyPostTarget != null && <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-600">Target: {props.activeStrategy.weeklyPostTarget} posts/week</div>}
+  {props.activeStrategy.weeklyPostTarget != null && <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-600">{t('Target:', 'الهدف:')} {props.activeStrategy.weeklyPostTarget} {t('posts/week', 'منشور/أسبوع')}</div>}
  </div>
  </div>
  )}
 
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</h3>
+  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Weekly Targets', 'الأهداف الأسبوعية')}</h3>
  <div className="mt-2 space-y-2">
  {props.plan ? (
  <>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Posts:</span> <span className="text-neutral-600">{props.plan.targetPosts ?? '—'}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Videos:</span> <span className="text-neutral-600">{props.plan.targetVideos ?? '—'}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Carousels:</span> <span className="text-neutral-600">{props.plan.targetCarousels ?? '—'}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Other:</span> <span className="text-neutral-600">{props.plan.targetOther ?? '—'}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Posts:', 'المنشورات:')}</span> <span className="text-neutral-600">{props.plan.targetPosts ?? '—'}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Videos:', 'الفيديوهات:')}</span> <span className="text-neutral-600">{props.plan.targetVideos ?? '—'}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Carousels:', 'الكاروسيل:')}</span> <span className="text-neutral-600">{props.plan.targetCarousels ?? '—'}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Other:', 'أخرى:')}</span> <span className="text-neutral-600">{props.plan.targetOther ?? '—'}</span></div>
  </>
  ) : (
- <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-500">No targets set</div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-500">{t('No targets set', 'لم يتم تحديد أهداف')}</div>
  )}
  </div>
  </div>
 
  <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Quick Stats</h3>
+  <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Quick Stats', 'إحصائيات سريعة')}</h3>
  <div className="mt-2 space-y-2">
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Platforms:</span> <span className="text-neutral-600">{props.socialPlatforms.length}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Pillars:</span> <span className="text-neutral-600">{props.contentPillars.length}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Total Content:</span> <span className="text-neutral-600">{props.contentItems.length}</span></div>
- <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">Published:</span> <span className="text-neutral-600">{props.contentItems.filter((i) => i.status === 'published').length}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Platforms:', 'المنصات:')}</span> <span className="text-neutral-600">{props.socialPlatforms.length}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Pillars:', 'المحاور:')}</span> <span className="text-neutral-600">{props.contentPillars.length}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Total Content:', 'إجمالي المحتوى:')}</span> <span className="text-neutral-600">{props.contentItems.length}</span></div>
+  <div className="rounded-md bg-neutral-50 p-2 text-xs"><span className="font-medium text-neutral-900">{t('Published:', 'المنشور:')}</span> <span className="text-neutral-600">{props.contentItems.filter((i) => i.status === 'published').length}</span></div>
  </div>
  </div>
  </aside>
@@ -366,7 +378,8 @@ interface StrategyViewProps {
 }
 
 function StrategyView(props: StrategyViewProps) {
- const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentStrategyInput> } | null>(null);
+  const { t } = useLanguage();
+  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentStrategyInput> } | null>(null);
  const handleSave = async (input: ContentStrategyInput) => {
  if (editing?.id) { await props.onUpdateContentStrategy(editing.id, input); }
  else { await props.onAddContentStrategy(input); }
@@ -379,15 +392,15 @@ function StrategyView(props: StrategyViewProps) {
  <div className="space-y-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">Content Strategy</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Define your audience, positioning, and weekly targets.</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Content Strategy', 'استراتيجية المحتوى')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{t('Define your audience, positioning, and weekly targets.', 'حدد جمهورك وتحديد موقعك وأهدافك الأسبوعية.')}</p>
  </div>
  {props.contentStrategies.length === 0 && (
- <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Strategy</button>
+  <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Strategy', 'إضافة استراتيجية')}</button>
  )}
  </div>
   {props.contentStrategies.length === 0 ? (
-  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No content strategy yet. Define your audience, positioning, and weekly targets.</div>
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">{t('No content strategy yet. Define your audience, positioning, and weekly targets.', 'لا توجد استراتيجية محتوى بعد. حدد جمهورك وتحديد موقعك وأهدافك الأسبوعية.')}</div>
   ) : (
   <div className="space-y-4">
   {props.contentStrategies.map((strategy) => (
@@ -396,11 +409,11 @@ function StrategyView(props: StrategyViewProps) {
   <div className="flex items-start justify-between gap-4">
   <div className="min-w-0 flex-1">
   <DirectionalText text={strategy.name} className="text-xl font-semibold text-neutral-900" as="div" />
-  <div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-400">Content Strategy</div>
+  <div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-400">{t('Content Strategy', 'استراتيجية المحتوى')}</div>
   </div>
   <div className="flex gap-2 shrink-0">
-  <button type="button" onClick={() => setEditing({ id: strategy.id, data: strategy })} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors">Edit</button>
-  <button type="button" onClick={() => { if (window.confirm('Delete this strategy?')) props.onDeleteContentStrategy(strategy.id); }} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">Delete</button>
+  <button type="button" onClick={() => setEditing({ id: strategy.id, data: strategy })} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors">{t('Edit', 'تعديل')}</button>
+  <button type="button" onClick={() => { if (window.confirm(t('Delete this strategy?', 'حذف هذه الاستراتيجية؟'))) props.onDeleteContentStrategy(strategy.id); }} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
   </div>
   </div>
 
@@ -408,34 +421,34 @@ function StrategyView(props: StrategyViewProps) {
   <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
   {/* Audience */}
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Audience</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Audience', 'الجمهور')}</div>
   {strategy.targetAudience ? (
   <DirectionalText text={strategy.targetAudience} className="mt-2 text-sm text-neutral-800 leading-relaxed" as="div" />
   ) : (
-  <div className="mt-2 text-sm text-neutral-400 italic">Audience not defined yet.</div>
+  <div className="mt-2 text-sm text-neutral-400 italic">{t('Audience not defined yet.', 'لم يتم تحديد الجمهور بعد.')}</div>
   )}
   </div>
 
   {/* Positioning */}
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Positioning', 'التحديد')}</div>
   {strategy.positioning ? (
   <DirectionalText text={strategy.positioning} className="mt-2 text-sm text-neutral-800 leading-relaxed" as="div" />
   ) : (
-  <div className="mt-2 text-sm text-neutral-400 italic">Positioning not defined yet.</div>
+  <div className="mt-2 text-sm text-neutral-400 italic">{t('Positioning not defined yet.', 'لم يتم تحديد الموقع بعد.')}</div>
   )}
   </div>
 
   {/* Weekly Targets */}
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Targets</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Weekly Targets', 'الأهداف الأسبوعية')}</div>
   {(strategy.weeklyPostTarget != null || strategy.weeklyVideoTarget != null) ? (
   <div className="mt-2 space-y-1.5 text-sm text-neutral-800">
-  {strategy.weeklyPostTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyPostTarget} posts</div>}
-  {strategy.weeklyVideoTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyVideoTarget} videos</div>}
+  {strategy.weeklyPostTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyPostTarget} {t('posts', 'منشورات')}</div>}
+  {strategy.weeklyVideoTarget != null && <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />{strategy.weeklyVideoTarget} {t('videos', 'فيديوهات')}</div>}
   </div>
   ) : (
-  <div className="mt-2 text-sm text-neutral-400 italic">Weekly targets not defined yet.</div>
+  <div className="mt-2 text-sm text-neutral-400 italic">{t('Weekly targets not defined yet.', 'لم يتم تحديد الأهداف الأسبوعية بعد.')}</div>
   )}
   </div>
   </div>
@@ -445,25 +458,25 @@ function StrategyView(props: StrategyViewProps) {
   <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
   {strategy.mainPromise && (
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Promise</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Promise', 'الوعد')}</div>
   <DirectionalText text={strategy.mainPromise} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
   </div>
   )}
   {strategy.tone && (
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Tone', 'النبرة')}</div>
   <DirectionalText text={strategy.tone} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
   </div>
   )}
   {strategy.languages && (
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Languages', 'اللغات')}</div>
   <DirectionalText text={strategy.languages} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
   </div>
   )}
   {strategy.activePlatforms && (
   <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platforms</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Platforms', 'المنصات')}</div>
   <DirectionalText text={strategy.activePlatforms} className="mt-1.5 text-sm text-neutral-700 leading-relaxed" as="div" />
   </div>
   )}
@@ -473,7 +486,7 @@ function StrategyView(props: StrategyViewProps) {
   {/* Notes footer */}
   {strategy.notes && (
   <div className="mt-4 border-t border-neutral-100 pt-4">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-400 mb-1.5">Notes</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-400 mb-1.5">{t('Notes', 'ملاحظات')}</div>
   <DirectionalText text={strategy.notes} className="text-sm text-neutral-600 leading-relaxed" as="div" preserveWhitespace />
   </div>
   )}
@@ -481,7 +494,7 @@ function StrategyView(props: StrategyViewProps) {
   {/* Created date footer */}
   {strategy.createdAt && (
   <div className="mt-4 border-t border-neutral-100 pt-3">
-  <span className="text-[11px] text-neutral-400">Created {formatDate(strategy.createdAt)}</span>
+  <span className="text-[11px] text-neutral-400">{t('Created', 'تم الإنشاء')} {formatDate(strategy.createdAt)}</span>
   </div>
   )}
   </div>
@@ -502,7 +515,8 @@ interface PlatformsViewProps {
 }
 
 function PlatformsView(props: PlatformsViewProps) {
- const [editing, setEditing] = useState<{ id?: string; data?: Partial<SocialPlatformInput> } | null>(null);
+  const { t } = useLanguage();
+  const [editing, setEditing] = useState<{ id?: string; data?: Partial<SocialPlatformInput> } | null>(null);
  const createDefaults = async () => {
  for (const p of DEFAULT_PLATFORMS) { await props.onAddSocialPlatform({ name: p.name, slug: p.slug, isActive: true }); }
  };
@@ -518,18 +532,18 @@ function PlatformsView(props: PlatformsViewProps) {
  <div className="space-y-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">Platforms</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Social media platforms where content is published.</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Platforms', 'المنصات')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{t('Social media platforms where content is published.', 'منصات التواصل الاجتماعي حيث يتم نشر المحتوى.')}</p>
  </div>
  <div className="flex gap-2">
  {props.socialPlatforms.length === 0 && (
- <button type="button" onClick={createDefaults} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Create Default Platforms</button>
+  <button type="button" onClick={createDefaults} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">{t('Create Default Platforms', 'إنشاء المنصات الافتراضية')}</button>
  )}
- <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Add Platform</button>
+  <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Add Platform', 'إضافة منصة')}</button>
  </div>
  </div>
  {props.socialPlatforms.length === 0 ? (
- <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No platforms yet. Create default platforms or add your own.</div>
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">{t('No platforms yet. Create default platforms or add your own.', 'لا توجد منصات بعد. أنشئ المنصات الافتراضية أو أضف منصاتك الخاصة.')}</div>
  ) : (
  <div className="grid gap-3 md:grid-cols-2">
  {props.socialPlatforms.map((platform) => (
@@ -541,9 +555,9 @@ function PlatformsView(props: PlatformsViewProps) {
   {platform.notes && <DirectionalText text={platform.notes} className="text-xs text-neutral-500 mt-1" as="div" />}
  </div>
  <div className="flex items-center gap-2 shrink-0">
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(platform.isActive)}`}>{platform.isActive ? 'Active' : 'Inactive'}</span>
- <button type="button" onClick={() => setEditing({ id: platform.id, data: platform })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
- <button type="button" onClick={() => { if (window.confirm('Delete this platform?')) props.onDeleteSocialPlatform(platform.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(platform.isActive)}`}>{platform.isActive ? t('Active', 'نشط') : t('Inactive', 'غير نشط')}</span>
+  <button type="button" onClick={() => setEditing({ id: platform.id, data: platform })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
+  <button type="button" onClick={() => { if (window.confirm(t('Delete this platform?', 'حذف هذه المنصة؟'))) props.onDeleteSocialPlatform(platform.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
  </div>
  </div>
  ))}
@@ -563,7 +577,8 @@ interface PillarsViewProps {
 }
 
 function PillarsView(props: PillarsViewProps) {
- const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentPillarInput> } | null>(null);
+  const { t } = useLanguage();
+  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentPillarInput> } | null>(null);
  const createStarterPillars = async () => {
  for (const p of STARTER_PILLARS) {
  const exists = props.contentPillars.some((cp) => cp.slug === p.slug);
@@ -582,18 +597,18 @@ function PillarsView(props: PillarsViewProps) {
  <div className="space-y-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">Content Pillars</h3>
- <p className="mt-0.5 text-xs text-neutral-500">Themes that define your content categories.</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Content Pillars', 'محاور المحتوى')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{t('Themes that define your content categories.', 'موضوعات تحدد فئات المحتوى الخاص بك.')}</p>
  </div>
  <div className="flex gap-2">
  {props.contentPillars.length === 0 && (
- <button type="button" onClick={createStarterPillars} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Create Starter Pillars</button>
+  <button type="button" onClick={createStarterPillars} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">{t('Create Starter Pillars', 'إنشاء المحاور الأولية')}</button>
  )}
- <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Add Pillar</button>
+  <button type="button" onClick={() => setEditing({})} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Add Pillar', 'إضافة محور')}</button>
  </div>
  </div>
  {props.contentPillars.length === 0 ? (
- <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No pillars yet. Create starter pillars or add your own.</div>
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">{t('No pillars yet. Create starter pillars or add your own.', 'لا توجد محاور بعد. أنشئ المحاور الأولية أو أضف محاورك الخاصة.')}</div>
  ) : (
  <div className="grid gap-3 md:grid-cols-2">
  {props.contentPillars.map((pillar) => (
@@ -603,17 +618,17 @@ function PillarsView(props: PillarsViewProps) {
   <DirectionalText text={pillar.name} className="text-sm font-semibold text-neutral-900" />
   <div className="text-xs text-neutral-500" dir="ltr">/{pillar.slug}</div>
   {pillar.description && <DirectionalText text={pillar.description} className="text-xs text-neutral-500 mt-1" as="div" />}
-  {pillar.targetAudience && <div className="text-xs text-neutral-500 mt-0.5"><DirectionalText text={`Audience: ${pillar.targetAudience}`} /></div>}
+  {pillar.targetAudience && <div className="text-xs text-neutral-500 mt-0.5"><DirectionalText text={`${t('Audience: ', 'الجمهور: ')}${pillar.targetAudience}`} /></div>}
   {pillar.notes && <DirectionalText text={pillar.notes} className="text-xs text-neutral-500 mt-1" as="div" />}
  </div>
  <div className="flex items-center gap-2 shrink-0">
  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${priorityBadge(pillar.priority)}`}>{pillar.priority}</span>
- <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(pillar.isActive)}`}>{pillar.isActive ? 'Active' : 'Inactive'}</span>
+  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${isActiveBadge(pillar.isActive)}`}>{pillar.isActive ? t('Active', 'نشط') : t('Inactive', 'غير نشط')}</span>
  </div>
  </div>
  <div className="mt-3 flex gap-2">
- <button type="button" onClick={() => setEditing({ id: pillar.id, data: pillar })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
- <button type="button" onClick={() => { if (window.confirm('Delete this pillar?')) props.onDeleteContentPillar(pillar.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+  <button type="button" onClick={() => setEditing({ id: pillar.id, data: pillar })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
+  <button type="button" onClick={() => { if (window.confirm(t('Delete this pillar?', 'حذف هذا المحور؟'))) props.onDeleteContentPillar(pillar.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
  </div>
  </div>
  ))}
@@ -638,7 +653,8 @@ interface IdeasViewProps {
 }
 
 function IdeasView(props: IdeasViewProps) {
- const ideas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea'), [props.contentItems]);
+  const { t } = useLanguage();
+  const ideas = useMemo(() => props.contentItems.filter((item) => item.status === 'idea'), [props.contentItems]);
  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
  const [searchQuery, setSearchQuery] = useState('');
  const [typeFilter, setTypeFilter] = useState('');
@@ -682,34 +698,34 @@ function IdeasView(props: IdeasViewProps) {
  <div className="space-y-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <h3 className="text-sm font-semibold text-neutral-900">Ideas Bank</h3>
- <p className="mt-0.5 text-xs text-neutral-500">{ideas.length} content ideas waiting to be developed.</p>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Ideas Bank', 'بنك الأفكار')}</h3>
+  <p className="mt-0.5 text-xs text-neutral-500">{ideas.length} {t('content ideas waiting to be developed.', 'فكرة محتوى تنتظر التطوير.')}</p>
  </div>
- <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">Add Idea</button>
+  <button type="button" onClick={() => setEditing({})} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Idea', 'إضافة فكرة')}</button>
  </div>
 
   <div className="flex flex-wrap items-center gap-3">
-  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[220px] flex-1" placeholder="Search ideas..." />
+  <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[220px] flex-1" placeholder={t('Search ideas...', 'ابحث عن أفكار...')} />
   <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">All types</option>
+  <option value="">{t('All types', 'جميع الأنواع')}</option>
   {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
   </select>
   <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">All platforms</option>
+  <option value="">{t('All platforms', 'جميع المنصات')}</option>
   {props.socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
   </select>
   <select value={pillarFilter} onChange={(e) => setPillarFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">All pillars</option>
+  <option value="">{t('All pillars', 'جميع المحاور')}</option>
   {props.contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
   </select>
   <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">All priorities</option>
+  <option value="">{t('All priorities', 'جميع الأولويات')}</option>
   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
   </select>
   </div>
 
  {filteredIdeas.length === 0 ? (
- <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No ideas found.</div>
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">{t('No ideas found.', 'لم يتم العثور على أفكار.')}</div>
  ) : (
  <div className="space-y-2">
  {filteredIdeas.map((item) => (
@@ -729,9 +745,9 @@ function IdeasView(props: IdeasViewProps) {
   {item.content && <DirectionalText text={item.content} className="mt-1 text-xs text-neutral-500 truncate" as="div" />}
  </div>
  <div className="flex gap-2 shrink-0">
- <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'drafted' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Draft</button>
- <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
- <button type="button" onClick={() => { if (window.confirm('Delete this idea?')) props.onDeleteContentItem(item.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+  <button type="button" onClick={async () => { await props.onUpdateContentItem(item.id, { status: 'drafted' }); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Draft', 'مسودة')}</button>
+  <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
+  <button type="button" onClick={() => { if (window.confirm(t('Delete this idea?', 'حذف هذه الفكرة؟'))) props.onDeleteContentItem(item.id); }} className="rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-red-600 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
  </div>
  </div>
  </div>
@@ -773,6 +789,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 function WeeklyPlanView(props: WeeklyPlanViewProps) {
+  const { t } = useLanguage();
   const system = props.socialWeeklySystem;
 
   useEffect(() => {
@@ -858,13 +875,13 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   };
 
   const handleDelete = async (task: SocialWeeklyTask) => {
-    if (!window.confirm('Delete this weekly task?')) return;
+    if (!window.confirm(t('Delete this weekly task?', 'حذف هذه المهمة الأسبوعية؟'))) return;
     const next = tasks.filter((t) => t.id !== task.id);
     await persistTasks(next);
   };
 
   const handleResetCompleted = async () => {
-    if (!window.confirm('Reset all completed tasks? All tasks will be marked as not done.')) return;
+    if (!window.confirm(t('Reset all completed tasks? All tasks will be marked as not done.', 'إعادة تعيين جميع المهام المنجزة؟ سيتم وضع علامة "غير منجزة" على جميع المهام.'))) return;
     const next = tasks.map((t) => ({ ...t, done: false }));
     await persistTasks(next);
   };
@@ -876,12 +893,12 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-neutral-900">Weekly Social Media Board</h2>
-          <p className="mt-0.5 text-xs text-neutral-500">Recurring social media tasks you repeat every week.</p>
+          <h2 className="text-sm font-semibold text-neutral-900">{t('Weekly Social Media Board', 'لوحة التواصل الاجتماعي الأسبوعية')}</h2>
+          <p className="mt-0.5 text-xs text-neutral-500">{t('Recurring social media tasks you repeat every week.', 'مهام التواصل الاجتماعي المتكررة التي تكررها كل أسبوع.')}</p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button type="button" onClick={handleResetCompleted} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">Reset Completed</button>
-          <button type="button" onClick={openAdd} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">Add Task</button>
+          <button type="button" onClick={handleResetCompleted} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">{t('Reset Completed', 'إعادة تعيين المهام المنجزة')}</button>
+          <button type="button" onClick={openAdd} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Task', 'إضافة مهمة')}</button>
         </div>
       </div>
 
@@ -889,11 +906,11 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
       {totalCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {[
-            { label: 'Total', value: totalCount, color: 'text-neutral-900' },
-            { label: 'Completed', value: doneCount, color: 'text-emerald-700' },
-            { label: 'Remaining', value: remainingCount, color: 'text-amber-700' },
-            { label: 'Active', value: activeCount, color: 'text-blue-700' },
-            ...(highPriorityCount > 0 ? [{ label: 'High Priority', value: highPriorityCount, color: 'text-red-700' }] : []),
+            { label: t('Total', 'الإجمالي'), value: totalCount, color: 'text-neutral-900' },
+            { label: t('Completed', 'مكتمل'), value: doneCount, color: 'text-emerald-700' },
+            { label: t('Remaining', 'المتبقي'), value: remainingCount, color: 'text-amber-700' },
+            { label: t('Active', 'نشط'), value: activeCount, color: 'text-blue-700' },
+            ...(highPriorityCount > 0 ? [{ label: t('High Priority', 'أولوية عالية'), value: highPriorityCount, color: 'text-red-700' }] : []),
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white px-3 py-2 flex items-center gap-2">
               <span className="text-xs text-neutral-500">{stat.label}</span>
@@ -906,9 +923,9 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
       {/* Task board */}
       {tasks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
-          <p className="text-sm text-neutral-500">No weekly tasks yet.</p>
-          <p className="mt-1 text-xs text-neutral-400">Add the recurring social media tasks you want to repeat every week.</p>
-          <button type="button" onClick={openAdd} className="mt-4 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">Add Task</button>
+          <p className="text-sm text-neutral-500">{t('No weekly tasks yet.', 'لا توجد مهام أسبوعية بعد.')}</p>
+          <p className="mt-1 text-xs text-neutral-400">{t('Add the recurring social media tasks you want to repeat every week.', 'أضف مهام التواصل الاجتماعي المتكررة التي تريد تكرارها كل أسبوع.')}</p>
+          <button type="button" onClick={openAdd} className="mt-4 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Task', 'إضافة مهمة')}</button>
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -922,20 +939,20 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
                     <DirectionalText text={title} className={`text-sm font-medium ${task.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${TYPE_COLORS[task.type] || TYPE_COLORS.other}`}>{task.type}</span>
                     {task.targetCount != null && (
-                      <span className="text-[10px] text-neutral-500">Target: {task.targetCount}</span>
+                      <span className="text-[10px] text-neutral-500">{t('Target: ', 'الهدف: ')}{task.targetCount}</span>
                     )}
                     {task.priority && (
                       <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</span>
                     )}
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${task.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{task.done ? 'done' : 'active'}</span>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${task.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{task.done ? t('done', 'تم') : t('active', 'نشط')}</span>
                   </div>
                   {task.notes && (
                     <DirectionalText text={task.notes} className="mt-1 text-xs text-neutral-500 line-clamp-2" />
                   )}
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button type="button" onClick={() => openEdit(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors">Edit</button>
-                  <button type="button" onClick={() => handleDelete(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors">Delete</button>
+                  <button type="button" onClick={() => openEdit(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
+                  <button type="button" onClick={() => handleDelete(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
                 </div>
               </div>
             );
@@ -947,48 +964,48 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
       {modalMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={closeModal}>
           <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-neutral-900 mb-4">{modalMode === 'add' ? 'Add Task' : 'Edit Task'}</h3>
+            <h3 className="text-sm font-semibold text-neutral-900 mb-4">{modalMode === 'add' ? t('Add Task', 'إضافة مهمة') : t('Edit Task', 'تعديل المهمة')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-neutral-500 mb-1 block">Title *</label>
+                <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Title *', 'العنوان *')}</label>
                 <input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} dir={detectTextDirection(formTitle)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(formTitle)}`} placeholder="اكتب 6 بوستات" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">Type</label>
+                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Type', 'النوع')}</label>
                   <select value={formType} onChange={(e) => setFormType(e.target.value as SocialWeeklyTask['type'])} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
                     {TYPE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">Target Count</label>
+                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Target Count', 'العدد المستهدف')}</label>
                   <input type="number" min="0" value={formTargetCount} onChange={(e) => setFormTargetCount(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" placeholder="6" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">Priority</label>
+                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Priority', 'الأولوية')}</label>
                   <select value={formPriority} onChange={(e) => setFormPriority(e.target.value as typeof formPriority)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-                    <option value="">None</option>
+                    <option value="">{t('None', 'لا يوجد')}</option>
                     {PRIORITY_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">Active</label>
+                  <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Active', 'نشط')}</label>
                   <label className="flex items-center gap-2 h-9 px-3 rounded-md border border-neutral-200 bg-white cursor-pointer">
                     <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-neutral-300" />
-                    <span className="text-sm text-neutral-900">{formIsActive ? 'Yes' : 'No'}</span>
+                    <span className="text-sm text-neutral-900">{formIsActive ? t('Yes', 'نعم') : t('No', 'لا')}</span>
                   </label>
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-neutral-500 mb-1 block">Notes</label>
-                <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} dir={detectTextDirection(formNotes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(formNotes)}`} placeholder="Optional notes about this task..." />
+                <label className="text-xs font-semibold text-neutral-500 mb-1 block">{t('Notes', 'ملاحظات')}</label>
+                <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} dir={detectTextDirection(formNotes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(formNotes)}`} placeholder={t('Optional notes about this task...', 'ملاحظات اختيارية حول هذه المهمة...')} />
               </div>
             </div>
             <div className="flex gap-2 mt-5">
-              <button type="button" onClick={handleSave} disabled={!formTitle.trim()} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">Save</button>
-              <button type="button" onClick={closeModal} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
+              <button type="button" onClick={handleSave} disabled={!formTitle.trim()} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">{t('Save', 'حفظ')}</button>
+              <button type="button" onClick={closeModal} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
             </div>
           </div>
         </div>
@@ -1011,7 +1028,8 @@ interface ProductionBoardViewProps {
 }
 
 function ProductionBoardView(props: ProductionBoardViewProps) {
- const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
+  const { t } = useLanguage();
+  const [editing, setEditing] = useState<{ id?: string; data?: Partial<ContentItemInput> } | null>(null);
  const groupedByStatus = useMemo(() => {
  const groups: Record<string, ContentItem[]> = {};
  for (const item of props.contentItems) {
@@ -1060,7 +1078,7 @@ function ProductionBoardView(props: ProductionBoardViewProps) {
  </div>
  <div className="p-3 space-y-3 max-h-[65vh] overflow-y-auto">
  {items.length === 0 && (
- <div className="rounded-md border border-dashed border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500 text-center">No items</div>
+  <div className="rounded-md border border-dashed border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500 text-center">{t('No items', 'لا توجد عناصر')}</div>
  )}
  {items.map((item) => (
  <div key={item.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
@@ -1070,10 +1088,10 @@ function ProductionBoardView(props: ProductionBoardViewProps) {
  {item.platformName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.platformName}</span>}
  {item.pillarName && <span className="text-[10px] rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-neutral-600">{item.pillarName}</span>}
  </div>
- {item.publishDate && <div className="mt-1 text-[10px] text-neutral-500">Publish: {formatDate(item.publishDate)}</div>}
+  {item.publishDate && <div className="mt-1 text-[10px] text-neutral-500">{t('Publish: ', 'نشر: ')}{formatDate(item.publishDate)}</div>}
   {item.hook && <DirectionalText text={`"${item.hook}"`} className="mt-1 text-[10px] text-neutral-500 truncate" as="div" />}
  <div className="mt-2 flex gap-1">
- <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900 hover:bg-neutral-50 transition-colors">Edit</button>
+  <button type="button" onClick={() => setEditing({ id: item.id, data: item })} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
  <select
  value={item.status}
  onChange={(e) => moveStatus(item.id, e.target.value)}
@@ -1083,7 +1101,7 @@ function ProductionBoardView(props: ProductionBoardViewProps) {
  <option key={s} value={s}>{s}</option>
  ))}
  </select>
- <button type="button" onClick={() => { if (window.confirm('Delete?')) props.onDeleteContentItem(item.id); }} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-red-600 hover:bg-red-50 transition-colors">Del</button>
+  <button type="button" onClick={() => { if (window.confirm(t('Delete?', 'حذف؟'))) props.onDeleteContentItem(item.id); }} className="text-[10px] rounded-md border border-neutral-200 bg-white px-2 py-1 text-red-600 hover:bg-red-50 transition-colors">{t('Del', 'حذف')}</button>
  </div>
  </div>
  ))}
@@ -1104,7 +1122,8 @@ interface CalendarViewProps {
 }
 
 function CalendarView(props: CalendarViewProps) {
- const itemsWithDate = useMemo(() => props.contentItems.filter((item) => item.publishDate).sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '')), [props.contentItems]);
+  const { t } = useLanguage();
+  const itemsWithDate = useMemo(() => props.contentItems.filter((item) => item.publishDate).sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '')), [props.contentItems]);
  const groupedByDate = useMemo(() => {
  const groups: Record<string, ContentItem[]> = {};
  for (const item of itemsWithDate) {
@@ -1117,9 +1136,9 @@ function CalendarView(props: CalendarViewProps) {
 
  return (
  <div className="space-y-4">
- <h3 className="text-sm font-semibold text-neutral-900">Content Calendar</h3>
- {Object.keys(groupedByDate).length === 0 ? (
- <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">No scheduled content. Set a publish date on content items to see them here.</div>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Content Calendar', 'تقويم المحتوى')}</h3>
+  {Object.keys(groupedByDate).length === 0 ? (
+  <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-500 text-center">{t('No scheduled content. Set a publish date on content items to see them here.', 'لا يوجد محتوى مجدول. حدد تاريخ نشر لعناصر المحتوى لرؤيتها هنا.')}</div>
  ) : (
  <div className="space-y-3">
  {Object.entries(groupedByDate).map(([date, items]) => (
@@ -1156,7 +1175,8 @@ interface PerformanceViewProps {
 }
 
 function PerformanceView(props: PerformanceViewProps) {
- const published = useMemo(() => props.contentItems.filter((item) => item.status === 'published'), [props.contentItems]);
+  const { t } = useLanguage();
+  const published = useMemo(() => props.contentItems.filter((item) => item.status === 'published'), [props.contentItems]);
  const stats = useMemo(() => {
  const totalViews = published.reduce((sum, item) => sum + (item.performanceViews || 0), 0);
  const totalLikes = published.reduce((sum, item) => sum + (item.performanceLikes || 0), 0);
@@ -1179,35 +1199,35 @@ function PerformanceView(props: PerformanceViewProps) {
  return (
  <div className="space-y-7">
  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalViews.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Views</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalLikes.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Likes</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalComments.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Comments</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalShares.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Shares</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalSaves.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Saves</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalClicks.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Total Clicks</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{props.totalLeads.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Leads Generated</div></div>
- <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{published.length}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">Published Items</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalViews.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Views', 'إجمالي المشاهدات')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalLikes.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Likes', 'إجمالي الإعجابات')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalComments.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Comments', 'إجمالي التعليقات')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalShares.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Shares', 'إجمالي المشاركات')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalSaves.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Saves', 'إجمالي الحفظ')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{stats.totalClicks.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Total Clicks', 'إجمالي النقرات')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{props.totalLeads.toLocaleString()}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Leads Generated', 'العملاء المتوقعون')}</div></div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-4"><div className="text-2xl font-semibold text-neutral-900">{published.length}</div><div className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-neutral-500">{t('Published Items', 'العناصر المنشورة')}</div></div>
  </div>
 
  <div className="grid gap-4 md:grid-cols-2">
  {stats.byViews.length > 0 && (
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Best by Views</h3>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Best by Views', 'الأفضل حسب المشاهدات')}</h3>
  <div className="mt-2 gap-2 text-sm">
  <div className="rounded-md bg-neutral-50 p-3">
   <DirectionalText text={stats.byViews[0].title} className="font-medium text-neutral-900" />
-  <div className="text-xs text-neutral-500 mt-1">{stats.byViews[0].performanceViews?.toLocaleString()} views</div>
+  <div className="text-xs text-neutral-500 mt-1">{stats.byViews[0].performanceViews?.toLocaleString()} {t('views', 'مشاهدة')}</div>
  </div>
  </div>
  </div>
  )}
  {stats.byLeads.length > 0 && (
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Best by Leads</h3>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Best by Leads', 'الأفضل حسب العملاء المتوقعين')}</h3>
  <div className="mt-2 gap-2 text-sm">
  <div className="rounded-md bg-neutral-50 p-3">
   <DirectionalText text={stats.byLeads[0].title} className="font-medium text-neutral-900" />
-  <div className="text-xs text-neutral-500 mt-1">{stats.byLeads[0].leadsGenerated} leads</div>
+  <div className="text-xs text-neutral-500 mt-1">{stats.byLeads[0].leadsGenerated} {t('leads', 'عميل متوقع')}</div>
  </div>
  </div>
  </div>
@@ -1215,9 +1235,9 @@ function PerformanceView(props: PerformanceViewProps) {
  </div>
 
  <div className="rounded-xl border border-neutral-200 bg-white p-5">
- <h3 className="text-sm font-semibold text-neutral-900">Published Content ({published.length})</h3>
- {published.length === 0 ? (
- <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">No published content yet.</div>
+  <h3 className="text-sm font-semibold text-neutral-900">{t('Published Content', 'المحتوى المنشور')} ({published.length})</h3>
+  {published.length === 0 ? (
+  <div className="mt-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500 text-center">{t('No published content yet.', 'لا يوجد محتوى منشور بعد.')}</div>
  ) : (
  <div className="mt-3 space-y-2">
  {published.map((item) => (
@@ -1225,9 +1245,9 @@ function PerformanceView(props: PerformanceViewProps) {
  <div className="flex items-start justify-between gap-3">
  <div className="min-w-0 flex-1">
   <DirectionalText text={item.title} className="text-sm font-medium text-neutral-900" />
-  <div className="text-xs text-neutral-500 mt-0.5">{item.type} | {item.platformName || 'No platform'} | {item.publishDate ? formatDate(item.publishDate) : 'No date'}</div>
+  <div className="text-xs text-neutral-500 mt-0.5">{item.type} | {item.platformName || t('No platform', 'لا توجد منصة')} | {item.publishDate ? formatDate(item.publishDate) : t('No date', 'لا يوجد تاريخ')}</div>
  </div>
- <button type="button" onClick={() => { setEditPerf(item.id); setPerfData(item); }} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">Edit Perf</button>
+  <button type="button" onClick={() => { setEditPerf(item.id); setPerfData(item); }} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors shrink-0">{t('Edit Perf', 'تعديل الأداء')}</button>
  </div>
  {editPerf === item.id && (
  <div className="mt-3 grid grid-cols-3 md:grid-cols-4 gap-3 p-3 bg-white rounded-md border border-neutral-200">
@@ -1243,8 +1263,8 @@ function PerformanceView(props: PerformanceViewProps) {
  </div>
  ))}
  <div className="col-span-full flex gap-2 mt-2">
- <button type="button" onClick={() => handleSavePerf(item)} className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">Save</button>
- <button type="button" onClick={() => setEditPerf(null)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
+  <button type="button" onClick={() => handleSavePerf(item)} className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">{t('Save', 'حفظ')}</button>
+  <button type="button" onClick={() => setEditPerf(null)} className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
  </div>
  </div>
  )}
@@ -1260,7 +1280,8 @@ function PerformanceView(props: PerformanceViewProps) {
 // ── Standalone Forms ──
 
 function SocialPlatformForm({ initial, onSave, onCancel }: { initial?: Partial<SocialPlatformInput>; onSave: (input: SocialPlatformInput) => Promise<void>; onCancel: () => void }) {
- const [name, setName] = useState(initial?.name || '');
+  const { t } = useLanguage();
+  const [name, setName] = useState(initial?.name || '');
  const [slug, setSlug] = useState(initial?.slug || '');
  const [url, setUrl] = useState(initial?.url || '');
  const [isActive, setIsActive] = useState(initial?.isActive ?? true);
@@ -1276,39 +1297,40 @@ function SocialPlatformForm({ initial, onSave, onCancel }: { initial?: Partial<S
 
  return (
  <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
- <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Platform</h4>
- <div className="grid gap-4 md:grid-cols-2">
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+  <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? t('Edit Platform', 'تعديل المنصة') : t('Add Platform', 'إضافة منصة')}</h4>
+  <div className="grid gap-4 md:grid-cols-2">
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Name *', 'الاسم *')}</div>
   <input value={name} onChange={(e) => setName(e.target.value)} required dir={detectTextDirection(name)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(name)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Slug *</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Slug *', 'الرابط المختصر *')}</div>
   <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" dir="ltr" />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">URL</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('URL', 'الرابط')}</div>
   <input value={url} onChange={(e) => setUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" dir="ltr" />
   </label>
   <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 self-end">
   <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4" />
-  <span className="text-sm text-neutral-900">Active</span>
+  <span className="text-sm text-neutral-900">{t('Active', 'نشط')}</span>
   </label>
   <label className="space-y-1.5 md:col-span-2">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Notes', 'ملاحظات')}</div>
   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} dir={detectTextDirection(notes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(notes)}`} rows={2} />
- </label>
- </div>
- <div className="flex gap-2 mt-4">
- <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
- <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
- </div>
- </form>
- );
-}
+  </label>
+  </div>
+  <div className="flex gap-2 mt-4">
+  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? t('Saving...', 'جارٍ الحفظ...') : t('Save', 'حفظ')}</button>
+  <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
+  </div>
+  </form>
+  );
+ }
 
-function ContentPillarForm({ initial, onSave, onCancel }: { initial?: Partial<ContentPillarInput>; onSave: (input: ContentPillarInput) => Promise<void>; onCancel: () => void }) {
- const [name, setName] = useState(initial?.name || '');
+ function ContentPillarForm({ initial, onSave, onCancel }: { initial?: Partial<ContentPillarInput>; onSave: (input: ContentPillarInput) => Promise<void>; onCancel: () => void }) {
+  const { t } = useLanguage();
+  const [name, setName] = useState(initial?.name || '');
  const [slug, setSlug] = useState(initial?.slug || '');
  const [description, setDescription] = useState(initial?.description || '');
  const [targetAudience, setTargetAudience] = useState(initial?.targetAudience || '');
@@ -1332,49 +1354,50 @@ function ContentPillarForm({ initial, onSave, onCancel }: { initial?: Partial<Co
 
  return (
  <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
- <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Pillar</h4>
- <div className="grid gap-4 md:grid-cols-2">
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+  <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? t('Edit Pillar', 'تعديل المحور') : t('Add Pillar', 'إضافة محور')}</h4>
+  <div className="grid gap-4 md:grid-cols-2">
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Name *', 'الاسم *')}</div>
   <input value={name} onChange={(e) => setName(e.target.value)} required dir={detectTextDirection(name)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(name)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Slug *</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Slug *', 'الرابط المختصر *')}</div>
   <input value={slug} onChange={(e) => setSlug(e.target.value)} required className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" dir="ltr" />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Description</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Description', 'الوصف')}</div>
   <input value={description} onChange={(e) => setDescription(e.target.value)} dir={detectTextDirection(description)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(description)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Audience</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Target Audience', 'الجمهور المستهدف')}</div>
   <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} dir={detectTextDirection(targetAudience)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(targetAudience)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Priority</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Priority', 'الأولوية')}</div>
   <select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
   </select>
   </label>
   <label className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 self-end">
   <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="h-4 w-4" />
-  <span className="text-sm text-neutral-900">Active</span>
+  <span className="text-sm text-neutral-900">{t('Active', 'نشط')}</span>
   </label>
   <label className="space-y-1.5 md:col-span-2">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Notes', 'ملاحظات')}</div>
   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} dir={detectTextDirection(notes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(notes)}`} rows={2} />
- </label>
- </div>
- <div className="flex gap-2 mt-4">
- <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
- <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
- </div>
- </form>
- );
-}
+  </label>
+  </div>
+  <div className="flex gap-2 mt-4">
+  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? t('Saving...', 'جارٍ الحفظ...') : t('Save', 'حفظ')}</button>
+  <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
+  </div>
+  </form>
+  );
+ }
 
-function ContentStrategyForm({ initial, onSave, onCancel }: { initial?: Partial<ContentStrategyInput>; onSave: (input: ContentStrategyInput) => Promise<void>; onCancel: () => void }) {
- const [name, setName] = useState(initial?.name || '');
+ function ContentStrategyForm({ initial, onSave, onCancel }: { initial?: Partial<ContentStrategyInput>; onSave: (input: ContentStrategyInput) => Promise<void>; onCancel: () => void }) {
+  const { t } = useLanguage();
+  const [name, setName] = useState(initial?.name || '');
  const [targetAudience, setTargetAudience] = useState(initial?.targetAudience || '');
  const [positioning, setPositioning] = useState(initial?.positioning || '');
  const [mainPromise, setMainPromise] = useState(initial?.mainPromise || '');
@@ -1404,68 +1427,69 @@ function ContentStrategyForm({ initial, onSave, onCancel }: { initial?: Partial<
 
  return (
  <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
- <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Strategy</h4>
- <div className="grid gap-4 md:grid-cols-2">
-  <label className="space-y-1.5 md:col-span-2">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Name *</div>
+  <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? t('Edit Strategy', 'تعديل الاستراتيجية') : t('Add Strategy', 'إضافة استراتيجية')}</h4>
+  <div className="grid gap-4 md:grid-cols-2">
+   <label className="space-y-1.5 md:col-span-2">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Name *', 'الاسم *')}</div>
   <input value={name} onChange={(e) => setName(e.target.value)} required dir={detectTextDirection(name)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(name)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Target Audience</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Target Audience', 'الجمهور المستهدف')}</div>
   <input value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} dir={detectTextDirection(targetAudience)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(targetAudience)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Positioning</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Positioning', 'التحديد')}</div>
   <input value={positioning} onChange={(e) => setPositioning(e.target.value)} dir={detectTextDirection(positioning)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(positioning)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Main Promise</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Main Promise', 'الوعد الرئيسي')}</div>
   <input value={mainPromise} onChange={(e) => setMainPromise(e.target.value)} dir={detectTextDirection(mainPromise)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(mainPromise)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Tone</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Tone', 'النبرة')}</div>
   <input value={tone} onChange={(e) => setTone(e.target.value)} dir={detectTextDirection(tone)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(tone)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Languages</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Languages', 'اللغات')}</div>
   <input value={languages} onChange={(e) => setLanguages(e.target.value)} dir={detectTextDirection(languages)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(languages)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Post Target</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Weekly Post Target', 'الهدف الأسبوعي للمنشورات')}</div>
   <input type="number" min="0" value={weeklyPostTarget} onChange={(e) => setWeeklyPostTarget(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Weekly Video Target</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Weekly Video Target', 'الهدف الأسبوعي للفيديوهات')}</div>
   <input type="number" min="0" value={weeklyVideoTarget} onChange={(e) => setWeeklyVideoTarget(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
   </label>
   <label className="space-y-1.5 md:col-span-2">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Active Platforms</div>
-  <input value={activePlatforms} onChange={(e) => setActivePlatforms(e.target.value)} placeholder="e.g. LinkedIn, X, Instagram" dir={detectTextDirection(activePlatforms)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(activePlatforms)}`} />
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Active Platforms', 'المنصات النشطة')}</div>
+  <input value={activePlatforms} onChange={(e) => setActivePlatforms(e.target.value)} placeholder={t('e.g. LinkedIn, X, Instagram', 'مثال: لينكد إن، إكس، إنستغرام')} dir={detectTextDirection(activePlatforms)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(activePlatforms)}`} />
   </label>
   <label className="space-y-1.5 md:col-span-2">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Notes</div>
+  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Notes', 'ملاحظات')}</div>
   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} dir={detectTextDirection(notes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(notes)}`} rows={2} />
- </label>
- </div>
- <div className="flex gap-2 mt-4">
- <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? 'Saving...' : 'Save'}</button>
- <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">Cancel</button>
- </div>
- </form>
- );
-}
+  </label>
+  </div>
+  <div className="flex gap-2 mt-4">
+  <button type="submit" disabled={saving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-70">{saving ? t('Saving...', 'جارٍ الحفظ...') : t('Save', 'حفظ')}</button>
+  <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
+  </div>
+  </form>
+  );
+ }
 
 function ContentItemForm({ initial, socialPlatforms, contentPillars, projects, smartNotes, companies, onSave, onCancel }: {
- initial?: Partial<ContentItemInput>;
- socialPlatforms: SocialPlatform[];
- contentPillars: ContentPillar[];
- projects: Project[];
- smartNotes: SmartNote[];
- companies: Company[];
- onSave: (input: ContentItemInput) => Promise<void>;
- onCancel: () => void;
+  initial?: Partial<ContentItemInput>;
+  socialPlatforms: SocialPlatform[];
+  contentPillars: ContentPillar[];
+  projects: Project[];
+  smartNotes: SmartNote[];
+  companies: Company[];
+  onSave: (input: ContentItemInput) => Promise<void>;
+  onCancel: () => void;
 }) {
- const [title, setTitle] = useState(initial?.title || '');
+  const { t } = useLanguage();
+  const [title, setTitle] = useState(initial?.title || '');
  const [type, setType] = useState(initial?.type || 'text_post');
  const [priority, setPriority] = useState(initial?.priority || 'medium');
  const [status, setStatus] = useState(initial?.status || 'idea');
@@ -1502,87 +1526,87 @@ function ContentItemForm({ initial, socialPlatforms, contentPillars, projects, s
 
  return (
  <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-200 bg-white p-5">
- <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? 'Edit' : 'Add'} Content</h4>
- <div className="grid gap-4 md:grid-cols-3">
-  <label className="space-y-1.5 md:col-span-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Title *</div>
-  <input value={title} onChange={(e) => setTitle(e.target.value)} required dir={detectTextDirection(title)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(title)}`} />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Type</div>
+  <h4 className="text-sm font-semibold text-neutral-900 mb-4">{initial?.id ? t('Edit Content', 'تعديل المحتوى') : t('Add Content', 'إضافة محتوى')}</h4>
+  <div className="grid gap-4 md:grid-cols-3">
+   <label className="space-y-1.5 md:col-span-3">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Title *', 'العنوان *')}</div>
+   <input value={title} onChange={(e) => setTitle(e.target.value)} required dir={detectTextDirection(title)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(title)}`} />
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Type', 'النوع')}</div>
   <select value={type} onChange={(e) => setType(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
   {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
   </select>
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Priority</div>
-  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-  </select>
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Status</div>
-  <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  {CONTENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-  </select>
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Platform</div>
-  <select value={platformId} onChange={(e) => setPlatformId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">None</option>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Priority', 'الأولوية')}</div>
+   <select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+   </select>
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Status', 'الحالة')}</div>
+   <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   {CONTENT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+   </select>
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Platform', 'المنصة')}</div>
+   <select value={platformId} onChange={(e) => setPlatformId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   <option value="">{t('None', 'لا يوجد')}</option>
   {socialPlatforms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
   </select>
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Pillar</div>
-  <select value={pillarId} onChange={(e) => setPillarId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">None</option>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Pillar', 'المحور')}</div>
+   <select value={pillarId} onChange={(e) => setPillarId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   <option value="">{t('None', 'لا يوجد')}</option>
   {contentPillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
   </select>
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Publish Date</div>
-  <input type="date" value={publishDate} onChange={(e) => setPublishDate(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Week Start</div>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Publish Date', 'تاريخ النشر')}</div>
+   <input type="date" value={publishDate} onChange={(e) => setPublishDate(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Week Start', 'بداية الأسبوع')}</div>
   <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Asset URL</div>
-  <input value={assetUrl} onChange={(e) => setAssetUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" dir="ltr" />
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Hook</div>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Asset URL', 'رابط الأصل')}</div>
+   <input value={assetUrl} onChange={(e) => setAssetUrl(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400" dir="ltr" />
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Hook', 'الخطاف')}</div>
   <input value={hook} onChange={(e) => setHook(e.target.value)} dir={detectTextDirection(hook)} className={`h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(hook)}`} />
   </label>
   <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Project</div>
-  <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">None</option>
-  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-  </select>
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Note</div>
-  <select value={linkedNoteId} onChange={(e) => setLinkedNoteId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">None</option>
-  {smartNotes.map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}
-  </select>
-  </label>
-  <label className="space-y-1.5">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Linked Company</div>
-  <select value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
-  <option value="">None</option>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Linked Project', 'المشروع المرتبط')}</div>
+   <select value={linkedProjectId} onChange={(e) => setLinkedProjectId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   <option value="">{t('None', 'لا يوجد')}</option>
+   {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+   </select>
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Linked Note', 'الملاحظة المرتبطة')}</div>
+   <select value={linkedNoteId} onChange={(e) => setLinkedNoteId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   <option value="">{t('None', 'لا يوجد')}</option>
+   {smartNotes.map((n) => <option key={n.id} value={n.id}>{n.title}</option>)}
+   </select>
+   </label>
+   <label className="space-y-1.5">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Linked Company', 'الشركة المرتبطة')}</div>
+   <select value={linkedCompanyId} onChange={(e) => setLinkedCompanyId(e.target.value)} className="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400">
+   <option value="">{t('None', 'لا يوجد')}</option>
   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
   </select>
   </label>
   <label className="space-y-1.5 md:col-span-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Content</div>
-  <textarea value={content} onChange={(e) => setContent(e.target.value)} dir={detectTextDirection(content)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(content)}`} rows={3} />
-  </label>
-  <label className="space-y-1.5 md:col-span-3">
-  <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">Caption</div>
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Content', 'المحتوى')}</div>
+   <textarea value={content} onChange={(e) => setContent(e.target.value)} dir={detectTextDirection(content)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(content)}`} rows={3} />
+   </label>
+   <label className="space-y-1.5 md:col-span-3">
+   <div className="text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500">{t('Caption', 'التعليق')}</div>
   <textarea value={caption} onChange={(e) => setCaption(e.target.value)} dir={detectTextDirection(caption)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 ${getDirectionClass(caption)}`} rows={2} />
   </label>
   <label className="space-y-1.5 md:col-span-3">

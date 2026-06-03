@@ -142,6 +142,8 @@ import type {
   RecurringTaskInput,
   SocialPlatform,
   SocialPlatformInput,
+  SocialPerson,
+  SocialPersonInput,
   ContentPillar,
   ContentPillarInput,
   ContentStrategy,
@@ -221,6 +223,7 @@ const cloneSeedData = (): OpportunitiesData => ({
   tasks: [],
   recurringTasks: [],
   socialPlatforms: [],
+  socialPeople: [],
   contentPillars: [],
   contentStrategies: [],
   contentItems: [],
@@ -1712,6 +1715,43 @@ const socialPlatformToDb = (input: Partial<SocialPlatformInput>) => {
   return payload;
 };
 
+const socialPersonFromDb = (row: any): SocialPerson => ({
+  id: String(row?.id ?? ''),
+  name: String(row?.name ?? ''),
+  linkedinUrl: row?.linkedin_url ?? row?.linkedinUrl ?? undefined,
+  instagramUrl: row?.instagram_url ?? row?.instagramUrl ?? undefined,
+  xUrl: row?.x_url ?? row?.xUrl ?? undefined,
+  websiteUrl: row?.website_url ?? row?.websiteUrl ?? undefined,
+  priority: row?.priority ?? 'medium',
+  category: row?.category ?? undefined,
+  reason: row?.reason ?? undefined,
+  interactionGoal: row?.interaction_goal ?? row?.interactionGoal ?? undefined,
+  lastInteractionAt: row?.last_interaction_at ?? row?.lastInteractionAt ?? undefined,
+  nextInteractionAt: row?.next_interaction_at ?? row?.nextInteractionAt ?? undefined,
+  status: row?.status ?? 'active',
+  notes: row?.notes ?? undefined,
+  createdAt: row?.created_at ?? row?.createdAt ?? undefined,
+  updatedAt: row?.updated_at ?? row?.updatedAt ?? undefined,
+});
+
+const socialPersonToDb = (input: Partial<SocialPersonInput>) => {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = String(input.name || '').trim();
+  if (input.linkedinUrl !== undefined) payload.linkedin_url = toNullableString(input.linkedinUrl);
+  if (input.instagramUrl !== undefined) payload.instagram_url = toNullableString(input.instagramUrl);
+  if (input.xUrl !== undefined) payload.x_url = toNullableString(input.xUrl);
+  if (input.websiteUrl !== undefined) payload.website_url = toNullableString(input.websiteUrl);
+  if (input.priority !== undefined) payload.priority = input.priority;
+  if (input.category !== undefined) payload.category = toNullableString(input.category);
+  if (input.reason !== undefined) payload.reason = toNullableString(input.reason);
+  if (input.interactionGoal !== undefined) payload.interaction_goal = toNullableString(input.interactionGoal);
+  if (input.lastInteractionAt !== undefined) payload.last_interaction_at = toNullableString(input.lastInteractionAt);
+  if (input.nextInteractionAt !== undefined) payload.next_interaction_at = toNullableString(input.nextInteractionAt);
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.notes !== undefined) payload.notes = toNullableString(input.notes);
+  return payload;
+};
+
 const contentPillarFromDb = (row: any): ContentPillar => ({
   id: String(row?.id ?? ''),
   name: String(row?.name ?? ''),
@@ -2101,6 +2141,7 @@ export const useOpportunitiesData = (enabled = true) => {
   const [weeklyTaskReviews, setWeeklyTaskReviews] = useState<WeeklyTaskReview[]>([]);
   const [strategyNotes] = useState(() => cloneSeedData().strategyNotes);
   const [socialPlatforms, setSocialPlatforms] = useState<SocialPlatform[]>([]);
+  const [socialPeople, setSocialPeople] = useState<SocialPerson[]>([]);
   const [contentPillars, setContentPillars] = useState<ContentPillar[]>([]);
   const [contentStrategies, setContentStrategies] = useState<ContentStrategy[]>([]);
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
@@ -2371,6 +2412,7 @@ export const useOpportunitiesData = (enabled = true) => {
 
     // ── Social ──
     if (has('social_platforms')) setSocialPlatforms((raw('social_platforms') || []).map((row: any) => socialPlatformFromDb(row)));
+    if (has('social_people')) setSocialPeople((raw('social_people') || []).map((row: any) => socialPersonFromDb(row)));
     if (has('content_pillars')) setContentPillars((raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)));
     if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
     if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
@@ -2550,6 +2592,7 @@ export const useOpportunitiesData = (enabled = true) => {
         setPersonContactMethods(fallback.personContactMethods || []);
         setCompanyProblemProfiles(fallback.companyProblemProfiles);
         setCompanyOutreachScripts(fallback.companyOutreachScripts);
+        setSocialPeople(fallback.socialPeople);
         setSocialWeeklySystems(fallback.socialWeeklySystems);
         setError('Using seed data fallback.');
       } finally {
@@ -4454,6 +4497,33 @@ export const useOpportunitiesData = (enabled = true) => {
     setSocialPlatforms((current) => current.filter((item) => item.id !== id));
   };
 
+  const addSocialPerson = async (input: SocialPersonInput) => {
+    if (!String(input.name || '').trim()) {
+      throw new Error('Person name is required.');
+    }
+    const row = await syncInsert('social_people', socialPersonToDb(input));
+    const next = socialPersonFromDb(row);
+    setSocialPeople((current) => [next, ...current]);
+    return next;
+  };
+
+  const updateSocialPerson = async (id: string, input: Partial<SocialPersonInput>) => {
+    if (input.name !== undefined && !String(input.name || '').trim()) {
+      throw new Error('Person name is required.');
+    }
+    const row = await syncUpdate('social_people', id, socialPersonToDb(input));
+    const next = socialPersonFromDb(row);
+    setSocialPeople((current) => current.map((item) => (item.id === id ? next : item)));
+    return next;
+  };
+
+  const deleteSocialPerson = async (id: string) => {
+    const confirmed = window.confirm('Delete this social media person?');
+    if (!confirmed) return;
+    await syncDelete('social_people' as any, id);
+    setSocialPeople((current) => current.filter((item) => item.id !== id));
+  };
+
   const addContentPillar = async (input: ContentPillarInput) => {
     if (!String(input.name || '').trim()) {
       throw new Error('Pillar name is required.');
@@ -5106,6 +5176,7 @@ export const useOpportunitiesData = (enabled = true) => {
     error,
     loadedScopes,
     socialPlatforms,
+    socialPeople,
     contentPillars,
     contentStrategies,
     contentItems,
@@ -5119,6 +5190,9 @@ export const useOpportunitiesData = (enabled = true) => {
     addSocialPlatform,
     updateSocialPlatform,
     deleteSocialPlatform,
+    addSocialPerson,
+    updateSocialPerson,
+    deleteSocialPerson,
     addContentPillar,
     updateContentPillar,
     deleteContentPillar,
