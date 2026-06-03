@@ -2416,7 +2416,7 @@ export const useOpportunitiesData = (enabled = true) => {
     if (has('content_pillars')) setContentPillars((raw('content_pillars') || []).map((row: any) => contentPillarFromDb(row)));
     if (has('content_strategy')) setContentStrategies((raw('content_strategy') || []).map((row: any) => contentStrategyFromDb(row)));
     if (has('weekly_content_plans')) setWeeklyContentPlans((raw('weekly_content_plans') || []).map((row: any) => weeklyContentPlanFromDb(row)));
-    if (has('social_weekly_systems')) setSocialWeeklySystems((raw('social_weekly_systems') || []).map((row: any) => socialWeeklySystemFromDb(row)));
+    if (has('social_weekly_system')) setSocialWeeklySystems((raw('social_weekly_system') || []).map((row: any) => socialWeeklySystemFromDb(row)));
     // ── Life ──
     if (has('life_nutrition_logs')) setLifeNutritionLogs((raw('life_nutrition_logs') || []).map((row: any) => lifeNutritionLogFromDb(row)));
     if (has('life_fitness_logs')) setLifeFitnessLogs((raw('life_fitness_logs') || []).map((row: any) => lifeFitnessLogFromDb(row)));
