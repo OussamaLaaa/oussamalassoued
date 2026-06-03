@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import type { SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, Project, SmartNote, Company, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, SocialWeeklySystem, SocialWeeklySystemInput, SocialWeeklyTask } from '../../types/opportunities';
 import AISocialMediaAssistantPanel from './AISocialMediaAssistantPanel';
 import SocialPeoplePanel from './SocialPeoplePanel';
@@ -792,12 +792,6 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   const { t } = useLanguage();
   const system = props.socialWeeklySystem;
 
-  useEffect(() => {
-    if (!system) {
-      props.onEnsureDefaultSocialWeeklySystem();
-    }
-  }, [system, props.onEnsureDefaultSocialWeeklySystem]);
-
   const tasks = system?.weeklyTasks ?? [];
 
   const totalCount = tasks.length;
@@ -814,6 +808,15 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
   const [formPriority, setFormPriority] = useState<'low' | 'medium' | 'high' | ''>('');
   const [formNotes, setFormNotes] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
+
+  const [savingTask, setSavingTask] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
+  const [resettingCompleted, setResettingCompleted] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const systemRef = useRef(system);
+  systemRef.current = system;
 
   const openAdd = () => {
     setModalMode('add');
@@ -842,49 +845,93 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
     setEditingTask(null);
   };
 
+  const getTasks = () => systemRef.current?.weeklyTasks ?? [];
+
   const persistTasks = async (next: SocialWeeklyTask[]) => {
-    if (system?.id) {
-      await props.onUpdateSocialWeeklySystem(system.id, { weeklyTasks: next });
+    const currentSystem = systemRef.current;
+    if (currentSystem?.id) {
+      await props.onUpdateSocialWeeklySystem(currentSystem.id, { weeklyTasks: next });
     }
   };
 
   const handleSave = async () => {
     if (!formTitle.trim()) return;
-    if (!system?.id) return;
-    const next = modalMode === 'add'
-      ? [...tasks, {
-          id: uid(),
-          title: formTitle.trim(),
-          type: formType,
-          targetCount: formTargetCount ? Number(formTargetCount) : undefined,
-          priority: formPriority || undefined,
-          notes: formNotes || undefined,
-          done: false,
-          isActive: formIsActive,
-        }]
-      : tasks.map((t) => t.id === editingTask?.id
-          ? { ...t, title: formTitle.trim(), type: formType, targetCount: formTargetCount ? Number(formTargetCount) : undefined, priority: formPriority || undefined, notes: formNotes || undefined, isActive: formIsActive }
-          : t);
-    await persistTasks(next);
-    closeModal();
+    if (!systemRef.current?.id) return;
+    setMutationError(null);
+    setSavingTask(true);
+    try {
+      const currentTasks = getTasks();
+      const next = modalMode === 'add'
+        ? [...currentTasks, {
+            id: uid(),
+            title: formTitle.trim(),
+            type: formType,
+            targetCount: formTargetCount ? Number(formTargetCount) : undefined,
+            priority: formPriority || undefined,
+            notes: formNotes || undefined,
+            done: false,
+            isActive: formIsActive,
+          }]
+        : currentTasks.map((t) => t.id === editingTask?.id
+            ? { ...t, title: formTitle.trim(), type: formType, targetCount: formTargetCount ? Number(formTargetCount) : undefined, priority: formPriority || undefined, notes: formNotes || undefined, isActive: formIsActive }
+            : t);
+      await persistTasks(next);
+      closeModal();
+    } catch (err: any) {
+      setMutationError(err?.message || t('Unable to save weekly task.', 'تعذر حفظ المهمة الأسبوعية.'));
+    } finally {
+      setSavingTask(false);
+    }
   };
 
   const toggleDone = async (task: SocialWeeklyTask) => {
-    const next = tasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t);
-    await persistTasks(next);
+    if (togglingTaskId) return;
+    setTogglingTaskId(task.id);
+    setMutationError(null);
+    try {
+      const currentTasks = getTasks();
+      const next = currentTasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t);
+      await persistTasks(next);
+    } catch (err: any) {
+      setMutationError(err?.message || t('Unable to update weekly task.', 'تعذر تحديث المهمة الأسبوعية.'));
+    } finally {
+      setTogglingTaskId(null);
+    }
   };
 
   const handleDelete = async (task: SocialWeeklyTask) => {
+    if (deletingTaskId) return;
     if (!window.confirm(t('Delete this weekly task?', 'حذف هذه المهمة الأسبوعية؟'))) return;
-    const next = tasks.filter((t) => t.id !== task.id);
-    await persistTasks(next);
+    setDeletingTaskId(task.id);
+    setMutationError(null);
+    try {
+      const currentTasks = getTasks();
+      const next = currentTasks.filter((t) => t.id !== task.id);
+      await persistTasks(next);
+    } catch (err: any) {
+      setMutationError(err?.message || t('Unable to delete weekly task.', 'تعذر حذف المهمة الأسبوعية.'));
+    } finally {
+      setDeletingTaskId(null);
+    }
   };
 
   const handleResetCompleted = async () => {
+    if (resettingCompleted) return;
     if (!window.confirm(t('Reset all completed tasks? All tasks will be marked as not done.', 'إعادة تعيين جميع المهام المنجزة؟ سيتم وضع علامة "غير منجزة" على جميع المهام.'))) return;
-    const next = tasks.map((t) => ({ ...t, done: false }));
-    await persistTasks(next);
+    setResettingCompleted(true);
+    setMutationError(null);
+    try {
+      const currentTasks = getTasks();
+      const next = currentTasks.map((t) => ({ ...t, done: false }));
+      await persistTasks(next);
+    } catch (err: any) {
+      setMutationError(err?.message || t('Unable to reset completed tasks.', 'تعذر إعادة تعيين المهام المنجزة.'));
+    } finally {
+      setResettingCompleted(false);
+    }
   };
+
+  const isMutating = savingTask || deletingTaskId !== null || togglingTaskId !== null || resettingCompleted;
 
   const displayTitle = (task: SocialWeeklyTask) => task.title || task.label || '';
 
@@ -897,10 +944,18 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
           <p className="mt-0.5 text-xs text-neutral-500">{t('Recurring social media tasks you repeat every week.', 'مهام التواصل الاجتماعي المتكررة التي تكررها كل أسبوع.')}</p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button type="button" onClick={handleResetCompleted} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors">{t('Reset Completed', 'إعادة تعيين المهام المنجزة')}</button>
-          <button type="button" onClick={openAdd} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Task', 'إضافة مهمة')}</button>
+          <button type="button" onClick={handleResetCompleted} disabled={isMutating} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Reset Completed', 'إعادة تعيين المهام المنجزة')}</button>
+          <button type="button" onClick={openAdd} disabled={isMutating} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Add Task', 'إضافة مهمة')}</button>
         </div>
       </div>
+
+      {/* Error banner */}
+      {mutationError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700 flex items-center gap-2">
+          <span>{mutationError}</span>
+          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 font-medium">{t('Dismiss', 'تجاهل')}</button>
+        </div>
+      )}
 
       {/* Summary cards */}
       {totalCount > 0 && (
@@ -925,15 +980,17 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
           <p className="text-sm text-neutral-500">{t('No weekly tasks yet.', 'لا توجد مهام أسبوعية بعد.')}</p>
           <p className="mt-1 text-xs text-neutral-400">{t('Add the recurring social media tasks you want to repeat every week.', 'أضف مهام التواصل الاجتماعي المتكررة التي تريد تكرارها كل أسبوع.')}</p>
-          <button type="button" onClick={openAdd} className="mt-4 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition-colors">{t('Add Task', 'إضافة مهمة')}</button>
+          <button type="button" onClick={openAdd} disabled={isMutating} className="mt-4 rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Add Task', 'إضافة مهمة')}</button>
         </div>
       ) : (
         <div className="space-y-1.5">
           {tasks.map((task) => {
             const title = displayTitle(task);
+            const isToggling = togglingTaskId === task.id;
+            const isDeleting = deletingTaskId === task.id;
             return (
-              <div key={task.id} className="rounded-xl border border-neutral-200 bg-white p-3 flex items-start gap-3">
-                <input type="checkbox" checked={task.done} onChange={() => toggleDone(task)} className="mt-1 h-4 w-4 shrink-0 rounded border-neutral-300" />
+              <div key={task.id} className={`rounded-xl border ${isDeleting ? 'border-red-200 bg-red-50' : 'border-neutral-200 bg-white'} p-3 flex items-start gap-3`}>
+                <input type="checkbox" checked={task.done} onChange={() => toggleDone(task)} disabled={isToggling || isMutating} className="mt-1 h-4 w-4 shrink-0 rounded border-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <DirectionalText text={title} className={`text-sm font-medium ${task.done ? 'text-neutral-400 line-through' : 'text-neutral-900'}`} />
@@ -945,14 +1002,16 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
                       <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</span>
                     )}
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium shrink-0 ${task.done ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>{task.done ? t('done', 'تم') : t('active', 'نشط')}</span>
+                    {isDeleting && <span className="text-[10px] text-red-500">{t('Deleting...', 'جارٍ الحذف...')}</span>}
+                    {isToggling && <span className="text-[10px] text-neutral-500">{t('Updating...', 'جارٍ التحديث...')}</span>}
                   </div>
                   {task.notes && (
                     <DirectionalText text={task.notes} className="mt-1 text-xs text-neutral-500 line-clamp-2" />
                   )}
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button type="button" onClick={() => openEdit(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors">{t('Edit', 'تعديل')}</button>
-                  <button type="button" onClick={() => handleDelete(task)} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors">{t('Delete', 'حذف')}</button>
+                  <button type="button" onClick={() => openEdit(task)} disabled={isMutating} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Edit', 'تعديل')}</button>
+                  <button type="button" onClick={() => handleDelete(task)} disabled={isDeleting || isMutating} className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-[10px] text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('Delete', 'حذف')}</button>
                 </div>
               </div>
             );
@@ -1003,9 +1062,12 @@ function WeeklyPlanView(props: WeeklyPlanViewProps) {
                 <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} dir={detectTextDirection(formNotes)} className={`w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-h-[60px] ${getDirectionClass(formNotes)}`} placeholder={t('Optional notes about this task...', 'ملاحظات اختيارية حول هذه المهمة...')} />
               </div>
             </div>
+            {mutationError && (
+              <p className="mt-3 text-xs text-red-600">{mutationError}</p>
+            )}
             <div className="flex gap-2 mt-5">
-              <button type="button" onClick={handleSave} disabled={!formTitle.trim()} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">{t('Save', 'حفظ')}</button>
-              <button type="button" onClick={closeModal} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors">{t('Cancel', 'إلغاء')}</button>
+              <button type="button" onClick={handleSave} disabled={!formTitle.trim() || savingTask} className="flex-1 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50">{savingTask ? t('Saving...', 'جارٍ الحفظ...') : t('Save', 'حفظ')}</button>
+              <button type="button" onClick={closeModal} disabled={savingTask} className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-900 hover:bg-neutral-50 transition-colors disabled:opacity-50">{t('Cancel', 'إلغاء')}</button>
             </div>
           </div>
         </div>
