@@ -1,4 +1,5 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { SiteConfigProvider } from './context/SiteConfigContext';
 import { lazyWithRetry, clearChunkReloadedFlag } from './utils/lazyWithRetry';
 
@@ -238,6 +239,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SiteConfigProvider>
+        <Analytics />
         {route.page === 'dashboard' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
             <Dashboard />
