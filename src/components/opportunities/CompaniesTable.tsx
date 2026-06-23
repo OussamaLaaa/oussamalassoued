@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { Company } from '../../types/opportunities';
 import StatusBadge from './StatusBadge';
@@ -8,6 +8,7 @@ import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
+import { useLanguage } from '../../hooks/useLanguage';
 
 export interface CompanyFilters {
  searchQuery: string;
@@ -79,12 +80,12 @@ const outreachLabel = (value?: string | null) => {
  return map[value] || 'Not contacted';
 };
 
-const outreachColorClass = (value?: string | null) => {
+const outreachActiveClass = (value?: string | null) => {
  const map: Record<string, string> = {
- not_contacted: 'border-neutral-200 text-neutral-600 bg-neutral-50',
- contacted_accepted: 'border-emerald-200 text-emerald-700 bg-emerald-50',
- contacted_rejected: 'border-red-200 text-red-700 bg-red-50',
- contacted_no_reply: 'border-amber-200 text-amber-700 bg-amber-50',
+ not_contacted: 'border-neutral-400 bg-neutral-100 font-medium text-neutral-900',
+ contacted_accepted: 'border-emerald-400 bg-emerald-100 font-medium text-emerald-900',
+ contacted_rejected: 'border-red-400 bg-red-100 font-medium text-red-900',
+ contacted_no_reply: 'border-amber-400 bg-amber-100 font-medium text-amber-900',
  };
  return map[value || 'not_contacted'];
 };
@@ -95,9 +96,10 @@ const CompaniesTable: React.FC<{
  onDelete?: (id: string) => void;
  onAIScore?: (company: Company) => void;
  onCompanyClick?: (companyId: string) => void;
+ onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
  filters?: CompanyFilters;
  onFilterChange?: (filters: CompanyFilters) => void;
-}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, filters, onFilterChange }) => {
+}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, onUpdateCompany, filters, onFilterChange }) => {
  const filtered = useMemo(() => {
  if (!filters) return companies;
  return companies.filter((company) => {
@@ -140,9 +142,29 @@ const CompaniesTable: React.FC<{
  });
  };
 
- const hasActiveFilters = Boolean(
+  const hasActiveFilters = Boolean(
  filters && (filters.priority || filters.status || filters.databaseType || filters.targetNiche || filters.outreachStatus || filters.country),
  );
+
+  const { isAr, t } = useLanguage();
+  const [updatingOutreachCompanyId, setUpdatingOutreachCompanyId] = useState<string | null>(null);
+  const [outreachUpdateError, setOutreachUpdateError] = useState<string | null>(null);
+
+  const handleOutreachStatusChange = async (company: Company, status: string, event: React.SyntheticEvent) => {
+  if (!onUpdateCompany) return;
+  event.stopPropagation();
+  event.preventDefault();
+  setUpdatingOutreachCompanyId(company.id);
+  setOutreachUpdateError(null);
+  try {
+  await onUpdateCompany(company.id, { outreachStatus: status as Company['outreachStatus'] });
+  } catch (error) {
+  const message = error instanceof Error && error.message ? error.message : 'Unable to update outreach status.';
+  setOutreachUpdateError(message);
+  } finally {
+  setUpdatingOutreachCompanyId(null);
+  }
+  };
 
   return (
   <div>
@@ -205,9 +227,9 @@ const CompaniesTable: React.FC<{
  options={[
  { value: '', label: 'Outreach Status' },
  { value: 'not_contacted', label: 'Not contacted' },
- { value: 'contacted_accepted', label: 'Contacted — accepted' },
- { value: 'contacted_rejected', label: 'Contacted — rejected' },
- { value: 'contacted_no_reply', label: 'Contacted — no reply' },
+ { value: 'contacted_accepted', label: 'Accepted' },
+ { value: 'contacted_rejected', label: 'Rejected' },
+ { value: 'contacted_no_reply', label: 'No reply' },
  ]}
  className={`${toolbarSelect} min-w-[140px]`}
  />
@@ -239,7 +261,7 @@ const CompaniesTable: React.FC<{
   <th className="px-4 py-3 font-medium">Fit</th>
   <th className="px-4 py-3 font-medium">Ethical</th>
   <th className="px-4 py-3 font-medium">Status</th>
- <th className="px-4 py-3 font-medium">Next action</th>
+ <th className="px-4 py-3 font-medium">Niche</th>
  <th className="px-4 py-3 font-medium">Outreach</th>
  <th className="px-4 py-3 text-right font-medium">Actions</th>
   </tr>
@@ -305,19 +327,46 @@ const CompaniesTable: React.FC<{
   <StatusBadge status={company.status} />
   </td>
  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
- <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
+ {company.targetNiche ? (
+ <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border border-neutral-200 bg-neutral-50 text-neutral-700">
+ {nicheLabel(company.targetNiche)}
+ </span>
+ ) : (
+ <span className="text-xs text-neutral-400">—</span>
+ )}
  </td>
  <td className="px-4 py-3.5 align-top">
- <span
- onClick={(e) => {
- e.stopPropagation();
- e.preventDefault();
- }}
- className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium cursor-default select-none ${outreachColorClass(company.outreachStatus)}`}
- title={outreachLabel(company.outreachStatus)}
- >
- {outreachLabel(company.outreachStatus)}
- </span>
+ <div className="flex max-w-[260px] flex-wrap gap-1">
+  {(['not_contacted', 'contacted_accepted', 'contacted_rejected', 'contacted_no_reply'] as const).map((status) => {
+  const isActive = company.outreachStatus === status;
+  const isUpdating = updatingOutreachCompanyId === company.id;
+  const labelEn = outreachLabel(status);
+  const labelAr = isAr ? (
+  status === 'not_contacted' ? 'لم أتواصل' :
+  status === 'contacted_accepted' ? 'قبلت' :
+  status === 'contacted_rejected' ? 'رفضت' :
+  'لم تجب'
+  ) : labelEn;
+  return (
+  <button
+  key={status}
+  type="button"
+  disabled={isUpdating}
+  onClick={(event) => handleOutreachStatusChange(company, status, event)}
+  className={`h-7 rounded-md border px-2 text-xs transition-colors ${
+  isActive
+  ? outreachActiveClass(status)
+  : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
+  } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+  >
+  {labelAr}
+  </button>
+  );
+  })}
+ </div>
+ {outreachUpdateError && (
+ <div className="mt-1 text-xs text-red-600">{outreachUpdateError}</div>
+ )}
  </td>
  <td className="px-4 py-3.5 align-top">
  <div className="flex items-center justify-end gap-1">
@@ -396,7 +445,7 @@ const CompaniesTable: React.FC<{
   ))}
   {filtered.length === 0 && (
   <tr>
- <td colSpan={11} className="px-4 py-8 text-center">
+ <td colSpan={10} className="px-4 py-8 text-center">
   <EmptyState
   title="No companies match the current filters."
   description="Clear the filters or add a company to continue."

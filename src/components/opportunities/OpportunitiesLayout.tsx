@@ -1240,6 +1240,7 @@ const OpportunitiesLayout: React.FC<{
   onAIScore={handleAIScore}
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
+  onUpdateCompany={updateCompany}
   />
   )}
 
@@ -1258,6 +1259,7 @@ const OpportunitiesLayout: React.FC<{
   onAIScore={handleAIScore}
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
+  onUpdateCompany={updateCompany}
   />
   )}
 
@@ -1276,6 +1278,7 @@ const OpportunitiesLayout: React.FC<{
   onAIScore={handleAIScore}
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
+  onUpdateCompany={updateCompany}
   />
   )}
 
@@ -1394,6 +1397,7 @@ const OpportunitiesLayout: React.FC<{
   onDelete={handleRequestDelete}
   onAIScore={handleAIScore}
   onCompanyClick={handleCompanyClick}
+  onUpdateCompany={updateCompany}
   filters={companyFilters}
   onFilterChange={setCompanyFilters}
   />

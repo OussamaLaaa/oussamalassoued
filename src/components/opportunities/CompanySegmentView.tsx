@@ -62,6 +62,7 @@ const CompanySegmentView: React.FC<{
  onDelete: (id: string) => void;
  onAIScore?: (company: Company) => void;
  onCompanyClick?: (companyId: string) => void;
+ onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
  onImportCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>, segmentType?: SegmentType) => Promise<any>;
 }> = ({
  segmentType,
@@ -76,6 +77,7 @@ const CompanySegmentView: React.FC<{
  onDelete,
  onAIScore,
  onCompanyClick,
+ onUpdateCompany,
  onImportCompaniesBatch,
 }) => {
  const [showCsvImport, setShowCsvImport] = useState(false);
@@ -233,15 +235,16 @@ const CompanySegmentView: React.FC<{
  action={onAddCompany && <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>}
  />
  ) : (
- <CompaniesTable
- companies={segmentCompanies}
- onEdit={onEdit}
- onDelete={onDelete}
- onAIScore={onAIScore}
- onCompanyClick={onCompanyClick}
- filters={segmentFilters}
- onFilterChange={setSegmentFilters}
- />
+  <CompaniesTable
+  companies={segmentCompanies}
+  onEdit={onEdit}
+  onDelete={onDelete}
+  onAIScore={onAIScore}
+  onCompanyClick={onCompanyClick}
+  onUpdateCompany={onUpdateCompany}
+  filters={segmentFilters}
+  onFilterChange={setSegmentFilters}
+  />
  )}
  </div>
 
