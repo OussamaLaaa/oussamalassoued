@@ -4,15 +4,15 @@ import OpportunityModal from './OpportunityModal';
 
 interface DeleteCompanyModalProps {
   isOpen: boolean;
-  companyName: string;
+  company: { id: string; name: string };
   onClose: () => void;
-  onArchive: () => Promise<void>;
+  onArchive: (company: { id: string; name: string }) => Promise<void>;
   onDeletePermanently: () => Promise<void>;
 }
 
 const DeleteCompanyModal: React.FC<DeleteCompanyModalProps> = ({
   isOpen,
-  companyName,
+  company,
   onClose,
   onArchive,
   onDeletePermanently,
@@ -26,7 +26,7 @@ const DeleteCompanyModal: React.FC<DeleteCompanyModalProps> = ({
     setArchiving(true);
     setArchiveError(null);
     try {
-      await onArchive();
+      await onArchive(company);
       onClose();
     } catch (error) {
       const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';

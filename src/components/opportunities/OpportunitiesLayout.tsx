@@ -917,24 +917,25 @@ const OpportunitiesLayout: React.FC<{
  setShowDeleteModal(true);
 };
 
-  const handleArchiveCompany = async () => {
-    if (!companyToDelete?.id) {
-      console.error("Missing company id", companyToDelete);
-      throw new Error("Missing id");
+  const handleArchiveCompany = async (company: { id: string; name: string }) => {
+    console.log("ARCHIVE DEBUG", company);
+    if (!company || typeof company.id !== "string") {
+      console.error("Invalid company object", company);
+      return;
     }
     try {
-      await updateCompany(companyToDelete.id, { status: 'archived' });
- setShowDeleteModal(false);
- setCompanyToDelete(null);
- } catch (error) {
- if (import.meta.env.DEV) {
- console.error('[CRM] archive company failed', error);
- }
- const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
- setDeleteError(message);
- throw error;
- }
-};
+      await updateCompany(company.id, { status: 'archived' });
+      setShowDeleteModal(false);
+      setCompanyToDelete(null);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('[CRM] archive company failed', error);
+      }
+      const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
+      setDeleteError(message);
+      throw error;
+    }
+  };
 
  const handleDeletePermanently = async () => {
  if (!companyToDelete) return;
@@ -2311,7 +2312,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  {showDeleteModal && companyToDelete ? (
  <DeleteCompanyModal
  isOpen={showDeleteModal}
- companyName={companyToDelete.name}
+  company={companyToDelete}
  onClose={() => { setShowDeleteModal(false); setCompanyToDelete(null); }}
  onArchive={handleArchiveCompany}
  onDeletePermanently={handleDeletePermanently}

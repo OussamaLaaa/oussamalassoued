@@ -369,20 +369,21 @@ const CompanyWorkspace: React.FC<Props> = ({
  setShowDeleteModal(true);
  };
 
-  const handleArchiveAndBack = async () => {
+  const handleArchiveAndBack = async (companyArg: { id: string; name: string }) => {
+    console.log("ARCHIVE DEBUG", companyArg);
+    if (!companyArg || typeof companyArg.id !== "string") {
+      console.error("Invalid company object", companyArg);
+      return;
+    }
     try {
-      if (!company?.id) {
-        console.error("Missing company id", company);
-        throw new Error("Missing id");
-      }
-      await updateCompany(company.id, { status: 'archived' });
+      await updateCompany(companyArg.id, { status: 'archived' });
       setShowDeleteModal(false);
       onBack();
- } catch (error) {
- const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
- setFormError(message);
- }
- };
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
+      setFormError(message);
+    }
+  };
 
  const handleDeletePermanentlyAndBack = async () => {
  try {
@@ -1221,7 +1222,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   return (
   <CompanyResearchPanel
   title="Research / Refresh AI"
-  companyName={company.name}
+  company={company}
   countryHint={company.country || undefined}
   cityHint={company.city || undefined}
   industryHint={company.industry || undefined}
@@ -1346,7 +1347,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  {showDeleteModal && (
  <DeleteCompanyModal
  isOpen={showDeleteModal}
- companyName={company.name}
+  company={company}
  onClose={() => setShowDeleteModal(false)}
  onArchive={handleArchiveAndBack}
  onDeletePermanently={handleDeletePermanentlyAndBack}

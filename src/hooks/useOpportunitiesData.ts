@@ -2956,9 +2956,10 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const updateCompany = async (id: string, input: Partial<CompanyInput>) => {
-    if (!id) {
-      console.error("Missing company id", { id, input });
-      throw new Error("Missing id");
+    console.log("updateCompany id:", id);
+    if (!id || typeof id !== "string") {
+      console.error("Invalid company id", { id, input });
+      throw new Error("Invalid company id");
     }
     const row = await syncUpdate('companies', id, toCompanyUpdateDb(input));
     const next = mapCompanyRow(row);
