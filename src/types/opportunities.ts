@@ -29,11 +29,12 @@ export interface Company {
   priority?: 'low' | 'medium' | 'high';
   fitScore?: number;
   ethicalFit?: 'low' | 'medium' | 'high' | 'good' | 'needs_review' | 'avoid';
-  status?: 'prospect' | 'contacted' | 'qualified' | 'lost' | 'customer';
+  status?: 'prospect' | 'contacted' | 'qualified' | 'lost' | 'customer' | 'archived';
   nextAction?: string;
   notes?: string;
   createdAt?: string;
   targetNiche?: TargetNiche | null;
+  outreachStatus?: OutreachStatus | null;
   outreachStatus?: OutreachStatus | null;
 }
 
@@ -145,6 +146,7 @@ export interface CompanyInput {
   notes?: string;
   targetNiche?: TargetNiche | null;
   outreachStatus?: OutreachStatus | null;
+  linkedProjectId?: string | null;
 }
 
 export interface PersonInput {

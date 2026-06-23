@@ -1792,7 +1792,85 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     const body = readBody(req);
-    const { entity, action, id } = body || {};
+    const { entity, action, id, preserveRelated } = body || {};
+
+    if (action === 'OPPORTUNITIES_DELETE_COMPANY') {
+      if (!id) {
+        return toSafeJson(res, 400, { success: false, error: 'Missing company id.', errorCode: 'MISSING_ID' });
+      }
+
+      try {
+        if (preserveRelated) {
+          const { error: peopleError } = await supabase
+            .from('people')
+            .update({ company_id: null })
+            .eq('company_id', id);
+
+          if (peopleError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to unlink people from company.', errorCode: 'UNLINK_PEOPLE_FAILED', details: peopleError });
+          }
+
+          const { error: dealsError } = await supabase
+            .from('deals')
+            .update({ company_id: null })
+            .eq('company_id', id);
+
+          if (dealsError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to unlink deals from company.', errorCode: 'UNLINK_DEALS_FAILED', details: dealsError });
+          }
+
+          const { error: messagesError } = await supabase
+            .from('messages')
+            .update({ company_id: null })
+            .eq('company_id', id);
+
+          if (messagesError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to unlink messages from company.', errorCode: 'UNLINK_MESSAGES_FAILED', details: messagesError });
+          }
+
+          const { error: contactMethodsError } = await supabase
+            .from('company_contact_methods')
+            .delete()
+            .eq('company_id', id);
+
+          if (contactMethodsError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to delete company contact methods.', errorCode: 'DELETE_CONTACT_METHODS_FAILED', details: contactMethodsError });
+          }
+
+          const { error: problemProfilesError } = await supabase
+            .from('company_problem_profiles')
+            .delete()
+            .eq('company_id', id);
+
+          if (problemProfilesError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to delete company problem profiles.', errorCode: 'DELETE_PROBLEM_PROFILES_FAILED', details: problemProfilesError });
+          }
+
+          const { error: outreachScriptsError } = await supabase
+            .from('company_outreach_scripts')
+            .delete()
+            .eq('company_id', id);
+
+          if (outreachScriptsError) {
+            return toSafeJson(res, 200, { success: false, error: 'Unable to delete company outreach scripts.', errorCode: 'DELETE_OUTREACH_SCRIPTS_FAILED', details: outreachScriptsError });
+          }
+        }
+
+        const { error: deleteError } = await supabase
+          .from('companies')
+          .delete()
+          .eq('id', id);
+
+        if (deleteError) {
+          return toSafeJson(res, 200, { success: false, error: 'Unable to delete company.', errorCode: 'DELETE_COMPANY_FAILED', details: deleteError });
+        }
+
+        return toSafeJson(res, 200, { success: true });
+      } catch (error) {
+        console.error('[Opportunities] DELETE_COMPANY failure', { id, preserveRelated, error });
+        return toSafeJson(res, 500, { success: false, error: 'Unexpected failure while deleting company.', errorCode: 'DELETE_COMPANY_UNEXPECTED', details: error });
+      }
+    }
 
     if (action !== 'delete') {
       return toSafeJson(res, 400, { success: false, error: 'Unsupported action.' });

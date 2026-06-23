@@ -44,6 +44,7 @@ import NoteCategoryForm from './NoteCategoryForm';
 import SocialMediaPanel from './SocialMediaPanel';
 import LifeManagementPanel from './LifeManagementPanel';
 import LeadResearchPlaybook from './LeadResearchPlaybook';
+import DeleteCompanyModal from './DeleteCompanyModal';
 import DesktopLauncher from './DesktopLauncher';
 import type { AppId } from './DesktopLauncher';
 import AppDashboardShell from './AppDashboardShell';
@@ -136,6 +137,7 @@ const defaultCompanyFilters: CompanyFilters = {
  targetNiche: '',
  outreachStatus: '',
  country: '',
+ status: 'active',
 };
 
 const defaultPersonFilters: PersonFilters = {
@@ -255,6 +257,7 @@ const resolveInitialCompanyFilters = (): CompanyFilters => {
  targetNiche: typeof next.targetNiche === 'string' ? next.targetNiche : '',
  outreachStatus: typeof next.outreachStatus === 'string' ? next.outreachStatus : '',
  country: typeof next.country === 'string' ? next.country : '',
+ status: typeof next.status === 'string' ? next.status : 'active',
  }
  : defaultCompanyFilters;
 };
@@ -516,8 +519,10 @@ const OpportunitiesLayout: React.FC<{
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [personWorkspaceContext, setPersonWorkspaceContext] = useState<'global' | 'company'>('global');
-  const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
+ const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
+ const [showDeleteModal, setShowDeleteModal] = useState(false);
+ const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
@@ -897,38 +902,52 @@ const OpportunitiesLayout: React.FC<{
  setEditingCompany(company);
  };
 
- const handleDeleteCompany = async (id: string) => {
+ const handleDeleteCompany = async (id: string, options?: { preserveRelated?: boolean }) => {
  if (import.meta.env.DEV) {
- console.log('[CRM] deleting company', id);
+ console.log('[CRM] deleting company', id, 'preserveRelated:', options?.preserveRelated);
  }
- await deleteCompany(id);
+ await deleteCompany(id, options);
  if (import.meta.env.DEV) {
  console.log('[CRM] delete company success', id);
  }
- };
+};
 
- const handleRequestDelete = (id: string) => {
- setConfirmDeleteCompanyId(id);
- };
+ const handleRequestDelete = (company: Company) => {
+ setCompanyToDelete(company);
+ setShowDeleteModal(true);
+};
 
- const handleConfirmDelete = async () => {
- const id = confirmDeleteCompanyId;
- setConfirmDeleteCompanyId(null);
- if (!id) return;
+ const handleArchiveCompany = async () => {
+ if (!companyToDelete) return;
  try {
- await handleDeleteCompany(id);
+ await updateCompany(companyToDelete.id, { status: 'archived' });
+ setShowDeleteModal(false);
+ setCompanyToDelete(null);
+ } catch (error) {
+ if (import.meta.env.DEV) {
+ console.error('[CRM] archive company failed', error);
+ }
+ const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
+ setDeleteError(message);
+ throw error;
+ }
+};
+
+ const handleDeletePermanently = async () => {
+ if (!companyToDelete) return;
+ try {
+ await handleDeleteCompany(companyToDelete.id, { preserveRelated: true });
+ setShowDeleteModal(false);
+ setCompanyToDelete(null);
  } catch (error) {
  if (import.meta.env.DEV) {
  console.error('[CRM] delete company failed', error);
  }
  const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
  setDeleteError(message);
+ throw error;
  }
- };
-
- const handleCancelDelete = () => {
- setConfirmDeleteCompanyId(null);
- };
+};
 
  const handleEditPerson = (person: Person) => {
  setEditingPerson(person);
@@ -2286,14 +2305,14 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  />
  ) : null}
 
- {confirmDeleteCompanyId ? (
- <OpportunityModal title="Confirm Delete" onClose={handleCancelDelete}>
- <p className="text-sm leading-6 text-neutral-700">This may leave related people, messages, and deals without a company. Continue?</p>
- <div className="mt-6 flex items-center gap-3">
- <Button variant="primary" size="md" onClick={handleConfirmDelete}>Delete</Button>
- <Button variant="secondary" size="md" onClick={handleCancelDelete}>Cancel</Button>
- </div>
- </OpportunityModal>
+ {showDeleteModal && companyToDelete ? (
+ <DeleteCompanyModal
+ isOpen={showDeleteModal}
+ companyName={companyToDelete.name}
+ onClose={() => { setShowDeleteModal(false); setCompanyToDelete(null); }}
+ onArchive={handleArchiveCompany}
+ onDeletePermanently={handleDeletePermanently}
+ />
  ) : null}
 
  {deleteError ? (

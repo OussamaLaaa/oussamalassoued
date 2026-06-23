@@ -7,7 +7,7 @@ import type {
  PersonInput, MessageInput, DealInput,
  PersonContactMethod, PersonContactMethodInput,
 } from '../../types/opportunities';
-import { ArrowLeft } from 'lucide-react';
+import { Archive, ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import EmptyState from '../ui/EmptyState';
@@ -195,6 +195,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  const [formSaving, setFormSaving] = useState(false);
  const [formError, setFormError] = useState<string | null>(null);
  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+ const [showDeleteModal, setShowDeleteModal] = useState(false);
 
  const safeCompanies = companies ?? [];
  const safePeople = people ?? [];
@@ -362,6 +363,32 @@ const CompanyWorkspace: React.FC<Props> = ({
  if (!ok) return;
  await deleteCompany(id);
  onBack();
+ };
+
+ const handleDeleteClick = () => {
+ setShowDeleteModal(true);
+ };
+
+ const handleArchiveAndBack = async () => {
+ try {
+ await updateCompany(company.id, { status: 'archived' });
+ setShowDeleteModal(false);
+ onBack();
+ } catch (error) {
+ const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
+ setFormError(message);
+ }
+ };
+
+ const handleDeletePermanentlyAndBack = async () => {
+ try {
+ await deleteCompany(company.id, { preserveRelated: true });
+ setShowDeleteModal(false);
+ onBack();
+ } catch (error) {
+ const message = error instanceof Error && error.message ? error.message : 'Unable to delete company.';
+ setFormError(message);
+ }
  };
 
  const handleCreateResearchContactMethods = async (items: any[]) => {
@@ -1224,7 +1251,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   <h2 className="text-xl font-semibold text-neutral-900">{company.name}</h2>
   <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => onEditCompany(company))} className="text-neutral-400 hover:text-neutral-900">Edit Company</Button>
   </div>
-  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteAndBack(company.id))} className="text-neutral-300 hover:text-red-500">Delete</Button>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(handleDeleteClick)} className="text-neutral-300 hover:text-red-500">Delete</Button>
   </div>
 
   {copyFeedback ? (
@@ -1310,6 +1337,16 @@ const CompanyWorkspace: React.FC<Props> = ({
  {/* Tab Content */}
  {tabContent()}
  </>
+ )}
+
+ {showDeleteModal && (
+ <DeleteCompanyModal
+ isOpen={showDeleteModal}
+ companyName={company.name}
+ onClose={() => setShowDeleteModal(false)}
+ onArchive={handleArchiveAndBack}
+ onDeletePermanently={handleDeletePermanentlyAndBack}
+ />
  )}
 
  {/* ── Modal: Contact Method Form ── */}

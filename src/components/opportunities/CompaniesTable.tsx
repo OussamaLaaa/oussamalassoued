@@ -14,6 +14,7 @@ export interface CompanyFilters {
  targetNiche: string;
  outreachStatus: string;
  country: string;
+ status: string;
 }
 
 const priorityOptions = [
@@ -109,6 +110,10 @@ const CompaniesTable: React.FC<{
  }
  if (filters.targetNiche && company.targetNiche !== filters.targetNiche) return false;
  if (filters.outreachStatus && company.outreachStatus !== filters.outreachStatus) return false;
+ if (filters.status && filters.status !== 'all') {
+   if (filters.status === 'archived' && company.status !== 'archived') return false;
+   if (filters.status === 'active' && company.status === 'archived') return false;
+ }
  return true;
  });
 }, [companies, filters]);
@@ -118,16 +123,17 @@ const CompaniesTable: React.FC<{
  onFilterChange({ ...filters, [key]: value });
  };
 
- const clearFilters = () => {
- if (!onFilterChange || !filters) return;
-  onFilterChange({
-  searchQuery: '',
-  priority: '',
-  targetNiche: '',
-  outreachStatus: '',
-  country: '',
-  });
- };
+  const clearFilters = () => {
+  if (!onFilterChange || !filters) return;
+   onFilterChange({
+   searchQuery: '',
+   priority: '',
+   targetNiche: '',
+   outreachStatus: '',
+   country: '',
+   status: '',
+   });
+  };
 
   const hasActiveFilters = Boolean(
   filters && (filters.priority || filters.targetNiche || filters.outreachStatus || filters.country),
@@ -196,7 +202,7 @@ const CompaniesTable: React.FC<{
  ]}
  className={`${toolbarSelect} min-w-[120px]`}
  />
- <Select
+  <Select
  value={filters.outreachStatus}
  onChange={(event) => setFilter('outreachStatus', event.target.value)}
  options={[
@@ -207,6 +213,17 @@ const CompaniesTable: React.FC<{
  { value: 'contacted_no_reply', label: 'No reply' },
  ]}
  className={`${toolbarSelect} min-w-[140px]`}
+ />
+  <Select
+ value={filters.status}
+ onChange={(event) => setFilter('status', event.target.value)}
+ options={[
+ { value: '', label: 'Status' },
+ { value: 'active', label: 'Active' },
+ { value: 'archived', label: 'Archived' },
+ { value: 'all', label: 'All' },
+ ]}
+ className={`${toolbarSelect} min-w-[120px]`}
  />
  <input
  type="text"
