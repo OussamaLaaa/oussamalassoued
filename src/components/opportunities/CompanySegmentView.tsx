@@ -59,7 +59,7 @@ const CompanySegmentView: React.FC<{
  deals: Deal[];
  onAddCompany?: () => void;
  onEdit: (company: Company) => void;
- onDelete: (id: string) => void;
+  onDelete: (company: Company) => void;
  onAIScore?: (company: Company) => void;
  onCompanyClick?: (companyId: string) => void;
  onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;

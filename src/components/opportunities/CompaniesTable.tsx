@@ -85,7 +85,7 @@ const outreachActiveClass = (value?: string | null) => {
 const CompaniesTable: React.FC<{
  companies: Company[];
  onEdit?: (company: Company) => void;
- onDelete?: (id: string) => void;
+  onDelete?: (company: Company) => void;
  onAIScore?: (company: Company) => void;
  onCompanyClick?: (companyId: string) => void;
  onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
@@ -371,7 +371,7 @@ const CompaniesTable: React.FC<{
   onClick={(event) => {
   event.stopPropagation();
   event.preventDefault();
-  onDelete(company.id);
+  onDelete(company);
   }}
   className="text-neutral-500 hover:text-red-600"
   title="Delete company"
