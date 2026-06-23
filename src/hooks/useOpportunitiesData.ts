@@ -2969,8 +2969,13 @@ export const useOpportunitiesData = (enabled = true) => {
 
   const deleteCompany = async (id: string, options?: { preserveRelated?: boolean }) => {
     await requestOpportunities({
-      action: 'OPPORTUNITIES_DELETE_COMPANY',
-      payload: { id, preserveRelated: options?.preserveRelated ?? false },
+      method: 'DELETE',
+      body: JSON.stringify({
+        entity: 'companies',
+        action: 'OPPORTUNITIES_DELETE_COMPANY',
+        id,
+        preserveRelated: options?.preserveRelated ?? false,
+      }),
     });
     setCompanies((current) => current.filter((c) => c.id !== id));
   };
