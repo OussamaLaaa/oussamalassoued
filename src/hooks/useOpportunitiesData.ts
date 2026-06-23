@@ -5,7 +5,7 @@ import { isValidUuid } from '../utils/securityUtils';
 import {
   toNullableString, toNullableNumber, normalizeDatabaseType,
   toIso,
-  companyFromDb as mapCompanyRow, companyToDb as toCompanyDb,
+  companyFromDb as mapCompanyRow, companyToDb as toCompanyDb, companyUpdateToDb as toCompanyUpdateDb,
   personFromDb as mapPersonRow, personToDb as toPersonDb,
   messageFromDb as mapMessageRow, messageToDb as toMessageDb,
   dealFromDb as mapDealRow, dealToDb as toDealDb,
@@ -2955,8 +2955,8 @@ export const useOpportunitiesData = (enabled = true) => {
     setAIUseCaseSettings((current) => current.filter((item) => item.id !== id));
   };
 
-  const updateCompany = async (id: string, input: CompanyInput) => {
-    const row = await syncUpdate('companies', id, toCompanyDb(input));
+  const updateCompany = async (id: string, input: Partial<CompanyInput>) => {
+    const row = await syncUpdate('companies', id, toCompanyUpdateDb(input));
     const next = mapCompanyRow(row);
     setCompanies((current) => current.map((c) => (c.id === id ? next : c)));
     return next;

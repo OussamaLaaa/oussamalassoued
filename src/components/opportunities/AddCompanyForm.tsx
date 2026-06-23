@@ -13,7 +13,6 @@ const AddCompanyForm: React.FC<{
   const [form, setForm] = useState<CompanyInput>(initialData || {
     name: '',
     databaseType: 'sme',
-    category: '',
     industry: '',
     country: '',
     targetNiche: undefined,
@@ -22,10 +21,6 @@ const AddCompanyForm: React.FC<{
     website: '',
     linkedin: '',
     priority: 'medium',
-    fitScore: 6,
-    ethicalFit: 'good',
-    status: 'prospect',
-    nextAction: '',
     notes: '',
   });
   const setField = <K extends keyof CompanyInput>(key: K, value: CompanyInput[K]) => {
@@ -79,10 +74,6 @@ const AddCompanyForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Category</span>
-          <input className={baseInput} value={form.category || ''} onChange={(e) => setField('category', e.target.value)} />
-        </label>
-        <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Industry</span>
           <input className={baseInput} value={form.industry || ''} onChange={(e) => setField('industry', e.target.value)} />
         </label>
@@ -119,28 +110,6 @@ const AddCompanyForm: React.FC<{
           </select>
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Fit Score</span>
-          <input type="number" min="0" max="10" className={baseInput} value={form.fitScore ?? ''} onChange={(e) => setField('fitScore', e.target.value === '' ? undefined : Number(e.target.value))} />
-        </label>
-        <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Ethical Fit</span>
-          <select className={baseInput} value={form.ethicalFit} onChange={(e) => setField('ethicalFit', e.target.value as CompanyInput['ethicalFit'])}>
-            <option value="good">good</option>
-            <option value="needs_review">needs_review</option>
-            <option value="avoid">avoid</option>
-          </select>
-        </label>
-        <label className="space-y-1">
-          <span className="text-sm font-medium text-[#0f172a]">Status</span>
-          <select className={baseInput} value={form.status} onChange={(e) => setField('status', e.target.value as CompanyInput['status'])}>
-            <option value="prospect">prospect</option>
-            <option value="contacted">contacted</option>
-            <option value="qualified">qualified</option>
-            <option value="lost">lost</option>
-            <option value="customer">customer</option>
-          </select>
-        </label>
-        <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Outreach Status</span>
           <select className={baseInput} value={form.outreachStatus || ''} onChange={(e) => setField('outreachStatus', (e.target.value || undefined) as CompanyInput['outreachStatus'])}>
             <option value="">—</option>
@@ -149,10 +118,6 @@ const AddCompanyForm: React.FC<{
             <option value="contacted_rejected">Contacted — rejected</option>
             <option value="contacted_no_reply">Contacted — no reply</option>
           </select>
-        </label>
-        <label className="space-y-1 md:col-span-2">
-          <span className="text-sm font-medium text-[#0f172a]">Next Action</span>
-          <input className={baseInput} value={form.nextAction || ''} onChange={(e) => setField('nextAction', e.target.value)} />
         </label>
         <label className="space-y-1 md:col-span-2">
           <span className="text-sm font-medium text-[#0f172a]">Notes</span>

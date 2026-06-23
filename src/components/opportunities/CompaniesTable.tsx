@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
 import type { Company } from '../../types/opportunities';
-import StatusBadge from './StatusBadge';
 import PriorityBadge from './PriorityBadge';
-import Button from '../ui/Button';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
@@ -13,7 +11,6 @@ import { useLanguage } from '../../hooks/useLanguage';
 export interface CompanyFilters {
  searchQuery: string;
  priority: string;
- status: string;
  databaseType: string;
  targetNiche: string;
  outreachStatus: string;
@@ -25,15 +22,6 @@ const priorityOptions = [
  { value: 'high', label: 'High' },
  { value: 'medium', label: 'Medium' },
  { value: 'low', label: 'Low' },
-];
-
-const statusOptions = [
- { value: '', label: 'Status' },
- { value: 'prospect', label: 'Prospect' },
- { value: 'contacted', label: 'Contacted' },
- { value: 'qualified', label: 'Qualified' },
- { value: 'lost', label: 'Lost' },
- { value: 'customer', label: 'Customer' },
 ];
 
 const databaseTypeOptions = [
@@ -51,18 +39,10 @@ const databaseTypeLabel = (value?: string) => {
  return value || '—';
 };
 
-const ethicalLabel = (value?: Company['ethicalFit']) => {
- if (!value) return '—';
- if (value === 'needs_review') return 'Needs review';
- return String(value).replace(/_/g, ' ');
-};
-
 const locationLabel = (company: Company) => {
  const parts = [company.city, company.country].filter(Boolean);
  return parts.length > 0 ? parts.join(', ') : '—';
 };
-
-const categoryLabel = (company: Company) => company.category || company.industry || '—';
 
 const nicheLabel = (value?: string | null) => {
  if (!value) return '—';
@@ -78,6 +58,25 @@ const outreachLabel = (value?: string | null) => {
  contacted_no_reply: 'No reply',
  };
  return map[value] || 'Not contacted';
+};
+
+const outreachShortLabel = (value?: string | null, isAr = false): string => {
+ if (!value) return isAr ? 'لم أتواصل' : 'Not';
+ const map: Record<string, string> = {
+ not_contacted: isAr ? 'لم أتواصل' : 'Not',
+ contacted_accepted: isAr ? 'قبلت' : 'Accepted',
+ contacted_rejected: isAr ? 'رفضت' : 'Rejected',
+ contacted_no_reply: isAr ? 'لم تجب' : 'No reply',
+ };
+ return map[value] || (isAr ? 'لم أتواصل' : 'Not');
+};
+
+const outreachTitle = (value?: string | null): string => {
+ if (!value || value === 'not_contacted') return 'Not contacted';
+ if (value === 'contacted_accepted') return 'Accepted';
+ if (value === 'contacted_rejected') return 'Rejected';
+ if (value === 'contacted_no_reply') return 'No reply';
+ return value;
 };
 
 const outreachActiveClass = (value?: string | null) => {
@@ -112,7 +111,6 @@ const CompaniesTable: React.FC<{
  if (!haystack.includes(q)) return false;
  }
  if (filters.priority && company.priority !== filters.priority) return false;
- if (filters.status && company.status !== filters.status) return false;
  if (filters.databaseType && normalizeDatabaseType(company.databaseType) !== filters.databaseType) return false;
  if (filters.country) {
  const q = filters.country.toLowerCase();
@@ -134,7 +132,6 @@ const CompaniesTable: React.FC<{
  onFilterChange({
  searchQuery: '',
  priority: '',
- status: '',
  databaseType: '',
  targetNiche: '',
  outreachStatus: '',
@@ -142,8 +139,8 @@ const CompaniesTable: React.FC<{
  });
  };
 
-  const hasActiveFilters = Boolean(
- filters && (filters.priority || filters.status || filters.databaseType || filters.targetNiche || filters.outreachStatus || filters.country),
+ const hasActiveFilters = Boolean(
+ filters && (filters.priority || filters.databaseType || filters.targetNiche || filters.outreachStatus || filters.country),
  );
 
   const { isAr, t } = useLanguage();
@@ -192,17 +189,11 @@ const CompaniesTable: React.FC<{
             className={`${toolbarSelect} min-w-[110px]`}
           />
           <Select
-            value={filters.status}
-            onChange={(event) => setFilter('status', event.target.value)}
-            options={statusOptions}
-            className={`${toolbarSelect} min-w-[110px]`}
+            value={filters.databaseType}
+            onChange={(event) => setFilter('databaseType', event.target.value)}
+            options={databaseTypeOptions}
+            className={`${toolbarSelect} min-w-[120px]`}
           />
- <Select
- value={filters.databaseType}
- onChange={(event) => setFilter('databaseType', event.target.value)}
- options={databaseTypeOptions}
- className={`${toolbarSelect} min-w-[120px]`}
- />
  <Select
  value={filters.targetNiche}
  onChange={(event) => setFilter('targetNiche', event.target.value)}
@@ -250,20 +241,16 @@ const CompaniesTable: React.FC<{
   )}
 
   <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
-  <table className="min-w-[1160px] w-full border-collapse text-left">
+  <table className="min-w-[960px] w-full border-collapse text-left">
   <thead>
   <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
   <th className="px-4 py-3 font-medium">Company</th>
   <th className="px-4 py-3 font-medium">Type</th>
-  <th className="px-4 py-3 font-medium">Category</th>
   <th className="px-4 py-3 font-medium">Location</th>
   <th className="px-4 py-3 font-medium">Priority</th>
-  <th className="px-4 py-3 font-medium">Fit</th>
-  <th className="px-4 py-3 font-medium">Ethical</th>
-  <th className="px-4 py-3 font-medium">Status</th>
- <th className="px-4 py-3 font-medium">Niche</th>
- <th className="px-4 py-3 font-medium">Outreach</th>
- <th className="px-4 py-3 text-right font-medium">Actions</th>
+  <th className="px-4 py-3 font-medium">Niche</th>
+  <th className="px-4 py-3 font-medium">Outreach</th>
+  <th className="px-4 py-3 text-right font-medium">Actions</th>
   </tr>
   </thead>
   <tbody>
@@ -295,149 +282,115 @@ const CompaniesTable: React.FC<{
   <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{databaseTypeLabel(company.databaseType)}</Badge>
   </td>
   <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
-  <div className="max-w-[160px] truncate">{categoryLabel(company)}</div>
-  </td>
-  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
   <div className="max-w-[140px] truncate">{locationLabel(company)}</div>
   </td>
   <td className="px-4 py-3.5 align-top">
   <PriorityBadge priority={company.priority} />
   </td>
-  <td className="px-4 py-3.5 align-top text-sm font-semibold text-neutral-900 tabular-nums">
-  {typeof company.fitScore === 'number' ? company.fitScore : '—'}
-  </td>
-  <td className="px-4 py-3.5 align-top">
-  {!company.ethicalFit || company.ethicalFit === 'good' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">
-  {ethicalLabel(company.ethicalFit)}
-  </span>
-  ) : company.ethicalFit === 'needs_review' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">
-  {ethicalLabel(company.ethicalFit)}
-  </span>
-  ) : company.ethicalFit === 'avoid' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">
-  {ethicalLabel(company.ethicalFit)}
+  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+  {company.targetNiche ? (
+  <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border border-neutral-200 bg-neutral-50 text-neutral-700">
+  {nicheLabel(company.targetNiche)}
   </span>
   ) : (
-  <Badge variant="neutral">{ethicalLabel(company.ethicalFit)}</Badge>
+  <span className="text-xs text-neutral-400">—</span>
   )}
   </td>
   <td className="px-4 py-3.5 align-top">
-  <StatusBadge status={company.status} />
-  </td>
- <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
- {company.targetNiche ? (
- <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border border-neutral-200 bg-neutral-50 text-neutral-700">
- {nicheLabel(company.targetNiche)}
- </span>
- ) : (
- <span className="text-xs text-neutral-400">—</span>
- )}
- </td>
- <td className="px-4 py-3.5 align-top">
- <div className="flex max-w-[260px] flex-wrap gap-1">
+  <div className="flex flex-wrap gap-1 max-w-[260px]">
   {(['not_contacted', 'contacted_accepted', 'contacted_rejected', 'contacted_no_reply'] as const).map((status) => {
   const isActive = company.outreachStatus === status;
   const isUpdating = updatingOutreachCompanyId === company.id;
-  const labelEn = outreachLabel(status);
-  const labelAr = isAr ? (
-  status === 'not_contacted' ? 'لم أتواصل' :
-  status === 'contacted_accepted' ? 'قبلت' :
-  status === 'contacted_rejected' ? 'رفضت' :
-  'لم تجب'
-  ) : labelEn;
+  const label = outreachShortLabel(status, isAr);
+  const title = outreachTitle(status);
   return (
   <button
   key={status}
   type="button"
   disabled={isUpdating}
   onClick={(event) => handleOutreachStatusChange(company, status, event)}
-  className={`h-7 rounded-md border px-2 text-xs transition-colors ${
+  title={title}
+  className={`h-7 rounded-md border px-2 text-xs whitespace-nowrap min-w-fit transition-colors ${
   isActive
   ? outreachActiveClass(status)
   : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
   } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
-  {labelAr}
+  {label}
   </button>
   );
   })}
- </div>
- {outreachUpdateError && (
- <div className="mt-1 text-xs text-red-600">{outreachUpdateError}</div>
- )}
- </td>
- <td className="px-4 py-3.5 align-top">
- <div className="flex items-center justify-end gap-1">
-  {onCompanyClick && (
-  <Button
+  </div>
+  {outreachUpdateError && (
+  <div className="mt-1 text-xs text-red-600">{outreachUpdateError}</div>
+  )}
+  </td>
+  <td className="px-4 py-3.5 align-top">
+  <div className="inline-flex items-center justify-end gap-2">
+  <button
   type="button"
-  variant="ghost"
-  size="sm"
   onClick={(event) => {
   event.stopPropagation();
   event.preventDefault();
-  onCompanyClick(company.id);
+  onCompanyClick?.(company.id);
   }}
-  className="text-neutral-600 hover:text-neutral-900 px-2"
+  className="text-sm font-medium text-neutral-700 hover:text-neutral-900"
+  title="Open"
   >
   Open
-  </Button>
-  )}
+  </button>
   {onEdit && (
-  <Button
+  <button
   type="button"
-  variant="ghost"
-  size="sm"
   onClick={(event) => {
   event.stopPropagation();
   event.preventDefault();
   onEdit(company);
   }}
-  className="text-neutral-400 hover:text-neutral-900 px-1.5"
-  title="Edit"
+  className="text-neutral-600 hover:text-blue-700"
+  title="Edit company"
   >
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+  <path d="m15 5 4 4"/>
   </svg>
-  </Button>
+  </button>
   )}
   {onAIScore && (
-  <Button
+  <button
   type="button"
-  variant="ghost"
-  size="sm"
   onClick={(event) => {
   event.stopPropagation();
   event.preventDefault();
   onAIScore(company);
   }}
-  className="text-indigo-500 hover:text-indigo-700 px-1.5"
+  className="text-indigo-600 hover:text-indigo-700"
   title="AI Score"
   >
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  <path d="M12 2a4 4 0 0 1 4 4c0 2-2 4-2 6"/><path d="M12 18v4"/><path d="M16 22H8"/>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M12 2a4 4 0 0 1 4 4c0 2-2 4-2 6"/>
+  <path d="M12 18v4"/>
+  <path d="M16 22H8"/>
   </svg>
-  </Button>
+  </button>
   )}
   {onDelete && (
-  <Button
+  <button
   type="button"
-  variant="ghost"
-  size="sm"
   onClick={(event) => {
   event.stopPropagation();
   event.preventDefault();
   onDelete(company.id);
   }}
-  className="text-neutral-300 hover:text-red-500 px-1.5"
-  title="Delete"
+  className="text-red-600 hover:text-red-700"
+  title="Delete company"
   >
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <path d="M3 6h18"/>
+  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
   </svg>
-  </Button>
+  </button>
   )}
   </div>
   </td>
@@ -445,7 +398,7 @@ const CompaniesTable: React.FC<{
   ))}
   {filtered.length === 0 && (
   <tr>
- <td colSpan={10} className="px-4 py-8 text-center">
+  <td colSpan={7} className="px-4 py-8 text-center">
   <EmptyState
   title="No companies match the current filters."
   description="Clear the filters or add a company to continue."
@@ -459,6 +412,7 @@ const CompaniesTable: React.FC<{
   </div>
   </div>
   );
+
 };
 
 export default CompaniesTable;

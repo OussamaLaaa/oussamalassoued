@@ -154,6 +154,29 @@ export const companyToDb = (input: CompanyInput) => ({
   outreach_status: input.outreachStatus ?? null,
 });
 
+export const companyUpdateToDb = (input: Partial<CompanyInput>) => {
+  const output: Record<string, unknown> = {};
+
+  if ("name" in input) output.name = safeString(input.name).trim();
+  if ("databaseType" in input) output.database_type = normalizeDatabaseType(input.databaseType);
+  if ("industry" in input) output.industry = input.industry;
+  if ("country" in input) output.country = input.country;
+  if ("city" in input) output.city = input.city;
+  if ("website" in input) output.website = input.website;
+  if ("linkedin" in input) output.linkedin = input.linkedin;
+  if ("priority" in input) output.priority = input.priority;
+  if ("category" in input) output.category = input.category;
+  if ("fitScore" in input) output.fit_score = toNullableNumber(input.fitScore);
+  if ("ethicalFit" in input) output.ethical_fit = input.ethicalFit;
+  if ("status" in input) output.status = input.status;
+  if ("nextAction" in input) output.next_action = input.nextAction;
+  if ("targetNiche" in input) output.target_niche = input.targetNiche ?? null;
+  if ("outreachStatus" in input) output.outreach_status = input.outreachStatus ?? null;
+  if ("notes" in input) output.notes = input.notes;
+
+  return output;
+};
+
 // ── Person mappers ──
 
 export const personFromDb = (row: any, companyName?: string): Person => ({

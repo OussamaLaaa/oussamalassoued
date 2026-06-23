@@ -133,8 +133,9 @@ const toProjectInput = (p: Project): ProjectInput => ({
 const defaultCompanyFilters: CompanyFilters = {
  searchQuery: '',
  priority: '',
- status: '',
  databaseType: '',
+ targetNiche: '',
+ outreachStatus: '',
  country: '',
 };
 
@@ -252,8 +253,9 @@ const resolveInitialCompanyFilters = (): CompanyFilters => {
  ? {
  searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
  priority: typeof next.priority === 'string' ? next.priority : '',
- status: typeof next.status === 'string' ? next.status : '',
  databaseType: typeof next.databaseType === 'string' ? next.databaseType : '',
+ targetNiche: typeof next.targetNiche === 'string' ? next.targetNiche : '',
+ outreachStatus: typeof next.outreachStatus === 'string' ? next.outreachStatus : '',
  country: typeof next.country === 'string' ? next.country : '',
  }
  : defaultCompanyFilters;
@@ -2045,7 +2047,8 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  onResearchResultChange={setCompanyResearchDraft}
  onSubmit={async (input) => {
  try {
- const savedCompany = await updateCompany(editingCompany.id, input);
+ const { category, fitScore, ethicalFit, status, nextAction, ...allowedUpdate } = input;
+ const savedCompany = await updateCompany(editingCompany.id, allowedUpdate);
  await createResearchFollowUpRecords(savedCompany, companyResearchDraft);
  setEditingCompany(null);
  setCompanyResearchDraft(null);
