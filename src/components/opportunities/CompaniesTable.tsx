@@ -14,6 +14,8 @@ export interface CompanyFilters {
  priority: string;
  status: string;
  databaseType: string;
+ targetNiche: string;
+ outreachStatus: string;
  country: string;
 }
 
@@ -61,6 +63,32 @@ const locationLabel = (company: Company) => {
 
 const categoryLabel = (company: Company) => company.category || company.industry || '—';
 
+const nicheLabel = (value?: string | null) => {
+ if (!value) return '—';
+ return value.replace(/_/g, ' ').replace(/^([a-z])/i, (m) => m.toUpperCase());
+};
+
+const outreachLabel = (value?: string | null) => {
+ if (!value) return 'Not contacted';
+ const map: Record<string, string> = {
+ not_contacted: 'Not contacted',
+ contacted_accepted: 'Accepted',
+ contacted_rejected: 'Rejected',
+ contacted_no_reply: 'No reply',
+ };
+ return map[value] || 'Not contacted';
+};
+
+const outreachColorClass = (value?: string | null) => {
+ const map: Record<string, string> = {
+ not_contacted: 'border-neutral-200 text-neutral-600 bg-neutral-50',
+ contacted_accepted: 'border-emerald-200 text-emerald-700 bg-emerald-50',
+ contacted_rejected: 'border-red-200 text-red-700 bg-red-50',
+ contacted_no_reply: 'border-amber-200 text-amber-700 bg-amber-50',
+ };
+ return map[value || 'not_contacted'];
+};
+
 const CompaniesTable: React.FC<{
  companies: Company[];
  onEdit?: (company: Company) => void;
@@ -88,9 +116,11 @@ const CompaniesTable: React.FC<{
  const q = filters.country.toLowerCase();
  if (!(company.country || '').toLowerCase().includes(q)) return false;
  }
+ if (filters.targetNiche && company.targetNiche !== filters.targetNiche) return false;
+ if (filters.outreachStatus && company.outreachStatus !== filters.outreachStatus) return false;
  return true;
  });
- }, [companies, filters]);
+}, [companies, filters]);
 
  const setFilter = (key: keyof CompanyFilters, value: string) => {
  if (!onFilterChange || !filters) return;
@@ -104,12 +134,14 @@ const CompaniesTable: React.FC<{
  priority: '',
  status: '',
  databaseType: '',
+ targetNiche: '',
+ outreachStatus: '',
  country: '',
  });
  };
 
  const hasActiveFilters = Boolean(
- filters && (filters.priority || filters.status || filters.databaseType || filters.country),
+ filters && (filters.priority || filters.status || filters.databaseType || filters.targetNiche || filters.outreachStatus || filters.country),
  );
 
   return (
@@ -143,19 +175,49 @@ const CompaniesTable: React.FC<{
             options={statusOptions}
             className={`${toolbarSelect} min-w-[110px]`}
           />
-          <Select
-            value={filters.databaseType}
-            onChange={(event) => setFilter('databaseType', event.target.value)}
-            options={databaseTypeOptions}
-            className={`${toolbarSelect} min-w-[120px]`}
-          />
-          <input
-            type="text"
-            value={filters.country}
-            onChange={(event) => setFilter('country', event.target.value)}
-            placeholder="Country"
-            className="h-10 min-w-[110px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
-          />
+ <Select
+ value={filters.databaseType}
+ onChange={(event) => setFilter('databaseType', event.target.value)}
+ options={databaseTypeOptions}
+ className={`${toolbarSelect} min-w-[120px]`}
+ />
+ <Select
+ value={filters.targetNiche}
+ onChange={(event) => setFilter('targetNiche', event.target.value)}
+ options={[
+ { value: '', label: 'Target Niche' },
+ { value: 'saas', label: 'SaaS' },
+ { value: 'b2b_services', label: 'B2B Services' },
+ { value: 'healthtech', label: 'HealthTech' },
+ { value: 'edtech', label: 'EdTech' },
+ { value: 'marketplace', label: 'Marketplace' },
+ { value: 'ecommerce', label: 'E-commerce' },
+ { value: 'startup', label: 'Startup' },
+ { value: 'commercial', label: 'Commercial' },
+ { value: 'agency', label: 'Agency' },
+ { value: 'other', label: 'Other' },
+ ]}
+ className={`${toolbarSelect} min-w-[120px]`}
+ />
+ <Select
+ value={filters.outreachStatus}
+ onChange={(event) => setFilter('outreachStatus', event.target.value)}
+ options={[
+ { value: '', label: 'Outreach Status' },
+ { value: 'not_contacted', label: 'Not contacted' },
+ { value: 'contacted_accepted', label: 'Contacted — accepted' },
+ { value: 'contacted_rejected', label: 'Contacted — rejected' },
+ { value: 'contacted_no_reply', label: 'Contacted — no reply' },
+ ]}
+ className={`${toolbarSelect} min-w-[140px]`}
+ />
+ <input
+ type="text"
+ value={filters.country}
+ onChange={(event) => setFilter('country', event.target.value)}
+ placeholder="Country"
+ className="h-10 min-w-[110px] rounded-lg border border-neutral-200 bg-white px-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-colors focus:border-neutral-400"
+ />
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" className={`${toolbarButton} text-neutral-400 hover:text-neutral-900`} onClick={clearFilters}>
               Clear
@@ -177,8 +239,9 @@ const CompaniesTable: React.FC<{
   <th className="px-4 py-3 font-medium">Fit</th>
   <th className="px-4 py-3 font-medium">Ethical</th>
   <th className="px-4 py-3 font-medium">Status</th>
-  <th className="px-4 py-3 font-medium">Next action</th>
-  <th className="px-4 py-3 text-right font-medium">Actions</th>
+ <th className="px-4 py-3 font-medium">Next action</th>
+ <th className="px-4 py-3 font-medium">Outreach</th>
+ <th className="px-4 py-3 text-right font-medium">Actions</th>
   </tr>
   </thead>
   <tbody>
@@ -241,11 +304,23 @@ const CompaniesTable: React.FC<{
   <td className="px-4 py-3.5 align-top">
   <StatusBadge status={company.status} />
   </td>
-  <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
-  <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
-  </td>
-  <td className="px-4 py-3.5 align-top">
-  <div className="flex items-center justify-end gap-1">
+ <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+ <div className="max-w-[180px] truncate">{company.nextAction || '—'}</div>
+ </td>
+ <td className="px-4 py-3.5 align-top">
+ <span
+ onClick={(e) => {
+ e.stopPropagation();
+ e.preventDefault();
+ }}
+ className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium cursor-default select-none ${outreachColorClass(company.outreachStatus)}`}
+ title={outreachLabel(company.outreachStatus)}
+ >
+ {outreachLabel(company.outreachStatus)}
+ </span>
+ </td>
+ <td className="px-4 py-3.5 align-top">
+ <div className="flex items-center justify-end gap-1">
   {onCompanyClick && (
   <Button
   type="button"
@@ -321,7 +396,7 @@ const CompaniesTable: React.FC<{
   ))}
   {filtered.length === 0 && (
   <tr>
-  <td colSpan={10} className="px-4 py-8 text-center">
+ <td colSpan={11} className="px-4 py-8 text-center">
   <EmptyState
   title="No companies match the current filters."
   description="Clear the filters or add a company to continue."

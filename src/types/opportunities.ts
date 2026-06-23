@@ -1,3 +1,21 @@
+export type TargetNiche =
+  | 'saas'
+  | 'b2b_services'
+  | 'healthtech'
+  | 'edtech'
+  | 'marketplace'
+  | 'ecommerce'
+  | 'startup'
+  | 'commercial'
+  | 'agency'
+  | 'other';
+
+export type OutreachStatus =
+  | 'not_contacted'
+  | 'contacted_accepted'
+  | 'contacted_rejected'
+  | 'contacted_no_reply';
+
 export interface Company {
   id: string;
   name: string;
@@ -15,6 +33,8 @@ export interface Company {
   nextAction?: string;
   notes?: string;
   createdAt?: string;
+  targetNiche?: TargetNiche | null;
+  outreachStatus?: OutreachStatus | null;
 }
 
 export interface Person {
@@ -123,6 +143,8 @@ export interface CompanyInput {
   status?: Company['status'];
   nextAction?: string;
   notes?: string;
+  targetNiche?: TargetNiche | null;
+  outreachStatus?: OutreachStatus | null;
 }
 
 export interface PersonInput {
@@ -601,6 +623,8 @@ export interface CompanyResearchSuggestionCompany {
   status?: Company['status'] | null;
   nextAction?: string | null;
   notes?: string | null;
+  targetNiche?: TargetNiche | null;
+  outreachStatus?: OutreachStatus | null;
 }
 
 export interface CompanyResearchContactMethodSuggestion {

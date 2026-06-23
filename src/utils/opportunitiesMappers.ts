@@ -131,6 +131,8 @@ export const companyFromDb = (row: any): Company => ({
   nextAction: row?.next_action ?? row?.nextAction ?? undefined,
   notes: row?.notes ?? undefined,
   createdAt: toIso(row?.created_at ?? row?.createdAt),
+  targetNiche: row?.target_niche ?? row?.targetNiche ?? null,
+  outreachStatus: row?.outreach_status ?? row?.outreachStatus ?? null,
 });
 
 export const companyToDb = (input: CompanyInput) => ({
@@ -148,6 +150,8 @@ export const companyToDb = (input: CompanyInput) => ({
   status: input.status,
   next_action: input.nextAction,
   notes: input.notes,
+  target_niche: input.targetNiche ?? null,
+  outreach_status: input.outreachStatus ?? null,
 });
 
 // ── Person mappers ──
