@@ -377,11 +377,14 @@ const CompanyWorkspace: React.FC<Props> = ({
     }
     try {
       await updateCompany(companyArg.id, { status: 'archived' });
+      console.log("[CRM] archive company success", companyArg.id);
       setShowDeleteModal(false);
       onBack();
     } catch (error) {
+      console.error('[CRM] archive company failed', error);
       const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
       setFormError(message);
+      throw error;
     }
   };
 

@@ -605,8 +605,9 @@ const OpportunitiesLayout: React.FC<{
    { id: 'queue', label: 'Outreach Queue', icon: Send },
    { id: 'messages', label: 'Messages', icon: MessageSquare },
    { id: 'templates', label: 'Templates', icon: FileText },
-  { id: 'lead_research', label: 'Lead Research', icon: Search },
-   ],
+    { id: 'lead_research', label: 'Lead Research', icon: Search },
+    { id: 'archived', label: 'Archived', icon: Archive },
+    ],
    plans: [
    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
    { id: 'plans', label: 'Plans', icon: Calendar },
@@ -925,12 +926,11 @@ const OpportunitiesLayout: React.FC<{
     }
     try {
       await updateCompany(company.id, { status: 'archived' });
+      console.log("[CRM] archive company success", company.id);
       setShowDeleteModal(false);
       setCompanyToDelete(null);
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[CRM] archive company failed', error);
-      }
+      console.error('[CRM] archive company failed', error);
       const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
       setDeleteError(message);
       throw error;
@@ -1427,6 +1427,23 @@ const OpportunitiesLayout: React.FC<{
   </>
   );
   })()}
+  </div>
+  )}
+
+  {tab === 'archived' && (
+  <div className="space-y-5">
+    <div>
+      <h2 className="text-xl font-semibold text-neutral-900">Archived Companies</h2>
+      <p className="mt-0.5 text-sm text-neutral-500">Companies you have archived. Set filter to Active to restore.</p>
+    </div>
+    <CompaniesTable
+      companies={companies.filter(c => c.status === 'archived')}
+      onEdit={handleEditCompany}
+      onDelete={handleRequestDelete}
+      onAIScore={handleAIScore}
+      onCompanyClick={handleCompanyClick}
+      onUpdateCompany={updateCompany}
+    />
   </div>
   )}
 
