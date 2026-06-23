@@ -84,7 +84,7 @@ const CompanySegmentView: React.FC<{
   const [segmentFilters, setSegmentFilters] = useState<CompanyFilters>({
   searchQuery: '',
   priority: '',
-  status: '',
+  status: 'active',
   country: '',
   });
 

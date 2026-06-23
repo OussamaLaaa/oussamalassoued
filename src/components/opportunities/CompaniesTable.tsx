@@ -126,13 +126,13 @@ const CompaniesTable: React.FC<{
   const clearFilters = () => {
   if (!onFilterChange || !filters) return;
    onFilterChange({
-   searchQuery: '',
-   priority: '',
-   targetNiche: '',
-   outreachStatus: '',
-   country: '',
-   status: '',
-   });
+    searchQuery: '',
+    priority: '',
+    targetNiche: '',
+    outreachStatus: '',
+    country: '',
+    status: 'active',
+    });
   };
 
   const hasActiveFilters = Boolean(
