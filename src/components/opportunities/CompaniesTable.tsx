@@ -454,11 +454,12 @@ const CompaniesTable: React.FC<{
   title="AI Score"
   aria-label="AI Score"
   >
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  <path d="M12 2a4 4 0 0 1 4 4c0 2-2 4-2 6"/>
-  <path d="M12 18v4"/>
-  <path d="M16 22H8"/>
-  </svg>
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+   <rect x="4" y="8" width="16" height="12" rx="3"/>
+   <circle cx="9" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+   <circle cx="15" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+   <path d="M9 17h6"/>
+   </svg>
   </button>
   )}
   {onDelete && (
