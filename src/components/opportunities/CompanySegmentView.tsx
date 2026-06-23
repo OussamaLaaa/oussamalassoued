@@ -81,13 +81,12 @@ const CompanySegmentView: React.FC<{
  onImportCompaniesBatch,
 }) => {
  const [showCsvImport, setShowCsvImport] = useState(false);
- const [segmentFilters, setSegmentFilters] = useState<CompanyFilters>({
- searchQuery: '',
- priority: '',
- status: '',
- databaseType: '',
- country: '',
- });
+  const [segmentFilters, setSegmentFilters] = useState<CompanyFilters>({
+  searchQuery: '',
+  priority: '',
+  status: '',
+  country: '',
+  });
 
  // Filter to only this segment's companies
  const segmentCompanies = useMemo(

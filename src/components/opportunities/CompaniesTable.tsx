@@ -11,7 +11,6 @@ import { useLanguage } from '../../hooks/useLanguage';
 export interface CompanyFilters {
  searchQuery: string;
  priority: string;
- databaseType: string;
  targetNiche: string;
  outreachStatus: string;
  country: string;
@@ -22,13 +21,6 @@ const priorityOptions = [
  { value: 'high', label: 'High' },
  { value: 'medium', label: 'Medium' },
  { value: 'low', label: 'Low' },
-];
-
-const databaseTypeOptions = [
- { value: '', label: 'Database Type' },
- { value: 'big_company', label: 'Big Company' },
- { value: 'sme', label: 'SME' },
- { value: 'freelance', label: 'Freelance' },
 ];
 
 const databaseTypeLabel = (value?: string) => {
@@ -110,9 +102,8 @@ const CompaniesTable: React.FC<{
  .toLowerCase();
  if (!haystack.includes(q)) return false;
  }
- if (filters.priority && company.priority !== filters.priority) return false;
- if (filters.databaseType && normalizeDatabaseType(company.databaseType) !== filters.databaseType) return false;
- if (filters.country) {
+  if (filters.priority && company.priority !== filters.priority) return false;
+  if (filters.country) {
  const q = filters.country.toLowerCase();
  if (!(company.country || '').toLowerCase().includes(q)) return false;
  }
@@ -129,19 +120,18 @@ const CompaniesTable: React.FC<{
 
  const clearFilters = () => {
  if (!onFilterChange || !filters) return;
- onFilterChange({
- searchQuery: '',
- priority: '',
- databaseType: '',
- targetNiche: '',
- outreachStatus: '',
- country: '',
- });
+  onFilterChange({
+  searchQuery: '',
+  priority: '',
+  targetNiche: '',
+  outreachStatus: '',
+  country: '',
+  });
  };
 
- const hasActiveFilters = Boolean(
- filters && (filters.priority || filters.databaseType || filters.targetNiche || filters.outreachStatus || filters.country),
- );
+  const hasActiveFilters = Boolean(
+  filters && (filters.priority || filters.targetNiche || filters.outreachStatus || filters.country),
+  );
 
   const { isAr, t } = useLanguage();
   const [updatingOutreachCompanyId, setUpdatingOutreachCompanyId] = useState<string | null>(null);
@@ -188,13 +178,7 @@ const CompaniesTable: React.FC<{
             options={priorityOptions}
             className={`${toolbarSelect} min-w-[110px]`}
           />
-          <Select
-            value={filters.databaseType}
-            onChange={(event) => setFilter('databaseType', event.target.value)}
-            options={databaseTypeOptions}
-            className={`${toolbarSelect} min-w-[120px]`}
-          />
- <Select
+  <Select
  value={filters.targetNiche}
  onChange={(event) => setFilter('targetNiche', event.target.value)}
  options={[
@@ -327,18 +311,6 @@ const CompaniesTable: React.FC<{
   </td>
   <td className="px-4 py-3.5 align-top">
   <div className="inline-flex items-center justify-end gap-2">
-  <button
-  type="button"
-  onClick={(event) => {
-  event.stopPropagation();
-  event.preventDefault();
-  onCompanyClick?.(company.id);
-  }}
-  className="text-sm font-medium text-neutral-700 hover:text-neutral-900"
-  title="Open"
-  >
-  Open
-  </button>
   {onEdit && (
   <button
   type="button"
@@ -347,8 +319,9 @@ const CompaniesTable: React.FC<{
   event.preventDefault();
   onEdit(company);
   }}
-  className="text-neutral-600 hover:text-blue-700"
+  className="text-neutral-500 hover:text-blue-700"
   title="Edit company"
+  aria-label="Edit company"
   >
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
@@ -364,8 +337,9 @@ const CompaniesTable: React.FC<{
   event.preventDefault();
   onAIScore(company);
   }}
-  className="text-indigo-600 hover:text-indigo-700"
+  className="text-neutral-500 hover:text-violet-600"
   title="AI Score"
+  aria-label="AI Score"
   >
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M12 2a4 4 0 0 1 4 4c0 2-2 4-2 6"/>
@@ -382,8 +356,9 @@ const CompaniesTable: React.FC<{
   event.preventDefault();
   onDelete(company.id);
   }}
-  className="text-red-600 hover:text-red-700"
+  className="text-neutral-500 hover:text-red-600"
   title="Delete company"
+  aria-label="Delete company"
   >
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
   <path d="M3 6h18"/>

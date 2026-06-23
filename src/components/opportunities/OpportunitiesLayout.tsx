@@ -133,7 +133,6 @@ const toProjectInput = (p: Project): ProjectInput => ({
 const defaultCompanyFilters: CompanyFilters = {
  searchQuery: '',
  priority: '',
- databaseType: '',
  targetNiche: '',
  outreachStatus: '',
  country: '',
@@ -253,7 +252,6 @@ const resolveInitialCompanyFilters = (): CompanyFilters => {
  ? {
  searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
  priority: typeof next.priority === 'string' ? next.priority : '',
- databaseType: typeof next.databaseType === 'string' ? next.databaseType : '',
  targetNiche: typeof next.targetNiche === 'string' ? next.targetNiche : '',
  outreachStatus: typeof next.outreachStatus === 'string' ? next.outreachStatus : '',
  country: typeof next.country === 'string' ? next.country : '',
