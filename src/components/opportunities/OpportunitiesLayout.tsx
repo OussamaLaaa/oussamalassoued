@@ -917,10 +917,13 @@ const OpportunitiesLayout: React.FC<{
  setShowDeleteModal(true);
 };
 
- const handleArchiveCompany = async () => {
- if (!companyToDelete) return;
- try {
- await updateCompany(companyToDelete.id, { status: 'archived' });
+  const handleArchiveCompany = async () => {
+    if (!companyToDelete?.id) {
+      console.error("Missing company id", companyToDelete);
+      throw new Error("Missing id");
+    }
+    try {
+      await updateCompany(companyToDelete.id, { status: 'archived' });
  setShowDeleteModal(false);
  setCompanyToDelete(null);
  } catch (error) {

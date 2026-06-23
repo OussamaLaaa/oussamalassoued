@@ -1679,6 +1679,8 @@ export default async function handler(req, res) {
       return toSafeJson(res, 400, { success: false, error: 'Missing data payload.' });
     }
 
+    console.log("Updating company:", id, data);
+
     if (entity === 'ai_use_case_settings' && 'model' in data) {
       const modelVal = String(data.model || '').trim();
       if (!modelVal) {

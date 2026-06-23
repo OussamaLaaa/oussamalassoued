@@ -369,11 +369,15 @@ const CompanyWorkspace: React.FC<Props> = ({
  setShowDeleteModal(true);
  };
 
- const handleArchiveAndBack = async () => {
- try {
- await updateCompany(company.id, { status: 'archived' });
- setShowDeleteModal(false);
- onBack();
+  const handleArchiveAndBack = async () => {
+    try {
+      if (!company?.id) {
+        console.error("Missing company id", company);
+        throw new Error("Missing id");
+      }
+      await updateCompany(company.id, { status: 'archived' });
+      setShowDeleteModal(false);
+      onBack();
  } catch (error) {
  const message = error instanceof Error && error.message ? error.message : 'Unable to archive company.';
  setFormError(message);
