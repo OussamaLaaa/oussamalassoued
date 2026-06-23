@@ -62,23 +62,27 @@ const CompanySegmentView: React.FC<{
   onDelete: (company: Company) => void;
  onAIScore?: (company: Company) => void;
  onCompanyClick?: (companyId: string) => void;
- onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
- onImportCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>, segmentType?: SegmentType) => Promise<any>;
+  onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
+  onImportCompaniesBatch?: (rows: Array<{ name: string; country?: string; industry?: string; website?: string }>, segmentType?: SegmentType) => Promise<any>;
+  onBulkArchive?: (ids: string[]) => Promise<void>;
+  onBulkDelete?: (ids: string[]) => Promise<void>;
 }> = ({
- segmentType,
- title,
- subtitle,
- companies,
- people,
- messages,
- deals,
- onAddCompany,
- onEdit,
- onDelete,
- onAIScore,
- onCompanyClick,
- onUpdateCompany,
- onImportCompaniesBatch,
+  segmentType,
+  title,
+  subtitle,
+  companies,
+  people,
+  messages,
+  deals,
+  onAddCompany,
+  onEdit,
+  onDelete,
+  onAIScore,
+  onCompanyClick,
+  onUpdateCompany,
+  onImportCompaniesBatch,
+  onBulkArchive,
+  onBulkDelete,
 }) => {
  const [showCsvImport, setShowCsvImport] = useState(false);
   const [segmentFilters, setSegmentFilters] = useState<CompanyFilters>({
@@ -234,16 +238,18 @@ const CompanySegmentView: React.FC<{
  action={onAddCompany && <Button variant="primary" size="sm" onClick={onAddCompany}>Add Company</Button>}
  />
  ) : (
-  <CompaniesTable
-  companies={segmentCompanies}
-  onEdit={onEdit}
-  onDelete={onDelete}
-  onAIScore={onAIScore}
-  onCompanyClick={onCompanyClick}
-  onUpdateCompany={onUpdateCompany}
-  filters={segmentFilters}
-  onFilterChange={setSegmentFilters}
-  />
+   <CompaniesTable
+   companies={segmentCompanies}
+   onEdit={onEdit}
+   onDelete={onDelete}
+   onAIScore={onAIScore}
+   onCompanyClick={onCompanyClick}
+   onUpdateCompany={onUpdateCompany}
+   filters={segmentFilters}
+   onFilterChange={setSegmentFilters}
+   onBulkArchive={onBulkArchive}
+   onBulkDelete={onBulkDelete}
+   />
  )}
  </div>
 

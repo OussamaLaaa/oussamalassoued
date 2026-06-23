@@ -918,6 +918,26 @@ const OpportunitiesLayout: React.FC<{
  setShowDeleteModal(true);
 };
 
+  const handleBulkArchive = async (ids: string[]) => {
+    for (const id of ids) {
+      try {
+        await updateCompany(id, { status: 'archived' });
+      } catch (e) {
+        console.error('[CRM] bulk archive failed for', id, e);
+      }
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    for (const id of ids) {
+      try {
+        await deleteCompany(id, { preserveRelated: true });
+      } catch (e) {
+        console.error('[CRM] bulk delete failed for', id, e);
+      }
+    }
+  };
+
   const handleArchiveCompany = async (company: { id: string; name: string }) => {
     console.log("ARCHIVE DEBUG", company);
     if (!company || typeof company.id !== "string") {
@@ -1264,6 +1284,8 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   onUpdateCompany={updateCompany}
+  onBulkArchive={handleBulkArchive}
+  onBulkDelete={handleBulkDelete}
   />
   )}
 
@@ -1283,6 +1305,8 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   onUpdateCompany={updateCompany}
+  onBulkArchive={handleBulkArchive}
+  onBulkDelete={handleBulkDelete}
   />
   )}
 
@@ -1302,6 +1326,8 @@ const OpportunitiesLayout: React.FC<{
   onImportCompaniesBatch={importCompaniesBatch}
   onCompanyClick={handleCompanyClick}
   onUpdateCompany={updateCompany}
+  onBulkArchive={handleBulkArchive}
+  onBulkDelete={handleBulkDelete}
   />
   )}
 
@@ -1414,23 +1440,25 @@ const OpportunitiesLayout: React.FC<{
   <Button variant="primary" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
   <Button variant="secondary" size="sm" onClick={() => setShowCsvImport(true)}>Import CSV</Button>
   </div>
-  <CompaniesTable
-  companies={companies}
-  onEdit={handleEditCompany}
-  onDelete={handleRequestDelete}
-  onAIScore={handleAIScore}
-  onCompanyClick={handleCompanyClick}
-  onUpdateCompany={updateCompany}
-  filters={companyFilters}
-  onFilterChange={setCompanyFilters}
-  />
-  </>
-  );
-  })()}
-  </div>
-  )}
+   <CompaniesTable
+   companies={companies}
+   onEdit={handleEditCompany}
+   onDelete={handleRequestDelete}
+   onAIScore={handleAIScore}
+   onCompanyClick={handleCompanyClick}
+   onUpdateCompany={updateCompany}
+   filters={companyFilters}
+   onFilterChange={setCompanyFilters}
+   onBulkArchive={handleBulkArchive}
+   onBulkDelete={handleBulkDelete}
+   />
+   </>
+   );
+   })()}
+   </div>
+   )}
 
-  {tab === 'archived' && (
+   {tab === 'archived' && (
   <div className="space-y-5">
     <div>
       <h2 className="text-xl font-semibold text-neutral-900">Archived Companies</h2>
@@ -1443,6 +1471,8 @@ const OpportunitiesLayout: React.FC<{
       onAIScore={handleAIScore}
       onCompanyClick={handleCompanyClick}
       onUpdateCompany={updateCompany}
+      onBulkArchive={handleBulkArchive}
+      onBulkDelete={handleBulkDelete}
     />
   </div>
   )}

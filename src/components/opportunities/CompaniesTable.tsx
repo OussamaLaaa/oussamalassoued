@@ -5,6 +5,7 @@ import PriorityBadge from './PriorityBadge';
 import Select from '../ui/Select';
 import EmptyState from '../ui/EmptyState';
 import Badge from '../ui/Badge';
+import Button from '../ui/Button';
 import { toolbarSearch, toolbarSearchIcon, toolbarSearchInput, toolbarSelect, toolbarButton, toolbarCount } from './Toolbar';
 import { useLanguage } from '../../hooks/useLanguage';
 
@@ -83,16 +84,19 @@ const outreachActiveClass = (value?: string | null) => {
 };
 
 const CompaniesTable: React.FC<{
- companies: Company[];
- onEdit?: (company: Company) => void;
-  onDelete?: (company: Company) => void;
- onAIScore?: (company: Company) => void;
- onCompanyClick?: (companyId: string) => void;
- onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
- filters?: CompanyFilters;
- onFilterChange?: (filters: CompanyFilters) => void;
-}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, onUpdateCompany, filters, onFilterChange }) => {
- const filtered = useMemo(() => {
+  companies: Company[];
+  onEdit?: (company: Company) => void;
+   onDelete?: (company: Company) => void;
+  onAIScore?: (company: Company) => void;
+  onCompanyClick?: (companyId: string) => void;
+  onUpdateCompany?: (id: string, data: Partial<Company>) => Promise<void>;
+  filters?: CompanyFilters;
+  onFilterChange?: (filters: CompanyFilters) => void;
+  onBulkArchive?: (ids: string[]) => Promise<void>;
+  onBulkDelete?: (ids: string[]) => Promise<void>;
+}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, onUpdateCompany, filters, onFilterChange, onBulkArchive, onBulkDelete }) => {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const filtered = useMemo(() => {
  if (!filters) return companies;
  return companies.filter((company) => {
  if (filters.searchQuery) {
@@ -142,6 +146,47 @@ const CompaniesTable: React.FC<{
   const { isAr, t } = useLanguage();
   const [updatingOutreachCompanyId, setUpdatingOutreachCompanyId] = useState<string | null>(null);
   const [outreachUpdateError, setOutreachUpdateError] = useState<string | null>(null);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((c) => c.id)));
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (!onBulkArchive || selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    try {
+      await onBulkArchive(Array.from(selectedIds));
+      setSelectedIds(new Set());
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!onBulkDelete || selectedIds.size === 0) return;
+    const ok = window.confirm(`Delete ${selectedIds.size} company(ies) permanently? This cannot be undone.`);
+    if (!ok) return;
+    setBulkProcessing(true);
+    try {
+      await onBulkDelete(Array.from(selectedIds));
+      setSelectedIds(new Set());
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
 
   const handleOutreachStatusChange = async (company: Company, status: string, event: React.SyntheticEvent) => {
   if (!onUpdateCompany) return;
@@ -241,10 +286,53 @@ const CompaniesTable: React.FC<{
         </div>
   )}
 
+  {selectedIds.size > 0 && (
+  <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5">
+    <span className="text-sm font-medium text-blue-900">{selectedIds.size} selected</span>
+    <div className="ml-auto flex items-center gap-2">
+      {onBulkArchive && (
+        <button
+          type="button"
+          onClick={handleBulkArchive}
+          disabled={bulkProcessing}
+          className="rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50"
+        >
+          {bulkProcessing ? 'Archiving...' : 'Archive selected'}
+        </button>
+      )}
+      {onBulkDelete && (
+        <button
+          type="button"
+          onClick={handleBulkDelete}
+          disabled={bulkProcessing}
+          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+        >
+          {bulkProcessing ? 'Deleting...' : 'Delete selected'}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => setSelectedIds(new Set())}
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
+      >
+        Clear selection
+      </button>
+    </div>
+  </div>
+  )}
+
   <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
   <table className="min-w-[960px] w-full border-collapse text-left">
   <thead>
   <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
+  <th className="w-10 px-2 py-3 text-center">
+    <input
+      type="checkbox"
+      checked={filtered.length > 0 && selectedIds.size === filtered.length}
+      onChange={toggleSelectAll}
+      className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+    />
+  </th>
   <th className="px-4 py-3 font-medium">Company</th>
   <th className="px-4 py-3 font-medium">Type</th>
   <th className="px-4 py-3 font-medium">Location</th>
@@ -258,9 +346,17 @@ const CompaniesTable: React.FC<{
   {filtered.map((company) => (
   <tr
   key={company.id}
-  className="border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer"
+  className={`border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer ${selectedIds.has(company.id) ? 'bg-blue-50/50' : ''}`}
   onClick={() => onCompanyClick?.(company.id)}
   >
+  <td className="w-10 px-2 py-3.5 align-top text-center" onClick={(e) => e.stopPropagation()}>
+    <input
+      type="checkbox"
+      checked={selectedIds.has(company.id)}
+      onChange={() => toggleSelect(company.id)}
+      className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+    />
+  </td>
   <td className="px-4 py-3.5 align-top">
   <div className="min-w-0">
   <div className="font-medium text-neutral-900">{company.name}</div>
@@ -390,7 +486,7 @@ const CompaniesTable: React.FC<{
   ))}
   {filtered.length === 0 && (
   <tr>
-  <td colSpan={7} className="px-4 py-8 text-center">
+  <td colSpan={8} className="px-4 py-8 text-center">
   <EmptyState
   title="No companies match the current filters."
   description="Clear the filters or add a company to continue."
