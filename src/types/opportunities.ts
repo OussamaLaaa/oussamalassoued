@@ -25,6 +25,7 @@ export interface Company {
   country?: string;
   city?: string;
   phone?: string | null;
+  email?: string | null;
   website?: string;
   linkedin?: string;
   priority?: 'low' | 'medium' | 'high';
@@ -57,6 +58,10 @@ export interface Person {
   nextFollowUpDate?: string;
   notes?: string;
   createdAt?: string;
+  phone?: string | null;
+  relationType?: 'new' | 'weak' | 'medium' | 'strong' | 'strategic' | string | null;
+  status?: 'active' | 'archived' | string | null;
+  archivedAt?: string | null;
 }
 
 export type PersonContactMethodType = 'email' | 'phone' | 'linkedin' | 'whatsapp' | 'telegram' | 'website' | 'instagram' | 'facebook' | 'x' | 'other';
@@ -138,6 +143,7 @@ export interface CompanyInput {
   country?: string;
   city?: string;
   phone?: string | null;
+  email?: string | null;
   website?: string;
   linkedin?: string;
   priority?: 'low' | 'medium' | 'high';
@@ -166,6 +172,10 @@ export interface PersonInput {
   relationshipStatus?: string;
   nextFollowUpDate?: string;
   notes?: string;
+  phone?: string | null;
+  relationType?: string | null;
+  status?: string | null;
+  archivedAt?: string | null;
 }
 
 export interface MessageInput {

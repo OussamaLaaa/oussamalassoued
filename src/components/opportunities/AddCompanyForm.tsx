@@ -21,6 +21,7 @@ const AddCompanyForm: React.FC<{
     outreachStatus: 'not_contacted',
     city: '',
     phone: '',
+    email: '',
     website: '',
     linkedin: '',
     priority: 'medium',
@@ -91,6 +92,10 @@ const AddCompanyForm: React.FC<{
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">{isAr ? 'رقم الهاتف' : 'Phone'}</span>
           <input className={baseInput} type="tel" placeholder="+216 ..." value={form.phone || ''} onChange={(e) => setField('phone', e.target.value)} />
+        </label>
+        <label className="space-y-1">
+          <span className="text-sm font-medium text-[#0f172a]">{isAr ? 'البريد الإلكتروني' : 'Email'}</span>
+          <input className={baseInput} type="email" placeholder="contact@example.com" value={form.email || ''} onChange={(e) => setField('email', e.target.value)} />
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Website</span>

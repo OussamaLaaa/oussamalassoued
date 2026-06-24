@@ -60,6 +60,7 @@ const toCompanyInput = (c: Company): CompanyInput => ({
   country: c.country,
   city: c.city,
   phone: c.phone,
+  email: c.email,
   website: c.website,
   linkedin: c.linkedin,
   priority: c.priority,

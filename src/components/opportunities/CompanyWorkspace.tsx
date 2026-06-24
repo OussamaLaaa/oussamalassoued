@@ -714,6 +714,10 @@ const CompanyWorkspace: React.FC<Props> = ({
   <div className="text-neutral-900">
   {company.phone ? <ContactLink type="phone" value={company.phone} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /> : <span className="text-neutral-400">—</span>}
   </div>
+  <div className="text-neutral-500">Email</div>
+  <div className="text-neutral-900">
+  {company.email ? <ContactLink type="email" value={company.email} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /> : <span className="text-neutral-400">—</span>}
+  </div>
   </div>
   </div>
 
