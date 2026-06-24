@@ -86,6 +86,14 @@ const AddCompanyForm: React.FC<{
           <input className={baseInput} value={form.city || ''} onChange={(e) => setField('city', e.target.value)} />
         </label>
         <label className="space-y-1">
+          <span className="text-sm font-medium text-[#0f172a]">Website</span>
+          <input className={baseInput} type="url" placeholder="https://example.com" value={form.website || ''} onChange={(e) => setField('website', e.target.value)} />
+        </label>
+        <label className="space-y-1">
+          <span className="text-sm font-medium text-[#0f172a]">LinkedIn</span>
+          <input className={baseInput} type="url" placeholder="https://www.linkedin.com/company/example" value={form.linkedin || ''} onChange={(e) => setField('linkedin', e.target.value)} />
+        </label>
+        <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Target Niche</span>
           <select className={baseInput} value={form.targetNiche || ''} onChange={(e) => setField('targetNiche', (e.target.value || undefined) as CompanyInput['targetNiche'])}>
             <option value="">—</option>
