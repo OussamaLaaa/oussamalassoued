@@ -203,6 +203,10 @@ export const personFromDb = (row: any, companyName?: string): Person => ({
   nextFollowUpDate: toIso(row?.next_followup_date ?? row?.nextFollowUpDate),
   notes: row?.notes ?? undefined,
   createdAt: toIso(row?.created_at ?? row?.createdAt),
+  phone: row?.phone ?? null,
+  relationType: row?.relation_type ?? row?.relationType ?? null,
+  status: row?.status ?? 'active',
+  archivedAt: row?.archived_at ?? row?.archivedAt ?? null,
 });
 
 export const personToDb = (input: PersonInput) => ({
@@ -220,7 +224,36 @@ export const personToDb = (input: PersonInput) => ({
   relationship_status: input.relationshipStatus,
   next_followup_date: toNullableDate(input.nextFollowUpDate),
   notes: input.notes,
+  phone: input.phone ?? null,
+  relation_type: input.relationType ?? null,
+  status: input.status ?? 'active',
+  archived_at: input.archivedAt ?? null,
 });
+
+export const personUpdateToDb = (input: Partial<PersonInput>) => {
+  const payload: Record<string, unknown> = {};
+
+  if (input.companyId !== undefined) payload.company_id = toNullableString(input.companyId);
+  if (input.fullName !== undefined) payload.full_name = String(input.fullName || '').trim();
+  if (input.role !== undefined) payload.role = input.role;
+  if (input.department !== undefined) payload.department = input.department;
+  if (input.seniority !== undefined) payload.seniority = input.seniority;
+  if (input.decisionPower !== undefined) payload.decision_power = input.decisionPower;
+  if (input.influencePower !== undefined) payload.influence_power = input.influencePower;
+  if (input.relevance !== undefined) payload.relevance = input.relevance;
+  if (input.linkedin !== undefined) payload.linkedin = input.linkedin;
+  if (input.emailPublic !== undefined) payload.email_public = input.emailPublic;
+  if (input.contactChannel !== undefined) payload.contact_channel = input.contactChannel;
+  if (input.relationshipStatus !== undefined) payload.relationship_status = input.relationshipStatus;
+  if (input.nextFollowUpDate !== undefined) payload.next_followup_date = toNullableDate(input.nextFollowUpDate);
+  if (input.notes !== undefined) payload.notes = input.notes;
+  if (input.phone !== undefined) payload.phone = input.phone ?? null;
+  if (input.relationType !== undefined) payload.relation_type = input.relationType ?? null;
+  if (input.status !== undefined) payload.status = input.status;
+  if (input.archivedAt !== undefined) payload.archived_at = input.archivedAt ?? null;
+
+  return payload;
+};
 
 export const personContactMethodFromDb = (row: any): PersonContactMethod => ({
   id: safeString(row?.id),
