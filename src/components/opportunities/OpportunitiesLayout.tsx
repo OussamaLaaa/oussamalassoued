@@ -273,8 +273,7 @@ const resolveInitialPersonFilters = (): PersonFilters => {
  ? {
  searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
  decisionPower: typeof next.decisionPower === 'string' ? next.decisionPower : '',
- relevance: typeof next.relevance === 'string' ? next.relevance : '',
- relationshipStatus: typeof next.relationshipStatus === 'string' ? next.relationshipStatus : '',
+ status: typeof next.status === 'string' ? next.status : 'active',
  }
  : defaultPersonFilters;
 };
