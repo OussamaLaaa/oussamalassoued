@@ -24,6 +24,7 @@ export interface Company {
   industry?: string;
   country?: string;
   city?: string;
+  phone?: string | null;
   website?: string;
   linkedin?: string;
   priority?: 'low' | 'medium' | 'high';
@@ -136,6 +137,7 @@ export interface CompanyInput {
   industry?: string;
   country?: string;
   city?: string;
+  phone?: string | null;
   website?: string;
   linkedin?: string;
   priority?: 'low' | 'medium' | 'high';
@@ -611,6 +613,7 @@ export interface CompanyResearchSuggestionCompany {
   industry?: string | null;
   country?: string | null;
   city?: string | null;
+  phone?: string | null;
   website?: string | null;
   linkedin?: string | null;
   facebook?: string | null;

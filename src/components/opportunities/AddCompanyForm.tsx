@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { CompanyInput, CompanyResearchResult } from '../../types/opportunities';
+import { useLanguage } from '../../hooks/useLanguage';
 import CompanyResearchPanel from './CompanyResearchPanel';
 
 const baseInput = 'w-full rounded-md border border-[#dbe2ea] bg-white px-3 py-2 text-sm text-[#0f172a] placeholder:text-[#94a3b8] focus:border-[#2563eb] focus:outline-none';
@@ -10,6 +11,7 @@ const AddCompanyForm: React.FC<{
   initialData?: CompanyInput;
   onResearchResultChange?: (result: CompanyResearchResult | null) => void;
 }> = ({ onSubmit, onCancel, initialData, onResearchResultChange }) => {
+  const { isAr } = useLanguage();
   const [form, setForm] = useState<CompanyInput>(initialData || {
     name: '',
     databaseType: 'sme',
@@ -18,6 +20,7 @@ const AddCompanyForm: React.FC<{
     targetNiche: undefined,
     outreachStatus: 'not_contacted',
     city: '',
+    phone: '',
     website: '',
     linkedin: '',
     priority: 'medium',
@@ -84,6 +87,10 @@ const AddCompanyForm: React.FC<{
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">City</span>
           <input className={baseInput} value={form.city || ''} onChange={(e) => setField('city', e.target.value)} />
+        </label>
+        <label className="space-y-1">
+          <span className="text-sm font-medium text-[#0f172a]">{isAr ? 'رقم الهاتف' : 'Phone'}</span>
+          <input className={baseInput} type="tel" placeholder="+216 ..." value={form.phone || ''} onChange={(e) => setField('phone', e.target.value)} />
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium text-[#0f172a]">Website</span>

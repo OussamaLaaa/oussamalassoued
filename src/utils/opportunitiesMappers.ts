@@ -122,6 +122,7 @@ export const companyFromDb = (row: any): Company => ({
   industry: row?.industry ?? undefined,
   country: row?.country ?? undefined,
   city: row?.city ?? undefined,
+  phone: row?.phone ?? undefined,
   website: row?.website ?? undefined,
   linkedin: row?.linkedin ?? undefined,
   priority: row?.priority ?? undefined,
@@ -142,6 +143,7 @@ export const companyToDb = (input: CompanyInput) => ({
   industry: input.industry,
   country: input.country,
   city: input.city,
+  phone: input.phone ?? null,
   website: input.website,
   linkedin: input.linkedin,
   priority: input.priority,
@@ -162,6 +164,7 @@ export const companyUpdateToDb = (input: Partial<CompanyInput>) => {
   if ("industry" in input) output.industry = input.industry;
   if ("country" in input) output.country = input.country;
   if ("city" in input) output.city = input.city;
+  if ("phone" in input) output.phone = input.phone ?? null;
   if ("website" in input) output.website = input.website;
   if ("linkedin" in input) output.linkedin = input.linkedin;
   if ("priority" in input) output.priority = input.priority;

@@ -53,20 +53,21 @@ import { buildNoteCategoryMenu, protectedCategorySlugSet } from './noteCategoryU
 import type { CompanyResearchResult } from '../../types/opportunities';
 
 const toCompanyInput = (c: Company): CompanyInput => ({
- name: c.name,
- databaseType: c.databaseType as CompanyInput['databaseType'],
- category: c.category,
- industry: c.industry,
- country: c.country,
- city: c.city,
- website: c.website,
- linkedin: c.linkedin,
- priority: c.priority,
- fitScore: c.fitScore,
- ethicalFit: c.ethicalFit as CompanyInput['ethicalFit'],
- status: c.status as CompanyInput['status'],
- nextAction: c.nextAction,
- notes: c.notes,
+  name: c.name,
+  databaseType: c.databaseType as CompanyInput['databaseType'],
+  category: c.category,
+  industry: c.industry,
+  country: c.country,
+  city: c.city,
+  phone: c.phone,
+  website: c.website,
+  linkedin: c.linkedin,
+  priority: c.priority,
+  fitScore: c.fitScore,
+  ethicalFit: c.ethicalFit as CompanyInput['ethicalFit'],
+  status: c.status as CompanyInput['status'],
+  nextAction: c.nextAction,
+  notes: c.notes,
 });
 
 const toPersonInput = (p: Person): PersonInput => ({
