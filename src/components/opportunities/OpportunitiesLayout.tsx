@@ -86,6 +86,10 @@ const toPersonInput = (p: Person): PersonInput => ({
  relationshipStatus: p.relationshipStatus,
  nextFollowUpDate: p.nextFollowUpDate,
  notes: p.notes,
+ phone: p.phone ?? null,
+ relationType: p.relationType ?? null,
+ status: p.status ?? 'active',
+ archivedAt: p.archivedAt ?? null,
 });
 
 const toMessageInput = (m: OutreachMessage): MessageInput => ({
@@ -145,8 +149,7 @@ const defaultCompanyFilters: CompanyFilters = {
 const defaultPersonFilters: PersonFilters = {
  searchQuery: '',
  decisionPower: '',
- relevance: '',
- relationshipStatus: '',
+ status: 'active',
 };
 
 const defaultMessageFilters: MessageFilters = {
@@ -1483,25 +1486,18 @@ const OpportunitiesLayout: React.FC<{
   <div className="space-y-5">
   {(() => {
   const totalPeople = people.length;
-  const decisionMakers = people.filter(p => (p.decisionPower ?? 0) >= 3).length;
-  const highRelevance = people.filter(p => (p.relevance ?? 0) >= 3).length;
-  const withContactMethod = people.filter(p => p.emailPublic || p.linkedin || p.contactChannel).length;
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const followUpsDue = people.filter(p => {
-  if (!p.nextFollowUpDate) return false;
-  const d = new Date(p.nextFollowUpDate);
-  d.setHours(0, 0, 0, 0);
-  return d <= now;
-  }).length;
+  const withContactMethod = people.filter(p => p.emailPublic || p.linkedin || p.contactChannel || p.phone).length;
   const companiesConnected = new Set(people.map(p => p.companyId).filter(Boolean)).size;
+  const strategicRelations = people.filter(p => p.relationType === 'strategic').length;
+  const strongRelations = people.filter(p => p.relationType === 'strong').length;
+  const archivedCount = people.filter(p => p.status === 'archived').length;
   const peopleStats = [
   { label: 'Total People', value: totalPeople, color: '' },
-  { label: 'Decision Makers', value: decisionMakers, color: 'text-violet-600' },
-  { label: 'High Relevance', value: highRelevance, color: 'text-blue-600' },
   { label: 'With Contact', value: withContactMethod, color: 'text-emerald-600' },
-  { label: 'Follow-ups Due', value: followUpsDue, color: 'text-amber-600' },
-  { label: 'Companies', value: companiesConnected, color: '' },
+  { label: 'Companies Connected', value: companiesConnected, color: '' },
+  { label: 'Strategic Relations', value: strategicRelations, color: 'text-violet-600' },
+  { label: 'Strong Relations', value: strongRelations, color: 'text-blue-600' },
+  ...(personFilters.status === 'archived' || archivedCount > 0 ? [{ label: 'Archived', value: archivedCount, color: '' }] : []),
   ];
   return (
   <>
