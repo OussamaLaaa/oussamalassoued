@@ -520,9 +520,10 @@ const OpportunitiesLayout: React.FC<{
  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
  const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
  const [companyResearchDraft, setCompanyResearchDraft] = useState<CompanyResearchResult | null>(null);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+ const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [personWorkspaceContext, setPersonWorkspaceContext] = useState<'global' | 'company'>('global');
+ const [selectedPersonIds, setSelectedPersonIds] = useState<Set<string>>(new Set());
  const [confirmDeleteCompanyId, setConfirmDeleteCompanyId] = useState<string | null>(null);
  const [deleteError, setDeleteError] = useState<string | null>(null);
  const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -981,8 +982,88 @@ const OpportunitiesLayout: React.FC<{
  setEditingPerson(person);
  };
 
- const handleDeletePerson = (id: string) => {
- deletePerson(id);
+ const handleArchivePerson = async (person: Person) => {
+ try {
+ await updatePerson(person.id, {
+   ...toPersonInput(person),
+   status: 'archived',
+   archivedAt: new Date().toISOString(),
+ });
+ } catch (error) {
+ console.error('[CRM] archive person failed', error);
+ const message = error instanceof Error && error.message ? error.message : 'Unable to archive person.';
+ setDeleteError(message);
+ throw error;
+ }
+ };
+
+ const handleDeletePerson = async (id: string) => {
+ const confirmed = window.confirm('Delete this person permanently?\n\nThis will remove their contact methods. Other linked records will be kept and unlinked.');
+ if (!confirmed) return;
+ try {
+ await deletePerson(id);
+ } catch (error) {
+ console.error('[CRM] delete person failed', error);
+ const message = error instanceof Error && error.message ? error.message : 'Unable to delete person.';
+ setDeleteError(message);
+ throw error;
+ }
+ };
+
+ const handleSelectAllPeople = useCallback((ids: string[]) => {
+ setSelectedPersonIds((prev) => {
+ const next = new Set(prev);
+ ids.forEach((id) => next.add(id));
+ return next;
+ });
+ }, []);
+
+ const handleSelectOnePerson = useCallback((id: string, selected: boolean) => {
+ setSelectedPersonIds((prev) => {
+ const next = new Set(prev);
+ if (selected) next.add(id); else next.delete(id);
+ return next;
+ });
+ }, []);
+
+ const handleClearPeopleSelection = useCallback(() => {
+ setSelectedPersonIds(new Set());
+ }, []);
+
+ const handleBulkArchivePeople = async () => {
+ if (selectedPersonIds.size === 0) return;
+ const confirmed = window.confirm(`Archive ${selectedPersonIds.size} selected people?`);
+ if (!confirmed) return;
+ for (const id of selectedPersonIds) {
+ try {
+ const person = people.find((p) => p.id === id);
+ if (!person) continue;
+ await updatePerson(id, {
+   ...toPersonInput(person),
+   status: 'archived',
+   archivedAt: new Date().toISOString(),
+ });
+ } catch (e) {
+ console.error('[CRM] bulk archive person failed for', id, e);
+ }
+ }
+ setSelectedPersonIds(new Set());
+ };
+
+ const handleBulkDeletePeople = async () => {
+ if (selectedPersonIds.size === 0) return;
+ const confirmed = window.confirm(
+ `Delete ${selectedPersonIds.size} selected people permanently?\n\nThis will remove their contact methods. Other linked records will be kept and unlinked.`
+ );
+ if (!confirmed) return;
+ for (const id of selectedPersonIds) {
+ try {
+ await deletePerson(id);
+ } catch (e) {
+ console.error('[CRM] bulk delete person failed for', id, e);
+ }
+ }
+ setSelectedPersonIds(new Set());
  };
 
  const handleEditMessage = (message: OutreachMessage) => {
@@ -1529,7 +1610,14 @@ const OpportunitiesLayout: React.FC<{
   </div>
   <PeopleTable
   people={people}
+  selectedPersonIds={selectedPersonIds}
+  onSelectAll={handleSelectAllPeople}
+  onSelectOne={handleSelectOnePerson}
+  onClearSelection={handleClearPeopleSelection}
+  onBulkArchive={handleBulkArchivePeople}
+  onBulkDelete={handleBulkDeletePeople}
   onEdit={handleEditPerson}
+  onArchive={handleArchivePerson}
   onDelete={handleDeletePerson}
   onPersonClick={handlePersonClick}
   personContactMethods={personContactMethods}
