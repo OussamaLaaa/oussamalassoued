@@ -493,7 +493,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
           </div>
         ) : null}
 
-        {visibility.featuredViewAllButton && allProjects.length > MAX_VISIBLE_PROJECTS ? (
+        {visibility.featuredViewAllButton && visibleProjects.length > MAX_VISIBLE_PROJECTS ? (
           <div className="fw-reveal mb-8 mt-16 flex justify-center opacity-0 md:mb-14">
             <button
               type="button"

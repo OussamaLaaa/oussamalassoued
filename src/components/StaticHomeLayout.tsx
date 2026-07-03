@@ -157,7 +157,9 @@ export const StaticHomeLayout: React.FC = () => {
   const { siteConfig } = useSiteConfig();
   const { scene05, featured, visibility, persistentUI, footer, designSystem } = siteConfig;
 
-  const visibleProjects = useMemo(() => siteConfig.projects.filter((project) => project.visible), [siteConfig.projects]);
+  const MAX_VISIBLE_PROJECTS = 4;
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const visibleProjects = useMemo(() => siteConfig.projects.filter((project) => project.visible !== false), [siteConfig.projects]);
   const visibleTestimonials = useMemo(
     () => siteConfig.testimonials.filter((testimonial) => testimonial.visible),
     [siteConfig.testimonials],
@@ -203,11 +205,12 @@ export const StaticHomeLayout: React.FC = () => {
   }, [featuredCertifications, scene05.certifications]);
 
   const projects = useMemo(() => {
-    return visibleProjects.map((project) => ({
+    const all = visibleProjects.map((project) => ({
       ...project,
       summary: project.summary?.trim() || project.tags,
     }));
-  }, [visibleProjects]);
+    return showAllProjects ? all : all.slice(0, MAX_VISIBLE_PROJECTS);
+  }, [visibleProjects, showAllProjects]);
 
   const testimonials = visibleTestimonials;
   const footerSocialLinks = footer.socialLinks.filter((link) => link.visible);
@@ -515,26 +518,21 @@ export const StaticHomeLayout: React.FC = () => {
 
       {/* ===================== PROJECTS SECTION ===================== */}
       <section id="projects" className="mx-auto max-w-6xl px-6 py-20" style={deferredSectionStyle}>
-        <div data-motion className="flex items-end justify-between mb-12 flex-wrap gap-4">
-          <div>
-            <SectionEyebrow>{featured.titleLine1}</SectionEyebrow>
-            <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
-              {featured.titleLine2}
-            </h2>
-            <p className="text-muted-foreground mt-3 max-w-xl">
-              {featured.description}
-            </p>
-          </div>
-          <a href="#projects" className={viewAllClass}>
-            {featured.viewAllLabel} <ArrowRight className="ml-1 h-4 w-4" />
-          </a>
+        <div data-motion className="mb-12">
+          <SectionEyebrow>{featured.titleLine1}</SectionEyebrow>
+          <h2 className="tracking-tight" style={{ fontSize: '2.25rem', fontWeight: 600, lineHeight: 1.15 }}>
+            {featured.titleLine2}
+          </h2>
+          <p className="text-muted-foreground mt-3 max-w-xl">
+            {featured.description}
+          </p>
         </div>
 
         <div data-motion className="grid md:grid-cols-2 gap-6">
           {projects.map((project) => {
             const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
             const isPlaceholder = !projectHref || projectHref.trim() === '#';
-            
+
             return (
               <a
                 key={project.id}
@@ -542,23 +540,25 @@ export const StaticHomeLayout: React.FC = () => {
                 onClick={(e) => isPlaceholder && e.preventDefault()}
                 target={isPlaceholder ? undefined : '_blank'}
                 rel={isPlaceholder ? undefined : 'noopener noreferrer'}
-                className="group"
+                className="group h-full"
               >
                 <Card
-                  className="rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0 gap-0 h-full"
+                  className="rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0 gap-0 h-full flex flex-col"
                 >
-                  <div className="aspect-[4/3] overflow-hidden bg-muted">
-                    <ImageWithFallback
-                      src={project.img}
-                      alt={project.title}
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      decoding="async"
-                      width={1200}
-                      height={900}
-                    />
+                  <div className="flex-shrink-0">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted">
+                      <ImageWithFallback
+                        src={project.img}
+                        alt={project.title}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        decoding="async"
+                        width={1200}
+                        height={900}
+                      />
+                    </div>
                   </div>
-                  <CardContent className="p-6">
+                  <CardContent className="p-6 flex-1 flex flex-col">
                     {project.badges && project.badges.length > 0 ? (
                       <div className="mb-3 flex flex-wrap gap-2">
                         {project.badges.map((badge) => (
@@ -571,8 +571,8 @@ export const StaticHomeLayout: React.FC = () => {
                         ))}
                       </div>
                     ) : null}
-                    <h3 className="tracking-tight" style={{ fontSize: '1.25rem', fontWeight: 600 }}>{project.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{project.summary}</p>
+                    <h3 className="tracking-tight text-[1.25rem] font-semibold">{project.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">{project.summary}</p>
                     <div className="mt-5 inline-flex items-center text-sm text-foreground gap-1 group-hover:gap-2 transition-all">
                       {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}{' '}
                       <ArrowUpRight className="h-4 w-4" />
@@ -583,6 +583,18 @@ export const StaticHomeLayout: React.FC = () => {
             );
           })}
         </div>
+
+        {visibleProjects.length > MAX_VISIBLE_PROJECTS ? (
+          <div data-motion className="mt-16 flex justify-center md:mt-14">
+            <button
+              type="button"
+              onClick={() => setShowAllProjects((prev) => !prev)}
+              className={viewAllClass}
+            >
+              {showAllProjects ? 'Show Less' : featured.viewAllLabel}
+            </button>
+          </div>
+        ) : null}
       </section>
 
       {/* ===================== TESTIMONIALS SECTION ===================== */}
