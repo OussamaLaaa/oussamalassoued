@@ -34,18 +34,26 @@ const PUBLIC_SECTIONS = [
   'visibility',
 ];
 
-export async function loadPublicSiteConfig({ debug = false } = {}) {
+const createSiteSupabaseClient = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw Object.assign(new Error('Supabase not configured'), { code: 'SUPABASE_SITE_CONFIG_NOT_CONFIGURED' });
+    return null;
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false },
   });
+};
+
+export async function loadPublicSiteConfig({ debug = false } = {}) {
+  const supabase = createSiteSupabaseClient();
+
+  if (!supabase) {
+    throw Object.assign(new Error('Supabase not configured'), { code: 'SUPABASE_SITE_CONFIG_NOT_CONFIGURED' });
+  }
 
   const startTime = debug ? Date.now() : 0;
 
@@ -101,4 +109,87 @@ export async function loadPublicSiteConfig({ debug = false } = {}) {
     : null;
 
   return { config, updatedAt: latestUpdatedAt, debugInfo };
+}
+
+const INTRO_FIELDS = [
+  'introText',
+  'introScrollPrompt',
+  'introOverlayBackdropColor',
+  'introOverlayBackdropOpacity',
+  'reducedMotion',
+];
+
+const SECTION_MAPPINGS = [
+  ['featured', 'featured'],
+  ['projects', 'projects'],
+  ['experienceMarquee', 'experience_marquee'],
+  ['testimonials', 'testimonials'],
+  ['scene05', 'about'],
+  ['persistentUI', 'persistent_ui'],
+  ['footer', 'footer'],
+  ['legalPages', 'legal_pages'],
+  ['articlesPage', 'articles_page'],
+  ['contactPage', 'contact_page'],
+  ['articles', 'articles'],
+  ['videos', 'videos'],
+  ['designSystem', 'design_system'],
+  ['animation', 'animation'],
+  ['cinematicSequence', 'cinematic_sequence'],
+  ['globalFrame', 'global_frame'],
+  ['crt', 'crt'],
+  ['visibility', 'visibility'],
+];
+
+export function splitSiteConfigIntoSections(config) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return [];
+
+  const sections = [];
+
+  const introData = {};
+  for (const key of INTRO_FIELDS) {
+    if (key in config) introData[key] = config[key];
+  }
+  if (Object.keys(introData).length > 0) {
+    sections.push({ section: 'intro', data: introData, is_public: true });
+  }
+
+  for (const [field, sectionName] of SECTION_MAPPINGS) {
+    if (field in config && config[field] !== undefined) {
+      sections.push({ section: sectionName, data: config[field], is_public: true });
+    }
+  }
+
+  if ('dashboard' in config && config.dashboard !== undefined) {
+    sections.push({ section: 'dashboard', data: config.dashboard, is_public: false });
+  }
+
+  return sections;
+}
+
+export async function saveSiteConfigSections(sections) {
+  const supabase = createSiteSupabaseClient();
+
+  if (!supabase) {
+    throw Object.assign(new Error('Supabase not configured'), { code: 'SUPABASE_SITE_CONFIG_NOT_CONFIGURED' });
+  }
+
+  const now = new Date().toISOString();
+
+  const rows = sections.map((s) => ({
+    section: s.section,
+    data: s.data,
+    is_public: s.is_public,
+    updated_at: now,
+  }));
+
+  const { error } = await supabase.from('site_content').upsert(rows, {
+    onConflict: 'section',
+    ignoreDuplicates: false,
+  });
+
+  if (error) {
+    throw Object.assign(error, { code: 'SITE_CONFIG_SAVE_FAILED' });
+  }
+
+  return sections.map((s) => s.section);
 }

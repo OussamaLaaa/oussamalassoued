@@ -214,13 +214,13 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
     console.log('[API Update] Starting config update...');
 
     const { signal, clear } = createTimeoutSignal();
-    const response = await fetch(`${API_BASE_URL}/config`, {
+    const response = await fetch(`${API_BASE_URL}/site/config`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(config),
+      body: JSON.stringify({ config }),
       signal,
     });
     const raw = await response.text();
@@ -233,16 +233,7 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
       if (response.status === 401) {
         return {
           success: false,
-          error: 'API request blocked (401). Your domain may be protected by Vercel authentication. Use the production domain or disable protection.',
-        };
-      }
-      
-      // Provide helpful error messages based on response
-      if (response.status === 503) {
-        return {
-          success: false,
-          error: 'Storage backend is not configured. Please add Vercel KV or Upstash Redis environment variables.',
-          message: 'To set up persistent storage, follow the QUICK_UPSTASH_SETUP.md guide in your project.',
+          error: 'Not authenticated. Please log in to the dashboard before saving.',
         };
       }
 
@@ -266,12 +257,11 @@ export async function updateSiteConfig(config: SiteConfig): Promise<ApiResponse<
       };
     }
 
-    console.log('[API Update] Config saved successfully to:', data.source);
+    console.log('[API Update] Config saved successfully to Supabase.');
     return data as ApiResponse<SiteConfig>;
   } catch (error) {
     console.error('[API Update] Error updating config:', error);
-    
-    // Check if it's a network error
+
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return {
         success: false,
