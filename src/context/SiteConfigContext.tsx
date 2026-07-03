@@ -25,7 +25,7 @@ import LOCAL_SITE_CONFIG from '../config/localSiteConfig';
     importStorageData,
     restoreVersionSnapshot,
   } from '../utils/storageSystem';
-  import { fetchSiteConfig, updateSiteConfig, checkApiHealth } from '../utils/apiClient';
+  import { fetchPublicSiteConfig, updateSiteConfig, checkApiHealth } from '../utils/apiClient';
 
   interface SiteConfigContextValue {
   siteConfig: SiteConfig;
@@ -455,18 +455,19 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       try {
         // mark hydration attempt but don't block rendering
         setIsHydratingFromApi(true);
-        const response = await fetchSiteConfig();
+        const response = await fetchPublicSiteConfig();
 
         if (!mounted) return;
 
-        if (response.success && response.data && Object.keys(response.data).length > 0) {
-          // Only replace local config when the remote version or timestamp changed
+        if (response.success && response.config && Object.keys(response.config).length > 0) {
           try {
-            const incoming = hydrateSiteConfig(response.data);
-            const currentVersion = (siteConfig as any)?.version || (siteConfig as any)?.lastUpdated || 0;
-            const incomingVersion = (incoming as any)?.version || (incoming as any)?.lastUpdated || 0;
+            const incoming = hydrateSiteConfig(response.config);
+            const currentUpdatedAt = (siteConfig as any)?.lastUpdated || 0;
+            const incomingUpdatedAt = response.updatedAt
+              ? new Date(response.updatedAt).getTime()
+              : 0;
 
-            if (incomingVersion && incomingVersion === currentVersion) {
+            if (incomingUpdatedAt && incomingUpdatedAt === currentUpdatedAt) {
               // nothing new
             } else {
               setSiteConfig(incoming);

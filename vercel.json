@@ -16,6 +16,10 @@
       "dest": "/api/opportunities.js"
     },
     {
+      "src": "/api/site/config",
+      "dest": "/api/site/config.js"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },

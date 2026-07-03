@@ -111,6 +111,57 @@ export async function checkApiHealth(): Promise<HealthCheckResponse> {
   }
 }
 
+export interface SiteConfigApiResponse {
+  success: boolean;
+  config?: SiteConfig;
+  source?: string;
+  updatedAt?: string | null;
+  error?: string;
+}
+
+/**
+ * Fetch public site configuration from the new site config endpoint.
+ * Uses API_BASE_URL (defaults to /api), calls GET /api/site/config.
+ */
+export async function fetchPublicSiteConfig(): Promise<SiteConfigApiResponse> {
+  try {
+    const { signal, clear } = createTimeoutSignal();
+    const response = await fetch(`${API_BASE_URL}/site/config`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+      signal,
+    });
+    const raw = await response.text();
+    clear();
+
+    const data = safeParseJson(raw);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.error || `HTTP error! status: ${response.status}`,
+      };
+    }
+
+    if (!data || typeof data !== 'object') {
+      return {
+        success: false,
+        error: 'API returned non-JSON response.',
+      };
+    }
+
+    return data as SiteConfigApiResponse;
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch public site config',
+    };
+  }
+}
+
 /**
  * Fetch site configuration from API
  */
