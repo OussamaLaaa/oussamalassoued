@@ -21,7 +21,8 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
   const projectAnimations = siteConfig.animation.sections.projects;
   const MAX_VISIBLE_PROJECTS = 4;
   const [showAllProjects, setShowAllProjects] = React.useState(false);
-  const allProjects = useMemo(() => siteConfig.projects.filter((project) => project.visible), [siteConfig.projects]);
+  const visibleProjects = useMemo(() => siteConfig.projects.filter((project) => project.visible !== false), [siteConfig.projects]);
+  const allProjects = useMemo(() => visibleProjects, [visibleProjects]);
   const projects = useMemo(() => {
     return showAllProjects ? allProjects : allProjects.slice(0, MAX_VISIBLE_PROJECTS);
   }, [allProjects, showAllProjects]);
@@ -436,6 +437,19 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
                   <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(15,18,25,0.02),rgba(15,18,25,0.28))]" />
                 </div>
 
+                {project.badges && project.badges.length > 0 ? (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {project.badges.map((badge) => (
+                      <span
+                        key={badge}
+                        className="inline-flex items-center rounded-full border border-[#0f1219]/15 bg-[#0f1219]/[0.04] px-3 py-1 text-xs font-medium text-[#0f1219]"
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
                 <h3 className="font-sans text-[2.1rem] leading-[0.95] tracking-tight text-[#0f1219] md:text-[2.6rem]">
                   {project.title}
                 </h3>
@@ -479,11 +493,11 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
           </div>
         ) : null}
 
-        {visibility.featuredViewAllButton && allProjects.length > MAX_VISIBLE_PROJECTS && !showAllProjects ? (
+        {visibility.featuredViewAllButton && allProjects.length > MAX_VISIBLE_PROJECTS ? (
           <div className="fw-reveal mb-8 mt-16 flex justify-center opacity-0 md:mb-14">
             <button
               type="button"
-              onClick={() => setShowAllProjects(true)}
+              onClick={() => setShowAllProjects((prev) => !prev)}
               className={getButtonClass(
                 designSystem.components.featuredViewAllButtonVariant,
                 'light',
@@ -491,7 +505,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
                 'min-w-[220px] justify-center transition-all duration-300',
               )}
             >
-              {featured.viewAllLabel}
+              {showAllProjects ? 'Show Less' : featured.viewAllLabel}
             </button>
           </div>
         ) : null}

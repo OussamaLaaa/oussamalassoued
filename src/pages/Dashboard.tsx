@@ -2307,6 +2307,24 @@ export const Dashboard: React.FC = () => {
                     rows={2}
                     onChange={(next) => updateProject(project.id, (item) => ({ ...item, tags: next }))}
                   />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                      Project Badges (comma separated)
+                    </label>
+                    <input
+                      type="text"
+                      value={(project.badges || []).join(', ')}
+                      placeholder="AI Built, UX Research, SaaS"
+                      onChange={(next) => {
+                        const badges = next
+                          .split(',')
+                          .map((badge) => badge.trim())
+                          .filter(Boolean);
+                        updateProject(project.id, (item) => ({ ...item, badges }));
+                      }}
+                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 placeholder:text-white/40"
+                    />
+                  </div>
                   <Textarea
                     label="Summary"
                     value={project.summary}
@@ -2367,6 +2385,7 @@ export const Dashboard: React.FC = () => {
                     live: '#',
                     buttonType: 'live',
                     visible: true,
+                    badges: [],
                   };
                   updateConfig((prev) => ({
                     ...prev,

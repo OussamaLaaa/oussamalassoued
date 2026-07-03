@@ -52,6 +52,7 @@ export interface SiteProject {
   live: string;
   buttonType: 'live' | 'caseStudy';
   visible: boolean;
+  badges?: string[];
 }
 
 export interface SiteTestimonial {
@@ -2584,6 +2585,9 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
           if (!isRecord(item)) return null;
           const fallback = DEFAULT_SITE_CONFIG.projects[Math.min(index, DEFAULT_SITE_CONFIG.projects.length - 1)];
           const fallbackImg = fallback?.img ?? '';
+          const badges = Array.isArray(item.badges)
+            ? item.badges.map((badge) => asString(badge, '')).filter(Boolean)
+            : undefined;
           return {
             id: asString(item.id, `project-${index + 1}`),
             title: asString(item.title, ''),
@@ -2594,6 +2598,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             live: asString(item.live, '#'),
             buttonType: (item.buttonType === 'caseStudy' ? 'caseStudy' : 'live') as 'live' | 'caseStudy',
             visible: asBoolean(item.visible, true),
+            badges,
           };
         })
         .filter((item): item is SiteProject => !!item)

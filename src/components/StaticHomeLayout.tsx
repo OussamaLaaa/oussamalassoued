@@ -381,7 +381,7 @@ export const StaticHomeLayout: React.FC = () => {
               {featured.ctaButtonText} <ArrowRight className="ml-2 h-4 w-4" />
             </a>
             <a href="#projects" className={secondaryCtaClass}>
-              {featured.heroSecondaryLabel || featured.viewAllLabel} <ArrowUpRight className="ml-2 h-4 w-4" />
+              {featured.heroSecondaryLabel || featured.viewAllLabel}
             </a>
           </div>
 
@@ -559,6 +559,18 @@ export const StaticHomeLayout: React.FC = () => {
                     />
                   </div>
                   <CardContent className="p-6">
+                    {project.badges && project.badges.length > 0 ? (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {project.badges.map((badge) => (
+                          <span
+                            key={badge}
+                            className="inline-flex items-center rounded-full border border-[#0f1219]/15 bg-[#0f1219]/[0.04] px-3 py-1 text-xs font-medium text-[#0f1219]"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     <h3 className="tracking-tight" style={{ fontSize: '1.25rem', fontWeight: 600 }}>{project.title}</h3>
                     <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{project.summary}</p>
                     <div className="mt-5 inline-flex items-center text-sm text-foreground gap-1 group-hover:gap-2 transition-all">
