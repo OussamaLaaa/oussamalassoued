@@ -32,6 +32,7 @@ const PUBLIC_SECTIONS = [
   'global_frame',
   'crt',
   'visibility',
+  'browser_identity',
 ];
 
 const createSiteSupabaseClient = () => {
@@ -86,6 +87,14 @@ export async function loadPublicSiteConfig({ debug = false } = {}) {
         for (const [key, value] of Object.entries(row.data)) {
           config[key] = value;
         }
+      }
+    } else if (row.section === 'browser_identity') {
+      if (row.data && typeof row.data === 'object' && !Array.isArray(row.data)) {
+        config.dashboard = config.dashboard || {};
+        config.dashboard.browser = {
+          ...(config.dashboard.browser || {}),
+          ...row.data,
+        };
       }
     } else {
       const fieldName = SECTION_FIELD_MAP[row.section] || row.section;
@@ -159,8 +168,19 @@ export function splitSiteConfigIntoSections(config) {
     }
   }
 
-  if ('dashboard' in config && config.dashboard !== undefined) {
-    sections.push({ section: 'dashboard', data: config.dashboard, is_public: false });
+  const dashboardData = config.dashboard;
+  if (dashboardData !== undefined) {
+    const browser = dashboardData?.browser;
+    if (browser && typeof browser === 'object' && !Array.isArray(browser)) {
+      const publicBrowser = {};
+      if ('browserTabTitle' in browser) publicBrowser.browserTabTitle = browser.browserTabTitle;
+      if ('faviconUrl' in browser) publicBrowser.faviconUrl = browser.faviconUrl;
+      if (Object.keys(publicBrowser).length > 0) {
+        sections.push({ section: 'browser_identity', data: publicBrowser, is_public: true });
+      }
+    }
+
+    sections.push({ section: 'dashboard', data: dashboardData, is_public: false });
   }
 
   return sections;
