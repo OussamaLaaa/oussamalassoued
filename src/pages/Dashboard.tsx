@@ -2313,10 +2313,10 @@ export const Dashboard: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={(project.badges || []).join(', ')}
+                      value={Array.isArray(project.badges) ? project.badges.join(', ') : ''}
                       placeholder="AI Built, UX Research, SaaS"
-                      onChange={(next) => {
-                        const badges = next
+                      onChange={(e) => {
+                        const badges = e.target.value
                           .split(',')
                           .map((badge) => badge.trim())
                           .filter(Boolean);
