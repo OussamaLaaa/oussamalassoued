@@ -9,6 +9,7 @@ import {
 } from '../components/designSystem';
   import { useSiteConfig } from '../context/SiteConfigContext';
   import { loginToDashboard, checkDashboardAuth, logoutFromDashboard, getApiDiagnostics, fetchMessages } from '../utils/apiClient';
+  import { API_BASE_URL } from '../config/runtimeConfig';
   import {
     DEFAULT_SITE_CONFIG,
     SITE_BUTTON_VARIANTS,
@@ -1278,6 +1279,8 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const [projectUploadState, setProjectUploadState] = useState<{ [projectId: string]: 'idle' | 'uploading' | 'failed' | 'complete' }>({});
+
   const handleProjectImageUpload = async (project: SiteProject, file: File | null) => {
     clearUploadFeedback();
     if (!file) return;
@@ -1289,12 +1292,44 @@ export const Dashboard: React.FC = () => {
       return;
     }
 
+    setProjectUploadState((prev) => ({ ...prev, [project.id]: 'uploading' }));
+
     try {
       const dataUrl = await readFileAsDataUrl(file);
-      updateProject(project.id, (item) => ({ ...item, img: dataUrl }));
-      setUploadMessage(`Image for "${project.title}" updated.`);
+
+      const response = await fetch(`${API_BASE_URL}/site/media/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+          dataUrl,
+          section: 'projects',
+          linkedItemId: project.id,
+          altText: project.title,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setProjectUploadState((prev) => ({ ...prev, [project.id]: 'failed' }));
+        setUploadError(result.error || 'Image upload failed.');
+        return;
+      }
+
+      updateProject(project.id, (item) => ({
+        ...item,
+        img: result.publicUrl,
+        imageStoragePath: result.storagePath,
+      }));
+
+      setProjectUploadState((prev) => ({ ...prev, [project.id]: 'complete' }));
+      setUploadMessage(`Image for "${project.title}" uploaded to media storage.`);
     } catch {
-      setUploadError('Could not read the selected image file.');
+      setProjectUploadState((prev) => ({ ...prev, [project.id]: 'failed' }));
+      setUploadError('Could not upload the selected image file.');
     }
   };
 
@@ -2269,6 +2304,7 @@ export const Dashboard: React.FC = () => {
             handleProjectImageUpload={handleProjectImageUpload}
             MAX_IMAGE_UPLOAD_BYTES={MAX_IMAGE_UPLOAD_BYTES}
             formatMegabytes={formatMegabytes}
+            projectUploadState={projectUploadState}
           />;
 
       case 'testimonials':
@@ -7600,7 +7636,11 @@ export const Dashboard: React.FC = () => {
                   } else {
                     const errMsg = result.error || 'Failed to save to API.';
                     setUploadError(errMsg);
-                    alert("Error: " + errMsg + "\n\n(Did you configure Upstash Redis on Vercel?)"); // <--- Added Alert
+                    if (errMsg.includes('timed out') || errMsg.includes('AbortError') || errMsg.includes('timeout')) {
+                      alert("Save timed out. The config payload may be too large or the server did not respond in time.");
+                    } else {
+                      alert("Error: " + errMsg);
+                    }
                   }
                 }}
                 title="Save to API"
@@ -7754,7 +7794,11 @@ export const Dashboard: React.FC = () => {
                   } else {
                     const errMsg = result.error || 'Failed to save to API. Please try again.';
                     setUploadError(errMsg);
-                    alert("Error: " + errMsg + "\n\n(Did you configure Upstash Redis on Vercel?)");
+                    if (errMsg.includes('timed out') || errMsg.includes('AbortError') || errMsg.includes('timeout')) {
+                      alert("Save timed out. The config payload may be too large or the server did not respond in time.");
+                    } else {
+                      alert("Error: " + errMsg);
+                    }
                   }
                 }}
                 className={dashboardActionButtonApiClass}
@@ -7784,17 +7828,15 @@ export const Dashboard: React.FC = () => {
               {uploadError ? (
                 <div className={`rounded-[12px] border px-4 py-3 text-sm space-y-2 ${dashboardStatusFailureClass}`}>
                   <div className="font-semibold">{uploadError}</div>
-                  {uploadError.includes('not configured') && (
-                    <div className="text-xs opacity-90 space-y-1">
-                      <p>📍 How to fix:</p>
-                      <ol className="list-decimal list-inside space-y-1">
-                        <li>Set up <code className="bg-black/30 px-1 rounded text-[11px]">UPSTASH_REDIS_REST_URL</code> and <code className="bg-black/30 px-1 rounded text-[11px]">UPSTASH_REDIS_REST_TOKEN</code> environment variables</li>
-                        <li>OR set up <code className="bg-black/30 px-1 rounded text-[11px]">KV_REST_API_URL</code> and <code className="bg-black/30 px-1 rounded text-[11px]">KV_REST_API_TOKEN</code> for Vercel KV</li>
-                        <li>Redeploy your site</li>
-                      </ol>
-                      <p className="text-[10px] mt-2">See <code className="bg-black/30 px-1 rounded">QUICK_UPSTASH_SETUP.md</code> for detailed instructions.</p>
+                  {uploadError.includes('timed out') || uploadError.includes('timeout') || uploadError.includes('AbortError') ? (
+                    <div className="text-xs opacity-90">
+                      The config payload may be too large or the server did not respond in time. Project images that were recently uploaded via Supabase Storage should not cause this issue.
                     </div>
-                  )}
+                  ) : uploadError.includes('not configured') ? (
+                    <div className="text-xs opacity-90">
+                      The Supabase backend is not fully configured. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in your environment variables.
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     onClick={async () => {
@@ -7833,6 +7875,7 @@ interface ProjectsStudioContentProps {
   handleProjectImageUpload: (project: SiteProject, file: File | null) => Promise<void>;
   MAX_IMAGE_UPLOAD_BYTES: number;
   formatMegabytes: (bytes: number) => string;
+  projectUploadState: { [projectId: string]: 'idle' | 'uploading' | 'failed' | 'complete' };
 }
 
 const TAB_CLASS = (isActive: boolean) =>
@@ -7849,6 +7892,7 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
   handleProjectImageUpload,
   MAX_IMAGE_UPLOAD_BYTES,
   formatMegabytes,
+  projectUploadState,
 }) => {
   const [activeTab, setActiveTab] = useState<'grid' | 'versions'>('grid');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -8020,6 +8064,22 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                 />
                 <span className="text-[10px] text-white/40">Max {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}</span>
               </label>
+              {projectUploadState[selectedProject.id] === 'uploading' && (
+                <div className="flex items-center gap-2 rounded-[8px] border border-blue-500/30 bg-blue-500/10 px-3 py-2">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-400" />
+                  <span className="font-mono text-[10px] text-blue-300">Uploading image...</span>
+                </div>
+              )}
+              {projectUploadState[selectedProject.id] === 'failed' && (
+                <div className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] text-red-300">
+                  Upload failed
+                </div>
+              )}
+              {projectUploadState[selectedProject.id] === 'complete' && (
+                <div className="rounded-[8px] border border-green-500/30 bg-green-500/10 px-3 py-2 font-mono text-[10px] text-green-300">
+                  Upload complete
+                </div>
+              )}
             </div>
             <div className="space-y-3">
               <Input

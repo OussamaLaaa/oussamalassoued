@@ -54,6 +54,7 @@ export interface SiteProject {
   visible: boolean;
   badges?: string[];
   sortOrder?: number;
+  imageStoragePath?: string;
 }
 
 export interface PortfolioVersion {
@@ -2618,6 +2619,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             visible: asBoolean(item.visible, true),
             badges,
             sortOrder,
+            imageStoragePath: item.imageStoragePath || undefined,
           };
         })
         .filter((item): item is SiteProject => !!item)
