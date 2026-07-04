@@ -533,73 +533,75 @@ export const StaticHomeLayout: React.FC = () => {
           </p>
         </div>
 
-        <div data-motion className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-10">
-          {projectsToRender.map((project) => {
-            const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
-            const isPlaceholder = !projectHref || projectHref.trim() === '#';
+        <div className="mx-auto max-w-[1120px]">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+            {projectsToRender.map((project) => {
+              const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
+              const isPlaceholder = !projectHref || projectHref.trim() === '#';
 
-            return (
-              <a
-                key={project.id}
-                href={projectHref}
-                onClick={(e) => isPlaceholder && e.preventDefault()}
-                target={isPlaceholder ? undefined : '_blank'}
-                rel={isPlaceholder ? undefined : 'noopener noreferrer'}
-                className="group h-full"
-              >
-                <Card
-                  className="rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0 gap-0 h-full flex flex-col"
+              return (
+                <a
+                  key={project.id}
+                  href={projectHref}
+                  onClick={(e) => isPlaceholder && e.preventDefault()}
+                  target={isPlaceholder ? undefined : '_blank'}
+                  rel={isPlaceholder ? undefined : 'noopener noreferrer'}
+                  className="group h-full"
                 >
-                  <div className="flex-shrink-0">
-                    <div className="aspect-[16/10] overflow-hidden bg-muted">
-                      <ImageWithFallback
-                        src={project.img}
-                        alt={project.title}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        decoding="async"
-                        width={1200}
-                        height={900}
-                      />
+                  <div
+                    className="flex h-full flex-col overflow-hidden rounded-2xl border border-black/10 bg-white"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="aspect-[16/10] overflow-hidden">
+                        <ImageWithFallback
+                          src={project.img}
+                          alt={project.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                          decoding="async"
+                          width={1200}
+                          height={900}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col p-6 md:p-8">
+                      {project.badges && project.badges.length > 0 ? (
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {project.badges.map((badge) => (
+                            <span
+                              key={badge}
+                              className="inline-flex items-center rounded-full border border-black/15 bg-black/[0.04] px-2.5 py-1 text-xs leading-none font-medium text-[#0f1219]"
+                            >
+                              {badge}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      <h3 className="tracking-tight text-[1.25rem] font-semibold">{project.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-3 leading-relaxed flex-1">{project.summary}</p>
+                      <div className="mt-auto inline-flex items-center gap-1 pt-6 text-sm text-foreground group-hover:gap-2 transition-all">
+                        {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}{' '}
+                        <ArrowUpRight className="h-4 w-4" />
+                      </div>
                     </div>
                   </div>
-                  <CardContent className="p-6 flex-1 flex flex-col">
-                    {project.badges && project.badges.length > 0 ? (
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        {project.badges.map((badge) => (
-                          <span
-                            key={badge}
-                            className="inline-flex items-center rounded-full border border-[#0f1219]/15 bg-[#0f1219]/[0.04] px-3 py-1 text-xs font-medium text-[#0f1219]"
-                          >
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    <h3 className="tracking-tight text-[1.25rem] font-semibold">{project.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">{project.summary}</p>
-                    <div className="mt-5 inline-flex items-center text-sm text-foreground gap-1 group-hover:gap-2 transition-all">
-                      {project.buttonType === 'caseStudy' ? featured.caseStudyLabel : featured.liveLabel}{' '}
-                      <ArrowUpRight className="h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </a>
-            );
-          })}
-        </div>
-
-        {shouldShowProjectToggle ? (
-          <div data-motion className="mt-10 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowAllProjects((prev) => !prev)}
-              className={viewAllClass}
-            >
-              {showAllProjects ? 'Show Less' : featured.viewAllLabel}
-            </button>
+                </a>
+              );
+            })}
           </div>
-        ) : null}
+
+          {shouldShowProjectToggle ? (
+            <div className="mt-14 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllProjects((prev) => !prev)}
+                className={viewAllClass}
+              >
+                {showAllProjects ? 'Show Less' : featured.viewAllLabel}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       {/* ===================== TESTIMONIALS SECTION ===================== */}

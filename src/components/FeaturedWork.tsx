@@ -5,7 +5,7 @@ import { Testimonials } from './Testimonials';
 import { Footer } from './Footer';
 import { ExperienceMarquee } from './ExperienceMarquee';
 import { useSiteConfig } from '../context/SiteConfigContext';
-import { getButtonClass, getCardClass, getGlassClass, getScaledRem } from './designSystem';
+import { getButtonClass, getScaledRem } from './designSystem';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -379,18 +379,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
     return () => window.clearTimeout(activationTimer);
   }, [isActive, runPortfolioNavigation]);
 
-  const projectCardClass = `${getCardClass(
-    designSystem.components.featuredProjectCardVariant,
-    'light',
-    'overflow-hidden p-4 md:p-5',
-  )} ${getGlassClass(designSystem.components.globalGlassVariant, 'light')}`;
-  const projectCardMotionClass = projectAnimations.hoverParallax
-    ? 'transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:-translate-y-3 hover:shadow-[0_35px_60px_-25px_rgba(0,0,0,0.25)]'
-    : '';
   const gridPerspective = projectAnimations.gridDepth === 'linger' ? '1600px' : '1200px';
-  const projectImageMotionClass = projectAnimations.hoverParallax
-    ? 'group-hover:scale-[1.12] group-hover:rotate-[0.35deg]'
-    : 'group-hover:scale-[1.08]';
 
   return (
     <div
@@ -406,7 +395,7 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
         isActive ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-12'
       }`}
     >
-      <div className="projects-wrapper site-shell origin-right py-24 md:py-32">
+      <div className="projects-wrapper site-shell py-24 md:py-32">
         {visibility.featuredHeader ? (
           <div className="mb-16 flex flex-col gap-9 md:mb-24 md:flex-row md:items-end md:justify-between">
             <h1
@@ -427,94 +416,94 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
         ) : null}
 
         {visibility.featuredProjectsGrid ? (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-10" style={{ perspective: gridPerspective }}>
-            {projectsToRender.map((project) => (
-              <article
-                key={project.id}
-                className={`fw-reveal group flex h-full flex-col opacity-0 ${projectCardClass} ${projectCardMotionClass}`}
-                style={{ transformOrigin: 'center bottom', perspective: gridPerspective }}
-              >
-                <div className="relative aspect-[16/10] flex-shrink-0 overflow-hidden rounded-[14px] border border-[#0f1219]/10 bg-[#0f1219]/4">
-                  <img
-                    src={project.img}
-                    alt={project.title}
-                    className={`h-full w-full object-cover transition-transform duration-[1.8s] ease-[cubic-bezier(0.19,1,0.22,1)] ${projectImageMotionClass}`}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(15,18,25,0.02),rgba(15,18,25,0.28))]" />
-                </div>
-
-                <div className="flex flex-1 flex-col pt-6">
-                  {project.badges && project.badges.length > 0 ? (
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {project.badges.map((badge) => (
-                        <span
-                          key={badge}
-                          className="inline-flex items-center rounded-full border border-[#0f1219]/15 bg-[#0f1219]/[0.04] px-3 py-1 text-xs font-medium text-[#0f1219]"
-                        >
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <h3 className="font-sans text-[2.1rem] leading-[0.95] tracking-tight text-[#0f1219] md:text-[2.6rem]">
-                    {project.title}
-                  </h3>
-
-                  <div className="mt-auto flex items-center gap-3 pt-6">
-                    {project.buttonType === 'live' ? (
-                      <a
-                        href={project.live}
-                        onClick={(e) => handlePlaceholderLinkClick(e, project.live)}
-                        target={isPlaceholderHref(project.live) ? undefined : '_blank'}
-                        rel={isPlaceholderHref(project.live) ? undefined : 'noopener noreferrer'}
-                        className={getButtonClass(
-                          designSystem.components.featuredProjectButtonVariant,
-                          'light',
-                          'sm',
-                          'min-w-[138px] justify-center gap-2',
-                        )}
-                      >
-                        <span>{featured.liveLabel}</span>
-                        <span aria-hidden="true">{'->'}</span>
-                      </a>
-                    ) : (
-                      <a
-                        href={project.behance}
-                        onClick={(e) => handlePlaceholderLinkClick(e, project.behance)}
-                        target={isPlaceholderHref(project.behance) ? undefined : '_blank'}
-                        rel={isPlaceholderHref(project.behance) ? undefined : 'noopener noreferrer'}
-                        className={getButtonClass(
-                          designSystem.components.featuredProjectButtonVariant,
-                          'light',
-                          'sm',
-                          'min-w-[138px] justify-center',
-                        )}
-                      >
-                        {featured.caseStudyLabel}
-                      </a>
-                    )}
+          <div className="mx-auto max-w-[1120px]">
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+              {projectsToRender.map((project) => (
+                <article
+                  key={project.id}
+                  className="fw-reveal group flex h-full flex-col overflow-hidden rounded-2xl border border-black/10 bg-white"
+                >
+                  <div className="aspect-[16/10] flex-shrink-0 overflow-hidden">
+                    <img
+                      src={project.img}
+                      alt={project.title}
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : null}
 
-        {visibility.featuredViewAllButton && shouldShowProjectToggle ? (
-          <div className="mt-10 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowAllProjects((prev) => !prev)}
-              className={getButtonClass(
-                designSystem.components.featuredViewAllButtonVariant,
-                'light',
-                'md',
-                'min-w-[220px] justify-center',
-              )}
-            >
-              {showAllProjects ? 'Show Less' : featured.viewAllLabel}
-            </button>
+                  <div className="flex flex-1 flex-col p-6 md:p-8">
+                    {project.badges && project.badges.length > 0 ? (
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        {project.badges.map((badge) => (
+                          <span
+                            key={badge}
+                            className="inline-flex items-center rounded-full border border-black/15 bg-black/[0.04] px-2.5 py-1 text-xs leading-none font-medium text-[#0f1219]"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <h3 className="font-sans text-[1.75rem] leading-[1.1] tracking-tight text-[#0f1219] md:text-[2rem]">
+                      {project.title}
+                    </h3>
+
+                    <div className="mt-auto flex items-center gap-3 pt-6">
+                      {project.buttonType === 'live' ? (
+                        <a
+                          href={project.live}
+                          onClick={(e) => handlePlaceholderLinkClick(e, project.live)}
+                          target={isPlaceholderHref(project.live) ? undefined : '_blank'}
+                          rel={isPlaceholderHref(project.live) ? undefined : 'noopener noreferrer'}
+                          className={getButtonClass(
+                            designSystem.components.featuredProjectButtonVariant,
+                            'light',
+                            'sm',
+                            'min-w-[138px] justify-center gap-2',
+                          )}
+                        >
+                          <span>{featured.liveLabel}</span>
+                          <span aria-hidden="true">{'->'}</span>
+                        </a>
+                      ) : (
+                        <a
+                          href={project.behance}
+                          onClick={(e) => handlePlaceholderLinkClick(e, project.behance)}
+                          target={isPlaceholderHref(project.behance) ? undefined : '_blank'}
+                          rel={isPlaceholderHref(project.behance) ? undefined : 'noopener noreferrer'}
+                          className={getButtonClass(
+                            designSystem.components.featuredProjectButtonVariant,
+                            'light',
+                            'sm',
+                            'min-w-[138px] justify-center',
+                          )}
+                        >
+                          {featured.caseStudyLabel}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {visibility.featuredViewAllButton && shouldShowProjectToggle ? (
+              <div className="mt-14 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllProjects((prev) => !prev)}
+                  className={getButtonClass(
+                    designSystem.components.featuredViewAllButtonVariant,
+                    'light',
+                    'md',
+                    'min-w-[220px] justify-center',
+                  )}
+                >
+                  {showAllProjects ? 'Show Less' : featured.viewAllLabel}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
