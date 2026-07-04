@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 const BUCKET_NAME = 'site-media';
-const MAX_DECODED_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 const MIME_EXT_MAP = {
   'image/jpeg': 'jpg',
@@ -10,7 +11,14 @@ const MIME_EXT_MAP = {
   'image/webp': 'webp',
   'image/avif': 'avif',
   'image/svg+xml': 'svg',
+  'audio/mpeg': 'mp3',
+  'audio/mp3': 'mp3',
+  'audio/ogg': 'ogg',
+  'audio/wav': 'wav',
 };
+
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
+const AUDIO_TYPES = new Set(['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav']);
 
 function createSiteSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -39,6 +47,15 @@ function generateUuid() {
   return crypto.randomUUID();
 }
 
+function getMaxBytes(contentType) {
+  if (AUDIO_TYPES.has(contentType)) return MAX_AUDIO_BYTES;
+  return MAX_IMAGE_BYTES;
+}
+
+export function isAllowedContentType(contentType) {
+  return IMAGE_TYPES.has(contentType) || AUDIO_TYPES.has(contentType);
+}
+
 async function uploadSiteMedia({ fileName, contentType, dataUrl, section, linkedItemId, altText }) {
   const supabase = createSiteSupabaseClient();
   if (!supabase) {
@@ -55,7 +72,8 @@ async function uploadSiteMedia({ fileName, contentType, dataUrl, section, linked
     throw Object.assign(new Error('Empty file data'), { code: 'EMPTY_FILE' });
   }
 
-  if (buffer.length > MAX_DECODED_BYTES) {
+  const maxBytes = getMaxBytes(contentType);
+  if (buffer.length > maxBytes) {
     throw Object.assign(new Error('File too large'), { code: 'FILE_TOO_LARGE' });
   }
 
@@ -110,4 +128,4 @@ async function uploadSiteMedia({ fileName, contentType, dataUrl, section, linked
   };
 }
 
-export { createSiteSupabaseClient, parseDataUrl, getFileExtension, generateUuid, uploadSiteMedia, BUCKET_NAME, MAX_DECODED_BYTES };
+export { createSiteSupabaseClient, parseDataUrl, getFileExtension, generateUuid, uploadSiteMedia, BUCKET_NAME, MAX_IMAGE_BYTES, MAX_AUDIO_BYTES };

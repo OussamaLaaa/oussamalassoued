@@ -10,6 +10,7 @@ import {
   import { useSiteConfig } from '../context/SiteConfigContext';
   import { loginToDashboard, checkDashboardAuth, logoutFromDashboard, getApiDiagnostics, fetchMessages } from '../utils/apiClient';
   import { API_BASE_URL } from '../config/runtimeConfig';
+  import { uploadSiteMediaFromFile } from '../utils/siteMediaClient';
   import {
     DEFAULT_SITE_CONFIG,
     SITE_BUTTON_VARIANTS,
@@ -54,7 +55,7 @@ import {
 const DASHBOARD_LOGO_FALLBACK_SRC = new URL('../../my logo/white.png', import.meta.url).href;
 
 const MAX_IMAGE_UPLOAD_BYTES = 1_500_000;
-const MAX_AUDIO_UPLOAD_BYTES = 2_500_000;
+const MAX_AUDIO_UPLOAD_BYTES = 10_000_000;
 
 type DashboardSectionId =
   | 'sequence'
@@ -1262,24 +1263,33 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
       setUploadError(
-        `Audio file is too large. Keep it under ${formatMegabytes(MAX_AUDIO_UPLOAD_BYTES)} for reliable local save.`,
+        `Audio file is too large. Keep it under ${formatMegabytes(MAX_AUDIO_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateConfig((prev) => ({
-        ...prev,
-        persistentUI: { ...prev.persistentUI, musicSrc: dataUrl },
-      }));
-      setUploadMessage(`Music file "${file.name}" uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected audio file.');
+    setMediaUploadState((prev) => ({ ...prev, music: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, { section: 'audio' });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, music: 'failed' }));
+      setUploadError(result.error || 'Audio upload failed.');
+      return;
     }
+
+    updateConfig((prev) => ({
+      ...prev,
+      persistentUI: { ...prev.persistentUI, musicSrc: result.publicUrl! },
+    }));
+
+    setMediaUploadState((prev) => ({ ...prev, music: 'complete' }));
+    setUploadMessage(`Music file "${file.name}" uploaded to media storage.`);
   };
 
   const [projectUploadState, setProjectUploadState] = useState<{ [projectId: string]: 'idle' | 'uploading' | 'failed' | 'complete' }>({});
+
+  const [mediaUploadState, setMediaUploadState] = useState<Record<string, 'idle' | 'uploading' | 'failed' | 'complete'>>({});
 
   const handleProjectImageUpload = async (project: SiteProject, file: File | null) => {
     clearUploadFeedback();
@@ -1339,18 +1349,25 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateDashboardBrowser('faviconUrl', dataUrl);
-      setUploadMessage(`Favicon file "${file.name}" uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected favicon file.');
+    setMediaUploadState((prev) => ({ ...prev, favicon: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, { section: 'browser_identity', altText: 'Favicon' });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, favicon: 'failed' }));
+      setUploadError(result.error || 'Favicon upload failed.');
+      return;
     }
+
+    updateDashboardBrowser('faviconUrl', result.publicUrl!);
+
+    setMediaUploadState((prev) => ({ ...prev, favicon: 'complete' }));
+    setUploadMessage(`Favicon uploaded to media storage.`);
   };
 
   const handleTestimonialAvatarUpload = async (testimonialId: string, file: File | null) => {
@@ -1359,23 +1376,34 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateConfig((prev) => ({
-        ...prev,
-        testimonials: prev.testimonials.map((item) =>
-          item.id === testimonialId ? { ...item, avatar: dataUrl } : item,
-        ),
-      }));
-      setUploadMessage(`Avatar image uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, [`avatar-${testimonialId}`]: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'testimonials',
+      linkedItemId: testimonialId,
+      altText: 'Testimonial avatar',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, [`avatar-${testimonialId}`]: 'failed' }));
+      setUploadError(result.error || 'Avatar upload failed.');
+      return;
     }
+
+    updateConfig((prev) => ({
+      ...prev,
+      testimonials: prev.testimonials.map((item) =>
+        item.id === testimonialId ? { ...item, avatar: result.publicUrl! } : item,
+      ),
+    }));
+
+    setMediaUploadState((prev) => ({ ...prev, [`avatar-${testimonialId}`]: 'complete' }));
+    setUploadMessage(`Avatar uploaded to media storage.`);
   };
 
   const handleArticleCoverUpload = async (articleId: string, file: File | null) => {
@@ -1384,18 +1412,29 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateArticle(articleId, (item) => ({ ...item, coverImage: dataUrl }));
-      setUploadMessage(`Cover image uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, [`cover-${articleId}`]: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'articles',
+      linkedItemId: articleId,
+      altText: 'Article cover',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, [`cover-${articleId}`]: 'failed' }));
+      setUploadError(result.error || 'Cover upload failed.');
+      return;
     }
+
+    updateArticle(articleId, (item) => ({ ...item, coverImage: result.publicUrl! }));
+
+    setMediaUploadState((prev) => ({ ...prev, [`cover-${articleId}`]: 'complete' }));
+    setUploadMessage(`Cover uploaded to media storage.`);
   };
 
   const handlePortraitUpload = async (file: File | null) => {
@@ -1404,21 +1443,31 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateConfig((prev) => ({
-        ...prev,
-        scene05: { ...prev.scene05, portraitImage: dataUrl },
-      }));
-      setUploadMessage(`Portrait image uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, portrait: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'about',
+      altText: 'About portrait',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, portrait: 'failed' }));
+      setUploadError(result.error || 'Portrait upload failed.');
+      return;
     }
+
+    updateConfig((prev) => ({
+      ...prev,
+      scene05: { ...prev.scene05, portraitImage: result.publicUrl! },
+    }));
+
+    setMediaUploadState((prev) => ({ ...prev, portrait: 'complete' }));
+    setUploadMessage(`Portrait uploaded to media storage.`);
   };
 
   const handleCertificationLogoUpload = async (certificationId: string, file: File | null) => {
@@ -1427,18 +1476,29 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateScene05Certification(certificationId, (item) => ({ ...item, logoSrc: dataUrl }));
-      setUploadMessage(`Certification logo uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, [`cert-${certificationId}`]: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'logos',
+      linkedItemId: certificationId,
+      altText: 'Certification logo',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, [`cert-${certificationId}`]: 'failed' }));
+      setUploadError(result.error || 'Certification logo upload failed.');
+      return;
     }
+
+    updateScene05Certification(certificationId, (item) => ({ ...item, logoSrc: result.publicUrl! }));
+
+    setMediaUploadState((prev) => ({ ...prev, [`cert-${certificationId}`]: 'complete' }));
+    setUploadMessage(`Certification logo uploaded to media storage.`);
   };
 
   const handleCompanyLogoUpload = async (logoId: string, file: File | null) => {
@@ -1447,18 +1507,29 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateScene05LogoItem(logoId, (item) => ({ ...item, logoSrc: dataUrl }));
-      setUploadMessage(`Company logo uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, [`logo-${logoId}`]: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'logos',
+      linkedItemId: logoId,
+      altText: 'Company logo',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, [`logo-${logoId}`]: 'failed' }));
+      setUploadError(result.error || 'Company logo upload failed.');
+      return;
     }
+
+    updateScene05LogoItem(logoId, (item) => ({ ...item, logoSrc: result.publicUrl! }));
+
+    setMediaUploadState((prev) => ({ ...prev, [`logo-${logoId}`]: 'complete' }));
+    setUploadMessage(`Company logo uploaded to media storage.`);
   };
 
   const handleLogoLightUpload = async (file: File | null) => {
@@ -1467,21 +1538,31 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateConfig((prev) => ({
-        ...prev,
-        persistentUI: { ...prev.persistentUI, logoLightSrc: dataUrl },
-      }));
-      setUploadMessage(`Light logo uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, logoLight: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'persistent_ui',
+      altText: 'Light logo',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, logoLight: 'failed' }));
+      setUploadError(result.error || 'Light logo upload failed.');
+      return;
     }
+
+    updateConfig((prev) => ({
+      ...prev,
+      persistentUI: { ...prev.persistentUI, logoLightSrc: result.publicUrl! },
+    }));
+
+    setMediaUploadState((prev) => ({ ...prev, logoLight: 'complete' }));
+    setUploadMessage(`Light logo uploaded to media storage.`);
   };
 
   const handleLogoDarkUpload = async (file: File | null) => {
@@ -1490,21 +1571,31 @@ export const Dashboard: React.FC = () => {
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setUploadError(
-        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable local save.`,
+        `Image is too large. Keep it under ${formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)} for reliable upload.`,
       );
       return;
     }
 
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      updateConfig((prev) => ({
-        ...prev,
-        persistentUI: { ...prev.persistentUI, logoDarkSrc: dataUrl },
-      }));
-      setUploadMessage(`Dark logo uploaded successfully.`);
-    } catch {
-      setUploadError('Could not read the selected image file.');
+    setMediaUploadState((prev) => ({ ...prev, logoDark: 'uploading' }));
+
+    const result = await uploadSiteMediaFromFile(file, {
+      section: 'persistent_ui',
+      altText: 'Dark logo',
+    });
+
+    if (!result.success) {
+      setMediaUploadState((prev) => ({ ...prev, logoDark: 'failed' }));
+      setUploadError(result.error || 'Dark logo upload failed.');
+      return;
     }
+
+    updateConfig((prev) => ({
+      ...prev,
+      persistentUI: { ...prev.persistentUI, logoDarkSrc: result.publicUrl! },
+    }));
+
+    setMediaUploadState((prev) => ({ ...prev, logoDark: 'complete' }));
+    setUploadMessage(`Dark logo uploaded to media storage.`);
   };
 
   const stats = useMemo(() => {

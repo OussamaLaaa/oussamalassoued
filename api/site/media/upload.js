@@ -1,4 +1,4 @@
-import { uploadSiteMedia } from '../../../server/lib/siteMedia.js';
+import { uploadSiteMedia, isAllowedContentType } from '../../../server/lib/siteMedia.js';
 
 const COOKIE_NAME = 'dashboard_session';
 const COOKIE_VALUE = 'test123';
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Invalid upload payload' });
   }
 
-  if (!body.contentType.startsWith('image/')) {
+  if (!isAllowedContentType(body.contentType)) {
     return res.status(400).json({ success: false, error: 'Invalid upload payload' });
   }
 
