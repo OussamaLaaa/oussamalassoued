@@ -23,14 +23,6 @@
       "dest": "/api/site/media/upload.js"
     },
     {
-      "src": "/api/site/backup",
-      "dest": "/api/site/backup.js"
-    },
-    {
-      "src": "/api/site/restore",
-      "dest": "/api/site/restore.js"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
