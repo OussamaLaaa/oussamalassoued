@@ -8,9 +8,10 @@ import {
   type SurfaceTone,
 } from '../components/designSystem';
   import { useSiteConfig } from '../context/SiteConfigContext';
-  import { loginToDashboard, checkDashboardAuth, logoutFromDashboard, getApiDiagnostics, fetchMessages } from '../utils/apiClient';
+  import { loginToDashboard, checkDashboardAuth, logoutFromDashboard, getApiDiagnostics, fetchMessages, updateSiteConfig } from '../utils/apiClient';
   import { API_BASE_URL } from '../config/runtimeConfig';
   import { uploadSiteMediaFromFile } from '../utils/siteMediaClient';
+  import { replaceEmbeddedMediaWithStorageUrls, type MigrationResult } from '../utils/siteMediaMigration';
   import {
     DEFAULT_SITE_CONFIG,
     SITE_BUTTON_VARIANTS,
@@ -671,7 +672,7 @@ export const Dashboard: React.FC = () => {
   const [uploadMessage, setUploadMessage] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [apiDiagnostics, setApiDiagnostics] = useState<Awaited<ReturnType<typeof getApiDiagnostics>> | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'optimizing' | 'saving' | 'success' | 'error'>('idle');
   const [saveResultMessage, setSaveResultMessage] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
@@ -1242,12 +1243,36 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleSaveToApi = async () => {
-    if (saveStatus === 'saving') return;
+    if (saveStatus === 'saving' || saveStatus === 'optimizing') return;
     clearUploadFeedback();
     setSaveResultMessage(null);
-    setSaveStatus('saving');
+    setSaveStatus('optimizing');
     try {
-      const result = await saveToAPI();
+      const migrationResult = await replaceEmbeddedMediaWithStorageUrls(siteConfig as unknown as Record<string, unknown>);
+      const cleanedConfig = migrationResult.config as unknown as SiteConfig;
+
+      if (migrationResult.migratedCount > 0) {
+        setSiteConfig(cleanedConfig);
+        const localSaveResult = saveSiteConfig(cleanedConfig);
+        if (!localSaveResult.success) {
+          console.warn('[Media Cleanup] localStorage save failed:', localSaveResult.error);
+        }
+        setHasUnsavedChanges(false);
+      }
+
+      const rawJsonSize = new TextEncoder().encode(JSON.stringify(cleanedConfig)).length;
+      if (rawJsonSize > 1_500_000) {
+        setSaveStatus('error');
+        setSaveResultMessage('Config is still large. Some embedded media may remain. Try again or reduce file sizes.');
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveResultMessage(null);
+        }, 4500);
+        return;
+      }
+
+      setSaveStatus('saving');
+      const result = await updateSiteConfig(cleanedConfig);
       if (result.success) {
         setSaveStatus('success');
         setSaveResultMessage('Saved successfully to Supabase.');
@@ -7756,10 +7781,10 @@ export const Dashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSaveToApi}
-                disabled={saveStatus === 'saving'}
+                disabled={saveStatus === 'saving' || saveStatus === 'optimizing'}
                 title="Save to API"
                 className={`inline-flex h-11 w-11 items-center justify-center rounded-[12px] border text-white transition-all ${
-                  saveStatus === 'saving'
+                  saveStatus === 'optimizing' || saveStatus === 'saving'
                     ? 'border-[#3b82f6]/30 bg-[#3b82f6]/60 cursor-not-allowed'
                     : saveStatus === 'success'
                       ? 'border-[#22c55e]/46 bg-[#22c55e] hover:bg-[#4ade80]'
@@ -7902,9 +7927,9 @@ export const Dashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSaveToApi}
-                disabled={saveStatus === 'saving'}
+                disabled={saveStatus === 'saving' || saveStatus === 'optimizing'}
                 className={`${dashboardActionButtonBaseClass} ${
-                  saveStatus === 'saving'
+                  saveStatus === 'optimizing' || saveStatus === 'saving'
                     ? 'border-[#3b82f6]/30 bg-[#3b82f6]/60 text-white/70 cursor-not-allowed'
                     : saveStatus === 'success'
                       ? 'border-[#22c55e]/46 bg-[#22c55e] text-white hover:bg-[#4ade80] focus-visible:ring-[#22c55e]/50'
@@ -7913,7 +7938,15 @@ export const Dashboard: React.FC = () => {
                         : dashboardActionButtonApiClass
                 }`}
               >
-                {saveStatus === 'saving' ? (
+                {saveStatus === 'optimizing' ? (
+                  <>
+                    <svg className="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeLinecap="round" className="opacity-30" />
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="20" strokeLinecap="round" />
+                    </svg>
+                    Optimizing media...
+                  </>
+                ) : saveStatus === 'saving' ? (
                   <>
                     <svg className="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
                       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeLinecap="round" className="opacity-30" />
