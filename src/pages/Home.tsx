@@ -85,7 +85,6 @@ export const Home: React.FC = () => {
     >
       {!hasStarted ? (
         <CreativeLoadingScreen
-          duration={5000}
           onFadeComplete={handleFadeComplete}
         />
       ) : null}
