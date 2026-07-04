@@ -159,7 +159,11 @@ export const StaticHomeLayout: React.FC = () => {
 
   const MAX_VISIBLE_PROJECTS = 4;
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const visibleProjects = useMemo(() => siteConfig.projects.filter((project) => project.visible !== false), [siteConfig.projects]);
+  const visibleProjects = useMemo(() => {
+    return Array.isArray(siteConfig.projects)
+      ? siteConfig.projects.filter((project) => project.visible !== false)
+      : [];
+  }, [siteConfig.projects]);
   const visibleTestimonials = useMemo(
     () => siteConfig.testimonials.filter((testimonial) => testimonial.visible),
     [siteConfig.testimonials],
@@ -204,13 +208,14 @@ export const StaticHomeLayout: React.FC = () => {
     return (scene05.certifications ?? []).map((title) => ({ title, org: '', logoSrc: '' }));
   }, [featuredCertifications, scene05.certifications]);
 
-  const projects = useMemo(() => {
+  const shouldShowProjectToggle = visibleProjects.length > MAX_VISIBLE_PROJECTS;
+  const projectsToRender = useMemo(() => {
     const all = visibleProjects.map((project) => ({
       ...project,
       summary: project.summary?.trim() || project.tags,
     }));
-    return showAllProjects ? all : all.slice(0, MAX_VISIBLE_PROJECTS);
-  }, [visibleProjects, showAllProjects]);
+    return shouldShowProjectToggle && !showAllProjects ? all.slice(0, MAX_VISIBLE_PROJECTS) : all;
+  }, [visibleProjects, shouldShowProjectToggle, showAllProjects]);
 
   const testimonials = visibleTestimonials;
   const footerSocialLinks = footer.socialLinks.filter((link) => link.visible);
@@ -528,8 +533,8 @@ export const StaticHomeLayout: React.FC = () => {
           </p>
         </div>
 
-        <div data-motion className="grid md:grid-cols-2 gap-6">
-          {projects.map((project) => {
+        <div data-motion className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-10">
+          {projectsToRender.map((project) => {
             const projectHref = project.buttonType === 'caseStudy' ? project.behance : project.live;
             const isPlaceholder = !projectHref || projectHref.trim() === '#';
 
@@ -546,7 +551,7 @@ export const StaticHomeLayout: React.FC = () => {
                   className="rounded-2xl overflow-hidden cursor-pointer hover:shadow-lg transition-all p-0 gap-0 h-full flex flex-col"
                 >
                   <div className="flex-shrink-0">
-                    <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    <div className="aspect-[16/10] overflow-hidden bg-muted">
                       <ImageWithFallback
                         src={project.img}
                         alt={project.title}
@@ -584,8 +589,8 @@ export const StaticHomeLayout: React.FC = () => {
           })}
         </div>
 
-        {visibleProjects.length > MAX_VISIBLE_PROJECTS ? (
-          <div data-motion className="mt-16 flex justify-center md:mt-14">
+        {shouldShowProjectToggle ? (
+          <div data-motion className="mt-10 flex justify-center">
             <button
               type="button"
               onClick={() => setShowAllProjects((prev) => !prev)}
