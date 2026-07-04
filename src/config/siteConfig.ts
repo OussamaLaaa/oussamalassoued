@@ -53,6 +53,21 @@ export interface SiteProject {
   buttonType: 'live' | 'caseStudy';
   visible: boolean;
   badges?: string[];
+  sortOrder?: number;
+}
+
+export interface PortfolioVersion {
+  id: string;
+  name: string;
+  description?: string;
+  audience?: string;
+  projectIds: string[];
+  isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  priority?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SiteTestimonial {
@@ -1012,6 +1027,7 @@ export interface SiteConfig {
   globalFrame: SiteGlobalFrameConfig;
   crt: SiteCRTConfig;
   visibility: SiteVisibilityConfig;
+  portfolioVersions: PortfolioVersion[];
   // Personal Hub sections
   partners: SitePartner[];
   personalProjects: SitePersonalProject[];
@@ -2337,6 +2353,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     footerNavLinks: true,
     footerOffice: true,
   },
+  portfolioVersions: [],
   // Personal Hub defaults
   partners: [],
   personalProjects: [],
@@ -2588,6 +2605,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
           const badges = Array.isArray(item.badges)
             ? item.badges.map((badge) => asString(badge, '')).filter(Boolean)
             : undefined;
+          const sortOrder = typeof item.sortOrder === 'number' ? item.sortOrder : index;
           return {
             id: asString(item.id, `project-${index + 1}`),
             title: asString(item.title, ''),
@@ -2599,6 +2617,7 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
             buttonType: (item.buttonType === 'caseStudy' ? 'caseStudy' : 'live') as 'live' | 'caseStudy',
             visible: asBoolean(item.visible, true),
             badges,
+            sortOrder,
           };
         })
         .filter((item): item is SiteProject => !!item)
@@ -4696,5 +4715,57 @@ export const hydrateSiteConfig = (value: unknown): SiteConfig => {
       footerNavLinks: asBoolean(visibility.footerNavLinks, DEFAULT_SITE_CONFIG.visibility.footerNavLinks),
       footerOffice: asBoolean(visibility.footerOffice, DEFAULT_SITE_CONFIG.visibility.footerOffice),
     },
+    portfolioVersions: Array.isArray(value.portfolioVersions)
+      ? value.portfolioVersions
+          .map((item) => {
+            if (!isRecord(item)) return null;
+            return {
+              id: asString(item.id, `version-${Date.now()}`),
+              name: asString(item.name, 'Untitled Version'),
+              description: asString(item.description, ''),
+              audience: asString(item.audience, ''),
+              projectIds: Array.isArray(item.projectIds)
+                ? item.projectIds.map((id) => asString(id, '')).filter(Boolean)
+                : [],
+              isActive: asBoolean(item.isActive, false),
+              startsAt: item.startsAt ? asString(item.startsAt, null) : null,
+              endsAt: item.endsAt ? asString(item.endsAt, null) : null,
+              priority: typeof item.priority === 'number' ? item.priority : 0,
+              createdAt: item.createdAt ? asString(item.createdAt, null) : null,
+              updatedAt: item.updatedAt ? asString(item.updatedAt, null) : null,
+            };
+          })
+          .filter(Boolean)
+      : DEFAULT_SITE_CONFIG.portfolioVersions,
   };
 };
+
+export function sortBySortOrder<T extends { sortOrder?: number }>(items: T[]): T[] {
+  return [...items].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+}
+
+export function getActivePortfolioVersion(
+  portfolioVersions: PortfolioVersion[],
+): PortfolioVersion | null {
+  const now = new Date().toISOString();
+  const activeWithRange = portfolioVersions.find(
+    (v) =>
+      v.isActive &&
+      v.startsAt &&
+      v.endsAt &&
+      now >= v.startsAt &&
+      now <= v.endsAt,
+  );
+  if (activeWithRange) return activeWithRange;
+  const activeWithoutRange = portfolioVersions.find(
+    (v) => v.isActive && !v.startsAt && !v.endsAt,
+  );
+  return activeWithoutRange ?? null;
+}
+
+export function getActiveVersionProjectIds(
+  portfolioVersions: PortfolioVersion[],
+): string[] | null {
+  const active = getActivePortfolioVersion(portfolioVersions);
+  return active ? active.projectIds : null;
+}

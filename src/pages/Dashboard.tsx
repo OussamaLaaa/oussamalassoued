@@ -32,6 +32,7 @@ import {
     type SiteScene05ValueCard,
     type SiteInboxMessage,
     type SiteMessageStatus,
+    type PortfolioVersion,
   } from '../config/siteConfig';
   import { saveSiteConfig } from '../utils/storageSystem';
   import {
@@ -2261,144 +2262,14 @@ export const Dashboard: React.FC = () => {
         );
 
       case 'projects':
-        return (
-          <div className="grid gap-4">
-            <Card title="Projects" subtitle="Edit, add, remove cards + upload images">
-              <p className="text-xs text-white/55">
-                You can upload image files directly. For local storage reliability keep each image under{' '}
-                {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}.
-              </p>
-
-              {siteConfig.projects.map((project) => (
-                <div key={project.id} className={listItemClass}>
-                  <div className="overflow-hidden rounded-[10px] border border-white/10 bg-black/20">
-                    <img src={project.img} alt={project.title} className="h-40 w-full object-cover" />
-                  </div>
-
-                  <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
-                      Upload project image
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        e.currentTarget.value = '';
-                        void handleProjectImageUpload(project, file);
-                      }}
-                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
-                    />
-                  </label>
-
-                  <Input
-                    label="Title"
-                    value={project.title}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, title: next }))}
-                  />
-                  <Toggle
-                    label="Visible on site"
-                    checked={project.visible}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, visible: next }))}
-                  />
-                  <Textarea
-                    label="Tags"
-                    value={project.tags}
-                    rows={2}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, tags: next }))}
-                  />
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
-                      Project Badges (comma separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={Array.isArray(project.badges) ? project.badges.join(', ') : ''}
-                      placeholder="AI Built, UX Research, SaaS"
-                      onChange={(e) => {
-                        const badges = e.target.value
-                          .split(',')
-                          .map((badge) => badge.trim())
-                          .filter(Boolean);
-                        updateProject(project.id, (item) => ({ ...item, badges }));
-                      }}
-                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 placeholder:text-white/40"
-                    />
-                  </div>
-                  <Textarea
-                    label="Summary"
-                    value={project.summary}
-                    rows={3}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, summary: next }))}
-                  />
-                  <Input
-                    label="Image path / data URL"
-                    value={project.img}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, img: next }))}
-                  />
-                  <Input
-                    label="Case Study URL"
-                    value={project.behance}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, behance: next }))}
-                  />
-                  <Input
-                    label="Live URL"
-                    value={project.live}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, live: next }))}
-                  />
-
-                  <SelectInput
-                    label="Button Type"
-                    value={project.buttonType}
-                    options={[
-                      { value: 'live', label: 'Live App' },
-                      { value: 'caseStudy', label: 'Case Study' },
-                    ]}
-                    onChange={(next) => updateProject(project.id, (item) => ({ ...item, buttonType: next as 'live' | 'caseStudy' }))}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateConfig((prev) => ({
-                        ...prev,
-                        projects: prev.projects.filter((item) => item.id !== project.id),
-                      }));
-                    }}
-                    className="rounded-[8px] border border-[#111217]/20 bg-[#111217]/6 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#111217] hover:bg-[#111217]/10"
-                  >
-                    Remove Project
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => {
-                  const nextProject: SiteProject = {
-                    id: `project-${Date.now()}`,
-                    title: 'New Project',
-                    tags: 'WEB • DESIGN',
-                    summary: 'Describe the outcome and impact of this project.',
-                    img: '/frames/scene-02-desk-focus/ezgif-frame-001.avif',
-                    behance: '#',
-                    live: '#',
-                    buttonType: 'live',
-                    visible: true,
-                    badges: [],
-                  };
-                  updateConfig((prev) => ({
-                    ...prev,
-                    projects: [...prev.projects, nextProject],
-                  }));
-                }}
-                className="rounded-[8px] border border-white/20 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
-              >
-                Add Project
-              </button>
-            </Card>
-          </div>
-        );
+        return <ProjectsStudioContent
+            siteConfig={siteConfig}
+            updateConfig={updateConfig}
+            updateProject={updateProject}
+            handleProjectImageUpload={handleProjectImageUpload}
+            MAX_IMAGE_UPLOAD_BYTES={MAX_IMAGE_UPLOAD_BYTES}
+            formatMegabytes={formatMegabytes}
+          />;
 
       case 'testimonials':
         return (
@@ -7952,6 +7823,595 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
     </main>
+  );
+};
+
+interface ProjectsStudioContentProps {
+  siteConfig: SiteConfig;
+  updateConfig: (updater: (prev: SiteConfig) => SiteConfig) => void;
+  updateProject: (projectId: string, updater: (project: SiteProject) => SiteProject) => void;
+  handleProjectImageUpload: (project: SiteProject, file: File | null) => Promise<void>;
+  MAX_IMAGE_UPLOAD_BYTES: number;
+  formatMegabytes: (bytes: number) => string;
+}
+
+const TAB_CLASS = (isActive: boolean) =>
+  `px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] rounded-[8px] border transition-all ${
+    isActive
+      ? 'border-white/20 bg-white/10 text-white'
+      : 'border-transparent text-white/50 hover:text-white/70'
+  }`;
+
+const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
+  siteConfig,
+  updateConfig,
+  updateProject,
+  handleProjectImageUpload,
+  MAX_IMAGE_UPLOAD_BYTES,
+  formatMegabytes,
+}) => {
+  const [activeTab, setActiveTab] = useState<'grid' | 'versions'>('grid');
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
+
+  const sortedProjects = [...siteConfig.projects].sort(
+    (a, b) => (a.sortOrder ?? siteConfig.projects.indexOf(a)) - (b.sortOrder ?? siteConfig.projects.indexOf(b)),
+  );
+
+  const moveProject = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= sortedProjects.length) return;
+    const updated = [...sortedProjects];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    updateConfig((prev) => ({
+      ...prev,
+      projects: updated.map((p, i) => ({ ...p, sortOrder: i })),
+    }));
+  };
+
+  const duplicateProject = (project: SiteProject) => {
+    const newProject: SiteProject = {
+      ...project,
+      id: `project-${Date.now()}`,
+      title: `${project.title} (copy)`,
+      sortOrder: siteConfig.projects.length,
+    };
+    updateConfig((prev) => ({
+      ...prev,
+      projects: [...prev.projects, newProject],
+    }));
+  };
+
+  const addProject = () => {
+    const newProject: SiteProject = {
+      id: `project-${Date.now()}`,
+      title: 'New Project',
+      tags: 'WEB • DESIGN',
+      summary: 'Describe the outcome and impact of this project.',
+      img: '/frames/scene-02-desk-focus/ezgif-frame-001.avif',
+      behance: '#',
+      live: '#',
+      buttonType: 'live',
+      visible: true,
+      badges: [],
+      sortOrder: siteConfig.projects.length,
+    };
+    updateConfig((prev) => ({
+      ...prev,
+      projects: [...prev.projects, newProject],
+    }));
+    setEditingProjectId(newProject.id);
+  };
+
+  const editingProject = editingProjectId
+    ? siteConfig.projects.find((p) => p.id === editingProjectId) ?? null
+    : null;
+
+  const sortedVersions = [...(siteConfig.portfolioVersions ?? [])].sort(
+    (a, b) => (b.priority ?? 0) - (a.priority ?? 0),
+  );
+
+  const editingVersion = editingVersionId
+    ? siteConfig.portfolioVersions?.find((v) => v.id === editingVersionId) ?? null
+    : null;
+
+  const addVersion = () => {
+    const newVersion: PortfolioVersion = {
+      id: `version-${Date.now()}`,
+      name: 'New Version',
+      description: '',
+      audience: '',
+      projectIds: [],
+      isActive: false,
+      startsAt: null,
+      endsAt: null,
+      priority: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    updateConfig((prev) => ({
+      ...prev,
+      portfolioVersions: [...(prev.portfolioVersions ?? []), newVersion],
+    }));
+    setEditingVersionId(newVersion.id);
+  };
+
+  const updateVersion = (versionId: string, updater: (v: PortfolioVersion) => PortfolioVersion) => {
+    updateConfig((prev) => ({
+      ...prev,
+      portfolioVersions: (prev.portfolioVersions ?? []).map((v) =>
+        v.id === versionId ? { ...updater(v), updatedAt: new Date().toISOString() } : v,
+      ),
+    }));
+  };
+
+  const removeVersion = (versionId: string) => {
+    updateConfig((prev) => ({
+      ...prev,
+      portfolioVersions: (prev.portfolioVersions ?? []).filter((v) => v.id !== versionId),
+    }));
+    if (editingVersionId === versionId) setEditingVersionId(null);
+  };
+
+  const [versionProjectSearch, setVersionProjectSearch] = useState('');
+
+  return (
+    <div className="grid gap-4">
+      {/* Tab bar */}
+      <div className="flex gap-2">
+        <button type="button" className={TAB_CLASS(activeTab === 'grid')} onClick={() => { setActiveTab('grid'); setEditingProjectId(null); setEditingVersionId(null); }}>
+          Projects
+        </button>
+        <button type="button" className={TAB_CLASS(activeTab === 'versions')} onClick={() => { setActiveTab('versions'); setEditingProjectId(null); setEditingVersionId(null); }}>
+          Portfolio Versions
+        </button>
+      </div>
+
+      {activeTab === 'grid' && (
+        <>
+          {/* Project grid */}
+          <div className={`grid gap-4 ${editingProject ? 'lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+            {sortedProjects.map((project, index) => (
+              <div
+                key={project.id}
+                onClick={() => setEditingProjectId(project.id)}
+                className={`group relative cursor-pointer overflow-hidden rounded-[12px] border transition-all ${
+                  editingProjectId === project.id
+                    ? 'border-white/30 bg-white/8'
+                    : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5'
+                }`}
+              >
+                {/* Image */}
+                <div className="aspect-[4/3] overflow-hidden bg-black/40">
+                  <img
+                    src={project.img}
+                    alt={project.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+
+                {/* Info overlay */}
+                <div className="space-y-1.5 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-[13px] text-white/90 leading-tight line-clamp-2">{project.title || 'Untitled'}</p>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); moveProject(index, -1); }}
+                        disabled={index === 0}
+                        className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 bg-black/30 text-white/50 hover:text-white/80 disabled:opacity-20"
+                        title="Move up"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6.5L5 3.5L8 6.5"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); moveProject(index, 1); }}
+                        disabled={index === sortedProjects.length - 1}
+                        className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 bg-black/30 text-white/50 hover:text-white/80 disabled:opacity-20"
+                        title="Move down"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.isArray(project.badges) && project.badges.slice(0, 3).map((badge) => (
+                      <span key={badge} className="rounded-[4px] bg-white/10 px-1.5 py-0.5 text-[9px] font-mono text-white/60">{badge}</span>
+                    ))}
+                    {Array.isArray(project.badges) && project.badges.length > 3 && (
+                      <span className="rounded-[4px] bg-white/8 px-1.5 py-0.5 text-[9px] font-mono text-white/40">+{project.badges.length - 3}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-white/50">
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${project.visible ? 'bg-green-400' : 'bg-red-400'}`} />
+                    {project.visible ? 'Visible' : 'Hidden'}
+                    <span className="text-white/20">·</span>
+                    {project.buttonType === 'live' ? 'Live App' : 'Case Study'}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add card */}
+            <button
+              type="button"
+              onClick={addProject}
+              className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-white/15 bg-black/10 text-white/40 hover:border-white/30 hover:text-white/60 transition-all"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em]">Add Project</span>
+            </button>
+          </div>
+
+          {/* Editor panel */}
+          {editingProject && (
+            <div className="rounded-[12px] border border-white/12 bg-black/25 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Editing: {editingProject.title || 'Untitled'}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditingProjectId(null)}
+                  className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 text-white/50 hover:text-white/80"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+                </button>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {/* Image */}
+                <div className="space-y-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Image</span>
+                  <div className="overflow-hidden rounded-[10px] border border-white/10 bg-black/20">
+                    <img src={editingProject.img} alt={editingProject.title} className="h-32 w-full object-cover" />
+                  </div>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload new image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        e.currentTarget.value = '';
+                        void handleProjectImageUpload(editingProject, file);
+                      }}
+                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                    />
+                    <span className="text-[10px] text-white/40">Max {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}</span>
+                  </label>
+                </div>
+
+                {/* Fields */}
+                <div className="space-y-2.5">
+                  <Input
+                    label="Image path / data URL"
+                    value={editingProject.img}
+                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, img: next }))}
+                  />
+                  <Input
+                    label="Title"
+                    value={editingProject.title}
+                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, title: next }))}
+                  />
+                  <Toggle
+                    label="Visible on site"
+                    checked={editingProject.visible}
+                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, visible: next }))}
+                  />
+                  <Textarea
+                    label="Tags"
+                    value={editingProject.tags}
+                    rows={2}
+                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, tags: next }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Badges (comma separated)</label>
+                  <input
+                    type="text"
+                    value={Array.isArray(editingProject.badges) ? editingProject.badges.join(', ') : ''}
+                    placeholder="AI Built, UX Research, SaaS"
+                    onChange={(e) => {
+                      const badges = e.target.value
+                        .split(',')
+                        .map((badge) => badge.trim())
+                        .filter(Boolean);
+                      updateProject(editingProject.id, (item) => ({ ...item, badges }));
+                    }}
+                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 placeholder:text-white/40"
+                  />
+                </div>
+                <Textarea
+                  label="Summary"
+                  value={editingProject.summary}
+                  rows={3}
+                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, summary: next }))}
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Case Study URL"
+                  value={editingProject.behance}
+                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, behance: next }))}
+                />
+                <Input
+                  label="Live URL"
+                  value={editingProject.live}
+                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, live: next }))}
+                />
+              </div>
+
+              <SelectInput
+                label="Button Type"
+                value={editingProject.buttonType}
+                options={[
+                  { value: 'live', label: 'Live App' },
+                  { value: 'caseStudy', label: 'Case Study' },
+                ]}
+                onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, buttonType: next as 'live' | 'caseStudy' }))}
+              />
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateConfig((prev) => ({
+                      ...prev,
+                      projects: prev.projects.filter((item) => item.id !== editingProject.id),
+                    }));
+                    setEditingProjectId(null);
+                  }}
+                  className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20"
+                >
+                  Remove Project
+                </button>
+                <button
+                  type="button"
+                  onClick={() => duplicateProject(editingProject)}
+                  className="rounded-[8px] border border-white/15 bg-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70 hover:bg-white/10"
+                >
+                  Duplicate
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'versions' && (
+        <>
+          {/* Versions list */}
+          <div className="grid gap-3">
+            <Card title="Portfolio Versions" subtitle="Create curated collections of projects for different audiences or time periods">
+              <p className="text-xs text-white/55">
+                Each version can include a subset of projects and be scheduled to go live during a specific date range.
+                The active version (matching current date) determines which projects appear on your public site.
+              </p>
+
+              {/* Current live version info */}
+              {(() => {
+                const now = new Date().toISOString();
+                const activeVersion = sortedVersions.find(
+                  (v) => v.isActive && v.startsAt && v.endsAt && now >= v.startsAt && now <= v.endsAt,
+                ) || sortedVersions.find((v) => v.isActive && !v.startsAt && !v.endsAt);
+                return activeVersion ? (
+                  <div className="rounded-[10px] border border-green-500/25 bg-green-500/8 p-3 space-y-1">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-green-400">Live Now</p>
+                    <p className="text-sm text-white/90">{activeVersion.name}</p>
+                    <p className="text-[11px] text-white/50">{activeVersion.projectIds.length} project{(activeVersion.projectIds.length !== 1) ? 's' : ''} · {activeVersion.audience || 'General audience'}</p>
+                  </div>
+                ) : (
+                  <div className="rounded-[10px] border border-yellow-500/20 bg-yellow-500/5 p-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-yellow-400">No active version</p>
+                    <p className="text-xs text-white/50 mt-1">All visible projects will be shown by default.</p>
+                  </div>
+                );
+              })()}
+
+              {/* Version list */}
+              <div className="space-y-2">
+                {sortedVersions.length === 0 && (
+                  <p className="text-xs text-white/40 py-2">No portfolio versions yet. Create one to curate which projects appear on your site.</p>
+                )}
+                {sortedVersions.map((version) => (
+                  <div
+                    key={version.id}
+                    onClick={() => setEditingVersionId(version.id)}
+                    className={`group cursor-pointer rounded-[10px] border p-3 transition-all ${
+                      editingVersionId === version.id
+                        ? 'border-white/25 bg-white/8'
+                        : 'border-white/10 bg-black/20 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <p className="text-[13px] font-medium text-white/90">{version.name}</p>
+                        {version.description && <p className="text-[11px] text-white/50">{version.description}</p>}
+                        <p className="text-[10px] font-mono text-white/40">
+                          {version.projectIds.length} project{(version.projectIds.length !== 1) ? 's' : ''}
+                          {version.isActive && (
+                            <>
+                              <span className="mx-1.5 text-white/20">·</span>
+                              <span className="text-green-400/70">Active</span>
+                            </>
+                          )}
+                          {version.startsAt && (
+                            <>
+                              <span className="mx-1.5 text-white/20">·</span>
+                              <span>From {new Date(version.startsAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                          {version.endsAt && (
+                            <>
+                              <span className="mx-1.5 text-white/20">·</span>
+                              <span>Until {new Date(version.endsAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); removeVersion(version.id); }}
+                          className="rounded-[6px] border border-red-500/20 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-red-300/60 hover:bg-red-500/10 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addVersion}
+                className="rounded-[8px] border border-dashed border-white/15 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/50 hover:border-white/30 hover:text-white/70 w-full transition-all"
+              >
+                + Create Version
+              </button>
+            </Card>
+          </div>
+
+          {/* Version editor panel */}
+          {editingVersion && (
+            <div className="rounded-[12px] border border-white/12 bg-black/25 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Editing: {editingVersion.name}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditingVersionId(null)}
+                  className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 text-white/50 hover:text-white/80"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+                </button>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  label="Version Name"
+                  value={editingVersion.name}
+                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, name: next }))}
+                />
+                <Toggle
+                  label="Active (publish this version)"
+                  checked={editingVersion.isActive}
+                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, isActive: next }))}
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Textarea
+                  label="Description"
+                  value={editingVersion.description || ''}
+                  rows={2}
+                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, description: next }))}
+                />
+                <Textarea
+                  label="Target Audience"
+                  value={editingVersion.audience || ''}
+                  rows={2}
+                  placeholder="e.g. Enterprise clients, Portfolio review"
+                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, audience: next }))}
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Starts At</label>
+                  <input
+                    type="datetime-local"
+                    value={editingVersion.startsAt ? editingVersion.startsAt.slice(0, 16) : ''}
+                    onChange={(e) => updateVersion(editingVersion.id, (v) => ({
+                      ...v,
+                      startsAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+                    }))}
+                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Ends At</label>
+                  <input
+                    type="datetime-local"
+                    value={editingVersion.endsAt ? editingVersion.endsAt.slice(0, 16) : ''}
+                    onChange={(e) => updateVersion(editingVersion.id, (v) => ({
+                      ...v,
+                      endsAt: e.target.value ? new Date(e.target.value).toISOString() : null,
+                    }))}
+                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              <Input
+                label="Priority (higher = preferred when overlapping)"
+                type="number"
+                value={String(editingVersion.priority ?? 0)}
+                onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, priority: Number(next) || 0 }))}
+              />
+
+              {/* Project selection */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+                    Included Projects ({editingVersion.projectIds.length} selected)
+                  </span>
+                  <input
+                    type="text"
+                    value={versionProjectSearch}
+                    onChange={(e) => setVersionProjectSearch(e.target.value)}
+                    placeholder="Search projects..."
+                    className="rounded-[8px] border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-white/70 placeholder:text-white/30 w-48"
+                  />
+                </div>
+                <div className="max-h-48 space-y-1 overflow-y-auto rounded-[10px] border border-white/10 bg-black/15 p-2">
+                  {sortedProjects
+                    .filter((p) => !versionProjectSearch || p.title.toLowerCase().includes(versionProjectSearch.toLowerCase()))
+                    .map((project) => (
+                      <label key={project.id} className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-2 py-1.5 hover:bg-white/5">
+                        <input
+                          type="checkbox"
+                          checked={editingVersion.projectIds.includes(project.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              updateVersion(editingVersion.id, (v) => ({
+                                ...v,
+                                projectIds: [...v.projectIds, project.id],
+                              }));
+                            } else {
+                              updateVersion(editingVersion.id, (v) => ({
+                                ...v,
+                                projectIds: v.projectIds.filter((id) => id !== project.id),
+                              }));
+                            }
+                          }}
+                          className="accent-white/60"
+                        />
+                        <span className="text-xs text-white/80 line-clamp-1">{project.title || 'Untitled'}</span>
+                        <span className={`ml-auto h-1.5 w-1.5 rounded-full ${project.visible ? 'bg-green-400/60' : 'bg-red-400/40'}`} />
+                      </label>
+                    ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => removeVersion(editingVersion.id)}
+                className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20"
+              >
+                Delete Version
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 

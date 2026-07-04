@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { sanitizeImageSrc, isBlockedUrl } from '../utils/resourceFilter';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass } from './designSystem';
+import { sortBySortOrder, getActiveVersionProjectIds } from '../config/siteConfig';
 import { getSocialIconComponent } from './icons';
 import {
   ArrowRight,
@@ -160,10 +161,13 @@ export const StaticHomeLayout: React.FC = () => {
   const MAX_VISIBLE_PROJECTS = 4;
   const [showAllProjects, setShowAllProjects] = useState(false);
   const visibleProjects = useMemo(() => {
-    return Array.isArray(siteConfig.projects)
-      ? siteConfig.projects.filter((project) => project.visible !== false)
-      : [];
-  }, [siteConfig.projects]);
+    const activeProjectIds = getActiveVersionProjectIds(siteConfig.portfolioVersions ?? []);
+    return sortBySortOrder(
+      (Array.isArray(siteConfig.projects) ? siteConfig.projects : [])
+        .filter((project) => project.visible !== false)
+        .filter((project) => !activeProjectIds || activeProjectIds.includes(project.id)),
+    );
+  }, [siteConfig.projects, siteConfig.portfolioVersions]);
   const visibleTestimonials = useMemo(
     () => siteConfig.testimonials.filter((testimonial) => testimonial.visible),
     [siteConfig.testimonials],

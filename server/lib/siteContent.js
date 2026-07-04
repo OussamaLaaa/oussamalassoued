@@ -10,12 +10,14 @@ const SECTION_FIELD_MAP = {
   global_frame: 'globalFrame',
   experience_marquee: 'experienceMarquee',
   legal_pages: 'legalPages',
+  portfolio_versions: 'portfolioVersions',
 };
 
 const PUBLIC_SECTIONS = [
   'intro',
   'featured',
   'projects',
+  'portfolio_versions',
   'experience_marquee',
   'testimonials',
   'about',
@@ -147,6 +149,7 @@ const SECTION_MAPPINGS = [
   ['globalFrame', 'global_frame'],
   ['crt', 'crt'],
   ['visibility', 'visibility'],
+  ['portfolioVersions', 'portfolio_versions'],
 ];
 
 export function splitSiteConfigIntoSections(config) {

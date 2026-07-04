@@ -6,6 +6,7 @@ import { Footer } from './Footer';
 import { ExperienceMarquee } from './ExperienceMarquee';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { getButtonClass, getScaledRem } from './designSystem';
+import { sortBySortOrder, getActiveVersionProjectIds } from '../config/siteConfig';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,10 +23,13 @@ export const FeaturedWork: React.FC<FeaturedWorkProps> = memo(({ isActive }) => 
   const MAX_VISIBLE_PROJECTS = 4;
   const [showAllProjects, setShowAllProjects] = React.useState(false);
   const visibleProjects = useMemo(() => {
-    return Array.isArray(siteConfig.projects)
-      ? siteConfig.projects.filter((project) => project.visible !== false)
-      : [];
-  }, [siteConfig.projects]);
+    const activeProjectIds = getActiveVersionProjectIds(siteConfig.portfolioVersions ?? []);
+    return sortBySortOrder(
+      (Array.isArray(siteConfig.projects) ? siteConfig.projects : [])
+        .filter((project) => project.visible !== false)
+        .filter((project) => !activeProjectIds || activeProjectIds.includes(project.id)),
+    );
+  }, [siteConfig.projects, siteConfig.portfolioVersions]);
   const shouldShowProjectToggle = visibleProjects.length > MAX_VISIBLE_PROJECTS;
   const projectsToRender = useMemo(() => {
     return shouldShowProjectToggle && !showAllProjects
