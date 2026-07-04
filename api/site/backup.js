@@ -84,6 +84,9 @@ export default async function handler(req, res) {
               storagePath: media.storage_path,
               fileName: media.file_name,
               contentType: media.content_type,
+              section: media.section,
+              linkedItemId: media.linked_item_id,
+              altText: media.alt_text,
               error: downloadError?.message || 'Download failed',
             });
             continue;
@@ -97,6 +100,9 @@ export default async function handler(req, res) {
             storagePath: media.storage_path,
             fileName: media.file_name,
             contentType: media.content_type,
+            section: media.section,
+            linkedItemId: media.linked_item_id,
+            altText: media.alt_text,
             dataUrl,
           });
         } catch (err) {
@@ -105,6 +111,9 @@ export default async function handler(req, res) {
             storagePath: media.storage_path,
             fileName: media.file_name,
             contentType: media.content_type,
+            section: media.section,
+            linkedItemId: media.linked_item_id,
+            altText: media.alt_text,
             error: err.message || 'Download failed',
           });
         }
@@ -132,6 +141,7 @@ export default async function handler(req, res) {
         sizeBytes: row.size_bytes,
         section: row.section,
         linkedItemId: row.linked_item_id,
+        altText: row.alt_text,
       })),
       mediaFiles,
     };

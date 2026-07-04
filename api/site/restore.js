@@ -186,6 +186,9 @@ export default async function handler(req, res) {
           bucket: BUCKET_NAME,
           content_type: parsed.mimeType,
           size_bytes: buffer.length,
+          section: mediaFile.section || null,
+          linked_item_id: mediaFile.linkedItemId || null,
+          alt_text: mediaFile.altText || null,
         });
 
       if (insertError) {
@@ -201,7 +204,6 @@ export default async function handler(req, res) {
       const now = new Date().toISOString();
       for (const section of body.siteContent) {
         const dataStr = JSON.stringify(section.data);
-        let modified = false;
         let newDataStr = dataStr;
 
         for (const [oldStoragePath, newPublicUrl] of oldToNewUrl) {
@@ -210,15 +212,18 @@ export default async function handler(req, res) {
         }
 
         if (newDataStr !== dataStr) {
-          modified = true;
-          const parsedData = JSON.parse(newDataStr);
-          const { error: updateError } = await supabase
-            .from('site_content')
-            .update({ data: parsedData, updated_at: now })
-            .eq('section', section.section);
+          try {
+            const parsedData = JSON.parse(newDataStr);
+            const { error: updateError } = await supabase
+              .from('site_content')
+              .update({ data: parsedData, updated_at: now })
+              .eq('section', section.section);
 
-          if (updateError) {
-            warnings.push(`Failed to remap URLs in section ${section.section}`);
+            if (updateError) {
+              warnings.push(`Failed to remap URLs in section ${section.section}`);
+            }
+          } catch {
+            warnings.push(`URL remapping produced invalid JSON for section ${section.section}`);
           }
         }
       }

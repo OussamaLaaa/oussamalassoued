@@ -96,7 +96,7 @@ function findEmbeddedMediaInConfig(config: unknown, path = ''): EmbeddedMediaIte
   if (Array.isArray(config)) {
     config.forEach((item, index) => {
       const childMedia = findEmbeddedMediaInConfig(item, `${path}[${index}]`);
-      if (item && typeof item === 'object' && 'id' in item) {
+      if (item && typeof item === 'object' && 'id' in item && item.id != null) {
         for (const media of childMedia) {
           media.linkedItemId = String((item as Record<string, unknown>).id);
         }

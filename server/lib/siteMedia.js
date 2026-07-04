@@ -15,10 +15,11 @@ const MIME_EXT_MAP = {
   'audio/mp3': 'mp3',
   'audio/ogg': 'ogg',
   'audio/wav': 'wav',
+  'audio/webm': 'webm',
 };
 
-const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
-const AUDIO_TYPES = new Set(['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav']);
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif']);
+const AUDIO_TYPES = new Set(['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm']);
 
 function createSiteSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
