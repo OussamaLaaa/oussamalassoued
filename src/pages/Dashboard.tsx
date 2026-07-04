@@ -7851,7 +7851,7 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
   formatMegabytes,
 }) => {
   const [activeTab, setActiveTab] = useState<'grid' | 'versions'>('grid');
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [editingVersionId, setEditingVersionId] = useState<string | null>(null);
 
   const sortedProjects = [...siteConfig.projects].sort(
@@ -7867,19 +7867,6 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
     updateConfig((prev) => ({
       ...prev,
       projects: updated.map((p, i) => ({ ...p, sortOrder: i })),
-    }));
-  };
-
-  const duplicateProject = (project: SiteProject) => {
-    const newProject: SiteProject = {
-      ...project,
-      id: `project-${Date.now()}`,
-      title: `${project.title} (copy)`,
-      sortOrder: siteConfig.projects.length,
-    };
-    updateConfig((prev) => ({
-      ...prev,
-      projects: [...prev.projects, newProject],
     }));
   };
 
@@ -7901,11 +7888,39 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
       ...prev,
       projects: [...prev.projects, newProject],
     }));
-    setEditingProjectId(newProject.id);
+    setSelectedProjectId(newProject.id);
   };
 
-  const editingProject = editingProjectId
-    ? siteConfig.projects.find((p) => p.id === editingProjectId) ?? null
+  const duplicateProject = (project: SiteProject) => {
+    const newId = `project-${Date.now()}`;
+    const newProject: SiteProject = {
+      ...project,
+      id: newId,
+      title: `${project.title} (copy)`,
+      sortOrder: siteConfig.projects.length,
+    };
+    updateConfig((prev) => ({
+      ...prev,
+      projects: [...prev.projects, newProject],
+    }));
+    setSelectedProjectId(newId);
+  };
+
+  const deleteProject = (projectId: string) => {
+    updateConfig((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((item) => item.id !== projectId),
+      portfolioVersions: (prev.portfolioVersions ?? []).map((v) => ({
+        ...v,
+        projectIds: v.projectIds.filter((id) => id !== projectId),
+        updatedAt: new Date().toISOString(),
+      })),
+    }));
+    setSelectedProjectId(null);
+  };
+
+  const selectedProject = selectedProjectId
+    ? siteConfig.projects.find((p) => p.id === selectedProjectId) ?? null
     : null;
 
   const sortedVersions = [...(siteConfig.portfolioVersions ?? [])].sort(
@@ -7956,14 +7971,163 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
 
   const [versionProjectSearch, setVersionProjectSearch] = useState('');
 
+  // ── Project Editor View ──────────────────────────────────────────────
+  if (selectedProject) {
+    return (
+      <div className="grid gap-4">
+        {/* Header */}
+        <div className="flex items-center justify-between rounded-[12px] border border-white/10 bg-black/20 p-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedProjectId(null)}
+              className="flex items-center gap-1.5 rounded-[8px] border border-white/15 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2.5L4 6l3.5 3.5"/></svg>
+              Back to Projects
+            </button>
+            <div className="h-4 w-px bg-white/10" />
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/80">Editing: {selectedProject.title || 'Untitled'}</p>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase tracking-[0.1em] ${
+              selectedProject.visible ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'
+            }`}>
+              <span className={`h-1 w-1 rounded-full ${selectedProject.visible ? 'bg-green-400' : 'bg-red-400'}`} />
+              {selectedProject.visible ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+
+        {/* Editor content */}
+        <div className="rounded-[12px] border border-white/10 bg-black/15 p-4 space-y-4">
+          {/* Image section */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Image</span>
+              <div className="overflow-hidden rounded-[12px] border border-white/10 bg-black/30">
+                <img src={selectedProject.img} alt={selectedProject.title} className="aspect-[16/10] w-full object-cover" />
+              </div>
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload new image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.currentTarget.value = '';
+                    void handleProjectImageUpload(selectedProject, file);
+                  }}
+                  className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
+                />
+                <span className="text-[10px] text-white/40">Max {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}</span>
+              </label>
+            </div>
+            <div className="space-y-3">
+              <Input
+                label="Image path / data URL"
+                value={selectedProject.img}
+                onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, img: next }))}
+              />
+              <Input
+                label="Title"
+                value={selectedProject.title}
+                onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, title: next }))}
+              />
+              <Toggle
+                label="Visible on site"
+                checked={selectedProject.visible}
+                onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, visible: next }))}
+              />
+              <Textarea
+                label="Tags"
+                value={selectedProject.tags}
+                rows={2}
+                onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, tags: next }))}
+              />
+            </div>
+          </div>
+
+          {/* Details section */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Badges (comma separated)</label>
+              <input
+                type="text"
+                value={Array.isArray(selectedProject.badges) ? selectedProject.badges.join(', ') : ''}
+                placeholder="AI Built, UX Research, SaaS"
+                onChange={(e) => {
+                  const badges = e.target.value
+                    .split(',')
+                    .map((badge) => badge.trim())
+                    .filter(Boolean);
+                  updateProject(selectedProject.id, (item) => ({ ...item, badges }));
+                }}
+                className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 placeholder:text-white/40"
+              />
+            </div>
+            <Textarea
+              label="Summary"
+              value={selectedProject.summary}
+              rows={3}
+              onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, summary: next }))}
+            />
+          </div>
+
+          {/* URLs section */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Case Study URL"
+              value={selectedProject.behance}
+              onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, behance: next }))}
+            />
+            <Input
+              label="Live URL"
+              value={selectedProject.live}
+              onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, live: next }))}
+            />
+          </div>
+
+          {/* Button type */}
+          <SelectInput
+            label="Button Type"
+            value={selectedProject.buttonType}
+            options={[
+              { value: 'live', label: 'Live App' },
+              { value: 'caseStudy', label: 'Case Study' },
+            ]}
+            onChange={(next) => updateProject(selectedProject.id, (item) => ({ ...item, buttonType: next as 'live' | 'caseStudy' }))}
+          />
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => deleteProject(selectedProject.id)}
+              className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20 transition-all"
+            >
+              Remove Project
+            </button>
+            <button
+              type="button"
+              onClick={() => duplicateProject(selectedProject)}
+              className="rounded-[8px] border border-white/15 bg-white/5 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70 hover:bg-white/10 transition-all"
+            >
+              Duplicate
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Grid + Versions views ────────────────────────────────────────────
   return (
     <div className="grid gap-4">
       {/* Tab bar */}
       <div className="flex gap-2">
-        <button type="button" className={TAB_CLASS(activeTab === 'grid')} onClick={() => { setActiveTab('grid'); setEditingProjectId(null); setEditingVersionId(null); }}>
+        <button type="button" className={TAB_CLASS(activeTab === 'grid')} onClick={() => { setActiveTab('grid'); setEditingVersionId(null); }}>
           Projects
         </button>
-        <button type="button" className={TAB_CLASS(activeTab === 'versions')} onClick={() => { setActiveTab('versions'); setEditingProjectId(null); setEditingVersionId(null); }}>
+        <button type="button" className={TAB_CLASS(activeTab === 'versions')} onClick={() => { setActiveTab('versions'); setEditingVersionId(null); }}>
           Portfolio Versions
         </button>
       </div>
@@ -7971,16 +8135,12 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
       {activeTab === 'grid' && (
         <>
           {/* Project grid */}
-          <div className={`grid gap-4 ${editingProject ? 'lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedProjects.map((project, index) => (
               <div
                 key={project.id}
-                onClick={() => setEditingProjectId(project.id)}
-                className={`group relative cursor-pointer overflow-hidden rounded-[12px] border transition-all ${
-                  editingProjectId === project.id
-                    ? 'border-white/30 bg-white/8'
-                    : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5'
-                }`}
+                onClick={() => setSelectedProjectId(project.id)}
+                className="group relative cursor-pointer overflow-hidden rounded-[12px] border border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5 transition-all"
               >
                 {/* Image */}
                 <div className="aspect-[4/3] overflow-hidden bg-black/40">
@@ -8044,149 +8204,11 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
               <span className="font-mono text-[10px] uppercase tracking-[0.14em]">Add Project</span>
             </button>
           </div>
-
-          {/* Editor panel */}
-          {editingProject && (
-            <div className="rounded-[12px] border border-white/12 bg-black/25 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Editing: {editingProject.title || 'Untitled'}</p>
-                <button
-                  type="button"
-                  onClick={() => setEditingProjectId(null)}
-                  className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 text-white/50 hover:text-white/80"
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
-                </button>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                {/* Image */}
-                <div className="space-y-1.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Image</span>
-                  <div className="overflow-hidden rounded-[10px] border border-white/10 bg-black/20">
-                    <img src={editingProject.img} alt={editingProject.title} className="h-32 w-full object-cover" />
-                  </div>
-                  <label className="flex flex-col gap-1.5">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Upload new image</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        e.currentTarget.value = '';
-                        void handleProjectImageUpload(editingProject, file);
-                      }}
-                      className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 file:mr-3 file:rounded-[8px] file:border-0 file:bg-white/15 file:px-2.5 file:py-1.5 file:text-xs file:text-white hover:file:bg-white/20"
-                    />
-                    <span className="text-[10px] text-white/40">Max {formatMegabytes(MAX_IMAGE_UPLOAD_BYTES)}</span>
-                  </label>
-                </div>
-
-                {/* Fields */}
-                <div className="space-y-2.5">
-                  <Input
-                    label="Image path / data URL"
-                    value={editingProject.img}
-                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, img: next }))}
-                  />
-                  <Input
-                    label="Title"
-                    value={editingProject.title}
-                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, title: next }))}
-                  />
-                  <Toggle
-                    label="Visible on site"
-                    checked={editingProject.visible}
-                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, visible: next }))}
-                  />
-                  <Textarea
-                    label="Tags"
-                    value={editingProject.tags}
-                    rows={2}
-                    onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, tags: next }))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Project Badges (comma separated)</label>
-                  <input
-                    type="text"
-                    value={Array.isArray(editingProject.badges) ? editingProject.badges.join(', ') : ''}
-                    placeholder="AI Built, UX Research, SaaS"
-                    onChange={(e) => {
-                      const badges = e.target.value
-                        .split(',')
-                        .map((badge) => badge.trim())
-                        .filter(Boolean);
-                      updateProject(editingProject.id, (item) => ({ ...item, badges }));
-                    }}
-                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 placeholder:text-white/40"
-                  />
-                </div>
-                <Textarea
-                  label="Summary"
-                  value={editingProject.summary}
-                  rows={3}
-                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, summary: next }))}
-                />
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  label="Case Study URL"
-                  value={editingProject.behance}
-                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, behance: next }))}
-                />
-                <Input
-                  label="Live URL"
-                  value={editingProject.live}
-                  onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, live: next }))}
-                />
-              </div>
-
-              <SelectInput
-                label="Button Type"
-                value={editingProject.buttonType}
-                options={[
-                  { value: 'live', label: 'Live App' },
-                  { value: 'caseStudy', label: 'Case Study' },
-                ]}
-                onChange={(next) => updateProject(editingProject.id, (item) => ({ ...item, buttonType: next as 'live' | 'caseStudy' }))}
-              />
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateConfig((prev) => ({
-                      ...prev,
-                      projects: prev.projects.filter((item) => item.id !== editingProject.id),
-                    }));
-                    setEditingProjectId(null);
-                  }}
-                  className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20"
-                >
-                  Remove Project
-                </button>
-                <button
-                  type="button"
-                  onClick={() => duplicateProject(editingProject)}
-                  className="rounded-[8px] border border-white/15 bg-white/5 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70 hover:bg-white/10"
-                >
-                  Duplicate
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
 
       {activeTab === 'versions' && (
         <>
-          {/* Versions list */}
           <div className="grid gap-3">
             <Card title="Portfolio Versions" subtitle="Create curated collections of projects for different audiences or time periods">
               <p className="text-xs text-white/55">
@@ -8194,7 +8216,6 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                 The active version (matching current date) determines which projects appear on your public site.
               </p>
 
-              {/* Current live version info */}
               {(() => {
                 const now = new Date().toISOString();
                 const activeVersion = sortedVersions.find(
@@ -8214,7 +8235,6 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                 );
               })()}
 
-              {/* Version list */}
               <div className="space-y-2">
                 {sortedVersions.length === 0 && (
                   <p className="text-xs text-white/40 py-2">No portfolio versions yet. Create one to curate which projects appear on your site.</p>
@@ -8224,9 +8244,7 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                     key={version.id}
                     onClick={() => setEditingVersionId(version.id)}
                     className={`group cursor-pointer rounded-[10px] border p-3 transition-all ${
-                      editingVersionId === version.id
-                        ? 'border-white/25 bg-white/8'
-                        : 'border-white/10 bg-black/20 hover:border-white/20'
+                      editingVersionId === version.id ? 'border-white/25 bg-white/8' : 'border-white/10 bg-black/20 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -8235,24 +8253,9 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                         {version.description && <p className="text-[11px] text-white/50">{version.description}</p>}
                         <p className="text-[10px] font-mono text-white/40">
                           {version.projectIds.length} project{(version.projectIds.length !== 1) ? 's' : ''}
-                          {version.isActive && (
-                            <>
-                              <span className="mx-1.5 text-white/20">·</span>
-                              <span className="text-green-400/70">Active</span>
-                            </>
-                          )}
-                          {version.startsAt && (
-                            <>
-                              <span className="mx-1.5 text-white/20">·</span>
-                              <span>From {new Date(version.startsAt).toLocaleDateString()}</span>
-                            </>
-                          )}
-                          {version.endsAt && (
-                            <>
-                              <span className="mx-1.5 text-white/20">·</span>
-                              <span>Until {new Date(version.endsAt).toLocaleDateString()}</span>
-                            </>
-                          )}
+                          {version.isActive && (<><span className="mx-1.5 text-white/20">·</span><span className="text-green-400/70">Active</span></>)}
+                          {version.startsAt && (<><span className="mx-1.5 text-white/20">·</span><span>From {new Date(version.startsAt).toLocaleDateString()}</span></>)}
+                          {version.endsAt && (<><span className="mx-1.5 text-white/20">·</span><span>Until {new Date(version.endsAt).toLocaleDateString()}</span></>)}
                         </p>
                       </div>
                       <div className="flex gap-1 shrink-0">
@@ -8279,116 +8282,54 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
             </Card>
           </div>
 
-          {/* Version editor panel */}
           {editingVersion && (
             <div className="rounded-[12px] border border-white/12 bg-black/25 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Editing: {editingVersion.name}</p>
-                <button
-                  type="button"
-                  onClick={() => setEditingVersionId(null)}
-                  className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 text-white/50 hover:text-white/80"
-                >
+                <button type="button" onClick={() => setEditingVersionId(null)} className="flex h-6 w-6 items-center justify-center rounded-[6px] border border-white/10 text-white/50 hover:text-white/80">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
                 </button>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  label="Version Name"
-                  value={editingVersion.name}
-                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, name: next }))}
-                />
-                <Toggle
-                  label="Active (publish this version)"
-                  checked={editingVersion.isActive}
-                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, isActive: next }))}
-                />
+                <Input label="Version Name" value={editingVersion.name} onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, name: next }))} />
+                <Toggle label="Active (publish this version)" checked={editingVersion.isActive} onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, isActive: next }))} />
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <Textarea
-                  label="Description"
-                  value={editingVersion.description || ''}
-                  rows={2}
-                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, description: next }))}
-                />
-                <Textarea
-                  label="Target Audience"
-                  value={editingVersion.audience || ''}
-                  rows={2}
-                  placeholder="e.g. Enterprise clients, Portfolio review"
-                  onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, audience: next }))}
-                />
+                <Textarea label="Description" value={editingVersion.description || ''} rows={2} onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, description: next }))} />
+                <Textarea label="Target Audience" value={editingVersion.audience || ''} rows={2} placeholder="e.g. Enterprise clients, Portfolio review" onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, audience: next }))} />
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Starts At</label>
-                  <input
-                    type="datetime-local"
-                    value={editingVersion.startsAt ? editingVersion.startsAt.slice(0, 16) : ''}
-                    onChange={(e) => updateVersion(editingVersion.id, (v) => ({
-                      ...v,
-                      startsAt: e.target.value ? new Date(e.target.value).toISOString() : null,
-                    }))}
-                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]"
-                  />
+                  <input type="datetime-local" value={editingVersion.startsAt ? editingVersion.startsAt.slice(0, 16) : ''} onChange={(e) => updateVersion(editingVersion.id, (v) => ({ ...v, startsAt: e.target.value ? new Date(e.target.value).toISOString() : null }))} className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]" />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Ends At</label>
-                  <input
-                    type="datetime-local"
-                    value={editingVersion.endsAt ? editingVersion.endsAt.slice(0, 16) : ''}
-                    onChange={(e) => updateVersion(editingVersion.id, (v) => ({
-                      ...v,
-                      endsAt: e.target.value ? new Date(e.target.value).toISOString() : null,
-                    }))}
-                    className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]"
-                  />
+                  <input type="datetime-local" value={editingVersion.endsAt ? editingVersion.endsAt.slice(0, 16) : ''} onChange={(e) => updateVersion(editingVersion.id, (v) => ({ ...v, endsAt: e.target.value ? new Date(e.target.value).toISOString() : null }))} className="rounded-[10px] border border-white/15 bg-black/30 px-3 py-2 text-xs text-white/85 [color-scheme:dark]" />
                 </div>
               </div>
 
-              <Input
-                label="Priority (higher = preferred when overlapping)"
-                type="number"
-                value={String(editingVersion.priority ?? 0)}
-                onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, priority: Number(next) || 0 }))}
-              />
+              <Input label="Priority (higher = preferred when overlapping)" type="number" value={String(editingVersion.priority ?? 0)} onChange={(next) => updateVersion(editingVersion.id, (v) => ({ ...v, priority: Number(next) || 0 }))} />
 
-              {/* Project selection */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
-                    Included Projects ({editingVersion.projectIds.length} selected)
-                  </span>
-                  <input
-                    type="text"
-                    value={versionProjectSearch}
-                    onChange={(e) => setVersionProjectSearch(e.target.value)}
-                    placeholder="Search projects..."
-                    className="rounded-[8px] border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-white/70 placeholder:text-white/30 w-48"
-                  />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">Included Projects ({editingVersion.projectIds.length} selected)</span>
+                  <input type="text" value={versionProjectSearch} onChange={(e) => setVersionProjectSearch(e.target.value)} placeholder="Search projects..." className="rounded-[8px] border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-white/70 placeholder:text-white/30 w-48" />
                 </div>
                 <div className="max-h-48 space-y-1 overflow-y-auto rounded-[10px] border border-white/10 bg-black/15 p-2">
                   {sortedProjects
                     .filter((p) => !versionProjectSearch || p.title.toLowerCase().includes(versionProjectSearch.toLowerCase()))
                     .map((project) => (
                       <label key={project.id} className="flex cursor-pointer items-center gap-2.5 rounded-[6px] px-2 py-1.5 hover:bg-white/5">
-                        <input
-                          type="checkbox"
-                          checked={editingVersion.projectIds.includes(project.id)}
+                        <input type="checkbox" checked={editingVersion.projectIds.includes(project.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              updateVersion(editingVersion.id, (v) => ({
-                                ...v,
-                                projectIds: [...v.projectIds, project.id],
-                              }));
+                              updateVersion(editingVersion.id, (v) => ({ ...v, projectIds: [...v.projectIds, project.id] }));
                             } else {
-                              updateVersion(editingVersion.id, (v) => ({
-                                ...v,
-                                projectIds: v.projectIds.filter((id) => id !== project.id),
-                              }));
+                              updateVersion(editingVersion.id, (v) => ({ ...v, projectIds: v.projectIds.filter((id) => id !== project.id) }));
                             }
                           }}
                           className="accent-white/60"
@@ -8400,11 +8341,7 @@ const ProjectsStudioContent: React.FC<ProjectsStudioContentProps> = ({
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => removeVersion(editingVersion.id)}
-                className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20"
-              >
+              <button type="button" onClick={() => removeVersion(editingVersion.id)} className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-red-300 hover:bg-red-500/20">
                 Delete Version
               </button>
             </div>
