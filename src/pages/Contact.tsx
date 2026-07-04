@@ -202,6 +202,7 @@ const Contact: React.FC = () => {
       ref={containerRef}
       className="min-h-screen"
       data-surface="static-home"
+      data-glow="off"
       style={{
         ['--background' as any]: '#ffffff',
         ['--foreground' as any]: '#0a0a0a',
