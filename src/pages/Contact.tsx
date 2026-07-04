@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useSeoMeta } from '../hooks/useSeoMeta';
-import { getButtonClass } from '../components/designSystem';
 import { AdvancedNavbar } from '../components/AdvancedNavbar';
 import { sendMessage, type MessageData } from '../utils/apiClient';
 import { validateMessage, sanitizeMessageData } from '../utils/messageValidator';
@@ -195,8 +194,8 @@ const Contact: React.FC = () => {
   const cardBodyClass = 'text-sm leading-relaxed text-[#111827]';
   const labelClass = 'block text-xs font-medium uppercase tracking-widest text-muted-foreground';
   const inputClass = 'w-full rounded-xl border border-[#d0d0cb] bg-white px-3.5 py-2.5 text-sm text-[#111827] placeholder:text-[#8b8b8b] transition-colors focus:border-[#111111] focus:outline-none';
-  const primaryButtonClass = getButtonClass('button-1', 'light', 'md', 'inline-flex items-center gap-2 rounded-full');
-  const secondaryButtonClass = getButtonClass('button-2', 'light', 'icon', 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full');
+  const primaryButtonClass = 'inline-flex items-center gap-2 rounded-full bg-[#030213] px-5 py-2.5 text-[0.9375rem] leading-none font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50';
+  const secondaryButtonClass = 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d0d0cb] text-muted-foreground transition-colors hover:bg-[#f3f2ee]';
 
   return (
     <div
@@ -240,8 +239,8 @@ const Contact: React.FC = () => {
             </p>
           </div>
 
-          {/* Decorative divider */}
-          <div data-motion className="my-16 h-px w-full bg-gradient-to-r from-transparent via-[#d0d0cb] to-transparent" />
+          {/* Divider */}
+          <div data-motion className="my-16 h-px w-full bg-[#d0d0cb]" />
 
           {/* Contact Info + Form Grid */}
           <div className="grid lg:grid-cols-12 gap-8 mb-20">
@@ -413,27 +412,25 @@ const Contact: React.FC = () => {
                   href={card.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ ['--contact-card-hover' as any]: card.hoverColor }}
-                  className={`${cardShellClass} group cursor-pointer p-5 transition-colors duration-300 hover:border-[var(--contact-card-hover)] hover:bg-[var(--contact-card-hover)]`}
+                  className={`${cardShellClass} group cursor-pointer p-5 transition-colors duration-300 hover:bg-[#f3f2ee]`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors group-hover:text-white">
+                    <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                       {card.action}
                     </span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-transparent transition-colors group-hover:border-white/20 group-hover:bg-white/15">
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-white" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d0d0cb] bg-transparent">
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div
-                      style={{ ['--contact-icon-color' as any]: card.color }}
-                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] transition-colors group-hover:border-white/20 group-hover:bg-white/15 text-[var(--contact-icon-color)] group-hover:text-white"
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d0d0cb] bg-[#f3f2ee] text-[#111827]"
                     >
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-[#111827] transition-colors group-hover:text-white">{card.title}</h3>
-                      <p className="truncate text-xs text-muted-foreground transition-colors group-hover:text-white/85">{card.subtitle}</p>
+                      <h3 className="truncate text-sm font-semibold text-[#111827]">{card.title}</h3>
+                      <p className="truncate text-xs text-muted-foreground">{card.subtitle}</p>
                     </div>
                   </div>
                 </a>
