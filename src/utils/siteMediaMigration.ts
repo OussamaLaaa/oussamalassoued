@@ -13,6 +13,8 @@ export interface MigrationResult {
   config: Record<string, unknown>;
   migratedCount: number;
   migratedPaths: string[];
+  skippedCount: number;
+  skippedPaths: string[];
   payloadSizeBefore: number;
   payloadSizeAfter: number;
 }
@@ -181,15 +183,25 @@ export async function replaceEmbeddedMediaWithStorageUrls(
       config: clonedConfig,
       migratedCount: 0,
       migratedPaths: [],
+      skippedCount: 0,
+      skippedPaths: [],
       payloadSizeBefore,
       payloadSizeAfter: payloadSizeBefore,
     };
   }
 
-  console.log(`[Media Cleanup] Found ${embeddedItems.length} embedded media item(s).`);
-  const migratedPaths: string[] = [];
+  const svgItems = embeddedItems.filter(i => i.contentType === 'image/svg+xml');
+  const uploadItems = embeddedItems.filter(i => i.contentType !== 'image/svg+xml');
 
-  for (const item of embeddedItems) {
+  for (const svg of svgItems) {
+    console.log(`[Media Cleanup] Skipped SVG data URL at path: ${svg.path}`);
+  }
+
+  console.log(`[Media Cleanup] Found ${uploadItems.length} item(s) to upload, ${svgItems.length} SVG(s) skipped.`);
+  const migratedPaths: string[] = [];
+  const skippedPaths: string[] = svgItems.map(i => i.path);
+
+  for (const item of uploadItems) {
     console.log(`[Media Cleanup] Uploading ${item.path} (${item.contentType})`);
     const result = await uploadDataUrl(
       item.dataUrl,
@@ -219,6 +231,8 @@ export async function replaceEmbeddedMediaWithStorageUrls(
     config: clonedConfig,
     migratedCount: migratedPaths.length,
     migratedPaths,
+    skippedCount: skippedPaths.length,
+    skippedPaths,
     payloadSizeBefore,
     payloadSizeAfter,
   };

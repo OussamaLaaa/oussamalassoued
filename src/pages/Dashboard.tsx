@@ -1261,14 +1261,18 @@ export const Dashboard: React.FC = () => {
       }
 
       const rawJsonSize = new TextEncoder().encode(JSON.stringify(cleanedConfig)).length;
-      if (rawJsonSize > 1_500_000) {
+      const remainingNonSvgDataUrl = JSON.stringify(cleanedConfig).match(/data:image\/(?!svg\+xml)|data:audio\//g);
+      if (rawJsonSize > 1_500_000 && remainingNonSvgDataUrl) {
         setSaveStatus('error');
-        setSaveResultMessage('Config is still large. Some embedded media may remain. Try again or reduce file sizes.');
+        setSaveResultMessage('Config is still large. Some embedded media could not be uploaded. Try again or reduce file sizes.');
         setTimeout(() => {
           setSaveStatus('idle');
           setSaveResultMessage(null);
         }, 4500);
         return;
+      }
+      if (migrationResult.skippedCount > 0 && remainingNonSvgDataUrl === null) {
+        console.log(`[Media Cleanup] ${migrationResult.skippedCount} SVG data URL(s) kept inline (small, safe).`);
       }
 
       setSaveStatus('saving');
