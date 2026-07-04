@@ -14,6 +14,7 @@ import {
   import { replaceEmbeddedMediaWithStorageUrls, type MigrationResult } from '../utils/siteMediaMigration';
   import {
     DEFAULT_SITE_CONFIG,
+    hydrateSiteConfig,
     SITE_BUTTON_VARIANTS,
     SITE_CARD_VARIANTS,
     SITE_GLASS_VARIANTS,
@@ -674,18 +675,17 @@ export const Dashboard: React.FC = () => {
   const [apiDiagnostics, setApiDiagnostics] = useState<Awaited<ReturnType<typeof getApiDiagnostics>> | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'optimizing' | 'saving' | 'success' | 'error'>('idle');
   const [saveResultMessage, setSaveResultMessage] = useState<string | null>(null);
-  const [backupLoading, setBackupLoading] = useState(false);
-  const [restorePreview, setRestorePreview] = useState<{
+  const [importPreview, setImportPreview] = useState<{
     exportedAt: string;
-    siteContentCount: number;
-    sections: string[];
-    siteMediaCount: number;
-    hasMediaFiles: boolean;
-    warnings: string[];
-    raw: Record<string, unknown>;
+    backupVersion: number;
+    projectCount: number;
+    testimonialCount: number;
+    articleCount: number;
+    hasPortfolioVersions: boolean;
+    configSizeKB: number;
+    config: Record<string, unknown>;
   } | null>(null);
-  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
-  const [restoring, setRestoring] = useState(false);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
   const [activeCardStudio, setActiveCardStudio] = useState<SiteCardVariant>('card-1');
@@ -1323,103 +1323,79 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const exportBackup = async (includeMedia: boolean) => {
-    setBackupLoading(true);
-    setRestoreMessage(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/site/backup?includeMedia=${includeMedia}`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Backup failed' }));
-        setRestoreMessage(err.error || 'Backup failed');
-        return;
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const dateStr = new Date().toISOString().split('T')[0];
-      a.download = `site-backup-${dateStr}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setRestoreMessage('Backup downloaded successfully.');
-      setTimeout(() => setRestoreMessage(null), 3000);
-    } catch {
-      setRestoreMessage('Failed to export backup. Check your connection and auth.');
-    } finally {
-      setBackupLoading(false);
-    }
+  const exportSiteBackup = () => {
+    const backup = {
+      backupVersion: 2,
+      type: 'oussama-site-config-backup',
+      exportedAt: new Date().toISOString(),
+      source: 'dashboard-client',
+      mode: 'config-only',
+      config: siteConfig,
+      notes: [
+        'This backup contains site settings and media URLs.',
+        'It does not embed media files.'
+      ]
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.download = `oussama-site-config-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const previewBackupFile = (file: File) => {
-    setRestorePreview(null);
-    setRestoreMessage(null);
+  const importSiteBackupFile = (file: File) => {
+    setImportPreview(null);
+    setImportMessage(null);
+    if (file.size > 10 * 1024 * 1024) {
+      setImportMessage('Invalid backup file: file is too large (>10MB).');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
-        if (data.type !== 'oussama-site-backup') {
-          setRestoreMessage('Invalid backup file: wrong type.');
+        if (data.type !== 'oussama-site-config-backup') {
+          setImportMessage('Invalid backup file: wrong type.');
           return;
         }
-        if (data.backupVersion !== 1) {
-          setRestoreMessage('Invalid backup file: unsupported version.');
+        if (data.backupVersion !== 2) {
+          setImportMessage('Invalid backup file: unsupported version.');
           return;
         }
-        if (!Array.isArray(data.siteContent)) {
-          setRestoreMessage('Invalid backup file: missing site content.');
+        if (!data.config || typeof data.config !== 'object') {
+          setImportMessage('Invalid backup file: missing config.');
           return;
         }
-        const sections = data.siteContent.map((s: { section: string }) => s.section);
-        const warnings: string[] = [];
-        if (data.siteMedia && data.siteMedia.length > 0 && (!data.mediaFiles || data.mediaFiles.length === 0)) {
-          warnings.push('This backup references media URLs but does not include media files.');
-        }
-        setRestorePreview({
+        const cfg = data.config as Record<string, unknown>;
+        setImportPreview({
           exportedAt: data.exportedAt || 'Unknown',
-          siteContentCount: data.siteContent.length,
-          sections,
-          siteMediaCount: data.siteMedia ? data.siteMedia.length : 0,
-          hasMediaFiles: Array.isArray(data.mediaFiles) && data.mediaFiles.length > 0,
-          warnings,
-          raw: data,
+          backupVersion: data.backupVersion,
+          projectCount: Array.isArray(cfg.projects) ? cfg.projects.length : 0,
+          testimonialCount: Array.isArray(cfg.testimonials) ? cfg.testimonials.length : 0,
+          articleCount: Array.isArray(cfg.articles) ? cfg.articles.length : 0,
+          hasPortfolioVersions: Array.isArray(cfg.portfolioVersions) && cfg.portfolioVersions.length > 0,
+          configSizeKB: Math.round(JSON.stringify(data).length / 1024),
+          config: cfg,
         });
       } catch {
-        setRestoreMessage('Invalid backup file: could not parse JSON.');
+        setImportMessage('Invalid backup file: could not parse JSON.');
       }
     };
     reader.readAsText(file);
   };
 
-  const confirmRestore = async () => {
-    if (!restorePreview) return;
-    setRestoring(true);
-    setRestoreMessage(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/site/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(restorePreview.raw),
-      });
-      const result = await response.json();
-      if (response.ok && result.success) {
-        setRestoreMessage('Backup restored successfully. Refresh the public site to see changes.');
-        setRestorePreview(null);
-      } else {
-        setRestoreMessage(result.error || 'Restore failed.');
-      }
-    } catch {
-      setRestoreMessage('Restore failed. Check your connection.');
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const clearRestorePreview = () => {
-    setRestorePreview(null);
-    setRestoreMessage(null);
+  const applySiteBackup = () => {
+    if (!importPreview) return;
+    const nextConfig = hydrateSiteConfig(importPreview.config as SiteConfig);
+    setSiteConfig(nextConfig);
+    setImportPreview(null);
+    setImportMessage('Backup loaded into Dashboard. Click Save to API to publish it.');
+    setTimeout(() => setImportMessage(null), 8000);
   };
 
   const handleOpenSite = () => {
@@ -7366,9 +7342,111 @@ export const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[12px] border border-yellow-500/22 bg-yellow-500/8 px-3 py-3">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-yellow-300">Site Backup — Temporarily Disabled</p>
-                  <p className="mt-1 text-[11px] text-white/52">Backup / Restore is temporarily disabled while the new storage system is being stabilized.</p>
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Site Backup</p>
+                  <p className="mt-1 text-[11px] text-white/52">Export or import your website customization settings. This backup is lightweight and stores media URLs, not media files.</p>
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={exportSiteBackup}
+                      className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12]"
+                    >
+                      <DownloadIcon size={16} />
+                      Export Site Backup
+                    </button>
+                    <label className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12] cursor-pointer">
+                      <UploadIcon size={16} />
+                      Import Site Backup
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            importSiteBackupFile(file);
+                          }
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-2 text-[10px] text-white/42 leading-relaxed">
+                    This backup stores media URLs, not the media files themselves. If media files are deleted from Storage, this backup may not restore those files.
+                  </div>
+
+                  {importPreview ? (
+                    <div className="mt-3 space-y-2 rounded-[10px] border border-blue-500/30 bg-blue-500/10 px-3 py-3">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-blue-300">Backup Preview</p>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Exported</span>
+                          <span className="font-medium text-white">{new Date(importPreview.exportedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Version</span>
+                          <span className="font-medium text-white">v{importPreview.backupVersion}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Projects</span>
+                          <span className="font-medium text-white">{importPreview.projectCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Testimonials</span>
+                          <span className="font-medium text-white">{importPreview.testimonialCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Articles</span>
+                          <span className="font-medium text-white">{importPreview.articleCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Portfolio Versions</span>
+                          <span className={`font-medium ${importPreview.hasPortfolioVersions ? 'text-green-400' : 'text-white/52'}`}>
+                            {importPreview.hasPortfolioVersions ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Size</span>
+                          <span className="font-medium text-white">{importPreview.configSizeKB} KB</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={applySiteBackup}
+                          className="flex-1 rounded-[8px] border border-blue-500/50 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-all hover:bg-blue-500/30"
+                        >
+                          Apply Backup to Dashboard
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setImportPreview(null); setImportMessage(null); }}
+                          className="rounded-[8px] border border-white/14 bg-white/[0.06] px-3 py-1.5 text-xs text-white transition-all hover:bg-white/[0.12]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {importMessage ? (
+                    <div className={`mt-2 rounded-[8px] border px-3 py-2 text-xs ${
+                      importMessage.startsWith('Backup loaded')
+                        ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                        : 'border-red-500/30 bg-red-500/10 text-red-300'
+                    }`}>
+                      {importMessage}
+                      <button
+                        type="button"
+                        onClick={() => setImportMessage(null)}
+                        className="ml-2 text-white/50 hover:text-white/80"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-2">
