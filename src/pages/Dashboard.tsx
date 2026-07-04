@@ -671,6 +671,8 @@ export const Dashboard: React.FC = () => {
   const [uploadMessage, setUploadMessage] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [apiDiagnostics, setApiDiagnostics] = useState<Awaited<ReturnType<typeof getApiDiagnostics>> | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveResultMessage, setSaveResultMessage] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
   const [activeCardStudio, setActiveCardStudio] = useState<SiteCardVariant>('card-1');
@@ -1236,6 +1238,47 @@ export const Dashboard: React.FC = () => {
     } catch {
       setUploadError('Unable to save changes. Try reducing uploaded file sizes and save again.');
       return false;
+    }
+  };
+
+  const handleSaveToApi = async () => {
+    if (saveStatus === 'saving') return;
+    clearUploadFeedback();
+    setSaveResultMessage(null);
+    setSaveStatus('saving');
+    try {
+      const result = await saveToAPI();
+      if (result.success) {
+        setSaveStatus('success');
+        setSaveResultMessage('Saved successfully to Supabase.');
+        setHasUnsavedChanges(false);
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveResultMessage(null);
+        }, 2500);
+      } else {
+        const errMsg = result.error || 'Failed to save to API. Please try again.';
+        let displayMsg = errMsg;
+        if (errMsg.includes('timed out') || errMsg.includes('AbortError') || errMsg.includes('timeout')) {
+          displayMsg = 'Save timed out. The config payload may be too large or the server did not respond in time.';
+        } else if (errMsg.includes('unauthorized') || errMsg.includes('not authenticated') || errMsg.includes('401')) {
+          displayMsg = 'You are not authenticated. Please log in again.';
+        }
+        setSaveStatus('error');
+        setSaveResultMessage(displayMsg);
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveResultMessage(null);
+        }, 4500);
+      }
+    } catch (err: any) {
+      const errMsg = err?.message || 'Failed to save to API. Please try again.';
+      setSaveStatus('error');
+      setSaveResultMessage(errMsg);
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setSaveResultMessage(null);
+      }, 4500);
     }
   };
 
@@ -7710,32 +7753,20 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="mt-auto flex flex-col gap-2 pt-3">
-              <button type="button" onClick={handleSaveChanges} title="Save changes" className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#000000]/46 bg-[#000000] text-[#0a0d11]">
-                <SaveIcon size={16} strokeWidth={1.9} />
-              </button>
-              <button 
-                type="button" 
-                onClick={async () => {
-                  clearUploadFeedback();
-                  const result = await saveToAPI();
-                  if (result.success) {
-                    const storageInfo = result.message ? ` (${result.message})` : '';
-                    const msg = `Changes saved to API successfully!${storageInfo}`;
-                    setUploadMessage(msg);
-                    alert(msg); // <--- Added Alert so user definitely sees it
-                    setHasUnsavedChanges(false);
-                  } else {
-                    const errMsg = result.error || 'Failed to save to API.';
-                    setUploadError(errMsg);
-                    if (errMsg.includes('timed out') || errMsg.includes('AbortError') || errMsg.includes('timeout')) {
-                      alert("Save timed out. The config payload may be too large or the server did not respond in time.");
-                    } else {
-                      alert("Error: " + errMsg);
-                    }
-                  }
-                }}
+              <button
+                type="button"
+                onClick={handleSaveToApi}
+                disabled={saveStatus === 'saving'}
                 title="Save to API"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border border-[#3b82f6]/46 bg-[#3b82f6] text-white hover:bg-[#60a5fa] transition-colors"
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-[12px] border text-white transition-all ${
+                  saveStatus === 'saving'
+                    ? 'border-[#3b82f6]/30 bg-[#3b82f6]/60 cursor-not-allowed'
+                    : saveStatus === 'success'
+                      ? 'border-[#22c55e]/46 bg-[#22c55e] hover:bg-[#4ade80]'
+                      : saveStatus === 'error'
+                        ? 'border-[#ef4444]/46 bg-[#ef4444] hover:bg-[#f87171]'
+                        : 'border-[#3b82f6]/46 bg-[#3b82f6] hover:bg-[#60a5fa]'
+                }`}
               >
                 <SaveIcon size={16} strokeWidth={1.9} />
               </button>
@@ -7867,34 +7898,41 @@ export const Dashboard: React.FC = () => {
               </div>
             </section>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" onClick={handleSaveChanges} className={dashboardActionButtonPrimaryClass}>
-                Save Changes
-              </button>
-              <button 
-                type="button" 
-                onClick={async () => {
-                  clearUploadFeedback();
-                  const result = await saveToAPI();
-                  if (result.success) {
-                    const storageInfo = result.message ? ` (${result.message})` : '';
-                    const msg = `Changes saved to API successfully!${storageInfo} The live site will update automatically.`;
-                    setUploadMessage(msg);
-                    alert(msg);
-                    setHasUnsavedChanges(false);
-                  } else {
-                    const errMsg = result.error || 'Failed to save to API. Please try again.';
-                    setUploadError(errMsg);
-                    if (errMsg.includes('timed out') || errMsg.includes('AbortError') || errMsg.includes('timeout')) {
-                      alert("Save timed out. The config payload may be too large or the server did not respond in time.");
-                    } else {
-                      alert("Error: " + errMsg);
-                    }
-                  }
-                }}
-                className={dashboardActionButtonApiClass}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSaveToApi}
+                disabled={saveStatus === 'saving'}
+                className={`${dashboardActionButtonBaseClass} ${
+                  saveStatus === 'saving'
+                    ? 'border-[#3b82f6]/30 bg-[#3b82f6]/60 text-white/70 cursor-not-allowed'
+                    : saveStatus === 'success'
+                      ? 'border-[#22c55e]/46 bg-[#22c55e] text-white hover:bg-[#4ade80] focus-visible:ring-[#22c55e]/50'
+                      : saveStatus === 'error'
+                        ? 'border-[#ef4444]/46 bg-[#ef4444] text-white hover:bg-[#f87171] focus-visible:ring-[#ef4444]/50'
+                        : dashboardActionButtonApiClass
+                }`}
               >
-                Save to API
+                {saveStatus === 'saving' ? (
+                  <>
+                    <svg className="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeLinecap="round" className="opacity-30" />
+                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="20" strokeLinecap="round" />
+                    </svg>
+                    Saving...
+                  </>
+                ) : saveStatus === 'success' ? (
+                  <>
+                    <svg className="mr-1.5 h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 8 6 11 13 4" />
+                    </svg>
+                    Saved
+                  </>
+                ) : saveStatus === 'error' ? (
+                  'Try Again'
+                ) : (
+                  'Save to API'
+                )}
               </button>
               <button type="button" onClick={handleOpenSite} className={dashboardActionButtonSecondaryClass}>
                 Open Site
@@ -7913,6 +7951,13 @@ export const Dashboard: React.FC = () => {
               <button type="button" onClick={handleLogout} className={dashboardActionButtonDangerClass}>
                 Logout
               </button>
+              {saveResultMessage ? (
+                <span className={`ml-1 text-[11px] font-mono ${
+                  saveStatus === 'success' ? 'text-[#86efac]' : 'text-[#fecaca]'
+                }`}>
+                  {saveResultMessage}
+                </span>
+              ) : null}
             </div>
 
             <section className="mt-4 space-y-4">
