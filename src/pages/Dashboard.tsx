@@ -674,6 +674,18 @@ export const Dashboard: React.FC = () => {
   const [apiDiagnostics, setApiDiagnostics] = useState<Awaited<ReturnType<typeof getApiDiagnostics>> | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'optimizing' | 'saving' | 'success' | 'error'>('idle');
   const [saveResultMessage, setSaveResultMessage] = useState<string | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restorePreview, setRestorePreview] = useState<{
+    exportedAt: string;
+    siteContentCount: number;
+    sections: string[];
+    siteMediaCount: number;
+    hasMediaFiles: boolean;
+    warnings: string[];
+    raw: Record<string, unknown>;
+  } | null>(null);
+  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeButtonStudio, setActiveButtonStudio] = useState<SiteButtonVariant>('button-1');
   const [activeCardStudio, setActiveCardStudio] = useState<SiteCardVariant>('card-1');
@@ -1309,6 +1321,105 @@ export const Dashboard: React.FC = () => {
         setSaveResultMessage(null);
       }, 4500);
     }
+  };
+
+  const exportBackup = async (includeMedia: boolean) => {
+    setBackupLoading(true);
+    setRestoreMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/site/backup?includeMedia=${includeMedia}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Backup failed' }));
+        setRestoreMessage(err.error || 'Backup failed');
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `site-backup-${dateStr}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setRestoreMessage('Backup downloaded successfully.');
+      setTimeout(() => setRestoreMessage(null), 3000);
+    } catch {
+      setRestoreMessage('Failed to export backup. Check your connection and auth.');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const previewBackupFile = (file: File) => {
+    setRestorePreview(null);
+    setRestoreMessage(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (data.type !== 'oussama-site-backup') {
+          setRestoreMessage('Invalid backup file: wrong type.');
+          return;
+        }
+        if (data.backupVersion !== 1) {
+          setRestoreMessage('Invalid backup file: unsupported version.');
+          return;
+        }
+        if (!Array.isArray(data.siteContent)) {
+          setRestoreMessage('Invalid backup file: missing site content.');
+          return;
+        }
+        const sections = data.siteContent.map((s: { section: string }) => s.section);
+        const warnings: string[] = [];
+        if (data.siteMedia && data.siteMedia.length > 0 && (!data.mediaFiles || data.mediaFiles.length === 0)) {
+          warnings.push('This backup references media URLs but does not include media files.');
+        }
+        setRestorePreview({
+          exportedAt: data.exportedAt || 'Unknown',
+          siteContentCount: data.siteContent.length,
+          sections,
+          siteMediaCount: data.siteMedia ? data.siteMedia.length : 0,
+          hasMediaFiles: Array.isArray(data.mediaFiles) && data.mediaFiles.length > 0,
+          warnings,
+          raw: data,
+        });
+      } catch {
+        setRestoreMessage('Invalid backup file: could not parse JSON.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const confirmRestore = async () => {
+    if (!restorePreview) return;
+    setRestoring(true);
+    setRestoreMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/site/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(restorePreview.raw),
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setRestoreMessage('Backup restored successfully. Refresh the public site to see changes.');
+        setRestorePreview(null);
+      } else {
+        setRestoreMessage(result.error || 'Restore failed.');
+      }
+    } catch {
+      setRestoreMessage('Restore failed. Check your connection.');
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const clearRestorePreview = () => {
+    setRestorePreview(null);
+    setRestoreMessage(null);
   };
 
   const handleOpenSite = () => {
@@ -7253,6 +7364,122 @@ export const Dashboard: React.FC = () => {
                       <span className="text-xs font-semibold text-white">{storageInfo.metadata.version}</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-[12px] border border-white/12 bg-black/22 px-3 py-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/56">Site Backup</p>
+                  <p className="mt-1 text-[11px] text-white/52">Export and restore public website customizations.</p>
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={() => exportBackup(false)}
+                      disabled={backupLoading}
+                      className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <DownloadIcon size={16} />
+                      {backupLoading ? 'Exporting...' : 'Export Site Backup'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => exportBackup(true)}
+                      disabled={backupLoading}
+                      className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <DownloadIcon size={16} />
+                      {backupLoading ? 'Exporting...' : 'Export Full Backup With Media'}
+                    </button>
+                  </div>
+
+                  <div className="mt-2 border-t border-white/10 pt-2">
+                    <label className="flex items-center justify-center gap-2 rounded-[10px] border border-white/14 bg-white/[0.06] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.12] cursor-pointer">
+                      <UploadIcon size={16} />
+                      Import Backup
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            previewBackupFile(file);
+                          }
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {restorePreview ? (
+                    <div className="mt-2 space-y-2 rounded-[10px] border border-blue-500/30 bg-blue-500/10 px-3 py-3">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-blue-300">Backup Preview</p>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Exported</span>
+                          <span className="font-medium text-white">{new Date(restorePreview.exportedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Sections</span>
+                          <span className="font-medium text-white">{restorePreview.siteContentCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Media Items</span>
+                          <span className="font-medium text-white">{restorePreview.siteMediaCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/72">Media Files Included</span>
+                          <span className={`font-medium ${restorePreview.hasMediaFiles ? 'text-green-400' : 'text-yellow-400'}`}>
+                            {restorePreview.hasMediaFiles ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div className="mt-1">
+                          <span className="text-white/52">Sections: {restorePreview.sections.join(', ')}</span>
+                        </div>
+                      </div>
+                      {restorePreview.warnings.length > 0 && (
+                        <div className="space-y-1">
+                          {restorePreview.warnings.map((w, i) => (
+                            <p key={i} className="text-yellow-400 text-[10px]">{w}</p>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={confirmRestore}
+                          disabled={restoring}
+                          className="flex-1 rounded-[8px] border border-blue-500/50 bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-all hover:bg-blue-500/30 disabled:opacity-50"
+                        >
+                          {restoring ? 'Restoring...' : 'Confirm Restore'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={clearRestorePreview}
+                          disabled={restoring}
+                          className="rounded-[8px] border border-white/14 bg-white/[0.06] px-3 py-1.5 text-xs text-white transition-all hover:bg-white/[0.12] disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {restoreMessage ? (
+                    <div className={`mt-2 rounded-[8px] border px-3 py-2 text-xs ${
+                      restoreMessage.startsWith('Backup downloaded') || restoreMessage.startsWith('Backup restored')
+                        ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                        : 'border-red-500/30 bg-red-500/10 text-red-300'
+                    }`}>
+                      {restoreMessage}
+                      <button
+                        type="button"
+                        onClick={() => setRestoreMessage(null)}
+                        className="ml-2 text-white/50 hover:text-white/80"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-2">
