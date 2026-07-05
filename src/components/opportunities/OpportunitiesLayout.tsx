@@ -424,8 +424,9 @@ const OpportunitiesLayout: React.FC<{
  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
+  const [archiveSubTab, setArchiveSubTab] = useState<'companies' | 'people'>('companies');
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
-  const [appSection, setAppSection] = useState<string>('');
+   const [appSection, setAppSection] = useState<string>('');
   const [selectedNoteCategorySlug, setSelectedNoteCategorySlug] = useState('all');
   const [noteCategoryEditor, setNoteCategoryEditor] = useState<{ mode: 'add' | 'edit'; category?: NoteCategory } | null>(null);
   const [noteCategoryActionError, setNoteCategoryActionError] = useState<string | null>(null);
@@ -874,19 +875,34 @@ const OpportunitiesLayout: React.FC<{
  };
 
  const handleArchivePerson = async (person: Person) => {
- try {
- await updatePerson(person.id, {
-   ...toPersonInput(person),
-   status: 'archived',
-   archivedAt: new Date().toISOString(),
- });
- } catch (error) {
- console.error('[CRM] archive person failed', error);
- const message = error instanceof Error && error.message ? error.message : 'Unable to archive person.';
- setDeleteError(message);
- throw error;
- }
- };
+  try {
+  await updatePerson(person.id, {
+    ...toPersonInput(person),
+    status: 'archived',
+    archivedAt: new Date().toISOString(),
+  });
+  } catch (error) {
+  console.error('[CRM] archive person failed', error);
+  const message = error instanceof Error && error.message ? error.message : 'Unable to archive person.';
+  setDeleteError(message);
+  throw error;
+  }
+  };
+
+  const handleRestorePerson = async (person: Person) => {
+  try {
+  await updatePerson(person.id, {
+    ...toPersonInput(person),
+    status: 'active',
+    archivedAt: null,
+  });
+  } catch (error) {
+  console.error('[CRM] restore person failed', error);
+  const message = error instanceof Error && error.message ? error.message : 'Unable to restore person.';
+  setDeleteError(message);
+  throw error;
+  }
+  };
 
  const handleDeletePerson = async (id: string) => {
  const confirmed = window.confirm('Delete this person permanently?\n\nThis will remove their contact methods. Other linked records will be kept and unlinked.');
@@ -1338,19 +1354,134 @@ const OpportunitiesLayout: React.FC<{
    {tab === 'archived' && (
   <div className="space-y-5">
     <div>
-      <h2 className="text-xl font-semibold text-neutral-900">Archived Companies</h2>
-      <p className="mt-0.5 text-sm text-neutral-500">Companies you have archived. Set filter to Active to restore.</p>
+      <h2 className="text-xl font-semibold text-neutral-900">Archived</h2>
+      <p className="mt-0.5 text-sm text-neutral-500">Archived CRM records. Restore companies or people when needed.</p>
     </div>
-    <CompaniesTable
-      companies={companies.filter(c => c.status === 'archived')}
-      onEdit={handleEditCompany}
-      onDelete={handleRequestDelete}
-      onAIScore={handleAIScore}
-      onCompanyClick={handleCompanyClick}
-      onUpdateCompany={updateCompany}
-      onBulkArchive={handleBulkArchive}
-      onBulkDelete={handleBulkDelete}
-    />
+
+    {/* Sub-tabs */}
+    <div className="flex gap-0 border-b border-neutral-200">
+      <button
+        onClick={() => setArchiveSubTab('companies')}
+        className={`relative px-4 py-2 text-sm font-medium transition-colors ${
+          archiveSubTab === 'companies'
+            ? 'text-neutral-900'
+            : 'text-neutral-500 hover:text-neutral-700'
+        }`}
+      >
+        Companies
+        {archiveSubTab === 'companies' && (
+          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900" />
+        )}
+      </button>
+      <button
+        onClick={() => setArchiveSubTab('people')}
+        className={`relative px-4 py-2 text-sm font-medium transition-colors ${
+          archiveSubTab === 'people'
+            ? 'text-neutral-900'
+            : 'text-neutral-500 hover:text-neutral-700'
+        }`}
+      >
+        People
+        {archiveSubTab === 'people' && (
+          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900" />
+        )}
+      </button>
+    </div>
+
+    {archiveSubTab === 'companies' && (
+      <CompaniesTable
+        companies={companies.filter(c => c.status === 'archived')}
+        onEdit={handleEditCompany}
+        onDelete={handleRequestDelete}
+        onAIScore={handleAIScore}
+        onCompanyClick={handleCompanyClick}
+        onUpdateCompany={updateCompany}
+        onBulkArchive={handleBulkArchive}
+        onBulkDelete={handleBulkDelete}
+      />
+    )}
+
+    {archiveSubTab === 'people' && (
+      <div>
+        {people.filter(p => p.status === 'archived').length === 0 ? (
+          <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center">
+            <p className="text-sm text-neutral-500">No archived people.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Company</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Role</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Relation</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Contact</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Phone</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Email</th>
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Archived</th>
+                  <th className="px-4 py-3 text-right font-medium text-neutral-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {people.filter(p => p.status === 'archived').map((person) => {
+                  const company = companies.find((c) => c.id === person.companyId);
+                  return (
+                    <tr key={person.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50">
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handlePersonClick(person.id)}
+                          className="font-medium text-neutral-900 hover:text-blue-600 transition-colors"
+                        >
+                          {person.fullName}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">{company?.name || '\u2014'}</td>
+                      <td className="px-4 py-3 text-neutral-600">{person.role || '\u2014'}</td>
+                      <td className="px-4 py-3 text-neutral-600">{person.relationType || '\u2014'}</td>
+                      <td className="px-4 py-3">
+                        {person.emailPublic || person.linkedin || person.contactChannel ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Known</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">Missing</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">{person.phone || '\u2014'}</td>
+                      <td className="px-4 py-3 text-neutral-600">{person.emailPublic || '\u2014'}</td>
+                      <td className="px-4 py-3 text-xs text-neutral-500">
+                        {person.archivedAt ? new Date(person.archivedAt).toLocaleDateString() : '\u2014'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleRestorePerson(person)}
+                            className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-green-700"
+                          >
+                            Restore
+                          </button>
+                          <button
+                            onClick={() => handlePersonClick(person.id)}
+                            className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+                          >
+                            Open
+                          </button>
+                          <button
+                            onClick={() => handleEditPerson(person)}
+                            className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    )}
   </div>
   )}
 
