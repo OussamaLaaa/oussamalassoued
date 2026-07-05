@@ -632,9 +632,7 @@ function FinancePanel({
   <div className="space-y-6">
 
   {/* Financial Snapshot — 4 hero cards */}
-  <div>
-    <h3 className="text-xs font-semibold text-neutral-600 mb-3">Financial Snapshot</h3>
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <MetricCard label="Total Income" value={toCur(receivedIncome)} className={receivedIncome > 0 ? '' : ''} />
       <MetricCard label="Total Expenses" value={toCur(totalExpenses)} className={totalExpenses > 0 ? '' : ''} />
       <MetricCard
@@ -648,7 +646,6 @@ function FinancePanel({
         className={netCash > 0 ? 'border-blue-200 bg-blue-50/30' : ''}
       />
     </div>
-  </div>
 
   {/* Smart Financial Status */}
   <div className="rounded-xl border border-neutral-200 bg-white p-4">
@@ -1743,15 +1740,18 @@ function FinancePanel({
   {tab === 'dashboard' && <div className="mb-6">{renderPeriodSelector()}</div>}
 
   {tab === 'dashboard' ? (
-  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-  <div className="space-y-6">
-  {renderDashboard()}
-  </div>
-  {showSidebar && (
-  <aside className="space-y-5 self-start hidden xl:block">
-  {renderSidebar()}
-  </aside>
-  )}
+  <div>
+    <h3 className="text-xs font-semibold text-neutral-600 mb-4">Financial Snapshot</h3>
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="space-y-6">
+    {renderDashboard()}
+    </div>
+    {showSidebar && (
+    <aside className="space-y-5 self-start hidden xl:block">
+    {renderSidebar()}
+    </aside>
+    )}
+    </div>
   </div>
   ) : (
   <div className="space-y-6">
