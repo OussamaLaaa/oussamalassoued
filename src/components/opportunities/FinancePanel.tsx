@@ -251,16 +251,45 @@ function FinancePanel({
  const defaultIncome: Partial<FinanceIncome> = { incomeType: 'other', source: 'other', status: 'expected', currency: 'MYR', recurrence: 'once', amount: 0, isRecurring: false, financePeriodId: selectedPeriodId || undefined, incomeDate: selectedPeriod?.startDate || undefined, expectedDate: selectedPeriod?.startDate || undefined };
  const defaultExpense: Partial<FinanceExpense> = { category: 'other', status: 'planned', currency: 'MYR', amount: 0, financePeriodId: selectedPeriodId || undefined, expenseDate: selectedPeriod?.startDate || undefined };
  const defaultRule: Partial<FinanceAllocationRule> = { name: 'New Rule', category: 'needs', percentage: 0, priority: 0, isActive: true };
- const defaultGoal: Partial<FinancePurchaseGoal> = { title: 'New Goal', category: 'other', status: 'planned', priority: 'medium', currency: 'MYR', targetAmount: 0, savedAmount: 0, decisionStatus: 'researching' };
+ const defaultGoal: Partial<FinancePurchaseGoal> = { title: 'New Goal', category: 'other', status: 'planned', priority: 'medium', currency: 'MYR', targetAmount: 0, savedAmount: 0, decisionStatus: 'researching', financePeriodId: selectedPeriodId || undefined };
  const defaultIdea: Partial<FinanceInvestmentIdea> = { title: 'New Idea', type: 'stocks', riskLevel: 'medium', ethicalStatus: 'good', status: 'researching', decisionStatus: 'researching', currency: 'MYR', plannedAmount: 0 };
  const defaultInvRule: Partial<FinanceInvestmentRule> = { title: 'New Rule', category: 'risk', priority: 0, isActive: true };
  const defaultInvAlloc: Partial<FinanceInvestmentAllocation> = { name: 'New Allocation', category: 'crypto', percentage: 0, riskLevel: 'medium', ethicalStatus: 'good', priority: 0, isActive: true };
  const defaultPeriod: Partial<FinancePeriod> = { title: '', type: 'manual', startDate: '', endDate: '', status: 'open' };
  const defaultRecurring: Partial<FinanceRecurringRule> = { kind: 'income', frequency: 'monthly', title: '', amount: 0, currency: 'MYR', isActive: true, confidence: 'medium' };
 
- const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadImageError, setUploadImageError] = useState<string | null>(null);
 
-  function openModal(type: FinanceTab, id?: string) {
+  async function handleUploadGoalImage(file: File): Promise<string | null> {
+    if (!file) return null;
+    setUploadingImage(true);
+    setUploadImageError(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch('/api/personal/media/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type, dataUrl, section: 'purchase_goal' }),
+      });
+      const json = await res.json();
+      if (!json.success) { setUploadImageError(json.error || 'Upload failed'); return null; }
+      return json.publicUrl || null;
+    } catch (e) {
+      setUploadImageError('Upload failed. Please check connection and try again.');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+   function openModal(type: FinanceTab, id?: string) {
   setSaveError(null);
   if (id) {
   const item = getEditItem(type, id);
@@ -493,19 +522,49 @@ function FinancePanel({
  ]);
  }
 
- function renderGoalForm(e?: FinancePurchaseGoal) {
- const d = e || defaultGoal;
- return renderFormFields([
- { label: 'Title', key: 'title', type: 'input' },
- { label: 'Status', key: 'status', type: 'select', options: GOAL_STATUSES.map(t => ({ value: t, label: t })) },
- { label: 'Priority', key: 'priority', type: 'select', options: GOAL_PRIORITIES.map(t => ({ value: t, label: t })) },
- { label: 'Target Amount', key: 'targetAmount', type: 'number' },
- { label: 'Saved Amount', key: 'savedAmount', type: 'number' },
- { label: 'Currency', key: 'currency', type: 'input' },
- { label: 'Target Date', key: 'targetDate', type: 'date' },
- { label: 'Notes', key: 'notes', type: 'input' },
- ]);
- }
+  function renderGoalForm(e?: FinancePurchaseGoal) {
+  const d = e || defaultGoal;
+  return (
+  <div className="space-y-3">
+  {renderFormFields([
+  { label: 'Title', key: 'title', type: 'input' },
+  { label: 'Category', key: 'category', type: 'select', options: EXPENSE_CATEGORIES.map(t => ({ value: t, label: t })) },
+  { label: 'Status', key: 'status', type: 'select', options: GOAL_STATUSES.map(t => ({ value: t, label: t })) },
+  { label: 'Priority', key: 'priority', type: 'select', options: GOAL_PRIORITIES.map(t => ({ value: t, label: t })) },
+  { label: 'Target Amount', key: 'targetAmount', type: 'number' },
+  { label: 'Saved Amount', key: 'savedAmount', type: 'number' },
+  { label: 'Monthly Contribution', key: 'monthlyContribution', type: 'number' },
+  { label: 'Currency', key: 'currency', type: 'input' },
+  { label: 'Target Date', key: 'targetDate', type: 'date' },
+  { label: 'Decision Status', key: 'decisionStatus', type: 'select', options: DECISION_STATUSES.map(t => ({ value: t, label: t })) },
+  { label: 'Allocation Category', key: 'allocationCategory', type: 'select', options: ALLOC_CATS.map(t => ({ value: t, label: t })) },
+  { label: 'Vendor', key: 'vendor', type: 'input' },
+  { label: 'Product URL', key: 'productUrl', type: 'input' },
+  { label: 'Image URL', key: 'imageUrl', type: 'input' },
+  { label: 'Reason', key: 'reason', type: 'input' },
+  { label: 'Expected Use', key: 'expectedUse', type: 'input' },
+  { label: 'Alternatives', key: 'alternatives', type: 'input' },
+  { label: 'Notes', key: 'notes', type: 'input' },
+  ])}
+  <div className="border-t border-neutral-200 pt-3">
+  <div className="flex items-center gap-3">
+  <FormField label="Upload Image">
+  <input type="file" accept="image/*"
+  onChange={async e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const url = await handleUploadGoalImage(file);
+  if (url) handleModalChange('imageUrl', url);
+  }}
+  className="text-xs w-full" />
+  </FormField>
+  {uploadingImage && <span className="text-xs text-neutral-400 shrink-0">Uploading...</span>}
+  {uploadImageError && <span className="text-xs text-red-500 shrink-0">{uploadImageError}</span>}
+  </div>
+  </div>
+  </div>
+  );
+  }
 
  function renderIdeaForm(e?: FinanceInvestmentIdea) {
  const d = e || defaultIdea;
@@ -1114,49 +1173,70 @@ function FinancePanel({
  );
  }
 
- function renderPurchaseGoalsTab() {
- const list = allGoals;
- return (
- <div className="space-y-3">
- <div className="flex items-center justify-between">
- <h3 className="text-sm font-semibold text-black">Purchase Goals ({list.length})</h3>
- <Button variant="primary" size="sm" onClick={() => openModal('purchase_goals')}>+ Add Goal</Button>
- </div>
- {list.length === 0 ? (
- <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No purchase goals yet.</div>
- ) : (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- {list.map(g => {
- const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
- return (
- <div key={g.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
- <div className="flex items-start justify-between gap-4">
- <div className="min-w-0 flex-1">
- <div className="flex items-center gap-1.5 flex-wrap">
- <span className="text-sm font-medium text-black">{g.title || 'Unnamed'}</span>
- <Badge variant={statusBadge[g.status] || 'neutral'}>{g.status}</Badge>
- <Badge variant={priorityBadge[g.priority] || 'neutral'}>{g.priority}</Badge>
- </div>
- <div className="mt-1 text-xs text-neutral-500">
- Target: {toCur(g.targetAmount, g.currency)} &middot; Saved: {toCur(g.savedAmount, g.currency)} &middot; {pct}%
- </div>
- <div className="mt-1.5 h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
- <div className="h-full rounded-full bg-black transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`}} />
- </div>
- </div>
- <div className="flex gap-1 shrink-0">
- <Button variant="outline" size="sm" onClick={() => openModal('purchase_goals', g.id)}>Edit</Button>
- <Button variant="danger" size="sm" onClick={() => handleDelete('purchase_goals', g.id)}>Del</Button>
- </div>
- </div>
- </div>
- );
- })}
- </div>
- )}
- </div>
- );
- }
+  function renderPurchaseGoalsTab() {
+  const list = allGoals;
+  return (
+  <div className="space-y-3">
+  <div className="flex items-center justify-between">
+  <h3 className="text-sm font-semibold text-black">Purchase Goals ({list.length})</h3>
+  <Button variant="primary" size="sm" onClick={() => openModal('purchase_goals')}>+ Add Goal</Button>
+  </div>
+  {list.length === 0 ? (
+  <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No purchase goals yet.</div>
+  ) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  {list.map(g => {
+  const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+  return (
+  <div key={g.id} className="rounded-xl border border-neutral-200 bg-white overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+  <div className="aspect-[4/3] bg-neutral-100 relative overflow-hidden">
+  {g.imageUrl ? (
+  <img src={g.imageUrl} alt={g.title} className="w-full h-full object-cover" />
+  ) : (
+  <div className="w-full h-full flex items-center justify-center text-neutral-300">
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+  </div>
+  )}
+  <div className="absolute top-2 left-2 flex gap-1">
+  <Badge variant={statusBadge[g.status] || 'neutral'}>{g.status}</Badge>
+  <Badge variant={priorityBadge[g.priority] || 'neutral'}>{g.priority}</Badge>
+  </div>
+  </div>
+  <div className="p-3 flex flex-col gap-1.5 flex-1">
+  <div className="flex items-start justify-between gap-2">
+  <h4 className="text-sm font-semibold text-black leading-tight">{g.title || 'Unnamed'}</h4>
+  <div className="flex gap-0.5 shrink-0">
+  <button onClick={() => openModal('purchase_goals', g.id)} className="p-1 text-neutral-400 hover:text-black transition-colors" title="Edit">
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+  </button>
+  <button onClick={() => handleDelete('purchase_goals', g.id)} className="p-1 text-neutral-400 hover:text-red-500 transition-colors" title="Delete">
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+  </button>
+  </div>
+  </div>
+  {g.vendor && <p className="text-xs text-neutral-500">{g.vendor}</p>}
+  <div className="text-xs text-neutral-600">Target: <span className="font-medium text-black">{toCur(g.targetAmount, g.currency)}</span></div>
+  <div className="text-xs text-neutral-600">Saved: <span className="font-medium text-black">{toCur(g.savedAmount, g.currency)}</span> ({pct}%)</div>
+  <div className="h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
+  <div className="h-full rounded-full bg-black transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`}} />
+  </div>
+  {g.targetDate && <div className="text-xs text-neutral-500">Target: {new Date(g.targetDate).toLocaleDateString()}</div>}
+  {g.productUrl && <a href={g.productUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate">{g.productUrl}</a>}
+  {g.reason && <p className="text-xs text-neutral-400 line-clamp-2">{g.reason}</p>}
+  <div className="flex items-center gap-1.5 mt-auto pt-1">
+  {g.monthlyContribution !== undefined && g.monthlyContribution > 0 && (
+  <span className="text-xs text-emerald-600 font-medium">{toCur(g.monthlyContribution, g.currency)}/mo</span>
+  )}
+  </div>
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  )}
+  </div>
+  );
+  }
 
  function renderRecurringRulesTab() {
  return (
