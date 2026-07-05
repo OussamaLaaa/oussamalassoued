@@ -495,16 +495,18 @@ const OpportunitiesLayout: React.FC<{
 
    const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
     crm: [
+    { id: '_group_core', label: 'Core CRM', isGroupLabel: true },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'big_companies', label: 'Big Companies', icon: Building2 },
     { id: 'sme_companies', label: 'SME Companies', icon: Store },
     { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
     { id: 'companies', label: 'All Companies', icon: Globe },
     { id: 'people', label: 'People', icon: Users },
+    { id: 'archived', label: 'Archived', icon: Archive },
+    { id: '_group_outreach', label: 'Outreach', isGroupLabel: true },
     { id: 'message_examples', label: 'Message Examples', icon: FileText },
-     { id: 'lead_research', label: 'Lead Research', icon: Search },
-     { id: 'archived', label: 'Archived', icon: Archive },
-     ],
+    { id: 'lead_research', label: 'Lead Research', icon: Search },
+    ],
    plans: [
    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
    { id: 'plans', label: 'Plans', icon: Calendar },

@@ -5,9 +5,10 @@ import PersonalOSLogo from '../personal/PersonalOSLogo';
 export interface SidebarItem {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string }>;
   badge?: number | string;
   trailingAction?: React.ReactNode;
+  isGroupLabel?: boolean;
 }
 
 interface AppDashboardShellProps {
@@ -51,6 +52,16 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
         {/* Navigation items */}
         <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
           {sidebarItems.map((item) => {
+            if (item.isGroupLabel) {
+              return (
+                <div
+                  key={item.id}
+                  className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-neutral-400"
+                >
+                  {item.label}
+                </div>
+              );
+            }
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (
@@ -63,7 +74,7 @@ const AppDashboardShell: React.FC<AppDashboardShellProps> = ({
                   onClick={() => onSectionChange(item.id)}
                   className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 rounded-lg text-left"
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  {Icon && <Icon className="h-4 w-4 shrink-0" />}
                   <span className="min-w-0 truncate">{item.label}</span>
                   {item.badge != null && (
                     <span className="ml-auto text-xs text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded-md tabular-nums">
