@@ -256,21 +256,17 @@ const MessageExamplesPanel: React.FC<{
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filtered.map((template) => {
-            const isRtl = isArabicText(template.name) || isArabicText(template.body);
-            const cardDir: React.CSSProperties = {
-              direction: isRtl ? 'rtl' : 'ltr',
-              textAlign: isRtl ? 'right' : 'left',
-            };
-            const badgeAlign = isRtl ? 'justify-end' : 'justify-start';
+            const isCardRtl = isArabicText(template.name || '') || (!template.name && isArabicText(template.body || ''));
+            const textAlignClass = isCardRtl ? 'text-right' : 'text-left';
             return (
-              <div
+              <article
                 key={template.id}
                 onClick={() => openView(template)}
+                dir={isCardRtl ? 'rtl' : 'ltr'}
                 className="flex cursor-pointer flex-col gap-3 rounded-[18px] border border-black/10 bg-white p-5 transition-colors transition-transform hover:-translate-y-0.5 hover:border-black/20 hover:bg-neutral-50"
-                style={cardDir}
               >
                 {/* Header: title + status badge */}
-                <div className={`flex items-center gap-2 ${badgeAlign}`}>
+                <div className={`flex items-center gap-2 ${textAlignClass}`}>
                   <span className="text-sm font-semibold text-neutral-900">{template.name}</span>
                   {template.isActive === false ? (
                     <Badge variant="neutral" className="rounded-full px-3 py-1">Inactive</Badge>
@@ -278,7 +274,7 @@ const MessageExamplesPanel: React.FC<{
                 </div>
 
                 {/* Metadata badges: category, channel, language */}
-                <div className={`flex flex-wrap gap-2 ${badgeAlign}`}>
+                <div className="flex flex-wrap justify-start gap-2">
                   {template.audience ? (
                     <span className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700">{template.audience}</span>
                   ) : null}
@@ -292,23 +288,30 @@ const MessageExamplesPanel: React.FC<{
 
                 {/* Tags */}
                 {template.subject ? (
-                  <div className={`flex flex-wrap gap-1.5 ${badgeAlign}`}>
+                  <div className="flex flex-wrap justify-start gap-1.5">
                     {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
                       <span key={tag} className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-600">{tag}</span>
                     ))}
                   </div>
                 ) : null}
 
-                {/* Message preview */}
-                <div className="line-clamp-4 whitespace-pre-wrap rounded-[14px] border border-black/5 bg-neutral-50 p-4 text-sm leading-7 text-neutral-700">
+                {/* Message preview with safe overflow clamping */}
+                <div
+                  className="overflow-hidden whitespace-pre-wrap rounded-[14px] border border-black/5 bg-neutral-50 p-4 text-sm leading-7 text-neutral-700"
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 4,
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
                   {template.body}
                 </div>
 
                 {/* Footer hint */}
-                <div className={`text-xs ${isRtl ? 'text-right' : 'text-left'} text-neutral-400`}>
+                <div className={`text-xs text-neutral-400 ${textAlignClass}`}>
                   Click to open
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
