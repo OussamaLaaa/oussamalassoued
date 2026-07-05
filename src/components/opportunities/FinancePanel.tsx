@@ -195,8 +195,9 @@ function FinancePanel({
  const [aiResult, setAiResult] = useState<any>(null);
  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
  const [horizonView, setHorizonView] = useState<HorizonView>('monthly');
- const [generateResult, setGenerateResult] = useState<string | null>(null);
- const [generating, setGenerating] = useState(false);
+  const [generateResult, setGenerateResult] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [calendarYear, setCalendarYear] = useState(cYear);
 
  const allIncome = financeIncome || [];
  const allExpenses = financeExpenses || [];
@@ -761,54 +762,177 @@ function FinancePanel({
   );
   }
 
- function renderPeriodsTab() {
- return (
- <div className="space-y-3">
- <div className="flex items-center justify-between">
- <h3 className="text-sm font-semibold text-black">Periods ({sortedPeriods.length})</h3>
- <div className="flex gap-2">
- <Button variant="outline" size="sm" onClick={() => {
- const n = new Date();
- const y = n.getFullYear();
- const m = String(n.getMonth() + 1).padStart(2, '0');
- onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
- }}>+ Current Month</Button>
- <Button variant="primary" size="sm" onClick={() => openModal('periods')}>+ New Period</Button>
- </div>
- </div>
- {sortedPeriods.length === 0 ? (
- <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-400">No periods yet.</div>
- ) : (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- {sortedPeriods.map(p => (
- <div key={p.id} className="px-4 py-3 hover:bg-neutral-50 transition-colors">
- <div className="flex items-start justify-between gap-4">
- <div className="min-w-0 flex-1">
- <div className="flex items-center gap-1.5 flex-wrap">
- <span className="text-sm font-medium text-black">{p.title}</span>
- <Badge variant={p.status === 'open' ? 'success' : 'neutral'}>{p.status}</Badge>
- {selectedPeriodId === p.id && <Badge variant="success">Active</Badge>}
- </div>
- <div className="mt-0.5 text-xs text-neutral-500">
- {new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()}
- {p.type !== 'manual' && <> &middot; {p.type}</>}
- </div>
- </div>
- <div className="flex gap-1 shrink-0">
- <Button variant={selectedPeriodId === p.id ? 'primary' : 'outline'} size="sm" onClick={() => setSelectedPeriodId(p.id)}>
- {selectedPeriodId === p.id ? 'Selected' : 'Select'}
- </Button>
- <Button variant="outline" size="sm" onClick={() => openModal('periods', p.id)}>Edit</Button>
- <Button variant="danger" size="sm" onClick={() => handleDelete('periods', p.id)}>Del</Button>
- </div>
- </div>
- </div>
- ))}
- </div>
- )}
- </div>
- );
- }
+  function renderPeriodsTab() {
+  const yearPeriods = allPeriods.filter(p => {
+  const d = new Date(p.startDate);
+  return d.getFullYear() === calendarYear;
+  });
+  const yearIncome = allIncome.filter(i => {
+  const d = new Date(i.incomeDate || i.expectedDate || i.receivedDate || '');
+  return !isNaN(d.getTime()) && d.getFullYear() === calendarYear;
+  });
+  const yearExpenses = allExpenses.filter(e => {
+  const d = new Date(e.expenseDate || e.createdAt || '');
+  return !isNaN(d.getTime()) && d.getFullYear() === calendarYear;
+  });
+  const yearIncomeTotal = yearIncome.reduce((s,i) => s + i.amount, 0);
+  const yearExpenseTotal = yearExpenses.reduce((s,e) => s + e.amount, 0);
+  const yearNet = yearIncomeTotal - yearExpenseTotal;
+  const openCount = yearPeriods.filter(p => p.status === 'open').length;
+
+  const monthPeriodMap = new Map<string, FinancePeriod>();
+  yearPeriods.forEach(p => {
+  const d = new Date(p.startDate);
+  const key = formatMonthKey(d);
+  monthPeriodMap.set(key, p);
+  });
+
+  function getMonthFinancials(m: number) {
+  const start = `${calendarYear}-${String(m + 1).padStart(2, '0')}-01`;
+  const end = `${calendarYear}-${String(m + 1).padStart(2, '0')}-${new Date(calendarYear, m + 1, 0).getDate()}`;
+  const inc = allIncome.filter(i => {
+  const d = i.incomeDate || i.expectedDate || i.receivedDate || '';
+  return d && isDateBetween(d, start, end);
+  }).reduce((s,i) => s + i.amount, 0);
+  const exp = allExpenses.filter(e => {
+  const d = e.expenseDate || e.createdAt || '';
+  return d && isDateBetween(d, start, end);
+  }).reduce((s,e) => s + e.amount, 0);
+  return { income: inc, expenses: exp, net: inc - exp };
+  }
+
+  return (
+  <div className="space-y-5">
+
+  {/* Page heading */}
+  <div>
+    <h2 className="text-lg font-bold text-black">Finance Calendar</h2>
+    <p className="text-xs text-neutral-500 mt-1">Manage monthly financial periods and track each month's status.</p>
+  </div>
+
+  {/* Year navigation & Current Month */}
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" className="h-9 rounded-lg border-neutral-200" onClick={() => setCalendarYear(calendarYear - 1)}>&larr;</Button>
+      <span className="text-base font-semibold text-black min-w-[80px] text-center">{calendarYear}</span>
+      <Button variant="outline" size="sm" className="h-9 rounded-lg border-neutral-200" onClick={() => setCalendarYear(calendarYear + 1)}>&rarr;</Button>
+    </div>
+    <Button variant="outline" size="sm" className="h-9 rounded-lg border-neutral-200" onClick={() => {
+      setCalendarYear(cYear);
+      const n = new Date();
+      const y = n.getFullYear();
+      const m = String(n.getMonth() + 1).padStart(2, '0');
+      onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
+    }}>+ Current Month</Button>
+  </div>
+
+  {/* Yearly summary strip */}
+  <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+      <div className="text-neutral-500">
+        <span className="block font-medium text-neutral-900">{yearPeriods.length}</span>
+        Total periods
+      </div>
+      <div className="text-neutral-500">
+        <span className="block font-medium text-emerald-700">{openCount}</span>
+        Open periods
+      </div>
+      <div className="text-neutral-500">
+        <span className="block font-medium text-neutral-900">{toCur(yearIncomeTotal)}</span>
+        Income
+      </div>
+      <div className="text-neutral-500">
+        <span className="block font-medium text-neutral-900">{toCur(yearExpenseTotal)}</span>
+        Expenses
+      </div>
+      <div className="text-neutral-500">
+        <span className={`block font-medium ${yearNet >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+          {yearNet >= 0 ? '+' : ''}{toCur(Math.abs(yearNet))}
+        </span>
+        Net
+      </div>
+    </div>
+  </div>
+
+  {/* Calendar grid */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    {Array.from({ length: 12 }, (_, i) => {
+    const key = formatMonthKey(new Date(calendarYear, i, 1));
+    const period = monthPeriodMap.get(key);
+    const fin = getMonthFinancials(i);
+    const isCurrent = calendarYear === cYear && i === cMonth;
+    const isSelected = period && selectedPeriodId === period.id;
+    const isMissing = !period;
+
+    return (
+    <div
+    key={key}
+    className={`rounded-xl border bg-white p-4 transition-colors ${isSelected ? 'border-neutral-800 ring-1 ring-neutral-800' : 'border-neutral-200'} ${isCurrent && !isSelected ? 'border-blue-300' : ''}`}
+    >
+    {/* Header row */}
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-sm font-semibold text-black">{MONTHS[i]} {calendarYear}</span>
+      {isCurrent && <span className="text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">Current</span>}
+    </div>
+
+    {/* Status badge */}
+    <div className="mb-3">
+      {period ? (
+      <Badge variant={period.status === 'open' ? 'success' : 'neutral'}>{period.status}</Badge>
+      ) : (
+      <Badge variant="neutral">No period</Badge>
+      )}
+      {isSelected && <Badge variant="success" className="ml-1">Selected</Badge>}
+    </div>
+
+    {/* Date range */}
+    {period ? (
+      <div className="text-[11px] text-neutral-500 mb-3">
+      {new Date(period.startDate).toLocaleDateString()} &ndash; {new Date(period.endDate).toLocaleDateString()}
+      </div>
+    ) : (
+      <div className="text-[11px] text-neutral-400 mb-3">
+      {new Date(calendarYear, i, 1).toLocaleDateString()} &ndash; {new Date(calendarYear, i + 1, 0).toLocaleDateString()}
+      </div>
+    )}
+
+    {/* Financials */}
+    <div className="space-y-0.5 text-[11px] mb-3">
+      <div className="flex justify-between"><span className="text-neutral-400">Income</span><span className="font-medium text-neutral-700">{toCur(fin.income)}</span></div>
+      <div className="flex justify-between"><span className="text-neutral-400">Expenses</span><span className="font-medium text-neutral-700">{toCur(fin.expenses)}</span></div>
+      <div className="flex justify-between pt-0.5 border-t border-neutral-100">
+      <span className="text-neutral-500">Net</span>
+      <span className={`font-semibold ${fin.net > 0 ? 'text-emerald-700' : fin.net < 0 ? 'text-red-700' : 'text-neutral-600'}`}>
+        {fin.net >= 0 ? '+' : ''}{toCur(Math.abs(fin.net))}
+      </span>
+      </div>
+    </div>
+
+    {/* Actions */}
+    <div className="flex flex-wrap gap-1.5">
+      {period ? (
+      <>
+      <Button variant={isSelected ? 'primary' : 'outline'} size="sm" className="h-7 text-[11px] px-2" onClick={() => setSelectedPeriodId(period.id)}>
+      {isSelected ? 'Selected' : 'Select'}
+      </Button>
+      <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => openModal('periods', period.id)}>Edit</Button>
+      <Button variant="danger" size="sm" className="h-7 text-[11px] px-2" onClick={() => handleDelete('periods', period.id)}>Del</Button>
+      </>
+      ) : (
+      <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => {
+      const m = String(i + 1).padStart(2, '0');
+      const days = new Date(calendarYear, i + 1, 0).getDate();
+      onAddFinancePeriod({ title: `${MONTHS[i]} ${calendarYear}`, type: 'manual', startDate: `${calendarYear}-${m}-01`, endDate: `${calendarYear}-${m}-${days}`, status: 'open' });
+      }}>+ Create Period</Button>
+      )}
+    </div>
+    </div>
+    );
+    })}
+  </div>
+  </div>
+  );
+  }
 
  function renderIncomeTab() {
  const list = filteredFinanceIncome;
