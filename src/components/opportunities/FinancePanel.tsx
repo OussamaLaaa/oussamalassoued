@@ -197,6 +197,7 @@ function FinancePanel({
  const [horizonView, setHorizonView] = useState<HorizonView>('monthly');
   const [generateResult, setGenerateResult] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [calendarYear, setCalendarYear] = useState(cYear);
 
  const allIncome = financeIncome || [];
@@ -256,10 +257,11 @@ function FinancePanel({
  setFormData({});
  }
 
- async function handleSave() {
- if (!modal) return;
- const { type, id } = modal;
- try {
+  async function handleSave() {
+  if (!modal || saving) return;
+  setSaving(true);
+  const { type, id } = modal;
+  try {
  if (type === 'income') {
  if (id) await onUpdateFinanceIncome(id, formData);
  else await onAddFinanceIncome({ ...defaultIncome, ...formData });
@@ -283,10 +285,12 @@ function FinancePanel({
  else await onAddFinancePeriod({ ...defaultPeriod, ...formData });
  }
  closeModal();
- } catch (e) {
- console.error('Save failed', e);
- }
- }
+  } catch (e) {
+  console.error('Save failed', e);
+  } finally {
+  setSaving(false);
+  }
+  }
 
  async function handleDelete(type: FinanceTab, id: string) {
  try {
@@ -556,7 +560,7 @@ function FinancePanel({
  </div>
  <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 rounded-b-2xl">
  <Button variant="outline" size="sm" onClick={closeModal}>Cancel</Button>
- <Button variant="primary" size="sm" onClick={handleSave}>Save</Button>
+  <Button variant="primary" size="sm" disabled={saving} onClick={handleSave}>{saving ? 'Saving...' : 'Save'}</Button>
  </div>
  </div>
  </div>

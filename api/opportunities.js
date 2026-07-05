@@ -162,21 +162,48 @@ const getEnvPresence = () => ({
   SUPABASE_SECRET_KEY: Boolean(process.env.SUPABASE_SECRET_KEY),
 });
 
+const FINANCE_PAYLOAD_FILTERS = {
+  finance_income: new Set(['title','source','amount','currency','income_date','status','notes','linked_project_id','linked_company_id','income_type','expected_amount','received_amount','expected_date','received_date','is_recurring','recurrence','confidence','finance_period_id']),
+  finance_expenses: new Set(['title','category','amount','currency','expense_date','status','notes','linked_project_id','finance_period_id']),
+  finance_allocation_rules: new Set(['name','category','percentage','priority','is_active','notes']),
+  finance_purchase_goals: new Set(['title','category','target_amount','saved_amount','currency','priority','status','decision_status','target_date','product_url','image_url','vendor','reason','expected_use','alternatives','allocation_category','monthly_contribution','notes','finance_period_id']),
+  finance_investment_ideas: new Set(['title','type','planned_amount','currency','risk_level','ethical_status','status','decision_status','expected_horizon','review_date','max_allocation','expected_reason','pros','cons','risks','red_flags','research_links','low_scenario','base_scenario','high_scenario','allocation_category','recommended_monthly_contribution','funding_status','notes','linked_project_id','finance_period_id']),
+  finance_investment_rules: new Set(['title','category','description','priority','is_active','notes']),
+  finance_investment_allocations: new Set(['name','category','percentage','risk_level','ethical_status','priority','is_active','notes']),
+  finance_periods: new Set(['title','type','start_date','end_date','status','focus','target_income','target_expenses','target_savings','target_investment','review_notes']),
+  finance_recurring_rules: new Set(['title','kind','category','amount','currency','frequency','start_date','end_date','is_active','confidence','source','notes','linked_project_id','linked_company_id']),
+};
+
+const filterFinancePayload = (entity, payload) => {
+  const allowed = FINANCE_PAYLOAD_FILTERS[entity];
+  if (!allowed) return payload;
+  const filtered = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (allowed.has(key)) {
+      filtered[key] = value;
+    }
+  }
+  return filtered;
+};
+
 const isDebugEnabled = (req) => req?.query?.debug === '1' || req?.query?.debug === 1;
 
 const buildMutationFailurePayload = ({ entity, action, error, payloadKeys }) => {
   const isDelete = action === 'delete';
   const isCompanyDeleteFkConstraint = isDelete && entity === 'companies' && error?.code === '23503';
+  const isSchemaMismatch = error?.code === 'PGRST204';
 
   const result = {
     success: false,
-    error: action === 'update'
-      ? 'Unable to update Opportunities data.'
-      : isCompanyDeleteFkConstraint
-        ? 'Company cannot be deleted because related records exist.'
-        : action === 'delete'
-          ? 'Unable to delete Opportunities data.'
-          : 'Unable to save Opportunities data.',
+    error: isSchemaMismatch
+      ? 'Finance save failed because the database schema is missing a required field. Please update the Supabase table or contact the system owner.'
+      : action === 'update'
+        ? 'Unable to update Opportunities data.'
+        : isCompanyDeleteFkConstraint
+          ? 'Company cannot be deleted because related records exist.'
+          : action === 'delete'
+            ? 'Unable to delete Opportunities data.'
+            : 'Unable to save Opportunities data.',
     entity,
     action,
     errorCode: error?.code ?? null,
@@ -1603,6 +1630,10 @@ export default async function handler(req, res) {
           ? data.map((row) => normalizeEntityRow(entity, row))
           : normalizeEntityRow(entity, data);
 
+      if (entity.startsWith('finance_')) {
+        payload = Array.isArray(payload) ? payload.map(row => filterFinancePayload(entity, row)) : filterFinancePayload(entity, payload);
+      }
+
       if (entity === 'relationships') {
         const keys = Array.isArray(payload) ? Object.keys(payload[0] || {}) : Object.keys(payload);
         console.error("[relationships insert payload keys]", keys);
@@ -1744,6 +1775,10 @@ export default async function handler(req, res) {
                       : entity === 'social_weekly_tasks'
                         ? normalizeSocialWeeklyTaskRow(data, { forUpdate: true })
         : normalizeEntityRow(entity, data);
+
+      if (entity.startsWith('finance_')) {
+        payload = filterFinancePayload(entity, payload);
+      }
 
       if (entity === 'relationships') {
         const cleaned = {};
