@@ -562,31 +562,31 @@ function FinancePanel({
  );
  }
 
- function renderPeriodSelector() {
- return (
- <div className="flex flex-wrap items-center gap-2">
- <select
- value={selectedPeriodId}
- onChange={e => setSelectedPeriodId(e.target.value)}
- className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[200px] cursor-pointer"
- >
- <option value="">All Records</option>
- {sortedPeriods.map(p => (
- <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>
- ))}
- </select>
- <Button variant="outline" size="sm" onClick={() => {
- const n = new Date();
- const y = n.getFullYear();
- const m = String(n.getMonth() + 1).padStart(2, '0');
- onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
- }}>+ Current Month</Button>
- {selectedPeriodId && (
- <Button variant="outline" size="sm" onClick={() => { setSelectedPeriodId(''); }}>Clear</Button>
- )}
- </div>
- );
- }
+  function renderPeriodSelector() {
+  return (
+  <div className="flex flex-wrap items-center gap-2">
+  <select
+  value={selectedPeriodId}
+  onChange={e => setSelectedPeriodId(e.target.value)}
+  className="h-9 px-3 text-sm rounded-lg border border-neutral-200 bg-white text-neutral-900 outline-none transition-colors focus:border-neutral-400 min-w-[200px] cursor-pointer"
+  >
+  <option value="">All Records</option>
+  {sortedPeriods.map(p => (
+  <option key={p.id} value={p.id}>{p.title} ({new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()})</option>
+  ))}
+  </select>
+  <Button variant="outline" size="sm" className="h-9 rounded-lg border-neutral-200" onClick={() => {
+  const n = new Date();
+  const y = n.getFullYear();
+  const m = String(n.getMonth() + 1).padStart(2, '0');
+  onAddFinancePeriod({ title: `${MONTHS[n.getMonth()]} ${y}`, type: 'manual', startDate: `${y}-${m}-01`, endDate: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}`, status: 'open' });
+  }}>+ Current Month</Button>
+  {selectedPeriodId && (
+  <Button variant="outline" size="sm" className="h-9 rounded-lg border-neutral-200" onClick={() => { setSelectedPeriodId(''); }}>Clear</Button>
+  )}
+  </div>
+  );
+  }
 
  function MetricCard({ label, value, className }: { label: string; value: string; className?: string }) {
  return (
@@ -612,7 +612,6 @@ function FinancePanel({
   const recentActivity = [...recentIncomeActivity, ...recentExpenseActivity].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime()).slice(0, 5);
   const activeRules = allRules.filter(r => r.isActive);
   const totalPct = allRules.reduce((s,r) => s + r.percentage, 0);
-  const activeGoals = allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled');
 
   const paidPct = totalExpenses > 0 ? Math.round(paidExpenses / totalExpenses * 100) : 0;
   const unpaidPct = 100 - paidPct;
@@ -630,14 +629,6 @@ function FinancePanel({
 
   return (
   <div className="space-y-5">
-
-  {/* Quick actions row */}
-  <div className="flex flex-wrap items-center gap-2">
-    <Button variant="primary" size="sm" onClick={() => openModal('income')}>+ Add Income</Button>
-    <Button variant="primary" size="sm" onClick={() => openModal('expenses')}>+ Add Expense</Button>
-    <Button variant="secondary" size="sm" onClick={() => openModal('purchase_goals')}>+ Purchase Goal</Button>
-    <Button variant="secondary" size="sm" onClick={() => openModal('investments')}>+ Investment Idea</Button>
-  </div>
 
   {/* Financial Snapshot — 4 hero cards */}
   <div>
@@ -1640,11 +1631,7 @@ function FinancePanel({
   <div className="mt-6">
  <div className="flex gap-6 items-start">
  <div className="flex-1 min-w-0 space-y-6">
- {tab === 'dashboard' && (
- <div className="flex flex-wrap items-center justify-between gap-3">
- {renderPeriodSelector()}
- </div>
- )}
+  {tab === 'dashboard' && renderPeriodSelector()}
  {tab === 'dashboard' && renderDashboard()}
  {tab === 'periods' && renderPeriodsTab()}
  {tab === 'income' && renderIncomeTab()}
