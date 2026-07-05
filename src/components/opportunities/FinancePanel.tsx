@@ -1425,19 +1425,6 @@ function FinancePanel({
   return (
   <div className="flex flex-col gap-4">
 
-  {/* Current period info */}
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-    <div className="text-xs font-semibold text-neutral-600 mb-2">Current View</div>
-    <div className="text-sm font-medium text-neutral-900">
-      {selectedPeriod ? selectedPeriod.title : 'All Records'}
-    </div>
-    {selectedPeriod && (
-      <div className="mt-1 text-xs text-neutral-500">
-        {new Date(selectedPeriod.startDate).toLocaleDateString()} — {new Date(selectedPeriod.endDate).toLocaleDateString()}
-      </div>
-    )}
-  </div>
-
   {/* Horizon View */}
   <div className="rounded-xl border border-neutral-200 bg-white p-4">
   <div className="flex items-center justify-between mb-3">
