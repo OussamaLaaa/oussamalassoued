@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  MessageSquarePlus, UserPlus, Building2, Plus, Sparkles, FileText,
-  LayoutDashboard, Store, Briefcase, Globe, Users, Handshake, Send, MessageSquare,
+  UserPlus, Building2, Plus, Sparkles, FileText,
+  LayoutDashboard, Store, Briefcase, Globe, Users,
   ListChecks, RotateCcw, Clock, Archive, Star,
   Calendar, TrendingUp, DollarSign, PiggyBank, Target, BarChart3, Shield,
   Activity, FolderOpen, FileEdit, Image, Smartphone, Heart, Leaf,
@@ -10,13 +10,11 @@ import {
 import Button from '../ui/Button';
 import SectionHeader from '../ui/SectionHeader';
 import { normalizeDatabaseType } from '../../utils/opportunitiesMappers';
-import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, NoteCategory, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, OutreachMessage, Deal, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
+import type { OpportunitiesTab, OpportunitiesData, CompanyInput, PersonInput, MessageInput, DealInput, RelationshipInput, RelationshipInteractionInput, RelationshipOpportunityInput, RelationshipCategoryInput, RelationshipContactMethodInput, NoteCategoryInput, NoteCategory, SmartNoteInput, NoteAttachmentInput, NoteBlockInput, Project, ProjectInput, MessageTemplateInput, Company, Person, StrategyItemInput, StrategyGoalInput, StrategyPlanInput, StrategyTacticInput, StrategyExperimentInput, StrategyDecisionInput, DocumentInput, DocumentItem, DocumentTemplateInput, DocumentTemplate, DocumentBrandSettingsInput, DocumentBrandSettings, GeneratedDocumentInput, GeneratedDocument, InvoiceInput, Invoice, InvoiceItemInput, InvoiceItem, AIProviderKeyInput, AIUseCaseSettingInput, AIProviderKey, AIUseCaseSetting, RecurringTaskLog, RecurringTaskLogInput, TaskWorkLog, TaskWorkLogInput, WeeklyTaskReview, WeeklyTaskReviewInput, SocialPlatform, SocialPerson, SocialPersonInput, ContentPillar, ContentStrategy, ContentItem, WeeklyContentPlan, SocialPlatformInput, ContentPillarInput, ContentStrategyInput, ContentItemInput, WeeklyContentPlanInput, LifeNutritionLog, LifeNutritionLogInput, LifeFitnessLog, LifeFitnessLogInput, LifeDeenLog, LifeDeenLogInput, LifeFamilyAction, LifeFamilyActionInput, LifeWeeklyReview, LifeWeeklyReviewInput, CompanyContactMethod, CompanyContactMethodInput, PersonContactMethod, PersonContactMethodInput, CompanyProblemProfile, CompanyProblemProfileInput, CompanyOutreachScript, CompanyOutreachScriptInput, DesktopShortcut, DesktopShortcutInput, DesktopGroup, DesktopGroupInput, DesktopSettings, DesktopSettingsInput } from '../../types/opportunities';
 import OpportunitiesDashboard from './OpportunitiesDashboard';
 import CompaniesTable, { type CompanyFilters } from './CompaniesTable';
 import CompanyWorkspace from './CompanyWorkspace';
 import PeopleTable, { type PersonFilters } from './PeopleTable';
-import MessagesTable, { type MessageFilters } from './MessagesTable';
-import DealsTable, { type DealFilters } from './DealsTable';
 import ProjectsPanel from './ProjectsPanel';
 import AddProjectForm from './AddProjectForm';
 import StrategyPanel from './StrategyPanel';
@@ -24,16 +22,12 @@ import PlansPanel from './PlansPanel';
 import FinancePanel from './FinancePanel';
 import DocumentStudioPanel from './DocumentStudioPanel';
 import AIControlPanel from './AIControlPanel';
-import OutreachQueuePanel from './OutreachQueuePanel';
 import OpportunityModal from './OpportunityModal';
 import AddCompanyForm from './AddCompanyForm';
 import AddPersonForm from './AddPersonForm';
-import LogMessageForm from './LogMessageForm';
-import AddDealForm from './AddDealForm';
 import CsvImportModal from './CsvImportModal';
 import ImportPeopleModal from './ImportPeopleModal';
-import OutreachTemplateModal from './OutreachTemplateModal';
-import TemplatesPanel from './TemplatesPanel';
+import MessageExamplesPanel from './MessageExamplesPanel';
 import CompanySegmentView from './CompanySegmentView';
 import PersonWorkspace from './PersonWorkspace';
 import AICompanyScoringModal from './AICompanyScoringModal';
@@ -92,32 +86,7 @@ const toPersonInput = (p: Person): PersonInput => ({
  archivedAt: p.archivedAt ?? null,
 });
 
-const toMessageInput = (m: OutreachMessage): MessageInput => ({
- companyId: m.companyId,
- personId: m.personId,
- channel: m.channel as MessageInput['channel'],
- language: m.language as MessageInput['language'],
- messageType: m.messageType,
- messageText: m.messageText,
- sentDate: m.sentDate,
- replyStatus: m.replyStatus,
- replySummary: m.replySummary,
- nextFollowUpDate: m.nextFollowUpDate,
- status: m.status as MessageInput['status'],
-});
-
-const toDealInput = (d: Deal): DealInput => ({
- companyId: d.companyId,
- personId: d.personId,
- servicePackage: d.servicePackage,
- problem: d.problem,
- proposedSolution: d.proposedSolution,
- value: d.value,
- currency: d.currency as DealInput['currency'],
- stage: d.stage as DealInput['stage'],
- probability: d.probability !== undefined ? Math.round(d.probability * 100) : undefined,
- notes: d.notes,
-});
+// toMessageInput/toDealInput removed — tracking system retired
 
 const toProjectInput = (p: Project): ProjectInput => ({
  name: p.name,
@@ -152,32 +121,16 @@ const defaultPersonFilters: PersonFilters = {
  status: 'active',
 };
 
-const defaultMessageFilters: MessageFilters = {
- searchQuery: '',
- replyStatus: '',
- followUp: '',
- channel: '',
- messageType: '',
- dateRange: '',
-};
-
-const defaultDealFilters: DealFilters = {
- searchQuery: '',
- stage: '',
- probabilityMin: '',
- probabilityMax: '',
-};
+// message/deal filters removed — tracking system retired
 
 const NAV_STATE_STORAGE_KEY = 'personalOS.navigationState';
 
 type PersistedNavState = {
- activeApp?: AppId;
- tab?: OpportunitiesTab;
- globalSearch?: string;
- companyFilters?: CompanyFilters;
- personFilters?: PersonFilters;
- messageFilters?: MessageFilters;
- dealFilters?: DealFilters;
+  activeApp?: AppId;
+  tab?: OpportunitiesTab;
+  globalSearch?: string;
+  companyFilters?: CompanyFilters;
+  personFilters?: PersonFilters;
 };
 
 const VALID_APP_IDS: AppId[] = [
@@ -198,28 +151,26 @@ const VALID_APP_IDS: AppId[] = [
 ];
 
 const VALID_TABS: OpportunitiesTab[] = [
- 'dashboard',
- 'big_companies',
- 'sme_companies',
- 'freelance_leads',
- 'companies',
- 'people',
- 'deals',
- 'queue',
- 'messages',
- 'templates',
- 'strategy',
- 'plans',
- 'tasks',
- 'projects',
- 'finance',
- 'documents',
- 'social',
- 'relationships',
- 'life',
- 'notes',
-  'lead_research',
- 'ai-control',
+  'dashboard',
+  'big_companies',
+  'sme_companies',
+  'freelance_leads',
+  'companies',
+  'people',
+  'message_examples',
+  'strategy',
+  'plans',
+  'tasks',
+  'projects',
+  'finance',
+  'documents',
+  'social',
+  'relationships',
+  'life',
+  'notes',
+   'lead_research',
+  'archived',
+  'ai-control',
 ];
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -278,63 +229,11 @@ const resolveInitialPersonFilters = (): PersonFilters => {
  : defaultPersonFilters;
 };
 
-const resolveInitialMessageFilters = (): MessageFilters => {
- const next = readPersistedNavState().messageFilters;
- return next && isObjectRecord(next)
- ? {
- searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
- replyStatus: typeof next.replyStatus === 'string' ? next.replyStatus : '',
- followUp: typeof next.followUp === 'string' ? next.followUp : '',
- channel: typeof next.channel === 'string' ? next.channel : '',
- messageType: typeof next.messageType === 'string' ? next.messageType : '',
- dateRange: typeof next.dateRange === 'string' ? next.dateRange : '',
- }
- : defaultMessageFilters;
-};
-
-const resolveInitialDealFilters = (): DealFilters => {
- const next = readPersistedNavState().dealFilters;
- return next && isObjectRecord(next)
- ? {
- searchQuery: typeof next.searchQuery === 'string' ? next.searchQuery : '',
- stage: typeof next.stage === 'string' ? next.stage : '',
- probabilityMin: typeof next.probabilityMin === 'string' ? next.probabilityMin : '',
- probabilityMax: typeof next.probabilityMax === 'string' ? next.probabilityMax : '',
- }
- : defaultDealFilters;
-};
+// message/deal filter resolvers removed — tracking system retired
 
 type AIControlQuickAction = 'add-provider-key' | 'test-provider' | 'save-routing';
 
-const toDayKey = (value?: string) => {
- if (!value) return null;
- const date = new Date(value);
- if (Number.isNaN(date.getTime())) return null;
- const year = date.getUTCFullYear();
- const month = String(date.getUTCMonth() + 1).padStart(2, '0');
- const day = String(date.getUTCDate()).padStart(2, '0');
- return `${year}-${month}-${day}`;
-};
-
-const isNoContact = (value?: string) => !value || value.trim() === '' || value.trim().toLowerCase() === 'no contact';
-
-const isHighPriorityPerson = (person: Person) => [person.relevance, person.decisionPower, person.influencePower].some((value) => typeof value === 'number' && value >= 8);
-
-const getQueueTabCount = (people: Person[], messages: OutreachMessage[]) => {
- const today = toDayKey(new Date().toISOString()) || '';
- const highPriority = people.filter((person) => isHighPriorityPerson(person) && isNoContact(person.relationshipStatus)).length;
- const dueToday = people.filter((person) => toDayKey(person.nextFollowUpDate) === today).length + messages.filter((message) => toDayKey(message.nextFollowUpDate) === today).length;
- const overdue = people.filter((person) => {
- const next = toDayKey(person.nextFollowUpDate);
- return Boolean(next && next < today);
- }).length + messages.filter((message) => {
- const next = toDayKey(message.nextFollowUpDate);
- return Boolean(next && next < today);
- }).length;
- const newContacts = people.filter((person) => isNoContact(person.relationshipStatus)).length;
-
- return highPriority + dueToday + overdue + newContacts;
-};
+// isNoContact / isHighPriorityPerson / toDayKey / getQueueTabCount removed — queue tab retired
 
 const OpportunitiesLayout: React.FC<{
  theme?: 'light' | 'dark';
@@ -498,16 +397,12 @@ const OpportunitiesLayout: React.FC<{
  };
 }> = ({ theme = 'light', setTheme, data }) => {
  const [tab, setTab] = useState<OpportunitiesTab>(resolveInitialTab);
- const [activeModal, setActiveModal] = useState<'company' | 'person' | 'message' | 'deal' | 'project' | null>(null);
- const [editingCompany, setEditingCompany] = useState<Company | null>(null);
- const [editingPerson, setEditingPerson] = useState<Person | null>(null);
- const [editingMessage, setEditingMessage] = useState<OutreachMessage | null>(null);
- const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
- const [editingProject, setEditingProject] = useState<Project | null>(null);
- const [showCsvImport, setShowCsvImport] = useState(false);
- const [showPeopleImport, setShowPeopleImport] = useState(false);
- const [templatePerson, setTemplatePerson] = useState<Person | null>(null);
- const [messageDraft, setMessageDraft] = useState<MessageInput | null>(null);
+  const [activeModal, setActiveModal] = useState<'company' | 'person' | 'project' | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showCsvImport, setShowCsvImport] = useState(false);
+  const [showPeopleImport, setShowPeopleImport] = useState(false);
 
  // Global search state
  const [globalSearch, setGlobalSearch] = useState(resolveInitialGlobalSearch);
@@ -515,8 +410,7 @@ const OpportunitiesLayout: React.FC<{
  // Per-table filter states
  const [companyFilters, setCompanyFilters] = useState<CompanyFilters>(resolveInitialCompanyFilters);
  const [personFilters, setPersonFilters] = useState<PersonFilters>(resolveInitialPersonFilters);
- const [messageFilters, setMessageFilters] = useState<MessageFilters>(resolveInitialMessageFilters);
- const [dealFilters, setDealFilters] = useState<DealFilters>(resolveInitialDealFilters);
+  // message/deal filters removed — tracking system retired
  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
  const [aiScoringCompany, setAiScoringCompany] = useState<Company | null>(null);
  const [companyResearchDraft, setCompanyResearchDraft] = useState<CompanyResearchResult | null>(null);
@@ -545,8 +439,7 @@ const OpportunitiesLayout: React.FC<{
  globalSearch,
  companyFilters,
  personFilters,
- messageFilters,
- dealFilters,
+  // message/deal filters removed
  };
 
  try {
@@ -554,7 +447,7 @@ const OpportunitiesLayout: React.FC<{
  } catch {
  // Ignore storage write failures.
  }
- }, [activeApp, tab, globalSearch, companyFilters, personFilters, messageFilters, dealFilters]);
+  }, [activeApp, tab, globalSearch, companyFilters, personFilters]);
 
   const handleLaunchApp = (appId: AppId) => {
   setActiveApp(appId);
@@ -599,20 +492,17 @@ const OpportunitiesLayout: React.FC<{
  };
 
    const SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
-   crm: [
-   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-   { id: 'big_companies', label: 'Big Companies', icon: Building2 },
-   { id: 'sme_companies', label: 'SME Companies', icon: Store },
-   { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
-   { id: 'companies', label: 'All Companies', icon: Globe },
-   { id: 'people', label: 'People', icon: Users },
-   { id: 'deals', label: 'Deals', icon: Handshake },
-   { id: 'queue', label: 'Outreach Queue', icon: Send },
-   { id: 'messages', label: 'Messages', icon: MessageSquare },
-   { id: 'templates', label: 'Templates', icon: FileText },
-    { id: 'lead_research', label: 'Lead Research', icon: Search },
-    { id: 'archived', label: 'Archived', icon: Archive },
-    ],
+    crm: [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'big_companies', label: 'Big Companies', icon: Building2 },
+    { id: 'sme_companies', label: 'SME Companies', icon: Store },
+    { id: 'freelance_leads', label: 'Freelance Leads', icon: Briefcase },
+    { id: 'companies', label: 'All Companies', icon: Globe },
+    { id: 'people', label: 'People', icon: Users },
+    { id: 'message_examples', label: 'Message Examples', icon: FileText },
+     { id: 'lead_research', label: 'Lead Research', icon: Search },
+     { id: 'archived', label: 'Archived', icon: Archive },
+     ],
    plans: [
    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
    { id: 'plans', label: 'Plans', icon: Calendar },
@@ -784,10 +674,11 @@ const OpportunitiesLayout: React.FC<{
  addInvoice,
  addInvoiceItem,
  addTemplate,
- updateCompany, deleteCompany,
- updatePerson, deletePerson,
- updateMessage, deleteMessage,
- updateDeal, deleteDeal, updateProject, deleteProject,
+  updateMessage, deleteMessage,
+  updateDeal, deleteDeal,
+  updateCompany, deleteCompany,
+  updatePerson, deletePerson,
+   updateProject, deleteProject,
  updateStrategyItem, deleteStrategyItem,
  updateStrategyGoal, deleteStrategyGoal,
  updateStrategyPlan, deleteStrategyPlan,
@@ -1066,21 +957,7 @@ const OpportunitiesLayout: React.FC<{
  setSelectedPersonIds(new Set());
  };
 
- const handleEditMessage = (message: OutreachMessage) => {
- setEditingMessage(message);
- };
-
- const handleDeleteMessage = (id: string) => {
- deleteMessage(id);
- };
-
- const handleEditDeal = (deal: Deal) => {
- setEditingDeal(deal);
- };
-
- const handleDeleteDeal = (id: string) => {
- deleteDeal(id);
- };
+  // message and deal handlers removed — tracking system retired
 
  const handleAIScore = (company: Company) => {
  setAiScoringCompany(company);
@@ -1241,117 +1118,93 @@ const OpportunitiesLayout: React.FC<{
    >
  <div className="space-y-4">
   {selectedCompanyId ? (
-  <CompanyWorkspace
-  companyId={selectedCompanyId}
-  companies={companies}
-  people={people}
-  messages={messages}
-  deals={deals}
-  companyContactMethods={companyContactMethods}
-  personContactMethods={personContactMethods || []}
-  companyProblemProfiles={companyProblemProfiles}
-  companyOutreachScripts={companyOutreachScripts}
-  onBack={() => setSelectedCompanyId(null)}
-  onEditCompany={handleEditCompany}
-  onAIScoreCompany={handleAIScore}
-  addCompanyContactMethod={addCompanyContactMethod}
-  updateCompanyContactMethod={updateCompanyContactMethod}
-  deleteCompanyContactMethod={deleteCompanyContactMethod}
-  addPersonContactMethod={addPersonContactMethod}
-  updatePersonContactMethod={updatePersonContactMethod}
-  deletePersonContactMethod={deletePersonContactMethod}
-  addCompanyProblemProfile={addCompanyProblemProfile}
-  updateCompanyProblemProfile={updateCompanyProblemProfile}
-  deleteCompanyProblemProfile={deleteCompanyProblemProfile}
-  addCompanyOutreachScript={addCompanyOutreachScript}
-  updateCompanyOutreachScript={updateCompanyOutreachScript}
-  deleteCompanyOutreachScript={deleteCompanyOutreachScript}
-  addPerson={addPerson}
-  updatePerson={updatePerson}
-  deletePerson={deletePerson}
-  addMessage={addMessage}
-  updateMessage={updateMessage}
-  deleteMessage={deleteMessage}
-  addDeal={addDeal}
-  updateDeal={updateDeal}
-  deleteDeal={deleteDeal}
-  updateCompany={updateCompany}
-  deleteCompany={handleDeleteCompany}
-  />
+   <CompanyWorkspace
+   companyId={selectedCompanyId}
+   companies={companies}
+   people={people}
+   messages={messages}
+   deals={deals}
+   companyContactMethods={companyContactMethods}
+   personContactMethods={personContactMethods || []}
+   companyProblemProfiles={companyProblemProfiles}
+   companyOutreachScripts={companyOutreachScripts}
+   onBack={() => setSelectedCompanyId(null)}
+   onEditCompany={handleEditCompany}
+   onAIScoreCompany={handleAIScore}
+   addCompanyContactMethod={addCompanyContactMethod}
+   updateCompanyContactMethod={updateCompanyContactMethod}
+   deleteCompanyContactMethod={deleteCompanyContactMethod}
+   addPersonContactMethod={addPersonContactMethod}
+   updatePersonContactMethod={updatePersonContactMethod}
+   deletePersonContactMethod={deletePersonContactMethod}
+   addCompanyProblemProfile={addCompanyProblemProfile}
+   updateCompanyProblemProfile={updateCompanyProblemProfile}
+   deleteCompanyProblemProfile={deleteCompanyProblemProfile}
+   addCompanyOutreachScript={addCompanyOutreachScript}
+   updateCompanyOutreachScript={updateCompanyOutreachScript}
+   deleteCompanyOutreachScript={deleteCompanyOutreachScript}
+    addMessage={addMessage}
+    updateMessage={updateMessage}
+    deleteMessage={deleteMessage}
+    addDeal={addDeal}
+    updateDeal={updateDeal}
+    deleteDeal={deleteDeal}
+    addPerson={addPerson}
+    updatePerson={updatePerson}
+    deletePerson={deletePerson}
+    updateCompany={updateCompany}
+    deleteCompany={handleDeleteCompany}
+    />
   ) : selectedPersonId && personWorkspaceContext === 'global' ? (
   (() => {
   const person = people.find((p) => p.id === selectedPersonId);
   if (!person) return null;
   return (
-  <PersonWorkspace
-  companies={companies}
-  person={person}
-  people={people}
-  messages={messages}
-  deals={deals}
-  personContactMethods={personContactMethods}
-  onBack={handleBackFromPersonWorkspace}
-  onEditPerson={handleEditPerson}
-  onAddMessage={(personId) => {
-  setMessageDraft({
-  companyId: person.companyId || '',
-  personId: personId || person.id,
-  channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
-  language: 'English',
-  messageType: 'outreach',
-  messageText: '',
-  sentDate: new Date().toISOString().slice(0, 16),
-  replyStatus: 'no_reply',
-  replySummary: '',
-  nextFollowUpDate: '',
-  status: 'sent',
-  });
-  setActiveModal('message');
-  }}
-  onAddDeal={() => setActiveModal('deal')}
-  addPersonContactMethod={addPersonContactMethod}
-  updatePersonContactMethod={updatePersonContactMethod}
-  deletePersonContactMethod={deletePersonContactMethod}
-  updatePerson={updatePerson}
-  addMessage={addMessage}
-  updateMessage={updateMessage}
-  deleteMessage={deleteMessage}
-  addDeal={addDeal}
-  updateDeal={updateDeal}
-  deleteDeal={deleteDeal}
-  />
+   <PersonWorkspace
+   companies={companies}
+   person={person}
+   people={people}
+   messages={messages}
+   deals={deals}
+   personContactMethods={personContactMethods}
+   onBack={handleBackFromPersonWorkspace}
+   onEditPerson={handleEditPerson}
+    addPersonContactMethod={addPersonContactMethod}
+    updatePersonContactMethod={updatePersonContactMethod}
+    deletePersonContactMethod={deletePersonContactMethod}
+    addMessage={addMessage}
+    updateMessage={updateMessage}
+    deleteMessage={deleteMessage}
+    addDeal={addDeal}
+    updateDeal={updateDeal}
+    deleteDeal={deleteDeal}
+    onAddMessage={(_personId?: string) => {}}
+    onAddDeal={(_personId?: string) => {}}
+    updatePerson={updatePerson}
+    />
   );
   })()
   ) : (
  <>
-  {tab === 'dashboard' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="Dashboard"
-  description="CRM overview and pipeline health."
-  actions={
-  <>
-  <Button variant="ghost" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
-  <Button variant="outline" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
-  </>
-  }
-  />
-  <OpportunitiesDashboard
- companies={companies}
- people={people}
- messages={messages}
- deals={deals}
- updatePerson={updatePerson}
- updateMessage={updateMessage}
- onUseTemplate={(person) => setTemplatePerson(person)}
- onAddCompany={() => setActiveModal('company')}
- onAddPerson={() => setActiveModal('person')}
- onAddMessage={() => setActiveModal('message')}
- onResetDemoData={handleResetDemoData}
-  onOpenCompaniesTab={() => setTab('companies')}
-  />
-  </div>
-  )}
+   {tab === 'dashboard' && (
+   <div className="space-y-5">
+   <SectionHeader
+   title="Dashboard"
+   description="CRM overview and pipeline health."
+   actions={
+   <Button variant="outline" size="sm" onClick={() => setActiveModal('company')}><Building2 className="h-4 w-4" />Add Company</Button>
+   }
+   />
+   <OpportunitiesDashboard
+  companies={companies}
+  people={people}
+  templateCount={templates.length}
+  onAddCompany={() => setActiveModal('company')}
+  onAddPerson={() => setActiveModal('person')}
+   onOpenCompaniesTab={() => setTab('companies')}
+   />
+   </div>
+   )}
 
   {tab === 'big_companies' && (
   <CompanySegmentView
@@ -1416,64 +1269,7 @@ const OpportunitiesLayout: React.FC<{
   />
   )}
 
-  {tab === 'queue' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="Outreach Queue"
-  description="Messages, follow-ups, and communication priorities."
-  actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
-  }
-  />
-  <OutreachQueuePanel
- companies={companies}
- people={people}
- messages={messages}
- onUseTemplate={(person) => setTemplatePerson(person)}
- onLogMessage={(person) => {
- setMessageDraft({
- companyId: person.companyId,
- personId: person.id,
- channel: person.contactChannel === 'email' ? 'Email' : person.contactChannel === 'linkedin' ? 'LinkedIn' : person.contactChannel || 'LinkedIn',
- language: 'English',
- messageType: 'outreach',
- messageText: '',
- sentDate: new Date().toISOString().slice(0, 16),
- replyStatus: 'no_reply',
- replySummary: '',
- nextFollowUpDate: '',
- status: 'sent',
- });
- setActiveModal('message');
- }}
- onMarkContacted={async (person) => {
- await updatePerson(person.id, {
- ...toPersonInput(person),
- relationshipStatus: 'Message Sent',
- nextFollowUpDate: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString(),
- });
- }}
- onReschedule={async (person, message, nextFollowUpDate) => {
- if (message) {
- await updateMessage(message.id, {
- ...toMessageInput(message),
- nextFollowUpDate,
- });
- return;
- }
-
- await updatePerson(person.id, {
- ...toPersonInput(person),
- nextFollowUpDate,
- });
- }}
-  onOpenLinkedIn={(person) => {
-  if (!person.linkedin) return;
-  window.open(person.linkedin, '_blank', 'noopener,noreferrer');
-  }}
-  />
-  </div>
-  )}
+   {/* Outreach Queue removed — tracking system retired */}
 
   {tab === 'companies' && (
   <div className="space-y-5">
@@ -1486,16 +1282,12 @@ const OpportunitiesLayout: React.FC<{
   const highPriority = companies.filter(c => c.priority === 'high').length;
   const cIds = companies.map(c => c.id);
   const peopleConnected = people.filter(p => p.companyId && cIds.includes(p.companyId)).length;
-  const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost' && cIds.includes(d.companyId)).length;
-  const messagesSent = messages.filter(m => m.companyId && cIds.includes(m.companyId)).length;
-  const primaryStats = [
-  { label: 'Total', value: totalCompanies, color: '' },
-  { label: 'Avg Fit Score', value: avgFitScore, color: 'text-blue-600' },
-  { label: 'High Priority', value: highPriority, color: 'text-amber-600' },
-  { label: 'People Connected', value: peopleConnected, color: '' },
-  { label: 'Open Deals', value: openDeals, color: 'text-emerald-600' },
-  { label: 'Messages Sent', value: messagesSent, color: 'text-indigo-500' },
-  ];
+   const primaryStats = [
+   { label: 'Total', value: totalCompanies, color: '' },
+   { label: 'Avg Fit Score', value: avgFitScore, color: 'text-blue-600' },
+   { label: 'High Priority', value: highPriority, color: 'text-amber-600' },
+   { label: 'People Connected', value: peopleConnected, color: '' },
+   ];
   return (
   <>
   <div>
@@ -1620,9 +1412,8 @@ const OpportunitiesLayout: React.FC<{
   onArchive={handleArchivePerson}
   onDelete={handleDeletePerson}
   onPersonClick={handlePersonClick}
-  personContactMethods={personContactMethods}
-  onUseTemplate={(person) => setTemplatePerson(person)}
-  filters={personFilters}
+   personContactMethods={personContactMethods}
+   filters={personFilters}
   onFilterChange={setPersonFilters}
   />
   </>
@@ -1631,85 +1422,9 @@ const OpportunitiesLayout: React.FC<{
   </div>
   )}
 
-  {tab === 'messages' && (
-  <div className="space-y-5">
-  <SectionHeader
-  title="Messages"
-  description="All logged outreach, follow-ups, and communication history."
-  actions={
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('message')}><MessageSquarePlus className="h-4 w-4" />Log Message</Button>
-  }
-  />
-  <MessagesTable
-  messages={messages}
-  onEdit={handleEditMessage}
-  onDelete={handleDeleteMessage}
-  filters={messageFilters}
-  onFilterChange={setMessageFilters}
-  onLogMessage={() => setActiveModal('message')}
-  />
-  </div>
-  )}
+   {/* Messages page removed — tracking system retired */}
 
-  {tab === 'deals' && (
-  <div className="space-y-5">
-  {(() => {
-  const totalDeals = deals.length;
-  const openDeals = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost').length;
-  const wonDeals = deals.filter(d => d.stage === 'won').length;
-  const pipelineValue = deals.filter(d => d.stage !== 'won' && d.stage !== 'lost').reduce((sum, d) => sum + (d.value || 0), 0);
-  const avgProbability = deals.length > 0
-  ? Math.round(deals.reduce((sum, d) => sum + (d.probability ?? 0), 0) / deals.length * 100)
-  : 0;
-  const needsAction = deals.filter(d => !d.nextAction || d.nextAction.trim() === '').length;
-  const dealStats = [
-  { label: 'Total Deals', value: totalDeals, color: '' },
-  { label: 'Open Deals', value: openDeals, color: 'text-blue-600' },
-  { label: 'Won Deals', value: wonDeals, color: 'text-emerald-600' },
-  { label: 'Pipeline Value', value: pipelineValue ? `${pipelineValue.toLocaleString()} TND` : '0', color: 'text-amber-600' },
-  { label: 'Avg Probability', value: `${avgProbability}%`, color: '' },
-  { label: 'Needs Action', value: needsAction, color: 'text-violet-600' },
-  ];
-  return (
-  <>
-  <div>
-  <h2 className="text-xl font-semibold text-neutral-900">Deals</h2>
-  <p className="mt-0.5 text-sm text-neutral-500">Opportunities, stages, value, and next actions.</p>
-  </div>
-  <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-blue-50/40 p-3.5">
-  <div className="mt-0.5 shrink-0 text-blue-600">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-  </svg>
-  </div>
-  <div className="min-w-0">
-  <div className="text-sm font-semibold text-neutral-900">Revenue pipeline</div>
-  <div className="mt-0.5 text-xs leading-relaxed text-neutral-500">Track deal stages, value, probability, and the next action needed to move forward.</div>
-  </div>
-  </div>
-  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-  {dealStats.map(stat => (
-  <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white p-4">
-  <p className="text-xs text-neutral-500">{stat.label}</p>
-  <p className={`mt-1.5 text-xl font-bold tabular-nums ${stat.color || 'text-neutral-900'}`}>{stat.value}</p>
-  </div>
-  ))}
-  </div>
-  <div className="flex flex-wrap justify-end gap-2">
-  <Button variant="primary" size="sm" onClick={() => setActiveModal('deal')}><Plus className="h-4 w-4" />Add Deal</Button>
-  </div>
-  <DealsTable
-  deals={deals}
-  onEdit={handleEditDeal}
-  onDelete={handleDeleteDeal}
-  filters={dealFilters}
-  onFilterChange={setDealFilters}
-  />
-  </>
-  );
-  })()}
-  </div>
-  )}
+   {/* Deals page removed — deal tracking retired from CRM UI */}
 
  {tab === 'relationships' && (
   <div className="space-y-5">
@@ -1813,24 +1528,16 @@ onDeleteFinanceItem={deleteProjectFinanceItem}
   </div>
   )}
 
-  {tab === 'templates' && (
-  <div className="space-y-5">
-   <SectionHeader
-    title="Templates"
-    description="Message templates, personalization, and reuse."
-    actions={
-     <Button variant="primary" size="sm" onClick={() => addTemplate()}><FileText className="h-4 w-4" />New Template</Button>
-    }
-   />
-   <TemplatesPanel
- templates={templates}
- onAddTemplate={addTemplate}
- onUpdateTemplate={updateTemplate}
- onDeleteTemplate={deleteTemplate}
-onSeedDefaults={seedDefaultTemplates}
-  />
-  </div>
-  )}
+   {tab === 'message_examples' && (
+   <div className="space-y-5">
+    <MessageExamplesPanel
+    templates={templates}
+    onAddTemplate={addTemplate}
+    onUpdateTemplate={updateTemplate}
+    onDeleteTemplate={deleteTemplate}
+    />
+   </div>
+   )}
 
   {tab === 'lead_research' && (
    <LeadResearchPlaybook />
@@ -2254,49 +1961,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  </OpportunityModal>
  ) : null}
 
- {/* Add Message Modal */}
- {activeModal === 'message' ? (
- <OpportunityModal title="Log Message" onClose={() => { setActiveModal(null); setMessageDraft(null); }}>
- <LogMessageForm
- companies={companies}
- people={people}
- onSubmit={async (input) => {
- try {
- await addMessage(input);
- setActiveModal(null);
- setMessageDraft(null);
- } catch (error) {
- console.error('[Opportunities] Failed to add message.', error);
- }
- }}
- initialData={messageDraft || undefined}
- onCancel={() => {
- setActiveModal(null);
- setMessageDraft(null);
- }}
- />
- </OpportunityModal>
- ) : null}
-
- {/* Edit Message Modal */}
- {editingMessage ? (
- <OpportunityModal title="Edit Message" onClose={() => setEditingMessage(null)}>
- <LogMessageForm
- companies={companies}
- people={people}
- initialData={toMessageInput(editingMessage)}
- onSubmit={async (input) => {
- try {
- await updateMessage(editingMessage.id, input);
- setEditingMessage(null);
- } catch (error) {
- console.error('[Opportunities] Failed to update message.', error);
- }
- }}
- onCancel={() => setEditingMessage(null)}
- />
- </OpportunityModal>
- ) : null}
+ {/* Message modals removed — tracking system retired */}
 
  {/* Add Project Modal */}
  {activeModal === 'project' ? (
@@ -2337,44 +2002,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  </OpportunityModal>
  ) : null}
 
- {/* Add Deal Modal */}
- {activeModal === 'deal' ? (
- <OpportunityModal title="Add Deal" onClose={() => setActiveModal(null)}>
- <AddDealForm
- companies={companies}
- people={people}
- onSubmit={async (input) => {
- try {
- await addDeal(input);
- setActiveModal(null);
- } catch (error) {
- console.error('[Opportunities] Failed to add deal.', error);
- }
- }}
- onCancel={() => setActiveModal(null)}
- />
- </OpportunityModal>
- ) : null}
-
- {/* Edit Deal Modal */}
- {editingDeal ? (
- <OpportunityModal title="Edit Deal" onClose={() => setEditingDeal(null)}>
- <AddDealForm
- companies={companies}
- people={people}
- initialData={toDealInput(editingDeal)}
- onSubmit={async (input) => {
- try {
- await updateDeal(editingDeal.id, input);
- setEditingDeal(null);
- } catch (error) {
- console.error('[Opportunities] Failed to update deal.', error);
- }
- }}
- onCancel={() => setEditingDeal(null)}
- />
- </OpportunityModal>
- ) : null}
+ {/* Deal modals removed — deal tracking retired */}
 
  {/* CSV Import Modal */}
  {showCsvImport && (
@@ -2413,21 +2041,7 @@ onDeleteLifeWeeklyReview={deleteLifeWeeklyReview}
  />
  )}
 
- {templatePerson ? (
- <OutreachTemplateModal
- isOpen
- person={templatePerson}
- company={companies.find((company) => company.id === templatePerson.companyId) || null}
- templates={templates}
- onClose={() => setTemplatePerson(null)}
- onLogMessage={async (messageInput) => {
- await addMessage(messageInput);
- }}
- onUpdatePerson={async (id, input) => {
- await updatePerson(id, input);
- }}
- />
- ) : null}
+ {/* OutreachTemplateModal removed — tracking system retired */}
 
  {aiScoringCompany ? (
  <AICompanyScoringModal
