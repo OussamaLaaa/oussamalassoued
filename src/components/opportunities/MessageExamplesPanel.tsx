@@ -187,6 +187,7 @@ const MessageExamplesPanel: React.FC<{
       closeModal();
     } catch {
       setStatus('Failed to delete message example.');
+    } finally {
       setIsDeleting(false);
     }
   };

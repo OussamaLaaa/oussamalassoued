@@ -1887,17 +1887,10 @@ export default async function handler(req, res) {
     }
 
     try {
-      const query = entity === 'message_templates'
-        ? supabase
-            .from(entity)
-            .update({ is_active: false, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select('id')
-            .single()
-        : supabase
-            .from(entity)
-            .delete()
-            .eq('id', id);
+      const query = supabase
+        .from(entity)
+        .delete()
+        .eq('id', id);
 
       const { error } = await query;
 
