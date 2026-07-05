@@ -233,8 +233,20 @@ function FinancePanel({
  return allExpenses.filter(e => expenseInPeriod(e, selectedPeriodId, selectedPeriod));
  }, [allExpenses, selectedPeriodId, selectedPeriod]);
 
- const filteredFinanceIncome = dashboardIncome;
- const filteredFinanceExpenses = dashboardExpenses;
+  const filteredFinanceIncome = dashboardIncome;
+  const filteredFinanceExpenses = dashboardExpenses;
+
+  const financeSummary = useMemo(() => {
+  const totalIncome = dashboardIncome.reduce((s,i) => s + i.amount, 0);
+  const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
+  const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+  const totalExpenses = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
+  const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
+  const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned' || e.status === 'unpaid').reduce((s,e) => s + e.amount, 0);
+  const netPosition = totalIncome - totalExpenses;
+  const netCash = receivedIncome - paidExpenses;
+  return { totalIncome, receivedIncome, expectedIncome, totalExpenses, paidExpenses, plannedExpenses, netPosition, netCash };
+  }, [dashboardIncome, dashboardExpenses]);
 
  const defaultIncome: Partial<FinanceIncome> = { incomeType: 'other', source: 'other', status: 'expected', currency: 'MYR', recurrence: 'once', amount: 0, isRecurring: false, financePeriodId: selectedPeriodId || undefined, incomeDate: selectedPeriod?.startDate || undefined, expectedDate: selectedPeriod?.startDate || undefined };
  const defaultExpense: Partial<FinanceExpense> = { category: 'other', status: 'planned', currency: 'MYR', amount: 0, financePeriodId: selectedPeriodId || undefined, expenseDate: selectedPeriod?.startDate || undefined };
@@ -626,16 +638,13 @@ function FinancePanel({
  );
  }
 
-  function renderDashboard() {
-  const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
-  const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
-  const totalExpenses = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
-  const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
+   function renderDashboard() {
+  const {
+  totalIncome, receivedIncome, expectedIncome,
+  totalExpenses, paidExpenses, plannedExpenses,
+  netPosition, netCash
+  } = financeSummary;
   const unpaidExpenses = dashboardExpenses.filter(e => e.status === 'unpaid').reduce((s,e) => s + e.amount, 0);
-  const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned').reduce((s,e) => s + e.amount, 0);
-  const totalIncome = dashboardIncome.reduce((s,i) => s + i.amount, 0);
-  const netCash = receivedIncome - paidExpenses;
-  const netProjected = totalIncome - totalExpenses;
   const recentIncomeActivity = dashboardIncome.map(i => ({ ...i, _type: 'income' as const, _date: i.incomeDate || i.expectedDate || '' }));
   const recentExpenseActivity = dashboardExpenses.map(e => ({ ...e, _type: 'expense' as const, _date: e.expenseDate || '' }));
   const recentActivity = [...recentIncomeActivity, ...recentExpenseActivity].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime()).slice(0, 5);
@@ -643,16 +652,15 @@ function FinancePanel({
   const totalPct = allRules.reduce((s,r) => s + r.percentage, 0);
 
   const paidPct = totalExpenses > 0 ? Math.round(paidExpenses / totalExpenses * 100) : 0;
-  const unpaidPct = 100 - paidPct;
 
   function renderStatusText() {
     if (totalIncome === 0 && totalExpenses === 0) return 'No income or expenses recorded yet for this period.';
     if (receivedIncome === 0 && expectedIncome > 0) return 'Income is expected but not yet received. Focus on confirming expected payments.';
-    if (netProjected < 0) return 'Net is negative — planned expenses exceed total income. Consider reducing expenses or increasing income.';
+    if (netPosition < 0) return 'Net is negative — planned expenses exceed total income. Consider reducing expenses or increasing income.';
     if (totalExpenses > totalIncome && receivedIncome > 0) return 'Expenses exceed income — review spending and prioritize essential costs.';
     if (totalIncome > 0 && totalExpenses === 0) return 'Income recorded with no expenses — allocate funds toward goals and savings.';
-    if (totalIncome > 0 && totalExpenses > 0 && netProjected > 0 && Math.abs(totalPct - 100) < 1) return 'Good shape — income covers expenses and allocation is balanced.';
-    if (totalIncome > 0 && totalExpenses > 0 && netProjected > 0) return 'Positive net — review allocation rules to ensure funds are distributed effectively.';
+    if (totalIncome > 0 && totalExpenses > 0 && netPosition > 0 && Math.abs(totalPct - 100) < 1) return 'Good shape — income covers expenses and allocation is balanced.';
+    if (totalIncome > 0 && totalExpenses > 0 && netPosition > 0) return 'Positive net — review allocation rules to ensure funds are distributed effectively.';
     return 'Review your income and expenses to get a complete financial picture.';
   }
 
@@ -661,12 +669,12 @@ function FinancePanel({
 
   {/* Financial Snapshot — 4 hero cards */}
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <MetricCard label="Total Income" value={toCur(receivedIncome)} className={receivedIncome > 0 ? '' : ''} />
+      <MetricCard label="Total Income" value={toCur(totalIncome)} className={totalIncome > 0 ? '' : ''} />
       <MetricCard label="Total Expenses" value={toCur(totalExpenses)} className={totalExpenses > 0 ? '' : ''} />
       <MetricCard
         label="Net Position"
-        value={toCur(netProjected)}
-        className={netProjected > 0 ? 'border-emerald-200 bg-emerald-50/30' : netProjected < 0 ? 'border-red-200 bg-red-50/30' : ''}
+        value={toCur(netPosition)}
+        className={netPosition > 0 ? 'border-emerald-200 bg-emerald-50/30' : netPosition < 0 ? 'border-red-200 bg-red-50/30' : ''}
       />
       <MetricCard
         label="Available Cash"
@@ -709,7 +717,7 @@ function FinancePanel({
       {totalExpenses > 0 && (
         <div className="mt-3 h-2 w-full rounded-full bg-neutral-200 overflow-hidden flex">
           <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${paidPct}%` }} />
-          <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${unpaidPct}%` }} />
+          <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${100 - paidPct}%` }} />
         </div>
       )}
       {totalExpenses === 0 && (
