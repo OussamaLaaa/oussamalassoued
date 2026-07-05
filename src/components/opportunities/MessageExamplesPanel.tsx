@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FileText, Search, Copy, Check } from 'lucide-react';
+import { FileText, Search, Copy, Check, Pencil, Trash2 } from 'lucide-react';
 import type { MessageTemplate, MessageTemplateInput } from '../../types/opportunities';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
@@ -37,6 +37,23 @@ const emptyForm: MessageTemplateInput = {
   isActive: true,
 };
 
+function isArabicText(text: string): boolean {
+  const clean = text.trim();
+  if (!clean) return false;
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i];
+    if (/[a-zA-Z\u0600-\u06FF]/.test(ch)) {
+      return /[\u0600-\u06FF]/.test(ch);
+    }
+  }
+  return false;
+}
+
+type ModalKind =
+  | { type: 'view'; template: MessageTemplate }
+  | { type: 'edit'; template: MessageTemplate }
+  | { type: 'create' };
+
 const MessageExamplesPanel: React.FC<{
   templates: MessageTemplate[];
   onAddTemplate: (input: MessageTemplateInput) => Promise<unknown>;
@@ -46,12 +63,12 @@ const MessageExamplesPanel: React.FC<{
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterChannel, setFilterChannel] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
+  const [modal, setModal] = useState<ModalKind | null>(null);
   const [form, setForm] = useState<MessageTemplateInput>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const filtered = useMemo(() => {
     return templates.filter((t) => {
@@ -83,15 +100,12 @@ const MessageExamplesPanel: React.FC<{
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const openAddForm = () => {
-    setEditingTemplate(null);
-    setForm(emptyForm);
-    setStatus('');
-    setShowForm(true);
+  const openView = (template: MessageTemplate) => {
+    setModal({ type: 'view', template });
+    setConfirmDelete(false);
   };
 
-  const openEditForm = (template: MessageTemplate) => {
-    setEditingTemplate(template);
+  const openEdit = (template: MessageTemplate) => {
     setForm({
       name: template.name,
       audience: template.audience,
@@ -101,8 +115,37 @@ const MessageExamplesPanel: React.FC<{
       body: template.body,
       isActive: template.isActive ?? true,
     });
+    setModal({ type: 'edit', template });
     setStatus('');
-    setShowForm(true);
+    setConfirmDelete(false);
+  };
+
+  const openCreate = () => {
+    setForm(emptyForm);
+    setModal({ type: 'create' });
+    setStatus('');
+    setConfirmDelete(false);
+  };
+
+  const closeModal = () => {
+    setModal(null);
+    setStatus('');
+    setConfirmDelete(false);
+  };
+
+  const switchToEdit = (template: MessageTemplate) => {
+    setForm({
+      name: template.name,
+      audience: template.audience,
+      goal: template.goal,
+      language: template.language,
+      subject: template.subject || '',
+      body: template.body,
+      isActive: template.isActive ?? true,
+    });
+    setModal({ type: 'edit', template });
+    setStatus('');
+    setConfirmDelete(false);
   };
 
   const handleSave = async () => {
@@ -117,14 +160,15 @@ const MessageExamplesPanel: React.FC<{
     setIsSubmitting(true);
     setStatus('');
     try {
-      if (editingTemplate) {
-        await onUpdateTemplate(editingTemplate.id, form);
+      if (modal?.type === 'edit' && modal.template) {
+        await onUpdateTemplate(modal.template.id, form);
         setStatus('Saved successfully.');
+        const updated: MessageTemplate = { ...modal.template, ...form };
+        setModal({ type: 'view', template: updated });
       } else {
         await onAddTemplate(form);
-        setStatus('Saved successfully.');
+        closeModal();
       }
-      setTimeout(() => setShowForm(false), 800);
     } catch {
       setStatus('Unable to save.');
     } finally {
@@ -132,10 +176,19 @@ const MessageExamplesPanel: React.FC<{
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const ok = window.confirm('Delete this message example? It will be hidden from the library.');
-    if (!ok) return;
-    await onDeleteTemplate(id);
+  const handleDelete = async () => {
+    if (modal?.type !== 'edit' && modal?.type !== 'view') return;
+    const t = (modal.type === 'edit' || modal.type === 'view') ? modal.template : null;
+    if (!t) return;
+    await onDeleteTemplate(t.id);
+    closeModal();
+  };
+
+  const rtl = isArabicText(form.body);
+
+  const textDir = (text: string): React.CSSProperties => {
+    const isRtl = isArabicText(text);
+    return { direction: isRtl ? 'rtl' : 'ltr', textAlign: isRtl ? 'right' : 'left' };
   };
 
   return (
@@ -178,7 +231,7 @@ const MessageExamplesPanel: React.FC<{
             <option key={ch} value={ch}>{ch}</option>
           ))}
         </select>
-        <Button type="button" variant="primary" size="sm" onClick={openAddForm}>
+        <Button type="button" variant="primary" size="sm" onClick={openCreate}>
           <FileText className="h-4 w-4" />Add Example
         </Button>
       </div>
@@ -189,23 +242,25 @@ const MessageExamplesPanel: React.FC<{
           <p className="mt-2 text-sm font-medium text-neutral-900">No message examples yet.</p>
           <p className="mt-0.5 text-xs text-neutral-500">Add your first example to build your library.</p>
           <div className="mt-4">
-            <Button type="button" variant="primary" size="sm" onClick={openAddForm}>Add Example</Button>
+            <Button type="button" variant="primary" size="sm" onClick={openCreate}>Add Example</Button>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          {filtered.map((template) => (
-            <div
-              key={template.id}
-              className="rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1.5">
+          {filtered.map((template) => {
+            const isRtl = isArabicText(template.body);
+            return (
+              <div
+                key={template.id}
+                onClick={() => openView(template)}
+                className="cursor-pointer rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300 hover:bg-neutral-50/50"
+              >
+                <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="text-sm font-semibold text-neutral-900">{template.name}</div>
-                    {template.isActive !== false ? null : (
+                    {template.isActive === false ? (
                       <Badge variant="neutral">Inactive</Badge>
-                    )}
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {template.audience ? <Badge variant="neutral">{template.audience}</Badge> : null}
@@ -213,131 +268,211 @@ const MessageExamplesPanel: React.FC<{
                     {template.language ? <Badge variant="neutral">{template.language}</Badge> : null}
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopy(template.id, template.body)}
-                    className="text-neutral-600"
-                  >
-                    {copiedId === template.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    {copiedId === template.id ? 'Copied' : 'Copy'}
-                  </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => openEditForm(template)} className="text-neutral-600">Edit</Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete(template.id)} className="text-neutral-600">Delete</Button>
+                <div
+                  className="mt-3 line-clamp-3 whitespace-pre-wrap text-xs leading-relaxed text-neutral-700"
+                  style={textDir(template.body)}
+                >
+                  {template.body}
                 </div>
+                {template.subject ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                      <span key={tag} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="mt-3 rounded-lg bg-neutral-50 px-3 py-2.5 text-xs leading-relaxed text-neutral-700 whitespace-pre-wrap line-clamp-4">
-                {template.body}
-              </div>
-              {template.subject ? (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                    <span key={tag} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {showForm ? (
-        <OpportunityModal
-          title={editingTemplate ? 'Edit Message Example' : 'Add Message Example'}
-          onClose={() => { setShowForm(false); setEditingTemplate(null); setStatus(''); }}
-        >
-          <div className="space-y-4">
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-neutral-900">Title</span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Cold Email — UX Audit Offer"
-                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
-              />
-            </label>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <label className="block space-y-1">
-                <span className="text-sm font-medium text-neutral-900">Category</span>
-                <select
-                  value={form.audience}
-                  onChange={(e) => setForm({ ...form, audience: e.target.value })}
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+      {modal ? (() => {
+        const isCreating = modal.type === 'create';
+        const isEditing = modal.type === 'edit';
+        const isViewing = modal.type === 'view';
+        const template = isViewing || isEditing ? modal.template : null;
+
+        return (
+          <OpportunityModal
+            title={isCreating ? 'Add Message Example' : isEditing ? 'Edit Message Example' : template!.name}
+            onClose={closeModal}
+          >
+            {isViewing && template ? (
+              <div className="space-y-5">
+                {/* Meta badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {template.audience ? <Badge variant="neutral">{template.audience}</Badge> : null}
+                  {template.goal ? <Badge variant="neutral">{template.goal}</Badge> : null}
+                  {template.language ? <Badge variant="neutral">{template.language}</Badge> : null}
+                  {template.isActive === false ? <Badge variant="neutral">Inactive</Badge> : null}
+                </div>
+
+                {template.subject ? (
+                  <div className="flex flex-wrap gap-1">
+                    {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                      <span key={tag} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Gmail-like message body */}
+                <div
+                  className="rounded-xl border border-neutral-200 bg-white p-5 text-sm leading-relaxed text-neutral-900 whitespace-pre-wrap"
+                  style={textDir(template.body)}
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block space-y-1">
-                <span className="text-sm font-medium text-neutral-900">Channel</span>
-                <select
-                  value={form.goal}
-                  onChange={(e) => setForm({ ...form, goal: e.target.value })}
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
-                >
-                  {CHANNELS.map((ch) => (
-                    <option key={ch} value={ch}>{ch}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-neutral-900">Language</span>
-              <select
-                value={form.language}
-                onChange={(e) => setForm({ ...form, language: e.target.value })}
-                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
-              >
-                <option value="English">English</option>
-                <option value="French">French</option>
-                <option value="Arabic">Arabic</option>
-              </select>
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-neutral-900">Tags</span>
-              <input
-                type="text"
-                value={form.subject || ''}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder="e.g. urgent, design, saas (comma separated)"
-                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
-              />
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-neutral-900">Message Body</span>
-              <textarea
-                value={form.body}
-                onChange={(e) => setForm({ ...form, body: e.target.value })}
-                rows={10}
-                placeholder="Write your message example here..."
-                className="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
-              />
-            </label>
-            {status ? (
-              <div className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
-                {status}
+                  {template.body}
+                </div>
+
+                {/* Footer actions */}
+                <div className="flex items-center justify-between gap-2 border-t border-neutral-200 pt-4">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(template.id, template.body)}
+                      className="text-neutral-600"
+                    >
+                      {copiedId === template.id ? (
+                        <><Check className="h-3.5 w-3.5" />Copied</>
+                      ) : (
+                        <><Copy className="h-3.5 w-3.5" />Copy Message</>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {confirmDelete ? (
+                      <>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
+                          Yes, delete
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => switchToEdit(template)} className="text-neutral-600">
+                          <Pencil className="h-3.5 w-3.5" />Edit
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} className="text-red-600 hover:bg-red-50">
+                          <Trash2 className="h-3.5 w-3.5" />Delete
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={closeModal}>
+                          Close
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            ) : null}
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <Button type="button" variant="ghost" size="sm" onClick={() => { setShowForm(false); setEditingTemplate(null); setStatus(''); }}>
-                Cancel
-              </Button>
-              {editingTemplate ? (
-                <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete(editingTemplate.id)} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
-                  Delete
-                </Button>
-              ) : null}
-              <Button type="button" variant="primary" size="sm" onClick={() => void handleSave()} disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Example'}
-              </Button>
-            </div>
-          </div>
-        </OpportunityModal>
-      ) : null}
+            ) : (
+              <div className="space-y-4">
+                <label className="block space-y-1">
+                  <span className="text-sm font-medium text-neutral-900">Title</span>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Cold Email \u2014 UX Audit Offer"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
+                  />
+                </label>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label className="block space-y-1">
+                    <span className="text-sm font-medium text-neutral-900">Category</span>
+                    <select
+                      value={form.audience}
+                      onChange={(e) => setForm({ ...form, audience: e.target.value })}
+                      className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-sm font-medium text-neutral-900">Channel</span>
+                    <select
+                      value={form.goal}
+                      onChange={(e) => setForm({ ...form, goal: e.target.value })}
+                      className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+                    >
+                      {CHANNELS.map((ch) => (
+                        <option key={ch} value={ch}>{ch}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <label className="block space-y-1">
+                  <span className="text-sm font-medium text-neutral-900">Language</span>
+                  <select
+                    value={form.language}
+                    onChange={(e) => setForm({ ...form, language: e.target.value })}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
+                  >
+                    <option value="English">English</option>
+                    <option value="French">French</option>
+                    <option value="Arabic">Arabic</option>
+                  </select>
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-sm font-medium text-neutral-900">Tags</span>
+                  <input
+                    type="text"
+                    value={form.subject || ''}
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    placeholder="e.g. urgent, design, saas (comma separated)"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-sm font-medium text-neutral-900">Message Body</span>
+                  <textarea
+                    value={form.body}
+                    onChange={(e) => setForm({ ...form, body: e.target.value })}
+                    rows={10}
+                    dir={rtl ? 'rtl' : 'ltr'}
+                    placeholder="Write your message example here..."
+                    className="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
+                    style={{ textAlign: rtl ? 'right' : 'left' }}
+                  />
+                </label>
+                {status ? (
+                  <div className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">
+                    {status}
+                  </div>
+                ) : null}
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <Button type="button" variant="ghost" size="sm" onClick={closeModal}>
+                    Cancel
+                  </Button>
+                  {!isCreating && template ? (
+                    confirmDelete ? (
+                      <>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                          Keep
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
+                          Yes, delete
+                        </Button>
+                      </>
+                    ) : (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
+                        Delete
+                      </Button>
+                    )
+                  ) : null}
+                  <Button type="button" variant="primary" size="sm" onClick={() => void handleSave()} disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save Example'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </OpportunityModal>
+        );
+      })() : null}
     </div>
   );
 };
