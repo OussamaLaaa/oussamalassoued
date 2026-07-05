@@ -254,41 +254,60 @@ const MessageExamplesPanel: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filtered.map((template) => {
-            const isRtl = isArabicText(template.body);
+            const isRtl = isArabicText(template.name) || isArabicText(template.body);
+            const cardDir: React.CSSProperties = {
+              direction: isRtl ? 'rtl' : 'ltr',
+              textAlign: isRtl ? 'right' : 'left',
+            };
+            const badgeAlign = isRtl ? 'justify-end' : 'justify-start';
             return (
               <div
                 key={template.id}
                 onClick={() => openView(template)}
-                className="cursor-pointer rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300 hover:bg-neutral-50/50"
+                className="flex cursor-pointer flex-col gap-3 rounded-[18px] border border-black/10 bg-white p-5 transition-colors transition-transform hover:-translate-y-0.5 hover:border-black/20 hover:bg-neutral-50"
+                style={cardDir}
               >
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-sm font-semibold text-neutral-900">{template.name}</div>
-                    {template.isActive === false ? (
-                      <Badge variant="neutral">Inactive</Badge>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {template.audience ? <Badge variant="neutral">{template.audience}</Badge> : null}
-                    {template.goal ? <Badge variant="neutral">{template.goal}</Badge> : null}
-                    {template.language ? <Badge variant="neutral">{template.language}</Badge> : null}
-                  </div>
+                {/* Header: title + status badge */}
+                <div className={`flex items-center gap-2 ${badgeAlign}`}>
+                  <span className="text-sm font-semibold text-neutral-900">{template.name}</span>
+                  {template.isActive === false ? (
+                    <Badge variant="neutral" className="rounded-full px-3 py-1">Inactive</Badge>
+                  ) : null}
                 </div>
-                <div
-                  className="mt-3 line-clamp-3 whitespace-pre-wrap text-xs leading-relaxed text-neutral-700"
-                  style={textDir(template.body)}
-                >
-                  {template.body}
+
+                {/* Metadata badges: category, channel, language */}
+                <div className={`flex flex-wrap gap-2 ${badgeAlign}`}>
+                  {template.audience ? (
+                    <span className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700">{template.audience}</span>
+                  ) : null}
+                  {template.goal ? (
+                    <span className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700">{template.goal}</span>
+                  ) : null}
+                  {template.language ? (
+                    <span className="inline-flex items-center rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700">{template.language}</span>
+                  ) : null}
                 </div>
+
+                {/* Tags */}
                 {template.subject ? (
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div className={`flex flex-wrap gap-1.5 ${badgeAlign}`}>
                     {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                      <span key={tag} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
+                      <span key={tag} className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-600">{tag}</span>
                     ))}
                   </div>
                 ) : null}
+
+                {/* Message preview */}
+                <div className="line-clamp-4 whitespace-pre-wrap rounded-[14px] border border-black/5 bg-neutral-50 p-4 text-sm leading-7 text-neutral-700">
+                  {template.body}
+                </div>
+
+                {/* Footer hint */}
+                <div className={`text-xs ${isRtl ? 'text-right' : 'text-left'} text-neutral-400`}>
+                  Click to open
+                </div>
               </div>
             );
           })}
@@ -300,6 +319,8 @@ const MessageExamplesPanel: React.FC<{
         const isEditing = modal.type === 'edit';
         const isViewing = modal.type === 'view';
         const template = isViewing || isEditing ? modal.template : null;
+        const modalRtl = isViewing && template ? isArabicText(template.name) || isArabicText(template.body) : false;
+        const modalAlign = modalRtl ? 'justify-end' : 'justify-start';
 
         return (
           <OpportunityModal
@@ -307,19 +328,19 @@ const MessageExamplesPanel: React.FC<{
             onClose={closeModal}
           >
             {isViewing && template ? (
-              <div className="space-y-5">
+              <div className="space-y-5" dir={modalRtl ? 'rtl' : 'ltr'} style={{ textAlign: modalRtl ? 'right' : 'left' }}>
                 {/* Meta badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {template.audience ? <Badge variant="neutral">{template.audience}</Badge> : null}
-                  {template.goal ? <Badge variant="neutral">{template.goal}</Badge> : null}
-                  {template.language ? <Badge variant="neutral">{template.language}</Badge> : null}
-                  {template.isActive === false ? <Badge variant="neutral">Inactive</Badge> : null}
+                <div className={`flex flex-wrap items-center gap-2 ${modalAlign}`}>
+                  {template.audience ? <Badge variant="neutral" className="rounded-full px-3 py-1">{template.audience}</Badge> : null}
+                  {template.goal ? <Badge variant="neutral" className="rounded-full px-3 py-1">{template.goal}</Badge> : null}
+                  {template.language ? <Badge variant="neutral" className="rounded-full px-3 py-1">{template.language}</Badge> : null}
+                  {template.isActive === false ? <Badge variant="neutral" className="rounded-full px-3 py-1">Inactive</Badge> : null}
                 </div>
 
                 {template.subject ? (
-                  <div className="flex flex-wrap gap-1">
+                  <div className={`flex flex-wrap gap-1.5 ${modalAlign}`}>
                     {template.subject.split(',').map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                      <span key={tag} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
+                      <span key={tag} className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-600">{tag}</span>
                     ))}
                   </div>
                 ) : null}
