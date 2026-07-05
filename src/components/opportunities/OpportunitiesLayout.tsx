@@ -425,6 +425,7 @@ const OpportunitiesLayout: React.FC<{
   const [aiControlQuickAction, setAiControlQuickAction] = useState<AIControlQuickAction | null>(null);
 
   const [archiveSubTab, setArchiveSubTab] = useState<'companies' | 'people'>('companies');
+  const [selectedArchivedPersonIds, setSelectedArchivedPersonIds] = useState<Set<string>>(new Set());
   const [activeApp, setActiveApp] = useState<AppId>(resolveInitialApp);
    const [appSection, setAppSection] = useState<string>('');
   const [selectedNoteCategorySlug, setSelectedNoteCategorySlug] = useState('all');
@@ -899,6 +900,17 @@ const OpportunitiesLayout: React.FC<{
   } catch (error) {
   console.error('[CRM] restore person failed', error);
   const message = error instanceof Error && error.message ? error.message : 'Unable to restore person.';
+  setDeleteError(message);
+  throw error;
+  }
+  };
+
+  const handleRestoreCompany = async (company: Company) => {
+  try {
+  await updateCompany(company.id, { status: 'active' as const });
+  } catch (error) {
+  console.error('[CRM] restore company failed', error);
+  const message = error instanceof Error && error.message ? error.message : 'Unable to restore company.';
   setDeleteError(message);
   throw error;
   }
@@ -1398,75 +1410,122 @@ const OpportunitiesLayout: React.FC<{
         onUpdateCompany={updateCompany}
         onBulkArchive={handleBulkArchive}
         onBulkDelete={handleBulkDelete}
+        onRestore={handleRestoreCompany}
       />
     )}
 
     {archiveSubTab === 'people' && (
       <div>
         {people.filter(p => p.status === 'archived').length === 0 ? (
-          <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center">
+          <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center">
             <p className="text-sm text-neutral-500">No archived people.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-            <table className="w-full text-sm">
+          <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
+            <table className="min-w-[960px] w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-neutral-200 bg-neutral-50">
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Name</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Company</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Role</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Relation</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Contact</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Phone</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Email</th>
-                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Archived</th>
-                  <th className="px-4 py-3 text-right font-medium text-neutral-600">Actions</th>
+                <tr className="border-b border-neutral-200 text-xs font-medium text-neutral-500">
+                  <th className="w-10 px-2 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={people.filter(p => p.status === 'archived').length > 0 && selectedArchivedPersonIds.size === people.filter(p => p.status === 'archived').length}
+                      onChange={() => {
+                        const archived = people.filter(p => p.status === 'archived');
+                        if (selectedArchivedPersonIds.size === archived.length) {
+                          setSelectedArchivedPersonIds(new Set());
+                        } else {
+                          setSelectedArchivedPersonIds(new Set(archived.map((p) => p.id)));
+                        }
+                      }}
+                      className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </th>
+                  <th className="px-4 py-3 font-medium">Person</th>
+                  <th className="px-4 py-3 font-medium">Company</th>
+                  <th className="px-4 py-3 font-medium">Role</th>
+                  <th className="px-4 py-3 font-medium">Relation</th>
+                  <th className="px-4 py-3 font-medium">Contact</th>
+                  <th className="px-4 py-3 font-medium">Phone</th>
+                  <th className="px-4 py-3 font-medium">Email</th>
+                  <th className="px-4 py-3 font-medium">Archived</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {people.filter(p => p.status === 'archived').map((person) => {
                   const company = companies.find((c) => c.id === person.companyId);
+                  const isSelected = selectedArchivedPersonIds.has(person.id);
                   return (
-                    <tr key={person.id} className="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50">
-                      <td className="px-4 py-3">
+                    <tr
+                      key={person.id}
+                      className={`border-b border-neutral-100 transition-colors hover:bg-neutral-50 cursor-pointer ${isSelected ? 'bg-blue-50/50' : ''}`}
+                      onClick={() => handlePersonClick(person.id)}
+                    >
+                      <td className="w-10 px-2 py-3.5 align-top text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedArchivedPersonIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(person.id)) next.delete(person.id); else next.add(person.id);
+                              return next;
+                            });
+                          }}
+                          className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
                         <button
-                          onClick={() => handlePersonClick(person.id)}
+                          onClick={(e) => { e.stopPropagation(); handlePersonClick(person.id); }}
                           className="font-medium text-neutral-900 hover:text-blue-600 transition-colors"
                         >
                           {person.fullName}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">{company?.name || '\u2014'}</td>
-                      <td className="px-4 py-3 text-neutral-600">{person.role || '\u2014'}</td>
-                      <td className="px-4 py-3 text-neutral-600">{person.relationType || '\u2014'}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+                        <div className="max-w-[140px] truncate">{company?.name || 'Not added yet'}</div>
+                      </td>
+                      <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+                        {person.role || 'Not added yet'}
+                      </td>
+                      <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+                        {person.relationType ? (
+                          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-600">{person.relationType}</span>
+                        ) : 'Not added yet'}
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
                         {person.emailPublic || person.linkedin || person.contactChannel ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Known</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">Missing</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">Unknown</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">{person.phone || '\u2014'}</td>
-                      <td className="px-4 py-3 text-neutral-600">{person.emailPublic || '\u2014'}</td>
-                      <td className="px-4 py-3 text-xs text-neutral-500">
-                        {person.archivedAt ? new Date(person.archivedAt).toLocaleDateString() : '\u2014'}
+                      <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+                        {person.phone || 'Not added yet'}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="px-4 py-3.5 align-top text-sm text-neutral-700">
+                        {person.emailPublic || 'Not added yet'}
+                      </td>
+                      <td className="px-4 py-3.5 align-top text-xs text-neutral-500">
+                        {person.archivedAt ? new Date(person.archivedAt).toLocaleDateString() : 'Not added yet'}
+                      </td>
+                      <td className="px-4 py-3.5 align-top">
+                        <div className="inline-flex items-center justify-end gap-1">
                           <button
-                            onClick={() => handleRestorePerson(person)}
+                            onClick={(e) => { e.stopPropagation(); handleRestorePerson(person).then(() => { setSelectedArchivedPersonIds((prev) => { const next = new Set(prev); next.delete(person.id); return next; }); }); }}
                             className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-green-700"
                           >
                             Restore
                           </button>
                           <button
-                            onClick={() => handlePersonClick(person.id)}
+                            onClick={(e) => { e.stopPropagation(); handlePersonClick(person.id); }}
                             className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
                           >
                             Open
                           </button>
                           <button
-                            onClick={() => handleEditPerson(person)}
+                            onClick={(e) => { e.stopPropagation(); handleEditPerson(person); }}
                             className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
                           >
                             Edit

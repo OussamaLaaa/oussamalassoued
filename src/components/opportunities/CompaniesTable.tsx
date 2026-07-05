@@ -94,7 +94,8 @@ const CompaniesTable: React.FC<{
   onFilterChange?: (filters: CompanyFilters) => void;
   onBulkArchive?: (ids: string[]) => Promise<void>;
   onBulkDelete?: (ids: string[]) => Promise<void>;
-}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, onUpdateCompany, filters, onFilterChange, onBulkArchive, onBulkDelete }) => {
+  onRestore?: (company: Company) => void;
+}> = ({ companies, onEdit, onDelete, onAIScore, onCompanyClick, onUpdateCompany, filters, onFilterChange, onBulkArchive, onBulkDelete, onRestore }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const filtered = useMemo(() => {
  if (!filters) return companies;
@@ -423,8 +424,21 @@ const CompaniesTable: React.FC<{
   )}
   </td>
   <td className="px-4 py-3.5 align-top">
-  <div className="inline-flex items-center justify-end gap-2">
-  {onEdit && (
+                  <div className="inline-flex items-center justify-end gap-2">
+                  {onRestore && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
+                      onRestore(company);
+                    }}
+                    className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-green-700"
+                  >
+                    Restore
+                  </button>
+                  )}
+                  {onEdit && (
   <button
   type="button"
   onClick={(event) => {
