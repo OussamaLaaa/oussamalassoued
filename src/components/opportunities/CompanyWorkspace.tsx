@@ -7,7 +7,7 @@ import type {
  PersonInput, MessageInput, DealInput,
  PersonContactMethod, PersonContactMethodInput,
 } from '../../types/opportunities';
-import { Archive, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import EmptyState from '../ui/EmptyState';
@@ -18,9 +18,7 @@ import AddPersonForm from './AddPersonForm';
 import LogMessageForm from './LogMessageForm';
 import AddDealForm from './AddDealForm';
 import CompanyContactMethodForm from './CompanyContactMethodForm';
-import CompanyProblemProfileForm from './CompanyProblemProfileForm';
 import CompanyOutreachScriptForm from './CompanyOutreachScriptForm';
-import CompanyResearchPanel from './CompanyResearchPanel';
 import PersonWorkspace from './PersonWorkspace';
 import LinkExistingPersonDialog from './LinkExistingPersonDialog';
 import { ContactLink, getContactHref } from './contactHelpers';
@@ -63,19 +61,14 @@ interface Props {
  deleteCompany: (id: string) => Promise<void>;
 }
 
-type WorkspaceTab = 'overview' | 'contact_methods' | 'people' | 'problem' | 'outreach_script' | 'messages' | 'deals' | 'notes' | 'ai_score' | 'research';
+type WorkspaceTab = 'overview' | 'contact_methods' | 'people' | 'outreach_script' | 'notes';
 
 const TABS: { id: WorkspaceTab; label: string }[] = [
- { id: 'overview', label: 'Overview' },
- { id: 'contact_methods', label: 'Contact Methods' },
- { id: 'people', label: 'People' },
- { id: 'problem', label: 'Problem / Opportunity' },
- { id: 'outreach_script', label: 'Outreach Script' },
- { id: 'messages', label: 'Messages' },
- { id: 'deals', label: 'Deals' },
- { id: 'notes', label: 'Notes' },
- { id: 'ai_score', label: 'AI Score' },
- { id: 'research', label: 'Research' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'contact_methods', label: 'Contact Methods' },
+  { id: 'people', label: 'People' },
+  { id: 'outreach_script', label: 'Outreach Script' },
+  { id: 'notes', label: 'Notes' },
 ];
 
 const DATABASE_TYPE_LABELS: Record<string, string> = {
@@ -99,12 +92,26 @@ const URGENCY_LABELS: Record<string, string> = {
 };
 
 const CHANNEL_LABELS: Record<string, string> = {
- email: 'Email',
- phone: 'Phone',
- linkedin: 'LinkedIn',
- whatsapp: 'WhatsApp',
- twitter: 'Twitter',
- other: 'Other',
+  email: 'Email',
+  phone: 'Phone',
+  linkedin: 'LinkedIn',
+  whatsapp: 'WhatsApp',
+  twitter: 'Twitter',
+  website: 'Website',
+  other: 'Other',
+};
+
+const NICHE_LABELS: Record<string, string> = {
+  saas: 'SaaS',
+  b2b_services: 'B2B Services',
+  healthtech: 'HealthTech',
+  edtech: 'EdTech',
+  marketplace: 'Marketplace',
+  ecommerce: 'E-Commerce',
+  startup: 'Startup',
+  commercial: 'Commercial',
+  agency: 'Agency',
+  other: 'Other',
 };
 
 const toPersonInput = (person: Person, overrides: Partial<PersonInput> = {}): PersonInput => ({
@@ -132,17 +139,12 @@ const CompanyWorkspace: React.FC<Props> = ({
  deals,
  companyContactMethods,
  personContactMethods = [],
- companyProblemProfiles,
- companyOutreachScripts,
- onBack,
- onEditCompany,
- onAIScoreCompany,
- addCompanyContactMethod,
- updateCompanyContactMethod,
- deleteCompanyContactMethod,
- addCompanyProblemProfile,
- updateCompanyProblemProfile,
- deleteCompanyProblemProfile,
+  companyOutreachScripts,
+  onBack,
+  onEditCompany,
+  addCompanyContactMethod,
+  updateCompanyContactMethod,
+  deleteCompanyContactMethod,
  addCompanyOutreachScript,
  updateCompanyOutreachScript,
  deleteCompanyOutreachScript,
@@ -182,10 +184,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  const [showContactMethodForm, setShowContactMethodForm] = useState(false);
  const [editingContactMethod, setEditingContactMethod] = useState<CompanyContactMethod | null>(null);
 
- const [showProblemProfileForm, setShowProblemProfileForm] = useState(false);
- const [editingProblemProfile, setEditingProblemProfile] = useState<CompanyProblemProfile | null>(null);
-
- const [showOutreachScriptForm, setShowOutreachScriptForm] = useState(false);
+  const [showOutreachScriptForm, setShowOutreachScriptForm] = useState(false);
  const [editingOutreachScript, setEditingOutreachScript] = useState<CompanyOutreachScript | null>(null);
 
  const [showPersonChoiceModal, setShowPersonChoiceModal] = useState(false);
@@ -203,8 +202,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  const safeDeals = deals ?? [];
  const safeCompanyContactMethods = companyContactMethods ?? [];
  const safePersonContactMethods = personContactMethods ?? [];
- const safeCompanyProblemProfiles = companyProblemProfiles ?? [];
- const safeCompanyOutreachScripts = companyOutreachScripts ?? [];
+  const safeCompanyOutreachScripts = companyOutreachScripts ?? [];
 
  if (import.meta.env.DEV) {
  if (typeof safePersonContactMethods === 'undefined') {
@@ -215,20 +213,18 @@ const CompanyWorkspace: React.FC<Props> = ({
 
  const company = safeCompanies.find((c) => c.id === companyId);
 
- useEffect(() => {
- if (!import.meta.env.DEV || !company) return;
+  useEffect(() => {
+  if (!import.meta.env.DEV || !company) return;
 
- const contactMethodsForCompany = safeCompanyContactMethods.filter((item) => String(item.companyId) === String(company.id));
- const problemProfilesForCompany = safeCompanyProblemProfiles.filter((item) => String(item.companyId) === String(company.id));
- const outreachScriptsForCompany = safeCompanyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
+  const contactMethodsForCompany = safeCompanyContactMethods.filter((item) => String(item.companyId) === String(company.id));
+  const outreachScriptsForCompany = safeCompanyOutreachScripts.filter((item) => String(item.companyId) === String(company.id));
 
- console.log('[CompanyWorkspace] companyId', companyId);
- console.log('[CompanyWorkspace] contact methods total', safeCompanyContactMethods.length);
- console.log('[CompanyWorkspace] contact methods for company', contactMethodsForCompany.length);
- console.log('[CompanyWorkspace] first contact method', safeCompanyContactMethods[0] || null);
- console.log('[CompanyWorkspace] problem profiles for company', problemProfilesForCompany.length);
- console.log('[CompanyWorkspace] outreach scripts for company', outreachScriptsForCompany.length);
- }, [company, companyId, safeCompanyContactMethods, safeCompanyProblemProfiles, safeCompanyOutreachScripts]);
+  console.log('[CompanyWorkspace] companyId', companyId);
+  console.log('[CompanyWorkspace] contact methods total', safeCompanyContactMethods.length);
+  console.log('[CompanyWorkspace] contact methods for company', contactMethodsForCompany.length);
+  console.log('[CompanyWorkspace] first contact method', safeCompanyContactMethods[0] || null);
+  console.log('[CompanyWorkspace] outreach scripts for company', outreachScriptsForCompany.length);
+  }, [company, companyId, safeCompanyContactMethods, safeCompanyOutreachScripts]);
 
  useEffect(() => {
  if (!company) return;
@@ -399,58 +395,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  }
  };
 
- const handleCreateResearchContactMethods = async (items: any[]) => {
- if (!items?.length) return;
- for (const item of items) {
- if (!item?.value) continue;
- await addCompanyContactMethod({
- companyId: company.id,
- type: item.type || 'other',
- label: item.label || undefined,
- value: item.value,
- isPrimary: Boolean(item.isPrimary),
- notes: item.notes || undefined,
- });
- }
- };
-
- const handleCreateResearchProblemProfile = async (item: any) => {
- await addCompanyProblemProfile({
- companyId: company.id,
- problemTitle: item.problemTitle || undefined,
- problemDescription: item.problemDescription || undefined,
- currentSituation: item.currentSituation || undefined,
- businessImpact: item.businessImpact || undefined,
- proposedSolution: item.proposedSolution || undefined,
- serviceAngle: item.serviceAngle || undefined,
- valueProposition: item.valueProposition || undefined,
- urgency: item.urgency || undefined,
- confidence: item.confidence || undefined,
- status: item.status || undefined,
- notes: item.notes || undefined,
- });
- };
-
- const handleCreateResearchOutreachScript = async (item: any) => {
- await addCompanyOutreachScript({
- companyId: company.id,
- name: item.name || `${company.name} AI Research Script`,
- channel: item.channel || undefined,
- language: item.language || undefined,
- audience: item.audience || undefined,
- goal: item.goal || undefined,
- hook: item.hook || undefined,
- messageBody: item.messageBody || undefined,
- callScript: item.callScript || undefined,
- objectionHandling: item.objectionHandling || undefined,
- followUpMessage: item.followUpMessage || undefined,
- status: item.status || undefined,
- isActive: item.isActive ?? undefined,
- notes: item.notes || undefined,
- });
- };
-
- // ── Contact Method Handlers ──
+  // ── Contact Method Handlers ──
  const openAddContactMethod = () => {
  setEditingContactMethod(null);
  setFormError(null);
@@ -481,38 +426,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  await deleteCompanyContactMethod(id);
  };
 
- // ── Problem Profile Handlers ──
- const openAddProblemProfile = () => {
- setEditingProblemProfile(null);
- setFormError(null);
- setShowProblemProfileForm(true);
- };
-
- const openEditProblemProfile = (profile: CompanyProblemProfile) => {
- setEditingProblemProfile(profile);
- setFormError(null);
- setShowProblemProfileForm(true);
- };
-
- const handleSaveProblemProfile = async (data: CompanyProblemProfileInput) => {
- await wrapSave(async () => {
- if (editingProblemProfile) {
- await updateCompanyProblemProfile(editingProblemProfile.id, data);
- } else {
- await addCompanyProblemProfile(data);
- }
- });
- setShowProblemProfileForm(false);
- setEditingProblemProfile(null);
- };
-
- const handleDeleteProblemProfile = async (id: string) => {
- const ok = window.confirm('Delete this problem profile?');
- if (!ok) return;
- await deleteCompanyProblemProfile(id);
- };
-
- // ── Outreach Script Handlers ──
+  // ── Outreach Script Handlers ──
  const openAddOutreachScript = () => {
  setEditingOutreachScript(null);
  setFormError(null);
@@ -694,82 +608,285 @@ const CompanyWorkspace: React.FC<Props> = ({
 
  const tabContent = () => {
  switch (tab) {
-  case 'overview':
+  case 'overview': {
+  const companyMethods = companyContactMethods.filter((m) => String(m.companyId) === String(company.id));
+  const primaryPeople = companyPeople.filter((p) => p.role && ['ceo', 'founder', 'owner', 'manager', 'director'].includes(p.role.toLowerCase()));
+  const topPeople = companyPeople.slice(0, 3);
+
+  const renderCopyButton = (text: string) => (
+  <button
+  type="button"
+  onClick={(e) => { e.stopPropagation(); handleCopyToClipboard(text); }}
+  className="text-xs font-medium text-neutral-400 hover:text-neutral-700 transition-colors"
+  >
+  Copy
+  </button>
+  );
+
+  const renderOpenButton = (url: string) => (
+  <a
+  href={url.startsWith('http') ? url : `https://${url}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors"
+  >
+  Open
+  </a>
+  );
+
+  const contactRowBg = (type: string) => {
+  if (type === 'phone') return 'bg-green-50/60 border-green-100';
+  if (type === 'email') return 'bg-indigo-50/60 border-indigo-100';
+  if (type === 'website') return 'bg-neutral-50 border-neutral-200';
+  if (type === 'linkedin') return 'bg-blue-50/60 border-blue-100';
+  return 'bg-neutral-50 border-neutral-200';
+  };
+
+  const contactTypeColor = (type: string) => {
+  if (type === 'phone') return 'text-green-700';
+  if (type === 'email') return 'text-indigo-700';
+  if (type === 'website') return 'text-neutral-700';
+  if (type === 'linkedin') return 'text-blue-700';
+  return 'text-neutral-600';
+  };
+
+  const methodTagVariant = (type: string) => {
+  if (type === 'email') return 'blue' as const;
+  if (type === 'phone' || type === 'whatsapp') return 'success' as const;
+  if (type === 'website') return 'neutral' as const;
+  if (type === 'linkedin') return 'blue' as const;
+  return 'neutral' as const;
+  };
+
   return (
   <div className="space-y-6">
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Company Details</h3>
-  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-  <div className="text-neutral-500">Name</div>
-  <div className="text-neutral-900 font-medium">{company.name}</div>
-  <div className="text-neutral-500">Category</div>
-  <div className="text-neutral-900">{company.category || '—'}</div>
-  <div className="text-neutral-500">Industry</div>
-  <div className="text-neutral-900">{company.industry || '—'}</div>
-  <div className="text-neutral-500">Country</div>
-  <div className="text-neutral-900">{company.country || '—'}</div>
-  <div className="text-neutral-500">City</div>
-  <div className="text-neutral-900">{company.city || '—'}</div>
-  <div className="text-neutral-500">Phone</div>
-  <div className="text-neutral-900">
-  {company.phone ? <ContactLink type="phone" value={company.phone} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /> : <span className="text-neutral-400">—</span>}
+
+  {/* A. Company Summary Card */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-4 text-sm font-semibold text-neutral-900">Company Summary</h3>
+  <div className="space-y-3">
+  <div className="text-lg font-semibold text-neutral-900">{company.name}</div>
+
+  <div className="flex flex-wrap gap-1.5">
+  {company.databaseType && (
+  <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200 text-xs">
+  {DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType}
+  </Badge>
+  )}
+  {company.priority && <PriorityBadge priority={company.priority} />}
+  {company.status && <StatusBadge status={company.status} />}
+  {company.ethicalFit && (
+  <Badge variant={ethicalFitColor(company.ethicalFit) as 'success' | 'neutral' | 'warning' | 'danger'} className="text-xs">
+  {ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}
+  </Badge>
+  )}
+  {company.targetNiche && (
+  <Badge variant="purple" className="text-xs">
+  {NICHE_LABELS[company.targetNiche] || company.targetNiche}
+  </Badge>
+  )}
   </div>
-  <div className="text-neutral-500">Email</div>
-  <div className="text-neutral-900">
-  {company.email ? <ContactLink type="email" value={company.email} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /> : <span className="text-neutral-400">—</span>}
+
+  <div className="grid grid-cols-1 gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
+  {company.category && (
+  <><span className="text-neutral-500">Category</span><span className="text-neutral-900">{company.category}</span></>
+  )}
+  {company.industry && (
+  <><span className="text-neutral-500">Industry</span><span className="text-neutral-900">{company.industry}</span></>
+  )}
+  {company.targetNiche && (
+  <><span className="text-neutral-500">Target Niche</span><span className="text-neutral-900">{NICHE_LABELS[company.targetNiche] || company.targetNiche}</span></>
+  )}
+  {typeof company.fitScore === 'number' && (
+  <><span className="text-neutral-500">Fit Score</span><span className="font-semibold text-indigo-600">{company.fitScore}</span></>
+  )}
+  {company.nextAction && (
+  <><span className="text-neutral-500">Next Action</span><span className="text-neutral-900">{company.nextAction}</span></>
+  )}
   </div>
   </div>
   </div>
 
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="mb-3 text-sm font-semibold text-neutral-900">CRM Classification</h3>
-  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-  <div className="text-neutral-500">Database Type</div>
-  <div className="text-neutral-900"><Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200">{DATABASE_TYPE_LABELS[normalizeDatabaseType(company.databaseType)] || company.databaseType || '—'}</Badge></div>
-  <div className="text-neutral-500">Priority</div>
-  <div className="text-neutral-900"><PriorityBadge priority={company.priority} /></div>
-  <div className="text-neutral-500">Fit Score</div>
-  <div className="text-neutral-900">{typeof company.fitScore === 'number' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-indigo-200 text-indigo-700 bg-indigo-50">Fit: {company.fitScore}</span>
-  ) : '—'}</div>
-  <div className="text-neutral-500">Ethical Fit</div>
-  <div className="text-neutral-900">{company.ethicalFit === 'good' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
-  ) : company.ethicalFit === 'needs_review' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-amber-200 text-amber-700 bg-amber-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
-  ) : company.ethicalFit === 'avoid' ? (
-  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-md border border-red-200 text-red-700 bg-red-50">{ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit}</span>
+  {/* B. Location / Market Card */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Location / Market</h3>
+  <div className="space-y-1.5 text-sm">
+  {company.country ? (
+  <div className="flex items-center gap-2">
+  <span className="text-neutral-500">Country</span>
+  <span className="text-neutral-900">{company.country}</span>
+  </div>
   ) : (
-  <Badge variant="neutral">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</Badge>
-  )}</div>
-  <div className="text-neutral-500">Status</div>
-  <div className="text-neutral-900"><StatusBadge status={company.status} /></div>
-  <div className="text-neutral-500">Next Action</div>
-  <div className="text-neutral-900">{company.nextAction || '—'}</div>
+  <div className="text-neutral-400">Not added yet</div>
+  )}
+  {company.city && (
+  <div className="flex items-center gap-2">
+  <span className="text-neutral-500">City</span>
+  <span className="text-neutral-900">{company.city}</span>
   </div>
-  </div>
-
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Web Presence</h3>
-  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-  {company.website ? <><div className="text-neutral-500">Website</div><div className="text-neutral-900"><ContactLink type="website" value={company.website} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {company.linkedin ? <><div className="text-neutral-500">LinkedIn</div><div className="text-neutral-900"><ContactLink type="linkedin" value={company.linkedin} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {company.facebook ? <><div className="text-neutral-500">Facebook</div><div className="text-neutral-900"><ContactLink type="facebook" value={company.facebook} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {company.instagram ? <><div className="text-neutral-500">Instagram</div><div className="text-neutral-900"><ContactLink type="instagram" value={company.instagram} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {company.twitter ? <><div className="text-neutral-500">X / Twitter</div><div className="text-neutral-900"><ContactLink type="x" value={company.twitter} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {company.youtube ? <><div className="text-neutral-500">YouTube</div><div className="text-neutral-900"><ContactLink type="other" value={company.youtube} className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline" compact /></div></> : null}
-  {!company.website && !company.linkedin && !company.facebook && !company.instagram && !company.twitter && !company.youtube ? <div className="text-neutral-500 col-span-2">No web presence data.</div> : null}
-  </div>
-  </div>
-
-  {company.notes && (
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
-  <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words">{company.notes}</p>
+  )}
+  {company.country && company.city && (
+  <div className="flex items-center gap-2">
+  <span className="text-neutral-500">Location</span>
+  <span className="text-neutral-900">{company.city}, {company.country}</span>
   </div>
   )}
   </div>
- );
+  </div>
+
+  {/* C. Contact Snapshot Card */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Contact Snapshot</h3>
+  <div className="space-y-2">
+  {/* Phone */}
+  <div className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 ${contactRowBg('phone')}`}>
+  <div className="min-w-0 flex-1">
+  <div className={`text-xs font-semibold uppercase tracking-wide ${contactTypeColor('phone')}`}>Phone</div>
+  <div className="mt-0.5 text-sm text-neutral-900 break-words">
+  {company.phone || <span className="text-neutral-400">Not added yet</span>}
+  </div>
+  </div>
+  {company.phone && (
+  <div className="ml-3 shrink-0">{renderCopyButton(company.phone)}</div>
+  )}
+  </div>
+
+  {/* Email */}
+  <div className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 ${contactRowBg('email')}`}>
+  <div className="min-w-0 flex-1">
+  <div className={`text-xs font-semibold uppercase tracking-wide ${contactTypeColor('email')}`}>Email</div>
+  <div className="mt-0.5 text-sm text-neutral-900 break-words">
+  {company.email || <span className="text-neutral-400">Not added yet</span>}
+  </div>
+  </div>
+  {company.email && (
+  <div className="ml-3 shrink-0">{renderCopyButton(company.email)}</div>
+  )}
+  </div>
+
+  {/* Website */}
+  <div className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 ${contactRowBg('website')}`}>
+  <div className="min-w-0 flex-1">
+  <div className={`text-xs font-semibold uppercase tracking-wide ${contactTypeColor('website')}`}>Website</div>
+  <div className="mt-0.5 text-sm text-neutral-900 break-words">
+  {company.website || <span className="text-neutral-400">Not added yet</span>}
+  </div>
+  </div>
+  {company.website && (
+  <div className="ml-3 flex shrink-0 items-center gap-2">
+  {renderOpenButton(company.website)}
+  {renderCopyButton(company.website)}
+  </div>
+  )}
+  </div>
+
+  {/* LinkedIn */}
+  <div className={`flex items-center justify-between rounded-lg border px-3.5 py-2.5 ${contactRowBg('linkedin')}`}>
+  <div className="min-w-0 flex-1">
+  <div className={`text-xs font-semibold uppercase tracking-wide ${contactTypeColor('linkedin')}`}>LinkedIn</div>
+  <div className="mt-0.5 text-sm text-neutral-900 break-words">
+  {company.linkedin || <span className="text-neutral-400">Not added yet</span>}
+  </div>
+  </div>
+  {company.linkedin && (
+  <div className="ml-3 flex shrink-0 items-center gap-2">
+  {renderOpenButton(company.linkedin)}
+  {renderCopyButton(company.linkedin)}
+  </div>
+  )}
+  </div>
+  </div>
+  </div>
+
+  {/* D. Contact Methods Preview (PART 4) */}
+  {companyMethods.length > 0 && (
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Contact Methods</h3>
+  <div className="space-y-2">
+  {companyMethods.map((method) => (
+  <div key={method.id} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50/50 px-3.5 py-2.5">
+  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+  <Badge variant={methodTagVariant(method.type)} className="shrink-0 text-xs">
+  {CHANNEL_LABELS[method.type] || method.type}
+  </Badge>
+  <span className="text-sm text-neutral-900 break-words">{method.value}</span>
+  {method.isPrimary && <span className="text-xs text-neutral-400">Primary</span>}
+  </div>
+  <div className="ml-3 flex shrink-0 items-center gap-2">
+  {(['website', 'linkedin'].includes(method.type) || method.value.startsWith('http')) && renderOpenButton(method.value)}
+  {renderCopyButton(method.value)}
+  </div>
+  </div>
+  ))}
+  </div>
+  </div>
+  )}
+
+  {companyMethods.length === 0 && (company.phone || company.email || company.website || company.linkedin) && (
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-500">Contact Methods</h3>
+  <p className="text-sm text-neutral-400">No additional contact methods yet.</p>
+  </div>
+  )}
+
+  {/* E. People Preview */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <div className="flex items-center justify-between mb-3">
+  <h3 className="text-sm font-semibold text-neutral-900">People {companyPeople.length > 0 && <span className="font-normal text-neutral-500">({companyPeople.length})</span>}</h3>
+  <button type="button" onClick={() => setTab('people')} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">View All →</button>
+  </div>
+  {companyPeople.length === 0 ? (
+  <p className="text-sm text-neutral-400">No people linked yet.</p>
+  ) : (
+  <div className="space-y-2">
+  {topPeople.map((person) => (
+  <div
+  key={person.id}
+  role="button"
+  tabIndex={0}
+  onClick={() => setSelectedPersonId(person.id)}
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPersonId(person.id); } }}
+  className="flex items-center justify-between rounded-lg border border-neutral-200 px-3.5 py-2 hover:bg-neutral-50 transition-colors cursor-pointer"
+  >
+  <div className="min-w-0 flex-1">
+  <div className="text-sm font-medium text-neutral-900">{person.fullName}</div>
+  <div className="text-xs text-neutral-500">{[person.role, person.department].filter(Boolean).join(' · ') || '—'}</div>
+  </div>
+  <svg className="h-4 w-4 shrink-0 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+  </div>
+  ))}
+  {companyPeople.length > 3 && (
+  <button type="button" onClick={() => setTab('people')} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">+{companyPeople.length - 3} more</button>
+  )}
+  </div>
+  )}
+  </div>
+
+  {/* F. Notes Quick Add (PART 6) */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-5">
+  <h3 className="mb-3 text-sm font-semibold text-neutral-900">Notes</h3>
+  {company.notes && (
+  <div className="mb-3 rounded-lg bg-neutral-50 border border-neutral-200 px-3.5 py-2.5">
+  <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words line-clamp-3">{company.notes}</p>
+  </div>
+  )}
+  <textarea
+  value={notesDraft}
+  onChange={(e) => { setNotesDraft(e.target.value); setNotesSaved(false); }}
+  placeholder="Add a quick note about this company..."
+  className="w-full min-h-[80px] rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-900 resize-y focus:outline-none"
+  />
+  <div className="mt-3 flex items-center justify-end gap-3">
+  {notesSaved && <span className="text-xs text-emerald-600">Saved</span>}
+  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(handleSaveNotes)} disabled={notesSaving}>
+  {notesSaving ? 'Saving...' : 'Save Note'}
+  </Button>
+  </div>
+  </div>
+
+  </div>
+  );
+  }
 
  case 'contact_methods': {
  const methods = companyContactMethods.filter((m) => String(m.companyId) === String(company.id));
@@ -914,77 +1031,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  );
  }
 
- case 'problem': {
- const profiles = companyProblemProfiles.filter((p) => String(p.companyId) === String(company.id));
- return (
- <div className="space-y-4">
- <div className="flex justify-end">
- <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddProblemProfile)}>Add Problem Profile</Button>
- </div>
- {profiles.length === 0 ? (
- <EmptyState
- title="No problem profile yet."
- description="Define what problem you can solve before outreach."
- />
- ) : (
- <div className="space-y-3">
- {profiles.map((profile) => (
- <div key={profile.id} className="rounded-xl border border-neutral-200 bg-white p-4 space-y-3">
- <div className="flex items-start justify-between gap-2">
- <div className="min-w-0">
- <h4 className="text-sm font-semibold text-neutral-900">{profile.problemTitle || 'Untitled'}</h4>
- <div className="mt-1 flex flex-wrap gap-2">
- <Badge variant="neutral">Urgency: {URGENCY_LABELS[profile.urgency] || profile.urgency}</Badge>
- <Badge variant="neutral">Confidence: {profile.confidence || '—'}</Badge>
- <StatusBadge status={profile.status} />
- </div>
- </div>
- <div className="flex shrink-0 gap-1">
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditProblemProfile(profile))} className="text-neutral-600">Edit</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteProblemProfile(profile.id))} className="text-neutral-600">Delete</Button>
- </div>
- </div>
 
- <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
- <div>
- <p className="text-xs font-medium text-neutral-500">Problem Description</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.problemDescription || '—'}</p>
- </div>
- <div>
- <p className="text-xs font-medium text-neutral-500">Current Situation</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.currentSituation || '—'}</p>
- </div>
- <div>
- <p className="text-xs font-medium text-neutral-500">Business Impact</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.businessImpact || '—'}</p>
- </div>
- <div>
- <p className="text-xs font-medium text-neutral-500">Proposed Solution</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.proposedSolution || '—'}</p>
- </div>
- <div>
- <p className="text-xs font-medium text-neutral-500">Service Angle</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.serviceAngle || '—'}</p>
- </div>
- <div>
- <p className="text-xs font-medium text-neutral-500">Value Proposition</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.valueProposition || '—'}</p>
- </div>
- </div>
-
- {profile.notes && (
- <div>
- <p className="text-xs font-medium text-neutral-500">Notes</p>
- <p className="mt-1 text-sm text-neutral-700 whitespace-pre-wrap break-words">{profile.notes}</p>
- </div>
- )}
- </div>
- ))}
- </div>
- )}
- </div>
- );
- }
 
  case 'outreach_script': {
  const scripts = companyOutreachScripts.filter((s) => String(s.companyId) === String(company.id));
@@ -1082,104 +1129,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  );
  }
 
- case 'messages':
- return (
- <div className="space-y-4">
- <div className="flex justify-end">
- <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => openAddMessage())}>Log Message</Button>
- </div>
- {companyMessages.length === 0 ? (
- <EmptyState title="No messages logged for this company yet." description="Start logging outreach messages." />
- ) : (
- <div className="overflow-x-auto">
- <table className="w-full border-collapse text-left">
- <thead>
- <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
- <th className="px-3 py-2 font-medium">Date</th>
- <th className="px-3 py-2 font-medium">Person</th>
- <th className="px-3 py-2 font-medium">Channel</th>
- <th className="px-3 py-2 font-medium">Type</th>
- <th className="px-3 py-2 font-medium">Reply Status</th>
- <th className="px-3 py-2 font-medium">Follow-up</th>
- <th className="px-3 py-2 font-medium">Summary</th>
- <th className="px-3 py-2 text-right font-medium">Actions</th>
- </tr>
- </thead>
- <tbody>
- {companyMessages.map((msg) => {
- const person = people.find((p) => p.id === msg.personId);
- return (
- <tr key={msg.id} className="border-b border-neutral-100 text-sm">
- <td className="px-3 py-3 text-neutral-700">{msg.sentDate || msg.createdAt || '—'}</td>
- <td className="px-3 py-3 text-neutral-900">{person?.fullName || '—'}</td>
- <td className="px-3 py-3"><Badge variant="neutral">{msg.channel || '—'}</Badge></td>
- <td className="px-3 py-3 text-neutral-700">{msg.messageType || '—'}</td>
- <td className="px-3 py-3"><StatusBadge status={msg.replyStatus} /></td>
- <td className="px-3 py-3 text-neutral-700">{msg.nextFollowUpDate || '—'}</td>
- <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{msg.messageText || msg.replySummary || '—'}</td>
- <td className="px-3 py-3">
- <div className="flex justify-end gap-1">
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditMessage(msg))} className="text-neutral-600">Edit</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteMessage(msg.id))} className="text-neutral-600">Delete</Button>
- </div>
- </td>
- </tr>
- );
- })}
- </tbody>
- </table>
- </div>
- )}
- </div>
- );
-
- case 'deals':
- return (
- <div className="space-y-4">
- <div className="flex justify-end">
- <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddDeal)}>Add Deal</Button>
- </div>
- {companyDeals.length === 0 ? (
- <EmptyState title="No deals linked to this company yet." description="Add a deal to track progress." />
- ) : (
- <div className="overflow-x-auto">
- <table className="w-full border-collapse text-left">
- <thead>
- <tr className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
- <th className="px-3 py-2 font-medium">Service Package</th>
- <th className="px-3 py-2 font-medium">Stage</th>
- <th className="px-3 py-2 font-medium">Probability</th>
- <th className="px-3 py-2 font-medium">Value</th>
- <th className="px-3 py-2 font-medium">Problem</th>
- <th className="px-3 py-2 font-medium">Next Action</th>
- <th className="px-3 py-2 text-right font-medium">Actions</th>
- </tr>
- </thead>
- <tbody>
- {companyDeals.map((deal) => (
- <tr key={deal.id} className="border-b border-neutral-100 text-sm">
- <td className="px-3 py-3 font-medium text-neutral-900">{deal.servicePackage || '—'}</td>
- <td className="px-3 py-3"><StatusBadge status={deal.stage as string} /></td>
- <td className="px-3 py-3 text-neutral-700">{typeof deal.probability === 'number' ? `${deal.probability}%` : '—'}</td>
- <td className="px-3 py-3 text-neutral-700">{deal.value ? `${deal.currency || '$'}${deal.value}` : '—'}</td>
- <td className="px-3 py-3 text-neutral-700 max-w-[200px] truncate">{deal.problem || '—'}</td>
- <td className="px-3 py-3 text-neutral-700">{deal.nextAction || '—'}</td>
- <td className="px-3 py-3">
- <div className="flex justify-end gap-1">
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditDeal(deal))} className="text-neutral-600">Edit</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeleteDeal(deal.id))} className="text-neutral-600">Delete</Button>
- </div>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
- </div>
- );
-
- case 'notes':
+  case 'notes':
  return (
  <div className="space-y-4">
  {formError && (
@@ -1202,55 +1152,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  );
 
-  case 'ai_score':
-  return (
-  <div className="space-y-4">
-  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <p className="text-xs text-neutral-500">Fit Score</p>
-  <p className="mt-1 text-2xl font-bold text-indigo-600 tabular-nums">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</p>
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <p className="text-xs text-neutral-500">Priority</p>
-  <p className="mt-1 text-2xl font-bold text-neutral-900">{company.priority || '—'}</p>
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <p className="text-xs text-neutral-500">Ethical Fit</p>
-  <p className="mt-1 text-2xl font-bold text-neutral-900">{ETHICAL_LABELS[company.ethicalFit || ''] || company.ethicalFit || '—'}</p>
-  </div>
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <div className="flex items-center justify-between">
-  <h3 className="text-sm font-semibold text-neutral-900">AI Scoring</h3>
-  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(() => onAIScoreCompany(company))}>Run AI Score</Button>
-  </div>
-  <p className="mt-2 text-sm text-neutral-500">Run an AI-powered analysis to evaluate fit score, priority, ethical fit, and industry classification for this company.</p>
-  </div>
-  </div>
-  );
-
-  case 'research':
-  return (
-  <CompanyResearchPanel
-  title="Research / Refresh AI"
-  company={company}
-  countryHint={company.country || undefined}
-  cityHint={company.city || undefined}
-  industryHint={company.industry || undefined}
-  websiteHint={company.website || undefined}
-  currentCompany={company}
-  showRelatedActions
-  debug={import.meta.env.DEV}
-  onApplyCompanyPatch={async (patch) => {
-  await updateCompany(company.id, patch);
-  }}
-  onCreateContactMethods={handleCreateResearchContactMethods}
-  onCreateProblemProfile={handleCreateResearchProblemProfile}
-  onCreateOutreachScript={handleCreateResearchOutreachScript}
-  />
-  );
-
-  default:
+   default:
   return null;
   }
  };
@@ -1277,11 +1179,7 @@ const CompanyWorkspace: React.FC<Props> = ({
   ) : null}
 
   {/* Summary Cards */}
-  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-  <div className="rounded-xl border border-neutral-200 bg-white p-3">
-  <p className="text-xs text-neutral-500">Fit Score</p>
-  <p className="mt-1 text-lg font-bold text-indigo-600 tabular-nums">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</p>
-  </div>
+  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
   <div className="rounded-xl border border-neutral-200 bg-white p-3">
   <p className="text-xs text-neutral-500">Priority</p>
   <p className="mt-1 text-lg font-bold text-neutral-900">{company.priority || '—'}</p>
@@ -1291,16 +1189,16 @@ const CompanyWorkspace: React.FC<Props> = ({
   <p className="mt-1 text-lg font-bold text-neutral-900 tabular-nums">{companyPeople.length}</p>
   </div>
   <div className="rounded-xl border border-neutral-200 bg-white p-3">
-  <p className="text-xs text-neutral-500">Messages</p>
-  <p className="mt-1 text-lg font-bold text-indigo-600 tabular-nums">{companyMessages.length}</p>
-  </div>
-  <div className="rounded-xl border border-neutral-200 bg-white p-3">
-  <p className="text-xs text-neutral-500">Open Deals</p>
-  <p className="mt-1 text-lg font-bold text-emerald-600 tabular-nums">{openDeals.length}</p>
+  <p className="text-xs text-neutral-500">Contact Methods</p>
+  <p className="mt-1 text-lg font-bold text-neutral-900 tabular-nums">{safeCompanyContactMethods.filter((m) => String(m.companyId) === String(company.id)).length}</p>
   </div>
   <div className="rounded-xl border border-neutral-200 bg-white p-3">
   <p className="text-xs text-neutral-500">Next Action</p>
   <p className="mt-1 text-lg font-bold text-neutral-900 truncate">{company.nextAction || '—'}</p>
+  </div>
+  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+  <p className="text-xs text-neutral-500">Fit Score</p>
+  <p className="mt-1 text-lg font-bold text-indigo-600 tabular-nums">{typeof company.fitScore === 'number' ? company.fitScore : '—'}</p>
   </div>
   </div>
 
@@ -1387,33 +1285,7 @@ const CompanyWorkspace: React.FC<Props> = ({
  </OpportunityModal>
  )}
 
- {/* ── Modal: Problem Profile Form ── */}
- {showProblemProfileForm && (
- <OpportunityModal title={editingProblemProfile ? 'Edit Problem Profile' : 'Add Problem Profile'} onClose={() => { setShowProblemProfileForm(false); setEditingProblemProfile(null); setFormError(null); }}>
- <CompanyProblemProfileForm
- companyId={company.id}
- onSubmit={handleSaveProblemProfile}
- onCancel={() => { setShowProblemProfileForm(false); setEditingProblemProfile(null); setFormError(null); }}
- initialData={editingProblemProfile ? {
- companyId: editingProblemProfile.companyId,
- problemTitle: editingProblemProfile.problemTitle,
- problemDescription: editingProblemProfile.problemDescription,
- currentSituation: editingProblemProfile.currentSituation,
- businessImpact: editingProblemProfile.businessImpact,
- proposedSolution: editingProblemProfile.proposedSolution,
- serviceAngle: editingProblemProfile.serviceAngle,
- valueProposition: editingProblemProfile.valueProposition,
- urgency: editingProblemProfile.urgency,
- confidence: editingProblemProfile.confidence,
- status: editingProblemProfile.status,
- notes: editingProblemProfile.notes,
- } : undefined}
- />
- {formError && (
- <div className="mt-3 rounded-md border border-[#fecaca] bg-[#fff1f2] px-3 py-2 text-sm text-[#b91c1c]">{formError}</div>
- )}
- </OpportunityModal>
- )}
+
 
  {/* ── Modal: Outreach Script Form ── */}
  {showOutreachScriptForm && (
