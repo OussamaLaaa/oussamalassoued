@@ -176,12 +176,19 @@ const MessageExamplesPanel: React.FC<{
     }
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
   const handleDelete = async () => {
     if (modal?.type !== 'edit' && modal?.type !== 'view') return;
     const t = (modal.type === 'edit' || modal.type === 'view') ? modal.template : null;
     if (!t) return;
-    await onDeleteTemplate(t.id);
-    closeModal();
+    setIsDeleting(true);
+    try {
+      await onDeleteTemplate(t.id);
+      closeModal();
+    } catch {
+      setStatus('Failed to delete message example.');
+      setIsDeleting(false);
+    }
   };
 
   const rtl = isArabicText(form.body);
@@ -347,8 +354,8 @@ const MessageExamplesPanel: React.FC<{
                         <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
                           Cancel
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
-                          Yes, delete
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} disabled={isDeleting} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
+                          {isDeleting ? 'Deleting...' : 'Yes, delete'}
                         </Button>
                       </>
                     ) : (
@@ -454,8 +461,8 @@ const MessageExamplesPanel: React.FC<{
                         <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
                           Keep
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
-                          Yes, delete
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void handleDelete()} disabled={isDeleting} className="border border-red-200 bg-red-50 text-red-700 hover:bg-red-100">
+                          {isDeleting ? 'Deleting...' : 'Yes, delete'}
                         </Button>
                       </>
                     ) : (

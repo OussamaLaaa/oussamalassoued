@@ -4369,10 +4369,8 @@ export const useOpportunitiesData = (enabled = true) => {
   };
 
   const deleteTemplate = async (id: string) => {
-    const confirmed = window.confirm('Deactivate this template? It will be hidden from active outreach usage.');
-    if (!confirmed) return;
     await syncDelete('message_templates', id);
-    setTemplates((current) => current.map((template) => (template.id === id ? { ...template, isActive: false } : template)));
+    setTemplates((current) => current.filter((template) => template.id !== id));
   };
 
   const seedDefaultTemplates = async () => {
