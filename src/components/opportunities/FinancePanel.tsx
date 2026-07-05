@@ -629,7 +629,7 @@ function FinancePanel({
   }
 
   return (
-  <div className="space-y-5">
+  <div className="space-y-6">
 
   {/* Financial Snapshot — 4 hero cards */}
   <div>
@@ -1541,16 +1541,16 @@ function FinancePanel({
  );
  }
 
-  function renderSidebar() {
+   function renderSidebar() {
   const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
   const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
   const netAll = totalInc - totalExp;
 
   return (
-  <div className="flex flex-col gap-4">
+  <div className="flex flex-col gap-5">
 
   {/* Horizon View */}
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="rounded-[18px] border border-black/10 bg-white p-5">
   <div className="flex items-center justify-between mb-3">
   <span className="text-xs font-semibold text-black">Horizon View</span>
   <select
@@ -1569,19 +1569,19 @@ function FinancePanel({
   </div>
 
   {/* All-time Summary */}
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <div className="text-xs font-semibold text-neutral-600 mb-2">All-time Summary</div>
-  <div className="space-y-1.5 text-xs">
+  <div className="rounded-[18px] border border-black/10 bg-white p-5">
+  <div className="text-xs font-semibold text-neutral-600 mb-3">All-time Summary</div>
+  <div className="space-y-2 text-xs">
   <div className="flex justify-between"><span className="text-neutral-500">Income</span><span className="font-semibold text-neutral-900">{toCur(totalInc)}</span></div>
   <div className="flex justify-between"><span className="text-neutral-500">Expenses</span><span className="font-semibold text-neutral-900">{toCur(totalExp)}</span></div>
-  <div className="flex justify-between pt-1.5 mt-1.5 border-t border-neutral-200"><span className="font-semibold text-neutral-900">Net</span><span className={`font-semibold ${netAll >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{toCur(netAll)}</span></div>
+  <div className="flex justify-between pt-2 border-t border-neutral-200"><span className="font-semibold text-neutral-900">Net</span><span className={`font-semibold ${netAll >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{toCur(netAll)}</span></div>
   </div>
   </div>
 
   {/* Quick Counts */}
-  <div className="rounded-xl border border-neutral-200 bg-white p-4">
-  <div className="text-xs font-semibold text-neutral-600 mb-2">Quick Counts</div>
-  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-neutral-500">
+  <div className="rounded-[18px] border border-black/10 bg-white p-5">
+  <div className="text-xs font-semibold text-neutral-600 mb-3">Quick Counts</div>
+  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-neutral-500">
     <div className="flex justify-between"><span>Income</span><span className="text-neutral-900 font-medium">{allIncome.length}</span></div>
     <div className="flex justify-between"><span>Expenses</span><span className="text-neutral-900 font-medium">{allExpenses.length}</span></div>
     <div className="flex justify-between"><span>Goals</span><span className="text-neutral-900 font-medium">{allGoals.length}</span></div>
@@ -1735,36 +1735,41 @@ function FinancePanel({
  }
  }
 
-  const showSidebar = tab === 'dashboard';
+   const showSidebar = tab === 'dashboard';
 
   return (
   <div>
   <div className="mt-6">
- <div className="flex gap-6 items-start">
- <div className="flex-1 min-w-0 space-y-6">
-  {tab === 'dashboard' && renderPeriodSelector()}
- {tab === 'dashboard' && renderDashboard()}
- {tab === 'periods' && renderPeriodsTab()}
- {tab === 'income' && renderIncomeTab()}
- {tab === 'expenses' && renderExpensesTab()}
- {tab === 'allocation' && renderAllocationTab()}
- {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
- {tab === 'investments' && renderInvestmentsTab()}
- {tab === 'recurring' && renderRecurringRulesTab()}
- {tab === 'ai_assistant' && renderAiAssistant()}
- </div>
+  {tab === 'dashboard' && <div className="mb-6">{renderPeriodSelector()}</div>}
 
- {showSidebar && (
- <div className="w-[240px] shrink-0 sticky top-6 hidden lg:block">
- {renderSidebar()}
- </div>
- )}
- </div>
- </div>
+  {tab === 'dashboard' ? (
+  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+  <div className="space-y-6">
+  {renderDashboard()}
+  </div>
+  {showSidebar && (
+  <aside className="space-y-5 self-start hidden xl:block">
+  {renderSidebar()}
+  </aside>
+  )}
+  </div>
+  ) : (
+  <div className="space-y-6">
+  {tab === 'periods' && renderPeriodsTab()}
+  {tab === 'income' && renderIncomeTab()}
+  {tab === 'expenses' && renderExpensesTab()}
+  {tab === 'allocation' && renderAllocationTab()}
+  {tab === 'purchase_goals' && renderPurchaseGoalsTab()}
+  {tab === 'investments' && renderInvestmentsTab()}
+  {tab === 'recurring' && renderRecurringRulesTab()}
+  {tab === 'ai_assistant' && renderAiAssistant()}
+  </div>
+  )}
+  </div>
 
- {renderModal()}
- </div>
- );
+  {renderModal()}
+  </div>
+  );
 }
 
 export default FinancePanel;
