@@ -941,109 +941,123 @@ const CompanyWorkspace: React.FC<Props> = ({
  </div>
  );
  }
+  case 'people': {
+  const personMethodsById = new Map<string, PersonContactMethod[]>(
+  companyPeople.map((person) => [
+  person.id,
+  safePersonContactMethods.filter((method) => String(method.personId) === String(person.id)),
+  ] as const),
+  );
 
- case 'people': {
- const personMethodsById = new Map<string, PersonContactMethod[]>(
- companyPeople.map((person) => [
- person.id,
- safePersonContactMethods.filter((method) => String(method.personId) === String(person.id)),
- ] as const),
- );
-
- return (
- <div className="space-y-4">
- <div className="flex justify-end">
- <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
- </div>
- {companyPeople.length === 0 ? (
- <EmptyState
- title="No people linked to this company yet."
- description="Add decision makers, influencers, or relevant contacts."
- />
- ) : (
- <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
- {companyPeople.map((person) => {
- const methods = personMethodsById.get(person.id) || [];
- const primaryMethod = methods.find((method) => method.isPrimary) || methods[0] || null;
- const quickTypes = ['email', 'linkedin', 'phone', 'whatsapp'] as const;
-
- const openContact = (method: PersonContactMethod) => {
- const href = getContactHref(method.type, method.value);
- if (href) {
- window.open(href, '_blank', 'noopener,noreferrer');
- return;
- }
- void navigator.clipboard.writeText(method.value).catch(() => undefined);
- };
-
- return (
- <div
- key={person.id}
- role="button"
- tabIndex={0}
- onClick={() => setSelectedPersonId(person.id)}
- onKeyDown={(event) => {
- if (event.key === 'Enter' || event.key === ' ') {
- event.preventDefault();
- setSelectedPersonId(person.id);
- }
- }}
- className="rounded-xl border border-neutral-200 bg-white p-4 text-left transition-colors hover:bg-neutral-50 focus:outline-none"
- >
- <div className="flex items-start justify-between gap-3">
- <div className="min-w-0 space-y-2">
- <div className="flex flex-wrap items-center gap-2">
- <div className="text-sm font-semibold text-neutral-900">{person.fullName}</div>
- {person.relationshipStatus ? <Badge variant="neutral">{person.relationshipStatus}</Badge> : null}
- </div>
- <div className="text-sm text-neutral-700">
- {[person.role, person.department, person.seniority].filter(Boolean).join(' · ') || '—'}
- </div>
- <div className="flex flex-wrap gap-2 text-xs text-neutral-500">
- <span>Decision: {person.decisionPower || '—'}</span>
- <span>Influence: {person.influencePower || '—'}</span>
- <span>Relevance: {person.relevance || '—'}</span>
- <span>Next follow-up: {person.nextFollowUpDate || '—'}</span>
- </div>
- </div>
- <div className="flex shrink-0 flex-wrap justify-end gap-1">
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => setSelectedPersonId(person.id))} className="text-neutral-600">Open Person</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditPerson(person))} className="text-neutral-600">Edit</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openPersonContactMethodFlow(person.id))} className="text-neutral-600">Add Contact Method</Button>
- <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeletePerson(person.id))} className="text-neutral-600">Delete</Button>
- </div>
- </div>
-
- <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
- <div className="space-y-2">
- <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Primary Contact</div>
-  <div className="text-sm text-neutral-900 max-w-[200px] min-w-0 overflow-hidden truncate whitespace-nowrap">
-  {primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} compact className="text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-neutral-700" /> : '—'}
+  return (
+  <div className="space-y-4">
+  <div className="flex justify-end">
+  <Button type="button" variant="primary" size="sm" onClick={handleActionClick(openAddPerson)}>Add Person</Button>
   </div>
- </div>
- <div className="space-y-2">
- <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">Quick Contact</div>
- <div className="flex flex-wrap gap-2">
- {quickTypes.map((type) => {
- const method = methods.find((item) => String(item.type).toLowerCase() === type) || null;
- if (!method) return null;
- return (
- <Button key={`${person.id}-${type}`} type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openContact(method))} className="text-neutral-600">
- {type === 'linkedin' ? 'LinkedIn' : type === 'whatsapp' ? 'WhatsApp' : type.charAt(0).toUpperCase() + type.slice(1)}
- </Button>
- );
- })}
- </div>
- </div>
- </div>
- </div>
- );
- })}
- </div>
- )}
- </div>
- );
- }
+  {companyPeople.length === 0 ? (
+  <EmptyState
+  title="No people linked to this company yet."
+  description="Add decision makers, influencers, or relevant contacts."
+  />
+  ) : (
+  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+  {companyPeople.map((person) => {
+  const methods = personMethodsById.get(person.id) || [];
+  const primaryEmail = methods.find((m) => m.type === 'email');
+  const primaryPhone = methods.find((m) => m.type === 'phone');
+  const linkedInMethod = methods.find((m) => m.type === 'linkedin');
+  const whatsAppMethod = methods.find((m) => m.type === 'whatsapp');
+
+  return (
+  <div
+  key={person.id}
+  role="button"
+  tabIndex={0}
+  onClick={handleActionClick(() => setSelectedPersonId(person.id))}
+  onKeyDown={(event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+  event.preventDefault();
+  setSelectedPersonId(person.id);
+  }
+  }}
+  className="rounded-xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:bg-neutral-50 focus:outline-none"
+  >
+  <div className="mb-4">
+  <div className="flex flex-wrap items-center gap-2">
+  <div className="text-base font-semibold text-neutral-900">{person.fullName}</div>
+  {person.relationshipStatus ? <Badge variant="neutral">{person.relationshipStatus}</Badge> : null}
+  </div>
+  <div className="mt-1 text-sm text-neutral-500">
+  {[person.role, person.department, person.seniority].filter(Boolean).join(' · ') || 'Not added yet'}
+  </div>
+  </div>
+
+  <div className="mb-4 space-y-2">
+  {primaryEmail ? (
+  <div className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50/60 px-3.5 py-2.5">
+  <div className="flex items-center gap-2 min-w-0">
+  <span className="text-xs font-medium tracking-wide text-neutral-500 shrink-0">Email</span>
+  <span className="text-sm text-neutral-900 truncate max-w-[220px]">{primaryEmail.value}</span>
+  </div>
+  <button type="button" onClick={handleActionClick(() => handleCopyToClipboard(primaryEmail.value))} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5 shrink-0 ml-2">Copy</button>
+  </div>
+  ) : null}
+  {primaryPhone ? (
+  <div className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50/60 px-3.5 py-2.5">
+  <div className="flex items-center gap-2 min-w-0">
+  <span className="text-xs font-medium tracking-wide text-neutral-500 shrink-0">Phone</span>
+  <span className="text-sm text-neutral-900 truncate max-w-[220px]">{primaryPhone.value}</span>
+  </div>
+  <button type="button" onClick={handleActionClick(() => handleCopyToClipboard(primaryPhone.value))} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5 shrink-0 ml-2">Copy</button>
+  </div>
+  ) : null}
+  {linkedInMethod ? (
+  <div className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50/60 px-3.5 py-2.5">
+  <div className="flex items-center gap-2 min-w-0">
+  <span className="text-xs font-medium tracking-wide text-neutral-500 shrink-0">LinkedIn</span>
+  <span className="text-sm text-neutral-900 truncate max-w-[220px]">{linkedInMethod.value}</span>
+  </div>
+  <div className="flex shrink-0 gap-1 ml-2">
+  <button type="button" onClick={handleActionClick(() => { const href = getContactHref('linkedin', linkedInMethod.value); if (href) window.open(href, '_blank', 'noopener,noreferrer'); })} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Open</button>
+  <button type="button" onClick={handleActionClick(() => handleCopyToClipboard(linkedInMethod.value))} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Copy</button>
+  </div>
+  </div>
+  ) : null}
+  {whatsAppMethod ? (
+  <div className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50/60 px-3.5 py-2.5">
+  <div className="flex items-center gap-2 min-w-0">
+  <span className="text-xs font-medium tracking-wide text-neutral-500 shrink-0">WhatsApp</span>
+  <span className="text-sm text-neutral-900 truncate max-w-[220px]">{whatsAppMethod.value}</span>
+  </div>
+  <div className="flex shrink-0 gap-1 ml-2">
+  <button type="button" onClick={handleActionClick(() => { const href = getContactHref('whatsapp', whatsAppMethod.value); if (href) window.open(href, '_blank', 'noopener,noreferrer'); })} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Open</button>
+  <button type="button" onClick={handleActionClick(() => handleCopyToClipboard(whatsAppMethod.value))} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Copy</button>
+  </div>
+  </div>
+  ) : null}
+  </div>
+
+  <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+  {person.decisionPower ? <span>Decision: <span className="font-medium text-neutral-700">{person.decisionPower}</span></span> : null}
+  {person.influencePower ? <span>Influence: <span className="font-medium text-neutral-700">{person.influencePower}</span></span> : null}
+  {person.relevance ? <span>Relevance: <span className="font-medium text-neutral-700">{person.relevance}</span></span> : null}
+  <span>Next follow-up: <span className="font-medium text-neutral-700">{person.nextFollowUpDate || '—'}</span></span>
+  </div>
+
+  <div className="flex flex-wrap gap-1 border-t border-neutral-100 pt-3">
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => setSelectedPersonId(person.id))} className="text-neutral-600">Open Person</Button>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openEditPerson(person))} className="text-neutral-600">Edit</Button>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => openPersonContactMethodFlow(person.id))} className="text-neutral-600">+ Contact</Button>
+  <Button type="button" variant="ghost" size="sm" onClick={handleActionClick(() => handleDeletePerson(person.id))} className="text-neutral-600">Delete</Button>
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  )}
+  </div>
+  );
+  }
 
 
 

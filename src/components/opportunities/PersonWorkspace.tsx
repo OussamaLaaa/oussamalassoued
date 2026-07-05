@@ -4,12 +4,11 @@ import type { Company, Deal, DealInput, MessageInput, OutreachMessage, Person, P
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import EmptyState from '../ui/EmptyState';
-import StatusBadge from './StatusBadge';
 import OpportunityModal from './OpportunityModal';
 import PersonContactMethodForm from './PersonContactMethodForm';
 import { ContactLink, getContactHref } from './contactHelpers';
 
-const tabs = ['overview', 'contact_methods', 'messages', 'deals', 'notes'] as const;
+const tabs = ['overview', 'contact_methods'] as const;
 type PersonWorkspaceTab = (typeof tabs)[number];
 
 const cardClass = 'rounded-xl border border-neutral-200 bg-white p-4';
@@ -38,7 +37,7 @@ const composePersonInput = (person: Person, overrides: Partial<PersonInput> = {}
 });
 
 const formatDate = (value?: string) => {
-  if (!value) return '—';
+  if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
 };
@@ -99,6 +98,7 @@ const PersonWorkspace: React.FC<Props> = ({
   const [showContactMethodForm, setShowContactMethodForm] = useState(false);
   const [editingContactMethod, setEditingContactMethod] = useState<PersonContactMethod | null>(null);
   const [contactMethodError, setContactMethodError] = useState('');
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   const safePeople = people ?? [];
   const safeMessages = messages ?? [];
@@ -131,23 +131,6 @@ const PersonWorkspace: React.FC<Props> = ({
     () => personMethods.find((method) => method.isPrimary) || personMethods[0] || null,
     [personMethods],
   );
-
-  const personMessages = useMemo(
-    () => safeMessages.filter((message) => String(message.personId) === String(person.id)),
-    [safeMessages, person.id],
-  );
-
-  const personDeals = useMemo(
-    () => safeDeals.filter((deal) => String(deal.personId) === String(person.id)),
-    [safeDeals, person.id],
-  );
-
-  const latestMessage = useMemo(
-    () => [...personMessages].sort((a, b) => String(b.sentDate || b.createdAt || '').localeCompare(String(a.sentDate || a.createdAt || '')))[0] || null,
-    [personMessages],
-  );
-
-  const nextActionDate = person.nextFollowUpDate || latestMessage?.nextFollowUpDate || '—';
 
   const setPrimaryContactMethod = async (method: PersonContactMethod) => {
     await updatePersonContactMethod(method.id, { personId: person.id, isPrimary: true });
@@ -214,16 +197,40 @@ const PersonWorkspace: React.FC<Props> = ({
       window.open(href, '_blank', 'noopener,noreferrer');
       return;
     }
-
     void navigator.clipboard.writeText(method.value).catch(() => undefined);
   };
 
-  const companyMessages = company
-    ? personMessages.filter((message) => String(message.companyId || '') === String(company.id) || !message.companyId)
-    : personMessages;
-  const companyDeals = company
-    ? personDeals.filter((deal) => String(deal.companyId || '') === String(company.id) || !deal.companyId)
-    : personDeals;
+  const handleCopy = (key: string, value: string) => {
+    navigator.clipboard.writeText(value).catch(() => undefined);
+    setCopyFeedback(key);
+    setTimeout(() => setCopyFeedback(null), 1500);
+  };
+
+  const InfoTile: React.FC<{ label: string; value?: string | null }> = ({ label, value }) => (
+    <div>
+      <div className={sectionLabelClass}>{label}</div>
+      <div className={`mt-1 ${valueClass}`}>{value || 'Not added yet'}</div>
+    </div>
+  );
+
+  const renderSnapshotRow = (label: string, value: string | null | undefined, type: string) => {
+    if (!value) return null;
+    const href = getContactHref(type, value);
+    return (
+      <div className="flex items-center justify-between rounded-lg border px-3.5 py-2.5 bg-neutral-50/60 border-neutral-100">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 shrink-0">{label}</span>
+          <span className="text-sm text-neutral-900 truncate max-w-[240px]">{value}</span>
+        </div>
+        <div className="flex shrink-0 gap-1 ml-2">
+          {href ? (
+            <button type="button" onClick={() => window.open(href, '_blank', 'noopener,noreferrer')} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Open</button>
+          ) : null}
+          <button type="button" onClick={() => handleCopy(label, value)} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">{copyFeedback === label ? 'Copied!' : 'Copy'}</button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -238,35 +245,29 @@ const PersonWorkspace: React.FC<Props> = ({
         <div className="flex flex-wrap justify-center gap-2">
           <Button type="button" variant="primary" size="sm" onClick={() => onEditPerson(person)}>Edit Person</Button>
           <Button type="button" variant="outline" size="sm" onClick={openAddContactMethod}>+ Contact</Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => onAddMessage(person.id)}>Log Message</Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => onAddDeal(person.id)}>Add Deal</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <div className={cardClass}>
           <div className={sectionLabelClass}>Company</div>
-          <div className={`mt-2 ${valueClass} text-neutral-900 font-medium`}>{company ? company.name : (person.companyName || '—')}</div>
+          <div className={`mt-2 ${valueClass} text-neutral-900 font-medium`}>{company ? company.name : (person.companyName || 'Not added yet')}</div>
         </div>
         <div className={cardClass}>
           <div className={sectionLabelClass}>Primary Contact</div>
-          <div className={`mt-2 ${valueClass} text-blue-600`}>{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} /> : '—'}</div>
-        </div>
-        <div className={cardClass}>
-          <div className={sectionLabelClass}>Last Message</div>
-          <div className={`mt-2 ${valueClass} ${latestMessage ? 'text-indigo-600' : ''}`}>{latestMessage ? formatDate(latestMessage.sentDate || latestMessage.createdAt) : '—'}</div>
+          <div className={`mt-2 ${valueClass} text-blue-600`}>{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} /> : 'Not added yet'}</div>
         </div>
         <div className={cardClass}>
           <div className={sectionLabelClass}>Relation Type</div>
-          <div className={`mt-2 ${valueClass}`}>{person.relationType ? <Badge variant="neutral">{String(person.relationType)}</Badge> : '—'}</div>
+          <div className={`mt-2 ${valueClass}`}>{person.relationType ? <Badge variant="neutral">{String(person.relationType)}</Badge> : 'Not added yet'}</div>
         </div>
         <div className={cardClass}>
           <div className={sectionLabelClass}>Phone</div>
-          <div className={`mt-2 ${valueClass}`}>{person.phone || '—'}</div>
+          <div className={`mt-2 ${valueClass}`}>{person.phone || 'Not added yet'}</div>
         </div>
         <div className={cardClass}>
           <div className={sectionLabelClass}>Decision Power</div>
-          <div className={`mt-2 ${valueClass}`}>{person.decisionPower ?? '—'}</div>
+          <div className={`mt-2 ${valueClass}`}>{person.decisionPower ?? 'Not added yet'}</div>
         </div>
       </div>
 
@@ -286,51 +287,86 @@ const PersonWorkspace: React.FC<Props> = ({
       </div>
 
       {tab === 'overview' ? (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="space-y-6">
+          {/* Person Identity Card */}
           <div className={cardClass}>
-            <div className={sectionLabelClass}>Person Details</div>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <div className={sectionLabelClass}>Full Name</div>
-                <div className={`mt-1 ${valueClass}`}>{person.fullName}</div>
+            <div className="mb-5 flex flex-col gap-3">
+              <div className="text-base font-semibold text-neutral-900">{person.fullName}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {person.relationType ? <Badge variant="neutral">{String(person.relationType)}</Badge> : null}
+                {person.decisionPower ? <Badge variant="neutral">Decision: {String(person.decisionPower)}</Badge> : null}
+                {person.influencePower ? <Badge variant="neutral">Influence: {String(person.influencePower)}</Badge> : null}
+                {person.relevance ? <Badge variant="neutral">Relevance: {String(person.relevance)}</Badge> : null}
+                {primaryMethod ? <Badge variant="blue">Primary Contact</Badge> : null}
               </div>
-              <div>
-                <div className={sectionLabelClass}>Company</div>
-                <div className={`mt-1 ${valueClass}`}>{company ? company.name : (person.companyName || '—')}</div>
-              </div>
-              <div>
-                <div className={sectionLabelClass}>Role</div>
-                <div className={`mt-1 ${valueClass}`}>{person.role || '—'}</div>
-              </div>
-              <div>
-                <div className={sectionLabelClass}>Phone</div>
-                <div className={`mt-1 ${valueClass}`}>{person.phone || '—'}</div>
-              </div>
-              <div>
-                <div className={sectionLabelClass}>Relation Type</div>
-                <div className={`mt-1 ${valueClass}`}>{person.relationType ? <Badge variant="neutral">{String(person.relationType)}</Badge> : '—'}</div>
-              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <InfoTile label="Role" value={person.role} />
+              <InfoTile label="Company" value={company?.name || person.companyName} />
+              <InfoTile label="Department" value={person.department} />
+              <InfoTile label="Seniority" value={person.seniority} />
+              <InfoTile label="Next Follow-up" value={formatDate(person.nextFollowUpDate)} />
+              <InfoTile label="Preferred Channel" value={person.contactChannel} />
             </div>
           </div>
 
+          {/* Contact Snapshot */}
           <div className={cardClass}>
-            <div className={sectionLabelClass}>Contact Summary</div>
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
-                <span className="text-neutral-500">Primary Contact</span>
-                <span className="font-medium text-neutral-900">{primaryMethod ? <ContactLink type={primaryMethod.type} value={primaryMethod.value} displayValue={primaryMethod.label || primaryMethod.value} compact className="text-blue-600 hover:text-blue-700 hover:underline" /> : '—'}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-2">
-                <span className="text-neutral-500">Preferred Channel</span>
-                <span className="font-medium text-neutral-900">{person.contactChannel || '—'}</span>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {person.linkedin ? <ContactLink type="linkedin" value={person.linkedin} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
-                {person.emailPublic ? <ContactLink type="email" value={person.emailPublic} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" /> : null}
-                {personMethods.filter(m => m.id !== primaryMethod?.id).slice(0, 3).map(m => (
-                  <ContactLink key={m.id} type={m.type} value={m.value} displayValue={m.label || m.type} compact className="text-xs text-blue-600 hover:text-blue-700 hover:underline" />
+            <h3 className="mb-3 text-sm font-semibold text-neutral-900">Contact Snapshot</h3>
+            <div className="space-y-2">
+              {renderSnapshotRow('Phone', person.phone, 'phone')}
+              {renderSnapshotRow('Email', person.emailPublic || (primaryMethod?.type === 'email' ? primaryMethod.value : null), 'email')}
+              {renderSnapshotRow('LinkedIn', person.linkedin, 'linkedin')}
+              {personMethods.filter((m) => !['email', 'linkedin'].includes(m.type) && m.id !== primaryMethod?.id).slice(0, 3).map((method) => (
+                <div key={method.id} className="flex items-center justify-between rounded-lg border px-3.5 py-2.5 bg-neutral-50/60 border-neutral-100">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 shrink-0">{method.type}</span>
+                    <span className="text-sm text-neutral-900 truncate max-w-[240px]">{method.value}</span>
+                  </div>
+                  <div className="flex shrink-0 gap-1 ml-2">
+                    {getContactHref(method.type, method.value) ? (
+                      <button type="button" onClick={() => window.open(getContactHref(method.type, method.value)!, '_blank', 'noopener,noreferrer')} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">Open</button>
+                    ) : null}
+                    <button type="button" onClick={() => handleCopy(method.id, method.value)} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5">{copyFeedback === method.id ? 'Copied!' : 'Copy'}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact Methods Preview */}
+          {personMethods.length > 0 ? (
+            <div className={cardClass}>
+              <h3 className="mb-3 text-sm font-semibold text-neutral-900">Contact Methods</h3>
+              <div className="space-y-2">
+                {personMethods.map((method) => (
+                  <div key={method.id} className="flex items-center justify-between py-1.5 border-b border-neutral-100 last:border-b-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 shrink-0">{method.type}</span>
+                      <span className="text-sm text-neutral-900 truncate max-w-[240px]">{method.label || method.value}</span>
+                      {method.isPrimary ? <Badge variant="blue">Primary</Badge> : null}
+                    </div>
+                    <button type="button" onClick={() => handleCopy(method.id, method.value)} className="text-xs font-medium text-neutral-500 hover:text-neutral-900 px-1.5 py-0.5 shrink-0 ml-2">{copyFeedback === method.id ? 'Copied!' : 'Copy'}</button>
+                  </div>
                 ))}
               </div>
+            </div>
+          ) : null}
+
+          {/* Quick Notes */}
+          <div className={cardClass}>
+            <h3 className="mb-3 text-sm font-semibold text-neutral-900">Quick Notes</h3>
+            {notesError ? <div className="mb-3 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">{notesError}</div> : null}
+            <textarea
+              className="min-h-[120px] w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none"
+              value={notesDraft}
+              onChange={(event) => setNotesDraft(event.target.value)}
+              placeholder="Write notes about this person..."
+            />
+            <div className="mt-3 flex items-center justify-end">
+              <Button type="button" variant="primary" size="sm" onClick={handleSaveNotes} disabled={notesSaving}>
+                {notesSaving ? 'Saving...' : 'Save Notes'}
+              </Button>
             </div>
           </div>
         </div>
@@ -364,107 +400,6 @@ const PersonWorkspace: React.FC<Props> = ({
               ))}
             </div>
           )}
-        </div>
-      ) : null}
-
-      {tab === 'messages' ? (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button type="button" variant="primary" size="sm" onClick={() => onAddMessage(person.id)}>Log Message</Button>
-          </div>
-          {companyMessages.length === 0 ? (
-            <EmptyState title="No messages logged for this person yet." description="Log the first message to track the conversation." />
-          ) : (
-            <div className="space-y-2">
-              {companyMessages.map((message) => (
-                <div key={message.id} className="rounded-xl border border-neutral-200 bg-white p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-neutral-900">{formatDate(message.sentDate || message.createdAt)}</div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="neutral">{message.channel || '—'}</Badge>
-                        <Badge variant="neutral">{message.messageType || '—'}</Badge>
-                        <StatusBadge status={message.replyStatus} />
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => void deleteMessage(message.id)} className="text-neutral-600">Delete</Button>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <div className={sectionLabelClass}>Summary</div>
-                      <div className="mt-1 text-sm text-neutral-700 break-words">{message.messageText || message.replySummary || '—'}</div>
-                    </div>
-                    <div>
-                      <div className={sectionLabelClass}>Follow-up</div>
-                      <div className="mt-1 text-sm text-neutral-700">{formatDate(message.nextFollowUpDate)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {tab === 'deals' ? (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button type="button" variant="primary" size="sm" onClick={() => onAddDeal(person.id)}>Add Deal</Button>
-          </div>
-          {companyDeals.length === 0 ? (
-            <EmptyState title="No deals linked to this person yet." description="Add a deal to track this relationship." />
-          ) : (
-            <div className="space-y-2">
-              {companyDeals.map((deal) => (
-                <div key={deal.id} className="rounded-xl border border-neutral-200 bg-white p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-neutral-900">{deal.servicePackage || 'Untitled Deal'}</div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="neutral">{deal.stage || '—'}</Badge>
-                        <Badge variant="neutral">{typeof deal.probability === 'number' ? `${deal.probability}%` : '—'}</Badge>
-                        <Badge variant="neutral">{deal.value != null ? `${deal.currency || '$'}${deal.value}` : '—'}</Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => void deleteDeal(deal.id)} className="text-neutral-600">Delete</Button>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <div className={sectionLabelClass}>Problem</div>
-                      <div className="mt-1 text-sm text-neutral-700 break-words">{deal.problem || '—'}</div>
-                    </div>
-                    <div>
-                      <div className={sectionLabelClass}>Next Action</div>
-                      <div className="mt-1 text-sm text-neutral-700 break-words">{deal.nextAction || '—'}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {tab === 'notes' ? (
-        <div className="space-y-4">
-          {notesError ? <div className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800">{notesError}</div> : null}
-          <div className={cardClass}>
-            <textarea
-              className="min-h-[220px] w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-900 focus:border-neutral-400 focus:outline-none"
-              value={notesDraft}
-              onChange={(event) => setNotesDraft(event.target.value)}
-              placeholder="Write notes about this person..."
-            />
-            <div className="mt-3 flex items-center justify-end gap-3">
-              <Button type="button" variant="primary" size="sm" onClick={handleSaveNotes} disabled={notesSaving}>
-                {notesSaving ? 'Saving...' : 'Save Notes'}
-              </Button>
-            </div>
-          </div>
         </div>
       ) : null}
 
