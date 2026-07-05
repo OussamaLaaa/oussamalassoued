@@ -1843,12 +1843,6 @@ onAddPlanItem={addPlanItem}
 
   {tab === 'finance' && (
     <div className="space-y-5">
-     {appSection !== 'periods' && (
-     <SectionHeader
-      title="Finance"
-      description="Income, expenses, investments, and financial planning."
-     />
-     )}
      <FinancePanel
   section={appSection}
   onBackToDesktop={handleBackToDesktop}
