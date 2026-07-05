@@ -597,172 +597,178 @@ function FinancePanel({
  );
  }
 
- function renderDashboard() {
- const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
- const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
- const totalExpenses = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
- const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
- const unpaidExpenses = dashboardExpenses.filter(e => e.status === 'unpaid').reduce((s,e) => s + e.amount, 0);
- const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned').reduce((s,e) => s + e.amount, 0);
- const totalIncome = dashboardIncome.reduce((s,i) => s + i.amount, 0);
- const netCash = receivedIncome - paidExpenses;
- const netProjected = expectedIncome - totalExpenses;
- const needsTotal = dashboardExpenses.filter(e => e.category === 'needs' || e.category === 'family').reduce((s,e) => s + e.amount, 0);
- const recentIncome = [...dashboardIncome].sort((a,b) => new Date(b.incomeDate || b.expectedDate || '').getTime() - new Date(a.incomeDate || a.expectedDate || '').getTime()).slice(0, 5);
- const recentExpenses = [...dashboardExpenses].sort((a,b) => new Date(b.expenseDate || '').getTime() - new Date(a.expenseDate || '').getTime()).slice(0, 5);
- const activeRules = allRules.filter(r => r.isActive).slice(0, 3);
- const totalPct = allRules.reduce((s,r) => s + r.percentage, 0);
- const activeGoals = allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled');
+  function renderDashboard() {
+  const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
+  const receivedIncome = dashboardIncome.filter(i => i.status === 'received').reduce((s,i) => s + i.amount, 0);
+  const totalExpenses = dashboardExpenses.reduce((s,e) => s + e.amount, 0);
+  const paidExpenses = dashboardExpenses.filter(e => e.status === 'paid').reduce((s,e) => s + e.amount, 0);
+  const unpaidExpenses = dashboardExpenses.filter(e => e.status === 'unpaid').reduce((s,e) => s + e.amount, 0);
+  const plannedExpenses = dashboardExpenses.filter(e => e.status === 'planned').reduce((s,e) => s + e.amount, 0);
+  const totalIncome = dashboardIncome.reduce((s,i) => s + i.amount, 0);
+  const netCash = receivedIncome - paidExpenses;
+  const netProjected = totalIncome - totalExpenses;
+  const recentIncomeActivity = dashboardIncome.map(i => ({ ...i, _type: 'income' as const, _date: i.incomeDate || i.expectedDate || '' }));
+  const recentExpenseActivity = dashboardExpenses.map(e => ({ ...e, _type: 'expense' as const, _date: e.expenseDate || '' }));
+  const recentActivity = [...recentIncomeActivity, ...recentExpenseActivity].sort((a, b) => new Date(b._date).getTime() - new Date(a._date).getTime()).slice(0, 5);
+  const activeRules = allRules.filter(r => r.isActive);
+  const totalPct = allRules.reduce((s,r) => s + r.percentage, 0);
+  const activeGoals = allGoals.filter(g => g.status !== 'bought' && g.status !== 'cancelled');
 
- return (
- <div className="space-y-6">
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
- <MetricCard label="Expected Income" value={toCur(expectedIncome)} />
- <MetricCard label="Received Income" value={toCur(receivedIncome)} />
- <MetricCard label="Total Expenses" value={toCur(totalExpenses)} />
- <MetricCard label="Paid Expenses" value={toCur(paidExpenses)} />
- <MetricCard label="Unpaid / Planned" value={toCur(unpaidExpenses + plannedExpenses)} />
- <MetricCard label="Net Cash" value={toCur(netCash)} />
- <MetricCard label="Net Projected" value={toCur(netProjected)} />
- <MetricCard label="Needs Ratio" value={totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'} />
- </div>
+  const paidPct = totalExpenses > 0 ? Math.round(paidExpenses / totalExpenses * 100) : 0;
+  const unpaidPct = 100 - paidPct;
 
- <div className="p-3 rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-500">
- {selectedPeriodId
- ? 'Showing records linked to this period or dated within this month. Incomes/expenses from other months are hidden.'
- : 'Select a period above to focus on a specific month.'}
- <span className="ml-2">Variable income (expected/delayed) is estimated; actual net cash may differ.</span>
- </div>
+  function renderStatusText() {
+    if (totalIncome === 0 && totalExpenses === 0) return 'No income or expenses recorded yet for this period.';
+    if (receivedIncome === 0 && expectedIncome > 0) return 'Income is expected but not yet received. Focus on confirming expected payments.';
+    if (netProjected < 0) return 'Net is negative — planned expenses exceed total income. Consider reducing expenses or increasing income.';
+    if (totalExpenses > totalIncome && receivedIncome > 0) return 'Expenses exceed income — review spending and prioritize essential costs.';
+    if (totalIncome > 0 && totalExpenses === 0) return 'Income recorded with no expenses — allocate funds toward goals and savings.';
+    if (totalIncome > 0 && totalExpenses > 0 && netProjected > 0 && Math.abs(totalPct - 100) < 1) return 'Good shape — income covers expenses and allocation is balanced.';
+    if (totalIncome > 0 && totalExpenses > 0 && netProjected > 0) return 'Positive net — review allocation rules to ensure funds are distributed effectively.';
+    return 'Review your income and expenses to get a complete financial picture.';
+  }
 
- {(recentIncome.length > 0 || recentExpenses.length > 0) && (
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
- {recentIncome.length > 0 && (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Income</div>
- {recentIncome.map(i => (
- <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
- <div className="min-w-0 flex-1 truncate pr-2">
- <span className="text-black font-medium">{i.title || i.incomeType}</span>
- <Badge variant={statusBadge[i.status] || 'neutral'}>{i.status}</Badge>
- </div>
- <span className="font-semibold text-black shrink-0">{toCur(i.amount, i.currency)}</span>
- </div>
- ))}
- </div>
- )}
- {recentExpenses.length > 0 && (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Recent Expenses</div>
- {recentExpenses.map(e => (
- <div key={e.id} className="px-4 py-2 flex items-center justify-between text-xs">
- <div className="min-w-0 flex-1 truncate pr-2">
- <span className="text-black font-medium">{e.title || e.category}</span>
- <Badge variant={statusBadge[e.status] || 'neutral'}>{e.status}</Badge>
- </div>
- <span className="font-semibold text-black shrink-0">{toCur(e.amount, e.currency)}</span>
- </div>
- ))}
- </div>
- )}
- </div>
- )}
+  return (
+  <div className="space-y-5">
 
- {activeRules.length > 0 && (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Allocation Rules</div>
- {activeRules.map(r => (
- <div key={r.id} className="px-4 py-2 flex items-center justify-between text-xs">
- <span className="text-black">{r.name || r.category}</span>
- <span className="text-neutral-500">{r.category} &middot; {r.percentage}%</span>
- </div>
- ))}
- {totalPct > 0 && (
- <div className="px-4 py-2 text-xs text-neutral-400">Total allocated: {totalPct}%</div>
- )}
- </div>
- )}
+  {/* Quick actions row */}
+  <div className="flex flex-wrap items-center gap-2">
+    <Button variant="primary" size="sm" onClick={() => openModal('income')}>+ Add Income</Button>
+    <Button variant="primary" size="sm" onClick={() => openModal('expenses')}>+ Add Expense</Button>
+    <Button variant="secondary" size="sm" onClick={() => openModal('purchase_goals')}>+ Purchase Goal</Button>
+    <Button variant="secondary" size="sm" onClick={() => openModal('investments')}>+ Investment Idea</Button>
+  </div>
 
- {(allIdeas.length > 0 || allGoals.length > 0) && (
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
- {allIdeas.length > 0 && (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Investment Ideas</div>
- {allIdeas.slice(0, 3).map(i => (
- <div key={i.id} className="px-4 py-2 flex items-center justify-between text-xs">
- <div className="min-w-0 flex-1 truncate pr-2">
- <span className="text-black font-medium">{i.title || 'Unnamed'}</span>
- <Badge variant="neutral">{i.type}</Badge>
- </div>
- <span className="font-semibold text-black shrink-0">{toCur(i.plannedAmount, i.currency)}</span>
- </div>
- ))}
- </div>
- )}
- {activeGoals.length > 0 && (
- <div className="rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 overflow-hidden">
- <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600">Active Purchase Goals</div>
- {activeGoals.slice(0, 3).map(g => {
- const pct = g.targetAmount > 0 ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
- return (
- <div key={g.id} className="px-4 py-2 text-xs">
- <div className="flex items-center justify-between">
- <span className="text-black font-medium">{g.title || 'Unnamed'}</span>
- <span className="text-neutral-500">{pct}%</span>
- </div>
- <div className="mt-1 h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
- <div className="h-full rounded-full bg-black transition-all duration-300" style={{width:`${Math.min(100, Math.max(0, pct))}%`}} />
- </div>
- </div>
- );
- })}
- </div>
- )}
- </div>
- )}
+  {/* Financial Snapshot — 4 hero cards */}
+  <div>
+    <h3 className="text-xs font-semibold text-neutral-600 mb-3">Financial Snapshot</h3>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <MetricCard label="Total Income" value={toCur(receivedIncome)} className={receivedIncome > 0 ? '' : ''} />
+      <MetricCard label="Total Expenses" value={toCur(totalExpenses)} className={totalExpenses > 0 ? '' : ''} />
+      <MetricCard
+        label="Net Position"
+        value={toCur(netProjected)}
+        className={netProjected > 0 ? 'border-emerald-200 bg-emerald-50/30' : netProjected < 0 ? 'border-red-200 bg-red-50/30' : ''}
+      />
+      <MetricCard
+        label="Available Cash"
+        value={toCur(netCash > 0 ? netCash : 0)}
+        className={netCash > 0 ? 'border-blue-200 bg-blue-50/30' : ''}
+      />
+    </div>
+  </div>
 
- {selectedPeriodId && allRecurring.some(r => r.isActive) && (
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="flex items-center justify-between gap-3">
- <div className="text-xs text-neutral-500">Recurring rules: {allRecurring.filter(r => r.isActive).length} active</div>
- <Button variant="outline" size="sm" disabled={generating} onClick={generateRecurringItemsForPeriod}>
- {generating ? 'Generating...' : 'Generate Recurring'}
- </Button>
- </div>
- {generateResult && (
- <div className="mt-2 p-2 rounded-lg border border-emerald-200 bg-emerald-50 text-xs text-emerald-800">{generateResult}</div>
- )}
- </div>
- )}
+  {/* Smart Financial Status */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="text-xs font-semibold text-neutral-600 mb-1">Financial Status</div>
+    <p className="text-sm text-neutral-700 leading-relaxed">{renderStatusText()}</p>
+    {totalPct > 0 && Math.abs(totalPct - 100) >= 1 && (
+      <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        Allocation total is {totalPct}% — {totalPct > 100 ? 'over-allocated by' : 'under-allocated by'} {Math.abs(100 - totalPct)}%.
+      </p>
+    )}
+  </div>
 
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="text-xs font-semibold text-neutral-600 mb-3">Review & Gaps</div>
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
- <MetricCard label="Needs Ratio" value={totalExpenses > 0 ? `${Math.round(needsTotal/totalExpenses*100)}%` : '0%'} />
- <MetricCard label="Allocation Rules" value={String(allRules.length)} />
- <MetricCard label="Active Recurring" value={String(allRecurring.filter(r => r.isActive).length)} />
- <MetricCard label="Open Goals" value={String(activeGoals.length)} />
- </div>
- {(() => {
- const gaps: string[] = [];
- const needsPct = totalExpenses > 0 ? Math.round(needsTotal / totalExpenses * 100) : 0;
- if (needsPct > 50) gaps.push(`Needs/family spending is ${needsPct}% of total expenses — consider reducing.`);
- if (allRules.length === 0) gaps.push('No allocation rules — consider setting up income allocation.');
- if (allRecurring.filter(r => r.isActive).length === 0) gaps.push('No active recurring rules — add regular income/expenses for better forecasting.');
- if (allInvRules.length === 0) gaps.push('No investment rules defined — set ethical and risk guidelines.');
- return gaps.length > 0 ? (
- <div className="space-y-1.5">
- {gaps.map((g,i) => (
- <div key={i} className="p-2.5 rounded-lg border border-amber-200 bg-amber-50 text-xs text-amber-800">{g}</div>
- ))}
- </div>
- ) : (
- <div className="text-xs text-neutral-400">No major gaps detected.</div>
- );
- })()}
- </div>
- </div>
- );
- }
+  {/* Expense Status + Allocation Health grid */}
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    {/* Expense Status */}
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h3 className="text-xs font-semibold text-neutral-600 mb-3">Expense Status</h3>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-neutral-500">Paid</span>
+          <span className="font-semibold text-emerald-700">{toCur(paidExpenses)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-neutral-500">Planned / Unpaid</span>
+          <span className="font-semibold text-amber-700">{toCur(plannedExpenses + unpaidExpenses)}</span>
+        </div>
+        <div className="flex justify-between pt-2 border-t border-neutral-200">
+          <span className="font-semibold text-neutral-900">Total</span>
+          <span className="font-semibold text-neutral-900">{toCur(totalExpenses)}</span>
+        </div>
+      </div>
+      {totalExpenses > 0 && (
+        <div className="mt-3 h-2 w-full rounded-full bg-neutral-200 overflow-hidden flex">
+          <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${paidPct}%` }} />
+          <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${unpaidPct}%` }} />
+        </div>
+      )}
+      {totalExpenses === 0 && (
+        <p className="mt-2 text-xs text-neutral-400">No expenses recorded yet.</p>
+      )}
+    </div>
+
+    {/* Allocation Health */}
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h3 className="text-xs font-semibold text-neutral-600 mb-3">Allocation Health</h3>
+      {activeRules.length > 0 ? (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-neutral-500">Total allocated</span>
+            <span className={`text-sm font-semibold ${Math.abs(totalPct - 100) < 1 ? 'text-emerald-700' : 'text-amber-700'}`}>
+              {totalPct}%
+              {Math.abs(totalPct - 100) < 1 ? ' — Balanced' : totalPct > 100 ? ' — Over' : ' — Under'}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {activeRules.slice(0, 5).map(r => (
+              <div key={r.id}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-neutral-700 font-medium truncate">{r.name || r.category}</span>
+                  <span className="text-neutral-500">{r.percentage}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
+                  <div className="h-full rounded-full bg-neutral-800 transition-all" style={{ width: `${Math.min(100, Math.max(0, r.percentage))}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-neutral-400">No allocation rules yet. Add rules to plan your money.</p>
+      )}
+    </div>
+  </div>
+
+  {/* Recent Activity */}
+  <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+    <div className="px-4 py-2.5 text-xs font-semibold text-neutral-600 border-b border-neutral-100">Recent Activity</div>
+    {recentActivity.length > 0 ? (
+      <div className="divide-y divide-neutral-100">
+        {recentActivity.map(item => (
+          <div key={item.id} className="px-4 py-2.5 flex items-center justify-between text-xs">
+            <div className="min-w-0 flex-1 truncate pr-2 flex items-center gap-2">
+              <span className={`shrink-0 w-1.5 h-1.5 rounded-full ${item._type === 'income' ? 'bg-emerald-500' : 'bg-rose-400'}`} />
+              <span className="text-neutral-900 font-medium truncate">{item.title || item._type === 'income' ? item.incomeType : item.category}</span>
+              <Badge variant={statusBadge[item.status] || 'neutral'}>{item.status}</Badge>
+            </div>
+            <span className="font-semibold text-neutral-900 shrink-0">{toCur(item.amount, item.currency)}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="px-4 py-6 text-center text-xs text-neutral-400">No recent activity yet.</div>
+    )}
+  </div>
+
+  {/* Recurring generate — only when period selected */}
+  {selectedPeriodId && allRecurring.some(r => r.isActive) && (
+    <div className="rounded-xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
+      <span className="text-xs text-neutral-500">{allRecurring.filter(r => r.isActive).length} active recurring rules</span>
+      <Button variant="outline" size="sm" disabled={generating} onClick={generateRecurringItemsForPeriod}>
+        {generating ? 'Generating...' : 'Generate Recurring'}
+      </Button>
+      {generateResult && (
+        <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1">{generateResult}</span>
+      )}
+    </div>
+  )}
+
+  </div>
+  );
+  }
 
  function renderPeriodsTab() {
  return (
@@ -1420,55 +1426,71 @@ function FinancePanel({
  );
  }
 
- function renderSidebar() {
- const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
- const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
- const netAll = totalInc - totalExp;
+  function renderSidebar() {
+  const totalInc = allIncome.reduce((s,i) => s + i.amount, 0);
+  const totalExp = allExpenses.reduce((s,e) => s + e.amount, 0);
+  const netAll = totalInc - totalExp;
 
- return (
- <div className="flex flex-col gap-4">
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="flex items-center justify-between mb-3">
- <span className="text-xs font-semibold text-black">Horizon View</span>
- <select
- value={horizonView}
- onChange={e => setHorizonView(e.target.value as HorizonView)}
- className="h-7 text-xs rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none focus:border-neutral-400 cursor-pointer px-2"
- >
- <option value="monthly">Monthly</option>
- <option value="six_months">6 Months</option>
- <option value="yearly">Yearly</option>
- <option value="five_years">5 Years</option>
- <option value="ten_years">10 Years</option>
- </select>
- </div>
- {renderCompactHorizonView()}
- </div>
+  return (
+  <div className="flex flex-col gap-4">
 
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="text-xs font-semibold text-neutral-600 mb-2">All-time Totals</div>
- <div className="space-y-1.5 text-xs">
- <div className="flex justify-between"><span className="text-neutral-500">Income</span><span className="font-semibold text-black">{toCur(totalInc)}</span></div>
- <div className="flex justify-between"><span className="text-neutral-500">Expenses</span><span className="font-semibold text-black">{toCur(totalExp)}</span></div>
- <div className="flex justify-between pt-1.5 mt-1.5 border-t border-neutral-200 font-bold text-black"><span>Net</span><span>{toCur(netAll)}</span></div>
- </div>
- </div>
+  {/* Current period info */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="text-xs font-semibold text-neutral-600 mb-2">Current View</div>
+    <div className="text-sm font-medium text-neutral-900">
+      {selectedPeriod ? selectedPeriod.title : 'All Records'}
+    </div>
+    {selectedPeriod && (
+      <div className="mt-1 text-xs text-neutral-500">
+        {new Date(selectedPeriod.startDate).toLocaleDateString()} — {new Date(selectedPeriod.endDate).toLocaleDateString()}
+      </div>
+    )}
+  </div>
 
- <div className="rounded-xl border border-neutral-200 bg-white p-4">
- <div className="text-xs font-semibold text-neutral-600 mb-2">Quick Stats</div>
- <div className="space-y-1 text-xs text-neutral-500">
- <div className="flex justify-between"><span>Income records</span><span className="text-black">{allIncome.length}</span></div>
- <div className="flex justify-between"><span>Expense records</span><span className="text-black">{allExpenses.length}</span></div>
- <div className="flex justify-between"><span>Periods</span><span className="text-black">{allPeriods.length}</span></div>
- <div className="flex justify-between"><span>Recurring rules</span><span className="text-black">{allRecurring.length}</span></div>
- <div className="flex justify-between"><span>Purchase goals</span><span className="text-black">{allGoals.length}</span></div>
- <div className="flex justify-between"><span>Investment ideas</span><span className="text-black">{allIdeas.length}</span></div>
- <div className="flex justify-between"><span>Allocation rules</span><span className="text-black">{allRules.length}</span></div>
- </div>
- </div>
- </div>
- );
- }
+  {/* Horizon View */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="flex items-center justify-between mb-3">
+  <span className="text-xs font-semibold text-black">Horizon View</span>
+  <select
+  value={horizonView}
+  onChange={e => setHorizonView(e.target.value as HorizonView)}
+  className="h-7 text-xs rounded-md border border-neutral-200 bg-white text-neutral-900 outline-none focus:border-neutral-400 cursor-pointer px-2"
+  >
+  <option value="monthly">Monthly</option>
+  <option value="six_months">6 Months</option>
+  <option value="yearly">Yearly</option>
+  <option value="five_years">5 Years</option>
+  <option value="ten_years">10 Years</option>
+  </select>
+  </div>
+  {renderCompactHorizonView()}
+  </div>
+
+  {/* All-time Summary */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="text-xs font-semibold text-neutral-600 mb-2">All-time Summary</div>
+  <div className="space-y-1.5 text-xs">
+  <div className="flex justify-between"><span className="text-neutral-500">Income</span><span className="font-semibold text-neutral-900">{toCur(totalInc)}</span></div>
+  <div className="flex justify-between"><span className="text-neutral-500">Expenses</span><span className="font-semibold text-neutral-900">{toCur(totalExp)}</span></div>
+  <div className="flex justify-between pt-1.5 mt-1.5 border-t border-neutral-200"><span className="font-semibold text-neutral-900">Net</span><span className={`font-semibold ${netAll >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{toCur(netAll)}</span></div>
+  </div>
+  </div>
+
+  {/* Quick Counts */}
+  <div className="rounded-xl border border-neutral-200 bg-white p-4">
+  <div className="text-xs font-semibold text-neutral-600 mb-2">Quick Counts</div>
+  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-neutral-500">
+    <div className="flex justify-between"><span>Income</span><span className="text-neutral-900 font-medium">{allIncome.length}</span></div>
+    <div className="flex justify-between"><span>Expenses</span><span className="text-neutral-900 font-medium">{allExpenses.length}</span></div>
+    <div className="flex justify-between"><span>Goals</span><span className="text-neutral-900 font-medium">{allGoals.length}</span></div>
+    <div className="flex justify-between"><span>Investments</span><span className="text-neutral-900 font-medium">{allIdeas.length}</span></div>
+    <div className="flex justify-between"><span>Allocations</span><span className="text-neutral-900 font-medium">{allRules.length}</span></div>
+    <div className="flex justify-between"><span>Recurring</span><span className="text-neutral-900 font-medium">{allRecurring.length}</span></div>
+  </div>
+  </div>
+  </div>
+  );
+  }
 
  function buildFinanceSummary() {
  const expectedIncome = dashboardIncome.filter(i => i.status === 'expected' || i.status === 'delayed').reduce((s,i) => s + i.amount, 0);
