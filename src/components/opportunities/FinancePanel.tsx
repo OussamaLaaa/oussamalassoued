@@ -198,6 +198,7 @@ function FinancePanel({
   const [generateResult, setGenerateResult] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [calendarYear, setCalendarYear] = useState(cYear);
 
  const allIncome = financeIncome || [];
@@ -247,10 +248,16 @@ function FinancePanel({
 
  const [formData, setFormData] = useState<Record<string, any>>({});
 
- function openModal(type: FinanceTab, id?: string) {
- setFormData({});
- setModal({ type, id });
- }
+  function openModal(type: FinanceTab, id?: string) {
+  setSaveError(null);
+  if (id) {
+  const item = getEditItem(type, id);
+  setFormData(item ? { ...item } : {});
+  } else {
+  setFormData({});
+  }
+  setModal({ type, id });
+  }
 
  function closeModal() {
  setModal(null);
@@ -262,13 +269,21 @@ function FinancePanel({
   setSaving(true);
   const { type, id } = modal;
   try {
- if (type === 'income') {
- if (id) await onUpdateFinanceIncome(id, formData);
- else await onAddFinanceIncome({ ...defaultIncome, ...formData });
- } else if (type === 'expenses') {
- if (id) await onUpdateFinanceExpense(id, formData);
- else await onAddFinanceExpense({ ...defaultExpense, ...formData });
- } else if (type === 'allocation') {
+  if (type === 'income') {
+  if (id) await onUpdateFinanceIncome(id, formData);
+  else {
+  const merged = { ...defaultIncome, ...formData };
+  if (!merged.amount || merged.amount <= 0) throw new Error('Please enter an income amount greater than 0.');
+  await onAddFinanceIncome(merged);
+  }
+  } else if (type === 'expenses') {
+  if (id) await onUpdateFinanceExpense(id, formData);
+  else {
+  const merged = { ...defaultExpense, ...formData };
+  if (!merged.amount || merged.amount <= 0) throw new Error('Please enter an expense amount greater than 0.');
+  await onAddFinanceExpense(merged);
+  }
+  } else if (type === 'allocation') {
  if (id) await onUpdateFinanceAllocationRule(id, formData);
  else await onAddFinanceAllocationRule({ ...defaultRule, ...formData });
  } else if (type === 'purchase_goals') {
@@ -286,6 +301,7 @@ function FinancePanel({
  }
  closeModal();
   } catch (e) {
+  if (!saveError) setSaveError(String(e instanceof Error ? e.message : 'Save failed'));
   console.error('Save failed', e);
   } finally {
   setSaving(false);
@@ -310,9 +326,9 @@ function FinancePanel({
  setFormData(prev => ({ ...prev, [field]: value }));
  }
 
- function getEditItem(type: FinanceTab): any {
- if (!modal?.id) return null;
- const id = modal.id;
+  function getEditItem(type: FinanceTab, overrideId?: string): any {
+  const id = overrideId || modal?.id;
+  if (!id) return null;
  if (type === 'income') return allIncome.find(i => i.id === id);
  if (type === 'expenses') return allExpenses.find(i => i.id === id);
  if (type === 'allocation') return allRules.find(i => i.id === id);
@@ -412,7 +428,7 @@ function FinancePanel({
  <input
  type={f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'}
  value={formData[f.key] ?? ''}
- onChange={e => handleModalChange(f.key, f.type === 'number' ? Number(e.target.value) : e.target.value)}
+  onChange={e => handleModalChange(f.key, f.type === 'number' ? (e.target.value === '' ? undefined : Number(e.target.value)) : e.target.value)}
  placeholder={f.label}
  className="h-9 px-3 text-sm rounded-md border border-neutral-200 bg-white text-neutral-900 placeholder-neutral-400 outline-none transition-colors focus:border-neutral-400 w-full"
  />
@@ -557,19 +573,27 @@ function FinancePanel({
  {modal.type === 'investments' && renderIdeaForm(item)}
  {modal.type === 'recurring' && renderRecurringForm(item)}
  {modal.type === 'periods' && renderPeriodForm(item)}
- </div>
- <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 rounded-b-2xl">
- <Button variant="outline" size="sm" onClick={closeModal}>Cancel</Button>
-  <Button variant="primary" size="sm" disabled={saving} onClick={handleSave}>{saving ? 'Saving...' : 'Save'}</Button>
- </div>
+  </div>
+  {saveError && (
+  <div className="px-5 py-3 border-t border-red-100 bg-red-50">
+    <p className="text-xs text-red-700">{saveError}</p>
+  </div>
+  )}
+  <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 rounded-b-2xl">
+  <Button variant="outline" size="sm" onClick={closeModal}>Cancel</Button>
+   <Button variant="primary" size="sm" disabled={saving} onClick={handleSave}>{saving ? 'Saving...' : 'Save'}</Button>
+  </div>
  </div>
  </div>
  );
  }
 
   function renderPeriodSelector() {
+  const contextLabel = selectedPeriod ? selectedPeriod.title : 'All Records';
   return (
   <div className="flex flex-wrap items-center gap-2">
+  <span className="text-xs font-medium text-neutral-500 mr-1 whitespace-nowrap">Viewing:</span>
+  <span className="text-xs font-semibold text-neutral-800 bg-neutral-100 rounded-md px-2.5 py-1.5 whitespace-nowrap">{contextLabel}</span>
   <select
   value={selectedPeriodId}
   onChange={e => setSelectedPeriodId(e.target.value)}
@@ -789,6 +813,13 @@ function FinancePanel({
   });
 
   function getMonthFinancials(m: number) {
+  const key = formatMonthKey(new Date(calendarYear, m, 1));
+  const period = monthPeriodMap.get(key);
+  if (period) {
+  const inc = allIncome.filter(i => incomeInPeriod(i, period.id, period)).reduce((s,i) => s + i.amount, 0);
+  const exp = allExpenses.filter(e => expenseInPeriod(e, period.id, period)).reduce((s,e) => s + e.amount, 0);
+  return { income: inc, expenses: exp, net: inc - exp };
+  }
   const start = `${calendarYear}-${String(m + 1).padStart(2, '0')}-01`;
   const end = `${calendarYear}-${String(m + 1).padStart(2, '0')}-${new Date(calendarYear, m + 1, 0).getDate()}`;
   const inc = allIncome.filter(i => {
