@@ -613,6 +613,15 @@ const CompanyWorkspace: React.FC<Props> = ({
   const primaryPeople = companyPeople.filter((p) => p.role && ['ceo', 'founder', 'owner', 'manager', 'director'].includes(p.role.toLowerCase()));
   const topPeople = companyPeople.slice(0, 3);
 
+  const InfoTile: React.FC<{ label: string; value?: string; valueClass?: string }> = ({ label, value, valueClass }) => (
+  <div className="rounded-xl border border-neutral-200 bg-white p-3.5">
+  <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</div>
+  <div className={`mt-1 text-sm text-neutral-900 break-words leading-relaxed ${valueClass || ''}`}>
+  {value || <span className="text-neutral-400">Not added yet</span>}
+  </div>
+  </div>
+  );
+
   const renderCopyButton = (text: string) => (
   <button
   type="button"
@@ -663,10 +672,8 @@ const CompanyWorkspace: React.FC<Props> = ({
 
   {/* A. Company Summary Card */}
   <div className="rounded-xl border border-neutral-200 bg-white p-5">
-  <h3 className="mb-4 text-sm font-semibold text-neutral-900">Company Summary</h3>
-  <div className="space-y-3">
+  <div className="mb-4 flex flex-col gap-3">
   <div className="text-lg font-semibold text-neutral-900">{company.name}</div>
-
   <div className="flex flex-wrap gap-1.5">
   {company.databaseType && (
   <Badge variant="neutral" className="text-neutral-600 bg-neutral-50 border-neutral-200 text-xs">
@@ -686,24 +693,31 @@ const CompanyWorkspace: React.FC<Props> = ({
   </Badge>
   )}
   </div>
+  </div>
 
-  <div className="grid grid-cols-1 gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
-  {company.category && (
-  <><span className="text-neutral-500">Category</span><span className="text-neutral-900">{company.category}</span></>
-  )}
-  {company.industry && (
-  <><span className="text-neutral-500">Industry</span><span className="text-neutral-900">{company.industry}</span></>
-  )}
-  {company.targetNiche && (
-  <><span className="text-neutral-500">Target Niche</span><span className="text-neutral-900">{NICHE_LABELS[company.targetNiche] || company.targetNiche}</span></>
-  )}
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+  {company.industry && company.industry.length > 60 ? (
+  <div className="sm:col-span-2 xl:col-span-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3.5">
+  <div className="text-xs font-medium uppercase tracking-wide text-neutral-500 mb-1">Industry / Description</div>
+  <div className="text-sm text-neutral-900 leading-relaxed">{company.industry}</div>
+  </div>
+  ) : null}
+  {company.industry && company.industry.length <= 60 ? (
+  <InfoTile label="Industry" value={company.industry} />
+  ) : !company.industry ? (
+  <InfoTile label="Industry" />
+  ) : null}
+  <InfoTile label="Category" value={company.category} />
+  <InfoTile label="Target Niche" value={company.targetNiche ? (NICHE_LABELS[company.targetNiche] || company.targetNiche) : undefined} />
+  <InfoTile label="Status" value={company.status ? company.status.replace(/_/g, ' ') : undefined} />
+  <InfoTile label="Priority" value={company.priority || undefined} />
+  <InfoTile label="Ethical Fit" value={company.ethicalFit ? (ETHICAL_LABELS[company.ethicalFit] || company.ethicalFit) : undefined} />
   {typeof company.fitScore === 'number' && (
-  <><span className="text-neutral-500">Fit Score</span><span className="font-semibold text-indigo-600">{company.fitScore}</span></>
+  <InfoTile label="Fit Score" value={String(company.fitScore)} valueClass="font-semibold text-indigo-600" />
   )}
   {company.nextAction && (
-  <><span className="text-neutral-500">Next Action</span><span className="text-neutral-900">{company.nextAction}</span></>
+  <InfoTile label="Next Action" value={company.nextAction} />
   )}
-  </div>
   </div>
   </div>
 
