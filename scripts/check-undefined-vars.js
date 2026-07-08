@@ -1,9 +1,11 @@
 import { readFileSync } from 'fs';
-import { globSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolve, relative } from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const srcDir = resolve(import.meta.dirname, '../src');
+const workspaceRoot = resolve(srcDir, '..');
 
 const TOOLBAR_EXPORTS = [
   'toolbarRoot', 'toolbarSearch', 'toolbarSearchInput',
@@ -21,13 +23,48 @@ function findRelativeImportPath(filePath, importSource) {
   return importSource;
 }
 
-const files = execSync('git ls-files "src/**/*.tsx" "src/**/*.ts"', { encoding: 'utf8', cwd: srcDir })
-  .trim().split('\n').filter(Boolean);
+function walkSourceFiles(dir, files = []) {
+  if (!fs.existsSync(dir)) return files;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (['node_modules', 'dist', 'build', 'coverage', '.vercel', 'public'].includes(entry.name)) {
+        continue;
+      }
+      walkSourceFiles(fullPath, files);
+      continue;
+    }
+    if (/\.(ts|tsx)$/.test(entry.name)) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+function getSourceFiles() {
+  try {
+    const files = execSync('git ls-files "src/**/*.tsx" "src/**/*.ts"', {
+      encoding: 'utf8',
+      cwd: srcDir,
+      stdio: ['ignore', 'pipe', 'pipe']
+    }).trim().split('\n').filter(Boolean);
+    const gitRoot = execSync('git rev-parse --show-toplevel', {
+      encoding: 'utf8',
+      cwd: srcDir,
+      stdio: ['ignore', 'pipe', 'pipe']
+    }).trim();
+    return files.map(file => resolve(gitRoot, file));
+  } catch {
+    console.warn('[check-undefined-vars] Git not available, using filesystem scan.');
+    return walkSourceFiles(resolve(srcDir));
+  }
+}
+
+const files = getSourceFiles();
 
 let errors = [];
 
-for (const file of files) {
-  const fullPath = resolve(execSync('git rev-parse --show-toplevel', { encoding: 'utf8', cwd: srcDir }).trim(), file);
+for (const fullPath of files) {
   const content = readFileSync(fullPath, 'utf8');
 
   const usedInJSX = TOOLBAR_EXPORTS.filter(v =>
@@ -43,7 +80,7 @@ for (const file of files) {
 
   const missing = usedInJSX.filter(v => !imported.includes(v));
   if (missing.length > 0) {
-    errors.push({ file, missing });
+    errors.push({ file: relative(workspaceRoot, fullPath), missing });
   }
 }
 

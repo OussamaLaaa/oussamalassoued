@@ -16,6 +16,7 @@ import {
   Quote,
 } from 'lucide-react';
 import { ExperienceMarquee } from './ExperienceMarquee';
+import HeroFluidGlass from './animations/HeroFluidGlass';
 
 const SECTION_IDS = ['home', 'about', 'projects', 'testimonials', 'contact'] as const;
 const deferredSectionStyle: React.CSSProperties = {
@@ -340,6 +341,8 @@ export const StaticHomeLayout: React.FC = () => {
         />
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-foreground/[0.04] blur-3xl -z-10" />
         <div className="absolute top-20 -right-32 h-96 w-96 rounded-full bg-foreground/[0.04] blur-3xl -z-10" />
+
+        <HeroFluidGlass />
 
         <div className="mx-auto max-w-6xl px-6 pt-28 md:pt-36 pb-20 text-center">
           <h1
