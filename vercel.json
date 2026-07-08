@@ -4,6 +4,13 @@
   "framework": "vite",
   "installCommand": "npm install",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/ux-ui-designer-tunisia",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
   "functions": {
     "api/documents.js": {
         "maxDuration": 60

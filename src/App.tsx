@@ -10,7 +10,7 @@ const Personal = lazyWithRetry(() => import('./pages/Personal'));
 const Articles = lazy(() => import('./pages/Articles'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const UXUIDesignerTunisia = lazy(() => import('./pages/UXUIDesignerTunisia'));
+
 const AIProductBuilder = lazy(() => import('./pages/AIProductBuilder'));
 const DesignEngineer = lazy(() => import('./pages/DesignEngineer'));
 const AboutOussama = lazy(() => import('./pages/AboutOussama'));
@@ -228,6 +228,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (route.page === 'ux-ui-designer-tunisia') {
+      window.location.replace('/');
+    }
+  }, [route.page]);
+
+  useEffect(() => {
     if (route.page === 'dashboard') {
       document.body.classList.add('dashboard-page');
     } else {
@@ -261,10 +267,6 @@ function App() {
         ) : route.page === 'privacy' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
             <PrivacyPolicy />
-          </Suspense>
-        ) : route.page === 'ux-ui-designer-tunisia' ? (
-          <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
-            <UXUIDesignerTunisia />
           </Suspense>
         ) : route.page === 'ai-product-builder' ? (
           <Suspense fallback={<div style={{ height: '100vh', background: 'var(--bg-color, #000)' }} />}>
