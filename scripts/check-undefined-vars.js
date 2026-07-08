@@ -1,7 +1,6 @@
-import { readFileSync } from 'fs';
-import { globSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import { resolve, relative } from 'path';
+import { resolve, relative, join } from 'path';
 
 const srcDir = resolve(import.meta.dirname, '../src');
 
@@ -9,6 +8,44 @@ const TOOLBAR_EXPORTS = [
   'toolbarRoot', 'toolbarSearch', 'toolbarSearchInput',
   'toolbarSearchIcon', 'toolbarSelect', 'toolbarButton', 'toolbarCount',
 ];
+
+function walkSourceFiles(dir, files = []) {
+  if (!existsSync(dir)) return files;
+
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (["node_modules", "dist", "build", "coverage", ".vercel", "public"].includes(entry.name)) {
+        continue;
+      }
+      walkSourceFiles(fullPath, files);
+      continue;
+    }
+
+    if (/\.(ts|tsx)$/.test(entry.name)) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function getSourceFiles() {
+  try {
+    return execSync('git ls-files "src/**/*.tsx" "src/**/*.ts"', {
+      encoding: "utf8",
+      cwd: srcDir,
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+  } catch {
+    console.warn("[check-undefined-vars] Git not available, using filesystem scan.");
+    return walkSourceFiles(srcDir).map(f => relative(resolve(srcDir, ".."), f).replace(/\\/g, "/"));
+  }
+}
 
 function findRelativeImportPath(filePath, importSource) {
   if (importSource.startsWith('.')) {
@@ -21,13 +58,12 @@ function findRelativeImportPath(filePath, importSource) {
   return importSource;
 }
 
-const files = execSync('git ls-files "src/**/*.tsx" "src/**/*.ts"', { encoding: 'utf8', cwd: srcDir })
-  .trim().split('\n').filter(Boolean);
+const files = getSourceFiles();
 
 let errors = [];
 
 for (const file of files) {
-  const fullPath = resolve(execSync('git rev-parse --show-toplevel', { encoding: 'utf8', cwd: srcDir }).trim(), file);
+  const fullPath = resolve(srcDir, "..", file);
   const content = readFileSync(fullPath, 'utf8');
 
   const usedInJSX = TOOLBAR_EXPORTS.filter(v =>
