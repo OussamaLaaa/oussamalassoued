@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { getButtonClass } from './designSystem';
 import { getSocialIconComponent, MailIcon } from './icons';
 import { useSiteConfig } from '../context/SiteConfigContext';
